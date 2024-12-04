@@ -94,17 +94,17 @@ export { UserProvider, useUserState, useUserDispatch, loginUser, signOut, signUp
 
 // ###########################################################
 
-function loginUser(dispatch, login, password, history, setIsLoading, setError) {
+function loginUser(dispatch, login, password, navigate, setIsLoading, setError) {
   setError(false);
   setIsLoading(true);
-
+  console.log("login = ", login, "password = ", password);
   if (!!login && !!password) {
     setTimeout(() => {
       localStorage.setItem('id_token', 1)
       setError(null)
       setIsLoading(false)
       dispatch({ type: 'LOGIN_SUCCESS' })
-      history.push('/app/dashboard')
+      navigate('/app/dashboard')
     }, 2000);
   } else {
     dispatch({ type: "LOGIN_FAILURE" });
