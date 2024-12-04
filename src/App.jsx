@@ -110,7 +110,7 @@ import HostDashboard from './pages/host/HostDashboard';
 
 const App = () => {
   return (
-    <BrowserRouter future={{ v7_startTransition: true }}>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Redirect from root to dashboard */}
         <Route path="/" element={<Navigate to="/app/dashboard" replace />} />

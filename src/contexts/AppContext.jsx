@@ -16,7 +16,7 @@ function appReducer(state, action) {
 }
 
 function AppProvider({ children }) {
-  console.log("AppProvider is called...");
+  // console.log("AppProvider is called...");
   var [state, dispatch] = useReducer(appReducer, {
     filter: null
   });

@@ -27,7 +27,6 @@ import ProfileMenu from './ProfileMenu';
 import useStyles from './styles';
 
 export default function Header(props) {
-  console.log('In Header.js 000 props= ', props);
 
   // const theme = useTheme();
   const classes = useStyles();

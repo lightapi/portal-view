@@ -32,7 +32,7 @@ function siteReducer(state, action) {
 }
 
 function SiteProvider({ children }) {
-  console.log("SiteProvider is called...");
+  // console.log("SiteProvider is called...");
   var [state, dispatch] = React.useReducer(siteReducer, {
     site: null,
     owner: null,

@@ -21,7 +21,7 @@ function userReducer(state, action) {
 }
 
 function UserProvider({ children }) {
-  console.log("UserProvider is called...");
+  // console.log("UserProvider is called...");
   const cookies = new Cookies();
   const email = cookies.get('userId');
   const refreshToken = cookies.get('refreshToken');
@@ -113,12 +113,12 @@ function loginUser(dispatch, login, password, history, setIsLoading, setError) {
   }
 }
 
-function signOut(dispatch, history) {
+function signOut(dispatch, navigate) {
     dispatch({ type: "SIGN_OUT_SUCCESS" });
     fetch("/logout", { credentials: 'include'})
     .then(response => {
       if(response.ok) {
-        history.push("/app/dashboard");
+        navigate("/app/dashboard");
       } else {
         throw Error(response.statusText);
       }
@@ -128,33 +128,30 @@ function signOut(dispatch, history) {
     });
 }
 
-function changePassword(dispatch, history) {
-  console.log("changePassword is called");
-  history.push("/app/form/changePasswordForm");
+function changePassword(dispatch, navigate) {
+  navigate("/app/form/changePasswordForm");
 }
 
-function signUp(dispatch, history) {
-  console.log("signUp is called");
-  history.push("/app/form/signupForm");
+function signUp(dispatch, navigate) {
+  navigate("/app/form/signupForm");
 }
 
-function getProfile(dispatch, history) {
-  console.log("getProfile is called");
-  history.push("/app/profile");
+function getProfile(dispatch, navigate) {
+  navigate("/app/profile");
 }
 
-function getPayment(dispatch, history) {
-  history.push("/app/payment");
+function getPayment(dispatch, navigate) {
+  navigate("/app/payment");
 }
 
-function updateRoles(dispatch, history) {
-  history.push("/app/updateRoles");
+function updateRoles(dispatch, navigate) {
+  navigate("/app/updateRoles");
 }
 
-function getOrders(dispatch, history) {
-  history.push("/app/userOrders");
+function getOrders(dispatch, navigate) {
+  navigate("/app/userOrders");
 }
 
-function hostForm(dispatch, history) {
-  history.push("/app/form/hostForm");
+function hostForm(dispatch, navigate) {
+  navigate("/app/form/hostForm");
 }

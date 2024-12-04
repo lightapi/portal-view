@@ -1,5 +1,6 @@
 import { Person as AccountIcon } from '@mui/icons-material';
 import { IconButton, Menu, MenuItem } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
 import React, { useState } from 'react';
 import {
@@ -21,6 +22,7 @@ export default function ProfileMenu(props) {
   var userDispatch = useUserDispatch();
   var classes = props.classes;
   var { isAuthenticated, userId, roles } = useUserState();
+  const navigate = useNavigate();
 
   //console.log(isAuthenticated);
 
@@ -66,7 +68,7 @@ export default function ProfileMenu(props) {
                 classes.headerMenuItem
               )}
               onClick={() => {
-                getProfile(userDispatch, props.history);
+                getProfile(userDispatch, navigate);
                 setProfileMenu(false);
               }}
             >
@@ -78,7 +80,7 @@ export default function ProfileMenu(props) {
                 classes.headerMenuItem
               )}
               onClick={() => {
-                getPayment(userDispatch, props.history);
+                getPayment(userDispatch, navigate);
                 setProfileMenu(false);
               }}
             >
@@ -91,7 +93,7 @@ export default function ProfileMenu(props) {
                   classes.headerMenuItem
                 )}
                 onClick={() => {
-                  updateRoles(userDispatch, props.history);
+                  updateRoles(userDispatch, navigate);
                   setProfileMenu(false);
                 }}
               >
@@ -104,7 +106,7 @@ export default function ProfileMenu(props) {
                 classes.headerMenuItem
               )}
               onClick={() => {
-                getOrders(userDispatch, props.history);
+                getOrders(userDispatch, navigate);
                 setProfileMenu(false);
               }}
             >
@@ -116,7 +118,7 @@ export default function ProfileMenu(props) {
                 classes.headerMenuItem
               )}
               onClick={() => {
-                hostForm(userDispatch, props.history);
+                hostForm(userDispatch, navigate);
                 setProfileMenu(false);
               }}
             >
@@ -151,7 +153,7 @@ export default function ProfileMenu(props) {
                 className={classes.profileMenuLink}
                 color="primary"
                 onClick={() => {
-                  changePassword(userDispatch, props.history);
+                  changePassword(userDispatch, navigate);
                   setProfileMenu(false);
                 }}
               >
@@ -162,7 +164,7 @@ export default function ProfileMenu(props) {
               <Typography
                 className={classes.profileMenuLink}
                 color="primary"
-                onClick={() => signOut(userDispatch, props.history)}
+                onClick={() => signOut(userDispatch, navigate)}
               >
                 Sign Out
               </Typography>
@@ -184,7 +186,7 @@ export default function ProfileMenu(props) {
                 className={classes.profileMenuLink}
                 color="primary"
                 onClick={() => {
-                  signUp(userDispatch, props.history);
+                  signUp(userDispatch, navigate);
                   setProfileMenu(false);
                 }}
               >
