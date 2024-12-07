@@ -677,9 +677,9 @@
       "title": "User Registration",
       "type": "object",
       "properties": {
-        "host": {
+        "hostId": {
           "type": "string",
-          "default": "lightapi.net"
+          "default": "N2CMw0HGQXeLvC1wBfln2A"
         },
         "email": {
           "type": "string",
@@ -687,6 +687,9 @@
           "validationMessage": "Email must be of proper format: example@example.com"
         },
         "userId": {
+          "type": "string"
+        },
+        "userType": {
           "type": "string"
         },
         "language": {
@@ -725,36 +728,41 @@
         "city": {
           "type": "string"
         },
-        "postCode": {
+        "address": {
           "type": "string"
         },
-        "address": {
+        "postCode": {
           "type": "string"
         }
       },
       "required": [
-        "host",
+        "hostId",
         "email",
         "userId",
         "language",
         "password",
-        "passwordConfirm",
-        "firstName",
-        "lastName",
-        "gender"
+        "passwordConfirm"
       ]
     },
     "form": [
       {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
+        "key": "hostId",
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=host"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22listHost%22%2C%22version%22%3A%220.1.0%22%7D"
         }
       },
       "email",
       "userId",
+      {
+        "key": "userType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=user_type"
+        }
+      },
       "language",
       {
         "key": "password",
@@ -774,16 +782,16 @@
       "taijiWallet",
       {
         "key": "country",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=country"
         }
       },
       {
         "key": "province",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=province&rela=ctry-prov&from={0}",
           "params": ["country"]
@@ -791,15 +799,15 @@
       },
       {
         "key": "city",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=city&rela=prov-city&from={0}",
           "params": ["province"]
         }
       },
-      "postCode",
-      "address"
+      "address",
+      "postCode"
     ]
   },
   "changePasswordForm": {
@@ -2037,8 +2045,8 @@
         "items": [
           {
             "key": "accesses[].ruleId",
-            "type": "rc-select",
-            "filterOption": true,
+            "type": "dynaselect",
+            "multiple": true,
             "action": {
               "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRuleByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22host%22%3A%22{0}%22%2C%22ruleType%22%3A%22request-access%22%7D%7D",
               "params": ["host"]
@@ -2046,7 +2054,7 @@
           },
           {
             "key": "accesses[].roles",
-            "type": "rc-select",
+            "type": "dynaselect",
             "multiple": true,
             "tags": true,
             "maxTagTextLength": 20,
