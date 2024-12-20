@@ -9,9 +9,9 @@ function userReducer(state, action) {
   console.log("action = ", action);
   switch (action.type) {
     case "LOGIN_SUCCESS":
-      return { ...state, isAuthenticated: action.isAuthenticated, email: action.email, roles: action.roles};
+      return { ...state, isAuthenticated: action.isAuthenticated, email: action.email, roles: action.roles, host: action.host };
     case "SIGN_OUT_SUCCESS":
-      return { ...state, isAuthenticated: false, email: null, userId: null, roles: null };
+      return { ...state, isAuthenticated: false, email: null, userId: null, roles: null, host: null };
     case "UPDATE_PROFILE":
       return { ...state, userId: action.userId, host: action.host }
     default: {
@@ -25,11 +25,12 @@ function UserProvider({ children }) {
   const cookies = new Cookies();
   const email = cookies.get('userId');
   const refreshToken = cookies.get('refreshToken');
+  const host = cookies.get('host');
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!email,
     email: email,
     userId: null,
-    host: null,
+    host: host,
     roles: cookies.get('roles')
   });
 
