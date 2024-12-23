@@ -23,14 +23,15 @@ function userReducer(state, action) {
 function UserProvider({ children }) {
   // console.log("UserProvider is called...");
   const cookies = new Cookies();
-  const email = cookies.get('userId');
+  const userId = cookies.get('userId');
   const refreshToken = cookies.get('refreshToken');
   const host = cookies.get('host');
+  const email = cookies.get('email');
   var [state, dispatch] = React.useReducer(userReducer, {
-    isAuthenticated: !!email,
-    email: email,
-    userId: null,
+    isAuthenticated: !!userId,
+    userId: userId,
     host: host,
+    email: email,
     roles: cookies.get('roles')
   });
 
