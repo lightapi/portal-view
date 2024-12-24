@@ -1,12 +1,14 @@
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
 import { useUserState } from '../../contexts/UserContext';
 import { useApiGet } from '../../hooks/useApiGet';
 import useStyles from './styles';
 
-export default function Profile(props) {
+export default function Profile() {
+  const navigate = useNavigate();
   const classes = useStyles();
   const { email } = useUserState();
   //console.log("isAuthenticated = " + isAuthenticated + " userId = " + userId);
@@ -26,14 +28,13 @@ export default function Profile(props) {
   const deleteProfile = () => {
     if (window.confirm('Are you sure you want to delete your profile?')) {
       //console.log("confirmed");
-      props.history.push({ pathname: '/app/deleteProfile', state: { data } });
+      navigate('/app/deleteProfile', { state: { data } });
     }
   };
 
   const editProfile = () => {
     //console.log("editProfile is called");
-    props.history.push({
-      pathname: '/app/form/updateProfile',
+    navigate('/app/form/updateProfile', {
       state: { data },
     });
   };

@@ -2,7 +2,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import ServiceList from './ServiceList';
@@ -10,6 +10,7 @@ import useStyles from './styles';
 
 export default function Service(props) {
   const classes = useStyles();
+  const navigate = useNavigate();
   const { email, host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -67,7 +68,7 @@ export default function Service(props) {
   };
 
   const handleCreate = () => {
-    props.history.push('/app/form/createService');
+    navigate('/app/form/createService');
   };
 
   let wait;
