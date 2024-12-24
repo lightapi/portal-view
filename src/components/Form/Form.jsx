@@ -6,6 +6,8 @@ import { SchemaForm, utils } from 'react-schema-form';
 import Cookies from 'universal-cookie';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import forms from '../../data/Forms';
+import { useUserState } from '../../contexts/UserContext';
+import Typography from '@mui/material/Typography'; // Import Typography for better text rendering
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -25,13 +27,22 @@ const useStyles = makeStyles((theme) => ({
   button: {
     margin: theme.spacing(1),
   },
+  errorContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: theme.spacing(4),
+  },
+  errorMessage: {
+    marginBottom: theme.spacing(2),
+  },
 }));
 
 function Form() {
   const params = useParams();
   const formId = params.formId;
   const location = useLocation();
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
   const [fetching, setFetching] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [schema, setSchema] = useState(null);
@@ -39,6 +50,7 @@ function Form() {
   const [actions, setActions] = useState(null);
   const [model, setModel] = useState({});
   const classes = useStyles();
+  const { isAuthenticated, host } = useUserState();
 
   useEffect(() => {
     console.log(formId);
@@ -46,13 +58,15 @@ function Form() {
     setSchema(formData.schema);
     setForm(formData.form);
     setActions(formData.actions);
-    console.log('state = ', location.state);
+    console.log('host = ', host);
+
     // must ensure that the model is an empty object to the cascade dropdown
-    setModel(
-      location.state
-        ? location.state.data || {}
-        : formData.model || {}
-    );
+    const initialModel = location.state
+      ? location.state.data || {}
+      : formData.model || {};
+
+    const modelWithHostId = Object.assign({}, initialModel, { hostId: host });
+    setModel(modelWithHostId);
   }, [formId, location.state]);
 
   const onModelChange = (key, val, type) => {
@@ -101,19 +115,35 @@ function Form() {
         // code is not OK.
         navigate(
           action.failure,
-          {state: { error: data }}
+          { state: { error: data } }
         );
       } else {
-        navigate(action.success, {state: { data } });
+        navigate(action.success, { state: { data } });
       }
     } catch (e) {
       // network error here.
       console.log(e);
       // convert it to json as the failure component can only deal with JSON.
       const error = { error: e };
-      navigate(action.failure, {state: { error } });
+      navigate(action.failure, { state: { error } });
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className={classes.errorContainer}>
+        <Typography variant="h6" color="error" className={classes.errorMessage}>
+          Authentication Required
+        </Typography>
+        <Typography variant="body1" className={classes.errorMessage}>
+          You need to be logged in to access this form.
+        </Typography>
+        <Button variant="contained" onClick={() => navigate(-1)}>
+          Go Back
+        </Button>
+      </div>
+    );
+  }
 
   if (schema) {
     var buttons = [];
