@@ -1835,8 +1835,7 @@
         },
         "apiStatus": {
           "title": "Api Status",
-          "type": "string",
-          "enum": ["onboarded", "published", "implemented", "deployed", "decommissioned"]
+          "type": "string"
         },
         "apiTags": {
           "title": "Api Tags",
@@ -1848,9 +1847,18 @@
       "hostId",
       "apiId",
       "serviceId",
-      "apiType",
+      "apiName",
       {
-        "key": "desc",
+        "key": "apiType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=api_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiDesc",
         "type": "textarea"
       },
       "operationOwner",
@@ -1902,20 +1910,20 @@
       },
       "gitRepo",
       {
-        "key": "apiTags",
+        "key": "apiStatus",
         "type": "dynaselect",
-        "multiple": true,
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=tag&host={0}",
+          "url": "/r/data?name=api_status&host={0}",
           "params": ["hostId"]
         }
       },
       {
-        "key": "apiStatus",
+        "key": "apiTags",
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "/r/data?name=api_status&host={0}",
+          "url": "/r/data?name=api_tag&host={0}",
           "params": ["hostId"]
         }
       }
