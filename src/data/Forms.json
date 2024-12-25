@@ -1768,95 +1768,155 @@
     "schema": {
       "type": "object",
       "required": [
-        "host",
-        "lob",
-        "style",
+        "hostId",
         "apiId",
+        "apiName",
         "serviceId",
-        "name",
-        "desc",
-        "tags",
-        "status"
+        "apiType",
+        "apiStatus"
       ],
       "properties": {
-        "host": {
-          "title": "Host",
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "serviceId": {
+          "title": "Service Id",
+          "type": "string"
+        },
+        "apiName": {
+          "title": "Api Name",
+          "type": "string"
+        },
+        "apiType": {
+          "title": "Api Type",
+          "type": "string"
+        },
+        "apiDesc": {
+          "title": "Api Desc",
+          "type": "string"
+        },
+        "operationOwner": {
+          "title": "Operation Owner",
+          "type": "string"
+        },
+        "deliveryOwner": {
+          "title": "Delivery Owner",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "businessGroup": {
+          "title": "Business Group",
           "type": "string"
         },
         "lob": {
           "title": "Line of Business",
           "type": "string"
         },
-        "style": {
-          "title": "API Style",
-          "type": "string",
-          "enum": ["openapi", "graphql", "hybrid"]
-        },
-        "apiId": {
-          "title": "Api Id - four digit unique number",
-          "type": "string",
-          "pattern": "\\b\\d{4}\\b"
-        },
-        "serviceId": {
-          "title": "Service Id",
+        "platform": {
+          "title": "Platform",
           "type": "string"
         },
-        "name": {
-          "title": "Service Name",
+        "capability": {
+          "title": "Capability",
           "type": "string"
         },
-        "desc": {
-          "title": "Service Description",
+        "gitRepo": {
+          "title": "Git Repo",
           "type": "string"
         },
-        "status": {
-          "title": "Service Status",
+        "apiStatus": {
+          "title": "Api Status",
           "type": "string",
-          "enum": ["published", "implemented", "deployed", "decommissioned"]
+          "enum": ["onboarded", "published", "implemented", "deployed", "decommissioned"]
         },
-        "tags": {
-          "title": "Tags",
-          "type": "array",
-          "minItems": 0,
-          "maxItems": 10
+        "apiTags": {
+          "title": "Api Tags",
+          "type": "string"
         }
       }
     },
     "form": [
-      {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=host"
-        }
-      },
-      {
-        "key": "lob",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=lob&rela=host-lob&from={0}",
-          "params": ["host"]
-        }
-      },
-      "style",
+      "hostId",
       "apiId",
       "serviceId",
-      "name",
+      "apiType",
       {
         "key": "desc",
         "type": "textarea"
       },
-      "status",
+      "operationOwner",
+      "deliveryOwner",
       {
-        "key": "tags",
-        "type": "rc-select",
-        "multiple": true,
-        "tags": true,
-        "maxTagTextLength": 20,
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=tag"
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "businessGroup",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=business_group&host={0}&rela=region-bgrp&from={1}",
+          "params": ["hostId", "region"]
+        }
+      },
+      {
+        "key": "lob",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lob&host={0}&rela=bgrp-lob&from={1}",
+          "params": ["hostId", "businessGroup"]
+        }
+      },
+      {
+        "key": "platform",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=platform_journer&host={0}&rela=lob-platform&from={1}",
+          "params": ["hostId", "lob"]
+        }
+      },
+      {
+        "key": "capability",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=capability&host={0}&rela=platform-capability&from={1}",
+          "params": ["hostId", "platform"]
+        }
+      },
+      "gitRepo",
+      {
+        "key": "apiTags",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=tag&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiStatus",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=api_status&host={0}",
+          "params": ["hostId"]
         }
       }
     ]
