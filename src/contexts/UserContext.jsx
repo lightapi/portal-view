@@ -21,15 +21,17 @@ function userReducer(state, action) {
 }
 
 function UserProvider({ children }) {
-  // console.log("UserProvider is called...");
   const cookies = new Cookies();
   const userId = cookies.get('userId');
   const refreshToken = cookies.get('refreshToken');
   const host = cookies.get('host');
   const email = cookies.get('email');
+  const eid = cookies.get('eid');
+  console.log("userId = ", userId, "refreshToken = ", refreshToken, "host = ", host, "email = ", email, "eid = ", eid);
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
+    eid: eid,
     host: host,
     email: email,
     roles: cookies.get('roles')
@@ -42,9 +44,9 @@ function UserProvider({ children }) {
     const cmd = {
       host: 'lightapi.net',
       service: 'user',
-      action: 'getNonceByEmail',
+      action: 'getNonceByUserId',
       version: '0.1.0',
-      data: { email: 'fake' }
+      data: { userId: 'fake' }
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
