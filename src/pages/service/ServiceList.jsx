@@ -23,12 +23,6 @@ const useRowStyles = makeStyles({
 function Row(props) {
     const { row, navigate, email, roles, host } = props;
     const classes = useRowStyles();
-    
-    const fields = row.split("|");
-    const serviceId = fields[0];
-    const serviceSytle = fields[1];
-    const name = fields[2];
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState();
 
@@ -107,21 +101,21 @@ function Row(props) {
 
     return (
         <TableRow className={classes.root}>
-          <TableCell align="left">{apiId}</TableCell>
-          <TableCell align="left">{serviceId}</TableCell>
-          <TableCell align="left">{apiName}</TableCell>
-          <TableCell align="left">{apiType}</TableCell>
-          <TableCell align="left">{apiDesc}</TableCell>
-          <TableCell align="left">{operationOwner}</TableCell>
-          <TableCell align="left">{deliveryOwner}</TableCell>
-          <TableCell align="left">{region}</TableCell>
-          <TableCell align="left">{businessGroup}</TableCell>
-          <TableCell align="left">{lob}</TableCell>
-          <TableCell align="left">{platform}</TableCell>
-          <TableCell align="left">{capability}</TableCell>
-          <TableCell align="left">{gitRepo}</TableCell>
-          <TableCell align="left">{apiTags}</TableCell>
-          <TableCell align="left">{apiStatus}</TableCell>
+          <TableCell align="left">{row.apiId}</TableCell>
+          <TableCell align="left">{row.serviceId}</TableCell>
+          <TableCell align="left">{row.apiName}</TableCell>
+          <TableCell align="left">{row.apiType}</TableCell>
+          <TableCell align="left">{row.apiDesc}</TableCell>
+          <TableCell align="left">{row.operationOwner}</TableCell>
+          <TableCell align="left">{row.deliveryOwner}</TableCell>
+          <TableCell align="left">{row.region}</TableCell>
+          <TableCell align="left">{row.businessGroup}</TableCell>
+          <TableCell align="left">{row.lob}</TableCell>
+          <TableCell align="left">{row.platform}</TableCell>
+          <TableCell align="left">{row.capability}</TableCell>
+          <TableCell align="left">{row.gitRepo}</TableCell>
+          <TableCell align="left">{row.apiTags}</TableCell>
+          <TableCell align="left">{row.apiStatus}</TableCell>
           <TableCell align="right">
               <SystemUpdateIcon onClick={() => handleUpdate(serviceId)} />
           </TableCell>
