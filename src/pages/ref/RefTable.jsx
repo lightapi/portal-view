@@ -15,12 +15,6 @@ import useDebounce from '../../hooks/useDebounce';
 import useStyles from './styles';
 import TableList from './TableList';
 
-const getPaginatedData = (data, page, rowsPerPage) => {
-    const startIndex = page * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return data.slice(startIndex, endIndex);
-}
-
 export default function RefTable(props) {
     const classes = useStyles();
     const [tableName, setTableName] = useState('');
@@ -180,7 +174,7 @@ export default function RefTable(props) {
                         </TableRow>
                         </TableHead>
 
-                        <TableList {...props} tables={getPaginatedData(tables, page, rowsPerPage)} />
+                        <TableList {...props} tables={tables} />
 
                     </Table>
                 </TableContainer>
