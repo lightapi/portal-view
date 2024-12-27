@@ -14,6 +14,8 @@ import useStyles from './styles';
 
 export default function Dashboard(props) {
   var classes = useStyles();
+  /*
+  // can not remember why we need to query user profile here
   const { email } = useUserState();
   const userDispatch = useUserDispatch();
   const cmd = {
@@ -65,7 +67,7 @@ export default function Dashboard(props) {
       abortController.abort();
     };
   }, []);
-
+  */
   return (
     <>
       <Box className={classes.mainHeader}>

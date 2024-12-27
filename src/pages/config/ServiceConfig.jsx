@@ -12,6 +12,8 @@ import useStyles from './styles';
 
 export default function ServiceConfig(props) {
   var classes = useStyles();
+  /*
+  // can not remember why we need to query user profile here
   const { email } = useUserState();
   const userDispatch = useUserDispatch();
   const cmd = {
@@ -65,7 +67,7 @@ export default function ServiceConfig(props) {
   }, []);
 
   console.log('In Dashboard.js 000 classes.mainHeader: ', classes.mainHeader);
-
+  */
   const columns = [
     // { field: 'id', headerName: 'ID', width: 90 },
     {
