@@ -9,9 +9,9 @@ function userReducer(state, action) {
   console.log("action = ", action);
   switch (action.type) {
     case "LOGIN_SUCCESS":
-      return { ...state, isAuthenticated: action.isAuthenticated, email: action.email, roles: action.roles, host: action.host };
+      return { ...state, isAuthenticated: action.isAuthenticated, email: action.email, userId: action.userId, eid: action.eid, roles: action.roles, host: action.host };
     case "SIGN_OUT_SUCCESS":
-      return { ...state, isAuthenticated: false, email: null, userId: null, roles: null, host: null };
+      return { ...state, isAuthenticated: false, email: null, userId: null, eid: null, roles: null, host: null };
     case "UPDATE_PROFILE":
       return { ...state, userId: action.userId, host: action.host }
     default: {
@@ -27,14 +27,15 @@ function UserProvider({ children }) {
   const host = cookies.get('host');
   const email = cookies.get('email');
   const eid = cookies.get('eid');
-  console.log("userId = ", userId, "refreshToken = ", refreshToken, "host = ", host, "email = ", email, "eid = ", eid);
+  const roles = cookies.get('roles');
+  console.log("userId = ", userId, "refreshToken = ", refreshToken, "host = ", host, "email = ", email, "eid = ", eid, "roles = ", roles);
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
     eid: eid,
     host: host,
     email: email,
-    roles: cookies.get('roles')
+    roles: roles
   });
 
   if(email == null && refreshToken != null) {
