@@ -12,9 +12,9 @@ import FileUpload from "../../components/Upload/FileUpload";
 import { useUserState } from "../../contexts/UserContext";
 
 export default function OpenapiEditor(props) {
-    const serviceId = props.location.state.data.serviceId;
-    const serviceName = props.location.state.data.name;
-    const style = props.location.state.data.style;
+    console.log("props =", props);
+    const apiId = props.location.state.data.apiId;
+    const hostId = props.location.state.data.hostId;
     const [spec, setSpec] = useState('');
     const [loading, setLoading] = useState(true);
 
@@ -24,7 +24,7 @@ export default function OpenapiEditor(props) {
         service: 'market',
         action: 'getServiceById',
         version: '0.1.0',
-        data: { serviceId, host }
+        data: { hostId, apiId }
     }
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -73,7 +73,7 @@ export default function OpenapiEditor(props) {
         // console.log("submitSpec is called");
         props.history.push({
             pathname: '/app/submitSpec',
-            state: { serviceId, style, spec },
+            state: { hostId, apiId, spec },
         });
     };
 
