@@ -1,41 +1,49 @@
-import React from 'react';
-import { useApiGet } from '../../hooks/useApiGet';
-import { useUserState } from "../../contexts/UserContext";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useApiGet } from "../../hooks/useApiGet";
 import Widget from "../../components/Widget/Widget";
 import useStyles from "./styles";
 
-import CircularProgress from '@mui/material/CircularProgress';
-import Button from '@mui/material/Button';
+import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
 
-export default function ServiceDetail(props) {
-  const serviceId = props.location.state.data.serviceId;
-  const { history} = props;
+export default function ServiceDetail() {
   const classes = useStyles();
-  const { host } = useUserState();
+  const location = useLocation();
+  console.log("location =", location);
+  const navigate = useNavigate();
+  const { service } = location.state;
+  const { hostId, apiId, apiType } = service;
+  console.log(hostId, apiId, apiType);
+
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getServiceById',
-    version: '0.1.0',
-    data: { serviceId, host }
-  }
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    host: "lightapi.net",
+    service: "market",
+    action: "getServiceVersion",
+    version: "0.1.0",
+    data: { hostId, apiId },
+  };
+
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   console.log(url);
   const headers = {};
 
-  const { isLoading, data } = useApiGet({url, headers});
+  const { isLoading, data } = useApiGet({ url, headers });
 
   const uploadSpec = () => {
-      props.history.push({pathname: '/app/uploadSpec', state: { data }});
+    navigate("/app/uploadSpec", { state: { data } });
   };
 
   const listEndpoint = () => {
-    props.history.push({pathname: '/app/listEndpoint', state: { data }});
+    navigate("/app/listEndpoint", { state: { data } });
   };
 
   let wait;
-  if(isLoading) {
-    wait = <div><CircularProgress/></div>;
+  if (isLoading) {
+    wait = (
+      <div>
+        <CircularProgress />
+      </div>
+    );
   } else {
     wait = (
       <Widget
@@ -51,15 +59,12 @@ export default function ServiceDetail(props) {
           <Button variant="contained" color="primary" onClick={listEndpoint}>
             List Endpoint
           </Button>
-        </div>  
-        <pre>{ data ? JSON.stringify(data, null, 2) : 'Unauthorized' }</pre>
+        </div>
+        <pre>{service ? JSON.stringify(service, null, 2) : "Unauthorized"}</pre>
+        <pre>{data ? JSON.stringify(data, null, 2) : "Unauthorized"}</pre>
       </Widget>
-    )
+    );
   }
 
-  return (
-    <div className="App">
-      {wait}
-    </div>
-  );
+  return <div className="App">{wait}</div>;
 }
