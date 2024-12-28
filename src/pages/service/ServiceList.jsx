@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
-import makeStyles from '@mui/styles/makeStyles';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ImageAspectRatioIcon from '@mui/icons-material/ImageAspectRatio';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import InputIcon from '@mui/icons-material/Input';
-import BugReportIcon from '@mui/icons-material/BugReport';
-import Cookies from 'universal-cookie'
-import { useNavigate } from 'react-router-dom';
+import makeStyles from "@mui/styles/makeStyles";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import SettingsIcon from "@mui/icons-material/Settings";
+import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import InputIcon from "@mui/icons-material/Input";
+import BugReportIcon from "@mui/icons-material/BugReport";
+import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
@@ -25,86 +24,62 @@ function Row(props) {
   const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
 
-  const handleUpdate = (serviceId) => {
-    const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getServiceById',
-      version: '0.1.0',
-      data: { serviceId }
-    }
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-    const callback = (data) => {
-      console.log("data = ", data);
-      history.push({ pathname: '/app/form/updateService', state: { data } });
-    }
-
-    const queryServices = async (url, headers, callback) => {
-      try {
-        setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
-        if (!response.ok) {
-          const error = await response.json();
-          setError(error.description);
-        } else {
-          const data = await response.json();
-          callback(data);
-        }
-        setLoading(false);
-      } catch (e) {
-        console.log(e);
-        setError(e);
-        setLoading(false);
-      }
-    };
-    queryServices(url, headers, callback);
+  const handleUpdate = (service) => {
+    console.log("service = ", service);
+    navigate("/app/form/updateService", { state: { service } });
   };
 
-  const handleDelete = (serviceId) => {
+  const handleDelete = (hostId, apiId) => {
     if (window.confirm("Are you sure you want to delete the service?")) {
-      navigate({ pathname: '/app/deleteService', state: { data: { serviceId } } });
+      navigate("/app/deleteService", { state: { data: { hostId, apiId } } });
     }
+  };
+
+  const handleDetail = (service) => {
+    console.log("service", service);
+    navigate("/app/serviceDetail", { state: { service } });
   };
 
   const handleSpec = (hostId, apiId, apiType) => {
     switch (apiType) {
-      case 'openapi':
-        navigate({ pathname: '/app/openapiEditor', state: { data: { hostId, apiId, apiType } } });
+      case "openapi":
+        navigate("/app/openapiEditor", {
+          state: { data: { hostId, apiId, apiType } },
+        });
         break;
-      case 'hybrid':
-        navigate({ pathname: '/app/hybridEditor', state: { data: { hostId, apiId, apiType } } });
+      case "hybrid":
+        navigate("/app/hybridEditor", {
+          state: { data: { hostId, apiId, apiType } },
+        });
         break;
-      case 'graphql':
-        navigate({ pathname: '/app/graphqlEditor', state: { data: { hostId, apiId, apiType } } });
+      case "graphql":
+        navigate("/app/graphqlEditor", {
+          state: { data: { hostId, apiId, apiType } },
+        });
         break;
     }
   };
 
-  const handleEndpoint = (serviceId, style, name) => {
-    navigate({ pathname: '/app/serviceEndpoint', state: { data: { serviceId, style, name } } });
+  const handleEndpoint = (hostId, apiId) => {
+    navigate("/app/serviceEndpoint", { state: { data: { hostId, apiId } } });
   };
 
-  const handleCodegen = (serviceId, style, name) => {
-    navigate({ pathname: '/app/serviceCodegen', state: { data: { serviceId, style, name } } });
+  const handleCodegen = (hostId, apiId) => {
+    navigate("/app/serviceCodegen", { state: { data: { hostId, apiId } } });
   };
 
-  const handleDeploy = (serviceId, style, name) => {
-    navigate({ pathname: '/app/serviceDeploy', state: { data: { serviceId, style, name } } });
+  const handleDeploy = (hostId, apiId) => {
+    navigate("/app/serviceDeploy", { state: { data: { hostId, apiId } } });
   };
 
-  const handleTest = (serviceId, style, name) => {
-    navigate({ pathname: '/app/serviceTest', state: { data: { serviceId, style, name } } });
+  const handleTest = (hostId, apiId) => {
+    navigate("/app/serviceTest", { state: { data: { hostId, apiId } } });
   };
 
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.apiId}</TableCell>
-      <TableCell align="left">{row.serviceId}</TableCell>
       <TableCell align="left">{row.apiName}</TableCell>
       <TableCell align="left">{row.apiType}</TableCell>
       <TableCell align="left">{row.apiDesc}</TableCell>
@@ -119,32 +94,65 @@ function Row(props) {
       <TableCell align="left">{row.apiTags}</TableCell>
       <TableCell align="left">{row.apiStatus}</TableCell>
       <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(serviceId)} />
+        <SystemUpdateIcon onClick={() => handleDetail(row)} />
       </TableCell>
       <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(serviceId)} />
+        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
       </TableCell>
       <TableCell align="right">
-        <ImageAspectRatioIcon onClick={() => handleSpec(row.hostId, row.apiId, row.apiType)} />
+        <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <FormatListBulletedIcon onClick={() => handleEndpoint(serviceId, serviceSytle, name)} />
+        <ImageAspectRatioIcon
+          onClick={() => handleSpec(row.hostId, row.apiId, row.apiType)}
+        />
       </TableCell>
       <TableCell align="right">
-        <InputIcon onClick={() => handleCodegen(serviceId, serviceSytle, name)} />
+        <FormatListBulletedIcon
+          onClick={() => handleEndpoint(row.hostId, row.apiId)}
+        />
       </TableCell>
       <TableCell align="right">
-        <SettingsIcon onClick={() => handleDeploy(serviceId, serviceSytle, name)} />
+        <InputIcon onClick={() => handleCodegen(row.hostId, row.apiId)} />
       </TableCell>
       <TableCell align="right">
-        <BugReportIcon onClick={() => handleTest(serviceId, serviceSytle, name)} />
+        <SettingsIcon onClick={() => handleDeploy(row.hostId, row.apiId)} />
+      </TableCell>
+      <TableCell align="right">
+        <BugReportIcon onClick={() => handleTest(row.hostId, row.apiId)} />
       </TableCell>
     </TableRow>
   );
 }
 
+// Add propTypes validation for Row
+Row.propTypes = {
+  row: PropTypes.shape({
+    apiId: PropTypes.string.isRequired,
+    apiName: PropTypes.string,
+    apiType: PropTypes.string,
+    apiDesc: PropTypes.string,
+    operationOwner: PropTypes.string,
+    deliveryOwner: PropTypes.string,
+    region: PropTypes.string,
+    businessGroup: PropTypes.string,
+    lob: PropTypes.string,
+    platform: PropTypes.string,
+    capability: PropTypes.string,
+    gitRepo: PropTypes.string,
+    apiTags: PropTypes.string,
+    apiStatus: PropTypes.string,
+    hostId: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+ServiceList.propTypes = {
+  services: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
 export default function ServiceList(props) {
   const { services } = props;
+  console.log("services", services);
   return (
     <TableBody>
       {services.map((service, index) => (
@@ -153,4 +161,3 @@ export default function ServiceList(props) {
     </TableBody>
   );
 }
-
