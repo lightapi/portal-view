@@ -23,8 +23,6 @@ export default function Service(props) {
   const debouncedApiId = useDebounce(apiId, 1000);
   const [apiName, setApiName] = useState("");
   const debouncedApiName = useDebounce(apiName, 1000);
-  const [apiType, setApiType] = useState("");
-  const debouncedApiType = useDebounce(apiType, 1000);
   const [apiDesc, setApiDesc] = useState("");
   const debouncedApiDesc = useDebounce(apiDesc, 1000);
   const [operationOwner, setOperationOwner] = useState("");
@@ -57,9 +55,6 @@ export default function Service(props) {
   };
   const handleApiNameChange = (event) => {
     setApiName(event.target.value);
-  };
-  const handleApiTypeChange = (event) => {
-    setApiType(event.target.value);
   };
   const handleApiDescChange = (event) => {
     setApiDesc(event.target.value);
@@ -131,7 +126,6 @@ export default function Service(props) {
         limit: rowsPerPage,
         apiId: debouncedApiId,
         apiName: debouncedApiName,
-        apiType: debouncedApiType,
         apiDesc: debouncedApiDesc,
         operationOwner: debouncedOperationOwner,
         deliveryOwner: debouncedDeliveryOwner,
@@ -157,7 +151,6 @@ export default function Service(props) {
     host,
     debouncedApiId,
     debouncedApiName,
-    debouncedApiType,
     debouncedApiDesc,
     debouncedOperationOwner,
     debouncedDeliveryOwner,
@@ -219,14 +212,6 @@ export default function Service(props) {
                     placeholder="Api Name"
                     value={apiName}
                     onChange={handleApiNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Api Type"
-                    value={apiType}
-                    onChange={handleApiTypeChange}
                   />
                 </TableCell>
                 <TableCell align="left">

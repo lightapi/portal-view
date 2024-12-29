@@ -45,7 +45,6 @@ function Row(props) {
     <TableRow className={classes.root}>
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiName}</TableCell>
-      <TableCell align="left">{row.apiType}</TableCell>
       <TableCell align="left">{row.apiDesc}</TableCell>
       <TableCell align="left">{row.operationOwner}</TableCell>
       <TableCell align="left">{row.deliveryOwner}</TableCell>
@@ -75,7 +74,6 @@ Row.propTypes = {
   row: PropTypes.shape({
     apiId: PropTypes.string.isRequired,
     apiName: PropTypes.string,
-    apiType: PropTypes.string,
     apiDesc: PropTypes.string,
     operationOwner: PropTypes.string,
     deliveryOwner: PropTypes.string,

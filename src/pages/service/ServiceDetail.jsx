@@ -41,32 +41,24 @@ export default function ServiceDetail() {
 
   const { isLoading, data } = useApiGet({ url, headers });
 
-  const uploadSpec = () => {
-    navigate("/app/uploadSpec", { state: { data } });
-  };
-
-  const handleSpecEdit = (serviceVersion, apiType) => {
-    switch (apiType) {
+  const handleSpecEdit = (serviceVersion) => {
+    switch (serviceVersion.apiType) {
       case "openapi":
         navigate("/app/openapiEditor", {
-          state: { data: { serviceVersion, apiType } },
+          state: { data: { serviceVersion } },
         });
         break;
       case "hybrid":
         navigate("/app/hybridEditor", {
-          state: { data: { serviceVersion, apiType } },
+          state: { data: { serviceVersion } },
         });
         break;
       case "graphql":
         navigate("/app/graphqlEditor", {
-          state: { data: { serviceVersion, apiType } },
+          state: { data: { serviceVersion } },
         });
         break;
     }
-  };
-
-  const listEndpoint = () => {
-    navigate("/app/listEndpoint", { state: { data } });
   };
 
   const handleEndpoint = (hostId, apiId) => {
@@ -111,10 +103,6 @@ export default function ServiceDetail() {
                 <TableRow>
                   <TableCell>API ID</TableCell>
                   <TableCell>{service.apiId}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>API Type</TableCell>
-                  <TableCell>{service.apiType}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>Service ID</TableCell>
@@ -179,10 +167,10 @@ export default function ServiceDetail() {
                 <TableCell align="left">Host Id</TableCell>
                 <TableCell align="left">Api Id</TableCell>
                 <TableCell align="left">Api Version</TableCell>
+                <TableCell align="left">Api Type</TableCell>
                 <TableCell align="left">Service Id</TableCell>
                 <TableCell align="left">Api Version Desc</TableCell>
                 <TableCell align="left">Spec Link</TableCell>
-                <TableCell align="left">Spec Upload</TableCell>
                 <TableCell align="left">Spec Edit</TableCell>
                 <TableCell align="right">Endpoint</TableCell>
                 <TableCell align="right">Codegen</TableCell>
@@ -197,13 +185,13 @@ export default function ServiceDetail() {
                     <TableCell align="left">{row.hostId}</TableCell>
                     <TableCell align="left">{row.apiId}</TableCell>
                     <TableCell align="left">{row.apiVersion}</TableCell>
+                    <TableCell align="left">{row.apiType}</TableCell>
                     <TableCell align="left">{row.serviceId}</TableCell>
                     <TableCell align="left">{row.apiVersionDesc}</TableCell>
                     <TableCell align="left">{row.specLink}</TableCell>
-                    <TableCell align="left">Spec Upload</TableCell>
                     <TableCell align="right">
                       <ImageAspectRatioIcon
-                        onClick={() => handleSpecEdit(row, service.apiType)}
+                        onClick={() => handleSpecEdit(row)}
                       />
                     </TableCell>
                     <TableCell align="right">

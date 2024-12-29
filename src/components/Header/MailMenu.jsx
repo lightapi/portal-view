@@ -2,17 +2,17 @@ import {
   Build as ManageIcon,
   MailOutline as MailIcon,
   Send as SendIcon,
-} from '@mui/icons-material';
-import { Fab, IconButton, Menu, MenuItem } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
-import classNames from 'classnames';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import { useInterval } from '../../hooks/useInterval';
-import { timeConversion } from '../../utils';
-import UserAvatar from '../UserAvatar/UserAvatar';
-import { Badge, Typography } from '../Wrappers/Wrappers';
+} from "@mui/icons-material";
+import { Fab, IconButton, Menu, MenuItem } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import classNames from "classnames";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import { useInterval } from "../../hooks/useInterval";
+import { timeConversion } from "../../utils";
+import UserAvatar from "../UserAvatar/UserAvatar";
+import { Badge, Typography } from "../Wrappers/Wrappers";
 
 export default function MailMenu(props) {
   var [mailMenu, setMailMenu] = useState(null);
@@ -24,19 +24,19 @@ export default function MailMenu(props) {
 
   //console.log("csrf = ", csrf);
   const cmd = {
-    host: 'lightapi.net',
-    service: 'user',
-    action: 'getPrivateMessage',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "user",
+    action: "getPrivateMessage",
+    version: "0.1.0",
     data: { email },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
   const queryMessageFn = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       //console.log(response);
       if (!response.ok) {
         const error = await response.json();
@@ -56,25 +56,25 @@ export default function MailMenu(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     queryMessageFn(url, headers);
   }, []);
 
   useInterval(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     queryMessageFn(url, headers);
-  }, 60000);
+  }, 600000);
 
   const sendMessage = () => {
-    console.log('sendMessage is callled');
-    props.history.push('/app/form/privateMessage');
+    console.log("sendMessage is callled");
+    props.history.push("/app/form/privateMessage");
   };
 
   const manageMessages = () => {
-    console.log('manageMessages is callled');
+    console.log("manageMessages is callled");
     props.history.push({
-      pathname: '/app/messages',
+      pathname: "/app/messages",
       state: { data: messages },
     });
   };
@@ -103,7 +103,8 @@ export default function MailMenu(props) {
             setIsMailsUnread(false);
           }}
           className={classes.headerMenuButton}
-          size="large">
+          size="large"
+        >
           <Badge
             badgeContent={isMailsUnread ? messages.length : null}
             color="secondary"
@@ -144,7 +145,7 @@ export default function MailMenu(props) {
               <div
                 className={classNames(
                   classes.messageNotificationSide,
-                  classes.messageNotificationBodySide
+                  classes.messageNotificationBodySide,
                 )}
               >
                 <Typography weight="medium" gutterBottom>

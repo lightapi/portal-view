@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Button from "@mui/material/Button";
 import CodeMirror from "@uiw/react-codemirror";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { githubLight } from "@uiw/codemirror-theme-github";
 import YAML from "yaml";
 import SwaggerUI from "swagger-ui-react";
 import "swagger-ui-react/swagger-ui.css";
+import { useApiPost } from "../../hooks/useApiPost";
 import FileUpload from "../../components/Upload/FileUpload";
 
 export default function OpenapiEditor() {
@@ -16,6 +17,7 @@ export default function OpenapiEditor() {
   const { serviceVersion } = data;
   console.log(serviceVersion);
   const [spec, setSpec] = useState(serviceVersion.spec);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onChange = (spec) => {
     setSpec(spec);
@@ -31,13 +33,35 @@ export default function OpenapiEditor() {
     });
   };
 
-  const submitSpec = () => {
-    // console.log("submitSpec is called");
-    navigate("/app/submitSpec", { state: { serviceVersion, spec } });
+  const submitSpec = useCallback(() => {
+    setIsSubmitting(true);
+  }, []);
+
+  const body = {
+    host: "lightapi.net",
+    service: "market",
+    action: "updateServiceSpec",
+    version: "0.1.0",
+    data: { ...serviceVersion, spec },
   };
+  console.log("body = ", body);
+
+  const url = "/portal/command";
+  const headers = {};
+  const { data: apiData } = useApiPost({
+    url,
+    headers,
+    body,
+    skip: !isSubmitting,
+  });
+
+  useEffect(() => {
+    if (apiData) {
+      navigate("/app/service/register");
+    }
+  }, [apiData, navigate]);
 
   let wait;
-  console.log(spec);
   wait = (
     <div>
       {serviceVersion.apiId} - {serviceVersion.apiName} -{" "}
