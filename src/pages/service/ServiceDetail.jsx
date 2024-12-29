@@ -101,14 +101,6 @@ export default function ServiceDetail() {
           bodyClass={classes.fullHeightBody}
           className={classes.card}
         >
-          <div className={classes.button}>
-            <Button variant="contained" color="primary" onClick={uploadSpec}>
-              Upload Spec
-            </Button>
-            <Button variant="contained" color="primary" onClick={listEndpoint}>
-              List Endpoint
-            </Button>
-          </div>
           <TableContainer component={Paper}>
             <Table>
               <TableBody>
