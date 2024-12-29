@@ -41,42 +41,6 @@ function Row(props) {
     navigate("/app/serviceDetail", { state: { service } });
   };
 
-  const handleSpec = (hostId, apiId, apiType) => {
-    switch (apiType) {
-      case "openapi":
-        navigate("/app/openapiEditor", {
-          state: { data: { hostId, apiId, apiType } },
-        });
-        break;
-      case "hybrid":
-        navigate("/app/hybridEditor", {
-          state: { data: { hostId, apiId, apiType } },
-        });
-        break;
-      case "graphql":
-        navigate("/app/graphqlEditor", {
-          state: { data: { hostId, apiId, apiType } },
-        });
-        break;
-    }
-  };
-
-  const handleEndpoint = (hostId, apiId) => {
-    navigate("/app/serviceEndpoint", { state: { data: { hostId, apiId } } });
-  };
-
-  const handleCodegen = (hostId, apiId) => {
-    navigate("/app/serviceCodegen", { state: { data: { hostId, apiId } } });
-  };
-
-  const handleDeploy = (hostId, apiId) => {
-    navigate("/app/serviceDeploy", { state: { data: { hostId, apiId } } });
-  };
-
-  const handleTest = (hostId, apiId) => {
-    navigate("/app/serviceTest", { state: { data: { hostId, apiId } } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.apiId}</TableCell>
@@ -101,25 +65,6 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <ImageAspectRatioIcon
-          onClick={() => handleSpec(row.hostId, row.apiId, row.apiType)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <FormatListBulletedIcon
-          onClick={() => handleEndpoint(row.hostId, row.apiId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <InputIcon onClick={() => handleCodegen(row.hostId, row.apiId)} />
-      </TableCell>
-      <TableCell align="right">
-        <SettingsIcon onClick={() => handleDeploy(row.hostId, row.apiId)} />
-      </TableCell>
-      <TableCell align="right">
-        <BugReportIcon onClick={() => handleTest(row.hostId, row.apiId)} />
       </TableCell>
     </TableRow>
   );

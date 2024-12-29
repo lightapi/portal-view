@@ -18,7 +18,7 @@ import useStyles from "./styles";
 export default function Service(props) {
   const classes = useStyles();
   const navigate = useNavigate();
-  const { email, host } = useUserState();
+  const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [apiId, setApiId] = useState("");
@@ -154,6 +154,8 @@ export default function Service(props) {
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     fetchData(url, headers);
   }, [
+    url,
+    fetchData,
     page,
     rowsPerPage,
     debouncedApiId,
@@ -320,11 +322,6 @@ export default function Service(props) {
                 <TableCell align="right">Detail</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Spec</TableCell>
-                <TableCell align="right">Endpoint</TableCell>
-                <TableCell align="right">Codegen</TableCell>
-                <TableCell align="right">Deploy</TableCell>
-                <TableCell align="right">Test</TableCell>
               </TableRow>
             </TableHead>
             <ServiceList {...props} services={services} />

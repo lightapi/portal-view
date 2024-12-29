@@ -1,4 +1,16 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import Table from "@mui/material/Table";
+import TableHead from "@mui/material/TableHead";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import InputIcon from "@mui/icons-material/Input";
+import SettingsIcon from "@mui/icons-material/Settings";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import { useApiGet } from "../../hooks/useApiGet";
 import Widget from "../../components/Widget/Widget";
 import useStyles from "./styles";
@@ -33,8 +45,44 @@ export default function ServiceDetail() {
     navigate("/app/uploadSpec", { state: { data } });
   };
 
+  const handleSpecEdit = (serviceVersion, apiType) => {
+    switch (apiType) {
+      case "openapi":
+        navigate("/app/openapiEditor", {
+          state: { data: { serviceVersion, apiType } },
+        });
+        break;
+      case "hybrid":
+        navigate("/app/hybridEditor", {
+          state: { data: { serviceVersion, apiType } },
+        });
+        break;
+      case "graphql":
+        navigate("/app/graphqlEditor", {
+          state: { data: { serviceVersion, apiType } },
+        });
+        break;
+    }
+  };
+
   const listEndpoint = () => {
     navigate("/app/listEndpoint", { state: { data } });
+  };
+
+  const handleEndpoint = (hostId, apiId) => {
+    navigate("/app/serviceEndpoint", { state: { data: { hostId, apiId } } });
+  };
+
+  const handleCodegen = (hostId, apiId) => {
+    navigate("/app/serviceCodegen", { state: { data: { hostId, apiId } } });
+  };
+
+  const handleDeploy = (hostId, apiId) => {
+    navigate("/app/serviceDeploy", { state: { data: { hostId, apiId } } });
+  };
+
+  const handleTest = (hostId, apiId) => {
+    navigate("/app/serviceTest", { state: { data: { hostId, apiId } } });
   };
 
   let wait;
@@ -46,23 +94,152 @@ export default function ServiceDetail() {
     );
   } else {
     wait = (
-      <Widget
-        title="Service Detail"
-        upperTitle
-        bodyClass={classes.fullHeightBody}
-        className={classes.card}
-      >
-        <div className={classes.button}>
-          <Button variant="contained" color="primary" onClick={uploadSpec}>
-            Upload Spec
-          </Button>
-          <Button variant="contained" color="primary" onClick={listEndpoint}>
-            List Endpoint
-          </Button>
-        </div>
-        <pre>{service ? JSON.stringify(service, null, 2) : "Unauthorized"}</pre>
-        <pre>{data ? JSON.stringify(data, null, 2) : "Unauthorized"}</pre>
-      </Widget>
+      <div>
+        <Widget
+          title="Service Detail"
+          upperTitle
+          bodyClass={classes.fullHeightBody}
+          className={classes.card}
+        >
+          <div className={classes.button}>
+            <Button variant="contained" color="primary" onClick={uploadSpec}>
+              Upload Spec
+            </Button>
+            <Button variant="contained" color="primary" onClick={listEndpoint}>
+              List Endpoint
+            </Button>
+          </div>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Host ID</TableCell>
+                  <TableCell>{service.hostId}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API ID</TableCell>
+                  <TableCell>{service.apiId}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API Type</TableCell>
+                  <TableCell>{service.apiType}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Service ID</TableCell>
+                  <TableCell>{service.serviceId}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API Name</TableCell>
+                  <TableCell>{service.apiName}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API Description</TableCell>
+                  <TableCell>{service.apiDesc}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Operation Owner</TableCell>
+                  <TableCell>{service.operationOwner}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Delivery Owner</TableCell>
+                  <TableCell>{service.deliveryOwner}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Region</TableCell>
+                  <TableCell>{service.region}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Business Group</TableCell>
+                  <TableCell>{service.businessGroup}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>LOB</TableCell>
+                  <TableCell>{service.lob}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Platform</TableCell>
+                  <TableCell>{service.platform}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Capability</TableCell>
+                  <TableCell>{service.capability}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Git Repo</TableCell>
+                  <TableCell>{service.gitRepo}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API Tags</TableCell>
+                  <TableCell>{service.apiTags}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>API Status</TableCell>
+                  <TableCell>{service.apiStatus}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Widget>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell align="left">Host Id</TableCell>
+                <TableCell align="left">Api Id</TableCell>
+                <TableCell align="left">Api Version</TableCell>
+                <TableCell align="left">Service Id</TableCell>
+                <TableCell align="left">Api Version Desc</TableCell>
+                <TableCell align="left">Spec Link</TableCell>
+                <TableCell align="left">Spec Upload</TableCell>
+                <TableCell align="left">Spec Edit</TableCell>
+                <TableCell align="right">Endpoint</TableCell>
+                <TableCell align="right">Codegen</TableCell>
+                <TableCell align="right">Deploy</TableCell>
+                <TableCell align="right">Test</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data &&
+                data.map((row, index) => (
+                  <TableRow key={index}>
+                    <TableCell align="left">{row.hostId}</TableCell>
+                    <TableCell align="left">{row.apiId}</TableCell>
+                    <TableCell align="left">{row.apiVersion}</TableCell>
+                    <TableCell align="left">{row.serviceId}</TableCell>
+                    <TableCell align="left">{row.apiVersionDesc}</TableCell>
+                    <TableCell align="left">{row.specLink}</TableCell>
+                    <TableCell align="left">Spec Upload</TableCell>
+                    <TableCell align="right">
+                      <ImageAspectRatioIcon
+                        onClick={() => handleSpecEdit(row, service.apiType)}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <FormatListBulletedIcon
+                        onClick={() => handleEndpoint(row.hostId, row.apiId)}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <InputIcon
+                        onClick={() => handleCodegen(row.hostId, row.apiId)}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <SettingsIcon
+                        onClick={() => handleDeploy(row.hostId, row.apiId)}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <BugReportIcon
+                        onClick={() => handleTest(row.hostId, row.apiId)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
     );
   }
 
