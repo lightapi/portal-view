@@ -1,26 +1,30 @@
-import CircularProgress from '@mui/material/CircularProgress';
-import React from 'react';
-import { useApiPost } from '../../hooks/useApiPost';
-import { useUserState } from '../../contexts/UserContext';
+import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useApiPost } from "../../hooks/useApiPost";
 
-export default function SubmitSpec(props) {
-  console.log(props.location.state);
-  const serviceId = props.location.state.serviceId;
-  const style = props.location.state.style;
-  const spec = props.location.state.spec;
-  const { host } = useUserState();
+export default function SubmitSpec() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { serviceVersion } = location.state;
+  console.log("serviceVersion", serviceVersion);
 
   const body = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'updateServiceSpec',
-    version: '0.1.0',
-    data: { host, serviceId, style, spec },
+    host: "lightapi.net",
+    service: "market",
+    action: "updateServiceSpec",
+    version: "0.1.0",
+    data: { ...serviceVersion },
   };
-  const url = '/portal/command';
+  const url = "/portal/command";
   const headers = {};
   const { isLoading, data, error } = useApiPost({ url, headers, body });
   console.log(isLoading, data, error);
+
+  const onBackToService = () => {
+    navigate("/app/service/register");
+  };
+
   let wait;
   if (isLoading) {
     wait = (
@@ -31,7 +35,15 @@ export default function SubmitSpec(props) {
   } else {
     wait = (
       <div>
-        <pre>{data ? JSON.stringify(data, null, 2) : 'Unauthorized'}</pre>
+        <pre>{data ? JSON.stringify(data, null, 2) : "Unauthorized"}</pre>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onBackToService}
+          disabled={isLoading}
+        >
+          BACK TO SERVICE
+        </Button>
       </div>
     );
   }

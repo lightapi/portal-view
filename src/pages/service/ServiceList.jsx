@@ -4,11 +4,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import SettingsIcon from "@mui/icons-material/Settings";
-import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
-import InputIcon from "@mui/icons-material/Input";
-import BugReportIcon from "@mui/icons-material/BugReport";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 

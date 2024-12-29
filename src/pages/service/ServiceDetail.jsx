@@ -16,7 +16,6 @@ import Widget from "../../components/Widget/Widget";
 import useStyles from "./styles";
 
 import CircularProgress from "@mui/material/CircularProgress";
-import Button from "@mui/material/Button";
 
 export default function ServiceDetail() {
   const classes = useStyles();
