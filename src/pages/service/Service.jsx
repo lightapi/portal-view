@@ -7,16 +7,14 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import ServiceList from "./ServiceList";
-import useStyles from "./styles";
 
 export default function Service(props) {
-  const classes = useStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
@@ -97,38 +95,10 @@ export default function Service(props) {
     setApiStatus(event.target.value);
   };
 
-  const cmd = {
-    host: "lightapi.net",
-    service: "market",
-    action: "getService",
-    version: "0.1.0",
-    data: {
-      hostId: host,
-      offset: page * rowsPerPage,
-      limit: rowsPerPage,
-      apiId: debouncedApiId,
-      apiName: debouncedApiName,
-      apiType: debouncedApiType,
-      apiDesc: debouncedApiDesc,
-      operationOwner: debouncedOperationOwner,
-      deliveryOwner: debouncedDeliveryOwner,
-      region: debouncedRegion,
-      businessGroup: debouncedBusinessGroup,
-      lob: debouncedLob,
-      platform: debouncedPlatform,
-      capability: debouncedCapability,
-      gitRepo: debouncedGitRepo,
-      apiTags: debouncedApiTags,
-      apiStatus: debouncedApiStatus,
-    },
-  };
-  console.log("cmd = ", cmd);
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const headers = {};
-  const fetchData = async (url, headers) => {
+  const fetchData = useCallback(async (url, headers) => {
+    // Wrap fetchData with useCallback
     try {
       setLoading(true);
-      console.log("fetch data from API with cmd = ", cmd);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
@@ -147,17 +117,44 @@ export default function Service(props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty dependency array for useCallback
 
   useEffect(() => {
+    const cmd = {
+      host: "lightapi.net",
+      service: "market",
+      action: "getService",
+      version: "0.1.0",
+      data: {
+        hostId: host,
+        offset: page * rowsPerPage,
+        limit: rowsPerPage,
+        apiId: debouncedApiId,
+        apiName: debouncedApiName,
+        apiType: debouncedApiType,
+        apiDesc: debouncedApiDesc,
+        operationOwner: debouncedOperationOwner,
+        deliveryOwner: debouncedDeliveryOwner,
+        region: debouncedRegion,
+        businessGroup: debouncedBusinessGroup,
+        lob: debouncedLob,
+        platform: debouncedPlatform,
+        capability: debouncedCapability,
+        gitRepo: debouncedGitRepo,
+        apiTags: debouncedApiTags,
+        apiStatus: debouncedApiStatus,
+      },
+    };
+
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+
     fetchData(url, headers);
   }, [
-    url,
-    fetchData,
     page,
     rowsPerPage,
+    host,
     debouncedApiId,
     debouncedApiName,
     debouncedApiType,
@@ -172,6 +169,7 @@ export default function Service(props) {
     debouncedGitRepo,
     debouncedApiTags,
     debouncedApiStatus,
+    fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
   const handleChangePage = (event, newPage) => {
