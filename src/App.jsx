@@ -133,8 +133,8 @@ const App = () => {
           <Route path="merchantOrders" element={<MerchantOrders />} />
           <Route path="userOrders" element={<UserOrders />} />
           <Route path="publishApi" element={<PublishApi />} />
-          <Route path="service/:style" element={<Service />} />
-          <Route path="service" element={<Service />} />
+          <Route path="service/:apiType" element={<Service />} />
+          <Route path="service/admin" element={<Service />} />
           <Route path="deleteService" element={<ServiceDelete />} />
           <Route path="serviceDetail" element={<ServiceDetail />} />
           <Route path="openapiEditor" element={<OpenapiEditor />} />
@@ -172,7 +172,7 @@ const App = () => {
           <Route path="schema/deleteSchema" element={<SchemaDelete />} />
           <Route path="schema/schemaList" element={<SchemaList />} />
           <Route path="schema/:host/:id" element={<SchemaItem />} />
-          <Route path="rule/adminList" element={<RuleAdmin />} />
+          <Route path="rule/admin" element={<RuleAdmin />} />
           <Route path="rule/deleteRule" element={<RuleDelete />} />
           <Route path="rule/ruleList" element={<RuleList />} />
           <Route path="rule/:host/:id" element={<RuleItem />} />
