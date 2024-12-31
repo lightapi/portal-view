@@ -81,6 +81,10 @@ RuleList.propTypes = {
   rules: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
+RuleList.defaultProps = {
+  rules: [], // Default empty array to prevent errors during startup Router check.
+};
+
 export default function RuleList(props) {
   const { rules } = props;
   console.log("rules", rules);

@@ -163,21 +163,21 @@ export default function Service(props) {
     navigate("/app/form/createRule");
   };
 
-  let wait;
+  let content;
   if (loading) {
-    wait = (
+    content = (
       <div>
         <CircularProgress />
       </div>
     );
   } else if (error) {
-    wait = (
+    content = (
       <div>
         <pre>{JSON.stringify(error, null, 2)}</pre>
       </div>
     );
-  } else {
-    wait = (
+  } else if (rules.length > 0) {
+    content = (
       <div>
         <TableContainer component={Paper}>
           <Table aria-label="collapsible table">
@@ -275,7 +275,13 @@ export default function Service(props) {
         <AddBoxIcon onClick={() => handleCreate()} />
       </div>
     );
+  } else {
+    content = (
+      <div>
+        <pre>No data found</pre>
+      </div>
+    );
   }
 
-  return <div className="App">{wait}</div>;
+  return <div className="App">{content}</div>;
 }
