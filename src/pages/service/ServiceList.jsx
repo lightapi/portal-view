@@ -4,6 +4,7 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import DetailsIcon from "@mui/icons-material/Details";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -52,7 +53,7 @@ function Row(props) {
       <TableCell align="left">{row.apiTags}</TableCell>
       <TableCell align="left">{row.apiStatus}</TableCell>
       <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleDetail(row)} />
+        <DetailsIcon onClick={() => handleDetail(row)} />
       </TableCell>
       <TableCell align="right">
         <SystemUpdateIcon onClick={() => handleUpdate(row)} />
