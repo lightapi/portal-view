@@ -4154,65 +4154,231 @@
       "title": "Create Rule",
       "type": "object",
       "properties": {
-        "host": {
-          "title": "Host",
-          "type": "string"
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
         },
         "ruleId": {
           "title": "Rule Id",
           "type": "string"
         },
+        "ruleName": {
+          "title": "Rule Name",
+          "type": "string"
+        },
+        "ruleVersion": {
+          "title": "Rule Version",
+          "type": "string"
+        },
         "ruleType": {
-          "type": "string",
-          "description": "Rule Type"
+          "title": "Rule Type",
+          "type": "string"
         },
-        "groupId": {
-          "type": "string",
-          "description": "Group Id"
+        "ruleGroup": {
+          "title": "Rule Group",
+          "type": "string"
         },
-        "visibility": {
-          "type": "string",
-          "enum": ["public", "private"],
-          "description": "Visibility, only public can be shared and subscribed by other hosts"
+        "ruleDesc": {
+          "title": "Rule Desc",
+          "type": "string"
         },
-        "desc": {
-          "type": "string",
-          "description": "Description"
+        "ruleOwner": {
+          "title": "Rule Owner",
+          "type": "string"
         },
-        "value": {
+        "common": {
+          "title": "Common",
           "type": "string",
-          "description": "Rule Body"
+          "enum": ["Y", "N"]
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "conditionId": {
+                "type": "string"
+              },
+              "conditionDesc": {
+                "type": "string"
+              },
+              "propertyPath": {
+                "type": "string"
+              },
+              "operatorCode": {
+                "type": "string",
+                "enum": [
+                  "equals",
+                  "on",
+                  "before",
+                  "after",
+                  "lengthEquals",
+                  "greaterThanOrEqual",
+                  "lessThanOrEqual",
+                  "isNotNull",
+                  "isNull",
+                  "contains",
+                  "match",
+                  "notMatch",
+                  "isEmpty",
+                  "isNotEmpty",
+                  "isBlank",
+                  "isNotBlank",
+                  "lengthGreaterThan",
+                  "lengthLessThan",
+                  "inList",
+                  "greaterThan",
+                  "containsIgnoreCase",
+                  "startsWith"
+                ]
+              },
+              "index": {
+                "type": "integer"
+              },
+              "conditionValues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "conditionValueId": {
+                      "type": "string"
+                    },
+                    "conditionValue": {
+                      "type": "string"
+                    },
+                    "expression": {
+                      "type": "boolean"
+                    },
+                    "valueTypeCode": {
+                      "type": "string",
+                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                    },
+                    "dateFormat": {
+                      "type": "string"
+                    },
+                    "regexFlags": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["conditionValue"]
+                }
+              }
+            },
+            "required": ["conditionId", "propertyPath", "operatorCode", "index"]
+          }
+        },
+        "conditionExpression": {
+          "type": "string",
+          "title": "Condition Expression"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string"
+              },
+              "actionDesc": {
+                "type": "string"
+              },
+              "actionClassName": {
+                "type": "string"
+              },
+              "conditionResult": {
+                "type": "boolean"
+              },
+              "actionValues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actionValueId": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "valueTypeCode": {
+                      "type": "string",
+                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                    }
+                  },
+                  "required": ["actionValueId", "value"]
+                }
+              }
+            },
+            "required": ["actionId", "actionClassName"]
+          }
         }
       },
-      "required": ["host", "ruleId", "ruleType", "visibility", "desc", "value"]
+      "required": [
+        "hostId",
+        "ruleId",
+        "ruleName",
+        "ruleVersion",
+        "ruleType",
+        "ruleOwner",
+        "common",
+        "conditions"
+      ]
     },
     "form": [
-      {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=host"
-        }
-      },
+      "hostId",
       "ruleId",
+      "ruleName",
+      "ruleVersion",
       {
         "key": "ruleType",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=rule-type&rela=hostrtype&from={0}",
-          "params": ["host"]
+          "url": "/r/data?name=rule_type&host={0}",
+          "params": ["hostId"]
         }
       },
-      "groupId",
-      "visibility",
-      "desc",
+      "ruleGroup",
+      "ruleDesc",
+      "ruleOwner",
+      "common",
       {
-        "key": "value",
-        "type": "textarea",
-        "placeholder": "YAML Rule Definition",
-        "rows": 10
+        "key": "conditions",
+        "items": [
+          "conditions[].conditionId",
+          "conditions[].conditionDesc",
+          "conditions[].propertyPath",
+          "conditions[].operatorCode",
+          "conditions[].index",
+          {
+            "key": "conditions[].conditionValues",
+            "items": [
+              "conditions[].conditionValues[].conditionValueId",
+              "conditions[].conditionValues[].conditionValue",
+              "conditions[].conditionValues[].expression",
+              "conditions[].conditionValues[].valueTypeCode",
+              "conditions[].conditionValues[].dateFormat",
+              "conditions[].conditionValues[].regexFlags"
+            ]
+          }
+        ]
+      },
+      "conditionExpression",
+      {
+        "key": "actions",
+        "items": [
+          "actions[].actionId",
+          "actions[].actionDesc",
+          "actions[].actionClassName",
+          "actions[].conditionResult",
+          {
+            "key": "actions[].actionValues",
+            "items": [
+              "actions[].actionValues[].actionValueId",
+              "actions[].actionValues[].value",
+              "actions[].actionValues[].valueTypeCode"
+            ]
+          }
+        ]
       }
     ]
   },
@@ -4233,8 +4399,8 @@
       "title": "Update Rule",
       "type": "object",
       "properties": {
-        "host": {
-          "title": "Host",
+        "hostId": {
+          "title": "Host Id",
           "type": "string",
           "readonly": true
         },
@@ -4243,57 +4409,223 @@
           "type": "string",
           "readonly": true
         },
+        "ruleName": {
+          "title": "Rule Name",
+          "type": "string"
+        },
+        "ruleVersion": {
+          "title": "Rule Version",
+          "type": "string"
+        },
         "ruleType": {
           "type": "string",
-          "description": "Rule Type"
+          "title": "Rule Type"
         },
-        "groupId": {
+        "ruleGroup": {
           "type": "string",
-          "description": "Group Id"
+          "title": "Rule Group"
         },
-        "visibility": {
+        "ruleDesc": {
           "type": "string",
-          "enum": ["public", "private"],
-          "description": "Visibility, only public can be shared and subscribed by other hosts"
+          "title": "Rule Desc"
         },
-        "desc": {
+        "ruleOwner": {
           "type": "string",
-          "description": "Description"
+          "title": "Rule Owner"
         },
-        "value": {
+        "common": {
           "type": "string",
-          "description": "Rule Body"
+          "enum": ["Y", "N"],
+          "title": "Common"
         },
-        "owner": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "conditionId": {
+                "type": "string"
+              },
+              "conditionDesc": {
+                "type": "string"
+              },
+              "propertyPath": {
+                "type": "string"
+              },
+              "operatorCode": {
+                "type": "string",
+                "enum": [
+                  "equals",
+                  "on",
+                  "before",
+                  "after",
+                  "lengthEquals",
+                  "greaterThanOrEqual",
+                  "lessThanOrEqual",
+                  "isNotNull",
+                  "isNull",
+                  "contains",
+                  "match",
+                  "notMatch",
+                  "isEmpty",
+                  "isNotEmpty",
+                  "isBlank",
+                  "isNotBlank",
+                  "lengthGreaterThan",
+                  "lengthLessThan",
+                  "inList",
+                  "greaterThan",
+                  "containsIgnoreCase",
+                  "startsWith"
+                ]
+              },
+              "index": {
+                "type": "integer"
+              },
+              "conditionValues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "conditionValueId": {
+                      "type": "string"
+                    },
+                    "conditionValue": {
+                      "type": "string"
+                    },
+                    "expression": {
+                      "type": "boolean"
+                    },
+                    "valueTypeCode": {
+                      "type": "string",
+                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                    },
+                    "dateFormat": {
+                      "type": "string"
+                    },
+                    "regexFlags": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["conditionValue"]
+                }
+              }
+            },
+            "required": ["conditionId", "propertyPath", "operatorCode", "index"]
+          }
+        },
+        "conditionExpression": {
           "type": "string",
-          "description": "Rule Owner",
-          "readonly": true
+          "title": "Condition Expression"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "actionId": {
+                "type": "string"
+              },
+              "actionDesc": {
+                "type": "string"
+              },
+              "actionClassName": {
+                "type": "string"
+              },
+              "conditionResult": {
+                "type": "boolean"
+              },
+              "actionValues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "actionValueId": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "valueTypeCode": {
+                      "type": "string",
+                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                    }
+                  },
+                  "required": ["actionValueId", "value"]
+                }
+              }
+            },
+            "required": ["actionId", "actionClassName"]
+          }
         }
       },
-      "required": ["host", "ruleId", "ruleType", "visibility", "desc", "value"]
+      "required": [
+        "hostId",
+        "ruleId",
+        "ruleName",
+        "ruleVersion",
+        "ruleType",
+        "ruleOwner",
+        "common",
+        "conditions"
+      ]
     },
     "form": [
-      "host",
+      "hostId",
       "ruleId",
+      "ruleName",
+      "ruleVersion",
       {
         "key": "ruleType",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=rule-type&rela=hostrtype&from={0}",
-          "params": ["host"]
+          "url": "/r/data?name=rule_type&host={0}",
+          "params": ["hostId"]
         }
       },
-      "groupId",
-      "visibility",
-      "desc",
+      "ruleGroup",
+      "ruleDesc",
+      "ruleOwner",
+      "common",
       {
-        "key": "value",
-        "type": "textarea",
-        "placeholder": "YAML Rule Definition",
-        "rows": 10
+        "key": "conditions",
+        "items": [
+          "conditions[].conditionId",
+          "conditions[].conditionDesc",
+          "conditions[].propertyPath",
+          "conditions[].operatorCode",
+          "conditions[].index",
+          {
+            "key": "conditions[].conditionValues",
+            "items": [
+              "conditions[].conditionValues[].conditionValueId",
+              "conditions[].conditionValues[].conditionValue",
+              "conditions[].conditionValues[].expression",
+              "conditions[].conditionValues[].valueTypeCode",
+              "conditions[].conditionValues[].dateFormat",
+              "conditions[].conditionValues[].regexFlags"
+            ]
+          }
+        ]
       },
-      "owner"
+      "conditionExpression",
+      {
+        "key": "actions",
+        "items": [
+          "actions[].actionId",
+          "actions[].actionDesc",
+          "actions[].actionClassName",
+          "actions[].conditionResult",
+          {
+            "key": "actions[].actionValues",
+            "items": [
+              "actions[].actionValues[].actionValueId",
+              "actions[].actionValues[].value",
+              "actions[].actionValues[].valueTypeCode"
+            ]
+          }
+        ]
+      }
     ]
   },
   "deleteRule": {
@@ -4313,8 +4645,8 @@
       "title": "Delete Rule",
       "type": "object",
       "properties": {
-        "host": {
-          "title": "Host",
+        "hostId": {
+          "title": "Host Id",
           "type": "string"
         },
         "ruleId": {
@@ -4322,9 +4654,9 @@
           "type": "string"
         }
       },
-      "required": ["host", "ruleId"]
+      "required": ["hostId", "ruleId"]
     },
-    "form": ["host", "ruleId"]
+    "form": ["hostId", "ruleId"]
   },
   "createCategory": {
     "formId": "createCategory",
@@ -4811,7 +5143,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=project&host={0}&cap={1}",
-          "params": ["host","cap"]
+          "params": ["host", "cap"]
         }
       },
       {
@@ -4821,7 +5153,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=projver&host={0}&cap={1}&project={2}",
-          "params": ["host","cap","project"]
+          "params": ["host", "cap", "project"]
         }
       },
       {
@@ -4831,7 +5163,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=scope&host={0}&cap={1}&project={2}&projver={3}",
-          "params": ["host","cap","project","projver"]
+          "params": ["host", "cap", "project", "projver"]
         }
       }
     ]
@@ -4919,7 +5251,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=project&host={0}&cap={1}",
-          "params": ["host","cap"]
+          "params": ["host", "cap"]
         }
       },
       {
@@ -4929,7 +5261,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=projver&host={0}&cap={1}&project={2}",
-          "params": ["host","cap","project"]
+          "params": ["host", "cap", "project"]
         }
       },
       {
@@ -4939,7 +5271,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=scope&host={0}&cap={1}&project={2}&projver={3}",
-          "params": ["host","cap","project","projver"]
+          "params": ["host", "cap", "project", "projver"]
         }
       },
       "key",
@@ -5067,10 +5399,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap"
-      ]
+      "required": ["host", "cap"]
     },
     "form": [
       {
@@ -5167,13 +5496,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "project",
-        "key",
-        "value"
-      ]
+      "required": ["host", "cap", "project", "key", "value"]
     },
     "form": [
       {
@@ -5247,7 +5570,7 @@
         "filterOption": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=key&host={0}&cap={1}",
-          "params": ["host","cap"]
+          "params": ["host", "cap"]
         }
       },
       "value"
@@ -5305,12 +5628,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "key",
-        "value"
-      ]
+      "required": ["host", "cap", "key", "value"]
     },
     "form": [
       "host",
@@ -5355,10 +5673,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap"
-      ]
+      "required": ["host", "cap"]
     },
     "form": [
       {
@@ -5446,11 +5761,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "filename"
-      ]
+      "required": ["host", "cap", "filename"]
     },
     "form": [
       {
@@ -5533,10 +5844,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap"
-      ]
+      "required": ["host", "cap"]
     },
     "form": [
       {
@@ -5625,11 +5933,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "filename"
-      ]
+      "required": ["host", "cap", "filename"]
     },
     "form": [
       {
@@ -5724,10 +6028,7 @@
           "type": "string"
         }
       },
-      "required": [
-        "host",
-        "cap"
-      ]
+      "required": ["host", "cap"]
     },
     "form": [
       {
@@ -5773,7 +6074,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/service/ref?name=service&project={0}&projver={1}",
-          "params": ["project","projver"]
+          "params": ["project", "projver"]
         }
       },
       {
@@ -5783,7 +6084,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/service/ref?name=servver&project={0}&projver={1}&service={2}",
-          "params": ["project","projver","service"]
+          "params": ["project", "projver", "service"]
         }
       },
       {
@@ -5793,7 +6094,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/service/ref?name=env&project={0}&projver={1}&service={2}&servver={3}",
-          "params": ["project","projver","service","servver"]
+          "params": ["project", "projver", "service", "servver"]
         }
       }
     ]
@@ -5894,7 +6195,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/service/ref?name=env&project={0}&projver={1}",
-          "params": ["project","projver"]
+          "params": ["project", "projver"]
         }
       }
     ]
@@ -5966,7 +6267,7 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/service/ref?name=env&project={0}&projver={1}",
-          "params": ["project","projver"]
+          "params": ["project", "projver"]
         }
       }
     ]
@@ -6056,7 +6357,7 @@
         "filterOption": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=key&host={0}&cap={1}",
-          "params": ["host","cap"]
+          "params": ["host", "cap"]
         }
       },
       "value"
@@ -6112,7 +6413,7 @@
         },
         "value": {
           "type": "string"
-        }     
+        }
       },
       "required": [
         "host",
@@ -6486,12 +6787,7 @@
           "title": "End Time"
         }
       },
-      "required": [
-        "protocol",
-        "address",
-        "port",
-        "loggerLevel"
-      ]
+      "required": ["protocol", "address", "port", "loggerLevel"]
     },
     "form": [
       "protocol",

@@ -13,8 +13,19 @@ import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import ServiceList from "./ServiceList";
+import { makeStyles } from "@mui/styles";
+
+const useRowStyles = makeStyles({
+  root: {
+    "& > *": {
+      borderBottom: "unset",
+    },
+  },
+});
 
 export default function Service(props) {
+  const classes = useRowStyles();
+
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
@@ -197,7 +208,7 @@ export default function Service(props) {
         <TableContainer component={Paper}>
           <Table aria-label="collapsible table">
             <TableHead>
-              <TableRow>
+              <TableRow className={classes.root}>
                 <TableCell align="left">
                   <input
                     type="text"

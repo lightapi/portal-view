@@ -1,6 +1,5 @@
 import { makeStyles } from "@mui/styles";
-
-export default makeStyles(theme => ({
+const useStyles = makeStyles((theme) => ({
   card: {
     minHeight: "100%",
     display: "flex",
@@ -23,7 +22,7 @@ export default makeStyles(theme => ({
     justifyContent: "space-between",
   },
   button: {
-    '& > *': {
+    "& > *": {
       margin: theme.spacing(1),
     },
   },
@@ -106,7 +105,7 @@ export default makeStyles(theme => ({
     flexDirection: "column",
     position: "relative",
   },
-  
+
   title: {
     maxHeight: "none",
     lineHeight: 1.4,
@@ -122,5 +121,6 @@ export default makeStyles(theme => ({
   content: {
     margin: "18px 0 0",
   },
-            
 }));
+
+export default useStyles;
