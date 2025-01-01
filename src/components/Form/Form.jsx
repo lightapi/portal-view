@@ -1,18 +1,18 @@
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import { makeStyles } from '@mui/styles';
-import React, { useEffect, useState } from 'react';
-import { SchemaForm, utils } from 'react-schema-form';
-import Cookies from 'universal-cookie';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import forms from '../../data/Forms';
-import { useUserState } from '../../contexts/UserContext';
-import Typography from '@mui/material/Typography'; // Import Typography for better text rendering
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import { makeStyles } from "@mui/styles";
+import { useEffect, useState } from "react";
+import { SchemaForm, utils } from "react-schema-form";
+import Cookies from "universal-cookie";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import forms from "../../data/Forms";
+import { useUserState } from "../../contexts/UserContext";
+import Typography from "@mui/material/Typography"; // Import Typography for better text rendering
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: "flex",
+    flexWrap: "wrap",
   },
   formControl: {
     margin: theme.spacing(1),
@@ -28,9 +28,9 @@ const useStyles = makeStyles((theme) => ({
     margin: theme.spacing(1),
   },
   errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     marginTop: theme.spacing(4),
   },
   errorMessage: {
@@ -58,7 +58,7 @@ function Form() {
     setSchema(formData.schema);
     setForm(formData.form);
     setActions(formData.actions);
-    console.log('host = ', host);
+    console.log("host = ", host);
 
     // must ensure that the model is an empty object to the cascade dropdown
     const initialModel = location.state
@@ -75,19 +75,19 @@ function Form() {
   };
 
   function onButtonClick(action) {
-    console.log('onButtonClick is called', action);
+    console.log("onButtonClick is called", action);
     let validationResult = utils.validateBySchema(schema, model);
     console.log(validationResult);
     if (!validationResult.valid) {
       setShowErrors(true);
     } else {
-      console.log('model = ', model);
+      console.log("model = ", model);
       // submit the form to the portal service.
       action.data = model;
       // use the path defined in the action, default to /portal/command.
-      const url = action.path ? action.path : '/portal/command';
+      const url = action.path ? action.path : "/portal/command";
       const headers = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       submitForm(url, headers, action);
     }
@@ -97,26 +97,23 @@ function Form() {
     setFetching(true);
     try {
       const cookies = new Cookies();
-      Object.assign(headers, { 'X-CSRF-TOKEN': cookies.get('csrf') });
+      Object.assign(headers, { "X-CSRF-TOKEN": cookies.get("csrf") });
       const response = await fetch(url, {
-        method: action.method ? action.method : 'POST',
+        method: action.method ? action.method : "POST",
         body: action.rest
           ? JSON.stringify(action.data)
           : JSON.stringify(action),
         headers,
-        credentials: 'include',
+        credentials: "include",
       });
       // we have tried out best to response json from our APIs; however, some services return text instead like light-oauth2.
       const s = await response.text();
-      console.log('submit error', s);
+      console.log("submit error", s);
       const data = JSON.parse(s);
       setFetching(false);
       if (!response.ok) {
         // code is not OK.
-        navigate(
-          action.failure,
-          { state: { error: data } }
-        );
+        navigate(action.failure, { state: { error: data } });
       } else {
         navigate(action.success, { state: { data } });
       }
@@ -154,10 +151,10 @@ function Form() {
           className={classes.button}
           color="primary"
           key={index}
-          onClick={(e) => onButtonClick(item)}
+          onClick={() => onButtonClick(item)}
         >
           {item.title}
-        </Button>
+        </Button>,
       );
       return buttons;
     });

@@ -1,5 +1,6 @@
 import { CircularProgress } from "@mui/material";
 import { useApiGet } from "../../hooks/useApiGet";
+import { apiPost } from "../../api/apiPost";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Table,
@@ -11,6 +12,7 @@ import {
   TableContainer,
 } from "@mui/material";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
 import useStyles from "./styles";
 
@@ -33,6 +35,33 @@ export default function ListRule() {
   const headers = {};
 
   const { isLoading, data } = useApiGet({ url, headers });
+
+  const handleDelete = async (row) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete the rule for the endpoint?",
+      )
+    ) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "market",
+        action: "deleteEndpointRule",
+        version: "0.1.0",
+        data: row,
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        console.log("delete rule successfully", data);
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
+    }
+  };
 
   const handleAddRule = () => {
     navigate("/app/form/createEndpointRule", {
@@ -60,7 +89,7 @@ export default function ListRule() {
                 <TableCell align="left">Endpoint</TableCell>
                 <TableCell align="left">Rule Type</TableCell>
                 <TableCell align="left">Rule Id</TableCell>
-                <TableCell align="left">Rule Name</TableCell>
+                <TableCell align="right">Delete</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -73,7 +102,9 @@ export default function ListRule() {
                     <TableCell align="left">{row.endpoint}</TableCell>
                     <TableCell align="left">{row.ruleType}</TableCell>
                     <TableCell align="left">{row.ruleId}</TableCell>
-                    <TableCell align="left">{row.ruleName}</TableCell>
+                    <TableCell align="right">
+                      <DeleteForeverIcon onClick={() => handleDelete(row)} />
+                    </TableCell>
                   </TableRow>
                 ))}
             </TableBody>
