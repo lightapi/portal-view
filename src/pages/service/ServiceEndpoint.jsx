@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import makeStyles from "@mui/styles/makeStyles";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -10,8 +10,8 @@ import Paper from "@mui/material/Paper";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import AccessibleForwardIcon from "@mui/icons-material/AccessibleForward";
 import CircularProgress from "@mui/material/CircularProgress";
+import PropTypes from "prop-types";
 import { useApiGet } from "../../hooks/useApiGet";
-import { useUserState } from "../../contexts/UserContext";
 import useStyles from "./styles";
 
 const useRowStyles = makeStyles({
@@ -23,128 +23,115 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const { row, history, host, serviceId, endpoint, endpointRules } = props;
-  console.log(row, endpointRules);
+  const navigate = useNavigate();
+  Row.propTypes = {
+    row: PropTypes.shape({
+      hostId: PropTypes.string.isRequired,
+      apiId: PropTypes.string.isRequired,
+      apiVersion: PropTypes.string.isRequired,
+      endpoint: PropTypes.string.isRequired,
+      httpMethod: PropTypes.string.isRequired,
+      endpointPath: PropTypes.string.isRequired,
+      endpointDesc: PropTypes.string.isRequired,
+    }).isRequired,
+  };
+  const { row } = props;
+  console.log(row);
   const classes = useRowStyles();
 
-  let accesses = null;
-  let filters = null;
-  if (endpointRules) {
-    let endpointRule = endpointRules[endpoint];
-    if (endpointRule) {
-      accesses = endpointRule["request-access"];
-      filters = endpointRule["response-filter"];
-    }
-  }
-
-  let scopes = row.scopes ? JSON.stringify(row.scopes, null, 2) : "N/A";
-  let access = accesses ? JSON.stringify(accesses, null, 2) : "N/A";
-  let filter = filters ? JSON.stringify(filters, null, 2) : "N/A";
-
-  const updateAccess = () => {
-    history.push({
-      pathname: "/app/form/updateServiceAccess",
+  const listScopes = () => {
+    navigate("/app/listScope", {
       state: {
-        data: {
-          host,
-          serviceId,
-          endpoint,
-          access: row.access ? access : null,
-          accesses,
-        },
+        hostId: row.hostId,
+        apiId: row.apiId,
+        apiVersion: row.apiVersion,
+        endpoint: row.endpoint,
       },
     });
   };
-  const updateFilter = () => {
-    history.push({
-      pathname: "/app/form/updateServiceFilter",
+  const listRules = () => {
+    navigate("/app/listRule", {
       state: {
-        data: {
-          host,
-          serviceId,
-          endpoint,
-          filter: row.filter ? filter : null,
-          filters,
-        },
+        hostId: row.hostId,
+        apiId: row.apiId,
+        apiVersion: row.apiVersion,
+        endpoint: row.endpoint,
       },
     });
   };
 
   return (
     <TableRow className={classes.root}>
-      <TableCell align="left">{serviceId}</TableCell>
-      <TableCell align="left">{endpoint}</TableCell>
-      <TableCell align="left">{host}</TableCell>
-      <TableCell align="left">{scopes}</TableCell>
-      <TableCell align="left">{access}</TableCell>
-      <TableCell align="left">{filter}</TableCell>
+      <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
+      <TableCell align="left">{row.httpMethod}</TableCell>
+      <TableCell align="left">{row.endpointPath}</TableCell>
+      <TableCell align="left">{row.endpointDesc}</TableCell>
       <TableCell align="right">
-        <AccessibleForwardIcon onClick={() => updateAccess(serviceId)} />
+        <AccessibleForwardIcon onClick={() => listScopes(row)} />
       </TableCell>
       <TableCell align="right">
-        <FilterListIcon onClick={() => updateFilter(serviceId)} />
+        <FilterListIcon onClick={() => listRules(row)} />
       </TableCell>
     </TableRow>
   );
 }
 
-export default function ServiceEndpoint(props) {
-  const serviceId = props.location.state.data.serviceId;
-  const { history } = props;
+export default function ServiceEndpoint() {
   const classes = useStyles();
-  const { host } = useUserState();
+  const location = useLocation();
+  const { hostId, apiId, apiVersion } = location.state.data;
+
   const cmd = {
     host: "lightapi.net",
     service: "market",
-    action: "getServiceById",
+    action: "getServiceEndpoint",
     version: "0.1.0",
-    data: { serviceId, host },
+    data: { hostId, apiId, apiVersion },
   };
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
   const { isLoading, data } = useApiGet({ url, headers });
 
-  let wait;
+  let content;
   if (isLoading) {
-    wait = (
+    content = (
       <div>
         <CircularProgress />
       </div>
     );
   } else {
-    let endpoints = data.endpoints;
-    wait = (
+    content = (
       <TableContainer component={Paper}>
         <Table aria-label="collapsible table">
           <TableHead>
-            <TableRow>
-              <TableCell align="left">Service Id</TableCell>
+            <TableRow className={classes.root}>
+              <TableCell align="left">Host Id</TableCell>
+              <TableCell align="left">Api Id</TableCell>
+              <TableCell align="left">Api Version</TableCell>
               <TableCell align="left">Endpoint</TableCell>
-              <TableCell align="left">Host</TableCell>
-              <TableCell align="left">Scopes</TableCell>
-              <TableCell align="left">Access</TableCell>
-              <TableCell align="left">Filter</TableCell>
-              <TableCell align="right">Update Access</TableCell>
-              <TableCell align="right">Update Filter</TableCell>
+              <TableCell align="left">HTTP Method</TableCell>
+              <TableCell align="left">Endpoint Path</TableCell>
+              <TableCell align="left">Endpoint Desc</TableCell>
+              <TableCell align="right">Scopes</TableCell>
+              <TableCell align="right">Rules</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {Object.keys(endpoints).map((key) => (
-              <Row
-                history={props.history}
-                host={host}
-                serviceId={serviceId}
-                endpoint={key}
-                key={key}
-                row={endpoints[key]}
-                endpointRules={data.endpointRules}
-              />
-            ))}
+            {data &&
+              data.map((row) => (
+                <Row
+                  key={row.hostId + row.apiId + row.apiVersion + row.endpoint}
+                  row={row}
+                />
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  return <div className="App">{content}</div>;
 }

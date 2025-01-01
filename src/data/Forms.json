@@ -2039,6 +2039,85 @@
       }
     ]
   },
+  "createEndpointRule": {
+    "formId": "createEndpointRule",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createEndpointRule",
+        "version": "0.1.0",
+        "title": "Create Endpoint Rule",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "apiId",
+        "apiVersion",
+        "endpoint",
+        "ruleType",
+        "ruleId"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string",
+          "readonly": true
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string",
+          "readonly": true
+        },
+        "ruleType": {
+          "title": "Rule Type",
+          "type": "string"
+        },
+        "ruleId": {
+          "title": "Rule Id",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "apiId",
+      "apiVersion",
+      "endpoint",
+      {
+        "key": "ruleType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=rule_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "ruleId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRuleByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22ruleType%22%3A%22{1}%22%7D%7D%0A%0A",
+          "params": ["hostId", "ruleType"]
+        }
+      }
+    ]
+  },
   "updateServiceAccess": {
     "formId": "updateServiceAccess",
     "actions": [

@@ -60,8 +60,10 @@ export default function ServiceDetail() {
     }
   };
 
-  const handleEndpoint = (hostId, apiId) => {
-    navigate("/app/serviceEndpoint", { state: { data: { hostId, apiId } } });
+  const handleEndpoint = (hostId, apiId, apiVersion) => {
+    navigate("/app/serviceEndpoint", {
+      state: { data: { hostId, apiId, apiVersion } },
+    });
   };
 
   const handleCodegen = (hostId, apiId) => {
@@ -195,7 +197,9 @@ export default function ServiceDetail() {
                     </TableCell>
                     <TableCell align="right">
                       <FormatListBulletedIcon
-                        onClick={() => handleEndpoint(row.hostId, row.apiId)}
+                        onClick={() =>
+                          handleEndpoint(row.hostId, row.apiId, row.apiVersion)
+                        }
                       />
                     </TableCell>
                     <TableCell align="right">

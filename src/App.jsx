@@ -25,6 +25,8 @@ import HybridEditor from "./pages/service/HybridEditor";
 import GraphqlEditor from "./pages/service/GraphqlEditor";
 import SubmitSpec from "./pages/service/SubmitSpec";
 import ServiceEndpoint from "./pages/service/ServiceEndpoint";
+import ListScope from "./pages/service/ListScope";
+import ListRule from "./pages/service/ListRule";
 import Client from "./pages/oauth/Client";
 import RefreshToken from "./pages/oauth/RefreshToken";
 import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
@@ -138,6 +140,8 @@ const App = () => {
           <Route path="graphqlEditor" element={<GraphqlEditor />} />
           <Route path="submitSpec" element={<SubmitSpec />} />
           <Route path="serviceEndpoint" element={<ServiceEndpoint />} />
+          <Route path="listScope" element={<ListScope />} />
+          <Route path="listRule" element={<ListRule />} />
           <Route path="client" element={<Client />} />
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
