@@ -57,6 +57,8 @@ export default function ListRule() {
       });
       if (result.data) {
         console.log("delete rule successfully", data);
+        // Refresh the data after successful deletion
+        window.location.reload();
       } else if (result.error) {
         console.error("Api Error", result.error);
       }
