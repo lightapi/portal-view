@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { makeStyles } from "@mui/styles";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useUserState } from "../../contexts/UserContext";
-import Ruleist from "./RuleList";
+import RuleList from "./RuleList";
 
 const useRowStyles = makeStyles({
   root: {
@@ -260,7 +260,7 @@ export default function Service(props) {
                 <TableCell align="right">Delete</TableCell>
               </TableRow>
             </TableHead>
-            <Ruleist {...props} rules={rules} />
+            <RuleList {...props} rules={rules} />
           </Table>
         </TableContainer>
         <TablePagination
