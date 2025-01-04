@@ -2293,6 +2293,502 @@
       }
     ]
   },
+  "createRole": {
+    "formId": "createRole",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createRole",
+        "version": "0.1.0",
+        "title": "Create Role",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "roleId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleId": {
+          "title": "Role Id",
+          "type": "string"
+        },
+        "roleDesc": {
+          "title": "Role Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "roleId",
+      {
+        "key": "roleDesc",
+        "type": "textarea",
+        "placeholder": "Role Description",
+        "rows": 5
+      }
+    ]
+  },
+  "updateRole": {
+    "formId": "updateRole",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateRole",
+        "version": "0.1.0",
+        "title": "Update Role",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "roleId", "roleDesc"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleId": {
+          "title": "Role Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleDesc": {
+          "title": "Role Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "roleId",
+      {
+        "key": "roleDesc",
+        "type": "textarea",
+        "placeholder": "Role Description",
+        "rows": 5
+      }
+    ]
+  },
+
+  "createGroup": {
+    "formId": "createGroup",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createGroup",
+        "version": "0.1.0",
+        "title": "Create Group",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "groupId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupId": {
+          "title": "Group Id",
+          "type": "string"
+        },
+        "groupDesc": {
+          "title": "Group Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "groupId",
+      {
+        "key": "groupDesc",
+        "type": "textarea",
+        "placeholder": "Group Description",
+        "rows": 5
+      }
+    ]
+  },
+  "updateGroup": {
+    "formId": "updateGroup",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateGroup",
+        "version": "0.1.0",
+        "title": "Update Group",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "groupId", "groupDesc"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupId": {
+          "title": "Group Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupDesc": {
+          "title": "Group Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "groupId",
+      {
+        "key": "groupDesc",
+        "type": "textarea",
+        "placeholder": "Group Description",
+        "rows": 5
+      }
+    ]
+  },
+  "createAttribute": {
+    "formId": "createAttribute",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createAttribute",
+        "version": "0.1.0",
+        "title": "Create Attribute",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "attributeId", "attributeType"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeId": {
+          "title": "Attribute Id",
+          "type": "string"
+        },
+        "attributeType": {
+          "title": "Attribute Type",
+          "type": "string"
+        },
+        "attributeDesc": {
+          "title": "Attribute Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "attributeId",
+      {
+        "key": "attributeType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "string",
+            "label": "String"
+          },
+          {
+            "id": "integer",
+            "label": "Integer"
+          },
+          {
+            "id": "float",
+            "label": "Float"
+          },
+          {
+            "id": "boolean",
+            "label": "Boolean"
+          },
+          {
+            "id": "list",
+            "label": "List"
+          },
+          {
+            "id": "date",
+            "label": "Date"
+          }
+        ]
+      },
+      {
+        "key": "attributeDesc",
+        "type": "textarea",
+        "placeholder": "Attribute Description",
+        "rows": 5
+      }
+    ]
+  },
+  "updateAttribute": {
+    "formId": "updateAttribute",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateAttribute",
+        "version": "0.1.0",
+        "title": "Update Attribute",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "attributeId", "attributeType", "attributeDesc"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeId": {
+          "title": "Attribute Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeType": {
+          "title": "Attribute Type",
+          "type": "string"
+        },
+        "attributeDesc": {
+          "title": "Attribute Desc",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "attributeId",
+      {
+        "key": "attributeType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "string",
+            "label": "String"
+          },
+          {
+            "id": "integer",
+            "label": "Integer"
+          },
+          {
+            "id": "float",
+            "label": "Float"
+          },
+          {
+            "id": "boolean",
+            "label": "Boolean"
+          },
+          {
+            "id": "list",
+            "label": "List"
+          },
+          {
+            "id": "date",
+            "label": "Date"
+          }
+        ]
+      },
+      {
+        "key": "attributeDesc",
+        "type": "textarea",
+        "placeholder": "Attribute Description",
+        "rows": 5
+      }
+    ]
+  },
+  "createPosition": {
+    "formId": "createPosition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createPosition",
+        "version": "0.1.0",
+        "title": "Create Position",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "positionId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "positionDesc": {
+          "title": "Position Desc",
+          "type": "string"
+        },
+        "inheritToAncestor": {
+          "title": "Inherit To Ancestor",
+          "type": "string"
+        },
+        "inheritToSibling": {
+          "title": "Inherit To Sibling",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "positionId",
+      {
+        "key": "positionDesc",
+        "type": "textarea",
+        "placeholder": "Position Description",
+        "rows": 5
+      },
+      {
+        "key": "inheritToAncestor",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]
+      },
+      {
+        "key": "inheritToSibling",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]
+      }
+    ]
+  },
+  "updatePosition": {
+    "formId": "updatePosition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updatePosition",
+        "version": "0.1.0",
+        "title": "Update Position",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "positionId", "positionDesc"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionDesc": {
+          "title": "Position Desc",
+          "type": "string"
+        },
+        "inheritToAncestor": {
+          "title": "Inherit To Ancestor",
+          "type": "string"
+        },
+        "inheritToSibling": {
+          "title": "Inherit To Sibling",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "positionId",
+      {
+        "key": "positionDesc",
+        "type": "textarea",
+        "placeholder": "Position Description",
+        "rows": 5
+      },
+      {
+        "key": "inheritToAncestor",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]
+      },
+      {
+        "key": "inheritToSibling",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]
+      }
+    ]
+  },
+
   "token": {
     "schema": {
       "type": "object",
