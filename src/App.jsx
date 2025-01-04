@@ -103,6 +103,14 @@ import LoggerConfig from "./pages/controller/LoggerConfig";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import HostDashboard from "./pages/host/HostDashboard";
+import RoleAdmin from "./pages/access/RoleAdmin";
+import RoleList from "./pages/access/RoleList";
+import GroupAdmin from "./pages/access/GroupAdmin";
+import GroupList from "./pages/access/GroupList";
+import AttributeAdmin from "./pages/access/AttributeAdmin";
+import AttributeList from "./pages/access/AttributeList";
+import PositionAdmin from "./pages/access/PositionAdmin";
+import PositionList from "./pages/access/PositionList";
 
 const App = () => {
   return (
@@ -142,6 +150,14 @@ const App = () => {
           <Route path="serviceEndpoint" element={<ServiceEndpoint />} />
           <Route path="listScope" element={<ListScope />} />
           <Route path="listRule" element={<ListRule />} />
+          <Route path="access/roleAdmin" element={<RoleAdmin />} />
+          <Route path="access/roleList" element={<RoleList />} />
+          <Route path="access/groupAdmin" element={<GroupAdmin />} />
+          <Route path="access/groupList" element={<GroupList />} />
+          <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
+          <Route path="access/attributeList" element={<AttributeList />} />
+          <Route path="access/positionAdmin" element={<PositionAdmin />} />
+          <Route path="access/positionList" element={<PositionList />} />
           <Route path="client" element={<Client />} />
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />

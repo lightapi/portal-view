@@ -180,6 +180,19 @@ const structure = [
     ],
   },
   {
+    id: 116,
+    label: "Access Admin",
+    role: "admin",
+    link: "/app/access/admin",
+    icon: <LibraryIcon />,
+    children: [
+      { label: "Role", link: "/app/access/roleAdmin" },
+      { label: "Position", link: "/app/access/positionAdmin" },
+      { label: "Group", link: "/app/access/groupAdmin" },
+      { label: "Attribute", link: "/app/access/attributeAdmin" },
+    ],
+  },
+  {
     id: 118,
     label: "Service Admin",
     role: "admin",

@@ -4434,7 +4434,25 @@
               "conditions[].conditionValues[].conditionValueId",
               "conditions[].conditionValues[].conditionValue",
               "conditions[].conditionValues[].expression",
-              "conditions[].conditionValues[].valueTypeCode",
+              {
+                "key": "conditions[].conditionValues[].valueTypeCode",
+                "type": "dynaselect",
+                "multiple": false,
+                "options": [
+                  {
+                    "id": "STRING",
+                    "label": "String"
+                  },
+                  {
+                    "id": "INTEGER",
+                    "label": "Integer"
+                  },
+                  {
+                    "id": "BOOLEAN",
+                    "label": "Boolean"
+                  }
+                ]
+              },
               "conditions[].conditionValues[].dateFormat",
               "conditions[].conditionValues[].regexFlags"
             ]
