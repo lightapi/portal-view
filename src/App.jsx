@@ -58,7 +58,6 @@ import SchemaList from "./pages/schema/SchemaList";
 import SchemaItem from "./pages/schema/SchemaItem";
 import RuleAdmin from "./pages/rule/RuleAdmin";
 import RuleDelete from "./pages/rule/RuleDelete";
-import RuleList from "./pages/rule/RuleList";
 import RuleItem from "./pages/rule/RuleItem";
 import CityRegistry from "./pages/covid/CityRegistry";
 import CityProfile from "./pages/covid/CityProfile";
@@ -104,13 +103,9 @@ import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import HostDashboard from "./pages/host/HostDashboard";
 import RoleAdmin from "./pages/access/RoleAdmin";
-import RoleList from "./pages/access/RoleList";
 import GroupAdmin from "./pages/access/GroupAdmin";
-import GroupList from "./pages/access/GroupList";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
-import AttributeList from "./pages/access/AttributeList";
 import PositionAdmin from "./pages/access/PositionAdmin";
-import PositionList from "./pages/access/PositionList";
 
 const App = () => {
   return (
@@ -151,13 +146,9 @@ const App = () => {
           <Route path="listScope" element={<ListScope />} />
           <Route path="listRule" element={<ListRule />} />
           <Route path="access/roleAdmin" element={<RoleAdmin />} />
-          <Route path="access/roleList" element={<RoleList />} />
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
-          <Route path="access/groupList" element={<GroupList />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
-          <Route path="access/attributeList" element={<AttributeList />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />
-          <Route path="access/positionList" element={<PositionList />} />
           <Route path="client" element={<Client />} />
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
@@ -190,7 +181,6 @@ const App = () => {
           <Route path="schema/:host/:id" element={<SchemaItem />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
           <Route path="rule/deleteRule" element={<RuleDelete />} />
-          <Route path="rule/ruleList" element={<RuleList />} />
           <Route path="rule/:host/:id" element={<RuleItem />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />

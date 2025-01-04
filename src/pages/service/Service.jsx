@@ -7,13 +7,17 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
+import TableBody from "@mui/material/TableBody"; // Import TableBody
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
-import ServiceList from "./ServiceList";
 import { makeStyles } from "@mui/styles";
+import PropTypes from "prop-types";
 
 const useRowStyles = makeStyles({
   root: {
@@ -23,9 +27,95 @@ const useRowStyles = makeStyles({
   },
 });
 
-export default function Service(props) {
+function Row(props) {
+  const navigate = useNavigate();
+  const { row } = props;
   const classes = useRowStyles();
 
+  const handleUpdate = (service) => {
+    console.log("service = ", service);
+    navigate("/app/form/updateService", { state: { service } });
+  };
+
+  const handleDelete = (hostId, apiId) => {
+    if (window.confirm("Are you sure you want to delete the service?")) {
+      navigate("/app/deleteService", { state: { data: { hostId, apiId } } });
+    }
+  };
+
+  const handleDetail = (service) => {
+    console.log("service", service);
+    navigate("/app/serviceDetail", { state: { service } });
+  };
+
+  return (
+    <TableRow className={classes.root}>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiName}</TableCell>
+      <TableCell align="left">{row.apiDesc}</TableCell>
+      <TableCell align="left">{row.operationOwner}</TableCell>
+      <TableCell align="left">{row.deliveryOwner}</TableCell>
+      <TableCell align="left">{row.region}</TableCell>
+      <TableCell align="left">{row.businessGroup}</TableCell>
+      <TableCell align="left">{row.lob}</TableCell>
+      <TableCell align="left">{row.platform}</TableCell>
+      <TableCell align="left">{row.capability}</TableCell>
+      <TableCell align="left">{row.gitRepo}</TableCell>
+      <TableCell align="left">{row.apiTags}</TableCell>
+      <TableCell align="left">{row.apiStatus}</TableCell>
+      <TableCell align="right">
+        <DetailsIcon onClick={() => handleDetail(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <DeleteForeverIcon
+          onClick={() => handleDelete(row.hostId, row.apiId)}
+        />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// Add propTypes validation for Row
+Row.propTypes = {
+  row: PropTypes.shape({
+    apiId: PropTypes.string.isRequired,
+    apiName: PropTypes.string,
+    apiDesc: PropTypes.string,
+    operationOwner: PropTypes.string,
+    deliveryOwner: PropTypes.string,
+    region: PropTypes.string,
+    businessGroup: PropTypes.string,
+    lob: PropTypes.string,
+    platform: PropTypes.string,
+    capability: PropTypes.string,
+    gitRepo: PropTypes.string,
+    apiTags: PropTypes.string,
+    apiStatus: PropTypes.string,
+    hostId: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+function ServiceList(props) {
+  const { services } = props;
+  console.log("services", services);
+  return (
+    <TableBody>
+      {services.map((service, index) => (
+        <Row key={index} row={service} />
+      ))}
+    </TableBody>
+  );
+}
+
+ServiceList.propTypes = {
+  services: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
+export default function Service() {
+  const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
@@ -318,7 +408,7 @@ export default function Service(props) {
                 <TableCell align="right">Delete</TableCell>
               </TableRow>
             </TableHead>
-            <ServiceList {...props} services={services} />
+            <ServiceList services={services} />
           </Table>
         </TableContainer>
         <TablePagination

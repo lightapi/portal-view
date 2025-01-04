@@ -7,13 +7,18 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
+import TableBody from "@mui/material/TableBody"; // Import TableBody
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
-import PositionList from "./PositionList";
 import { makeStyles } from "@mui/styles";
+import PropTypes from "prop-types";
+import { apiPost } from "../../api/apiPost";
 
 const useRowStyles = makeStyles({
   root: {
@@ -23,7 +28,104 @@ const useRowStyles = makeStyles({
   },
 });
 
-export default function PositionAdmin(props) {
+function Row(props) {
+  const navigate = useNavigate();
+  const { row } = props;
+  const classes = useRowStyles();
+
+  const handleUpdate = (position) => {
+    console.log("position = ", position);
+    navigate("/app/form/updatePosition", { state: { data: { ...position } } });
+  };
+
+  const handleDelete = async (row) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete the position for the host?",
+      )
+    ) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "market",
+        action: "deletePosition",
+        version: "0.1.0",
+        data: row,
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
+    }
+  };
+
+  const handleApiPosition = (position) => {
+    console.log("position", position);
+    navigate("/app/apiPosition", { state: { position } });
+  };
+
+  const handleUserPosition = (position) => {
+    console.log("position", position);
+    navigate("/app/userPosition", { state: { position } });
+  };
+
+  return (
+    <TableRow className={classes.root}>
+      <TableCell align="left">{row.positionId}</TableCell>
+      <TableCell align="left">{row.positionDesc}</TableCell>
+      <TableCell align="left">{row.inheritToAncestor}</TableCell>
+      <TableCell align="left">{row.inheritToSibling}</TableCell>
+      <TableCell align="right">
+        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <DeleteForeverIcon onClick={() => handleDelete(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <DetailsIcon onClick={() => handleApiPosition(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <DetailsIcon onClick={() => handleUserPosition(row)} />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+// Add propTypes validation for Row
+Row.propTypes = {
+  row: PropTypes.shape({
+    positionId: PropTypes.string.isRequired,
+    positionDesc: PropTypes.string,
+    inheritToAncestor: PropTypes.string,
+    inheritToSibling: PropTypes.string,
+    hostId: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+function PositionList(props) {
+  const { positions } = props;
+  console.log("positions", positions);
+  return (
+    <TableBody>
+      {positions.map((position, index) => (
+        <Row key={index} row={position} />
+      ))}
+    </TableBody>
+  );
+}
+
+PositionList.propTypes = {
+  positions: PropTypes.arrayOf(PropTypes.object).isRequired,
+};
+
+export default function PositionAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -184,7 +286,7 @@ export default function PositionAdmin(props) {
                 <TableCell align="right">User Position</TableCell>
               </TableRow>
             </TableHead>
-            <PositionList {...props} positions={positions} />
+            <PositionList positions={positions} />
           </Table>
         </TableContainer>
         <TablePagination
