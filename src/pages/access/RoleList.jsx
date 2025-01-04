@@ -7,6 +7,7 @@ import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DetailsIcon from "@mui/icons-material/Details";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import { apiPost } from "../../api/apiPost";
 
 const useRowStyles = makeStyles({
   root: {
@@ -23,12 +24,32 @@ function Row(props) {
 
   const handleUpdate = (role) => {
     console.log("role = ", role);
-    navigate("/app/form/updateRole", { state: { role } });
+    navigate("/app/form/updateRole", { state: { data: { ...role } } });
   };
 
-  const handleDelete = (hostId, roleId) => {
-    if (window.confirm("Are you sure you want to delete the role?")) {
-      navigate("/app/deleteRole", { state: { data: { hostId, roleId } } });
+  const handleDelete = async (row) => {
+    if (
+      window.confirm("Are you sure you want to delete the role for the host?")
+    ) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "market",
+        action: "deleteRole",
+        version: "0.1.0",
+        data: row,
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
     }
   };
 

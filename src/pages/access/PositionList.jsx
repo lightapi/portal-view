@@ -7,6 +7,7 @@ import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DetailsIcon from "@mui/icons-material/Details";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import { apiPost } from "../../api/apiPost";
 
 const useRowStyles = makeStyles({
   root: {
@@ -23,14 +24,34 @@ function Row(props) {
 
   const handleUpdate = (position) => {
     console.log("position = ", position);
-    navigate("/app/form/updatePosition", { state: { position } });
+    navigate("/app/form/updatePosition", { state: { data: { ...position } } });
   };
 
-  const handleDelete = (hostId, positionId) => {
-    if (window.confirm("Are you sure you want to delete the position?")) {
-      navigate("/app/deletePosition", {
-        state: { data: { hostId, positionId } },
+  const handleDelete = async (row) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete the position for the host?",
+      )
+    ) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "market",
+        action: "deletePosition",
+        version: "0.1.0",
+        data: row,
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
       });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
     }
   };
 
