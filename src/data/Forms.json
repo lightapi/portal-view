@@ -2380,7 +2380,172 @@
       }
     ]
   },
-
+  "createRoleUser": {
+    "formId": "createRoleUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createRoleUser",
+        "version": "0.1.0",
+        "title": "Create Role User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "roleId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleId": {
+          "title": "Role Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "roleId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "updateRoleUser": {
+    "formId": "updateRoleUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateRoleUser",
+        "version": "0.1.0",
+        "title": "Update Role User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "roleId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleId": {
+          "title": "Role Id",
+          "type": "string",
+          "readonly": true
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string",
+          "readonly": true
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string",
+          "readonly": true
+        },
+        "email": {
+          "title": "Email",
+          "type": "string",
+          "readonly": true
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "roleId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "createRolePermission": {
+    "formId": "createRolePermission",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createRolePermission",
+        "version": "0.1.0",
+        "title": "Create Role Permission",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "roleId", "apiId", "apiVersion", "endpoint"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "roleId": {
+          "title": "Role Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        }
+      }
+    },
+    "form": ["hostId", "roleId", "apiId", "apiVersion", "endpoint"]
+  },
   "createGroup": {
     "formId": "createGroup",
     "actions": [
@@ -2468,6 +2633,173 @@
       }
     ]
   },
+  "createGroupUser": {
+    "formId": "createGroupUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createGroupUser",
+        "version": "0.1.0",
+        "title": "Create Group User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "groupId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupId": {
+          "title": "Group Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "groupId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "updateGroupUser": {
+    "formId": "updateGroupUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateGroupUser",
+        "version": "0.1.0",
+        "title": "Update Group User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "groupId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupId": {
+          "title": "Group Id",
+          "type": "string",
+          "readonly": true
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string",
+          "readonly": true
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string",
+          "readonly": true
+        },
+        "email": {
+          "title": "Email",
+          "type": "string",
+          "readonly": true
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "groupId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "createGroupPermission": {
+    "formId": "createGroupPermission",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createGroupPermission",
+        "version": "0.1.0",
+        "title": "Create Group Permission",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "groupId", "apiId", "apiVersion", "endpoint"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "groupId": {
+          "title": "Group Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        }
+      }
+    },
+    "form": ["hostId", "groupId", "apiId", "apiVersion", "endpoint"]
+  },
+
   "createAttribute": {
     "formId": "createAttribute",
     "actions": [
@@ -2625,6 +2957,201 @@
       }
     ]
   },
+  "createAttributeUser": {
+    "formId": "createAttributeUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createAttributeUser",
+        "version": "0.1.0",
+        "title": "Create Attribute User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "attributeId", "attributeValue"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeId": {
+          "title": "Attribute Id",
+          "type": "string"
+        },
+        "attributeValue": {
+          "title": "Attribute Value",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "attributeId",
+      "attributeValue",
+      "userId",
+      "entityId",
+      "email",
+      "startDate",
+      "endDate"
+    ]
+  },
+  "updateAttributeUser": {
+    "formId": "updateAttributeUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updateAttributeUser",
+        "version": "0.1.0",
+        "title": "Update Attribute User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "attributeId", "attributeValue"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeId": {
+          "title": "Attribute Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeValue": {
+          "title": "Attribute Value",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string",
+          "readonly": true
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string",
+          "readonly": true
+        },
+        "email": {
+          "title": "Email",
+          "type": "string",
+          "readonly": true
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "attributeId",
+      "attributeValue",
+      "userId",
+      "entityId",
+      "email",
+      "startDate",
+      "endDate"
+    ]
+  },
+  "createAttributePermission": {
+    "formId": "createAttributePermission",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createAttributePermission",
+        "version": "0.1.0",
+        "title": "Create Attribute Permission",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "attributeId",
+        "attributeValue",
+        "apiId",
+        "apiVersion",
+        "endpoint"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "attributeId": {
+          "title": "Attribute Id",
+          "type": "string"
+        },
+        "attributeValue": {
+          "title": "Attribute Value",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "attributeId",
+      "attributeValue",
+      "apiId",
+      "apiVersion",
+      "endpoint"
+    ]
+  },
+
   "createPosition": {
     "formId": "createPosition",
     "actions": [
@@ -2787,6 +3314,172 @@
         ]
       }
     ]
+  },
+  "createPositionUser": {
+    "formId": "createPositionUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createPositionUser",
+        "version": "0.1.0",
+        "title": "Create Position User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "positionId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "positionId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "updatePositionUser": {
+    "formId": "updatePositionUser",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updatePositionUser",
+        "version": "0.1.0",
+        "title": "Update Position User",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "positionId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string",
+          "readonly": true
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string",
+          "readonly": true
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string",
+          "readonly": true
+        },
+        "email": {
+          "title": "Email",
+          "type": "string",
+          "readonly": true
+        },
+        "startTs": {
+          "title": "Start Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "positionId",
+      "userId",
+      "entityId",
+      "email",
+      "startTs",
+      "endTs"
+    ]
+  },
+  "createPositionPermission": {
+    "formId": "createPositionPermission",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createPositionPermission",
+        "version": "0.1.0",
+        "title": "Create Position Permission",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "positionId", "apiId", "apiVersion", "endpoint"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        }
+      }
+    },
+    "form": ["hostId", "positionId", "apiId", "apiVersion", "endpoint"]
   },
 
   "token": {
