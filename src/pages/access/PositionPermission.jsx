@@ -207,7 +207,6 @@ export default function PositionPermission(props) {
     rowsPerPage,
     host,
     debouncedPositionId,
-    debouncedPositionType,
     debouncedInheritToAncestor,
     debouncedInheritToSibling,
     debouncedApiId,
