@@ -106,6 +106,8 @@ import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
 import GroupAdmin from "./pages/access/GroupAdmin";
+import GroupPermission from "./pages/access/GroupPermission";
+import GroupUser from "./pages/access/GroupUser";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
 import PositionAdmin from "./pages/access/PositionAdmin";
 
@@ -151,6 +153,8 @@ const App = () => {
           <Route path="access/roleUser" element={<RoleUser />} />
           <Route path="access/rolePermission" element={<RolePermission />} />
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
+          <Route path="access/groupPermission" element={<GroupPermission />} />
+          <Route path="access/groupUser" element={<GroupUser />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />
           <Route path="client" element={<Client />} />

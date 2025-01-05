@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,22 +27,17 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (group) => {
-    navigate("/app/form/updateGroup", { state: { data: { ...group } } });
-  };
-
   const handleDelete = async (row) => {
     if (
-      window.confirm("Are you sure you want to delete the group for the host?")
+      window.confirm("Are you sure you want to delete the group for the api?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteGroup",
+        action: "deleteGroupUser",
         version: "0.1.0",
         data: row,
       };
@@ -63,31 +56,17 @@ function Row(props) {
     }
   };
 
-  const handleApiGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupPermission", { state: { group } });
-  };
-
-  const handleUserGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupUser", { state: { group } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.groupId}</TableCell>
-      <TableCell align="left">{row.groupDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.userId}</TableCell>
+      <TableCell align="left">{row.entityId}</TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.firstName}</TableCell>
+      <TableCell align="left">{row.lastName}</TableCell>
+      <TableCell align="left">{row.userType}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleApiGroup(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleUserGroup(row)} />
       </TableCell>
     </TableRow>
   );
@@ -97,21 +76,28 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     groupId: PropTypes.string.isRequired,
-    groupDesc: PropTypes.string,
+    userId: PropTypes.string,
+    entityId: PropTypes.string,
+    email: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
+    userType: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function GroupList(props) {
-  const { groups } = props;
+function GroupUserList(props) {
+  const { groupUsers } = props;
   return (
     <TableBody>
-      {groups && groups.length > 0 ? (
-        groups.map((group, index) => <Row key={index} row={group} />)
+      {groupUsers && groupUsers.length > 0 ? (
+        groupUsers.map((groupUser, index) => (
+          <Row key={index} row={groupUser} />
+        ))
       ) : (
         <TableRow>
           <TableCell colSpan={2} align="center">
-            No groups found.
+            No users assigned to this group.
           </TableCell>
         </TableRow>
       )}
@@ -119,11 +105,11 @@ function GroupList(props) {
   );
 }
 
-GroupList.propTypes = {
-  groups: PropTypes.arrayOf(PropTypes.object).isRequired,
+GroupUserList.propTypes = {
+  groupUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function GroupAdmin() {
+export default function GroupUser(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -131,18 +117,49 @@ export default function GroupAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [groupId, setGroupId] = useState("");
   const debouncedGroupId = useDebounce(groupId, 1000);
-  const [groupDesc, setGroupDesc] = useState("");
-  const debouncedGroupDesc = useDebounce(groupDesc, 1000);
+  const [userId, setUserId] = useState("");
+  const debouncedUserId = useDebounce(userId, 1000);
+  const [entityId, setEntityId] = useState("");
+  const debouncedEntityId = useDebounce(entityId, 1000);
+  const [email, setEmail] = useState("");
+  const debouncedEmail = useDebounce(email, 1000);
+  const [firstName, setFirstName] = useState("");
+  const debouncedFirstName = useDebounce(firstName, 1000);
+  const [lastName, setLastName] = useState("");
+  const debouncedLastName = useDebounce(lastName, 1000);
+  const [userType, setUserType] = useState("");
+  const debouncedUserType = useDebounce(userType, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [groups, setGroups] = useState([]);
+  const [groupUsers, setGroupUsers] = useState([]);
 
   const handleGroupIdChange = (event) => {
     setGroupId(event.target.value);
   };
-  const handleGroupDescChange = (event) => {
-    setGroupDesc(event.target.value);
+
+  const handleUserIdChange = (event) => {
+    setUserId(event.target.value);
+  };
+
+  const handleEntityIdChange = (event) => {
+    setEntityId(event.target.value);
+  };
+
+  const handleEmailChange = (event) => {
+    setEmail(event.target.value);
+  };
+
+  const handleFirstNameChange = (event) => {
+    setFirstName(event.target.value);
+  };
+
+  const handleLastNameChange = (event) => {
+    setLastName(event.target.value);
+  };
+
+  const handleUserTypeChange = (event) => {
+    setUserType(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -153,17 +170,17 @@ export default function GroupAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setGroups([]);
+        setGroupUsers([]);
       } else {
         const data = await response.json();
-        setGroups(data.groups);
+        setGroupUsers(data.groupUsers);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setGroups([]);
+      setGroupUsers([]);
     } finally {
       setLoading(false);
     }
@@ -173,14 +190,19 @@ export default function GroupAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getGroup",
+      action: "queryGroupUser",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         groupId: debouncedGroupId,
-        groupDesc: debouncedGroupDesc,
+        userId: debouncedUserId,
+        entityId: debouncedEntityId,
+        email: debouncedEmail,
+        firstName: debouncedFirstName,
+        lastName: debouncedLastName,
+        userType: debouncedUserType,
       },
     };
 
@@ -194,7 +216,12 @@ export default function GroupAdmin() {
     rowsPerPage,
     host,
     debouncedGroupId,
-    debouncedGroupDesc,
+    debouncedUserId,
+    debouncedEntityId,
+    debouncedEmail,
+    debouncedFirstName,
+    debouncedLastName,
+    debouncedUserType,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -208,7 +235,7 @@ export default function GroupAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createGroup");
+    navigate("/app/form/createGroupUser");
   };
 
   let content;
@@ -242,18 +269,55 @@ export default function GroupAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Group Desc"
-                    value={groupDesc}
-                    onChange={handleGroupDescChange}
+                    placeholder="User Id"
+                    value={userId}
+                    onChange={handleUserIdChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Entity Id"
+                    value={entityId}
+                    onChange={handleEntityIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Email"
+                    value={email}
+                    onChange={handleEmailChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={handleFirstNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={handleLastNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="User Type"
+                    value={userType}
+                    onChange={handleUserTypeChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Group Permission</TableCell>
-                <TableCell align="right">Group User</TableCell>
               </TableRow>
             </TableHead>
-            <GroupList groups={groups} />
+            <GroupUserList groupUsers={groupUsers} />
           </Table>
         </TableContainer>
         <TablePagination

@@ -85,8 +85,8 @@ function RolePermissionList(props) {
   return (
     <TableBody>
       {rolePermissions && rolePermissions.length > 0 ? (
-        rolePermissions.map((rowPermission, index) => (
-          <Row key={index} row={rowPermission} />
+        rolePermissions.map((rolePermission, index) => (
+          <Row key={index} row={rolePermission} />
         ))
       ) : (
         <TableRow>

@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,22 +27,17 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (group) => {
-    navigate("/app/form/updateGroup", { state: { data: { ...group } } });
-  };
-
   const handleDelete = async (row) => {
     if (
-      window.confirm("Are you sure you want to delete the group for the host?")
+      window.confirm("Are you sure you want to delete the group for the api?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteGroup",
+        action: "deleteGroupPermission",
         version: "0.1.0",
         data: row,
       };
@@ -63,31 +56,14 @@ function Row(props) {
     }
   };
 
-  const handleApiGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupPermission", { state: { group } });
-  };
-
-  const handleUserGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupUser", { state: { group } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.groupId}</TableCell>
-      <TableCell align="left">{row.groupDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleApiGroup(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleUserGroup(row)} />
       </TableCell>
     </TableRow>
   );
@@ -97,21 +73,25 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     groupId: PropTypes.string.isRequired,
-    groupDesc: PropTypes.string,
+    apiId: PropTypes.string,
+    apiVersion: PropTypes.string,
+    endpoint: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function GroupList(props) {
-  const { groups } = props;
+function GroupPermissionList(props) {
+  const { groupPermissions } = props;
   return (
     <TableBody>
-      {groups && groups.length > 0 ? (
-        groups.map((group, index) => <Row key={index} row={group} />)
+      {groupPermissions && groupPermissions.length > 0 ? (
+        groupPermissions.map((groupPermission, index) => (
+          <Row key={index} row={groupPermission} />
+        ))
       ) : (
         <TableRow>
           <TableCell colSpan={2} align="center">
-            No groups found.
+            No permissions assigned to this group.
           </TableCell>
         </TableRow>
       )}
@@ -119,11 +99,11 @@ function GroupList(props) {
   );
 }
 
-GroupList.propTypes = {
-  groups: PropTypes.arrayOf(PropTypes.object).isRequired,
+GroupPermissionList.propTypes = {
+  groupPermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function GroupAdmin() {
+export default function GroupPermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -131,18 +111,28 @@ export default function GroupAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [groupId, setGroupId] = useState("");
   const debouncedGroupId = useDebounce(groupId, 1000);
-  const [groupDesc, setGroupDesc] = useState("");
-  const debouncedGroupDesc = useDebounce(groupDesc, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [groups, setGroups] = useState([]);
+  const [groupPermissions, setGroupPermissions] = useState([]);
 
   const handleGroupIdChange = (event) => {
     setGroupId(event.target.value);
   };
-  const handleGroupDescChange = (event) => {
-    setGroupDesc(event.target.value);
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
+  };
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -153,17 +143,17 @@ export default function GroupAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setGroups([]);
+        setGroupPermissions([]);
       } else {
         const data = await response.json();
-        setGroups(data.groups);
+        setGroupPermissions(data.groups);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setGroups([]);
+      setGroupPermissions([]);
     } finally {
       setLoading(false);
     }
@@ -173,14 +163,16 @@ export default function GroupAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getGroup",
+      action: "queryGroupPermission",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         groupId: debouncedGroupId,
-        groupDesc: debouncedGroupDesc,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
       },
     };
 
@@ -194,7 +186,9 @@ export default function GroupAdmin() {
     rowsPerPage,
     host,
     debouncedGroupId,
-    debouncedGroupDesc,
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -208,7 +202,7 @@ export default function GroupAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createGroup");
+    navigate("/app/form/createGroupPermission");
   };
 
   let content;
@@ -242,18 +236,31 @@ export default function GroupAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Group Desc"
-                    value={groupDesc}
-                    onChange={handleGroupDescChange}
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Group Permission</TableCell>
-                <TableCell align="right">Group User</TableCell>
               </TableRow>
             </TableHead>
-            <GroupList groups={groups} />
+            <GroupPermissionList groupPermissions={groupPermissions} />
           </Table>
         </TableContainer>
         <TablePagination
