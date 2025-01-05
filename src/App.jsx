@@ -103,6 +103,8 @@ import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import HostDashboard from "./pages/host/HostDashboard";
 import RoleAdmin from "./pages/access/RoleAdmin";
+import RoleUser from "./pages/access/RoleUser";
+import RolePermission from "./pages/access/RolePermission";
 import GroupAdmin from "./pages/access/GroupAdmin";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
 import PositionAdmin from "./pages/access/PositionAdmin";
@@ -146,6 +148,8 @@ const App = () => {
           <Route path="listScope" element={<ListScope />} />
           <Route path="listRule" element={<ListRule />} />
           <Route path="access/roleAdmin" element={<RoleAdmin />} />
+          <Route path="access/roleUser" element={<RoleUser />} />
+          <Route path="access/rolePermission" element={<RolePermission />} />
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />

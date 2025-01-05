@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,27 +27,17 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (attribute) => {
-    console.log("attribute = ", attribute);
-    navigate("/app/form/updateAttribute", {
-      state: { data: { ...attribute } },
-    });
-  };
-
   const handleDelete = async (row) => {
     if (
-      window.confirm(
-        "Are you sure you want to delete the attribute for the host?",
-      )
+      window.confirm("Are you sure you want to delete the role for the api?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteAttribute",
+        action: "deleteRoleUser",
         version: "0.1.0",
         data: row,
       };
@@ -68,32 +56,17 @@ function Row(props) {
     }
   };
 
-  const handleApiAttribute = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/apiAttribute", { state: { attribute } });
-  };
-
-  const handleUserAttribute = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/userAttribute", { state: { attribute } });
-  };
-
   return (
     <TableRow className={classes.root}>
-      <TableCell align="left">{row.attributeId}</TableCell>
-      <TableCell align="left">{row.attributeType}</TableCell>
-      <TableCell align="left">{row.attributeDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.roleId}</TableCell>
+      <TableCell align="left">{row.userId}</TableCell>
+      <TableCell align="left">{row.entityId}</TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.firstName}</TableCell>
+      <TableCell align="left">{row.lastName}</TableCell>
+      <TableCell align="left">{row.userType}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleApiAttribute(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleUserAttribute(row)} />
       </TableCell>
     </TableRow>
   );
@@ -102,25 +75,27 @@ function Row(props) {
 // Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
-    attributeId: PropTypes.string.isRequired,
-    attributeType: PropTypes.string,
-    attributeDesc: PropTypes.string,
+    roleId: PropTypes.string.isRequired,
+    userId: PropTypes.string,
+    entityId: PropTypes.string,
+    email: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
+    userType: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function AttributeList(props) {
-  const { attributes } = props;
+function RoleUserList(props) {
+  const { roleUsers } = props;
   return (
     <TableBody>
-      {attributes && attributes.length > 0 ? (
-        attributes.map((attribute, index) => (
-          <Row key={index} row={attribute} />
-        ))
+      {roleUsers && roleUsers.length > 0 ? (
+        roleUsers.map((roleUser, index) => <Row key={index} row={roleUser} />)
       ) : (
         <TableRow>
-          <TableCell colSpan={3} align="center">
-            No attributes found.
+          <TableCell colSpan={2} align="center">
+            No users assigned to this role.
           </TableCell>
         </TableRow>
       )}
@@ -128,35 +103,61 @@ function AttributeList(props) {
   );
 }
 
-AttributeList.propTypes = {
-  attributes: PropTypes.arrayOf(PropTypes.object).isRequired,
+RoleUserList.propTypes = {
+  roleUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributeAdmin() {
+export default function RoleUser(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [attributeId, setAttributeId] = useState("");
-  const debouncedAttributeId = useDebounce(attributeId, 1000);
-  const [attributeType, setAttributeType] = useState("");
-  const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeDesc, setAttributeDesc] = useState("");
-  const debouncedAttributeDesc = useDebounce(attributeDesc, 1000);
+  const [roleId, setRoleId] = useState("");
+  const debouncedRoleId = useDebounce(roleId, 1000);
+  const [userId, setUserId] = useState("");
+  const debouncedUserId = useDebounce(userId, 1000);
+  const [entityId, setEntityId] = useState("");
+  const debouncedEntityId = useDebounce(entityId, 1000);
+  const [email, setEmail] = useState("");
+  const debouncedEmail = useDebounce(email, 1000);
+  const [firstName, setFirstName] = useState("");
+  const debouncedFirstName = useDebounce(firstName, 1000);
+  const [lastName, setLastName] = useState("");
+  const debouncedLastName = useDebounce(lastName, 1000);
+  const [userType, setUserType] = useState("");
+  const debouncedUserType = useDebounce(userType, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [attributes, setAttributes] = useState([]);
+  const [roleUsers, setRoleUsers] = useState([]);
 
-  const handleAttributeIdChange = (event) => {
-    setAttributeId(event.target.value);
+  const handleRoleIdChange = (event) => {
+    setRoleId(event.target.value);
   };
-  const handleAttributeTypeChange = (event) => {
-    setAttributeType(event.target.value);
+
+  const handleUserIdChange = (event) => {
+    setUserId(event.target.value);
   };
-  const handleAttributeDescChange = (event) => {
-    setAttributeDesc(event.target.value);
+
+  const handleEntityIdChange = (event) => {
+    setEntityId(event.target.value);
+  };
+
+  const handleEmailChange = (event) => {
+    setEmail(event.target.value);
+  };
+
+  const handleFirstNameChange = (event) => {
+    setFirstName(event.target.value);
+  };
+
+  const handleLastNameChange = (event) => {
+    setLastName(event.target.value);
+  };
+
+  const handleUserTypeChange = (event) => {
+    setUserType(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -167,17 +168,17 @@ export default function AttributeAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setAttributes([]);
+        setRoleUsers([]);
       } else {
         const data = await response.json();
-        setAttributes(data.attributes);
+        setRoleUsers(data.roleUsers);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setAttributes([]);
+      setRoleUsers([]);
     } finally {
       setLoading(false);
     }
@@ -187,15 +188,19 @@ export default function AttributeAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getAttribute",
+      action: "queryRoleUser",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        attributeId: debouncedAttributeId,
-        attributeType: debouncedAttributeType,
-        attributeDesc: debouncedAttributeDesc,
+        roleId: debouncedRoleId,
+        userId: debouncedUserId,
+        entityId: debouncedEntityId,
+        email: debouncedEmail,
+        firstName: debouncedFirstName,
+        lastName: debouncedLastName,
+        userType: debouncedUserType,
       },
     };
 
@@ -208,9 +213,13 @@ export default function AttributeAdmin() {
     page,
     rowsPerPage,
     host,
-    debouncedAttributeId,
-    debouncedAttributeType,
-    debouncedAttributeDesc,
+    debouncedRoleId,
+    debouncedUserId,
+    debouncedEntityId,
+    debouncedEmail,
+    debouncedFirstName,
+    debouncedLastName,
+    debouncedUserType,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -224,7 +233,7 @@ export default function AttributeAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createAttribute");
+    navigate("/app/form/createRoleUser");
   };
 
   let content;
@@ -250,34 +259,63 @@ export default function AttributeAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Id"
-                    value={attributeId}
-                    onChange={handleAttributeIdChange}
+                    placeholder="Role Id"
+                    value={roleId}
+                    onChange={handleRoleIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Type"
-                    value={attributeType}
-                    onChange={handleAttributeTypeChange}
+                    placeholder="User Id"
+                    value={userId}
+                    onChange={handleUserIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Desc"
-                    value={attributeDesc}
-                    onChange={handleAttributeDescChange}
+                    placeholder="Entity Id"
+                    value={entityId}
+                    onChange={handleEntityIdChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Email"
+                    value={email}
+                    onChange={handleEmailChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={handleFirstNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={handleLastNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="User Type"
+                    value={userType}
+                    onChange={handleUserTypeChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Api Attribute</TableCell>
-                <TableCell align="right">User Attribute</TableCell>
               </TableRow>
             </TableHead>
-            <AttributeList attributes={attributes} />
+            <RoleUserList roleUsers={roleUsers} />
           </Table>
         </TableContainer>
         <TablePagination

@@ -28,7 +28,6 @@ const useRowStyles = makeStyles({
   },
 });
 
-// -------------------- RoleList Component (moved inside RoleAdmin) --------------------
 function Row(props) {
   const navigate = useNavigate();
   const { row } = props;
@@ -65,14 +64,14 @@ function Row(props) {
     }
   };
 
-  const handleApiRole = (role) => {
+  const handleRolePermission = (role) => {
     console.log("role", role);
-    navigate("/app/apiRole", { state: { role } });
+    navigate("/app/access/rolePermission", { state: { role } });
   };
 
-  const handleUserRole = (role) => {
+  const handleRoleUser = (role) => {
     console.log("role", role);
-    navigate("/app/userRole", { state: { role } });
+    navigate("/app/access/roleUser", { state: { role } });
   };
 
   return (
@@ -86,10 +85,10 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DetailsIcon onClick={() => handleApiRole(row)} />
+        <DetailsIcon onClick={() => handleRolePermission(row)} />
       </TableCell>
       <TableCell align="right">
-        <DetailsIcon onClick={() => handleUserRole(row)} />
+        <DetailsIcon onClick={() => handleRoleUser(row)} />
       </TableCell>
     </TableRow>
   );
@@ -106,12 +105,17 @@ Row.propTypes = {
 
 function RoleList(props) {
   const { roles } = props;
-  console.log("roles", roles);
   return (
     <TableBody>
-      {roles.map((role, index) => (
-        <Row key={index} row={role} />
-      ))}
+      {roles && roles.length > 0 ? (
+        roles.map((role, index) => <Row key={index} row={role} />)
+      ) : (
+        <TableRow>
+          <TableCell colSpan={2} align="center">
+            No roles found.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   );
 }
@@ -120,7 +124,6 @@ RoleList.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-// -------------------- RoleAdmin Component --------------------
 export default function RoleAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
@@ -247,11 +250,11 @@ export default function RoleAdmin() {
                 </TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Api Role</TableCell>
-                <TableCell align="right">User Role</TableCell>
+                <TableCell align="right">Role Permission</TableCell>
+                <TableCell align="right">Role User</TableCell>
               </TableRow>
             </TableHead>
-            <RoleList roles={roles} /> {/* Render RoleList directly */}
+            <RoleList roles={roles} />
           </Table>
         </TableContainer>
         <TablePagination

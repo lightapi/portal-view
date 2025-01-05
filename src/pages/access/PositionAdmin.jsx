@@ -111,12 +111,17 @@ Row.propTypes = {
 
 function PositionList(props) {
   const { positions } = props;
-  console.log("positions", positions);
   return (
     <TableBody>
-      {positions.map((position, index) => (
-        <Row key={index} row={position} />
-      ))}
+      {positions && positions.length > 0 ? (
+        positions.map((position, index) => <Row key={index} row={position} />)
+      ) : (
+        <TableRow>
+          <TableCell colSpan={4} align="center">
+            No positions found.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   );
 }

@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,27 +27,17 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (attribute) => {
-    console.log("attribute = ", attribute);
-    navigate("/app/form/updateAttribute", {
-      state: { data: { ...attribute } },
-    });
-  };
-
   const handleDelete = async (row) => {
     if (
-      window.confirm(
-        "Are you sure you want to delete the attribute for the host?",
-      )
+      window.confirm("Are you sure you want to delete the role for the api?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteAttribute",
+        action: "deleteApiRole",
         version: "0.1.0",
         data: row,
       };
@@ -68,32 +56,14 @@ function Row(props) {
     }
   };
 
-  const handleApiAttribute = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/apiAttribute", { state: { attribute } });
-  };
-
-  const handleUserAttribute = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/userAttribute", { state: { attribute } });
-  };
-
   return (
     <TableRow className={classes.root}>
-      <TableCell align="left">{row.attributeId}</TableCell>
-      <TableCell align="left">{row.attributeType}</TableCell>
-      <TableCell align="left">{row.attributeDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.roleId}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleApiAttribute(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleUserAttribute(row)} />
       </TableCell>
     </TableRow>
   );
@@ -102,25 +72,26 @@ function Row(props) {
 // Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
-    attributeId: PropTypes.string.isRequired,
-    attributeType: PropTypes.string,
-    attributeDesc: PropTypes.string,
+    roleId: PropTypes.string.isRequired,
+    apiId: PropTypes.string,
+    apiVersion: PropTypes.string,
+    endpoint: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function AttributeList(props) {
-  const { attributes } = props;
+function RolePermissionList(props) {
+  const { rolePermissions } = props;
   return (
     <TableBody>
-      {attributes && attributes.length > 0 ? (
-        attributes.map((attribute, index) => (
-          <Row key={index} row={attribute} />
+      {rolePermissions && rolePermissions.length > 0 ? (
+        rolePermissions.map((rowPermission, index) => (
+          <Row key={index} row={rowPermission} />
         ))
       ) : (
         <TableRow>
-          <TableCell colSpan={3} align="center">
-            No attributes found.
+          <TableCell colSpan={2} align="center">
+            No permissions assigned to this role.
           </TableCell>
         </TableRow>
       )}
@@ -128,35 +99,40 @@ function AttributeList(props) {
   );
 }
 
-AttributeList.propTypes = {
-  attributes: PropTypes.arrayOf(PropTypes.object).isRequired,
+RolePermissionList.propTypes = {
+  rolePermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributeAdmin() {
+export default function RolePermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [attributeId, setAttributeId] = useState("");
-  const debouncedAttributeId = useDebounce(attributeId, 1000);
-  const [attributeType, setAttributeType] = useState("");
-  const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeDesc, setAttributeDesc] = useState("");
-  const debouncedAttributeDesc = useDebounce(attributeDesc, 1000);
+  const [roleId, setRoleId] = useState("");
+  const debouncedRoleId = useDebounce(roleId, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [attributes, setAttributes] = useState([]);
+  const [rolePermissions, setRolePermissions] = useState([]);
 
-  const handleAttributeIdChange = (event) => {
-    setAttributeId(event.target.value);
+  const handleRoleIdChange = (event) => {
+    setRoleId(event.target.value);
   };
-  const handleAttributeTypeChange = (event) => {
-    setAttributeType(event.target.value);
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
   };
-  const handleAttributeDescChange = (event) => {
-    setAttributeDesc(event.target.value);
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -167,17 +143,17 @@ export default function AttributeAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setAttributes([]);
+        setRolePermissions([]);
       } else {
         const data = await response.json();
-        setAttributes(data.attributes);
+        setRolePermissions(data.roles);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setAttributes([]);
+      setRolePermissions([]);
     } finally {
       setLoading(false);
     }
@@ -187,15 +163,16 @@ export default function AttributeAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getAttribute",
+      action: "queryRolePermission",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        attributeId: debouncedAttributeId,
-        attributeType: debouncedAttributeType,
-        attributeDesc: debouncedAttributeDesc,
+        roleId: debouncedRoleId,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
       },
     };
 
@@ -208,9 +185,10 @@ export default function AttributeAdmin() {
     page,
     rowsPerPage,
     host,
-    debouncedAttributeId,
-    debouncedAttributeType,
-    debouncedAttributeDesc,
+    debouncedRoleId,
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -224,7 +202,7 @@ export default function AttributeAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createAttribute");
+    navigate("/app/form/createRolePermission");
   };
 
   let content;
@@ -250,34 +228,39 @@ export default function AttributeAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Id"
-                    value={attributeId}
-                    onChange={handleAttributeIdChange}
+                    placeholder="Role Id"
+                    value={roleId}
+                    onChange={handleRoleIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Type"
-                    value={attributeType}
-                    onChange={handleAttributeTypeChange}
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Desc"
-                    value={attributeDesc}
-                    onChange={handleAttributeDescChange}
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Api Attribute</TableCell>
-                <TableCell align="right">User Attribute</TableCell>
               </TableRow>
             </TableHead>
-            <AttributeList attributes={attributes} />
+            <RolePermissionList rolePermissions={rolePermissions} />
           </Table>
         </TableContainer>
         <TablePagination

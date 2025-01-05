@@ -104,12 +104,17 @@ Row.propTypes = {
 
 function GroupList(props) {
   const { groups } = props;
-  console.log("groups", groups);
   return (
     <TableBody>
-      {groups.map((group, index) => (
-        <Row key={index} row={group} />
-      ))}
+      {groups && groups.length > 0 ? (
+        groups.map((group, index) => <Row key={index} row={group} />)
+      ) : (
+        <TableRow>
+          <TableCell colSpan={2} align="center">
+            No groups found.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   );
 }
