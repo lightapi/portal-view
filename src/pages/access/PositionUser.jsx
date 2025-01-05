@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,25 +27,19 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
-
-  const handleUpdate = (position) => {
-    console.log("position = ", position);
-    navigate("/app/form/updatePosition", { state: { data: { ...position } } });
-  };
 
   const handleDelete = async (row) => {
     if (
       window.confirm(
-        "Are you sure you want to delete the position for the host?",
+        "Are you sure you want to delete the position for the api?",
       )
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deletePosition",
+        action: "deletePositionUser",
         version: "0.1.0",
         data: row,
       };
@@ -66,31 +58,20 @@ function Row(props) {
     }
   };
 
-  const handlePositionPermission = (position) => {
-    navigate("/app/access/positionPermission", { state: { position } });
-  };
-
-  const handlePositionUser = (position) => {
-    navigate("/app/access/positionUser", { state: { position } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.positionId}</TableCell>
-      <TableCell align="left">{row.positionDesc}</TableCell>
-      <TableCell align="left">{row.inheritToAncestor}</TableCell>
-      <TableCell align="left">{row.inheritToSibling}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.positionType}</TableCell>
+      <TableCell align="left">{row.startDate}</TableCell>
+      <TableCell align="left">{row.endDate}</TableCell>
+      <TableCell align="left">{row.userId}</TableCell>
+      <TableCell align="left">{row.entityId}</TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.firstName}</TableCell>
+      <TableCell align="left">{row.lastName}</TableCell>
+      <TableCell align="left">{row.userType}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handlePositionPermission(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handlePositionUser(row)} />
       </TableCell>
     </TableRow>
   );
@@ -100,23 +81,31 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     positionId: PropTypes.string.isRequired,
-    positionDesc: PropTypes.string,
-    inheritToAncestor: PropTypes.string,
-    inheritToSibling: PropTypes.string,
+    positionType: PropTypes.string,
+    startDate: PropTypes.date,
+    endDate: PropTypes.date,
+    userId: PropTypes.string,
+    entityId: PropTypes.string,
+    email: PropTypes.string,
+    firstName: PropTypes.string,
+    lastName: PropTypes.string,
+    userType: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function PositionList(props) {
-  const { positions } = props;
+function PositionUserList(props) {
+  const { positionUsers } = props;
   return (
     <TableBody>
-      {positions && positions.length > 0 ? (
-        positions.map((position, index) => <Row key={index} row={position} />)
+      {positionUsers && positionUsers.length > 0 ? (
+        positionUsers.map((positionUser, index) => (
+          <Row key={index} row={positionUser} />
+        ))
       ) : (
         <TableRow>
-          <TableCell colSpan={4} align="center">
-            No positions found.
+          <TableCell colSpan={2} align="center">
+            No users assigned to this position.
           </TableCell>
         </TableRow>
       )}
@@ -124,11 +113,11 @@ function PositionList(props) {
   );
 }
 
-PositionList.propTypes = {
-  positions: PropTypes.arrayOf(PropTypes.object).isRequired,
+PositionUserList.propTypes = {
+  positionUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function PositionAdmin() {
+export default function PositionUser(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -136,28 +125,64 @@ export default function PositionAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [positionId, setPositionId] = useState("");
   const debouncedPositionId = useDebounce(positionId, 1000);
-  const [positionDesc, setPositionDesc] = useState("");
-  const debouncedPositionDesc = useDebounce(positionDesc, 1000);
-  const [inheritToAncestor, setInheritToAncestor] = useState("");
-  const debouncedInheritToAncestor = useDebounce(inheritToAncestor, 1000);
-  const [inheritToSibling, setInheritToSibling] = useState("");
-  const debouncedInheritToSibling = useDebounce(inheritToSibling, 1000);
+  const [positionType, setPositionType] = useState("");
+  const debouncedPositionType = useDebounce(positionType, 1000);
+  const [startDate, setStartDate] = useState("");
+  const debouncedStartDate = useDebounce(startDate, 1000);
+  const [endDate, setEndDate] = useState("");
+  const debouncedEndDate = useDebounce(endDate, 1000);
+  const [userId, setUserId] = useState("");
+  const debouncedUserId = useDebounce(userId, 1000);
+  const [entityId, setEntityId] = useState("");
+  const debouncedEntityId = useDebounce(entityId, 1000);
+  const [email, setEmail] = useState("");
+  const debouncedEmail = useDebounce(email, 1000);
+  const [firstName, setFirstName] = useState("");
+  const debouncedFirstName = useDebounce(firstName, 1000);
+  const [lastName, setLastName] = useState("");
+  const debouncedLastName = useDebounce(lastName, 1000);
+  const [userType, setUserType] = useState("");
+  const debouncedUserType = useDebounce(userType, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [positions, setPositions] = useState([]);
+  const [positionUsers, setPositionUsers] = useState([]);
 
   const handlePositionIdChange = (event) => {
     setPositionId(event.target.value);
   };
-  const handlePositionDescChange = (event) => {
-    setPositionDesc(event.target.value);
+  const handlePositionTypeChange = (event) => {
+    setPositionType(event.target.value);
   };
-  const handleInheritToAncestorChange = (event) => {
-    setInheritToAncestor(event.target.value);
+  const handleStartDateChange = (event) => {
+    setStartDate(event.target.value);
   };
-  const handleInheritToSiblingChange = (event) => {
-    setInheritToSibling(event.target.value);
+  const handleEndDateChange = (event) => {
+    setEndDate(event.target.value);
+  };
+
+  const handleUserIdChange = (event) => {
+    setUserId(event.target.value);
+  };
+
+  const handleEntityIdChange = (event) => {
+    setEntityId(event.target.value);
+  };
+
+  const handleEmailChange = (event) => {
+    setEmail(event.target.value);
+  };
+
+  const handleFirstNameChange = (event) => {
+    setFirstName(event.target.value);
+  };
+
+  const handleLastNameChange = (event) => {
+    setLastName(event.target.value);
+  };
+
+  const handleUserTypeChange = (event) => {
+    setUserType(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -168,17 +193,17 @@ export default function PositionAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setPositions([]);
+        setPositionUsers([]);
       } else {
         const data = await response.json();
-        setPositions(data.positions);
+        setPositionUsers(data.positionUsers);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setPositions([]);
+      setPositionUsers([]);
     } finally {
       setLoading(false);
     }
@@ -188,16 +213,22 @@ export default function PositionAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getPosition",
+      action: "queryPositionUser",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         positionId: debouncedPositionId,
-        positionDesc: debouncedPositionDesc,
-        inheritToAncestor: debouncedInheritToAncestor,
-        inheritToSibling: debouncedInheritToSibling,
+        positionType: debouncedPositionType,
+        startDate: debouncedStartDate,
+        endDate: debouncedEndDate,
+        userId: debouncedUserId,
+        entityId: debouncedEntityId,
+        email: debouncedEmail,
+        firstName: debouncedFirstName,
+        lastName: debouncedLastName,
+        userType: debouncedUserType,
       },
     };
 
@@ -211,9 +242,15 @@ export default function PositionAdmin() {
     rowsPerPage,
     host,
     debouncedPositionId,
-    debouncedPositionDesc,
-    debouncedInheritToAncestor,
-    debouncedInheritToSibling,
+    debouncedPositionType,
+    debouncedStartDate,
+    debouncedEndDate,
+    debouncedUserId,
+    debouncedEntityId,
+    debouncedEmail,
+    debouncedFirstName,
+    debouncedLastName,
+    debouncedUserType,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -227,7 +264,7 @@ export default function PositionAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createPosition");
+    navigate("/app/form/createPositionUser");
   };
 
   let content;
@@ -261,35 +298,79 @@ export default function PositionAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Position Desc"
-                    value={positionDesc}
-                    onChange={handlePositionDescChange}
+                    placeholder="Position Type"
+                    value={positionType}
+                    onChange={handlePositionTypeChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Inherit To Ancestor"
-                    value={inheritToAncestor}
-                    onChange={handleInheritToAncestorChange}
+                    placeholder="Start Date"
+                    value={startDate}
+                    onChange={handleStartDateChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Inherit To Sibling"
-                    value={inheritToSibling}
-                    onChange={handleInheritToSiblingChange}
+                    placeholder="End Date"
+                    value={endDate}
+                    onChange={handleEndDateChange}
                   />
                 </TableCell>
-
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="User Id"
+                    value={userId}
+                    onChange={handleUserIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Entity Id"
+                    value={entityId}
+                    onChange={handleEntityIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Email"
+                    value={email}
+                    onChange={handleEmailChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={handleFirstNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={handleLastNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="User Type"
+                    value={userType}
+                    onChange={handleUserTypeChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Position Permission</TableCell>
-                <TableCell align="right">Position User</TableCell>
               </TableRow>
             </TableHead>
-            <PositionList positions={positions} />
+            <PositionUserList positionUsers={positionUsers} />
           </Table>
         </TableContainer>
         <TablePagination

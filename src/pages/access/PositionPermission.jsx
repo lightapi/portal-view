@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,27 +27,19 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
-
-  const handleUpdate = (attribute) => {
-    console.log("attribute = ", attribute);
-    navigate("/app/form/updateAttribute", {
-      state: { data: { ...attribute } },
-    });
-  };
 
   const handleDelete = async (row) => {
     if (
       window.confirm(
-        "Are you sure you want to delete the attribute for the host?",
+        "Are you sure you want to delete the position for the api?",
       )
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteAttribute",
+        action: "deletePositionPermission",
         version: "0.1.0",
         data: row,
       };
@@ -68,32 +58,16 @@ function Row(props) {
     }
   };
 
-  const handleAttributePermission = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributePermission", { state: { attribute } });
-  };
-
-  const handleAttributeUser = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributeUser", { state: { attribute } });
-  };
-
   return (
     <TableRow className={classes.root}>
-      <TableCell align="left">{row.attributeId}</TableCell>
-      <TableCell align="left">{row.attributeType}</TableCell>
-      <TableCell align="left">{row.attributeDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.positionId}</TableCell>
+      <TableCell align="left">{row.inheritToAncestor}</TableCell>
+      <TableCell align="left">{row.inheritToSibling}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleAttributePermission(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleAttributeUser(row)} />
       </TableCell>
     </TableRow>
   );
@@ -102,25 +76,28 @@ function Row(props) {
 // Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
-    attributeId: PropTypes.string.isRequired,
-    attributeType: PropTypes.string,
-    attributeDesc: PropTypes.string,
+    positionId: PropTypes.string.isRequired,
+    inheritToAncestor: PropTypes.string,
+    inheritToSibling: PropTypes.string,
+    apiId: PropTypes.string,
+    apiVersion: PropTypes.string,
+    endpoint: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function AttributeList(props) {
-  const { attributes } = props;
+function PositionPermissionList(props) {
+  const { positionPermissions } = props;
   return (
     <TableBody>
-      {attributes && attributes.length > 0 ? (
-        attributes.map((attribute, index) => (
-          <Row key={index} row={attribute} />
+      {positionPermissions && positionPermissions.length > 0 ? (
+        positionPermissions.map((positionPermission, index) => (
+          <Row key={index} row={positionPermission} />
         ))
       ) : (
         <TableRow>
-          <TableCell colSpan={3} align="center">
-            No attributes found.
+          <TableCell colSpan={2} align="center">
+            No permissions assigned to this position.
           </TableCell>
         </TableRow>
       )}
@@ -128,35 +105,53 @@ function AttributeList(props) {
   );
 }
 
-AttributeList.propTypes = {
-  attributes: PropTypes.arrayOf(PropTypes.object).isRequired,
+PositionPermissionList.propTypes = {
+  positionPermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributeAdmin() {
+export default function PositionPermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [attributeId, setAttributeId] = useState("");
-  const debouncedAttributeId = useDebounce(attributeId, 1000);
-  const [attributeType, setAttributeType] = useState("");
-  const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeDesc, setAttributeDesc] = useState("");
-  const debouncedAttributeDesc = useDebounce(attributeDesc, 1000);
+  const [positionId, setPositionId] = useState("");
+  const debouncedPositionId = useDebounce(positionId, 1000);
+  const [inheritToAncestor, setInheritToAncestor] = useState("");
+  const debouncedInheritToAncestor = useDebounce(inheritToAncestor, 1000);
+  const [inheritToSibling, setInheritToSibling] = useState("");
+  const debouncedInheritToSibling = useDebounce(inheritToSibling, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [attributes, setAttributes] = useState([]);
+  const [positionPermissions, setPositionPermissions] = useState([]);
 
-  const handleAttributeIdChange = (event) => {
-    setAttributeId(event.target.value);
+  const handlePositionIdChange = (event) => {
+    setPositionId(event.target.value);
   };
-  const handleAttributeTypeChange = (event) => {
-    setAttributeType(event.target.value);
+  const handlePositionTypeChange = (event) => {
+    setPositionType(event.target.value);
   };
-  const handleAttributeDescChange = (event) => {
-    setAttributeDesc(event.target.value);
+  const handleInheritToAncestorChange = (event) => {
+    setInheritToAncestor(event.target.value);
+  };
+  const handleInheritToSiblingChange = (event) => {
+    setInheritToSibling(event.target.value);
+  };
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
+  };
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -167,17 +162,17 @@ export default function AttributeAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setAttributes([]);
+        setPositionPermissions([]);
       } else {
         const data = await response.json();
-        setAttributes(data.attributes);
+        setPositionPermissions(data.positions);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setAttributes([]);
+      setPositionPermissions([]);
     } finally {
       setLoading(false);
     }
@@ -187,15 +182,18 @@ export default function AttributeAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getAttribute",
+      action: "queryPositionPermission",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        attributeId: debouncedAttributeId,
-        attributeType: debouncedAttributeType,
-        attributeDesc: debouncedAttributeDesc,
+        positionId: debouncedPositionId,
+        inheritToAncestor: debouncedInheritToAncestor,
+        inheritToSibling: debouncedInheritToSibling,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
       },
     };
 
@@ -208,9 +206,13 @@ export default function AttributeAdmin() {
     page,
     rowsPerPage,
     host,
-    debouncedAttributeId,
-    debouncedAttributeType,
-    debouncedAttributeDesc,
+    debouncedPositionId,
+    debouncedPositionType,
+    debouncedInheritToAncestor,
+    debouncedInheritToSibling,
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -224,7 +226,7 @@ export default function AttributeAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createAttribute");
+    navigate("/app/form/createPositionPermission");
   };
 
   let content;
@@ -250,34 +252,55 @@ export default function AttributeAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Id"
-                    value={attributeId}
-                    onChange={handleAttributeIdChange}
+                    placeholder="Position Id"
+                    value={positionId}
+                    onChange={handlePositionIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Type"
-                    value={attributeType}
-                    onChange={handleAttributeTypeChange}
+                    placeholder="Inherit To Ancestor"
+                    value={inheritToAncestor}
+                    onChange={handleInheritToAncestorChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Desc"
-                    value={attributeDesc}
-                    onChange={handleAttributeDescChange}
+                    placeholder="Inherit To Sibling"
+                    value={inheritToSibling}
+                    onChange={handleInheritToSiblingChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Attribute Permission</TableCell>
-                <TableCell align="right">Attribute User</TableCell>
               </TableRow>
             </TableHead>
-            <AttributeList attributes={attributes} />
+            <PositionPermissionList positionPermissions={positionPermissions} />
           </Table>
         </TableContainer>
         <TablePagination

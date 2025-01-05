@@ -9,8 +9,6 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -29,27 +27,19 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
-
-  const handleUpdate = (attribute) => {
-    console.log("attribute = ", attribute);
-    navigate("/app/form/updateAttribute", {
-      state: { data: { ...attribute } },
-    });
-  };
 
   const handleDelete = async (row) => {
     if (
       window.confirm(
-        "Are you sure you want to delete the attribute for the host?",
+        "Are you sure you want to delete the attribute for the api?",
       )
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteAttribute",
+        action: "deleteAttributePermission",
         version: "0.1.0",
         data: row,
       };
@@ -68,32 +58,16 @@ function Row(props) {
     }
   };
 
-  const handleAttributePermission = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributePermission", { state: { attribute } });
-  };
-
-  const handleAttributeUser = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributeUser", { state: { attribute } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.attributeId}</TableCell>
       <TableCell align="left">{row.attributeType}</TableCell>
-      <TableCell align="left">{row.attributeDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.attributeValue}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleAttributePermission(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DetailsIcon onClick={() => handleAttributeUser(row)} />
       </TableCell>
     </TableRow>
   );
@@ -104,23 +78,26 @@ Row.propTypes = {
   row: PropTypes.shape({
     attributeId: PropTypes.string.isRequired,
     attributeType: PropTypes.string,
-    attributeDesc: PropTypes.string,
+    attributeValue: PropTypes.string,
+    apiId: PropTypes.string,
+    apiVersion: PropTypes.string,
+    endpoint: PropTypes.string,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function AttributeList(props) {
-  const { attributes } = props;
+function AttributePermissionList(props) {
+  const { attributePermissions } = props;
   return (
     <TableBody>
-      {attributes && attributes.length > 0 ? (
-        attributes.map((attribute, index) => (
-          <Row key={index} row={attribute} />
+      {attributePermissions && attributePermissions.length > 0 ? (
+        attributePermissions.map((attributePermission, index) => (
+          <Row key={index} row={attributePermission} />
         ))
       ) : (
         <TableRow>
-          <TableCell colSpan={3} align="center">
-            No attributes found.
+          <TableCell colSpan={2} align="center">
+            No permissions assigned to this attribute.
           </TableCell>
         </TableRow>
       )}
@@ -128,11 +105,11 @@ function AttributeList(props) {
   );
 }
 
-AttributeList.propTypes = {
-  attributes: PropTypes.arrayOf(PropTypes.object).isRequired,
+AttributePermissionList.propTypes = {
+  attributePermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributeAdmin() {
+export default function AttributePermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -142,12 +119,18 @@ export default function AttributeAdmin() {
   const debouncedAttributeId = useDebounce(attributeId, 1000);
   const [attributeType, setAttributeType] = useState("");
   const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeDesc, setAttributeDesc] = useState("");
-  const debouncedAttributeDesc = useDebounce(attributeDesc, 1000);
+  const [attributeValue, setAttributeValue] = useState("");
+  const debouncedAttributeValue = useDebounce(attributeValue, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [attributes, setAttributes] = useState([]);
+  const [attributePermissions, setAttributePermissions] = useState([]);
 
   const handleAttributeIdChange = (event) => {
     setAttributeId(event.target.value);
@@ -155,8 +138,17 @@ export default function AttributeAdmin() {
   const handleAttributeTypeChange = (event) => {
     setAttributeType(event.target.value);
   };
-  const handleAttributeDescChange = (event) => {
-    setAttributeDesc(event.target.value);
+  const handleAttributeValueChange = (event) => {
+    setAttributeValue(event.target.value);
+  };
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
+  };
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -167,17 +159,17 @@ export default function AttributeAdmin() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setAttributes([]);
+        setAttributePermissions([]);
       } else {
         const data = await response.json();
-        setAttributes(data.attributes);
+        setAttributePermissions(data.attributes);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setAttributes([]);
+      setAttributePermissions([]);
     } finally {
       setLoading(false);
     }
@@ -187,7 +179,7 @@ export default function AttributeAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getAttribute",
+      action: "queryAttributePermission",
       version: "0.1.0",
       data: {
         hostId: host,
@@ -195,7 +187,10 @@ export default function AttributeAdmin() {
         limit: rowsPerPage,
         attributeId: debouncedAttributeId,
         attributeType: debouncedAttributeType,
-        attributeDesc: debouncedAttributeDesc,
+        attributeValue: debouncedAttributeValue,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
       },
     };
 
@@ -210,7 +205,10 @@ export default function AttributeAdmin() {
     host,
     debouncedAttributeId,
     debouncedAttributeType,
-    debouncedAttributeDesc,
+    debouncedAttributeValue,
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -224,7 +222,7 @@ export default function AttributeAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createAttribute");
+    navigate("/app/form/createAttributePermission");
   };
 
   let content;
@@ -259,25 +257,48 @@ export default function AttributeAdmin() {
                   <input
                     type="text"
                     placeholder="Attribute Type"
-                    value={attributeType}
+                    value={attributeId}
                     onChange={handleAttributeTypeChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Attribute Desc"
-                    value={attributeDesc}
-                    onChange={handleAttributeDescChange}
+                    placeholder="Attribute Value"
+                    value={attributeId}
+                    onChange={handleAttributeValueChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Attribute Permission</TableCell>
-                <TableCell align="right">Attribute User</TableCell>
               </TableRow>
             </TableHead>
-            <AttributeList attributes={attributes} />
+            <AttributePermissionList
+              attributePermissions={attributePermissions}
+            />
           </Table>
         </TableContainer>
         <TablePagination

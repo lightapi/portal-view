@@ -109,7 +109,11 @@ import GroupAdmin from "./pages/access/GroupAdmin";
 import GroupPermission from "./pages/access/GroupPermission";
 import GroupUser from "./pages/access/GroupUser";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
+import AttributePermission from "./pages/access/AttributePermission";
+import AttributeUser from "./pages/access/AttributeUser";
 import PositionAdmin from "./pages/access/PositionAdmin";
+import PositionPermission from "./pages/access/PositionPermission";
+import PositionUser from "./pages/access/PositionUser";
 
 const App = () => {
   return (
@@ -156,7 +160,17 @@ const App = () => {
           <Route path="access/groupPermission" element={<GroupPermission />} />
           <Route path="access/groupUser" element={<GroupUser />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
+          <Route
+            path="access/attributePermission"
+            element={<AttributePermission />}
+          />
+          <Route path="access/attributeUser" element={<AttributeUser />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />
+          <Route
+            path="access/positionPermission"
+            element={<PositionPermission />}
+          />
+          <Route path="access/positionUser" element={<PositionUser />} />
           <Route path="client" element={<Client />} />
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
