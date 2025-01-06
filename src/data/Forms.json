@@ -2395,7 +2395,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId"],
+      "required": ["hostId", "roleId", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2408,14 +2408,6 @@
         },
         "userId": {
           "title": "User Id",
-          "type": "string"
-        },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string"
-        },
-        "email": {
-          "title": "Email",
           "type": "string"
         },
         "startTs": {
@@ -2441,9 +2433,15 @@
           "params": ["hostId"]
         }
       },
-      "userId",
-      "entityId",
-      "email",
+      {
+        "key": "userId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "startTs",
       "endTs"
     ]
@@ -2463,7 +2461,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId"],
+      "required": ["hostId", "roleId", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2480,16 +2478,6 @@
           "type": "string",
           "readonly": true
         },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string",
-          "readonly": true
-        },
-        "email": {
-          "title": "Email",
-          "type": "string",
-          "readonly": true
-        },
         "startTs": {
           "title": "Start Timestamp",
           "type": "string",
@@ -2502,15 +2490,7 @@
         }
       }
     },
-    "form": [
-      "hostId",
-      "roleId",
-      "userId",
-      "entityId",
-      "email",
-      "startTs",
-      "endTs"
-    ]
+    "form": ["hostId", "roleId", "userId", "startTs", "endTs"]
   },
   "createRolePermission": {
     "formId": "createRolePermission",
@@ -2694,7 +2674,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId"],
+      "required": ["hostId", "groupId", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2707,14 +2687,6 @@
         },
         "userId": {
           "title": "User Id",
-          "type": "string"
-        },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string"
-        },
-        "email": {
-          "title": "Email",
           "type": "string"
         },
         "startTs": {
@@ -2732,9 +2704,15 @@
     "form": [
       "hostId",
       "groupId",
-      "userId",
-      "entityId",
-      "email",
+      {
+        "key": "userId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "startTs",
       "endTs"
     ]
@@ -2771,16 +2749,6 @@
           "type": "string",
           "readonly": true
         },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string",
-          "readonly": true
-        },
-        "email": {
-          "title": "Email",
-          "type": "string",
-          "readonly": true
-        },
         "startTs": {
           "title": "Start Timestamp",
           "type": "string",
@@ -2793,15 +2761,7 @@
         }
       }
     },
-    "form": [
-      "hostId",
-      "groupId",
-      "userId",
-      "entityId",
-      "email",
-      "startTs",
-      "endTs"
-    ]
+    "form": ["hostId", "groupId", "userId", "startTs", "endTs"]
   },
   "createGroupPermission": {
     "formId": "createGroupPermission",
@@ -3048,7 +3008,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeValue"],
+      "required": ["hostId", "attributeId", "attributeValue", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3067,14 +3027,6 @@
           "title": "User Id",
           "type": "string"
         },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string"
-        },
-        "email": {
-          "title": "Email",
-          "type": "string"
-        },
         "startTs": {
           "title": "Start Timestamp",
           "type": "string",
@@ -3091,9 +3043,15 @@
       "hostId",
       "attributeId",
       "attributeValue",
-      "userId",
-      "entityId",
-      "email",
+      {
+        "key": "userId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "startDate",
       "endDate"
     ]
@@ -3113,7 +3071,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeValue"],
+      "required": ["hostId", "attributeId", "attributeValue", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3134,16 +3092,6 @@
           "type": "string",
           "readonly": true
         },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string",
-          "readonly": true
-        },
-        "email": {
-          "title": "Email",
-          "type": "string",
-          "readonly": true
-        },
         "startTs": {
           "title": "Start Timestamp",
           "type": "string",
@@ -3161,8 +3109,6 @@
       "attributeId",
       "attributeValue",
       "userId",
-      "entityId",
-      "email",
       "startDate",
       "endDate"
     ]
@@ -3430,7 +3376,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId"],
+      "required": ["hostId", "positionId", "userId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3443,14 +3389,6 @@
         },
         "userId": {
           "title": "User Id",
-          "type": "string"
-        },
-        "entityId": {
-          "title": "Entity Id",
-          "type": "string"
-        },
-        "email": {
-          "title": "Email",
           "type": "string"
         },
         "startTs": {
@@ -3468,9 +3406,15 @@
     "form": [
       "hostId",
       "positionId",
-      "userId",
-      "entityId",
-      "email",
+      {
+        "key": "userId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "startTs",
       "endTs"
     ]
