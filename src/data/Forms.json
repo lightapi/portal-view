@@ -2544,7 +2544,21 @@
         }
       }
     },
-    "form": ["hostId", "roleId", "apiId", "apiVersion", "endpoint"]
+    "form": [
+      "hostId",
+      {
+        "key": "roleId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRoleId%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      "apiId",
+      "apiVersion",
+      "endpoint"
+    ]
   },
   "createGroup": {
     "formId": "createGroup",
