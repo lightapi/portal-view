@@ -146,7 +146,7 @@ export default function RolePermission(props) {
         setRolePermissions([]);
       } else {
         const data = await response.json();
-        setRolePermissions(data.roles);
+        setRolePermissions(data.rolePermissions);
         setTotal(data.total);
       }
       setLoading(false);
