@@ -2429,7 +2429,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRoleId%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -2539,7 +2539,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRoleId%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -2703,7 +2703,15 @@
     },
     "form": [
       "hostId",
-      "groupId",
+      {
+        "key": "groupId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "userId",
         "type": "dynaselect",
@@ -2805,7 +2813,15 @@
     },
     "form": [
       "hostId",
-      "groupId",
+      {
+        "key": "groupId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "apiId",
         "type": "dynaselect",
@@ -3041,7 +3057,15 @@
     },
     "form": [
       "hostId",
-      "attributeId",
+      {
+        "key": "attributeId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "attributeValue",
       {
         "key": "userId",
@@ -3166,7 +3190,15 @@
     },
     "form": [
       "hostId",
-      "attributeId",
+      {
+        "key": "attributeId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "attributeValue",
       {
         "key": "apiId",
@@ -3405,7 +3437,15 @@
     },
     "form": [
       "hostId",
-      "positionId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "userId",
         "type": "dynaselect",
@@ -3525,7 +3565,15 @@
     },
     "form": [
       "hostId",
-      "positionId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "apiId",
         "type": "dynaselect",
