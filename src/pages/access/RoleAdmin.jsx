@@ -10,7 +10,8 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DetailsIcon from "@mui/icons-material/Details";
+import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
+import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -85,10 +86,10 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DetailsIcon onClick={() => handleRolePermission(row)} />
+        <DoNotTouchIcon onClick={() => handleRolePermission(row)} />
       </TableCell>
       <TableCell align="right">
-        <DetailsIcon onClick={() => handleRoleUser(row)} />
+        <AccessibilityIcon onClick={() => handleRoleUser(row)} />
       </TableCell>
     </TableRow>
   );
@@ -235,7 +236,7 @@ export default function RoleAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Api Id"
+                    placeholder="Role Id"
                     value={roleId}
                     onChange={handleRoleIdChange}
                   />
@@ -243,7 +244,7 @@ export default function RoleAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Api Desc"
+                    placeholder="Role Desc"
                     value={roleDesc}
                     onChange={handleRoleDescChange}
                   />
