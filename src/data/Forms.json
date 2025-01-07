@@ -2895,32 +2895,10 @@
         "key": "attributeType",
         "type": "dynaselect",
         "multiple": false,
-        "options": [
-          {
-            "id": "string",
-            "label": "String"
-          },
-          {
-            "id": "integer",
-            "label": "Integer"
-          },
-          {
-            "id": "float",
-            "label": "Float"
-          },
-          {
-            "id": "boolean",
-            "label": "Boolean"
-          },
-          {
-            "id": "list",
-            "label": "List"
-          },
-          {
-            "id": "date",
-            "label": "Date"
-          }
-        ]
+        "action": {
+          "url": "/r/data?name=attribute_type&host={0}",
+          "params": ["hostId"]
+        }
       },
       {
         "key": "attributeDesc",
@@ -2974,32 +2952,10 @@
         "key": "attributeType",
         "type": "dynaselect",
         "multiple": false,
-        "options": [
-          {
-            "id": "string",
-            "label": "String"
-          },
-          {
-            "id": "integer",
-            "label": "Integer"
-          },
-          {
-            "id": "float",
-            "label": "Float"
-          },
-          {
-            "id": "boolean",
-            "label": "Boolean"
-          },
-          {
-            "id": "list",
-            "label": "List"
-          },
-          {
-            "id": "date",
-            "label": "Date"
-          }
-        ]
+        "action": {
+          "url": "/r/data?name=attribute_type&host={0}",
+          "params": ["hostId"]
+        }
       },
       {
         "key": "attributeDesc",
