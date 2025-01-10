@@ -9,6 +9,7 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -27,8 +28,13 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
+  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
+
+  const handleUpdate = (row) => {
+    navigate("/app/form/updateRoleColFilter", { state: { data: { ...row } } });
+  };
 
   const handleDelete = async (row) => {
     if (
@@ -59,8 +65,13 @@ function Row(props) {
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.roleId}</TableCell>
-      <TableCell align="left">{row.tableId}</TableCell>
-      <TableCell align="left">{row.columnId}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
+      <TableCell align="left">{row.columns}</TableCell>
+      <TableCell align="right">
+        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
+      </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
@@ -71,8 +82,10 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     roleId: PropTypes.string.isRequired,
-    tableId: PropTypes.string.isRequired,
-    columnId: PropTypes.string.isRequired,
+    apiId: PropTypes.string.isRequired,
+    apiVersion: PropTypes.string.isRequired,
+    endpoint: PropTypes.string.isRequired,
+    columns: PropTypes.string.isRequired,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
@@ -108,10 +121,15 @@ export default function RoleColFilter(props) {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [roleId, setRoleId] = useState("");
   const debouncedRoleId = useDebounce(roleId, 1000);
-  const [tableId, setTableId] = useState("");
-  const debouncedTableId = useDebounce(tableId, 1000);
-  const [columnId, setColumnId] = useState("");
-  const debouncedColumnId = useDebounce(columnId, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
+  const [columns, setColumns] = useState("");
+  const debouncedColumns = useDebounce(columns, 1000);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -120,11 +138,19 @@ export default function RoleColFilter(props) {
   const handleRoleIdChange = (event) => {
     setRoleId(event.target.value);
   };
-  const handleTableIdChange = (event) => {
-    setTableId(event.target.value);
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
   };
-  const handleColumnIdChange = (event) => {
-    setColumnId(event.target.value);
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
+  };
+
+  const handleColumnsChange = (event) => {
+    setColumns(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -161,8 +187,10 @@ export default function RoleColFilter(props) {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         roleId: debouncedRoleId,
-        tableId: debouncedTableId,
-        columnId: debouncedColumnId,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
+        columns: debouncedColumns,
       },
     };
 
@@ -176,8 +204,10 @@ export default function RoleColFilter(props) {
     rowsPerPage,
     host,
     debouncedRoleId,
-    debouncedTableId,
-    debouncedColumnId,
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
+    debouncedColumns,
     fetchData,
   ]);
 
@@ -225,19 +255,36 @@ export default function RoleColFilter(props) {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Table Id"
-                    value={tableId}
-                    onChange={handleTableIdChange}
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Column Id"
-                    value={columnId}
-                    onChange={handleColumnIdChange}
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
                   />
                 </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Columns"
+                    value={columns}
+                    onChange={handleColumnsChange}
+                  />
+                </TableCell>
+                <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
               </TableRow>
             </TableHead>
