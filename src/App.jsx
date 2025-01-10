@@ -105,6 +105,8 @@ import HostDashboard from "./pages/host/HostDashboard";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
+import RoleRowFilter from "./pages/access/RoleRowFilter";
+import RoleColFilter from "./pages/access/RoleColFilter";
 import GroupAdmin from "./pages/access/GroupAdmin";
 import GroupPermission from "./pages/access/GroupPermission";
 import GroupUser from "./pages/access/GroupUser";
@@ -156,6 +158,8 @@ const App = () => {
           <Route path="access/roleAdmin" element={<RoleAdmin />} />
           <Route path="access/roleUser" element={<RoleUser />} />
           <Route path="access/rolePermission" element={<RolePermission />} />
+          <Route path="access/roleRowFilter" element={<RoleRowFilter />} />
+          <Route path="access/roleColFilter" element={<RoleColFilter />} />
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
           <Route path="access/groupPermission" element={<GroupPermission />} />
           <Route path="access/groupUser" element={<GroupUser />} />

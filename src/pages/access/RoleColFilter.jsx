@@ -7,13 +7,8 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
+import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -32,23 +27,17 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (role) => {
-    console.log("role = ", role);
-    navigate("/app/form/updateRole", { state: { data: { ...role } } });
-  };
-
   const handleDelete = async (row) => {
     if (
-      window.confirm("Are you sure you want to delete the role for the host?")
+      window.confirm("Are you sure you want to delete the role column filter?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteRole",
+        action: "deleteRoleColFilter",
         version: "0.1.0",
         data: row,
       };
@@ -67,71 +56,39 @@ function Row(props) {
     }
   };
 
-  const handleRolePermission = (role) => {
-    console.log("role", role);
-    navigate("/app/access/rolePermission", { state: { role } });
-  };
-
-  const handleRoleRowFilter = (role) => {
-    navigate("/app/access/roleRowFilter", { state: { role } });
-  };
-
-  const handleRoleColFilter = (role) => {
-    navigate("/app/access/roleColFilter", { state: { role } });
-  };
-
-  const handleRoleUser = (role) => {
-    console.log("role", role);
-    navigate("/app/access/roleUser", { state: { role } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.roleId}</TableCell>
-      <TableCell align="left">{row.roleDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
+      <TableCell align="left">{row.tableId}</TableCell>
+      <TableCell align="left">{row.columnId}</TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleRolePermission(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowDownIcon onClick={() => handleRoleRowFilter(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowRightIcon
-          onClick={() => handleRoleColFilter(row)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <AccessibilityIcon onClick={() => handleRoleUser(row)} />
       </TableCell>
     </TableRow>
   );
 }
 
-// Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
     roleId: PropTypes.string.isRequired,
-    roleDesc: PropTypes.string,
+    tableId: PropTypes.string.isRequired,
+    columnId: PropTypes.string.isRequired,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function RoleList(props) {
-  const { roles } = props;
+function RoleColFilterList(props) {
+  const { roleColFilters } = props;
   return (
     <TableBody>
-      {roles && roles.length > 0 ? (
-        roles.map((role, index) => <Row key={index} row={role} />)
+      {roleColFilters && roleColFilters.length > 0 ? (
+        roleColFilters.map((roleColFilter, index) => (
+          <Row key={index} row={roleColFilter} />
+        ))
       ) : (
         <TableRow>
-          <TableCell colSpan={2} align="center">
-            No roles found.
+          <TableCell colSpan={4} align="center">
+            No column filters assigned to this role.
           </TableCell>
         </TableRow>
       )}
@@ -139,11 +96,11 @@ function RoleList(props) {
   );
 }
 
-RoleList.propTypes = {
-  roles: PropTypes.arrayOf(PropTypes.object).isRequired,
+RoleColFilterList.propTypes = {
+  roleColFilters: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function RoleAdmin() {
+export default function RoleColFilter(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -151,56 +108,61 @@ export default function RoleAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [roleId, setRoleId] = useState("");
   const debouncedRoleId = useDebounce(roleId, 1000);
-  const [roleDesc, setRoleDesc] = useState("");
-  const debouncedRoleDesc = useDebounce(roleDesc, 1000);
+  const [tableId, setTableId] = useState("");
+  const debouncedTableId = useDebounce(tableId, 1000);
+  const [columnId, setColumnId] = useState("");
+  const debouncedColumnId = useDebounce(columnId, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [roles, setRoles] = useState([]);
+  const [roleColFilters, setRoleColFilters] = useState([]);
 
   const handleRoleIdChange = (event) => {
     setRoleId(event.target.value);
   };
-  const handleRoleDescChange = (event) => {
-    setRoleDesc(event.target.value);
+  const handleTableIdChange = (event) => {
+    setTableId(event.target.value);
+  };
+  const handleColumnIdChange = (event) => {
+    setColumnId(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
     try {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setRoles([]);
+        setRoleColFilters([]);
       } else {
         const data = await response.json();
-        setRoles(data.roles);
+        setRoleColFilters(data.roleColFilters);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setRoles([]);
+      setRoleColFilters([]);
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array for useCallback
+  }, []);
 
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getRole",
+      action: "queryRoleColFilter",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         roleId: debouncedRoleId,
-        roleDesc: debouncedRoleDesc,
+        tableId: debouncedTableId,
+        columnId: debouncedColumnId,
       },
     };
 
@@ -214,8 +176,9 @@ export default function RoleAdmin() {
     rowsPerPage,
     host,
     debouncedRoleId,
-    debouncedRoleDesc,
-    fetchData, // Add fetchData to dependency array of useEffect
+    debouncedTableId,
+    debouncedColumnId,
+    fetchData,
   ]);
 
   const handleChangePage = (event, newPage) => {
@@ -228,7 +191,7 @@ export default function RoleAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createRole");
+    navigate("/app/form/createRoleColFilter");
   };
 
   let content;
@@ -262,20 +225,23 @@ export default function RoleAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Role Desc"
-                    value={roleDesc}
-                    onChange={handleRoleDescChange}
+                    placeholder="Table Id"
+                    value={tableId}
+                    onChange={handleTableIdChange}
                   />
                 </TableCell>
-                <TableCell align="right">Update</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Column Id"
+                    value={columnId}
+                    onChange={handleColumnIdChange}
+                  />
+                </TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Role Permission</TableCell>
-                <TableCell align="right">Role Row Filter</TableCell>
-                <TableCell align="right">Role Col Filter</TableCell>
-                <TableCell align="right">Role User</TableCell>
               </TableRow>
             </TableHead>
-            <RoleList roles={roles} />
+            <RoleColFilterList roleColFilters={roleColFilters} />
           </Table>
         </TableContainer>
         <TablePagination

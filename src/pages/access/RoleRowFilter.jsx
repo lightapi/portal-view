@@ -7,13 +7,9 @@ import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
+import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -36,19 +32,18 @@ function Row(props) {
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (role) => {
-    console.log("role = ", role);
-    navigate("/app/form/updateRole", { state: { data: { ...role } } });
+  const handleUpdate = (row) => {
+    navigate("/app/form/updateRoleRowFilter", { state: { data: { ...row } } });
   };
 
   const handleDelete = async (row) => {
     if (
-      window.confirm("Are you sure you want to delete the role for the host?")
+      window.confirm("Are you sure you want to delete the role row filter?")
     ) {
       const cmd = {
         host: "lightapi.net",
         service: "market",
-        action: "deleteRole",
+        action: "deleteRoleRowFilter",
         version: "0.1.0",
         data: row,
       };
@@ -67,71 +62,50 @@ function Row(props) {
     }
   };
 
-  const handleRolePermission = (role) => {
-    console.log("role", role);
-    navigate("/app/access/rolePermission", { state: { role } });
-  };
-
-  const handleRoleRowFilter = (role) => {
-    navigate("/app/access/roleRowFilter", { state: { role } });
-  };
-
-  const handleRoleColFilter = (role) => {
-    navigate("/app/access/roleColFilter", { state: { role } });
-  };
-
-  const handleRoleUser = (role) => {
-    console.log("role", role);
-    navigate("/app/access/roleUser", { state: { role } });
-  };
-
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.roleId}</TableCell>
-      <TableCell align="left">{row.roleDesc}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
+      <TableCell align="left">{row.endpoint}</TableCell>
+      <TableCell align="left">{row.colName}</TableCell>
+      <TableCell align="left">{row.operator}</TableCell>
+      <TableCell align="left">{row.colValue}</TableCell>
       <TableCell align="right">
         <SystemUpdateIcon onClick={() => handleUpdate(row)} />
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
-      <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleRolePermission(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowDownIcon onClick={() => handleRoleRowFilter(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowRightIcon
-          onClick={() => handleRoleColFilter(row)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <AccessibilityIcon onClick={() => handleRoleUser(row)} />
-      </TableCell>
     </TableRow>
   );
 }
 
-// Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
     roleId: PropTypes.string.isRequired,
-    roleDesc: PropTypes.string,
+    apiId: PropTypes.string.isRequired,
+    apiVersion: PropTypes.string.isRequired,
+    endpoint: PropTypes.string.isRequired,
+    colName: PropTypes.string.isRequired,
+    operator: PropTypes.string.isRequired,
+    colValue: PropTypes.string.isRequired,
     hostId: PropTypes.string.isRequired,
   }).isRequired,
 };
 
-function RoleList(props) {
-  const { roles } = props;
+function RoleRowFilterList(props) {
+  const { roleRowFilters } = props;
   return (
     <TableBody>
-      {roles && roles.length > 0 ? (
-        roles.map((role, index) => <Row key={index} row={role} />)
+      {roleRowFilters && roleRowFilters.length > 0 ? (
+        roleRowFilters.map((roleRowFilter, index) => (
+          <Row key={index} row={roleRowFilter} />
+        ))
       ) : (
         <TableRow>
-          <TableCell colSpan={2} align="center">
-            No roles found.
+          <TableCell colSpan={4} align="center">
+            No row filters assigned to this role.
           </TableCell>
         </TableRow>
       )}
@@ -139,11 +113,11 @@ function RoleList(props) {
   );
 }
 
-RoleList.propTypes = {
-  roles: PropTypes.arrayOf(PropTypes.object).isRequired,
+RoleRowFilterList.propTypes = {
+  roleRowFilters: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function RoleAdmin() {
+export default function RoleRowFilter(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
@@ -151,56 +125,91 @@ export default function RoleAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [roleId, setRoleId] = useState("");
   const debouncedRoleId = useDebounce(roleId, 1000);
-  const [roleDesc, setRoleDesc] = useState("");
-  const debouncedRoleDesc = useDebounce(roleDesc, 1000);
+
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
+  const [colName, setColName] = useState("");
+  const debouncedColName = useDebounce(colName, 1000);
+  const [operator, setOperator] = useState("");
+  const debouncedOperator = useDebounce(operator, 1000);
+  const [colValue, setColValue] = useState("");
+  const debouncedColValue = useDebounce(colValue, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [roles, setRoles] = useState([]);
+  const [roleRowFilters, setRoleRowFilters] = useState([]);
 
   const handleRoleIdChange = (event) => {
     setRoleId(event.target.value);
   };
-  const handleRoleDescChange = (event) => {
-    setRoleDesc(event.target.value);
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
+  };
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
+  };
+
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
+  };
+
+  const handleColNameChange = (event) => {
+    setColName(event.target.value);
+  };
+
+  const handleOperatorChange = (event) => {
+    setOperator(event.target.value);
+  };
+
+  const handleColValueChange = (event) => {
+    setColValue(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
     try {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setRoles([]);
+        setRoleRowFilters([]);
       } else {
         const data = await response.json();
-        setRoles(data.roles);
+        setRoleRowFilters(data.roleRowFilters);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setRoles([]);
+      setRoleRowFilters([]);
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array for useCallback
+  }, []);
 
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
       service: "market",
-      action: "getRole",
+      action: "queryRoleRowFilter",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         roleId: debouncedRoleId,
-        roleDesc: debouncedRoleDesc,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
+        endpoint: debouncedEndpoint,
+        colName: debouncedColName,
+        operator: debouncedOperator,
+        colValue: debouncedColValue,
       },
     };
 
@@ -214,8 +223,13 @@ export default function RoleAdmin() {
     rowsPerPage,
     host,
     debouncedRoleId,
-    debouncedRoleDesc,
-    fetchData, // Add fetchData to dependency array of useEffect
+    debouncedApiId,
+    debouncedApiVersion,
+    debouncedEndpoint,
+    debouncedColName,
+    debouncedOperator,
+    debouncedColValue,
+    fetchData,
   ]);
 
   const handleChangePage = (event, newPage) => {
@@ -228,7 +242,7 @@ export default function RoleAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createRole");
+    navigate("/app/form/createRoleRowFilter");
   };
 
   let content;
@@ -262,20 +276,56 @@ export default function RoleAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Role Desc"
-                    value={roleDesc}
-                    onChange={handleRoleDescChange}
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={apiVersion}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Column Name"
+                    value={apiVersion}
+                    onChange={handleColNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Operator"
+                    value={operator}
+                    onChange={handleOperatorChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Column Value"
+                    value={colValue}
+                    onChange={handleColValueChange}
                   />
                 </TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Role Permission</TableCell>
-                <TableCell align="right">Role Row Filter</TableCell>
-                <TableCell align="right">Role Col Filter</TableCell>
-                <TableCell align="right">Role User</TableCell>
               </TableRow>
             </TableHead>
-            <RoleList roles={roles} />
+            <RoleRowFilterList roleRowFilters={roleRowFilters} />
           </Table>
         </TableContainer>
         <TablePagination
