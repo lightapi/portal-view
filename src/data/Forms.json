@@ -3667,7 +3667,6 @@
       "columns"
     ]
   },
-
   "createAttribute": {
     "formId": "createAttribute",
     "actions": [
@@ -4805,6 +4804,414 @@
           "params": ["hostId", "apiId", "apiVersion"]
         }
       }
+    ]
+  },
+  "createPositionRowFilter": {
+    "formId": "createPositionRowFilter",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createPositionRowFilter",
+        "version": "0.1.0",
+        "title": "Create Position Row Filter",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "positionId",
+        "apiId",
+        "apiVersion",
+        "endpoint",
+        "colName",
+        "operator",
+        "colValue"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "colName": {
+          "title": "Column Name",
+          "type": "string"
+        },
+        "operator": {
+          "title": "Operator",
+          "type": "string"
+        },
+        "colValue": {
+          "title": "Column Value",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
+          "params": ["hostId", "apiId"]
+        }
+      },
+      {
+        "key": "endpoint",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%2C%22apiVersion%22%3A%22{2}%22%7D%7D",
+          "params": ["hostId", "apiId", "apiVersion"]
+        }
+      },
+      "colName",
+      {
+        "key": "operator",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=filter_operator&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "colValue"
+    ]
+  },
+  "updatePositionRowFilter": {
+    "formId": "updatePositionRowFilter",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updatePositionRowFilter",
+        "version": "0.1.0",
+        "title": "Update Position Row Filter",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "positionId",
+        "apiId",
+        "apiVersion",
+        "endpoint",
+        "colName",
+        "operator",
+        "colValue"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "colName": {
+          "title": "Column Name",
+          "type": "string"
+        },
+        "operator": {
+          "title": "Operator",
+          "type": "string"
+        },
+        "colValue": {
+          "title": "Column Value",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
+          "params": ["hostId", "apiId"]
+        }
+      },
+      {
+        "key": "endpoint",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%2C%22apiVersion%22%3A%22{2}%22%7D%7D",
+          "params": ["hostId", "apiId", "apiVersion"]
+        }
+      },
+      "colName",
+      {
+        "key": "operator",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=filter_operator&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "colValue"
+    ]
+  },
+  "createPositionColFilter": {
+    "formId": "createPositionColFilter",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "createPositionColFilter",
+        "version": "0.1.0",
+        "title": "Create Position Col Filter",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "positionId",
+        "apiId",
+        "apiVersion",
+        "endpoint",
+        "columns"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "columns": {
+          "title": "Columns",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
+          "params": ["hostId", "apiId"]
+        }
+      },
+      {
+        "key": "endpoint",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%2C%22apiVersion%22%3A%22{2}%22%7D%7D",
+          "params": ["hostId", "apiId", "apiVersion"]
+        }
+      },
+      "columns"
+    ]
+  },
+  "updatePositionColFilter": {
+    "formId": "updatePositionColFilter",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "market",
+        "action": "updatePositionColFilter",
+        "version": "0.1.0",
+        "title": "Update Position Col Filter",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": [
+        "hostId",
+        "positionId",
+        "apiId",
+        "apiVersion",
+        "endpoint",
+        "columns"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "positionId": {
+          "title": "Position Id",
+          "type": "string"
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "columns": {
+          "title": "Columns",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "positionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
+          "params": ["hostId", "apiId"]
+        }
+      },
+      {
+        "key": "endpoint",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%2C%22apiVersion%22%3A%22{2}%22%7D%7D",
+          "params": ["hostId", "apiId", "apiVersion"]
+        }
+      },
+      "columns"
     ]
   },
 
