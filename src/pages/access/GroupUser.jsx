@@ -59,6 +59,9 @@ function Row(props) {
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.groupId}</TableCell>
+      <TableCell align="left">{row.startTs}</TableCell>
+      <TableCell align="left">{row.endTs}</TableCell>
+
       <TableCell align="left">{row.userId}</TableCell>
       <TableCell align="left">{row.entityId}</TableCell>
       <TableCell align="left">{row.email}</TableCell>
@@ -76,6 +79,8 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     groupId: PropTypes.string.isRequired,
+    startTs: PropTypes.string,
+    endTs: PropTypes.string,
     userId: PropTypes.string,
     entityId: PropTypes.string,
     email: PropTypes.string,
@@ -266,6 +271,8 @@ export default function GroupUser(props) {
                     onChange={handleGroupIdChange}
                   />
                 </TableCell>
+                <TableCell align="left">Start Timestamp</TableCell>
+                <TableCell align="left">End Timestamp</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
