@@ -7221,8 +7221,7 @@
         },
         "common": {
           "title": "Common",
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "string"
         },
         "conditions": {
           "type": "array",
@@ -7240,33 +7239,11 @@
               },
               "operatorCode": {
                 "type": "string",
-                "enum": [
-                  "equals",
-                  "on",
-                  "before",
-                  "after",
-                  "lengthEquals",
-                  "greaterThanOrEqual",
-                  "lessThanOrEqual",
-                  "isNotNull",
-                  "isNull",
-                  "contains",
-                  "match",
-                  "notMatch",
-                  "isEmpty",
-                  "isNotEmpty",
-                  "isBlank",
-                  "isNotBlank",
-                  "lengthGreaterThan",
-                  "lengthLessThan",
-                  "inList",
-                  "greaterThan",
-                  "containsIgnoreCase",
-                  "startsWith"
-                ]
+                "title": "Operator Code"
               },
               "index": {
-                "type": "integer"
+                "type": "integer",
+                "title": "Index from 1"
               },
               "conditionValues": {
                 "type": "array",
@@ -7284,7 +7261,7 @@
                     },
                     "valueTypeCode": {
                       "type": "string",
-                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                      "title": "Value Type Code"
                     },
                     "dateFormat": {
                       "type": "string"
@@ -7334,7 +7311,7 @@
                     },
                     "valueTypeCode": {
                       "type": "string",
-                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                      "title": "Value Type Code"
                     }
                   },
                   "required": ["actionValueId", "value"]
@@ -7372,14 +7349,122 @@
       "ruleGroup",
       "ruleDesc",
       "ruleOwner",
-      "common",
+      {
+        "key": "common",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]    
+      },  
       {
         "key": "conditions",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",
           "conditions[].propertyPath",
-          "conditions[].operatorCode",
+          {
+            "key": "conditions[].operatorCode",
+            "type": "dynaselect",
+            "multiple": false,
+            "options": [
+              {
+                "id": "equals",
+                "label": "equals"
+              },
+              {
+                "id": "on",
+                "label": "on"
+              },
+              {
+                "id": "before",
+                "label": "before"
+              },
+              {
+                "id": "after",
+                "label": "after"
+              },
+              {
+                "id": "lengthEquals",
+                "label": "lengthEquals"
+              },
+              {
+                "id": "greaterThanOrEqual",
+                "label": "greaterThanOrEqual"
+              },
+              {
+                "id": "lessThanOrEqual",
+                "label": "lessThanOrEqual"
+              },
+              {
+                "id": "isNotNull",
+                "label": "isNotNull"
+              },
+              {
+                "id": "isNull",
+                "label": "isNull"
+              },
+              {
+                "id": "contains",
+                "label": "contains"
+              },
+              {
+                "id": "match",
+                "label": "match"
+              },
+              {
+                "id": "notMatch",
+                "label": "notMatch"
+              },
+              {
+                "id": "isEmpty",
+                "label": "isEmpty"
+              },
+              {
+                "id": "isNotEmpty",
+                "label": "isNotEmpty"
+              },
+              {
+                "id": "isBlank",
+                "label": "isBlank"
+              },
+              {
+                "id": "isNotBlank",
+                "label": "isNotBlank"
+              },
+              {
+                "id": "lengthGreaterThan",
+                "label": "lengthGreaterThan"
+              },
+              {
+                "id": "lengthLessThan",
+                "label": "lengthLessThan"
+              },
+              {
+                "id": "inList",
+                "label": "inList"
+              },
+              {
+                "id": "greaterThan",
+                "label": "greaterThan"
+              },
+              {
+                "id": "containsIgnoreCase",
+                "label": "containsIgnoreCase"
+              },
+              {
+                "id": "startsWith",
+                "label": "startsWith"
+              }
+            ]
+          },
           "conditions[].index",
           {
             "key": "conditions[].conditionValues",
@@ -7425,7 +7510,25 @@
             "items": [
               "actions[].actionValues[].actionValueId",
               "actions[].actionValues[].value",
-              "actions[].actionValues[].valueTypeCode"
+              {
+                "key": "actions[].actionValues[].valueTypeCode",
+                "type": "dynaselect",
+                "multiple": false,
+                "options": [
+                  {
+                    "id": "STRING",
+                    "label": "String"
+                  },
+                  {
+                    "id": "INTEGER",
+                    "label": "Integer"
+                  },
+                  {
+                    "id": "BOOLEAN",
+                    "label": "Boolean"
+                  }
+                ]
+              }    
             ]
           }
         ]
@@ -7485,7 +7588,6 @@
         },
         "common": {
           "type": "string",
-          "enum": ["Y", "N"],
           "title": "Common"
         },
         "conditions": {
@@ -7504,33 +7606,11 @@
               },
               "operatorCode": {
                 "type": "string",
-                "enum": [
-                  "equals",
-                  "on",
-                  "before",
-                  "after",
-                  "lengthEquals",
-                  "greaterThanOrEqual",
-                  "lessThanOrEqual",
-                  "isNotNull",
-                  "isNull",
-                  "contains",
-                  "match",
-                  "notMatch",
-                  "isEmpty",
-                  "isNotEmpty",
-                  "isBlank",
-                  "isNotBlank",
-                  "lengthGreaterThan",
-                  "lengthLessThan",
-                  "inList",
-                  "greaterThan",
-                  "containsIgnoreCase",
-                  "startsWith"
-                ]
+                "title": "Operator Code"
               },
               "index": {
-                "type": "integer"
+                "type": "integer",
+                "title": "Index from 1"
               },
               "conditionValues": {
                 "type": "array",
@@ -7548,7 +7628,7 @@
                     },
                     "valueTypeCode": {
                       "type": "string",
-                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                      "title": "Value Type Code"
                     },
                     "dateFormat": {
                       "type": "string"
@@ -7598,7 +7678,7 @@
                     },
                     "valueTypeCode": {
                       "type": "string",
-                      "enum": ["STRING", "INTEGER", "BOOLEAN"]
+                      "title": "Value Type Code"
                     }
                   },
                   "required": ["actionValueId", "value"]
@@ -7636,14 +7716,122 @@
       "ruleGroup",
       "ruleDesc",
       "ruleOwner",
-      "common",
+      {
+        "key": "common",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Y",
+            "label": "Yes"
+          },
+          {
+            "id": "N",
+            "label": "No"
+          }
+        ]    
+      },  
       {
         "key": "conditions",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",
           "conditions[].propertyPath",
-          "conditions[].operatorCode",
+          {
+            "key": "conditions[].operatorCode",
+            "type": "dynaselect",
+            "multiple": false,
+            "options": [
+              {
+                "id": "equals",
+                "label": "equals"
+              },
+              {
+                "id": "on",
+                "label": "on"
+              },
+              {
+                "id": "before",
+                "label": "before"
+              },
+              {
+                "id": "after",
+                "label": "after"
+              },
+              {
+                "id": "lengthEquals",
+                "label": "lengthEquals"
+              },
+              {
+                "id": "greaterThanOrEqual",
+                "label": "greaterThanOrEqual"
+              },
+              {
+                "id": "lessThanOrEqual",
+                "label": "lessThanOrEqual"
+              },
+              {
+                "id": "isNotNull",
+                "label": "isNotNull"
+              },
+              {
+                "id": "isNull",
+                "label": "isNull"
+              },
+              {
+                "id": "contains",
+                "label": "contains"
+              },
+              {
+                "id": "match",
+                "label": "match"
+              },
+              {
+                "id": "notMatch",
+                "label": "notMatch"
+              },
+              {
+                "id": "isEmpty",
+                "label": "isEmpty"
+              },
+              {
+                "id": "isNotEmpty",
+                "label": "isNotEmpty"
+              },
+              {
+                "id": "isBlank",
+                "label": "isBlank"
+              },
+              {
+                "id": "isNotBlank",
+                "label": "isNotBlank"
+              },
+              {
+                "id": "lengthGreaterThan",
+                "label": "lengthGreaterThan"
+              },
+              {
+                "id": "lengthLessThan",
+                "label": "lengthLessThan"
+              },
+              {
+                "id": "inList",
+                "label": "inList"
+              },
+              {
+                "id": "greaterThan",
+                "label": "greaterThan"
+              },
+              {
+                "id": "containsIgnoreCase",
+                "label": "containsIgnoreCase"
+              },
+              {
+                "id": "startsWith",
+                "label": "startsWith"
+              }
+            ]
+          },
           "conditions[].index",
           {
             "key": "conditions[].conditionValues",
@@ -7651,7 +7839,25 @@
               "conditions[].conditionValues[].conditionValueId",
               "conditions[].conditionValues[].conditionValue",
               "conditions[].conditionValues[].expression",
-              "conditions[].conditionValues[].valueTypeCode",
+              {
+                "key": "conditions[].conditionValues[].valueTypeCode",
+                "type": "dynaselect",
+                "multiple": false,
+                "options": [
+                  {
+                    "id": "STRING",
+                    "label": "String"
+                  },
+                  {
+                    "id": "INTEGER",
+                    "label": "Integer"
+                  },
+                  {
+                    "id": "BOOLEAN",
+                    "label": "Boolean"
+                  }
+                ]
+              },
               "conditions[].conditionValues[].dateFormat",
               "conditions[].conditionValues[].regexFlags"
             ]
@@ -7671,7 +7877,25 @@
             "items": [
               "actions[].actionValues[].actionValueId",
               "actions[].actionValues[].value",
-              "actions[].actionValues[].valueTypeCode"
+              {
+                "key": "actions[].actionValues[].valueTypeCode",
+                "type": "dynaselect",
+                "multiple": false,
+                "options": [
+                  {
+                    "id": "STRING",
+                    "label": "String"
+                  },
+                  {
+                    "id": "INTEGER",
+                    "label": "Integer"
+                  },
+                  {
+                    "id": "BOOLEAN",
+                    "label": "Boolean"
+                  }
+                ]
+              }
             ]
           }
         ]
