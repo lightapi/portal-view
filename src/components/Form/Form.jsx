@@ -45,6 +45,7 @@ function Form() {
   const navigate = useNavigate();
   const [fetching, setFetching] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [skipAuth, setSkipAuth] = useState(false);
   const [schema, setSchema] = useState(null);
   const [form, setForm] = useState(null);
   const [actions, setActions] = useState(null);
@@ -55,6 +56,7 @@ function Form() {
   useEffect(() => {
     console.log(formId);
     let formData = forms[formId];
+    setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
     setForm(formData.form);
     setActions(formData.actions);
@@ -126,7 +128,7 @@ function Form() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !skipAuth) {
     return (
       <div className={classes.errorContainer}>
         <Typography variant="h6" color="error" className={classes.errorMessage}>
