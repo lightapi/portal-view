@@ -92,7 +92,6 @@ Row.propTypes = {
 
 function RoleUserList(props) {
   const { roleUsers } = props;
-  e;
   return (
     <TableBody>
       {roleUsers && roleUsers.length > 0 ? (
