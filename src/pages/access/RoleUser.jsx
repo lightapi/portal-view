@@ -59,6 +59,8 @@ function Row(props) {
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.roleId}</TableCell>
+      <TableCell align="left">{row.startTs}</TableCell>
+      <TableCell align="left">{row.endTs}</TableCell>
       <TableCell align="left">{row.userId}</TableCell>
       <TableCell align="left">{row.entityId}</TableCell>
       <TableCell align="left">{row.email}</TableCell>
@@ -76,6 +78,8 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     roleId: PropTypes.string.isRequired,
+    startTs: PropTypes.string,
+    endTs: PropTypes.string,
     userId: PropTypes.string,
     entityId: PropTypes.string,
     email: PropTypes.string,
@@ -88,6 +92,7 @@ Row.propTypes = {
 
 function RoleUserList(props) {
   const { roleUsers } = props;
+  e;
   return (
     <TableBody>
       {roleUsers && roleUsers.length > 0 ? (
@@ -264,6 +269,8 @@ export default function RoleUser(props) {
                     onChange={handleRoleIdChange}
                   />
                 </TableCell>
+                <TableCell align="left">Start Timestamp</TableCell>
+                <TableCell align="left">End Timestamp</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
