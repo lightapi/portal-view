@@ -662,6 +662,7 @@
   },
   "signupForm": {
     "formId": "signupForm",
+    "skipAuth": true,
     "actions": [
       {
         "host": "lightapi.net",
@@ -678,19 +679,31 @@
       "type": "object",
       "properties": {
         "hostId": {
+          "title": "Host Id",
           "type": "string",
           "default": "N2CMw0HGQXeLvC1wBfln2A"
         },
         "email": {
+          "title": "Email",
           "type": "string",
           "pattern": "^\\S+@\\S+$",
           "validationMessage": "Email must be of proper format: example@example.com"
         },
         "userId": {
+          "title": "Entity Id",
           "type": "string"
         },
         "userType": {
+          "title": "User Type",
           "type": "string"
+        },
+        "referralId": {
+          "type": "string",
+          "title": "Referral Id or Email"
+        },
+        "managerId": {
+          "type": "string",
+          "title": "Manager Id or Email"
         },
         "language": {
           "type": "string",
@@ -704,19 +717,22 @@
           "type": "string"
         },
         "firstName": {
-          "type": "string"
+          "type": "string",
+          "title": "First Name"
         },
         "lastName": {
-          "type": "string"
+          "type": "string",
+          "title": "Last Name"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "title": "Phone Number"
         },
         "gender": {
           "type": "string",
-          "enum": ["F", "M"]
+          "title": "Gender"
         },
         "birthday": {
-          "type": "string"
-        },
-        "taijiWallet": {
           "type": "string"
         },
         "country": {
@@ -739,6 +755,7 @@
         "hostId",
         "email",
         "userId",
+        "userType",
         "language",
         "password",
         "passwordConfirm"
@@ -763,6 +780,14 @@
           "url": "/r/data?name=user_type"
         }
       },
+      {
+        "condition": "model.userType === 'C'",
+        "key": "referralId"
+      },
+      {
+        "condition": "model.userType === 'E'",
+        "key": "managerId"
+      },
       "language",
       {
         "key": "password",
@@ -774,12 +799,26 @@
       },
       "firstName",
       "lastName",
-      "gender",
+      "phoneNumber",
+      {
+        "key": "gender",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "M",
+            "label": "Male"
+          },
+          {
+            "id": "F",
+            "label": "Female"
+          }
+        ]
+      },
       {
         "key": "birthday",
         "type": "date"
       },
-      "taijiWallet",
       {
         "key": "country",
         "type": "dynaselect",
@@ -793,19 +832,11 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=province&rela=ctry-prov&from={0}",
+          "url": "/r/data?name=province&rela=country-province&from={0}",
           "params": ["country"]
         }
       },
-      {
-        "key": "city",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/r/data?name=city&rela=prov-city&from={0}",
-          "params": ["province"]
-        }
-      },
+      "city",
       "address",
       "postCode"
     ]
