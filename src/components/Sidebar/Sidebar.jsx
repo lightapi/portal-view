@@ -7,7 +7,6 @@ import {
   LibraryBooks as LibraryIcon,
   NotificationsNone as NotificationsIcon,
   Toc as OrderIcon,
-  Handyman as HandymanIcon,
 } from "@mui/icons-material";
 import AccountBox from "@mui/icons-material/AccountBox";
 import AddAlert from "@mui/icons-material/AddAlert";
@@ -24,10 +23,11 @@ import SecurityIcon from "@mui/icons-material/Security";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import GiteIcon from "@mui/icons-material/Gite";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 // context
 import {
   toggleSidebar,
@@ -153,6 +153,13 @@ const structure = [
   //   ],
   // },
   { id: 90, type: "divider", role: "admin" },
+  {
+    id: 95,
+    label: "User Admin",
+    role: "admin",
+    link: "/app/user",
+    icon: <PeopleAltIcon />,
+  },
   {
     id: 110,
     label: "Client Admin",

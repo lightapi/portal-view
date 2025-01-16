@@ -689,7 +689,7 @@
           "pattern": "^\\S+@\\S+$",
           "validationMessage": "Email must be of proper format: example@example.com"
         },
-        "userId": {
+        "entityId": {
           "title": "Entity Id",
           "type": "string"
         },
@@ -754,7 +754,7 @@
       "required": [
         "hostId",
         "email",
-        "userId",
+        "entityId",
         "userType",
         "language",
         "password",
@@ -771,7 +771,7 @@
         }
       },
       "email",
-      "userId",
+      "entityId",
       {
         "key": "userType",
         "type": "dynaselect",
@@ -7362,8 +7362,8 @@
             "id": "N",
             "label": "No"
           }
-        ]    
-      },  
+        ]
+      },
       {
         "key": "conditions",
         "items": [
@@ -7528,7 +7528,7 @@
                     "label": "Boolean"
                   }
                 ]
-              }    
+              }
             ]
           }
         ]
@@ -7729,8 +7729,8 @@
             "id": "N",
             "label": "No"
           }
-        ]    
-      },  
+        ]
+      },
       {
         "key": "conditions",
         "items": [
