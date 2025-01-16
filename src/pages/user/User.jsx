@@ -16,6 +16,9 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import RadarIcon from "@mui/icons-material/Radar";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
 import DetailsIcon from "@mui/icons-material/Details";
+import DomainVerificationIcon from "@mui/icons-material/DomainVerification";
+import LockIcon from "@mui/icons-material/Lock";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -95,6 +98,87 @@ function Row(props) {
     }
   };
 
+  const handleLockUser = async (hostId, userId) => {
+    if (window.confirm("Are you sure you want to lock the user?")) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "user",
+        action: "lockUser",
+        version: "0.1.0",
+        data: {
+          hostId,
+          userId,
+        },
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
+    }
+  };
+
+  const handleUnlockUser = async (hostId, userId) => {
+    if (window.confirm("Are you sure you want to unlock the user?")) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "user",
+        action: "unlockUser",
+        version: "0.1.0",
+        data: {
+          hostId,
+          userId,
+        },
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
+    }
+  };
+
+  const handleVerifyUser = async (hostId, userId) => {
+    if (window.confirm("Are you sure you want to verify the user?")) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "user",
+        action: "verifyUser",
+        version: "0.1.0",
+        data: {
+          hostId,
+          userId,
+        },
+      };
+
+      const result = await apiPost({
+        url: "/portal/command",
+        headers: {},
+        body: cmd,
+      });
+      if (result.data) {
+        // Refresh the data after successful deletion
+        window.location.reload();
+      } else if (result.error) {
+        console.error("Api Error", result.error);
+      }
+    }
+  };
+
   const handleDetail = (user) => {
     navigate("/app/userDetail", { state: { user } });
   };
@@ -129,6 +213,19 @@ function Row(props) {
       <TableCell align="right">
         <DeleteForeverIcon
           onClick={() => handleDelete(row.hostId, row.userId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <LockIcon onClick={() => handleLockUser(row.hostId, row.userId)} />
+      </TableCell>
+      <TableCell align="right">
+        <LockOpenIcon
+          onClick={() => handleUnlockUser(row.hostId, row.userId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DomainVerificationIcon
+          onClick={() => handleVerifyUser(row.hostId, row.userId)}
         />
       </TableCell>
       <TableCell align="right">
@@ -571,6 +668,9 @@ export default function User() {
                 <TableCell align="right">Detail</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Lock</TableCell>
+                <TableCell align="right">Unlock</TableCell>
+                <TableCell align="right">Confirm</TableCell>
                 <TableCell align="right">Role</TableCell>
                 <TableCell align="right">Group</TableCell>
                 <TableCell align="right">Position</TableCell>
