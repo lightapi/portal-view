@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -111,26 +111,38 @@ RoleUserList.propTypes = {
   roleUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function RoleUser(props) {
+export default function RoleUser() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [roleId, setRoleId] = useState("");
+
+  const location = useLocation();
+  const data = location.state?.data;
+
+  // Initialize state using the functional form of useState
+  const [roleId, setRoleId] = useState(() => data?.roleId || "");
   const debouncedRoleId = useDebounce(roleId, 1000);
-  const [userId, setUserId] = useState("");
+
+  const [userId, setUserId] = useState(() => data?.userId || "");
   const debouncedUserId = useDebounce(userId, 1000);
+
   const [entityId, setEntityId] = useState("");
   const debouncedEntityId = useDebounce(entityId, 1000);
+
   const [email, setEmail] = useState("");
   const debouncedEmail = useDebounce(email, 1000);
+
   const [firstName, setFirstName] = useState("");
   const debouncedFirstName = useDebounce(firstName, 1000);
+
   const [lastName, setLastName] = useState("");
   const debouncedLastName = useDebounce(lastName, 1000);
+
   const [userType, setUserType] = useState("");
   const debouncedUserType = useDebounce(userType, 1000);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -236,8 +248,10 @@ export default function RoleUser(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createRoleUser");
+  const handleCreate = (roleId, userId) => {
+    navigate("/app/form/createRoleUser", {
+      state: { data: { roleId, userId } },
+    });
   };
 
   let content;
@@ -333,7 +347,7 @@ export default function RoleUser(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon onClick={() => handleCreate(roleId, userId)} />
       </div>
     );
   }

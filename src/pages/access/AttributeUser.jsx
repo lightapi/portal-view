@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -115,19 +115,23 @@ AttributeUserList.propTypes = {
   attributeUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributeUser(props) {
+export default function AttributeUser() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [attributeId, setAttributeId] = useState("");
+  const location = useLocation();
+  const data = location.state?.data;
+  const [attributeId, setAttributeId] = useState(() => data?.attributeId || "");
   const debouncedAttributeId = useDebounce(attributeId, 1000);
   const [attributeType, setAttributeType] = useState("");
   const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeValue, setAttributeValue] = useState("");
+  const [attributeValue, setAttributeValue] = useState(
+    () => data?.attributeValue || "",
+  );
   const debouncedAttributeValue = useDebounce(attributeValue, 1000);
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState(() => data?.userId || "");
   const debouncedUserId = useDebounce(userId, 1000);
   const [entityId, setEntityId] = useState("");
   const debouncedEntityId = useDebounce(entityId, 1000);
@@ -254,8 +258,16 @@ export default function AttributeUser(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createAttributeUser");
+  const handleCreate = (attributeId, attributeValue, userId) => {
+    navigate("/app/form/createAttributeUser", {
+      state: {
+        data: {
+          attributeId,
+          attributeValue,
+          userId,
+        },
+      },
+    });
   };
 
   let content;
@@ -365,7 +377,9 @@ export default function AttributeUser(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon
+          onClick={() => handleCreate(attributeId, attributeValue, userId)}
+        />
       </div>
     );
   }

@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
+import CameraRollIcon from "@mui/icons-material/CameraRoll";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { useEffect, useState, useCallback } from "react";
@@ -80,9 +80,8 @@ function Row(props) {
     navigate("/app/access/roleColFilter", { state: { role } });
   };
 
-  const handleRoleUser = (role) => {
-    console.log("role", role);
-    navigate("/app/access/roleUser", { state: { role } });
+  const handleRoleUser = (roleId) => {
+    navigate("/app/access/roleUser", { state: { data: { roleId } } });
   };
 
   return (
@@ -107,7 +106,7 @@ function Row(props) {
         />
       </TableCell>
       <TableCell align="right">
-        <AccessibilityIcon onClick={() => handleRoleUser(row)} />
+        <CameraRollIcon onClick={() => handleRoleUser(row.roleId)} />
       </TableCell>
     </TableRow>
   );

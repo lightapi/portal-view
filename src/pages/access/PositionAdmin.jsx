@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
+import RadarIcon from "@mui/icons-material/Radar";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -71,8 +71,8 @@ function Row(props) {
     navigate("/app/access/positionPermission", { state: { position } });
   };
 
-  const handlePositionUser = (position) => {
-    navigate("/app/access/positionUser", { state: { position } });
+  const handlePositionUser = (positionId) => {
+    navigate("/app/access/positionUser", { state: { data: { positionId } } });
   };
 
   return (
@@ -91,7 +91,7 @@ function Row(props) {
         <DoNotTouchIcon onClick={() => handlePositionPermission(row)} />
       </TableCell>
       <TableCell align="right">
-        <AccessibilityIcon onClick={() => handlePositionUser(row)} />
+        <RadarIcon onClick={() => handlePositionUser(row.positionId)} />
       </TableCell>
     </TableRow>
   );

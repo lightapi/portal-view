@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -114,15 +114,17 @@ GroupUserList.propTypes = {
   groupUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function GroupUser(props) {
+export default function GroupUser() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [groupId, setGroupId] = useState("");
+  const location = useLocation();
+  const data = location.state?.data;
+  const [groupId, setGroupId] = useState(() => data?.groupId || "");
   const debouncedGroupId = useDebounce(groupId, 1000);
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState(() => data?.userId || "");
   const debouncedUserId = useDebounce(userId, 1000);
   const [entityId, setEntityId] = useState("");
   const debouncedEntityId = useDebounce(entityId, 1000);
@@ -239,8 +241,10 @@ export default function GroupUser(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createGroupUser");
+  const handleCreate = (groupId, userId) => {
+    navigate("/app/form/createGroupUser", {
+      state: { data: { groupId, userId } },
+    });
   };
 
   let content;
@@ -336,7 +340,7 @@ export default function GroupUser(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon onClick={() => handleCreate(groupId, userId)} />
       </div>
     );
   }

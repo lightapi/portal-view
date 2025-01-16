@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
+import GroupsIcon from "@mui/icons-material/Groups";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -69,9 +69,8 @@ function Row(props) {
     navigate("/app/access/groupPermission", { state: { group } });
   };
 
-  const handleUserGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupUser", { state: { group } });
+  const handleUserGroup = (groupId) => {
+    navigate("/app/access/groupUser", { state: { data: { groupId } } });
   };
 
   return (
@@ -88,7 +87,7 @@ function Row(props) {
         <DoNotTouchIcon onClick={() => handleApiGroup(row)} />
       </TableCell>
       <TableCell align="right">
-        <AccessibilityIcon onClick={() => handleUserGroup(row)} />
+        <GroupsIcon onClick={() => handleUserGroup(row.groupId)} />
       </TableCell>
     </TableRow>
   );

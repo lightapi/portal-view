@@ -10,6 +10,11 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import CameraRollIcon from "@mui/icons-material/CameraRoll";
+import AttributionIcon from "@mui/icons-material/Attribution";
+import GroupsIcon from "@mui/icons-material/Groups";
+import RadarIcon from "@mui/icons-material/Radar";
+import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
 import DetailsIcon from "@mui/icons-material/Details";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -35,6 +40,32 @@ function Row(props) {
 
   const handleUpdate = (user) => {
     navigate("/app/form/updateUser", { state: { user } });
+  };
+
+  const handleRoleUser = (hostId, userId) => {
+    navigate("/app/access/roleUser", { state: { data: { hostId, userId } } });
+  };
+
+  const handleGroupUser = (hostId, userId) => {
+    navigate("/app/access/groupUser", { state: { data: { hostId, userId } } });
+  };
+
+  const handlePositionUser = (hostId, userId) => {
+    navigate("/app/access/positionUser", {
+      state: { data: { hostId, userId } },
+    });
+  };
+
+  const handleAttributeUser = (hostId, userId) => {
+    navigate("/app/access/attributeUser", {
+      state: { data: { hostId, userId } },
+    });
+  };
+
+  const handlePermission = (hostId, userId) => {
+    navigate("/app/access/userPermission", {
+      state: { data: { hostId, userId } },
+    });
   };
 
   const handleDelete = async (hostId, userId) => {
@@ -98,6 +129,27 @@ function Row(props) {
       <TableCell align="right">
         <DeleteForeverIcon
           onClick={() => handleDelete(row.hostId, row.userId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <CameraRollIcon
+          onClick={() => handleRoleUser(row.hostId, row.userId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <GroupsIcon onClick={() => handleGroupUser(row.hostId, row.userId)} />
+      </TableCell>
+      <TableCell align="right">
+        <RadarIcon onClick={() => handlePositionUser(row.hostId, row.userId)} />
+      </TableCell>
+      <TableCell align="right">
+        <AttributionIcon
+          onClick={() => handleAttributeUser(row.hostId, row.userId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DoNotTouchIcon
+          onClick={() => handlePermission(row.hostId, row.userId)}
         />
       </TableCell>
     </TableRow>
@@ -519,6 +571,11 @@ export default function User() {
                 <TableCell align="right">Detail</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Role</TableCell>
+                <TableCell align="right">Group</TableCell>
+                <TableCell align="right">Position</TableCell>
+                <TableCell align="right">Attribute</TableCell>
+                <TableCell align="right">Permission</TableCell>
               </TableRow>
             </TableHead>
             <UserList users={users} />

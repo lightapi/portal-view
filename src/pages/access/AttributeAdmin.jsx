@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import AccessibilityIcon from "@mui/icons-material/Accessibility";
+import AttributionIcon from "@mui/icons-material/Attribution";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -74,9 +74,10 @@ function Row(props) {
     navigate("/app/access/attributePermission", { state: { attribute } });
   };
 
-  const handleAttributeUser = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributeUser", { state: { attribute } });
+  const handleAttributeUser = (attributeId) => {
+    navigate("/app/access/attributeUser", {
+      state: { data: { attributeId } },
+    });
   };
 
   return (
@@ -94,7 +95,7 @@ function Row(props) {
         <DoNotTouchIcon onClick={() => handleAttributePermission(row)} />
       </TableCell>
       <TableCell align="right">
-        <AccessibilityIcon onClick={() => handleAttributeUser(row)} />
+        <AttributionIcon onClick={() => handleAttributeUser(row.attributeId)} />
       </TableCell>
     </TableRow>
   );
