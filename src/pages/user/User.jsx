@@ -39,7 +39,7 @@ function Row(props) {
   const classes = useRowStyles();
 
   const handleUpdate = (user) => {
-    navigate("/app/form/updateUser", { state: { user } });
+    navigate("/app/form/updateUser", { state: { data: { ...user } } });
   };
 
   const handleRoleUser = (hostId, userId) => {

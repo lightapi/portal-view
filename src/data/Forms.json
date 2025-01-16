@@ -885,8 +885,8 @@
       }
     ]
   },
-  "updateProfile": {
-    "formId": "updateProfile",
+  "updateUser": {
+    "formId": "updateUser",
     "actions": [
       {
         "host": "lightapi.net",
@@ -902,113 +902,147 @@
       "title": "User Profile",
       "type": "object",
       "properties": {
-        "host": {
-          "type": "string"
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
         },
         "email": {
           "type": "string",
+          "title": "Email",
           "pattern": "^\\S+@\\S+$",
           "validationMessage": "Email must be of proper format: example@example.com",
           "readonly": true
         },
         "userId": {
           "type": "string",
+          "title": "User Id",
           "readonly": true
+        },
+        "entityId": {
+          "type": "string",
+          "title": "Entity Id",
+          "readonly": true
+        },
+        "userType": {
+          "type": "string",
+          "title": "User Type",
+          "readonly": true
+        },
+        "referralId": {
+          "type": "string",
+          "title": "Referral Id or Email"
+        },
+        "managerId": {
+          "type": "string",
+          "title": "Manager Id or Email"
         },
         "language": {
           "type": "string",
+          "title": "Language",
           "enum": ["en"]
         },
         "firstName": {
-          "type": "string"
+          "type": "string",
+          "title": "First Name"
         },
         "lastName": {
-          "type": "string"
+          "type": "string",
+          "title": "Last Name"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "title": "Phone Number"
         },
         "gender": {
           "type": "string",
-          "enum": ["F", "M"]
+          "title": "Gender"
         },
         "birthday": {
-          "type": "string"
-        },
-        "taijiWallet": {
-          "type": "string"
+          "type": "string",
+          "title": "Birthday"
         },
         "country": {
-          "type": "string"
+          "type": "string",
+          "title": "Country"
         },
         "province": {
-          "type": "string"
+          "type": "string",
+          "title": "Province"
         },
         "city": {
-          "type": "string"
+          "type": "string",
+          "title": "City"
         },
         "postCode": {
-          "type": "string"
+          "type": "string",
+          "title": "Post Code"
         },
         "address": {
-          "type": "string"
+          "type": "string",
+          "title": "Address"
         }
       },
       "required": [
-        "host",
+        "hostId",
         "email",
         "userId",
-        "language",
-        "firstName",
-        "lastName",
-        "gender"
+        "entityId",
+        "userType",
+        "language"
       ]
     },
     "form": [
-      {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=host"
-        }
-      },
+      "hostId",
       "email",
       "userId",
+      "entityId",
+      "userType",
+      "referralId",
+      "managerId",
       "language",
       "firstName",
       "lastName",
-      "gender",
+      "phoneNumber",
+      {
+        "key": "gender",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "M",
+            "label": "Male"
+          },
+          {
+            "id": "F",
+            "label": "Female"
+          }
+        ]
+      },
       {
         "key": "birthday",
         "type": "date"
       },
-      "taijiWallet",
       {
         "key": "country",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=country"
         }
       },
       {
         "key": "province",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=province&rela=ctry-prov&from={0}",
+          "url": "/r/data?name=province&rela=country-province&from={0}",
           "params": ["country"]
         }
       },
-      {
-        "key": "city",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=city&rela=prov-city&from={0}",
-          "params": ["province"]
-        }
-      },
-      "postCode",
-      "address"
+      "city",
+      "address",
+      "postCode"
     ]
   },
   "covidMapForm": {
