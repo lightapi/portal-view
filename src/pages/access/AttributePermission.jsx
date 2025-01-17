@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -112,20 +112,22 @@ AttributePermissionList.propTypes = {
 export default function AttributePermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [attributeId, setAttributeId] = useState("");
+  const [attributeId, setAttributeId] = useState(() => data?.attributeId || "");
   const debouncedAttributeId = useDebounce(attributeId, 1000);
   const [attributeType, setAttributeType] = useState("");
   const debouncedAttributeType = useDebounce(attributeType, 1000);
   const [attributeValue, setAttributeValue] = useState("");
   const debouncedAttributeValue = useDebounce(attributeValue, 1000);
-  const [apiId, setApiId] = useState("");
+  const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
-  const [apiVersion, setApiVersion] = useState("");
+  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [endpoint, setEndpoint] = useState("");
+  const [endpoint, setEndpoint] = useState(() => data?.endpoint || "");
   const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
@@ -221,8 +223,10 @@ export default function AttributePermission(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createAttributePermission");
+  const handleCreate = (attributeId, apiId, apiVersion, endpoint) => {
+    navigate("/app/form/createAttributePermission", {
+      state: { data: { attributeId, apiId, apiVersion, endpoint } },
+    });
   };
 
   let content;
@@ -310,7 +314,7 @@ export default function AttributePermission(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon onClick={() => handleCreate(attributeId, apiId, apiVersion, endpoint)} />
       </div>
     );
   }

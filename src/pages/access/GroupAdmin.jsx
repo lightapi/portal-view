@@ -11,6 +11,8 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -64,9 +66,16 @@ function Row(props) {
     }
   };
 
-  const handleApiGroup = (group) => {
-    console.log("group", group);
-    navigate("/app/access/groupPermission", { state: { group } });
+  const handleApiGroup = (groupId) => {
+    navigate("/app/access/groupPermission", { state: { data: { groupId } } });
+  };
+
+  const handleGroupRowFilter = (groupId) => {
+    navigate("/app/access/groupRowFilter", { state: { data: { groupId } } });
+  };
+
+  const handleGroupColFilter = (groupId) => {
+    navigate("/app/access/groupColFilter", { state: { data: { groupId } } });
   };
 
   const handleUserGroup = (groupId) => {
@@ -84,7 +93,17 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleApiGroup(row)} />
+        <DoNotTouchIcon onClick={() => handleApiGroup(row.groupId)} />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() => handleGroupRowFilter(row.groupId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() => handleGroupColFilter(row.groupId)}
+        />
       </TableCell>
       <TableCell align="right">
         <GroupsIcon onClick={() => handleUserGroup(row.groupId)} />
@@ -250,6 +269,8 @@ export default function GroupAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Group Permission</TableCell>
+                <TableCell align="right">Role Row Filter</TableCell>
+                <TableCell align="right">Role Col Filter</TableCell>
                 <TableCell align="right">Group User</TableCell>
               </TableRow>
             </TableHead>

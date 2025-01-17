@@ -11,9 +11,9 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import CameraRollIcon from "@mui/icons-material/CameraRoll";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
+import CameraRollIcon from "@mui/icons-material/CameraRoll";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -37,7 +37,6 @@ function Row(props) {
   const classes = useRowStyles();
 
   const handleUpdate = (role) => {
-    console.log("role = ", role);
     navigate("/app/form/updateRole", { state: { data: { ...role } } });
   };
 
@@ -67,17 +66,16 @@ function Row(props) {
     }
   };
 
-  const handleRolePermission = (role) => {
-    console.log("role", role);
-    navigate("/app/access/rolePermission", { state: { role } });
+  const handleRolePermission = (roleId) => {
+    navigate("/app/access/rolePermission", { state: { data: { roleId } } });
   };
 
-  const handleRoleRowFilter = (role) => {
-    navigate("/app/access/roleRowFilter", { state: { role } });
+  const handleRoleRowFilter = (roleId) => {
+    navigate("/app/access/roleRowFilter", { state: { data: { roleId } } });
   };
 
-  const handleRoleColFilter = (role) => {
-    navigate("/app/access/roleColFilter", { state: { role } });
+  const handleRoleColFilter = (roleId) => {
+    navigate("/app/access/roleColFilter", { state: { data: { roleId } } });
   };
 
   const handleRoleUser = (roleId) => {
@@ -95,14 +93,16 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleRolePermission(row)} />
+        <DoNotTouchIcon onClick={() => handleRolePermission(row.roleId)} />
       </TableCell>
       <TableCell align="right">
-        <KeyboardDoubleArrowDownIcon onClick={() => handleRoleRowFilter(row)} />
+        <KeyboardDoubleArrowDownIcon
+          onClick={() => handleRoleRowFilter(row.roleId)}
+        />
       </TableCell>
       <TableCell align="right">
         <KeyboardDoubleArrowRightIcon
-          onClick={() => handleRoleColFilter(row)}
+          onClick={() => handleRoleColFilter(row.roleId)}
         />
       </TableCell>
       <TableCell align="right">

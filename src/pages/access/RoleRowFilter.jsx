@@ -12,7 +12,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -117,21 +117,21 @@ RoleRowFilterList.propTypes = {
   roleRowFilters: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function RoleRowFilter(props) {
+export default function RoleRowFilter() {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [roleId, setRoleId] = useState("");
+  const [roleId, setRoleId] = useState(() => data?.roleId || "");
   const debouncedRoleId = useDebounce(roleId, 1000);
-
-  const [apiId, setApiId] = useState("");
+  const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
-
-  const [apiVersion, setApiVersion] = useState("");
+  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [endpoint, setEndpoint] = useState("");
+  const [endpoint, setEndpoint] = useState(() => data?.endpoint || "");
   const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [colName, setColName] = useState("");
   const debouncedColName = useDebounce(colName, 1000);
@@ -241,8 +241,10 @@ export default function RoleRowFilter(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createRoleRowFilter");
+  const handleCreate = (roleId, apiId, apiVersion, endpoint) => {
+    navigate("/app/form/createRoleRowFilter", {
+      state: { data: { roleId, apiId, apiVersion, endpoint } },
+    });
   };
 
   let content;
@@ -293,7 +295,7 @@ export default function RoleRowFilter(props) {
                   <input
                     type="text"
                     placeholder="Endpoint"
-                    value={apiVersion}
+                    value={endpoint}
                     onChange={handleEndpointChange}
                   />
                 </TableCell>
@@ -301,7 +303,7 @@ export default function RoleRowFilter(props) {
                   <input
                     type="text"
                     placeholder="Column Name"
-                    value={apiVersion}
+                    value={colName}
                     onChange={handleColNameChange}
                   />
                 </TableCell>
@@ -337,7 +339,9 @@ export default function RoleRowFilter(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon
+          onClick={() => handleCreate(roleId, apiId, apiVersion, endpoint)}
+        />
       </div>
     );
   }

@@ -11,6 +11,8 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import RadarIcon from "@mui/icons-material/Radar";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -35,7 +37,6 @@ function Row(props) {
   const classes = useRowStyles();
 
   const handleUpdate = (position) => {
-    console.log("position = ", position);
     navigate("/app/form/updatePosition", { state: { data: { ...position } } });
   };
 
@@ -67,8 +68,16 @@ function Row(props) {
     }
   };
 
-  const handlePositionPermission = (position) => {
-    navigate("/app/access/positionPermission", { state: { position } });
+  const handlePositionPermission = (positionId) => {
+    navigate("/app/access/positionPermission", { state: { data: { positionId } } });
+  };
+
+  const handlePositionRowFilter = (positionId) => {
+    navigate("/app/access/positionRowFilter", { state: { data: { positionId } } });
+  };
+
+  const handlePositionColFilter = (positionId) => {
+    navigate("/app/access/positionColFilter", { state: { data: { positionId } } });
   };
 
   const handlePositionUser = (positionId) => {
@@ -88,7 +97,17 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handlePositionPermission(row)} />
+        <DoNotTouchIcon onClick={() => handlePositionPermission(row.positionId)} />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() => handlePositionRowFilter(row.positionId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() => handlePositionColFilter(row.positionId)}
+        />
       </TableCell>
       <TableCell align="right">
         <RadarIcon onClick={() => handlePositionUser(row.positionId)} />
@@ -287,6 +306,8 @@ export default function PositionAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Position Permission</TableCell>
+                <TableCell align="right">Role Row Filter</TableCell>
+                <TableCell align="right">Role Col Filter</TableCell>
                 <TableCell align="right">Position User</TableCell>
               </TableRow>
             </TableHead>

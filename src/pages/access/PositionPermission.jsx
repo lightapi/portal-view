@@ -11,7 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext";
 import { makeStyles } from "@mui/styles";
@@ -112,20 +112,22 @@ PositionPermissionList.propTypes = {
 export default function PositionPermission(props) {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [positionId, setPositionId] = useState("");
+  const [positionId, setPositionId] = useState(() => data?.positionId || "");
   const debouncedPositionId = useDebounce(positionId, 1000);
   const [inheritToAncestor, setInheritToAncestor] = useState("");
   const debouncedInheritToAncestor = useDebounce(inheritToAncestor, 1000);
   const [inheritToSibling, setInheritToSibling] = useState("");
   const debouncedInheritToSibling = useDebounce(inheritToSibling, 1000);
-  const [apiId, setApiId] = useState("");
+  const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
-  const [apiVersion, setApiVersion] = useState("");
+  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [endpoint, setEndpoint] = useState("");
+  const [endpoint, setEndpoint] = useState(() => data?.endpoint || "");
   const debouncedEndpoint = useDebounce(endpoint, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
@@ -224,8 +226,10 @@ export default function PositionPermission(props) {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createPositionPermission");
+  const handleCreate = (positionId, apiId, apiVersion, endpoint) => {
+    navigate("/app/form/createPositionPermission", {
+      state: { data: { positionId, apiId, apiVersion, endpoint } },
+    });
   };
 
   let content;
@@ -311,7 +315,7 @@ export default function PositionPermission(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
+        <AddBoxIcon onClick={() => handleCreate(positionId, apiId, apiVersion, endpoint)} />
       </div>
     );
   }

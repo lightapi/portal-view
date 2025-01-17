@@ -11,6 +11,8 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import AttributionIcon from "@mui/icons-material/Attribution";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -69,9 +71,16 @@ function Row(props) {
     }
   };
 
-  const handleAttributePermission = (attribute) => {
-    console.log("attribute", attribute);
-    navigate("/app/access/attributePermission", { state: { attribute } });
+  const handleAttributePermission = (attributeId) => {
+    navigate("/app/access/attributePermission", { state: { data: { attributeId } } });
+  };
+
+  const handleAttributeRowFilter = (attributeId) => {
+    navigate("/app/access/attributeRowFilter", { state: { data: { attributeId } } });
+  };
+
+  const handleAttributeColFilter = (attributeId) => {
+    navigate("/app/access/attributeColFilter", { state: { data: { attributeId } } });
   };
 
   const handleAttributeUser = (attributeId) => {
@@ -92,7 +101,17 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleAttributePermission(row)} />
+        <DoNotTouchIcon onClick={() => handleAttributePermission(row.attributeId)} />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() => handleAttributeRowFilter(row.attributeId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() => handleAttributeColFilter(row.attributeId)}
+        />
       </TableCell>
       <TableCell align="right">
         <AttributionIcon onClick={() => handleAttributeUser(row.attributeId)} />
@@ -276,6 +295,8 @@ export default function AttributeAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Attribute Permission</TableCell>
+                <TableCell align="right">Role Row Filter</TableCell>
+                <TableCell align="right">Role Col Filter</TableCell>
                 <TableCell align="right">Attribute User</TableCell>
               </TableRow>
             </TableHead>

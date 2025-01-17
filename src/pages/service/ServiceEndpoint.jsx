@@ -9,6 +9,10 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import AccessibleForwardIcon from "@mui/icons-material/AccessibleForward";
+import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
+import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import CircularProgress from "@mui/material/CircularProgress";
 import PropTypes from "prop-types";
 import { useApiGet } from "../../hooks/useApiGet";
@@ -60,6 +64,84 @@ function Row(props) {
     });
   };
 
+  const handleRolePermission = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/rolePermission", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleRoleRowFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/roleRowFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleRoleColFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/roleColFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleGroupPermission = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/groupPermission", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleGroupRowFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/groupRowFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleGroupColFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/groupColFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handlePositionPermission = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/positionPermission", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handlePositionRowFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/positionRowFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handlePositionColFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/positionColFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleAttributePermission = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/attributePermission", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleAttributeRowFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/attributeRowFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleAttributeColFilter = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/attributeColFilter", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
+  const handleUserPermission = (apiId, apiVersion, endpoint) => {
+    navigate("/app/access/userPermission", {
+      state: { data: { apiId, apiVersion, endpoint } },
+    });
+  };
+
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.hostId}</TableCell>
@@ -74,6 +156,97 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <FilterListIcon onClick={() => listRules(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <DoNotTouchIcon
+          onClick={() =>
+            handleRolePermission(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() =>
+            handleRoleRowFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() =>
+            handleRoleColFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DoNotTouchIcon
+          onClick={() =>
+            handleGroupPermission(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() =>
+            handleGroupRowFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() =>
+            handleGroupColFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DoNotTouchIcon
+          onClick={() =>
+            handlePositionPermission(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() =>
+            handlePositionRowFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() =>
+            handlePositionColFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DoNotTouchIcon
+          onClick={() =>
+            handleAttributePermission(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowDownIcon
+          onClick={() =>
+            handleAttributeRowFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <KeyboardDoubleArrowRightIcon
+          onClick={() =>
+            handleAttributeColFilter(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <AccessibilityIcon
+          onClick={() =>
+            handleUserPermission(row.apiId, row.apiVersion, row.endpoint)
+          }
+        />
       </TableCell>
     </TableRow>
   );
@@ -117,6 +290,19 @@ export default function ServiceEndpoint() {
               <TableCell align="left">Endpoint Desc</TableCell>
               <TableCell align="right">Scopes</TableCell>
               <TableCell align="right">Rules</TableCell>
+              <TableCell align="right">Role Permission</TableCell>
+              <TableCell align="right">Role Row Filter</TableCell>
+              <TableCell align="right">Role Col Filter</TableCell>
+              <TableCell align="right">Group Permission</TableCell>
+              <TableCell align="right">Group Row Filter</TableCell>
+              <TableCell align="right">Group Col Filter</TableCell>
+              <TableCell align="right">Position Permission</TableCell>
+              <TableCell align="right">Position Row Filter</TableCell>
+              <TableCell align="right">Position Col Filter</TableCell>
+              <TableCell align="right">Attribute Permission</TableCell>
+              <TableCell align="right">Attribute Row Filter</TableCell>
+              <TableCell align="right">Attribute Col Filter</TableCell>
+              <TableCell align="right">User Permission</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
