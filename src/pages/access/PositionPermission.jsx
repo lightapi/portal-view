@@ -109,7 +109,7 @@ PositionPermissionList.propTypes = {
   positionPermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function PositionPermission(props) {
+export default function PositionPermission() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
@@ -136,9 +136,6 @@ export default function PositionPermission(props) {
 
   const handlePositionIdChange = (event) => {
     setPositionId(event.target.value);
-  };
-  const handlePositionTypeChange = (event) => {
-    setPositionType(event.target.value);
   };
   const handleInheritToAncestorChange = (event) => {
     setInheritToAncestor(event.target.value);
@@ -315,7 +312,9 @@ export default function PositionPermission(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(positionId, apiId, apiVersion, endpoint)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(positionId, apiId, apiVersion, endpoint)}
+        />
       </div>
     );
   }

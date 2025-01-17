@@ -109,7 +109,7 @@ AttributePermissionList.propTypes = {
   attributePermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function AttributePermission(props) {
+export default function AttributePermission() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
@@ -314,7 +314,9 @@ export default function AttributePermission(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(attributeId, apiId, apiVersion, endpoint)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(attributeId, apiId, apiVersion, endpoint)}
+        />
       </div>
     );
   }
