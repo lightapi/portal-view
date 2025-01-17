@@ -14,8 +14,12 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import CircularProgress from "@mui/material/CircularProgress";
+import TablePagination from "@mui/material/TablePagination";
 import PropTypes from "prop-types";
-import { useApiGet } from "../../hooks/useApiGet";
+import { useEffect, useState, useCallback } from "react";
+import useDebounce from "../../hooks/useDebounce.js";
+import { useUserState } from "../../contexts/UserContext";
+import Cookies from "universal-cookie";
 import useStyles from "./styles";
 
 const useRowStyles = makeStyles({
@@ -254,68 +258,200 @@ function Row(props) {
 
 export default function ServiceEndpoint() {
   const classes = useStyles();
+  const navigate = useNavigate();
   const location = useLocation();
-  const { hostId, apiId, apiVersion } = location.state.data;
+  const { host } = useUserState();
+  const { hostId, apiId: initialApiId, apiVersion: initialApiVersion } = location.state.data;
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [endpoint, setEndpoint] = useState("");
+  const debouncedEndpoint = useDebounce(endpoint, 1000);
+  const [httpMethod, setHttpMethod] = useState("");
+  const debouncedHttpMethod = useDebounce(httpMethod, 1000);
+  const [endpointPath, setEndpointPath] = useState("");
+  const debouncedEndpointPath = useDebounce(endpointPath, 1000);
+  const [endpointDesc, setEndpointDesc] = useState("");
+  const debouncedEndpointDesc = useDebounce(endpointDesc, 1000);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+  const [total, setTotal] = useState(0);
+  const [endpoints, setEndpoints] = useState([]);
 
-  const cmd = {
-    host: "lightapi.net",
-    service: "market",
-    action: "getServiceEndpoint",
-    version: "0.1.0",
-    data: { hostId, apiId, apiVersion },
+  const handleEndpointChange = (event) => {
+    setEndpoint(event.target.value);
   };
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const headers = {};
-  const { isLoading, data } = useApiGet({ url, headers });
+  const handleHttpMethodChange = (event) => {
+    setHttpMethod(event.target.value);
+  };
+  const handleEndpointPathChange = (event) => {
+    setEndpointPath(event.target.value);
+  };
+  const handleEndpointDescChange = (event) => {
+    setEndpointDesc(event.target.value);
+  };
+
+  const fetchData = useCallback(async (url, headers) => {
+    try {
+      setLoading(true);
+      const response = await fetch(url, { headers, credentials: "include" });
+      if (!response.ok) {
+        const error = await response.json();
+        setError(error.description);
+        setEndpoints([]);
+        setTotal(0);
+      } else {
+        const data = await response.json();
+        setEndpoints(data.endpoints);
+        setTotal(data.total);
+      }
+      setLoading(false);
+    } catch (e) {
+      console.log(e);
+      setError(e);
+      setEndpoints([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const cmd = {
+      host: "lightapi.net",
+      service: "market",
+      action: "getServiceEndpoint",
+      version: "0.1.0",
+      data: {
+        hostId: hostId,
+        apiId: initialApiId,
+        apiVersion: initialApiVersion,
+        offset: page * rowsPerPage,
+        limit: rowsPerPage,
+        endpoint: debouncedEndpoint,
+        httpMethod: debouncedHttpMethod,
+        endpointPath: debouncedEndpointPath,
+        endpointDesc: debouncedEndpointDesc,
+      },
+    };
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    fetchData(url, headers);
+  }, [
+    page,
+    rowsPerPage,
+    hostId,
+    initialApiId,
+    initialApiVersion,
+    debouncedEndpoint,
+    debouncedHttpMethod,
+    debouncedEndpointPath,
+    debouncedEndpointDesc,
+    fetchData,
+  ]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   let content;
-  if (isLoading) {
+  if (loading) {
     content = (
       <div>
         <CircularProgress />
       </div>
     );
+  } else if (error) {
+    content = (
+      <div>
+        <pre>{JSON.stringify(error, null, 2)}</pre>
+      </div>
+    );
   } else {
     content = (
-      <TableContainer component={Paper}>
-        <Table aria-label="collapsible table">
-          <TableHead>
-            <TableRow className={classes.root}>
-              <TableCell align="left">Host Id</TableCell>
-              <TableCell align="left">Api Id</TableCell>
-              <TableCell align="left">Api Version</TableCell>
-              <TableCell align="left">Endpoint</TableCell>
-              <TableCell align="left">HTTP Method</TableCell>
-              <TableCell align="left">Endpoint Path</TableCell>
-              <TableCell align="left">Endpoint Desc</TableCell>
-              <TableCell align="right">Scopes</TableCell>
-              <TableCell align="right">Rules</TableCell>
-              <TableCell align="right">Role Permission</TableCell>
-              <TableCell align="right">Role Row Filter</TableCell>
-              <TableCell align="right">Role Col Filter</TableCell>
-              <TableCell align="right">Group Permission</TableCell>
-              <TableCell align="right">Group Row Filter</TableCell>
-              <TableCell align="right">Group Col Filter</TableCell>
-              <TableCell align="right">Position Permission</TableCell>
-              <TableCell align="right">Position Row Filter</TableCell>
-              <TableCell align="right">Position Col Filter</TableCell>
-              <TableCell align="right">Attribute Permission</TableCell>
-              <TableCell align="right">Attribute Row Filter</TableCell>
-              <TableCell align="right">Attribute Col Filter</TableCell>
-              <TableCell align="right">User Permission</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data &&
-              data.map((row) => (
-                <Row
-                  key={row.hostId + row.apiId + row.apiVersion + row.endpoint}
-                  row={row}
-                />
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <div>
+        <TableContainer component={Paper}>
+          <Table aria-label="collapsible table">
+            <TableHead>
+              <TableRow className={classes.root}>
+                <TableCell align="left">Host Id</TableCell>
+                <TableCell align="left">Api Id</TableCell>
+                <TableCell align="left">Api Version</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint"
+                    value={endpoint}
+                    onChange={handleEndpointChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="HTTP Method"
+                    value={httpMethod}
+                    onChange={handleHttpMethodChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint Path"
+                    value={endpointPath}
+                    onChange={handleEndpointPathChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Endpoint Desc"
+                    value={endpointDesc}
+                    onChange={handleEndpointDescChange}
+                  />
+                </TableCell>
+                <TableCell align="right">Scopes</TableCell>
+                <TableCell align="right">Rules</TableCell>
+                <TableCell align="right">Role Permission</TableCell>
+                <TableCell align="right">Role Row Filter</TableCell>
+                <TableCell align="right">Role Col Filter</TableCell>
+                <TableCell align="right">Group Permission</TableCell>
+                <TableCell align="right">Group Row Filter</TableCell>
+                <TableCell align="right">Group Col Filter</TableCell>
+                <TableCell align="right">Position Permission</TableCell>
+                <TableCell align="right">Position Row Filter</TableCell>
+                <TableCell align="right">Position Col Filter</TableCell>
+                <TableCell align="right">Attribute Permission</TableCell>
+                <TableCell align="right">Attribute Row Filter</TableCell>
+                <TableCell align="right">Attribute Col Filter</TableCell>
+                <TableCell align="right">User Permission</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {endpoints &&
+                endpoints.map((row) => (
+                  <Row
+                    key={row.hostId + row.apiId + row.apiVersion + row.endpoint}
+                    row={row}
+                  />
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 100]}
+          component="div"
+          count={total}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </div>
     );
   }
 
