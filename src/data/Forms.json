@@ -3737,7 +3737,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "createAttribute",
         "version": "0.1.0",
         "title": "Create Attribute",
@@ -3793,7 +3793,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "updateAttribute",
         "version": "0.1.0",
         "title": "Update Attribute",
@@ -3850,7 +3850,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "createAttributeUser",
         "version": "0.1.0",
         "title": "Create Attribute User",
@@ -3898,7 +3898,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -3921,7 +3921,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "updateAttributeUser",
         "version": "0.1.0",
         "title": "Update Attribute User",
@@ -3978,7 +3978,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "createAttributePermission",
         "version": "0.1.0",
         "title": "Create Attribute Permission",
@@ -4031,7 +4031,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -4070,7 +4070,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "createAttributeRowFilter",
         "version": "0.1.0",
         "title": "Create Attribute Row Filter",
@@ -4138,7 +4138,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -4188,7 +4188,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "updateAttributeRowFilter",
         "version": "0.1.0",
         "title": "Update Attribute Row Filter",
@@ -4256,7 +4256,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -4306,7 +4306,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "createAttributeColFilter",
         "version": "0.1.0",
         "title": "Create Attribute Col Filter",
@@ -4364,7 +4364,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -4404,7 +4404,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "market",
+        "service": "attribute",
         "action": "updateAttributeColFilter",
         "version": "0.1.0",
         "title": "Update Attribute Col Filter",
@@ -4462,7 +4462,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22market%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },

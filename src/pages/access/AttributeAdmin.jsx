@@ -51,7 +51,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "attribute",
         action: "deleteAttribute",
         version: "0.1.0",
         data: row,
@@ -207,7 +207,7 @@ export default function AttributeAdmin() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "attribute",
       action: "getAttribute",
       version: "0.1.0",
       data: {

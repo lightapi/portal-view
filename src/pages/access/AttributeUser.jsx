@@ -38,7 +38,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "attribute",
         action: "deleteAttributeUser",
         version: "0.1.0",
         data: row,
@@ -209,7 +209,7 @@ export default function AttributeUser() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "attribute",
       action: "queryAttributeUser",
       version: "0.1.0",
       data: {

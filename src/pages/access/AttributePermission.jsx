@@ -38,7 +38,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "attribute",
         action: "deleteAttributePermission",
         version: "0.1.0",
         data: row,
@@ -180,7 +180,7 @@ export default function AttributePermission() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "attribute",
       action: "queryAttributePermission",
       version: "0.1.0",
       data: {
