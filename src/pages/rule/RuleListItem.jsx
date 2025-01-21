@@ -1,11 +1,11 @@
 // this is a component to render an item in the BlogList component.
-import React, { useState, useEffect } from 'react';
-import Cookies from 'universal-cookie';
-import TableCell from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import useStyles from './styles';
+import React, { useState, useEffect } from "react";
+import Cookies from "universal-cookie";
+import TableCell from "@mui/material/TableCell";
+import TableRow from "@mui/material/TableRow";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import useStyles from "./styles";
 
 export default function RuleListItem(props) {
   const classes = useStyles();
@@ -16,24 +16,24 @@ export default function RuleListItem(props) {
 
   const handleUpdate = (ruleId) => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getRuleById',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "rule",
+      action: "getRuleById",
+      version: "0.1.0",
       data: { host, ruleId },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
-      history.push({ pathname: '/app/form/updateRule', state: { data } });
+      console.log("data = ", data);
+      history.push({ pathname: "/app/form/updateRule", state: { data } });
     };
 
     const queryRules = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setError(error.description);
@@ -52,9 +52,9 @@ export default function RuleListItem(props) {
   };
 
   const handleDelete = (ruleId) => {
-    if (window.confirm('Are you sure you want to delete the rule?')) {
+    if (window.confirm("Are you sure you want to delete the rule?")) {
       history.push({
-        pathname: '/app/rule/deleteRule',
+        pathname: "/app/rule/deleteRule",
         state: { data: { ruleId, host } },
       });
     }

@@ -1,26 +1,26 @@
 // import AddBoxIcon from '@mui/material/icons/AddBox';
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import useStyles from './styles';
+import AddBoxIcon from "@mui/icons-material/AddBox";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import { makeStyles } from "@mui/styles";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import useStyles from "./styles";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
@@ -34,24 +34,24 @@ function Row(props) {
 
   const handleUpdate = () => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getBlogById',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "blog",
+      action: "getBlogById",
+      version: "0.1.0",
       data: { host, id },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
-      history.push({ pathname: '/app/form/updateBlog', state: { data } });
+      console.log("data = ", data);
+      history.push({ pathname: "/app/form/updateBlog", state: { data } });
     };
 
     const query = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setLoading(false);
@@ -71,9 +71,9 @@ function Row(props) {
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete the client?')) {
+    if (window.confirm("Are you sure you want to delete the client?")) {
       history.push({
-        pathname: '/app/oauth/deleteClient',
+        pathname: "/app/oauth/deleteClient",
         state: { data: { host, id } },
       });
     }
@@ -136,18 +136,18 @@ export default function BlogAdmin(props) {
   const [blogs, setBlogs] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getBlog',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "blog",
+    action: "getBlog",
+    version: "0.1.0",
     data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const query = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
@@ -168,7 +168,7 @@ export default function BlogAdmin(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     query(url, headers);
   }, [page, rowsPerPage]);
 
@@ -182,7 +182,7 @@ export default function BlogAdmin(props) {
   };
 
   const handleCreate = () => {
-    props.history.push('/app/form/createBlog');
+    props.history.push("/app/form/createBlog");
   };
 
   let wait;

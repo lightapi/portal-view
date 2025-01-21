@@ -1,9 +1,9 @@
 // This is the component to display the entire blog for readers.
-import { CircularProgress } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import MarkdownEditor from '@uiw/react-markdown-editor';
-import useStyles from './styles';
+import { CircularProgress } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import MarkdownEditor from "@uiw/react-markdown-editor";
+import useStyles from "./styles";
 
 export default function ErrorItem(props) {
   const classes = useStyles();
@@ -15,19 +15,19 @@ export default function ErrorItem(props) {
   const [loading, setLoading] = useState(true);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getErrorByCode',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "error",
+    action: "getErrorByCode",
+    version: "0.1.0",
     data: { host, errorCode },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
   const queryErrorFn = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       //console.log(response);
       if (!response.ok) {
         const error = await response.json();
@@ -44,7 +44,7 @@ export default function ErrorItem(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     queryErrorFn(url, headers);
   }, []);
 
@@ -56,7 +56,7 @@ export default function ErrorItem(props) {
       </div>
     );
   } else {
-    console.log('errorItem = ', errorItem);
+    console.log("errorItem = ", errorItem);
     wait = (
       <div>
         <h1 className={classes.title}>{errorItem.errorCode}</h1>
@@ -77,7 +77,7 @@ export default function ErrorItem(props) {
 }
 
 const Content = ({ resolution }) => {
-  console.log('resolution = ', resolution);
+  console.log("resolution = ", resolution);
   return (
     <div className={classes.content}>
       <MarkdownEditor.Markdown source={resolution} height="200px" />

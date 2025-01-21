@@ -11,7 +11,7 @@ export default function SubmitSpec() {
 
   const body = {
     host: "lightapi.net",
-    service: "market",
+    service: "service",
     action: "updateServiceSpec",
     version: "0.1.0",
     data: { ...serviceVersion },

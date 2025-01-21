@@ -38,7 +38,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "position",
         action: "deletePositionPermission",
         version: "0.1.0",
         data: row,
@@ -180,7 +180,7 @@ export default function PositionPermission() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "position",
       action: "queryPositionPermission",
       version: "0.1.0",
       data: {

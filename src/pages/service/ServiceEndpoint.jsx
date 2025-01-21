@@ -261,7 +261,11 @@ export default function ServiceEndpoint() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState();
-  const { hostId, apiId: initialApiId, apiVersion: initialApiVersion } = location.state.data;
+  const {
+    hostId,
+    apiId: initialApiId,
+    apiVersion: initialApiVersion,
+  } = location.state.data;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [endpoint, setEndpoint] = useState("");
@@ -318,7 +322,7 @@ export default function ServiceEndpoint() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "service",
       action: "getServiceEndpoint",
       version: "0.1.0",
       data: {

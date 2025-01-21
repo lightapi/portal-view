@@ -1,22 +1,22 @@
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import { makeStyles } from "@mui/styles";
+import React, { useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
@@ -24,7 +24,7 @@ const useRowStyles = makeStyles({
 function Row(props) {
   const { row, history, email, roles, host } = props;
   const classes = useRowStyles();
-  const fields = row.split('|');
+  const fields = row.split("|");
   const clientId = fields[0];
   const clientName = fields[1];
 
@@ -33,24 +33,24 @@ function Row(props) {
 
   const handleUpdate = (clientId) => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getClientById',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "client",
+      action: "getClientById",
+      version: "0.1.0",
       data: { clientId },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
-      history.push({ pathname: '/app/form/updateClient', state: { data } });
+      console.log("data = ", data);
+      history.push({ pathname: "/app/form/updateClient", state: { data } });
     };
 
     const queryClients = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setError(error.description);
@@ -70,15 +70,15 @@ function Row(props) {
 
   const handleToken = (clientId) => {
     history.push({
-      pathname: '/app/form/testTokenForm',
+      pathname: "/app/form/testTokenForm",
       state: { data: { client_id: clientId, user_id: email, roles } },
     });
   };
 
   const handleDelete = (clientId) => {
-    if (window.confirm('Are you sure you want to delete the client?')) {
+    if (window.confirm("Are you sure you want to delete the client?")) {
       history.push({
-        pathname: '/app/oauth/deleteClient',
+        pathname: "/app/oauth/deleteClient",
         state: { data: { clientId } },
       });
     }

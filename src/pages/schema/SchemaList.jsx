@@ -1,10 +1,10 @@
 // this is a component to fetch a list of schemas and display them in pagination in marketplace
-import TablePagination from '@mui/material/TablePagination';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import SchemaListItem from './SchemaListItem';
-import useStyles from './styles';
+import TablePagination from "@mui/material/TablePagination";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import SchemaListItem from "./SchemaListItem";
+import useStyles from "./styles";
 
 export default function SchemaList(props) {
   const classes = useStyles();
@@ -17,25 +17,25 @@ export default function SchemaList(props) {
   const [schemas, setSchemas] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getJsonSchemaList',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "schema",
+    action: "getJsonSchemaList",
+    version: "0.1.0",
     data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const query = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
         setSchemas([]);
       } else {
         const data = await response.json();
-        console.log('data', data);
+        console.log("data", data);
         setSchemas(data.schemas);
         setCount(data.total);
       }
@@ -50,7 +50,7 @@ export default function SchemaList(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     query(url, headers);
   }, [page, rowsPerPage]);
 

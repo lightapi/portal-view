@@ -1,29 +1,29 @@
-import AddToQueueIcon from '@mui/icons-material/AddToQueue';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import { timeConversion } from '../../utils';
+import AddToQueueIcon from "@mui/icons-material/AddToQueue";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import { makeStyles } from "@mui/styles";
+import React, { useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import { timeConversion } from "../../utils";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
 
 function Row(props) {
   const { row, history, email, roles, host } = props;
-  const fields = row.split('|');
+  const fields = row.split("|");
   const refreshToken = fields[0];
   const userId = fields[1];
   const timestamp = timeConversion(new Date().getTime() - Number(fields[2]));
@@ -33,24 +33,24 @@ function Row(props) {
 
   const handleDetail = (refreshToken) => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getRefreshTokenDetail',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "oauth",
+      action: "getRefreshTokenDetail",
+      version: "0.1.0",
       data: { refreshToken },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
-      history.push({ pathname: '/app/refreshTokenDetail', state: { data } });
+      console.log("data = ", data);
+      history.push({ pathname: "/app/refreshTokenDetail", state: { data } });
     };
 
     const queryRefreshToken = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setError(error.description);
@@ -69,9 +69,9 @@ function Row(props) {
   };
 
   const handleDelete = (refreshToken) => {
-    if (window.confirm('Are you sure you want to delete the refreshToken?')) {
+    if (window.confirm("Are you sure you want to delete the refreshToken?")) {
       history.push({
-        pathname: '/app/oauth/deleteRefreshToken',
+        pathname: "/app/oauth/deleteRefreshToken",
         state: { data: { refreshToken } },
       });
     }

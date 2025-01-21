@@ -1,25 +1,25 @@
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import useStyles from './styles';
+import AddBoxIcon from "@mui/icons-material/AddBox";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import { makeStyles } from "@mui/styles";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import useStyles from "./styles";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
@@ -33,24 +33,24 @@ function Row(props) {
 
   const handleUpdate = () => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getErrorByCode',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "error",
+      action: "getErrorByCode",
+      version: "0.1.0",
       data: { host, errorCode },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
-      history.push({ pathname: '/app/form/updateError', state: { data } });
+      console.log("data = ", data);
+      history.push({ pathname: "/app/form/updateError", state: { data } });
     };
 
     const query = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setLoading(false);
@@ -70,9 +70,9 @@ function Row(props) {
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete the error?')) {
+    if (window.confirm("Are you sure you want to delete the error?")) {
       history.push({
-        pathname: '/app/error/deleteError',
+        pathname: "/app/error/deleteError",
         state: { data: { host, errorCode } },
       });
     }
@@ -135,18 +135,18 @@ export default function ErrorAdmin(props) {
   const [errors, setErrors] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getError',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "error",
+    action: "getError",
+    version: "0.1.0",
     data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const query = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
@@ -167,7 +167,7 @@ export default function ErrorAdmin(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     query(url, headers);
   }, [page, rowsPerPage]);
 
@@ -181,7 +181,7 @@ export default function ErrorAdmin(props) {
   };
 
   const handleCreate = () => {
-    props.history.push('/app/form/createError');
+    props.history.push("/app/form/createError");
   };
 
   let wait;

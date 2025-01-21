@@ -36,7 +36,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "role",
         action: "deleteRoleUser",
         version: "0.1.0",
         data: row,
@@ -203,7 +203,7 @@ export default function RoleUser() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "role",
       action: "queryRoleUser",
       version: "0.1.0",
       data: {

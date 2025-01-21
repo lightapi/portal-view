@@ -19,7 +19,7 @@ export default function ListScope() {
 
   const cmd = {
     host: "lightapi.net",
-    service: "market",
+    service: "service",
     action: "getEndpointScope",
     version: "0.1.0",
     data: { hostId, apiId, apiVersion, endpoint },

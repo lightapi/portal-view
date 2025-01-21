@@ -28,7 +28,7 @@ export default function ServiceDetail() {
 
   const cmd = {
     host: "lightapi.net",
-    service: "market",
+    service: "service",
     action: "getServiceVersion",
     version: "0.1.0",
     data: { hostId, apiId },

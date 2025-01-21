@@ -24,7 +24,7 @@ export default function ListRule() {
 
   const cmd = {
     host: "lightapi.net",
-    service: "market",
+    service: "service",
     action: "getEndpointRule",
     version: "0.1.0",
     data: { hostId, apiId, apiVersion, endpoint },
@@ -44,7 +44,7 @@ export default function ListRule() {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "service",
         action: "deleteEndpointRule",
         version: "0.1.0",
         data: row,

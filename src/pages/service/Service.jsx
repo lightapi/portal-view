@@ -218,7 +218,7 @@ export default function Service() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "service",
       action: "getService",
       version: "0.1.0",
       data: {

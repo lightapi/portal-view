@@ -193,7 +193,7 @@ export default function RuleAdmin() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "rule",
       action: "getRule",
       version: "0.1.0",
       data: {

@@ -1,6 +1,6 @@
 // this is a component to fetch a list of blog and display them in pagination
-import TablePagination from '@mui/material/TablePagination';
-import React, { useEffect, useState } from 'react';
+import TablePagination from "@mui/material/TablePagination";
+import React, { useEffect, useState } from "react";
 // import { makeStyles } from '@mui/styles';
 // import Table from '@mui/material/Table';
 // import TableBody from '@mui/material/TableBody';
@@ -11,13 +11,13 @@ import React, { useEffect, useState } from 'react';
 // import Paper from '@mui/material/Paper';
 // import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 // import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import BlogListItem from './BlogListItem';
-import useStyles from './styles';
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import BlogListItem from "./BlogListItem";
+import useStyles from "./styles";
 
 export default function BlogList(props) {
-  console.log('BlogList props', props);
+  console.log("BlogList props", props);
   const classes = useStyles();
   const { email, roles, host } = useUserState();
   const [page, setPage] = useState(0);
@@ -28,18 +28,18 @@ export default function BlogList(props) {
   const [blogs, setBlogs] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getBlogList',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "blog",
+    action: "getBlogList",
+    version: "0.1.0",
     data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const query = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
@@ -60,7 +60,7 @@ export default function BlogList(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     query(url, headers);
   }, [page, rowsPerPage]);
 

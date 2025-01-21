@@ -1,20 +1,20 @@
-import CircularProgress from '@mui/material/CircularProgress';
-import React from 'react';
-import { useUserState } from '../../contexts/UserContext';
-import { useApiPost } from '../../hooks/useApiPost';
+import CircularProgress from "@mui/material/CircularProgress";
+import React from "react";
+import { useUserState } from "../../contexts/UserContext";
+import { useApiPost } from "../../hooks/useApiPost";
 
 export default function SchemaDelete(props) {
   console.log(props.location.state.data);
   const id = props.location.state.data.id;
   const { host } = useUserState();
   const body = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'deleteJsonSchema',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "schema",
+    action: "deleteJsonSchema",
+    version: "0.1.0",
     data: { id, host },
   };
-  const url = '/portal/command';
+  const url = "/portal/command";
   const headers = {};
   const { isLoading, data, error } = useApiPost({ url, headers, body });
   console.log(isLoading, data, error);

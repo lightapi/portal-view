@@ -48,7 +48,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "position",
         action: "deletePosition",
         version: "0.1.0",
         data: row,
@@ -69,15 +69,21 @@ function Row(props) {
   };
 
   const handlePositionPermission = (positionId) => {
-    navigate("/app/access/positionPermission", { state: { data: { positionId } } });
+    navigate("/app/access/positionPermission", {
+      state: { data: { positionId } },
+    });
   };
 
   const handlePositionRowFilter = (positionId) => {
-    navigate("/app/access/positionRowFilter", { state: { data: { positionId } } });
+    navigate("/app/access/positionRowFilter", {
+      state: { data: { positionId } },
+    });
   };
 
   const handlePositionColFilter = (positionId) => {
-    navigate("/app/access/positionColFilter", { state: { data: { positionId } } });
+    navigate("/app/access/positionColFilter", {
+      state: { data: { positionId } },
+    });
   };
 
   const handlePositionUser = (positionId) => {
@@ -97,7 +103,9 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handlePositionPermission(row.positionId)} />
+        <DoNotTouchIcon
+          onClick={() => handlePositionPermission(row.positionId)}
+        />
       </TableCell>
       <TableCell align="right">
         <KeyboardDoubleArrowDownIcon
@@ -207,7 +215,7 @@ export default function PositionAdmin() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "position",
       action: "getPosition",
       version: "0.1.0",
       data: {

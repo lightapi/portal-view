@@ -1,25 +1,25 @@
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import { useApiGet } from '../../hooks/useApiGet';
-import useStyles from './styles';
+import AddBoxIcon from "@mui/icons-material/AddBox";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import { makeStyles } from "@mui/styles";
+import React, { useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import { useApiGet } from "../../hooks/useApiGet";
+import useStyles from "./styles";
 
 const useRowStyles = makeStyles({
   root: {
-    '& > *': {
-      borderBottom: 'unset',
+    "& > *": {
+      borderBottom: "unset",
     },
   },
 });
@@ -32,19 +32,19 @@ function Row(props) {
 
   const handleUpdate = (name) => {
     const cmd = {
-      host: 'lightapi.net',
-      service: 'market',
-      action: 'getCategoryByName',
-      version: '0.1.0',
+      host: "lightapi.net",
+      service: "category",
+      action: "getCategoryByName",
+      version: "0.1.0",
       data: { host, name },
     };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     const callback = (data) => {
-      console.log('data = ', data);
+      console.log("data = ", data);
       history.push({
-        pathname: '/app/form/updateCategory',
+        pathname: "/app/form/updateCategory",
         state: { data: { host, name, categories: data } },
       });
     };
@@ -52,7 +52,7 @@ function Row(props) {
     const queryCategories = async (url, headers, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
+        const response = await fetch(url, { headers, credentials: "include" });
         if (!response.ok) {
           const error = await response.json();
           setError(error.description);
@@ -71,9 +71,9 @@ function Row(props) {
   };
 
   const handleDelete = (name) => {
-    if (window.confirm('Are you sure you want to delete the category?')) {
+    if (window.confirm("Are you sure you want to delete the category?")) {
       props.history.push({
-        pathname: '/app/category/deleteCategory',
+        pathname: "/app/category/deleteCategory",
         state: { data: { host, name } },
       });
     }
@@ -99,17 +99,17 @@ export default function Category(props) {
   const [categories, setCategories] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getCategory',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "category",
+    action: "getCategory",
+    version: "0.1.0",
     data: { host },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
   const callback = (data) => {
-    console.log('data = ', data);
+    console.log("data = ", data);
     setCategories(data);
   };
 
@@ -117,7 +117,7 @@ export default function Category(props) {
   console.log(isLoading, data, error);
   const handleCreate = () => {
     props.history.push({
-      pathname: '/app/form/createCategory',
+      pathname: "/app/form/createCategory",
       state: { data: { host } },
     });
   };

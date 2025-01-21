@@ -36,7 +36,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "group",
         action: "deleteGroupPermission",
         version: "0.1.0",
         data: row,
@@ -164,7 +164,7 @@ export default function GroupPermission() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "group",
       action: "queryGroupPermission",
       version: "0.1.0",
       data: {
@@ -276,7 +276,9 @@ export default function GroupPermission() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(groupId, apiId, apiVersion, endpoint)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(groupId, apiId, apiVersion, endpoint)}
+        />
       </div>
     );
   }

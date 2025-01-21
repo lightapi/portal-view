@@ -1,7 +1,7 @@
-import CircularProgress from '@mui/material/CircularProgress';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import useStyles from './styles';
+import CircularProgress from "@mui/material/CircularProgress";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import useStyles from "./styles";
 
 export default function SchemaItem(props) {
   const classes = useStyles();
@@ -13,19 +13,19 @@ export default function SchemaItem(props) {
   const [loading, setLoading] = useState(true);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getJsonSchemaById',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "schema",
+    action: "getJsonSchemaById",
+    version: "0.1.0",
     data: { host, id },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
   const querySchemaFn = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       //console.log(response);
       if (!response.ok) {
         const error = await response.json();
@@ -42,7 +42,7 @@ export default function SchemaItem(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     querySchemaFn(url, headers);
   }, []);
 
@@ -54,7 +54,7 @@ export default function SchemaItem(props) {
       </div>
     );
   } else {
-    console.log('schema = ', schema);
+    console.log("schema = ", schema);
     wait = (
       <div>
         <h1 className={classes.title}>{schema.id}</h1>

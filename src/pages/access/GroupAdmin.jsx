@@ -46,7 +46,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "group",
         action: "deleteGroup",
         version: "0.1.0",
         data: row,
@@ -191,7 +191,7 @@ export default function GroupAdmin() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "group",
       action: "getGroup",
       version: "0.1.0",
       data: {

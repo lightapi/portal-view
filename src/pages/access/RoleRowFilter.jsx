@@ -42,7 +42,7 @@ function Row(props) {
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "market",
+        service: "role",
         action: "deleteRoleRowFilter",
         version: "0.1.0",
         data: row,
@@ -196,7 +196,7 @@ export default function RoleRowFilter() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "market",
+      service: "role",
       action: "queryRoleRowFilter",
       version: "0.1.0",
       data: {

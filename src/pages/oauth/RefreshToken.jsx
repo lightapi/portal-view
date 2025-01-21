@@ -1,10 +1,10 @@
-import CircularProgress from '@mui/material/CircularProgress';
-import TablePagination from '@mui/material/TablePagination';
-import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
-import { useUserState } from '../../contexts/UserContext';
-import RefreshTokenList from './RefreshTokenList';
-import useStyles from './styles';
+import CircularProgress from "@mui/material/CircularProgress";
+import TablePagination from "@mui/material/TablePagination";
+import React, { useEffect, useState } from "react";
+import Cookies from "universal-cookie";
+import { useUserState } from "../../contexts/UserContext";
+import RefreshTokenList from "./RefreshTokenList";
+import useStyles from "./styles";
 
 export default function RefreshToken(props) {
   const classes = useStyles();
@@ -17,19 +17,19 @@ export default function RefreshToken(props) {
   const [tokens, setTokens] = useState([]);
 
   const cmd = {
-    host: 'lightapi.net',
-    service: 'market',
-    action: 'getRefreshToken',
-    version: '0.1.0',
+    host: "lightapi.net",
+    service: "oauth",
+    action: "getRefreshToken",
+    version: "0.1.0",
     data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
   };
 
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
   const queryTokens = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
+      const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
@@ -50,7 +50,7 @@ export default function RefreshToken(props) {
 
   useEffect(() => {
     const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     queryTokens(url, headers);
   }, [page, rowsPerPage]);
 
