@@ -24,6 +24,7 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import GiteIcon from "@mui/icons-material/Gite";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import AppsIcon from "@mui/icons-material/Apps";
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -117,9 +118,9 @@ const structure = [
 
   {
     id: 30,
-    label: "Notifications",
+    label: "Notification",
     role: "user",
-    link: "/app/notifications",
+    link: "/app/notification",
     icon: <NotificationsIcon />,
   },
   { id: 40, label: "News", link: "/app/news", icon: <AnnouncementIcon /> },
@@ -161,17 +162,11 @@ const structure = [
     icon: <PeopleAltIcon />,
   },
   {
-    id: 110,
+    id: 100,
     label: "Client Admin",
     role: "admin",
-    link: "/app/client/admin",
-    icon: <LibraryIcon />,
-    children: [
-      { label: "Register", link: "/app/client/register" },
-      { label: "Update", link: "/app/client/update" },
-      { label: "Delete", link: "/app/client/delete" },
-      { label: "Service Request", link: "/app/client/request" },
-    ],
+    link: "/app/client/clientApp",
+    icon: <AppsIcon />,
   },
   {
     id: 115,

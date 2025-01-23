@@ -4,7 +4,7 @@ import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
 import BlogList from "./pages/blog/BlogList";
 import Form from "./components/Form/Form";
-import Notifications from "./pages/notifications/Notifications";
+import Notification from "./pages/notification/Notification";
 import Failure from "./pages/failure/Failure";
 import Success from "./pages/success/Success";
 import Profile from "./pages/profile/Profile";
@@ -28,6 +28,7 @@ import SubmitSpec from "./pages/service/SubmitSpec";
 import ServiceEndpoint from "./pages/service/ServiceEndpoint";
 import ListScope from "./pages/service/ListScope";
 import ListRule from "./pages/service/ListRule";
+import ClientApp from "./pages/client/ClientApp";
 import Client from "./pages/oauth/Client";
 import RefreshToken from "./pages/oauth/RefreshToken";
 import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
@@ -132,7 +133,7 @@ const App = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="blog/blogList" element={<BlogList />} />
           <Route path="form/:formId" element={<Form />} />
-          <Route path="notifications" element={<Notifications />} />
+          <Route path="notification" element={<Notification />} />
           <Route path="failure" element={<Failure />} />
           <Route path="success" element={<Success />} />
           <Route path="profile" element={<Profile />} />
@@ -177,6 +178,7 @@ const App = () => {
             element={<PositionPermission />}
           />
           <Route path="access/positionUser" element={<PositionUser />} />
+          <Route path="clientApp" element={<ClientApp />} />
           <Route path="client" element={<Client />} />
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
