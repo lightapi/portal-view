@@ -227,7 +227,7 @@ export default function AuthProvider() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createAuthProvider");
+    navigate("/app/form/createProvider");
   };
 
   let content;

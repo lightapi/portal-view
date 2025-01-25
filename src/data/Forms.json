@@ -10047,6 +10047,157 @@
       }
     ]
   },
+  "createProvider": {
+    "formId": "createProvider",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "createProvider",
+        "version": "0.1.0",
+        "title": "Create Provider Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "providerName": {
+          "type": "string",
+          "title": "Provider Name"
+        },
+        "providerDesc": {
+          "type": "string",
+          "title": "Provider Description"
+        },
+        "operationOwner": {
+          "type": "string",
+          "title": "Operation Owner"
+        },
+        "deliveryOwner": {
+          "type": "string",
+          "title": "Delivery Owner"
+        }
+      },
+      "required": ["hostId", "providerId", "providerName"]
+    },
+    "form": [
+      "hostId",
+      "providerId",
+      "providerName",
+      {
+        "key": "providerDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
+      {
+        "key": "operationOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deliveryOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updateProvider": {
+    "formId": "updateProvider",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "updateProvider",
+        "version": "0.1.0",
+        "title": "Update Provider Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Provider Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerName": {
+          "type": "string",
+          "title": "Provider Name"
+        },
+        "providerDesc": {
+          "type": "string",
+          "title": "Provider Description"
+        },
+        "operationOwner": {
+          "type": "string",
+          "title": "Operation Owner"
+        },
+        "deliveryOwner": {
+          "type": "string",
+          "title": "Delivery Owner"
+        }
+      },
+      "required": ["hostId", "providerId", "providerName"]
+    },
+    "form": [
+      "hostId",
+      "providerId",
+      "providerName",
+      {
+        "key": "providerDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
+      {
+        "key": "operationOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deliveryOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
   "logRetrieval": {
     "formId": "logRetrieval",
     "actions": [
