@@ -2,32 +2,31 @@ import {
   ArrowBack as ArrowBackIcon,
   Menu as MenuIcon,
   Search as SearchIcon,
-} from '@mui/icons-material';
-import { AppBar, IconButton, InputBase, Toolbar } from '@mui/material';
-import classNames from 'classnames';
-import React, { useState } from 'react';
+} from "@mui/icons-material";
+import { AppBar, IconButton, InputBase, Toolbar } from "@mui/material";
+import classNames from "classnames";
+import { useState } from "react";
 // router
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from "react-router-dom";
 // context
 import {
   toggleSidebar,
   useLayoutDispatch,
   useLayoutState,
-} from '../../contexts/LayoutContext';
-import { useSiteDispatch } from '../../contexts/SiteContext';
-import { useUserState } from '../../contexts/UserContext';
+} from "../../contexts/LayoutContext";
+import { useSiteDispatch } from "../../contexts/SiteContext";
+import { useUserState } from "../../contexts/UserContext";
 // components
-import { Typography } from '../Wrappers/Wrappers';
-import CartMenu from './CartMenu';
-import HomeMenu from './HomeMenu';
-import MailMenu from './MailMenu';
-import NotificationMenu from './NotificationMenu';
-import ProfileMenu from './ProfileMenu';
+import { Typography } from "../Wrappers/Wrappers";
+import CartMenu from "./CartMenu";
+import HomeMenu from "./HomeMenu";
+import MailMenu from "./MailMenu";
+import NotificationMenu from "./NotificationMenu";
+import ProfileMenu from "./ProfileMenu";
 // styles
-import useStyles from './styles';
+import useStyles from "./styles";
 
 export default function Header(props) {
-
   // const theme = useTheme();
   const classes = useStyles();
 
@@ -43,7 +42,7 @@ export default function Header(props) {
 
   var siteDispatch = useSiteDispatch();
   const changeFilter = (e) => {
-    siteDispatch({ type: 'UPDATE_FILTER', filter: e.target.value });
+    siteDispatch({ type: "UPDATE_FILTER", filter: e.target.value });
   };
 
   return (
@@ -54,7 +53,7 @@ export default function Header(props) {
           onClick={() => toggleSidebar(layoutDispatch)}
           className={classNames(
             classes.headerMenuButton,
-            classes.headerMenuButtonCollapse
+            classes.headerMenuButtonCollapse,
           )}
           size="large"
         >
@@ -63,7 +62,7 @@ export default function Header(props) {
               classes={{
                 root: classNames(
                   classes.headerIcon,
-                  classes.headerIconCollapse
+                  classes.headerIconCollapse,
                 ),
               }}
             />
@@ -72,7 +71,7 @@ export default function Header(props) {
               classes={{
                 root: classNames(
                   classes.headerIcon,
-                  classes.headerIconCollapse
+                  classes.headerIconCollapse,
                 ),
               }}
             />
@@ -109,10 +108,10 @@ export default function Header(props) {
             })}
           />
         </div>
-        {location.pathname.startsWith('/app/website') ? (
+        {location.pathname.startsWith("/app/website") ? (
           <HomeMenu {...props} classes={classes} />
         ) : null}
-        {location.pathname.startsWith('/app/website') ? (
+        {location.pathname.startsWith("/app/website") ? (
           <CartMenu {...props} classes={classes} />
         ) : null}
         {isAuthenticated ? (

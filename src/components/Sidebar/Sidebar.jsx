@@ -162,10 +162,17 @@ const structure = [
     icon: <PeopleAltIcon />,
   },
   {
+    id: 95,
+    label: "OAuth Admin",
+    role: "admin",
+    link: "/app/oauth/authProvider",
+    icon: <SecurityIcon />,
+  },
+  {
     id: 100,
     label: "Client Admin",
     role: "admin",
-    link: "/app/client/clientApp",
+    link: "/app/clientApp",
     icon: <AppsIcon />,
   },
   {

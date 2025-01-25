@@ -10,16 +10,14 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
+import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
+import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this context exists
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
-import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
 
 const useRowStyles = makeStyles({
   root: {
@@ -34,18 +32,20 @@ function Row(props) {
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (app) => {
-    navigate("/app/form/updateApp", { state: { data: { ...app } } });
+  const handleUpdate = (provider) => {
+    navigate("/app/form/updateProvider", { state: { data: { ...provider } } });
   };
 
   const handleDelete = async (row) => {
     if (
-      window.confirm("Are you sure you want to delete the app for the host?")
+      window.confirm(
+        "Are you sure you want to delete this auth provider for the host?",
+      )
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "client",
-        action: "deleteApp",
+        service: "oauth",
+        action: "deleteProvider",
         version: "0.1.0",
         data: row,
       };
@@ -64,16 +64,12 @@ function Row(props) {
     }
   };
 
-  const handleClient = (hostId, appId) => {
-    navigate("/app/app/client", { state: { data: { hostId, appId } } });
-  };
-
   return (
-    <TableRow className={classes.root} key={row.appId}>
-      <TableCell align="left">{row.appId}</TableCell>
-      <TableCell align="left">{row.appName}</TableCell>
-      <TableCell align="left">{row.appDesc}</TableCell>
-      <TableCell align="left">{row.isKafkaApp ? "Y" : "N"}</TableCell>
+    <TableRow className={classes.root}>
+      <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.providerId}</TableCell>
+      <TableCell align="left">{row.providerName}</TableCell>
+      <TableCell align="left">{row.providerDesc}</TableCell>
       <TableCell align="left">{row.operationOwner}</TableCell>
       <TableCell align="left">{row.deliveryOwner}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
@@ -86,11 +82,6 @@ function Row(props) {
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
-      <TableCell align="right">
-        <AirlineSeatReclineNormalIcon
-          onClick={() => handleClient(row.hostId, row.appId)}
-        />
-      </TableCell>
     </TableRow>
   );
 }
@@ -98,29 +89,27 @@ function Row(props) {
 // Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
-    appId: PropTypes.string.isRequired,
-    appName: PropTypes.string,
-    appDesc: PropTypes.string,
-    isKafkaApp: PropTypes.boolean,
+    hostId: PropTypes.string.isRequired,
+    providerId: PropTypes.string.isRequired,
+    providerName: PropTypes.string,
+    providerDesc: PropTypes.string,
     operationOwner: PropTypes.string,
     deliveryOwner: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
   }).isRequired,
-  onDelete: PropTypes.func.isRequired,
 };
 
-function AppList(props) {
-  const { apps } = props;
+function AuthProviderList(props) {
+  const { providers } = props;
   return (
     <TableBody>
-      {apps && apps.length > 0 ? (
-        apps.map((app, index) => <Row key={index} row={app} />)
+      {providers && providers.length > 0 ? (
+        providers.map((provider, index) => <Row key={index} row={provider} />)
       ) : (
         <TableRow>
           <TableCell colSpan={2} align="center">
-            No apps found.
+            No auth providers found.
           </TableCell>
         </TableRow>
       )}
@@ -128,24 +117,22 @@ function AppList(props) {
   );
 }
 
-AppList.propTypes = {
-  apps: PropTypes.arrayOf(PropTypes.object).isRequired,
+AuthProviderList.propTypes = {
+  providers: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function ClientApp() {
+export default function AuthProvider() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [appId, setAppId] = useState("");
-  const debouncedAppId = useDebounce(appId, 1000);
-  const [appName, setAppName] = useState("");
-  const debouncedAppName = useDebounce(appName, 1000);
-  const [appDesc, setAppDesc] = useState("");
-  const debouncedAppDesc = useDebounce(appDesc, 1000);
-  const [isKafkaApp, setIsKafkaApp] = useState("");
-  const debouncedIsKafkaApp = useDebounce(isKafkaApp, 1000);
+  const [providerId, setProviderId] = useState("");
+  const debouncedProviderId = useDebounce(providerId, 1000);
+  const [providerName, setProviderName] = useState("");
+  const debouncedProviderName = useDebounce(providerName, 1000);
+  const [providerDesc, setProviderDesc] = useState("");
+  const debouncedProviderDesc = useDebounce(providerDesc, 1000);
   const [operationOwner, setOperationOwner] = useState("");
   const debouncedOperationOwner = useDebounce(operationOwner, 1000);
   const [deliveryOwner, setDeliveryOwner] = useState("");
@@ -153,19 +140,16 @@ export default function ClientApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
-  const [apps, setApps] = useState([]);
+  const [providers, setProviders] = useState([]);
 
-  const handleAppIdChange = (event) => {
-    setAppId(event.target.value);
+  const handleProviderIdChange = (event) => {
+    setProviderId(event.target.value);
   };
-  const handleAppNameChange = (event) => {
-    setAppName(event.target.value);
+  const handleProviderNameChange = (event) => {
+    setProviderName(event.target.value);
   };
-  const handleAppDescChange = (event) => {
-    setAppDesc(event.target.value);
-  };
-  const handleIsKafkaAppChange = (event) => {
-    setIsKafkaApp(event.target.value);
+  const handleProviderDescChange = (event) => {
+    setProviderDesc(event.target.value);
   };
   const handleOperationOwnerChange = (event) => {
     setOperationOwner(event.target.value);
@@ -182,40 +166,36 @@ export default function ClientApp() {
       if (!response.ok) {
         const error = await response.json();
         setError(error.description);
-        setApps([]);
+        setProviders([]);
       } else {
         const data = await response.json();
         console.log(data);
-        setApps(data.apps);
+        setProviders(data.providers);
         setTotal(data.total);
       }
       setLoading(false);
     } catch (e) {
       console.log(e);
       setError(e);
-      setApps([]);
+      setProviders([]);
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array for useCallback
+  }, []);
 
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "client",
-      action: "getApp",
+      service: "oauth",
+      action: "getProvider",
       version: "0.1.0",
       data: {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        appId: debouncedAppId,
-        appName: debouncedAppName,
-        appDesc: debouncedAppDesc,
-        isKafkaApp:
-          debouncedIsKafkaApp === ""
-            ? undefined
-            : debouncedIsKafkaApp === "true",
+        providerId: debouncedProviderId,
+        providerName: debouncedProviderName,
+        providerDesc: debouncedProviderDesc,
         operationOwner: debouncedOperationOwner,
         deliveryOwner: debouncedDeliveryOwner,
       },
@@ -224,19 +204,17 @@ export default function ClientApp() {
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    console.log("fetchData is called", url, headers);
     fetchData(url, headers);
   }, [
     page,
     rowsPerPage,
     host,
-    debouncedAppId,
-    debouncedAppName,
-    debouncedAppDesc,
-    debouncedIsKafkaApp,
+    debouncedProviderId,
+    debouncedProviderName,
+    debouncedProviderDesc,
     debouncedOperationOwner,
     debouncedDeliveryOwner,
-    fetchData, // Add fetchData to dependency array of useEffect
+    fetchData,
   ]);
 
   const handleChangePage = (event, newPage) => {
@@ -249,7 +227,7 @@ export default function ClientApp() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createApp");
+    navigate("/app/form/createAuthProvider");
   };
 
   let content;
@@ -272,47 +250,30 @@ export default function ClientApp() {
           <Table aria-label="collapsible table">
             <TableHead>
               <TableRow className={classes.root}>
+                <TableCell align="left">Host ID</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="App Id"
-                    value={appId}
-                    onChange={handleAppIdChange}
+                    placeholder="Provider Id"
+                    value={providerId}
+                    onChange={handleProviderIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="App Name"
-                    value={appName}
-                    onChange={handleAppNameChange}
+                    placeholder="Provider Name"
+                    value={providerName}
+                    onChange={handleProviderNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="App Desc"
-                    value={appDesc}
-                    onChange={handleAppDescChange}
+                    placeholder="Provider Desc"
+                    value={providerDesc}
+                    onChange={handleProviderDescChange}
                   />
-                </TableCell>
-                <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="is-kafka-app-label">
-                      Is Kafka App
-                    </InputLabel>
-                    <Select
-                      labelId="is-kafka-app-label"
-                      id="is-kafka-app"
-                      value={isKafkaApp}
-                      onChange={handleIsKafkaAppChange}
-                      label="Is Kafka App"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"true"}>Y</MenuItem>
-                      <MenuItem value={"false"}>N</MenuItem>
-                    </Select>
-                  </FormControl>
                 </TableCell>
                 <TableCell align="left">
                   <input
@@ -330,12 +291,13 @@ export default function ClientApp() {
                     onChange={handleDeliveryOwnerChange}
                   />
                 </TableCell>
+                <TableCell align="left">Update Time</TableCell>
+                <TableCell align="left">Update User</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Client</TableCell>
               </TableRow>
             </TableHead>
-            <AppList apps={apps} />
+            <AuthProviderList providers={providers} />
           </Table>
         </TableContainer>
         <TablePagination
@@ -352,5 +314,5 @@ export default function ClientApp() {
     );
   }
 
-  return <div className="App">{content}</div>;
+  return <div className="AuthProvider">{content}</div>;
 }

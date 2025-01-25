@@ -118,6 +118,7 @@ import AttributeUser from "./pages/access/AttributeUser";
 import PositionAdmin from "./pages/access/PositionAdmin";
 import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
+import AuthProvider from "./pages/oauth/AuthProvider";
 
 const App = () => {
   return (
@@ -195,6 +196,7 @@ const App = () => {
           <Route path="ref/relation" element={<RefRelation />} />
           <Route path="ref/relationForm" element={<RelationForm />} />
           <Route path="ref/deleteRelation" element={<RelationDelete />} />
+          <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/client" element={<Client />} />
           <Route path="oauth/deleteClient" element={<ClientDelete />} />
           <Route path="category/list" element={<Category />} />
