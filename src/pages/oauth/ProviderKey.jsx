@@ -1,6 +1,4 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
 import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import Paper from "@mui/material/Paper";
@@ -8,16 +6,12 @@ import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this context exists
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 const useRowStyles = makeStyles({
@@ -29,43 +23,8 @@ const useRowStyles = makeStyles({
 });
 
 function Row(props) {
-  const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
-
-  const handleUpdate = (providerKey) => {
-    navigate("/app/form/updateProviderKey", {
-      state: { data: { ...providerKey } },
-    });
-  };
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this auth provider key for the host?",
-      )
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "oauth",
-        action: "deleteProviderKey",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
 
   return (
     <TableRow
@@ -76,18 +35,11 @@ function Row(props) {
       <TableCell align="left">{row.providerId}</TableCell>
       <TableCell align="left">{row.kid}</TableCell>
       <TableCell align="left">{row.keyType}</TableCell>
-      {/* PublicKey and PrivateKey are too long, might want to display in detail view */}
-      {/* <TableCell align="left">{row.publicKey}</TableCell> */}
-      {/* <TableCell align="left">{row.privateKey}</TableCell> */}
+      <TableCell align="left">{row.publicKey}</TableCell>
+      <TableCell align="left">{row.privateKey}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
     </TableRow>
   );
@@ -100,8 +52,8 @@ Row.propTypes = {
     providerId: PropTypes.string.isRequired,
     kid: PropTypes.string.isRequired,
     keyType: PropTypes.string.isRequired,
-    publicKey: PropTypes.string, // Optional, depending on if you want to display it
-    privateKey: PropTypes.string, // Optional, depending on if you want to display it
+    publicKey: PropTypes.string,
+    privateKey: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -134,8 +86,6 @@ export default function ProviderKey() {
   const classes = useRowStyles();
   const location = useLocation();
   const data = location.state?.data;
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [hostId, setHostId] = useState(data?.hostId || "");
   const [providerId, setProviderId] = useState(data?.providerId || "");
   const [kid, setKid] = useState("");
@@ -144,7 +94,6 @@ export default function ProviderKey() {
   const debouncedKeyType = useDebounce(keyType, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
   const [providerKeys, setProviderKeys] = useState([]);
 
   const handleHostIdChange = (event) => {
@@ -174,8 +123,7 @@ export default function ProviderKey() {
       } else {
         const data = await response.json();
         console.log(data);
-        setProviderKeys(data.providerKeys);
-        setTotal(data.total);
+        setProviderKeys(data);
       }
       setLoading(false);
     } catch (e) {
@@ -188,7 +136,7 @@ export default function ProviderKey() {
   }, []);
 
   useEffect(() => {
-    if (!hostId || !providerId) return; // Ensure hostId and providerId are available
+    if (!hostId || !providerId) return;
 
     const cmd = {
       host: "lightapi.net",
@@ -198,8 +146,6 @@ export default function ProviderKey() {
       data: {
         hostId: hostId,
         providerId: providerId,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
         kid: debouncedKid,
         keyType: debouncedKeyType,
       },
@@ -209,24 +155,7 @@ export default function ProviderKey() {
     const cookies = new Cookies();
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    hostId,
-    providerId,
-    debouncedKid,
-    debouncedKeyType,
-    fetchData,
-  ]);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  }, [hostId, providerId, debouncedKid, debouncedKeyType, fetchData]);
 
   let content;
   if (loading) {
@@ -290,24 +219,15 @@ export default function ProviderKey() {
                     </Select>
                   </FormControl>
                 </TableCell>
+                <TableCell align="left">Public Key</TableCell>
+                <TableCell align="left">Private Key</TableCell>
                 <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
+                <TableCell align="left">Update Ts</TableCell>
               </TableRow>
             </TableHead>
             <ProviderKeyList providerKeys={providerKeys} />
           </Table>
         </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
       </div>
     );
   }
