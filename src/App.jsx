@@ -119,6 +119,7 @@ import PositionAdmin from "./pages/access/PositionAdmin";
 import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
 import AuthProvider from "./pages/oauth/AuthProvider";
+import ProviderKey from "./pages/oauth/ProviderKey";
 
 const App = () => {
   return (
@@ -197,6 +198,7 @@ const App = () => {
           <Route path="ref/relationForm" element={<RelationForm />} />
           <Route path="ref/deleteRelation" element={<RelationDelete />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
+          <Route path="oauth/providerKey" element={<ProviderKey />} />
           <Route path="oauth/client" element={<Client />} />
           <Route path="oauth/deleteClient" element={<ClientDelete />} />
           <Route path="category/list" element={<Category />} />
