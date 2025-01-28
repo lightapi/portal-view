@@ -1,56 +1,62 @@
-import { Person as AccountIcon } from '@mui/icons-material';
-import { IconButton, Menu, MenuItem } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import classNames from 'classnames';
-import React, { useState } from 'react';
+import { useState } from "react";
+import { Person as AccountIcon } from "@mui/icons-material";
+import { IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import classNames from "classnames";
 import {
   changePassword,
   getOrders,
   getPayment,
   getProfile,
-  hostForm,
+  orgForm,
   signOut,
   signUp,
   updateRoles,
   useUserDispatch,
   useUserState,
-} from '../../contexts/UserContext';
-import { Typography } from '../Wrappers/Wrappers';
+} from "../../contexts/UserContext";
 
-export default function ProfileMenu(props) {
-  var [profileMenu, setProfileMenu] = useState(null);
-  var userDispatch = useUserDispatch();
-  var classes = props.classes;
-  var { isAuthenticated, userId, roles } = useUserState();
+export default function ProfileMenu({ classes }) {
+  const [profileMenu, setProfileMenu] = useState(null);
+  const userDispatch = useUserDispatch();
+  const { isAuthenticated, userId, roles } = useUserState();
   const navigate = useNavigate();
 
-  //console.log(isAuthenticated);
-
   const signIn = () => {
-    // this is the dev url which is the default for local developement.
-    var url =
-      'https://devsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=1222';
-    if (process.env.REACT_APP_SIGNIN_URL)
-      url = process.env.REACT_APP_SIGNIN_URL + '&user_type=customer&state=1222';
-    window.location = url;
+    const defaultUrl =
+      "https://devsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=1222";
+    const signInUrl = process.env.REACT_APP_SIGNIN_URL
+      ? `${process.env.REACT_APP_SIGNIN_URL}&user_type=customer&state=1222`
+      : defaultUrl;
+    window.location.href = signInUrl;
+  };
+
+  const handleMenuClose = () => {
+    setProfileMenu(null);
+  };
+
+  const handleMenuItemClick = (action) => {
+    action(userDispatch, navigate);
+    handleMenuClose();
   };
 
   return (
-    <React.Fragment>
+    <>
       <IconButton
         aria-haspopup="true"
         color="inherit"
         className={classes.headerMenuButton}
         aria-controls="profile-menu"
         onClick={(e) => setProfileMenu(e.currentTarget)}
-        size="large">
+        size="large"
+      >
         <AccountIcon classes={{ root: classes.headerIcon }} />
       </IconButton>
       <Menu
         id="profile-menu"
         open={Boolean(profileMenu)}
         anchorEl={profileMenu}
-        onClose={() => setProfileMenu(null)}
+        onClose={handleMenuClose}
         className={classes.headerMenu}
         classes={{ paper: classes.profileMenu }}
         disableAutoFocusItem
@@ -58,76 +64,61 @@ export default function ProfileMenu(props) {
         {isAuthenticated ? (
           <div>
             <div className={classes.profileMenuUser}>
-              <Typography variant="h6" weight="medium">
+              <Typography variant="h6" fontWeight="medium">
                 {userId}
               </Typography>
             </div>
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
-              onClick={() => {
-                getProfile(userDispatch, navigate);
-                setProfileMenu(false);
-              }}
+              onClick={() => handleMenuItemClick(getProfile)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Profile
             </MenuItem>
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
-              onClick={() => {
-                getPayment(userDispatch, navigate);
-                setProfileMenu(false);
-              }}
+              onClick={() => handleMenuItemClick(getPayment)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Payment
             </MenuItem>
-            {roles.includes('admin') ? (
+            {roles.includes("admin") && (
               <MenuItem
                 className={classNames(
                   classes.profileMenuItem,
-                  classes.headerMenuItem
+                  classes.headerMenuItem,
                 )}
-                onClick={() => {
-                  updateRoles(userDispatch, navigate);
-                  setProfileMenu(false);
-                }}
+                onClick={() => handleMenuItemClick(updateRoles)}
               >
                 <AccountIcon className={classes.profileMenuIcon} /> Update Roles
               </MenuItem>
-            ) : null}
+            )}
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
-              onClick={() => {
-                getOrders(userDispatch, navigate);
-                setProfileMenu(false);
-              }}
+              onClick={() => handleMenuItemClick(getOrders)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Orders
             </MenuItem>
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
-              onClick={() => {
-                hostForm(userDispatch, navigate);
-                setProfileMenu(false);
-              }}
+              onClick={() => handleMenuItemClick(orgForm)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Host
+              <AccountIcon className={classes.profileMenuIcon} /> Claim Org
             </MenuItem>
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Tasks
@@ -135,7 +126,7 @@ export default function ProfileMenu(props) {
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Messages
@@ -143,7 +134,7 @@ export default function ProfileMenu(props) {
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,
-                classes.headerMenuItem
+                classes.headerMenuItem,
               )}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Notifications
@@ -152,10 +143,7 @@ export default function ProfileMenu(props) {
               <Typography
                 className={classes.profileMenuLink}
                 color="primary"
-                onClick={() => {
-                  changePassword(userDispatch, navigate);
-                  setProfileMenu(false);
-                }}
+                onClick={() => handleMenuItemClick(changePassword)}
               >
                 Change Password
               </Typography>
@@ -164,7 +152,7 @@ export default function ProfileMenu(props) {
               <Typography
                 className={classes.profileMenuLink}
                 color="primary"
-                onClick={() => signOut(userDispatch, navigate)}
+                onClick={() => handleMenuItemClick(signOut)}
               >
                 Sign Out
               </Typography>
@@ -185,10 +173,7 @@ export default function ProfileMenu(props) {
               <Typography
                 className={classes.profileMenuLink}
                 color="primary"
-                onClick={() => {
-                  signUp(userDispatch, navigate);
-                  setProfileMenu(false);
-                }}
+                onClick={() => handleMenuItemClick(signUp)}
               >
                 Sign Up
               </Typography>
@@ -196,6 +181,6 @@ export default function ProfileMenu(props) {
           </div>
         )}
       </Menu>
-    </React.Fragment>
+    </>
   );
 }

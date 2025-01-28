@@ -117,6 +117,83 @@
       }
     ]
   },
+  "orgForm": {
+    "formId": "orgForm",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "createOrg",
+        "version": "0.1.0",
+        "title": "Create Org",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      },
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "updateOrg",
+        "version": "0.1.0",
+        "title": "Update Org",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      },
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "deleteOrg",
+        "version": "0.1.0",
+        "title": "Delete Org",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Org Request",
+      "required": ["domain", "orgName"],
+      "properties": {
+        "domain": {
+          "title": "Org Domain",
+          "type": "string"
+        },
+        "orgName": {
+          "title": "Org Name",
+          "type": "string"
+        },
+        "orgDesc": {
+          "title": "Org Desc",
+          "type": "string"
+        },
+        "orgOwner": {
+          "title": "Org Owner",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      {
+        "type": "help",
+        "description": "The domain should be your email domain name. i.e., it should be example.com if your email is yourname@example.com",
+        "align": "left"
+      },
+      "domain",
+      "orgName",
+      {
+        "key": "orgDesc",
+        "type": "textarea"
+      },
+      {
+        "key": "orgOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
   "hostForm": {
     "formId": "hostForm",
     "actions": [
