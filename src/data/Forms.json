@@ -117,33 +117,15 @@
       }
     ]
   },
-  "orgForm": {
-    "formId": "orgForm",
+  "createOrgForm": {
+    "formId": "createOrgForm",
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "user",
+        "service": "host",
         "action": "createOrg",
         "version": "0.1.0",
         "title": "Create Org",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      },
-      {
-        "host": "lightapi.net",
-        "service": "user",
-        "action": "updateOrg",
-        "version": "0.1.0",
-        "title": "Update Org",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      },
-      {
-        "host": "lightapi.net",
-        "service": "user",
-        "action": "deleteOrg",
-        "version": "0.1.0",
-        "title": "Delete Org",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -151,11 +133,97 @@
     "schema": {
       "type": "object",
       "title": "Org Request",
-      "required": ["domain", "orgName"],
+      "required": [
+        "domain",
+        "orgName",
+        "orgDesc",
+        "subDomain",
+        "hostDesc",
+        "hostOwner"
+      ],
       "properties": {
         "domain": {
           "title": "Org Domain",
           "type": "string"
+        },
+        "orgName": {
+          "title": "Org Name",
+          "type": "string"
+        },
+        "orgDesc": {
+          "title": "Org Desc",
+          "type": "string"
+        },
+        "subDomain": {
+          "title": "Default SubDomain or Host",
+          "type": "string",
+          "default": "test"
+        },
+        "hostDesc": {
+          "title": "Host or SubDomain Desc",
+          "type": "string"
+        },
+        "hostOwner": {
+          "title": "Host Owner",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      {
+        "type": "help",
+        "description": "The domain should be your email domain name. i.e., it should be example.com if your email is yourname@example.com",
+        "align": "left"
+      },
+      "domain",
+      "orgName",
+      {
+        "key": "orgDesc",
+        "type": "textarea"
+      },
+      {
+        "type": "help",
+        "description": "Create a default subdomain or host based on the domain and an owner of the host with host-admin role. Default to test and it can be changed.",
+        "align": "left"
+      },
+      "subDomain",
+      {
+        "key": "hostDesc",
+        "type": "textarea"
+      },
+      {
+        "key": "hostOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updateOrgForm": {
+    "formId": "updateOrgForm",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "host",
+        "action": "updateOrg",
+        "version": "0.1.0",
+        "title": "Update Org",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Org Request",
+      "required": ["domain", "orgName", "orgDesc", "orgOwner"],
+      "properties": {
+        "domain": {
+          "title": "Org Domain",
+          "type": "string",
+          "readonly": true
         },
         "orgName": {
           "title": "Org Name",
@@ -172,16 +240,16 @@
       }
     },
     "form": [
-      {
-        "type": "help",
-        "description": "The domain should be your email domain name. i.e., it should be example.com if your email is yourname@example.com",
-        "align": "left"
-      },
       "domain",
       "orgName",
       {
         "key": "orgDesc",
         "type": "textarea"
+      },
+      {
+        "type": "help",
+        "description": "You can choose another user to be the org owner and org-admin role will be switched.",
+        "align": "left"
       },
       {
         "key": "orgOwner",
@@ -844,7 +912,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22listHost%22%2C%22version%22%3A%220.1.0%22%7D"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22host%22%2C%22action%22%3A%22getHostLabel%22%2C%22version%22%3A%220.1.0%22%7D"
         }
       },
       "email",

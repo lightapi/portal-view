@@ -141,7 +141,9 @@ export {
   getPayment,
   updateRoles,
   getOrders,
-  orgForm,
+  createOrgForm,
+  updateOrgForm,
+  deleteOrgForm,
 };
 
 function loginUser(
@@ -209,6 +211,18 @@ function getOrders(dispatch, navigate) {
   navigate("/app/userOrders");
 }
 
-function orgForm(dispatch, navigate) {
-  navigate("/app/form/orgForm");
+function createOrgForm(dispatch, navigate) {
+  // make sure that the org associated with the user is not created yet.
+
+  navigate("/app/form/createOrgForm");
+}
+
+function updateOrgForm(dispatch, navigate) {
+  // load the org associated with the user. The user is allowed to update as it is org-admin role.
+  navigate("/app/form/updateOrgForm");
+}
+
+function deleteOrgForm(dispatch, navigate) {
+  // load the org associated with the user. The user is allowed to delete as it is org-admin role.
+  navigate("/app/form/deleteOrgForm");
 }
