@@ -27,11 +27,7 @@ function Row(props) {
   const classes = useRowStyles();
 
   return (
-    <TableRow
-      className={classes.root}
-      key={`${row.hostId}-${row.providerId}-${row.kid}`}
-    >
-      <TableCell align="left">{row.hostId}</TableCell>
+    <TableRow className={classes.root} key={`${row.providerId}-${row.kid}`}>
       <TableCell align="left">{row.providerId}</TableCell>
       <TableCell align="left">{row.kid}</TableCell>
       <TableCell align="left">{row.keyType}</TableCell>
@@ -48,7 +44,6 @@ function Row(props) {
 // Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
     providerId: PropTypes.string.isRequired,
     kid: PropTypes.string.isRequired,
     keyType: PropTypes.string.isRequired,
@@ -86,7 +81,6 @@ export default function ProviderKey() {
   const classes = useRowStyles();
   const location = useLocation();
   const data = location.state?.data;
-  const [hostId, setHostId] = useState(data?.hostId || "");
   const [providerId, setProviderId] = useState(data?.providerId || "");
   const [kid, setKid] = useState("");
   const debouncedKid = useDebounce(kid, 1000);
@@ -95,10 +89,6 @@ export default function ProviderKey() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [providerKeys, setProviderKeys] = useState([]);
-
-  const handleHostIdChange = (event) => {
-    setHostId(event.target.value);
-  };
 
   const handleProviderIdChange = (event) => {
     setProviderId(event.target.value);
@@ -136,7 +126,7 @@ export default function ProviderKey() {
   }, []);
 
   useEffect(() => {
-    if (!hostId || !providerId) return;
+    if (!providerId) return;
 
     const cmd = {
       host: "lightapi.net",
@@ -144,7 +134,6 @@ export default function ProviderKey() {
       action: "getProviderKey",
       version: "0.1.0",
       data: {
-        hostId: hostId,
         providerId: providerId,
         kid: debouncedKid,
         keyType: debouncedKeyType,
@@ -155,7 +144,7 @@ export default function ProviderKey() {
     const cookies = new Cookies();
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
     fetchData(url, headers);
-  }, [hostId, providerId, debouncedKid, debouncedKeyType, fetchData]);
+  }, [providerId, debouncedKid, debouncedKeyType, fetchData]);
 
   let content;
   if (loading) {
@@ -177,14 +166,6 @@ export default function ProviderKey() {
           <Table aria-label="provider key table">
             <TableHead>
               <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Host Id"
-                    value={hostId}
-                    onChange={handleHostIdChange}
-                  />
-                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
