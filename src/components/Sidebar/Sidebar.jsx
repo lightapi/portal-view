@@ -98,7 +98,8 @@ const structure = [
   {
     id: 24,
     label: "Host",
-    link: "/app/host/dashboard",
+    role: "user",
+    link: "/app/host/Host",
     icon: <GiteIcon />,
   },
   {
@@ -115,7 +116,6 @@ const structure = [
       { label: "Relation", link: "/app/ref/relationForm" },
     ],
   },
-
   {
     id: 30,
     label: "Notification",
@@ -154,6 +154,13 @@ const structure = [
   //   ],
   // },
   { id: 90, type: "divider", role: "admin" },
+  {
+    id: 91,
+    label: "Host Admin",
+    role: "admin",
+    link: "/app/host/HostAdmin",
+    icon: <PeopleAltIcon />,
+  },
   {
     id: 95,
     label: "User Admin",

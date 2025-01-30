@@ -262,47 +262,37 @@
       }
     ]
   },
-  "hostForm": {
-    "formId": "hostForm",
+  "createHostForm": {
+    "formId": "createHostForm",
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "user",
+        "service": "host",
         "action": "createHost",
         "version": "0.1.0",
         "title": "Create Host",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      },
-      {
-        "host": "lightapi.net",
-        "service": "user",
-        "action": "updateHost",
-        "version": "0.1.0",
-        "title": "Update Host",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      },
-      {
-        "host": "lightapi.net",
-        "service": "user",
-        "action": "deleteHost",
-        "version": "0.1.0",
-        "title": "Delete Host",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
       "type": "object",
-      "title": "Host Request",
-      "required": ["host"],
+      "title": "Create Host Request",
+      "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
       "properties": {
-        "host": {
-          "title": "Host name",
+        "domain": {
+          "title": "Domain",
           "type": "string"
         },
-        "desc": {
+        "subDomain": {
+          "title": "SubDomain",
+          "type": "string"
+        },
+        "hostDesc": {
+          "title": "Host description",
+          "type": "string"
+        },
+        "hostOwner": {
           "title": "Host description",
           "type": "string"
         }
@@ -311,13 +301,114 @@
     "form": [
       {
         "type": "help",
-        "description": "The hostname should be your email domain name. i.e., it should be example.com if your email is yourname@example.com",
+        "description": "A host is a sub domain that can be an environment or region. For example: dev, sit, stg, prd or ca, us, eu etc.",
         "align": "left"
       },
-      "host",
+      "domain",
+      "subDomain",
       {
-        "key": "desc",
+        "key": "hostDesc",
         "type": "textarea"
+      },
+      {
+        "key": "hostOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updateHostForm": {
+    "formId": "updateHostForm",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "host",
+        "action": "updateHost",
+        "version": "0.1.0",
+        "title": "Update Host",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Host Request",
+      "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
+      "properties": {
+        "domain": {
+          "title": "Domain",
+          "type": "string",
+          "readonly": true
+        },
+        "subDomain": {
+          "title": "SubDomain",
+          "type": "string",
+          "readonly": true
+        },
+        "hostDesc": {
+          "title": "Host description",
+          "type": "string"
+        },
+        "hostOwner": {
+          "title": "Host Owner",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "domain",
+      "subDomain",
+      {
+        "key": "hostDesc",
+        "type": "textarea"
+      },
+      {
+        "key": "hostOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "switchHostForm": {
+    "formId": "switchHostForm",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "switchHost",
+        "version": "0.1.0",
+        "title": "Switch Host",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Switch Host",
+      "required": ["hostId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      {
+        "key": "hostId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22host%22%2C%22action%22%3A%22getHostLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+        }
       }
     ]
   },

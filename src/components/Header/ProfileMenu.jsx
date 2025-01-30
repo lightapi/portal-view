@@ -8,6 +8,7 @@ import {
   getOrders,
   getPayment,
   getProfile,
+  switchHostForm,
   createOrgForm,
   updateOrgForm,
   deleteOrgForm,

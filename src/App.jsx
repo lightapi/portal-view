@@ -103,7 +103,8 @@ import LogViewer from "./pages/controller/LogViewer";
 import LoggerConfig from "./pages/controller/LoggerConfig";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
-import HostDashboard from "./pages/host/HostDashboard";
+import Host from "./pages/host/Host";
+import HostAdmin from "./pages/host/HostAdmin";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
@@ -304,7 +305,8 @@ const App = () => {
           <Route path="controller/loggerConfig" element={<LoggerConfig />} />
           <Route path="controller/logContent" element={<LogContent />} />
           <Route path="controller/chaos" element={<ChaosMonkey />} />
-          <Route path="host/dashboard" element={<HostDashboard />} />
+          <Route path="host/HostAdmin" element={<HostAdmin />} />
+          <Route path="host/Host" element={<Host />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

@@ -144,6 +144,7 @@ export {
   createOrgForm,
   updateOrgForm,
   deleteOrgForm,
+  switchHostForm,
 };
 
 function loginUser(
@@ -225,4 +226,9 @@ function updateOrgForm(dispatch, navigate) {
 function deleteOrgForm(dispatch, navigate) {
   // load the org associated with the user. The user is allowed to delete as it is org-admin role.
   navigate("/app/form/deleteOrgForm");
+}
+
+function switchHostForm(dispatch, navigate) {
+  // load the org associated with the user. The user is allowed to delete as it is org-admin role.
+  navigate("/app/form/switchHostForm");
 }
