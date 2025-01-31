@@ -44,20 +44,6 @@ function UserProvider({ children }) {
   const email = cookies.get("email");
   const eid = cookies.get("eid");
   const roles = cookies.get("roles");
-  console.log(
-    "userId = ",
-    userId,
-    "refreshToken = ",
-    refreshToken,
-    "host = ",
-    host,
-    "email = ",
-    email,
-    "eid = ",
-    eid,
-    "roles = ",
-    roles,
-  );
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,

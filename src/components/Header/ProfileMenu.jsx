@@ -114,6 +114,15 @@ export default function ProfileMenu({ classes }) {
                 classes.profileMenuItem,
                 classes.headerMenuItem,
               )}
+              onClick={() => handleMenuItemClick(switchHostForm)}
+            >
+              <AccountIcon className={classes.profileMenuIcon} /> Switch Host
+            </MenuItem>
+            <MenuItem
+              className={classNames(
+                classes.profileMenuItem,
+                classes.headerMenuItem,
+              )}
               onClick={() => handleMenuItemClick(createOrgForm)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Claim Org
