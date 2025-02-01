@@ -121,6 +121,14 @@ import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
 import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
+import Product from "./pages/product/Product";
+import ProductAdmin from "./pages/product/ProductAdmin";
+import Instance from "./pages/instance/Instance";
+import InstanceAdmin from "./pages/instance/InstanceAdmin";
+import PlatformAdmin from "./pages/deployment/PlatformAdmin";
+import Platform from "./pages/deployment/Platform";
+import Deployment from "./pages/deployment/Deployment";
+import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 
 const App = () => {
   return (
@@ -307,6 +315,17 @@ const App = () => {
           <Route path="controller/chaos" element={<ChaosMonkey />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
+          <Route path="product/Product" element={<Product />} />
+          <Route path="product/ProductAdmin" element={<ProductAdmin />} />
+          <Route path="instance/Instance" element={<Instance />} />
+          <Route path="instance/InstanceAdmin" element={<InstanceAdmin />} />
+          <Route path="deployment/Platform" element={<Platform />} />
+          <Route path="deployment/PlatformAdmin" element={<PlatformAdmin />} />
+          <Route path="deployment/Deployment" element={<Deployment />} />
+          <Route
+            path="deployment/DeploymentAdmin"
+            element={<DeploymentAdmin />}
+          />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

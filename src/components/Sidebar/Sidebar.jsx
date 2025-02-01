@@ -162,7 +162,7 @@ const structure = [
     icon: <PeopleAltIcon />,
   },
   {
-    id: 95,
+    id: 92,
     label: "User Admin",
     role: "admin",
     link: "/app/user",
@@ -180,6 +180,34 @@ const structure = [
     label: "Client Admin",
     role: "admin",
     link: "/app/clientApp",
+    icon: <AppsIcon />,
+  },
+  {
+    id: 101,
+    label: "Product Admin",
+    role: "admin",
+    link: "/app/product/ProductAdmin",
+    icon: <AppsIcon />,
+  },
+  {
+    id: 102,
+    label: "Platform Admin",
+    role: "admin",
+    link: "/app/deployment/PlatformAdmin",
+    icon: <AppsIcon />,
+  },
+  {
+    id: 103,
+    label: "Instance Admin",
+    role: "admin",
+    link: "/app/instance/InstanceAdmin",
+    icon: <AppsIcon />,
+  },
+  {
+    id: 104,
+    label: "Deployment Admin",
+    role: "admin",
+    link: "/app/deployment/DeploymentAdmin",
     icon: <AppsIcon />,
   },
   {
