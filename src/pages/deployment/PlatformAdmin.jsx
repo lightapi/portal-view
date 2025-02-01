@@ -324,7 +324,7 @@ export default function PlatformAdmin() {
                       onChange={handleClientTypeChange}
                       label="Client Type"
                     >
-                      <MenuItem value={""}> </MenuItem>
+                      <MenuItem value={""}> </MenuItem>
                       <MenuItem value={"MAVEN"}>MAVEN</MenuItem>
                       <MenuItem value={"GRADLE"}>GRADLE</MenuItem>
                       <MenuItem value={"NPM"}>NPM</MenuItem>

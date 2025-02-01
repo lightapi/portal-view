@@ -10434,6 +10434,754 @@
       }
     ]
   },
+  "createProductVersion": {
+    "formId": "createProductVersion",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "createProductVersion",
+        "version": "0.1.0",
+        "title": "Create Product Version Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Product Version Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productId": {
+          "title": "Product Id",
+          "type": "string"
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version"
+        },
+        "light4jVersion": {
+          "type": "string",
+          "title": "Light-4j Version"
+        },
+        "versionDesc": {
+          "type": "string",
+          "title": "Version Desc"
+        },
+        "current": {
+          "type": "boolean",
+          "title": "Current"
+        },
+        "versionStatus": {
+          "type": "string",
+          "title": "Version Status"
+        }
+      },
+      "required": [
+        "hostId",
+        "productId",
+        "productVersion",
+        "light4jVersion",
+        "current",
+        "versionStatus"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productId",
+      "productVersion",
+      "light4jVersion",
+      "versionDesc",
+      "current",
+      {
+        "key": "versionStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=product_version_status&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updateProductVersion": {
+    "formId": "updateProductVersion",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "updateProductVersion",
+        "version": "0.1.0",
+        "title": "Update Product Version Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Product Version Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productId": {
+          "title": "Product Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version",
+          "readonly": true
+        },
+        "light4jVersion": {
+          "type": "string",
+          "title": "Light-4j Version"
+        },
+        "versionDesc": {
+          "type": "string",
+          "title": "Version Desc"
+        },
+        "current": {
+          "type": "boolean",
+          "title": "Current"
+        },
+        "versionStatus": {
+          "type": "string",
+          "title": "Version Status"
+        }
+      },
+      "required": [
+        "hostId",
+        "productId",
+        "productVersion",
+        "light4jVersion",
+        "current",
+        "versionStatus"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productId",
+      "productVersion",
+      "light4jVersion",
+      "versionDesc",
+      "current",
+      {
+        "key": "versionStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=product_version_status&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createInstance": {
+    "formId": "createInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "createInstance",
+        "version": "0.1.0",
+        "title": "Create Instance Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Instance Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Product Id"
+        },
+        "productVersion": {
+          "title": "Product Version",
+          "type": "string"
+        },
+        "serviceId": {
+          "title": "Service Id",
+          "type": "string"
+        },
+        "serviceDesc": {
+          "title": "Service Desc",
+          "type": "string"
+        },
+        "instanceDesc": {
+          "title": "Instance Desc",
+          "type": "string"
+        },
+        "platformId": {
+          "title": "Version Status",
+          "type": "string"
+        },
+        "tagId": {
+          "title": "Tag Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "productId",
+        "productVersion",
+        "serviceId",
+        "serviceDesc",
+        "instanceDesc",
+        "platformId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productId",
+      "productVersion",
+      "serviceId",
+      "serviceDesc",
+      "instanceDesc",
+      "platformId",
+      "tagId"
+    ]
+  },
+  "updateInstance": {
+    "formId": "updateInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "updateInstance",
+        "version": "0.1.0",
+        "title": "Update Instance Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Instance Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "description": "Instance Id",
+          "readonly": true
+        },
+        "productId": {
+          "type": "string",
+          "description": "Product Id"
+        },
+        "productVersion": {
+          "title": "Product Version",
+          "type": "string"
+        },
+        "serviceId": {
+          "title": "Service Id",
+          "type": "string"
+        },
+        "serviceDesc": {
+          "title": "Service Desc",
+          "type": "string"
+        },
+        "instanceDesc": {
+          "title": "Instance Desc",
+          "type": "string"
+        },
+        "platformId": {
+          "title": "Version Status",
+          "type": "string"
+        },
+        "tagId": {
+          "title": "Tag Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "productId",
+        "productVersion",
+        "serviceId",
+        "serviceDesc",
+        "instanceDesc",
+        "platformId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      "productId",
+      "productVersion",
+      "serviceId",
+      "serviceDesc",
+      "instanceDesc",
+      "platformId",
+      "tagId"
+    ]
+  },
+  "createPlatform": {
+    "formId": "createPlatform",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "createPlatform",
+        "version": "0.1.0",
+        "title": "Create Platform Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Platform Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id"
+        },
+        "platformName": {
+          "type": "string",
+          "description": "Platform Name"
+        },
+        "platformVersion": {
+          "title": "Platform Version",
+          "type": "string"
+        },
+        "clientType": {
+          "title": "Client Type",
+          "type": "string"
+        },
+        "clientUrl": {
+          "title": "Client Url",
+          "type": "string"
+        },
+        "credentials": {
+          "title": "Credentials",
+          "type": "string"
+        },
+        "proxyUrl": {
+          "title": "Proxy Url",
+          "type": "string"
+        },
+        "proxyPort": {
+          "title": "Proxy Port",
+          "type": "integer"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "systemEnv": {
+          "title": "System Env",
+          "type": "string"
+        },
+        "runtimeEnv": {
+          "title": "Runtime Env",
+          "type": "string"
+        },
+        "zone": {
+          "title": "Zone",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "lob": {
+          "title": "Lob",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "platformName",
+        "platformVersion",
+        "clientType",
+        "clientUrl",
+        "credentials"
+      ]
+    },
+    "form": [
+      "hostId",
+      "platformName",
+      "platformVersion",
+      "clientType",
+      "clientUrl",
+      "credentials",
+      "proxyUrl",
+      "proxyPort",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "lob",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lob&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updatePlatform": {
+    "formId": "updatePlatform",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "updatePlatform",
+        "version": "0.1.0",
+        "title": "Update Platform Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Platform Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id",
+          "readonly": true
+        },
+        "platformId": {
+          "type": "string",
+          "description": "Platform Id",
+          "readonly": true
+        },
+        "platformName": {
+          "type": "string",
+          "description": "Platform Name"
+        },
+        "platformVersion": {
+          "title": "Platform Version",
+          "type": "string"
+        },
+        "clientType": {
+          "title": "Client Type",
+          "type": "string"
+        },
+        "clientUrl": {
+          "title": "Client Url",
+          "type": "string"
+        },
+        "credentials": {
+          "title": "Credentials",
+          "type": "string"
+        },
+        "proxyUrl": {
+          "title": "Proxy Url",
+          "type": "string"
+        },
+        "proxyPort": {
+          "title": "Proxy Port",
+          "type": "integer"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "systemEnv": {
+          "title": "System Env",
+          "type": "string"
+        },
+        "runtimeEnv": {
+          "title": "Runtime Env",
+          "type": "string"
+        },
+        "zone": {
+          "title": "Zone",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "lob": {
+          "title": "Lob",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "platformId",
+        "platformName",
+        "platformVersion",
+        "clientType",
+        "clientUrl",
+        "credentials"
+      ]
+    },
+    "form": [
+      "hostId",
+      "platformId",
+      "platformName",
+      "platformVersion",
+      "clientType",
+      "clientUrl",
+      "credentials",
+      "proxyUrl",
+      "proxyPort",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "lob",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lob&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createDeployment": {
+    "formId": "createDeployment",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "createDeployment",
+        "version": "0.1.0",
+        "title": "Create Deployment Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Deployment Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id"
+        },
+        "instanceId": {
+          "type": "string",
+          "description": "Instance Id"
+        },
+        "deploymentStatus": {
+          "title": "Deployment Status",
+          "type": "string"
+        },
+        "deploymentType": {
+          "title": "Deployment Type",
+          "type": "string"
+        },
+        "pipelineId": {
+          "title": "Pipeline Id",
+          "type": "string"
+        },
+        "scheduleTs": {
+          "title": "Schedule Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "deploymentStatus",
+        "deploymentType",
+        "pipelineId",
+        "scheduleTs"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      {
+        "key": "deploymentStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deployment_status&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deploymentType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deployment_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "pipelineId",
+      "scheduleTs"
+    ]
+  },
+  "updateDeployment": {
+    "formId": "updateDeployment",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "updateDeployment",
+        "version": "0.1.0",
+        "title": "Update Deployment Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Deployment Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "description": "Host Id",
+          "readonly": true
+        },
+        "deploymentId": {
+          "type": "string",
+          "description": "Deployment Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "description": "Instance Id"
+        },
+        "deploymentStatus": {
+          "title": "Deployment Status",
+          "type": "string"
+        },
+        "deploymentType": {
+          "title": "Deployment Type",
+          "type": "string"
+        },
+        "pipelineId": {
+          "title": "Pipeline Id",
+          "type": "string"
+        },
+        "scheduleTs": {
+          "title": "Schedule Timestamp",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "hostId",
+        "deploymentId",
+        "instanceId",
+        "deploymentStatus",
+        "deploymentType",
+        "pipelineId",
+        "scheduleTs"
+      ]
+    },
+    "form": [
+      "hostId",
+      "deploymentId",
+      "instanceId",
+      {
+        "key": "deploymentStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deployment_status&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deploymentType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deployment_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "pipelineId",
+      "scheduleTs"
+    ]
+  },
   "logRetrieval": {
     "formId": "logRetrieval",
     "actions": [

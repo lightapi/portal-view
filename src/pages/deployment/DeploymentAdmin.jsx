@@ -284,7 +284,7 @@ export default function DeploymentAdmin() {
                       onChange={handleDeploymentStatusChange}
                       label="Deployment Status"
                     >
-                      <MenuItem value={""}> </MenuItem>
+                      <MenuItem value={""}> </MenuItem>
                       <MenuItem value={"PENDING"}>PENDING</MenuItem>
                       <MenuItem value={"DEPLOYED"}>DEPLOYED</MenuItem>
                       <MenuItem value={"FAILED"}>FAILED</MenuItem>
@@ -305,7 +305,7 @@ export default function DeploymentAdmin() {
                       onChange={handleDeploymentTypeChange}
                       label="Deployment Type"
                     >
-                      <MenuItem value={""}> </MenuItem>
+                      <MenuItem value={""}> </MenuItem>
                       <MenuItem value={"DOCKER"}>DOCKER</MenuItem>
                       <MenuItem value={"KUBERNETES"}>KUBERNETES</MenuItem>
                       <MenuItem value={"VM"}>VM</MenuItem>

@@ -331,7 +331,7 @@ export default function Product() {
                       onChange={handleVersionStatusChange}
                       label="Version Status"
                     >
-                      <MenuItem value={""}> </MenuItem>
+                      <MenuItem value={""}> </MenuItem>
                       <MenuItem value={"READY"}>READY</MenuItem>
                       <MenuItem value={"PENDING"}>PENDING</MenuItem>
                       <MenuItem value={"DEPRECATED"}>DEPRECATED</MenuItem>
