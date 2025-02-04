@@ -189,7 +189,7 @@ export default function ProductAdmin() {
       } else {
         const data = await response.json();
         console.log(data);
-        setProductVersions(data.productVersions); // Assuming response is data.productVersions
+        setProductVersions(data.products);
         setTotal(data.total);
       }
       setLoading(false);

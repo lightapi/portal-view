@@ -10486,7 +10486,6 @@
         "productId",
         "productVersion",
         "light4jVersion",
-        "current",
         "versionStatus"
       ]
     },
@@ -10562,7 +10561,6 @@
         "productId",
         "productVersion",
         "light4jVersion",
-        "current",
         "versionStatus"
       ]
     },
