@@ -64,6 +64,7 @@ function Row(props) {
     <TableRow className={classes.root} key={`${row.hostId}-${row.instanceId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.serviceId}</TableCell>
@@ -90,6 +91,7 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string,
     productId: PropTypes.string,
     productVersion: PropTypes.string,
     serviceId: PropTypes.string,
@@ -131,6 +133,8 @@ export default function InstanceAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [instanceId, setInstanceId] = useState("");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
   const [productId, setProductId] = useState("");
   const debouncedProductId = useDebounce(productId, 1000);
   const [productVersion, setProductVersion] = useState("");
@@ -153,6 +157,9 @@ export default function InstanceAdmin() {
 
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
+  };
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
   };
   const handleProductIdChange = (event) => {
     setProductId(event.target.value);
@@ -212,6 +219,7 @@ export default function InstanceAdmin() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         serviceId: debouncedServiceId,
@@ -232,6 +240,7 @@ export default function InstanceAdmin() {
     rowsPerPage,
     host,
     debouncedInstanceId,
+    debouncedInstanceName,
     debouncedProductId,
     debouncedProductVersion,
     debouncedServiceId,
@@ -282,6 +291,14 @@ export default function InstanceAdmin() {
                     placeholder="Instance Id"
                     value={instanceId}
                     onChange={handleInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">

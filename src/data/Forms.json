@@ -10491,9 +10491,25 @@
     },
     "form": [
       "hostId",
-      "productId",
+      {
+        "key": "productId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=platform_product&host={0}",
+          "params": ["hostId"]
+        }
+      },
       "productVersion",
-      "light4jVersion",
+      {
+        "key": "light4jVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=light4j_version&host={0}",
+          "params": ["hostId"]
+        }
+      },
       "versionDesc",
       "current",
       {
@@ -10568,7 +10584,15 @@
       "hostId",
       "productId",
       "productVersion",
-      "light4jVersion",
+      {
+        "key": "light4jVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=light4j_version&host={0}",
+          "params": ["hostId"]
+        }
+      },
       "versionDesc",
       "current",
       {
@@ -10601,11 +10625,16 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "description": "Host Id"
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name"
         },
         "productId": {
           "type": "string",
-          "description": "Product Id"
+          "title": "Product Id"
         },
         "productVersion": {
           "title": "Product Version",
@@ -10624,7 +10653,7 @@
           "type": "string"
         },
         "platformId": {
-          "title": "Version Status",
+          "title": "Platform Id",
           "type": "string"
         },
         "tagId": {
@@ -10634,6 +10663,7 @@
       },
       "required": [
         "hostId",
+        "instanceName",
         "productId",
         "productVersion",
         "serviceId",
@@ -10644,12 +10674,45 @@
     },
     "form": [
       "hostId",
-      "productId",
-      "productVersion",
-      "serviceId",
+      "instanceName",
+      {
+        "key": "productId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "productVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22productId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "productId"]
+        }
+      },
+      {
+        "key": "serviceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getServiceIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "serviceDesc",
       "instanceDesc",
-      "platformId",
+      {
+        "key": "platformId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "tagId"
     ]
   },
@@ -10672,17 +10735,21 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "description": "Host Id",
+          "title": "Host Id",
           "readonly": true
         },
         "instanceId": {
           "type": "string",
-          "description": "Instance Id",
+          "title": "Instance Id",
           "readonly": true
+        },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name"
         },
         "productId": {
           "type": "string",
-          "description": "Product Id"
+          "title": "Product Id"
         },
         "productVersion": {
           "title": "Product Version",
@@ -10701,7 +10768,7 @@
           "type": "string"
         },
         "platformId": {
-          "title": "Version Status",
+          "title": "Platform Id",
           "type": "string"
         },
         "tagId": {
@@ -10712,6 +10779,7 @@
       "required": [
         "hostId",
         "instanceId",
+        "instanceName",
         "productId",
         "productVersion",
         "serviceId",
@@ -10723,12 +10791,45 @@
     "form": [
       "hostId",
       "instanceId",
-      "productId",
-      "productVersion",
-      "serviceId",
+      "instanceName",
+      {
+        "key": "productId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "productVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22productId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "productId"]
+        }
+      },
+      {
+        "key": "serviceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getServiceIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "serviceDesc",
       "instanceDesc",
-      "platformId",
+      {
+        "key": "platformId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "tagId"
     ]
   },
@@ -10751,11 +10852,12 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "description": "Host Id"
+          "title": "Host Id",
+          "readonly": true
         },
         "platformName": {
           "type": "string",
-          "description": "Platform Name"
+          "title": "Platform Name"
         },
         "platformVersion": {
           "title": "Platform Version",
@@ -10890,17 +10992,17 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "description": "Host Id",
+          "title": "Host Id",
           "readonly": true
         },
         "platformId": {
           "type": "string",
-          "description": "Platform Id",
+          "title": "Platform Id",
           "readonly": true
         },
         "platformName": {
           "type": "string",
-          "description": "Platform Name"
+          "title": "Platform Name"
         },
         "platformVersion": {
           "title": "Platform Version",
