@@ -74,6 +74,7 @@ function Row(props) {
       <TableCell align="left">{row.deploymentStatus}</TableCell>
       <TableCell align="left">{row.deploymentType}</TableCell>
       <TableCell align="left">{row.pipelineId}</TableCell>
+      <TableCell align="left">{row.scheduleTs}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -97,6 +98,7 @@ Row.propTypes = {
     deploymentStatus: PropTypes.string,
     deploymentType: PropTypes.string,
     pipelineId: PropTypes.string,
+    scheduleTs: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -321,7 +323,7 @@ export default function Deployment() {
                     onChange={handlePipelineIdChange}
                   />
                 </TableCell>
-
+                <TableCell align="left">Schedule Timestamp</TableCell>
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>

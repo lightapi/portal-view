@@ -11202,7 +11202,10 @@
         }
       },
       "pipelineId",
-      "scheduleTs"
+      {
+        "key": "scheduleTs",
+        "type": "timestamp"
+      }
     ]
   },
   "updateDeployment": {
@@ -11294,7 +11297,10 @@
         }
       },
       "pipelineId",
-      "scheduleTs"
+      {
+        "key": "scheduleTs",
+        "type": "timestamp"
+      }
     ]
   },
   "logRetrieval": {
