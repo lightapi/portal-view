@@ -10326,10 +10326,15 @@
           "title": "Delivery Owner"
         }
       },
-      "required": ["hostId", "providerId", "providerName"]
+      "required": ["hostId", "providerName"]
     },
     "form": [
       "hostId",
+      {
+        "type": "help",
+        "description": "A UUID to back up an existing OAuth 2.0 provider or leave it empty to generate on the server",
+        "align": "left"
+      },
       "providerId",
       "providerName",
       {
