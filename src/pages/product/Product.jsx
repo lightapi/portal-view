@@ -81,6 +81,9 @@ function Row(props) {
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.light4jVersion}</TableCell>
+      <TableCell align="left">{row.breakCode ? "Yes" : "No"}</TableCell>
+      <TableCell align="left">{row.breakConfig ? "Yes" : "No"}</TableCell>
+      <TableCell align="left">{row.upgradeGuide}</TableCell>
       <TableCell align="left">{row.versionDesc}</TableCell>
       <TableCell align="left">{row.current ? "Yes" : "No"}</TableCell>
       <TableCell align="left">{row.versionStatus}</TableCell>
@@ -105,6 +108,9 @@ Row.propTypes = {
     productId: PropTypes.string.isRequired,
     productVersion: PropTypes.string.isRequired,
     light4jVersion: PropTypes.string,
+    breakCode: PropTypes.bool,
+    breakConfig: PropTypes.bool,
+    upgradeGuide: PropTypes.string,
     versionDesc: PropTypes.string,
     current: PropTypes.bool,
     versionStatus: PropTypes.string.isRequired,
@@ -148,11 +154,15 @@ export default function Product() {
   const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [light4jVersion, setLight4jVersion] = useState("");
   const debouncedLight4jVersion = useDebounce(light4jVersion, 1000);
+  const [breakCode, setBreakCode] = useState(false);
+  const [breakConfig, setBreakConfig] = useState(false);
+  const [upgradeGuide, setUpgradeGuide] = useState("");
+  const debouncedUpgradeGuide = useDebounce(upgradeGuide, 1000);
   const [versionStatus, setVersionStatus] = useState("");
   const debouncedVersionStatus = useDebounce(versionStatus, 1000);
   const [versionDesc, setVersionDesc] = useState("");
   const debouncedVersionDesc = useDebounce(versionDesc, 1000);
-  const [currentFilter, setCurrentFilter] = useState(false); // For "current" boolean filter
+  const [currentFilter, setCurrentFilter] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -166,6 +176,15 @@ export default function Product() {
   };
   const handleLight4jVersionChange = (event) => {
     setLight4jVersion(event.target.value);
+  };
+  const handleBreakCodeChange = (event) => {
+    setBreakCode(event.target.checked);
+  };
+  const handleBreakConfigChange = (event) => {
+    setBreakConfig(event.target.checked);
+  };
+  const handleUpgradeGuideChange = (event) => {
+    setUpgradeGuide(event.target.value);
   };
   const handleVersionStatusChange = (event) => {
     setVersionStatus(event.target.value);
@@ -189,7 +208,7 @@ export default function Product() {
       } else {
         const data = await response.json();
         console.log(data);
-        setProductVersions(data.productVersions); // Assuming response is data.productVersions
+        setProductVersions(data.products);
         setTotal(data.total);
       }
       setLoading(false);
@@ -215,6 +234,9 @@ export default function Product() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         light4jVersion: debouncedLight4jVersion,
+        breakCode: breakCode,
+        breakConfig: breakConfig,
+        upgradeGuide: debouncedUpgradeGuide,
         versionStatus: debouncedVersionStatus,
         versionDesc: debouncedVersionDesc,
         current: currentFilter || undefined, // Include current filter, send undefined if false
@@ -233,6 +255,9 @@ export default function Product() {
     debouncedProductId,
     debouncedProductVersion,
     debouncedLight4jVersion,
+    breakCode,
+    breakConfig,
+    debouncedUpgradeGuide,
     debouncedVersionStatus,
     debouncedVersionDesc,
     currentFilter,
@@ -298,6 +323,42 @@ export default function Product() {
                   />
                 </TableCell>
                 <TableCell align="left">
+                  <FormControl component="fieldset" variant="standard">
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={breakCode}
+                          onChange={handleBreakCodeChange}
+                          name="breakCode"
+                        />
+                      }
+                      label="Break Code"
+                    />
+                  </FormControl>
+                </TableCell>
+                <TableCell align="left">
+                  <FormControl component="fieldset" variant="standard">
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={breakConfig}
+                          onChange={handleBreakConfigChange}
+                          name="breakConfig"
+                        />
+                      }
+                      label="Break Config"
+                    />
+                  </FormControl>
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Upgrade Guide"
+                    value={upgradeGuide}
+                    onChange={handleUpgradeGuideChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
                   <input
                     type="text"
                     placeholder="Version Desc"
@@ -332,10 +393,10 @@ export default function Product() {
                       label="Version Status"
                     >
                       <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"READY"}>READY</MenuItem>
-                      <MenuItem value={"PENDING"}>PENDING</MenuItem>
-                      <MenuItem value={"DEPRECATED"}>DEPRECATED</MenuItem>
-                      {/* Add more status options as needed */}
+                      <MenuItem value={"Supported"}>Supported</MenuItem>
+                      <MenuItem value={"Outdated"}>Outdated</MenuItem>
+                      <MenuItem value={"Deprecated"}>Deprecated</MenuItem>
+                      <MenuItem value={"Removed"}>Removed</MenuItem>
                     </Select>
                   </FormControl>
                 </TableCell>

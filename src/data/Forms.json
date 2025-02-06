@@ -10473,6 +10473,18 @@
           "type": "string",
           "title": "Light-4j Version"
         },
+        "breakCode": {
+          "type": "boolean",
+          "title": "Break Code"
+        },
+        "breakConfig": {
+          "type": "boolean",
+          "title": "Break Config"
+        },
+        "upgradeGuide": {
+          "type": "string",
+          "title": "Upgrade Guide"
+        },
         "versionDesc": {
           "type": "string",
           "title": "Version Desc"
@@ -10514,6 +10526,13 @@
           "url": "/r/data?name=light4j_version&host={0}",
           "params": ["hostId"]
         }
+      },
+      "breakCode",
+      "breakConfig",
+      {
+        "key": "upgradeGuide",
+        "height": "200px",
+        "type": "markdown"
       },
       "versionDesc",
       "current",
@@ -10564,6 +10583,18 @@
           "type": "string",
           "title": "Light-4j Version"
         },
+        "breakCode": {
+          "type": "boolean",
+          "title": "Break Code"
+        },
+        "breakConfig": {
+          "type": "boolean",
+          "title": "Break Config"
+        },
+        "upgradeGuide": {
+          "type": "string",
+          "title": "Upgrade Guide"
+        },
         "versionDesc": {
           "type": "string",
           "title": "Version Desc"
@@ -10597,6 +10628,13 @@
           "url": "/r/data?name=light4j_version&host={0}",
           "params": ["hostId"]
         }
+      },
+      "breakCode",
+      "breakConfig",
+      {
+        "key": "upgradeGuide",
+        "height": "200px",
+        "type": "markdown"
       },
       "versionDesc",
       "current",
