@@ -214,14 +214,8 @@ const structure = [
     id: 115,
     label: "Config Admin",
     role: "admin",
-    link: "/app/config/admin",
+    link: "/app/config/configAdmin",
     icon: <LibraryIcon />,
-    children: [
-      { label: "Properties", link: "/app/form/propertiesRef" },
-      { label: "Global Values", link: "/app/form/globalsRef" },
-      { label: "Global Files", link: "/app/form/globalsFileRef" },
-      { label: "Global Certs", link: "/app/form/globalsCertRef" },
-    ],
   },
   {
     id: 116,

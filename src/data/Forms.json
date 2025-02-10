@@ -8712,204 +8712,435 @@
       }
     ]
   },
-  "createConfigProperty": {
-    "formId": "createConfigProperty",
+  "createConfig": {
+    "formId": "createConfig",
     "actions": [
       {
-        "path": "/config-server/configs/property",
-        "rest": true,
-        "method": "post",
-        "title": "Property Detail",
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfig",
+        "version": "0.1.0",
+        "title": "Create Config",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Property Detail",
+      "title": "Create Config",
       "type": "object",
       "properties": {
-        "host": {
-          "type": "string"
+        "configName": {
+          "type": "string",
+          "title": "Config Name"
         },
-        "cap": {
-          "type": "string"
+        "configType": {
+          "type": "string",
+          "title": "Config Type"
         },
-        "project": {
-          "type": "string"
+        "light4jVersion": {
+          "type": "string",
+          "title": "Light4j Version"
         },
-        "projver": {
-          "type": "string"
+        "classPath": {
+          "type": "string",
+          "title": "Class Path"
         },
-        "scope": {
-          "type": "string"
-        },
-        "key": {
-          "type": "string"
-        },
-        "module": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "order": {
-          "type": "integer"
+        "configDesc": {
+          "type": "string",
+          "title": "Config Desc"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "project",
-        "projver",
-        "scope",
-        "key",
-        "module",
-        "type",
-        "order"
-      ]
+      "required": ["configName", "configType"]
+    },
+    "form": [
+      "configName",
+      {
+        "key": "configType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Handler",
+            "label": "Handler"
+          },
+          {
+            "id": "Module",
+            "label": "Module"
+          },
+          {
+            "id": "Deployment",
+            "label": "Deployment"
+          }
+        ]
+      },
+      {
+        "key": "light4jVersion",
+        "type": "dynaselect",
+        "action": {
+          "url": "/r/data?name=light4j_version"
+        }
+      },
+      "classPath",
+      {
+        "key": "configDesc",
+        "type": "textarea",
+        "placeholder": "Config Desc",
+        "rows": 5
+      }
+    ]
+  },
+  "updateConfig": {
+    "formId": "updateConfig",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfig",
+        "version": "0.1.0",
+        "title": "Update Config",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Config",
+      "type": "object",
+      "properties": {
+        "configId": {
+          "type": "string",
+          "title": "Config Id",
+          "readonly": true
+        },
+        "configName": {
+          "type": "string",
+          "title": "Config Name"
+        },
+        "configType": {
+          "type": "string",
+          "title": "Config Type"
+        },
+        "light4jVersion": {
+          "type": "string",
+          "title": "Light4j Version"
+        },
+        "classPath": {
+          "type": "string",
+          "title": "Class Path"
+        },
+        "configDesc": {
+          "type": "string",
+          "title": "Config Desc"
+        }
+      },
+      "required": ["configId", "configName", "configType"]
+    },
+    "form": [
+      "configId",
+      "configName",
+      {
+        "key": "configType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Handler",
+            "label": "Handler"
+          },
+          {
+            "id": "Module",
+            "label": "Module"
+          },
+          {
+            "id": "Deployment",
+            "label": "Deployment"
+          }
+        ]
+      },
+      {
+        "key": "light4jVersion",
+        "type": "dynaselect",
+        "action": {
+          "url": "/r/data?name=light4j_version"
+        }
+      },
+      "classPath",
+      {
+        "key": "configDesc",
+        "type": "textarea",
+        "placeholder": "Config Desc",
+        "rows": 5
+      }
+    ]
+  },
+  "createConfigProperty": {
+    "formId": "createConfigProperty",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigProperty",
+        "version": "0.1.0",
+        "title": "Create Config Property",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Config Property",
+      "type": "object",
+      "properties": {
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name"
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
+        "light4jVersion": {
+          "type": "string",
+          "title": "Light4j Version"
+        },
+        "displayOrder": {
+          "type": "integer",
+          "title": "Display Order"
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Required"
+        },
+        "propertyDesc": {
+          "type": "string",
+          "title": "Property Desc"
+        },
+        "propertyValue": {
+          "type": "string",
+          "title": "Property Value"
+        },
+        "propertyFile": {
+          "type": "string",
+          "title": "Property File"
+        },
+        "resourceType": {
+          "type": "string",
+          "title": "Resource Type"
+        }
+      },
+      "required": ["configId", "propertyName"]
     },
     "form": [
       {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "combobox": true,
+        "key": "configId",
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/config-server/configs/property/ref?name=host"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
         }
+      },
+      "propertyName",
+      {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
       },
       {
-        "key": "cap",
-        "type": "rc-select",
-        "filterOption": true,
-        "combobox": true,
+        "key": "light4jVersion",
+        "type": "dynaselect",
         "action": {
-          "url": "/config-server/configs/property/ref?name=cap&host={0}",
-          "params": ["host"]
+          "url": "/r/data?name=light4j_version"
         }
       },
+      "displayOrder",
+      "required",
+      "propertyDesc",
+      "propertyValue",
+      "propertyFile",
       {
-        "key": "project",
-        "type": "rc-select",
-        "filterOption": true,
-        "combobox": true,
-        "action": {
-          "url": "/config-server/configs/property/ref?name=project&host={0}&cap={1}",
-          "params": ["host", "cap"]
-        }
-      },
-      {
-        "key": "projver",
-        "type": "rc-select",
-        "filterOption": true,
-        "combobox": true,
-        "action": {
-          "url": "/config-server/configs/property/ref?name=projver&host={0}&cap={1}&project={2}",
-          "params": ["host", "cap", "project"]
-        }
-      },
-      {
-        "key": "scope",
-        "type": "rc-select",
-        "filterOption": true,
-        "combobox": true,
-        "action": {
-          "url": "/config-server/configs/property/ref?name=scope&host={0}&cap={1}&project={2}&projver={3}",
-          "params": ["host", "cap", "project", "projver"]
-        }
-      },
-      "key",
-      "module",
-      {
-        "key": "type",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=cfg-prop-type"
-        }
-      },
-      "order"
+        "key": "resourceType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "none",
+            "label": "none"
+          },
+          {
+            "id": "api",
+            "label": "api"
+          },
+          {
+            "id": "app",
+            "label": "app"
+          },
+          {
+            "id": "app_api",
+            "label": "app_api"
+          },
+          {
+            "id": "api|app_api",
+            "label": "api|app_api"
+          },
+          {
+            "id": "app|app_api",
+            "label": "app|app_api"
+          },
+          {
+            "id": "all",
+            "label": "all"
+          }
+        ]
+      }
     ]
   },
   "updateConfigProperty": {
     "formId": "updateConfigProperty",
     "actions": [
       {
-        "path": "/config-server/configs/property",
-        "rest": true,
-        "method": "put",
-        "title": "Property Detail",
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigProperty",
+        "version": "0.1.0",
+        "title": "Update Config Property",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Property Detail",
+      "title": "Update Config Property",
       "type": "object",
       "properties": {
-        "host": {
+        "configId": {
           "type": "string",
+          "title": "Config Id",
           "readonly": true
         },
-        "cap": {
+        "propertyName": {
           "type": "string",
+          "title": "Property Name",
           "readonly": true
         },
-        "project": {
+        "propertyType": {
           "type": "string",
-          "readonly": true
+          "title": "Property Type"
         },
-        "projver": {
+        "light4jVersion": {
           "type": "string",
-          "readonly": true
+          "title": "Light4j Version"
         },
-        "scope": {
+        "displayOrder": {
+          "type": "integer",
+          "title": "Display Order"
+        },
+        "required": {
+          "type": "boolean",
+          "title": "Required"
+        },
+        "propertyDesc": {
           "type": "string",
-          "readonly": true
+          "title": "Property Desc"
         },
-        "key": {
+        "propertyValue": {
           "type": "string",
-          "readonly": true
+          "title": "Property Value"
         },
-        "module": {
-          "type": "string"
+        "propertyFile": {
+          "type": "string",
+          "title": "Property File"
         },
-        "type": {
-          "type": "string"
-        },
-        "order": {
-          "type": "integer"
+        "resourceType": {
+          "type": "string",
+          "title": "Resource Type"
         }
       },
-      "required": [
-        "host",
-        "cap",
-        "project",
-        "projver",
-        "scope",
-        "key",
-        "module",
-        "type",
-        "order"
-      ]
+      "required": ["configId", "propertyName"]
     },
     "form": [
-      "host",
-      "cap",
-      "project",
-      "projver",
-      "scope",
-      "key",
-      "module",
+      "configId",
+      "propertyName",
       {
-        "key": "type",
-        "type": "rc-select",
-        "filterOption": true,
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
+        "key": "light4jVersion",
+        "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=cfg-prop-type"
+          "url": "/r/data?name=light4j_version"
         }
       },
-      "order"
+      "displayOrder",
+      "required",
+      "propertyDesc",
+      "propertyValue",
+      "propertyFile",
+      {
+        "key": "resourceType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "none",
+            "label": "none"
+          },
+          {
+            "id": "api",
+            "label": "api"
+          },
+          {
+            "id": "app",
+            "label": "app"
+          },
+          {
+            "id": "app_api",
+            "label": "app_api"
+          },
+          {
+            "id": "api|app_api",
+            "label": "api|app_api"
+          },
+          {
+            "id": "app|app_api",
+            "label": "app|app_api"
+          },
+          {
+            "id": "all",
+            "label": "all"
+          }
+        ]
+      }
     ]
   },
   "globalsRef": {

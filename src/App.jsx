@@ -72,6 +72,8 @@ import Publish from "./pages/covid/Publish";
 import PeerStatus from "./pages/covid/UserIdStatus";
 import UserId from "./pages/covid/UserId";
 import Website from "./pages/covid/UserIdWebsite";
+import ConfigAdmin from "./pages/config/ConfigAdmin";
+import ConfigProperty from "./pages/config/ConfigProperty";
 import Properties from "./pages/config/Properties";
 import GlobalValues from "./pages/config/GlobalValues";
 import GlobalValueDelete from "./pages/config/GlobalValueDelete";
@@ -236,6 +238,8 @@ const App = () => {
           <Route path="covid/peerStatus" element={<PeerStatus />} />
           <Route path="covid/userId" element={<UserId />} />
           <Route path="website" element={<Website />} />
+          <Route path="config/configAdmin" element={<ConfigAdmin />} />
+          <Route path="config/configProperty" element={<ConfigProperty />} />
           <Route path="config/properties" element={<Properties />} />
           <Route path="config/globalValues" element={<GlobalValues />} />
           <Route
