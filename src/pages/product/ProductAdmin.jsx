@@ -8,7 +8,6 @@ import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
@@ -20,14 +19,6 @@ import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js";
 import { stringToBoolean } from "../../utils/index.jsx";
-
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-} from "@mui/material";
 
 const useRowStyles = makeStyles({
   root: {

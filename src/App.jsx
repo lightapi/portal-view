@@ -74,6 +74,12 @@ import UserId from "./pages/covid/UserId";
 import Website from "./pages/covid/UserIdWebsite";
 import ConfigAdmin from "./pages/config/ConfigAdmin";
 import ConfigProperty from "./pages/config/ConfigProperty";
+import ConfigEnvironment from "./pages/config/ConfigEnvironment";
+import ConfigProduct from "./pages/config/ConfigProduct";
+import ConfigProductVersion from "./pages/config/ConfigProductVersion";
+import ConfigInstance from "./pages/config/ConfigInstance";
+import ConfigInstanceApi from "./pages/config/ConfigInstanceApi";
+import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import Properties from "./pages/config/Properties";
 import GlobalValues from "./pages/config/GlobalValues";
 import GlobalValueDelete from "./pages/config/GlobalValueDelete";
@@ -240,6 +246,24 @@ const App = () => {
           <Route path="website" element={<Website />} />
           <Route path="config/configAdmin" element={<ConfigAdmin />} />
           <Route path="config/configProperty" element={<ConfigProperty />} />
+          <Route
+            path="config/configEnvironment"
+            element={<ConfigEnvironment />}
+          />
+          <Route path="config/configProduct" element={<ConfigProduct />} />
+          <Route
+            path="config/configProductVersion"
+            element={<ConfigProductVersion />}
+          />
+          <Route path="config/configInstance" element={<ConfigInstance />} />
+          <Route
+            path="config/configInstanceApi"
+            element={<ConfigInstanceApi />}
+          />
+          <Route
+            path="config/configInstanceApp"
+            element={<ConfigInstanceApp />}
+          />
           <Route path="config/properties" element={<Properties />} />
           <Route path="config/globalValues" element={<GlobalValues />} />
           <Route

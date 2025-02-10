@@ -11,6 +11,12 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import YardIcon from "@mui/icons-material/Yard";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
+import InstallMobileIcon from "@mui/icons-material/InstallMobile";
+import AppsIcon from "@mui/icons-material/Apps";
+import ApiIcon from "@mui/icons-material/Api";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Make sure this hook is correctly implemented
 import { useNavigate } from "react-router-dom";
@@ -39,6 +45,33 @@ function Row(props) {
 
   const handleProperty = (config) => {
     navigate("/app/config/configProperty", { state: { data: { ...config } } });
+  };
+
+  const handleEnvironment = (config) => {
+    navigate("/app/config/configEnvironment", {
+      state: { data: { ...config } },
+    });
+  };
+  const handleProduct = (config) => {
+    navigate("/app/config/configProduct", { state: { data: { ...config } } });
+  };
+  const handleProductVersion = (config) => {
+    navigate("/app/config/configProductVersion", {
+      state: { data: { ...config } },
+    });
+  };
+  const handleInstance = (config) => {
+    navigate("/app/config/configInstance", { state: { data: { ...config } } });
+  };
+  const handleInstanceApi = (config) => {
+    navigate("/app/config/configInstanceApi", {
+      state: { data: { ...config } },
+    });
+  };
+  const handleInstanceApp = (config) => {
+    navigate("/app/config/configInstanceApp", {
+      state: { data: { ...config } },
+    });
   };
 
   const handleDelete = async (row) => {
@@ -87,6 +120,24 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <FormatListBulletedIcon onClick={() => handleProperty(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <YardIcon onClick={() => handleEnvironment(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <Inventory2Icon onClick={() => handleProduct(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <AddToDriveIcon onClick={() => handleProductVersion(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <InstallMobileIcon onClick={() => handleInstance(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <ApiIcon onClick={() => handleInstanceApi(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <AppsIcon onClick={() => handleInstanceApp(row)} />
       </TableCell>
     </TableRow>
   );
@@ -310,6 +361,12 @@ export default function ConfigAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Property</TableCell>
+                <TableCell align="right">Environment</TableCell>
+                <TableCell align="right">Product</TableCell>
+                <TableCell align="right">Product Version</TableCell>
+                <TableCell align="right">Instance</TableCell>
+                <TableCell align="right">Instance Api</TableCell>
+                <TableCell align="right">Instance App</TableCell>
               </TableRow>
             </TableHead>
             <ConfigList configs={configs} />
