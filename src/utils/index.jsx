@@ -1,4 +1,10 @@
-export { validateImageUrl, timeConversion, isJson, extractDomainFromEmail };
+export {
+  validateImageUrl,
+  timeConversion,
+  isJson,
+  extractDomainFromEmail,
+  stringToBoolean,
+};
 
 const validateImageUrl = (url) => {
   return new Promise(function (resolve, reject) {
@@ -50,4 +56,11 @@ const isJson = (str) => {
 const extractDomainFromEmail = (email) => {
   const parts = email.split("@");
   return parts[1];
+};
+
+const stringToBoolean = (str) => {
+  // Remove any leading/trailing whitespace and get the first character in lowercase.
+  const firstChar = str.trim().charAt(0).toLowerCase();
+  // Return true if the first character is 'y' or 't', otherwise false.
+  return firstChar === "y" || firstChar === "t";
 };

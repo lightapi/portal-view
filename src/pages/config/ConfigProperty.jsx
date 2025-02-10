@@ -12,20 +12,13 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Ensure this hook exists
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this exists
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Assuming you have this function
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel,
-} from "@mui/material";
+import { stringToBoolean } from "../../utils/index.jsx";
 
 const useRowStyles = makeStyles({
   root: {
@@ -149,10 +142,12 @@ ConfigPropertyList.propTypes = {
 export default function ConfigPropertyAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [configId, setConfigId] = useState("");
+  const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
@@ -162,7 +157,8 @@ export default function ConfigPropertyAdmin() {
   const debouncedPropertyType = useDebounce(propertyType, 1000);
   const [light4jVersion, setLight4jVersion] = useState("");
   const debouncedLight4jVersion = useDebounce(light4jVersion, 1000);
-  const [requiredFilter, setRequiredFilter] = useState(false);
+  const [required, setRequired] = useState("");
+  const debouncedRequired = useDebounce(required, 1000);
   const [valueType, setValueType] = useState("");
   const debouncedValueType = useDebounce(valueType, 1000);
 
@@ -187,8 +183,8 @@ export default function ConfigPropertyAdmin() {
     setLight4jVersion(event.target.value);
   };
 
-  const handleRequiredFilterChange = (event) => {
-    setRequiredFilter(event.target.checked);
+  const handleRequiredChange = (event) => {
+    setRequired(event.target.value);
   };
 
   const handleValueTypeChange = (event) => {
@@ -226,14 +222,16 @@ export default function ConfigPropertyAdmin() {
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from context.
+        hostId: host,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
         propertyType: debouncedPropertyType,
         light4jVersion: debouncedLight4jVersion,
-        required: requiredFilter || undefined, // Send undefined if false
         valueType: debouncedValueType,
+        ...(debouncedRequired && debouncedRequired.trim() !== ""
+          ? { required: stringToBoolean(debouncedRequired) }
+          : {}), // Conditional spread
       },
     };
 
@@ -251,7 +249,7 @@ export default function ConfigPropertyAdmin() {
     debouncedPropertyName,
     debouncedPropertyType,
     debouncedLight4jVersion,
-    requiredFilter,
+    debouncedRequired,
     debouncedValueType,
     fetchData,
   ]);
@@ -324,18 +322,12 @@ export default function ConfigPropertyAdmin() {
                 </TableCell>
                 <TableCell align="left">Display Order</TableCell>
                 <TableCell align="left">
-                  <FormControl component="fieldset" variant="standard">
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={requiredFilter}
-                          onChange={handleRequiredFilterChange}
-                          name="requiredFilter"
-                        />
-                      }
-                      label="Required"
-                    />
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Required"
+                    value={required}
+                    onChange={handleRequiredChange}
+                  />
                 </TableCell>
                 <TableCell align="left">Property Desc</TableCell>
                 <TableCell align="left">Property Value</TableCell>

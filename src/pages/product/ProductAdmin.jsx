@@ -13,12 +13,14 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js";
+import { stringToBoolean } from "../../utils/index.jsx";
+
 import {
   FormControl,
   InputLabel,
@@ -43,7 +45,7 @@ function Row(props) {
   const handleUpdate = (productVersion) => {
     navigate("/app/form/updateProductVersion", {
       state: { data: { ...productVersion } },
-    }); // Adjust path as needed
+    });
   };
 
   const handleDelete = async (row) => {
@@ -64,7 +66,6 @@ function Row(props) {
         body: cmd,
       });
       if (result.data) {
-        // Refresh the data after successful deletion
         window.location.reload();
       } else if (result.error) {
         console.error("Api Error", result.error);
@@ -145,24 +146,31 @@ ProductVersionList.propTypes = {
 export default function ProductAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(() => data?.productId || "");
   const debouncedProductId = useDebounce(productId, 1000);
-  const [productVersion, setProductVersion] = useState("");
+  const [productVersion, setProductVersion] = useState(
+    () => data?.productVersion || "",
+  );
   const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [light4jVersion, setLight4jVersion] = useState("");
   const debouncedLight4jVersion = useDebounce(light4jVersion, 1000);
-  const [breakCode, setBreakCode] = useState(false);
-  const [breakConfig, setBreakConfig] = useState(false);
+  const [breakCode, setBreakCode] = useState("");
+  const debouncedBreakCode = useDebounce(breakCode, 1000);
+  const [breakConfig, setBreakConfig] = useState("");
+  const debouncedBreakConfig = useDebounce(breakConfig, 1000);
   const [upgradeGuide, setUpgradeGuide] = useState("");
   const debouncedUpgradeGuide = useDebounce(upgradeGuide, 1000);
   const [versionStatus, setVersionStatus] = useState("");
   const debouncedVersionStatus = useDebounce(versionStatus, 1000);
   const [versionDesc, setVersionDesc] = useState("");
   const debouncedVersionDesc = useDebounce(versionDesc, 1000);
-  const [currentFilter, setCurrentFilter] = useState(false);
+  const [current, setCurrent] = useState("");
+  const debouncedCurrent = useDebounce(current, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -178,10 +186,10 @@ export default function ProductAdmin() {
     setLight4jVersion(event.target.value);
   };
   const handleBreakCodeChange = (event) => {
-    setBreakCode(event.target.checked);
+    setBreakCode(event.target.value);
   };
   const handleBreakConfigChange = (event) => {
-    setBreakConfig(event.target.checked);
+    setBreakConfig(event.target.value);
   };
   const handleUpgradeGuideChange = (event) => {
     setUpgradeGuide(event.target.value);
@@ -192,8 +200,8 @@ export default function ProductAdmin() {
   const handleVersionDescChange = (event) => {
     setVersionDesc(event.target.value);
   };
-  const handleCurrentFilterChange = (event) => {
-    setCurrentFilter(event.target.checked);
+  const handleCurrentChange = (event) => {
+    setCurrent(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -234,12 +242,18 @@ export default function ProductAdmin() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         light4jVersion: debouncedLight4jVersion,
-        breakCode: breakCode,
-        breakConfig: breakConfig,
         upgradeGuide: debouncedUpgradeGuide,
         versionStatus: debouncedVersionStatus,
         versionDesc: debouncedVersionDesc,
-        current: currentFilter || undefined, // Include current filter, send undefined if false
+        ...(debouncedCurrent && debouncedCurrent.trim() !== ""
+          ? { current: stringToBoolean(debouncedCurrent) }
+          : {}),
+        ...(debouncedBreakCode && debouncedBreakCode.trim() !== ""
+          ? { breakCode: stringToBoolean(debouncedBreakCode) }
+          : {}),
+        ...(debouncedBreakConfig && debouncedBreakConfig.trim() !== ""
+          ? { breakConfig: stringToBoolean(debouncedBreakConfig) }
+          : {}),
       },
     };
 
@@ -255,12 +269,12 @@ export default function ProductAdmin() {
     debouncedProductId,
     debouncedProductVersion,
     debouncedLight4jVersion,
-    breakCode,
-    breakConfig,
+    debouncedBreakCode,
+    debouncedBreakConfig,
     debouncedUpgradeGuide,
     debouncedVersionStatus,
     debouncedVersionDesc,
-    currentFilter,
+    debouncedCurrent,
     fetchData,
   ]);
 
@@ -323,32 +337,20 @@ export default function ProductAdmin() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl component="fieldset" variant="standard">
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={breakCode}
-                          onChange={handleBreakCodeChange}
-                          name="breakCode"
-                        />
-                      }
-                      label="Break Code"
-                    />
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Break Code"
+                    value={breakCode}
+                    onChange={handleBreakCodeChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl component="fieldset" variant="standard">
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={breakConfig}
-                          onChange={handleBreakConfigChange}
-                          name="breakConfig"
-                        />
-                      }
-                      label="Break Config"
-                    />
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Break Config"
+                    value={breakConfig}
+                    onChange={handleBreakConfigChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
                   <input
@@ -367,38 +369,20 @@ export default function ProductAdmin() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl component="fieldset" variant="standard">
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={currentFilter}
-                          onChange={handleCurrentFilterChange}
-                          name="currentFilter"
-                        />
-                      }
-                      label="Current"
-                    />
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Current"
+                    value={current}
+                    onChange={handleCurrentChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="version-status-label">
-                      Version Status
-                    </InputLabel>
-                    <Select
-                      labelId="version-status-label"
-                      id="version-status"
-                      value={versionStatus}
-                      onChange={handleVersionStatusChange}
-                      label="Version Status"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"Supported"}>Supported</MenuItem>
-                      <MenuItem value={"Outdated"}>Outdated</MenuItem>
-                      <MenuItem value={"Deprecated"}>Deprecated</MenuItem>
-                      <MenuItem value={"Removed"}>Removed</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Version Status"
+                    value={versionStatus}
+                    onChange={handleVersionStatusChange}
+                  />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
