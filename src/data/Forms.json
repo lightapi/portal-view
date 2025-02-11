@@ -2068,14 +2068,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": [
-        "hostId",
-        "apiId",
-        "apiName",
-        "serviceId",
-        "apiType",
-        "apiStatus"
-      ],
+      "required": ["hostId", "apiId", "apiName", "apiStatus"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2086,16 +2079,8 @@
           "title": "Api Id",
           "type": "string"
         },
-        "serviceId": {
-          "title": "Service Id",
-          "type": "string"
-        },
         "apiName": {
           "title": "Api Name",
-          "type": "string"
-        },
-        "apiType": {
-          "title": "Api Type",
           "type": "string"
         },
         "apiDesc": {
@@ -2147,23 +2132,29 @@
     "form": [
       "hostId",
       "apiId",
-      "serviceId",
       "apiName",
-      {
-        "key": "apiType",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/r/data?name=api_type&host={0}",
-          "params": ["hostId"]
-        }
-      },
       {
         "key": "apiDesc",
         "type": "textarea"
       },
-      "operationOwner",
-      "deliveryOwner",
+      {
+        "key": "operationOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deliveryOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "region",
         "type": "dynaselect",
@@ -2245,98 +2236,313 @@
     ],
     "schema": {
       "type": "object",
-      "required": [
-        "host",
-        "lob",
-        "style",
-        "apiId",
-        "serviceId",
-        "name",
-        "desc",
-        "tags",
-        "status"
-      ],
+      "required": ["hostId", "apiId", "apiName", "apiStatus"],
       "properties": {
-        "host": {
-          "title": "Host",
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiName": {
+          "title": "Api Name",
+          "type": "string"
+        },
+        "apiDesc": {
+          "title": "Api Desc",
+          "type": "string"
+        },
+        "operationOwner": {
+          "title": "Operation Owner",
+          "type": "string"
+        },
+        "deliveryOwner": {
+          "title": "Delivery Owner",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "businessGroup": {
+          "title": "Business Group",
           "type": "string"
         },
         "lob": {
           "title": "Line of Business",
           "type": "string"
         },
-        "style": {
-          "title": "API Style",
-          "type": "string",
-          "enum": ["openapi", "graphql", "hybrid"]
-        },
-        "apiId": {
-          "title": "Api Id - four digit unique number",
-          "type": "string",
-          "pattern": "\\b\\d{4}\\b"
-        },
-        "serviceId": {
-          "title": "Service Id",
-          "type": "string",
-          "readonly": true
-        },
-        "name": {
-          "title": "Service Name",
+        "platform": {
+          "title": "Platform",
           "type": "string"
         },
-        "desc": {
-          "title": "Service Description",
+        "capability": {
+          "title": "Capability",
           "type": "string"
         },
-        "status": {
-          "title": "Service Status",
-          "type": "string",
-          "enum": ["published", "implemented", "deployed", "decommissioned"]
+        "gitRepo": {
+          "title": "Git Repo",
+          "type": "string"
         },
-        "tags": {
-          "title": "Tags",
-          "type": "array",
-          "minItems": 0,
-          "maxItems": 10
+        "apiStatus": {
+          "title": "Api Status",
+          "type": "string"
+        },
+        "apiTags": {
+          "title": "Api Tags",
+          "type": "string"
         }
       }
     },
     "form": [
+      "hostId",
+      "apiId",
+      "apiName",
       {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
+        "key": "apiDesc",
+        "type": "textarea"
+      },
+      {
+        "key": "operationOwner",
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=host"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deliveryOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "businessGroup",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=business_group&host={0}&rela=region-bgrp&from={1}",
+          "params": ["hostId", "region"]
         }
       },
       {
         "key": "lob",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
-          "url": "/r/data?name=lob&rela=host-lob&from={0}",
-          "params": ["host"]
+          "url": "/r/data?name=lob&host={0}&rela=bgrp-lob&from={1}",
+          "params": ["hostId", "businessGroup"]
         }
       },
-      "style",
-      "apiId",
-      "serviceId",
-      "name",
       {
-        "key": "desc",
+        "key": "platform",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=platform_journer&host={0}&rela=lob-platform&from={1}",
+          "params": ["hostId", "lob"]
+        }
+      },
+      {
+        "key": "capability",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=capability&host={0}&rela=platform-capability&from={1}",
+          "params": ["hostId", "platform"]
+        }
+      },
+      "gitRepo",
+      {
+        "key": "apiStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=api_status&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiTags",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=api_tag&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createServiceVersion": {
+    "formId": "createServiceVersion",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "service",
+        "action": "createServiceVersion",
+        "version": "0.1.0",
+        "title": "Create Service Version",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "apiId", "apiVersion", "apiType", "serviceId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string"
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string"
+        },
+        "apiType": {
+          "title": "Api Type",
+          "type": "string"
+        },
+        "serviceId": {
+          "title": "Service Id",
+          "type": "string"
+        },
+        "apiVersionDesc": {
+          "title": "Api Version Desc",
+          "type": "string"
+        },
+        "specLink": {
+          "title": "Spec Link",
+          "type": "string"
+        },
+        "spec": {
+          "title": "Spec",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "apiId",
+      "apiVersion",
+      {
+        "key": "apiType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=api_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "serviceId",
+      {
+        "key": "apiVersionDesc",
         "type": "textarea"
       },
-      "status",
+      "specLink",
       {
-        "key": "tags",
-        "type": "rc-select",
-        "multiple": true,
-        "tags": true,
-        "maxTagTextLength": 20,
-        "action": {
-          "url": "/r/data?name=tag"
+        "key": "spec",
+        "type": "textarea"
+      }
+    ]
+  },
+  "updateServiceVersion": {
+    "formId": "updateServiceVersion",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "service",
+        "action": "updateServiceVersion",
+        "version": "0.1.0",
+        "title": "Update Service Version",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "required": ["hostId", "apiId", "apiVersion", "apiType", "serviceId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiId": {
+          "title": "Api Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiVersion": {
+          "title": "Api Version",
+          "type": "string",
+          "readonly": true
+        },
+        "apiType": {
+          "title": "Api Type",
+          "type": "string"
+        },
+        "serviceId": {
+          "title": "Service Id",
+          "type": "string"
+        },
+        "apiVersionDesc": {
+          "title": "Api Version Desc",
+          "type": "string"
+        },
+        "specLink": {
+          "title": "Spec Link",
+          "type": "string"
+        },
+        "spec": {
+          "title": "Spec",
+          "type": "string"
         }
+      }
+    },
+    "form": [
+      "hostId",
+      "apiId",
+      "apiVersion",
+      {
+        "key": "apiType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=api_type&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "serviceId",
+      {
+        "key": "apiVersionDesc",
+        "type": "textarea"
+      },
+      "specLink",
+      {
+        "key": "spec",
+        "type": "textarea"
       }
     ]
   },
