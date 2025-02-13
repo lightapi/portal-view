@@ -179,7 +179,8 @@
       "orgName",
       {
         "key": "orgDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "type": "help",
@@ -189,7 +190,8 @@
       "subDomain",
       {
         "key": "hostDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "key": "hostOwner",
@@ -244,7 +246,8 @@
       "orgName",
       {
         "key": "orgDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "type": "help",
@@ -308,7 +311,8 @@
       "subDomain",
       {
         "key": "hostDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "key": "hostOwner",
@@ -364,7 +368,8 @@
       "subDomain",
       {
         "key": "hostDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "key": "hostOwner",
@@ -527,7 +532,8 @@
       },
       {
         "key": "instruction",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       }
     ]
   },
@@ -829,7 +835,8 @@
           "ss[].s",
           {
             "key": "ss[].d",
-            "type": "textarea"
+            "type": "textarea",
+            "rows": 5
           },
           {
             "key": "ss[].is",
@@ -1723,7 +1730,8 @@
       "subject",
       {
         "key": "content",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 4
       }
     ]
   },
@@ -1922,12 +1930,14 @@
       "clientName",
       {
         "key": "clientDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "scope",
       {
         "key": "customClaim",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "redirectUri",
       "authenticateClass",
@@ -2040,12 +2050,14 @@
       "clientName",
       {
         "key": "clientDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "scope",
       {
         "key": "customClaim",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "redirectUri",
       "authenticateClass",
@@ -2135,7 +2147,8 @@
       "apiName",
       {
         "key": "apiDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "key": "operationOwner",
@@ -2304,7 +2317,8 @@
       "apiName",
       {
         "key": "apiDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       {
         "key": "operationOwner",
@@ -2458,12 +2472,14 @@
       "serviceId",
       {
         "key": "apiVersionDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "specLink",
       {
         "key": "spec",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       }
     ]
   },
@@ -2537,12 +2553,14 @@
       "serviceId",
       {
         "key": "apiVersionDesc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "specLink",
       {
         "key": "spec",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       }
     ]
   },
@@ -5839,7 +5857,8 @@
       "version",
       {
         "key": "desc",
-        "type": "textarea"
+        "type": "textarea",
+        "rows": 5
       },
       "status",
       {
