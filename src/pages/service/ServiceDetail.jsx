@@ -8,6 +8,7 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import AddBoxIcon from "@mui/icons-material/AddBox";
 import InputIcon from "@mui/icons-material/Input";
 import SettingsIcon from "@mui/icons-material/Settings";
 import BugReportIcon from "@mui/icons-material/BugReport";
@@ -76,6 +77,10 @@ export default function ServiceDetail() {
 
   const handleTest = (hostId, apiId) => {
     navigate("/app/serviceTest", { state: { data: { hostId, apiId } } });
+  };
+
+  const handleCreateServiceVersion = (apiId) => {
+    navigate("/app/form/createServiceVersion", { state: { data: { apiId } } });
   };
 
   let wait;
@@ -222,6 +227,7 @@ export default function ServiceDetail() {
             </TableBody>
           </Table>
         </TableContainer>
+        <AddBoxIcon onClick={() => handleCreateServiceVersion(apiId)} />
       </div>
     );
   }
