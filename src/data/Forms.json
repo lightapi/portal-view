@@ -12009,8 +12009,6 @@
         "productId",
         "productVersion",
         "serviceId",
-        "serviceDesc",
-        "instanceDesc",
         "platformId"
       ]
     },
@@ -12125,8 +12123,6 @@
         "productId",
         "productVersion",
         "serviceId",
-        "serviceDesc",
-        "instanceDesc",
         "platformId"
       ]
     },
