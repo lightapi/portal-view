@@ -18,7 +18,6 @@ import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this 
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
-import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 const useRowStyles = makeStyles({
   root: {
@@ -67,6 +66,7 @@ function Row(props) {
       <TableCell align="left">{row.platformId}</TableCell>
       <TableCell align="left">{row.platformName}</TableCell>
       <TableCell align="left">{row.platformVersion}</TableCell>
+      <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.clientType}</TableCell>
       <TableCell align="left">{row.clientUrl}</TableCell>
       {/* Credentials are sensitive, decide if you want to display */}
@@ -100,6 +100,7 @@ Row.propTypes = {
     platformId: PropTypes.string.isRequired,
     platformName: PropTypes.string,
     platformVersion: PropTypes.string,
+    pipelineId: PropTypes.string,
     clientType: PropTypes.string,
     clientUrl: PropTypes.string,
     credentials: PropTypes.string, // Consider if this should be displayed
@@ -149,6 +150,8 @@ export default function Platform() {
   const debouncedPlatformName = useDebounce(platformName, 1000);
   const [platformVersion, setPlatformVersion] = useState("");
   const debouncedPlatformVersion = useDebounce(platformVersion, 1000);
+  const [pipelineId, setPipelineId] = useState("");
+  const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [clientType, setClientType] = useState("");
   const debouncedClientType = useDebounce(clientType, 1000);
   const [environment, setEnvironment] = useState("");
@@ -173,6 +176,9 @@ export default function Platform() {
   };
   const handlePlatformVersionChange = (event) => {
     setPlatformVersion(event.target.value);
+  };
+  const handlePipelineIdChange = (event) => {
+    setPipelineId(event.target.value);
   };
   const handleClientTypeChange = (event) => {
     setClientType(event.target.value);
@@ -228,6 +234,7 @@ export default function Platform() {
         platformId: debouncedPlatformId,
         platformName: debouncedPlatformName,
         platformVersion: debouncedPlatformVersion,
+        pipelineId: debouncedPipelineId,
         clientType: debouncedClientType,
         environment: debouncedEnvironment,
         zone: debouncedZone,
@@ -248,6 +255,7 @@ export default function Platform() {
     debouncedPlatformId,
     debouncedPlatformName,
     debouncedPlatformVersion,
+    debouncedPipelineId,
     debouncedClientType,
     debouncedEnvironment,
     debouncedZone,
@@ -315,23 +323,20 @@ export default function Platform() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="client-type-label">Client Type</InputLabel>
-                    <Select
-                      labelId="client-type-label"
-                      id="client-type"
-                      value={clientType}
-                      onChange={handleClientTypeChange}
-                      label="Client Type"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"MAVEN"}>MAVEN</MenuItem>
-                      <MenuItem value={"GRADLE"}>GRADLE</MenuItem>
-                      <MenuItem value={"NPM"}>NPM</MenuItem>
-                      <MenuItem value={"DOCKER"}>DOCKER</MenuItem>
-                      {/* Add more client type options as needed */}
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Pipeline Id"
+                    value={pipelineId}
+                    onChange={handlePipelineIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Client Type"
+                    value={clientType}
+                    onChange={handleClientTypeChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
                   <input

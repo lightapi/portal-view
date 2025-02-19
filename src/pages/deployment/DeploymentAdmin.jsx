@@ -72,7 +72,6 @@ function Row(props) {
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.deploymentStatus}</TableCell>
       <TableCell align="left">{row.deploymentType}</TableCell>
-      <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.scheduleTs}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
@@ -96,7 +95,6 @@ Row.propTypes = {
     instanceId: PropTypes.string,
     deploymentStatus: PropTypes.string,
     deploymentType: PropTypes.string,
-    pipelineId: PropTypes.string,
     scheduleTs: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
@@ -140,8 +138,6 @@ export default function DeploymentAdmin() {
   const debouncedDeploymentStatus = useDebounce(deploymentStatus, 1000);
   const [deploymentType, setDeploymentType] = useState("");
   const debouncedDeploymentType = useDebounce(deploymentType, 1000);
-  const [pipelineId, setPipelineId] = useState("");
-  const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -158,9 +154,6 @@ export default function DeploymentAdmin() {
   };
   const handleDeploymentTypeChange = (event) => {
     setDeploymentType(event.target.value);
-  };
-  const handlePipelineIdChange = (event) => {
-    setPipelineId(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -202,7 +195,6 @@ export default function DeploymentAdmin() {
         instanceId: debouncedInstanceId,
         deploymentStatus: debouncedDeploymentStatus,
         deploymentType: debouncedDeploymentType,
-        pipelineId: debouncedPipelineId,
       },
     };
 
@@ -219,7 +211,6 @@ export default function DeploymentAdmin() {
     debouncedInstanceId,
     debouncedDeploymentStatus,
     debouncedDeploymentType,
-    debouncedPipelineId,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -287,14 +278,6 @@ export default function DeploymentAdmin() {
                     placeholder="Deployment Type"
                     value={deploymentType}
                     onChange={handleDeploymentTypeChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Pipeline Id"
-                    value={pipelineId}
-                    onChange={handlePipelineIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">Schedule Timestamp</TableCell>

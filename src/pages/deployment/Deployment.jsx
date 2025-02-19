@@ -18,7 +18,6 @@ import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this 
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
-import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 const useRowStyles = makeStyles({
   root: {
@@ -42,9 +41,9 @@ function Row(props) {
   const handleDelete = async (row) => {
     if (window.confirm("Are you sure you want to delete this deployment?")) {
       const cmd = {
-        host: "lightapi.net", // Adjust if needed
-        service: "deployment", // Assuming "deployment" service
-        action: "deleteDeployment", // Assuming "deleteDeployment" action
+        host: "lightapi.net",
+        service: "deployment",
+        action: "deleteDeployment",
         version: "0.1.0",
         data: row,
       };
@@ -73,7 +72,6 @@ function Row(props) {
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.deploymentStatus}</TableCell>
       <TableCell align="left">{row.deploymentType}</TableCell>
-      <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.scheduleTs}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
@@ -97,7 +95,6 @@ Row.propTypes = {
     instanceId: PropTypes.string,
     deploymentStatus: PropTypes.string,
     deploymentType: PropTypes.string,
-    pipelineId: PropTypes.string,
     scheduleTs: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
@@ -141,8 +138,6 @@ export default function Deployment() {
   const debouncedDeploymentStatus = useDebounce(deploymentStatus, 1000);
   const [deploymentType, setDeploymentType] = useState("");
   const debouncedDeploymentType = useDebounce(deploymentType, 1000);
-  const [pipelineId, setPipelineId] = useState("");
-  const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -159,9 +154,6 @@ export default function Deployment() {
   };
   const handleDeploymentTypeChange = (event) => {
     setDeploymentType(event.target.value);
-  };
-  const handlePipelineIdChange = (event) => {
-    setPipelineId(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -203,7 +195,6 @@ export default function Deployment() {
         instanceId: debouncedInstanceId,
         deploymentStatus: debouncedDeploymentStatus,
         deploymentType: debouncedDeploymentType,
-        pipelineId: debouncedPipelineId,
       },
     };
 
@@ -220,7 +211,6 @@ export default function Deployment() {
     debouncedInstanceId,
     debouncedDeploymentStatus,
     debouncedDeploymentType,
-    debouncedPipelineId,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -275,52 +265,19 @@ export default function Deployment() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="deployment-status-label">
-                      Deployment Status
-                    </InputLabel>
-                    <Select
-                      labelId="deployment-status-label"
-                      id="deployment-status"
-                      value={deploymentStatus}
-                      onChange={handleDeploymentStatusChange}
-                      label="Deployment Status"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"PENDING"}>PENDING</MenuItem>
-                      <MenuItem value={"DEPLOYED"}>DEPLOYED</MenuItem>
-                      <MenuItem value={"FAILED"}>FAILED</MenuItem>
-                      <MenuItem value={"DELETED"}>DELETED</MenuItem>
-                      {/* Add more status options as needed */}
-                    </Select>
-                  </FormControl>
-                </TableCell>
-                <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="deployment-type-label">
-                      Deployment Type
-                    </InputLabel>
-                    <Select
-                      labelId="deployment-type-label"
-                      id="deployment-type"
-                      value={deploymentType}
-                      onChange={handleDeploymentTypeChange}
-                      label="Deployment Type"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"DOCKER"}>DOCKER</MenuItem>
-                      <MenuItem value={"KUBERNETES"}>KUBERNETES</MenuItem>
-                      <MenuItem value={"VM"}>VM</MenuItem>
-                      {/* Add more type options as needed */}
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Deployment Status"
+                    value={deploymentStatus}
+                    onChange={handleDeploymentStatusChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Pipeline Id"
-                    value={pipelineId}
-                    onChange={handlePipelineIdChange}
+                    placeholder="Deployment Type"
+                    value={deploymentType}
+                    onChange={handleDeploymentTypeChange}
                   />
                 </TableCell>
                 <TableCell align="left">Schedule Timestamp</TableCell>

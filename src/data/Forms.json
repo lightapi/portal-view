@@ -12332,6 +12332,10 @@
           "title": "Platform Version",
           "type": "string"
         },
+        "pipelineId": {
+          "type": "string",
+          "title": "Pipeline Id"
+        },
         "clientType": {
           "title": "Client Type",
           "type": "string"
@@ -12381,6 +12385,7 @@
         "hostId",
         "platformName",
         "platformVersion",
+        "pipelineId",
         "clientType",
         "clientUrl",
         "credentials"
@@ -12396,6 +12401,15 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deploy_client_type"
+        }
+      },
+      {
+        "key": "pipelineId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
         }
       },
       "clientUrl",
@@ -12484,8 +12498,8 @@
           "title": "Platform Version",
           "type": "string"
         },
-        "clientType": {
-          "title": "Client Type",
+        "pipelineId": {
+          "title": "Pipeline Id",
           "type": "string"
         },
         "clientUrl": {
@@ -12534,6 +12548,7 @@
         "platformId",
         "platformName",
         "platformVersion",
+        "pipelineId",
         "clientType",
         "clientUrl",
         "credentials"
@@ -12550,6 +12565,15 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deploy_client_type"
+        }
+      },
+      {
+        "key": "pipelineId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
         }
       },
       "clientUrl",
@@ -12637,23 +12661,13 @@
           "title": "Deployment Type",
           "type": "string"
         },
-        "pipelineId": {
-          "title": "Pipeline Id",
-          "type": "string"
-        },
         "scheduleTs": {
           "title": "Schedule Timestamp",
           "type": "string",
           "format": "date-time"
         }
       },
-      "required": [
-        "hostId",
-        "instanceId",
-        "deploymentStatus",
-        "deploymentType",
-        "pipelineId"
-      ]
+      "required": ["hostId", "instanceId", "deploymentStatus", "deploymentType"]
     },
     "form": [
       "hostId",
@@ -12684,7 +12698,6 @@
           "params": ["hostId"]
         }
       },
-      "pipelineId",
       {
         "key": "scheduleTs",
         "type": "timestamp"
@@ -12730,10 +12743,6 @@
           "title": "Deployment Type",
           "type": "string"
         },
-        "pipelineId": {
-          "title": "Pipeline Id",
-          "type": "string"
-        },
         "scheduleTs": {
           "title": "Schedule Timestamp",
           "type": "string",
@@ -12745,8 +12754,7 @@
         "deploymentId",
         "instanceId",
         "deploymentStatus",
-        "deploymentType",
-        "pipelineId"
+        "deploymentType"
       ]
     },
     "form": [
@@ -12779,7 +12787,6 @@
           "params": ["hostId"]
         }
       },
-      "pipelineId",
       {
         "key": "scheduleTs",
         "type": "timestamp"
