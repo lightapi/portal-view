@@ -12259,7 +12259,14 @@
       "hostId",
       "platformName",
       "platformVersion",
-      "clientType",
+      {
+        "key": "clientType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deploy_client_type"
+        }
+      },
       "clientUrl",
       "credentials",
       "proxyUrl",
@@ -12406,7 +12413,14 @@
       "platformId",
       "platformName",
       "platformVersion",
-      "clientType",
+      {
+        "key": "clientType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=deploy_client_type"
+        }
+      },
       "clientUrl",
       "credentials",
       "proxyUrl",
