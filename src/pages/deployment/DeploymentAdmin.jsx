@@ -18,7 +18,6 @@ import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this 
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
-import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 
 const useRowStyles = makeStyles({
   root: {

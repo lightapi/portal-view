@@ -12171,6 +12171,137 @@
       "tagId"
     ]
   },
+  "createPipeline": {
+    "formId": "createPipeline",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "createPipeline",
+        "version": "0.1.0",
+        "title": "Create Pipeline Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Pipeline Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "pipelineId": {
+          "type": "string",
+          "title": "Pipeline Id"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "requestSchema": {
+          "title": "Request Schema",
+          "type": "string"
+        },
+        "responseSchema": {
+          "title": "Response Schema",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "pipelineId",
+        "endpoint",
+        "requestSchema",
+        "responseSchema"
+      ]
+    },
+    "form": [
+      "hostId",
+      "pipelineId",
+      "endpoint",
+      {
+        "key": "requestSchema",
+        "type": "textarea",
+        "placeholder": "Request Schema",
+        "rows": 5
+      },
+      {
+        "key": "responseSchema",
+        "type": "textarea",
+        "placeholder": "Response Schema",
+        "rows": 5
+      }
+    ]
+  },
+  "updatePipeline": {
+    "formId": "updatePipeline",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "updatePipeline",
+        "version": "0.1.0",
+        "title": "Update Pipeline Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Pipeline Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "pipelineId": {
+          "type": "string",
+          "title": "Pipeline Id",
+          "readonly": true
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "requestSchema": {
+          "title": "Request Schema",
+          "type": "string"
+        },
+        "responseSchema": {
+          "title": "Response Schema",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "pipelineId",
+        "endpoint",
+        "requestSchema",
+        "responseSchema"
+      ]
+    },
+    "form": [
+      "hostId",
+      "pipelineId",
+      "endpoint",
+      {
+        "key": "requestSchema",
+        "type": "textarea",
+        "placeholder": "Request Schema",
+        "rows": 5
+      },
+      {
+        "key": "responseSchema",
+        "type": "textarea",
+        "placeholder": "Response Schema",
+        "rows": 5
+      }
+    ]
+  },
   "createPlatform": {
     "formId": "createPlatform",
     "actions": [
