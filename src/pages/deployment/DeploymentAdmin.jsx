@@ -275,45 +275,20 @@ export default function DeploymentAdmin() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="deployment-status-label">
-                      Deployment Status
-                    </InputLabel>
-                    <Select
-                      labelId="deployment-status-label"
-                      id="deployment-status"
-                      value={deploymentStatus}
-                      onChange={handleDeploymentStatusChange}
-                      label="Deployment Status"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"PENDING"}>PENDING</MenuItem>
-                      <MenuItem value={"DEPLOYED"}>DEPLOYED</MenuItem>
-                      <MenuItem value={"FAILED"}>FAILED</MenuItem>
-                      <MenuItem value={"DELETED"}>DELETED</MenuItem>
-                      {/* Add more status options as needed */}
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Deployment Status"
+                    value={deploymentStatus}
+                    onChange={handleDeploymentStatusChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="deployment-type-label">
-                      Deployment Type
-                    </InputLabel>
-                    <Select
-                      labelId="deployment-type-label"
-                      id="deployment-type"
-                      value={deploymentType}
-                      onChange={handleDeploymentTypeChange}
-                      label="Deployment Type"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"DOCKER"}>DOCKER</MenuItem>
-                      <MenuItem value={"KUBERNETES"}>KUBERNETES</MenuItem>
-                      <MenuItem value={"VM"}>VM</MenuItem>
-                      {/* Add more type options as needed */}
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Deployment Type"
+                    value={deploymentType}
+                    onChange={handleDeploymentTypeChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
                   <input
