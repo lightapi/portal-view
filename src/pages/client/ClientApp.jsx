@@ -19,7 +19,7 @@ import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js";
-import { Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { stringToBoolean } from "../../utils/index.jsx";
 
 const useRowStyles = makeStyles({
   root: {
@@ -73,7 +73,7 @@ function Row(props) {
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appName}</TableCell>
       <TableCell align="left">{row.appDesc}</TableCell>
-      <TableCell align="left">{row.isKafkaApp ? "Y" : "N"}</TableCell>
+      <TableCell align="left">{row.isKafkaApp ? "Yes" : "No"}</TableCell>
       <TableCell align="left">{row.operationOwner}</TableCell>
       <TableCell align="left">{row.deliveryOwner}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
@@ -101,7 +101,7 @@ Row.propTypes = {
     appId: PropTypes.string.isRequired,
     appName: PropTypes.string,
     appDesc: PropTypes.string,
-    isKafkaApp: PropTypes.boolean,
+    isKafkaApp: PropTypes.bool,
     operationOwner: PropTypes.string,
     deliveryOwner: PropTypes.string,
     updateUser: PropTypes.string,
@@ -212,12 +212,11 @@ export default function ClientApp() {
         appId: debouncedAppId,
         appName: debouncedAppName,
         appDesc: debouncedAppDesc,
-        isKafkaApp:
-          debouncedIsKafkaApp === ""
-            ? undefined
-            : debouncedIsKafkaApp === "true",
         operationOwner: debouncedOperationOwner,
         deliveryOwner: debouncedDeliveryOwner,
+        ...(debouncedIsKafkaApp && debouncedIsKafkaApp.trim() !== ""
+          ? { isKafkaApp: stringToBoolean(debouncedIsKafkaApp) }
+          : {}), // Conditional spread
       },
     };
 
@@ -297,22 +296,12 @@ export default function ClientApp() {
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <FormControl fullWidth variant="standard">
-                    <InputLabel id="is-kafka-app-label">
-                      Is Kafka App
-                    </InputLabel>
-                    <Select
-                      labelId="is-kafka-app-label"
-                      id="is-kafka-app"
-                      value={isKafkaApp}
-                      onChange={handleIsKafkaAppChange}
-                      label="Is Kafka App"
-                    >
-                      <MenuItem value={""}> </MenuItem>
-                      <MenuItem value={"true"}>Y</MenuItem>
-                      <MenuItem value={"false"}>N</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <input
+                    type="text"
+                    placeholder="Is Kafka App"
+                    value={isKafkaApp}
+                    onChange={handleIsKafkaAppChange}
+                  />
                 </TableCell>
                 <TableCell align="left">
                   <input
@@ -330,9 +319,11 @@ export default function ClientApp() {
                     onChange={handleDeliveryOwnerChange}
                   />
                 </TableCell>
+                <TableCell align="left">Update User</TableCell>
+                <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Client</TableCell>
+                <TableCell align="right">OAuth Client</TableCell>
               </TableRow>
             </TableHead>
             <AppList apps={apps} />

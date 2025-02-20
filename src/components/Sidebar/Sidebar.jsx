@@ -4,7 +4,6 @@ import {
   BorderAll as TableIcon,
   HelpOutline as FAQIcon,
   Home as HomeIcon,
-  LibraryBooks as LibraryIcon,
   NotificationsNone as NotificationsIcon,
   Toc as OrderIcon,
 } from "@mui/icons-material";
@@ -190,7 +189,7 @@ const structure = [
   },
   {
     id: 100,
-    label: "Client Admin",
+    label: "App Admin",
     role: "admin",
     link: "/app/clientApp",
     icon: <AppsIcon />,
@@ -252,7 +251,7 @@ const structure = [
   },
   {
     id: 118,
-    label: "Service Admin",
+    label: "Api Admin",
     role: "admin",
     link: "/app/service/admin",
     icon: <ApiIcon />,
