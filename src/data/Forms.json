@@ -1992,7 +1992,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "client",
+        "service": "oauth",
         "action": "createClient",
         "version": "0.1.0",
         "title": "Create Client",
@@ -2122,7 +2122,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "client",
+        "service": "oauth",
         "action": "updateClient",
         "version": "0.1.0",
         "title": "Update Client",
@@ -2760,7 +2760,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "client",
+        "service": "oauth",
         "action": "createClient",
         "version": "0.1.0",
         "title": "Create Client",
@@ -2890,7 +2890,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "client",
+        "service": "oauth",
         "action": "updateClient",
         "version": "0.1.0",
         "title": "Update Client",

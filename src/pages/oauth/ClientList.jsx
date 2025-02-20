@@ -34,7 +34,7 @@ function Row(props) {
   const handleUpdate = (clientId) => {
     const cmd = {
       host: "lightapi.net",
-      service: "client",
+      service: "oauth",
       action: "getClientById",
       version: "0.1.0",
       data: { clientId },
