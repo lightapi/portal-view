@@ -11,6 +11,7 @@ import TableBody from "@mui/material/TableBody"; // Import TableBody
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import DetailsIcon from "@mui/icons-material/Details";
+import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,10 @@ function Row(props) {
     navigate("/app/serviceDetail", { state: { service } });
   };
 
+  const handleClient = (hostId, apiId) => {
+    navigate("/app/client", { state: { data: { hostId, apiId } } });
+  };
+
   return (
     <TableRow className={classes.root}>
       <TableCell align="left">{row.apiId}</TableCell>
@@ -72,6 +77,11 @@ function Row(props) {
       <TableCell align="right">
         <DeleteForeverIcon
           onClick={() => handleDelete(row.hostId, row.apiId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <AirlineSeatReclineNormalIcon
+          onClick={() => handleClient(row.hostId, row.apiId)}
         />
       </TableCell>
     </TableRow>
@@ -406,6 +416,7 @@ export default function Service() {
                 <TableCell align="right">Detail</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">OAuth Client</TableCell>
               </TableRow>
             </TableHead>
             <ServiceList services={services} />

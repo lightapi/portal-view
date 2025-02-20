@@ -138,7 +138,7 @@ export default function Client() {
   const debouncedClientName = useDebounce(clientName, 1000);
   const [appId, setAppId] = useState(() => data?.appId || "");
   const debouncedAppId = useDebounce(appId, 1000);
-  const [apiId, setApiId] = useState("");
+  const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
   const [clientType, setClientType] = useState("");
   const [clientProfile, setClientProfile] = useState("");
@@ -236,10 +236,10 @@ export default function Client() {
   };
 
   const handleCreate = (appId, apiId) => {
-    if (appId != null) {
+    if (appId != null && appId.length > 0) {
       // Checks if appId is not null or undefined
       navigate("/app/form/createAppClient", { state: { data: { appId } } });
-    } else if (apiId != null) {
+    } else if (apiId != null && apiId.length > 0) {
       // Checks if apiId is not null or undefined
       navigate("/app/form/createApiClient", { state: { data: { apiId } } });
     }

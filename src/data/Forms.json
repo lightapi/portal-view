@@ -2765,7 +2765,7 @@
         "service": "oauth",
         "action": "createClient",
         "version": "0.1.0",
-        "title": "Create Client",
+        "title": "Create Api Client",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -2782,11 +2782,13 @@
       "properties": {
         "hostId": {
           "title": "Host Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "apiId": {
           "type": "string",
-          "title": "Api Id"
+          "title": "Api Id",
+          "readonly": true
         },
         "clientName": {
           "title": "Client Name",
