@@ -65,7 +65,7 @@ function Row(props) {
   };
 
   const handleClient = (hostId, appId) => {
-    navigate("/app/app/client", { state: { data: { hostId, appId } } });
+    navigate("/app/client", { state: { data: { hostId, appId } } });
   };
 
   return (

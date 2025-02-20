@@ -12,7 +12,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
@@ -33,7 +33,11 @@ function Row(props) {
   const classes = useRowStyles();
 
   const handleUpdate = (client) => {
-    navigate("/app/form/updateClient", { state: { data: { ...client } } });
+    if (client.appId != null) {
+      navigate("/app/form/updateAppClient", { state: { data: { ...client } } });
+    } else if (client.apiId != null) {
+      navigate("/app/form/updateApiClient", { state: { data: { ...client } } });
+    }
   };
 
   const handleDelete = async (row) => {
@@ -123,6 +127,8 @@ ClientList.propTypes = {
 export default function Client() {
   const classes = useRowStyles();
   const navigate = useNavigate();
+  const location = useLocation();
+  const data = location.state?.data;
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -130,7 +136,7 @@ export default function Client() {
   const debouncedClientId = useDebounce(clientId, 1000);
   const [clientName, setClientName] = useState("");
   const debouncedClientName = useDebounce(clientName, 1000);
-  const [appId, setAppId] = useState("");
+  const [appId, setAppId] = useState(() => data?.appId || "");
   const debouncedAppId = useDebounce(appId, 1000);
   const [apiId, setApiId] = useState("");
   const debouncedApiId = useDebounce(apiId, 1000);
@@ -229,8 +235,14 @@ export default function Client() {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createClient"); // Adjust path as needed
+  const handleCreate = (appId, apiId) => {
+    if (appId != null) {
+      // Checks if appId is not null or undefined
+      navigate("/app/form/createAppClient", { state: { data: { appId } } });
+    } else if (apiId != null) {
+      // Checks if apiId is not null or undefined
+      navigate("/app/form/createApiClient", { state: { data: { apiId } } });
+    }
   };
 
   let content;
@@ -312,7 +324,7 @@ export default function Client() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={handleCreate} />
+        <AddBoxIcon onClick={() => handleCreate(appId, apiId)} />
       </div>
     );
   }

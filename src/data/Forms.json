@@ -1995,7 +1995,7 @@
         "service": "oauth",
         "action": "createClient",
         "version": "0.1.0",
-        "title": "Create Client",
+        "title": "Create App Client",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -2012,11 +2012,13 @@
       "properties": {
         "hostId": {
           "title": "Host Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "appId": {
           "type": "string",
-          "title": "App Id"
+          "title": "App Id",
+          "readonly": true
         },
         "clientName": {
           "title": "Client Name",
@@ -2125,7 +2127,7 @@
         "service": "oauth",
         "action": "updateClient",
         "version": "0.1.0",
-        "title": "Update Client",
+        "title": "Update App Client",
         "success": "/app/success",
         "failure": "/app/failure"
       }
