@@ -25,6 +25,19 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import GiteIcon from "@mui/icons-material/Gite";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import AppsIcon from "@mui/icons-material/Apps";
+import ProductionQuantityLimitsIcon from "@mui/icons-material/ProductionQuantityLimits";
+import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import AccessibleIcon from "@mui/icons-material/Accessible";
+import ApiIcon from "@mui/icons-material/Api";
+import RuleIcon from "@mui/icons-material/Rule";
+import CategoryIcon from "@mui/icons-material/Category";
+import NewspaperIcon from "@mui/icons-material/Newspaper";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import SchemaIcon from "@mui/icons-material/Schema";
+import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -159,7 +172,7 @@ const structure = [
     label: "Host Admin",
     role: "admin",
     link: "/app/host/HostAdmin",
-    icon: <PeopleAltIcon />,
+    icon: <GiteIcon />,
   },
   {
     id: 92,
@@ -187,49 +200,49 @@ const structure = [
     label: "Product Admin",
     role: "admin",
     link: "/app/product/ProductAdmin",
-    icon: <AppsIcon />,
+    icon: <ProductionQuantityLimitsIcon />,
   },
   {
     id: 111,
     label: "Pipeline Admin",
     role: "admin",
     link: "/app/deployment/PipelineAdmin",
-    icon: <AppsIcon />,
+    icon: <SettingsInputComponentIcon />,
   },
   {
     id: 112,
     label: "Platform Admin",
     role: "admin",
     link: "/app/deployment/PlatformAdmin",
-    icon: <AppsIcon />,
+    icon: <IntegrationInstructionsIcon />,
   },
   {
     id: 113,
     label: "Instance Admin",
     role: "admin",
     link: "/app/instance/InstanceAdmin",
-    icon: <AppsIcon />,
+    icon: <ContentCopyIcon />,
   },
   {
     id: 114,
     label: "Deployment Admin",
     role: "admin",
     link: "/app/deployment/DeploymentAdmin",
-    icon: <AppsIcon />,
+    icon: <AirplanemodeActiveIcon />,
   },
   {
     id: 115,
     label: "Config Admin",
     role: "admin",
     link: "/app/config/configAdmin",
-    icon: <LibraryIcon />,
+    icon: <PermDataSettingIcon />,
   },
   {
     id: 116,
     label: "Access Admin",
     role: "admin",
     link: "/app/access/admin",
-    icon: <LibraryIcon />,
+    icon: <AccessibleIcon />,
     children: [
       { label: "Role", link: "/app/access/roleAdmin" },
       { label: "Position", link: "/app/access/positionAdmin" },
@@ -242,14 +255,14 @@ const structure = [
     label: "Service Admin",
     role: "admin",
     link: "/app/service/admin",
-    icon: <LibraryIcon />,
+    icon: <ApiIcon />,
   },
   {
     id: 120,
     label: "Rule Admin",
     role: "admin",
     link: "/app/rule/admin",
-    icon: <LibraryIcon />,
+    icon: <RuleIcon />,
   },
   { id: 122, type: "divider" },
   {
@@ -257,7 +270,7 @@ const structure = [
     label: "Category Admin",
     role: "admin",
     link: "/app/category/admin",
-    icon: <LibraryIcon />,
+    icon: <CategoryIcon />,
     children: [
       { label: "List", link: "/app/category/list" },
       { label: "Create", link: "/app/form/createCategory" },
@@ -270,7 +283,7 @@ const structure = [
     label: "News Admin",
     role: "admin",
     link: "/app/news/admin",
-    icon: <LibraryIcon />,
+    icon: <NewspaperIcon />,
     children: [
       { label: "Create", link: "/app/news/create" },
       { label: "Update", link: "/app/news/update" },
@@ -282,7 +295,7 @@ const structure = [
     label: "Blog Admin",
     role: "admin",
     link: "/app/blog/admin",
-    icon: <LibraryIcon />,
+    icon: <BookIcon />,
     children: [
       { label: "List", link: "/app/blog/adminList" },
       { label: "Create", link: "/app/form/createBlog" },
@@ -295,7 +308,7 @@ const structure = [
     label: "Error Admin",
     role: "admin",
     link: "/app/error/admin",
-    icon: <LibraryIcon />,
+    icon: <ErrorOutlineIcon />,
     children: [
       { label: "List", link: "/app/error/adminList" },
       { label: "Create", link: "/app/form/createError" },
@@ -308,7 +321,7 @@ const structure = [
     label: "Schema Admin",
     role: "admin",
     link: "/app/schema/admin",
-    icon: <LibraryIcon />,
+    icon: <SchemaIcon />,
     children: [
       { label: "List", link: "/app/schema/adminList" },
       { label: "Create", link: "/app/form/createJsonSchema" },
@@ -321,7 +334,7 @@ const structure = [
     label: "Forum Admin",
     role: "admin",
     link: "/app/forum/admin",
-    icon: <LibraryIcon />,
+    icon: <ForumIcon />,
     children: [
       { label: "Create", link: "/app/forum/create" },
       { label: "Update", link: "/app/forum/update" },
@@ -332,7 +345,7 @@ const structure = [
     id: 160,
     label: "Training Admin",
     link: "/app/edu/admin",
-    icon: <LibraryIcon />,
+    icon: <ModelTrainingIcon />,
     children: [
       { label: "List Quiz", link: "/app/form/listQuiz" },
       { label: "Create Quiz", link: "/app/form/createQuiz" },
