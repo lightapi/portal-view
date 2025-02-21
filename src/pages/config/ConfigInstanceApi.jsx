@@ -262,7 +262,9 @@ export default function ConfigInstanceApi() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createConfigInstanceApi"); // Adjust path
+    navigate("/app/form/createConfigInstanceApi", {
+      state: { data: { configId } },
+    });
   };
 
   let content;
@@ -361,7 +363,7 @@ export default function ConfigInstanceApi() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={handleCreate} />
+        <AddBoxIcon onClick={() => handleCreate(configId)} />
       </div>
     );
   }

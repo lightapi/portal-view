@@ -239,8 +239,10 @@ export default function ConfigEnvironment() {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createConfigEnvironment"); // Adjust path as needed
+  const handleCreate = (configId) => {
+    navigate("/app/form/createConfigEnvironment", {
+      state: { data: { configId } },
+    });
   };
 
   let content;
@@ -322,7 +324,7 @@ export default function ConfigEnvironment() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={handleCreate} />
+        <AddBoxIcon onClick={() => handleCreate(configId)} />
       </div>
     );
   }

@@ -253,7 +253,9 @@ export default function ConfigProductVersion() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createConfigProductVersion"); // Adjust path
+    navigate("/app/form/createConfigProductVersion", {
+      state: { data: { configId } },
+    });
   };
 
   let content;
@@ -346,7 +348,7 @@ export default function ConfigProductVersion() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={handleCreate} />
+        <AddBoxIcon onClick={() => handleCreate(configId)} />
       </div>
     );
   }
