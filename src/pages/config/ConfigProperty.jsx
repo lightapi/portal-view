@@ -264,7 +264,9 @@ export default function ConfigPropertyAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createConfigProperty");
+    navigate("/app/form/createConfigProperty", {
+      state: { data: { configId } },
+    });
   };
 
   let content;
@@ -360,7 +362,7 @@ export default function ConfigPropertyAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={handleCreate} />
+        <AddBoxIcon onClick={() => handleCreate(configId)} />
       </div>
     );
   }

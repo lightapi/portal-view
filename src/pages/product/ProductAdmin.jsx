@@ -10,6 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -64,6 +65,12 @@ function Row(props) {
     }
   };
 
+  const handleConfig = (productId, productVersion) => {
+    navigate("/app/config/configProductVersion", {
+      state: { data: { productId, productVersion } },
+    });
+  };
+
   return (
     <TableRow
       className={classes.root}
@@ -88,6 +95,11 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <AddToDriveIcon
+          onClick={() => handleConfig(row.productId, row.productVersion)}
+        />
       </TableCell>
     </TableRow>
   );
@@ -379,6 +391,7 @@ export default function ProductAdmin() {
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Config</TableCell>
               </TableRow>
             </TableHead>
             <ProductVersionList productVersions={productVersions} />

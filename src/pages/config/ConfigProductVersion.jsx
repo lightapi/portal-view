@@ -142,9 +142,11 @@ export default function ConfigProductVersion() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(() => data?.productId || "");
   const debouncedProductId = useDebounce(productId, 1000);
-  const [productVersion, setProductVersion] = useState("");
+  const [productVersion, setProductVersion] = useState(
+    () => data?.productVersion || "",
+  );
   const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
@@ -252,9 +254,9 @@ export default function ConfigProductVersion() {
     setPage(0);
   };
 
-  const handleCreate = () => {
+  const handleCreate = (configId, productId, productVersion) => {
     navigate("/app/form/createConfigProductVersion", {
-      state: { data: { configId } },
+      state: { data: { configId, productId, productVersion } },
     });
   };
 
@@ -348,7 +350,9 @@ export default function ConfigProductVersion() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(configId)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(configId, productId, productVersion)}
+        />
       </div>
     );
   }

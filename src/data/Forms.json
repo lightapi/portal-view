@@ -9610,6 +9610,10 @@
           "type": "string",
           "title": "Property Value"
         },
+        "valueType": {
+          "type": "string",
+          "title": "Value Type"
+        },
         "propertyFile": {
           "type": "string",
           "title": "Property File"
@@ -9659,8 +9663,44 @@
       },
       "displayOrder",
       "required",
-      "propertyDesc",
+      {
+        "key": "propertyDesc",
+        "type": "textarea",
+        "placeholder": "Property Desc",
+        "rows": 5
+      },
       "propertyValue",
+      {
+        "key": "valueType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "boolean",
+            "label": "boolean"
+          },
+          {
+            "id": "float",
+            "label": "float"
+          },
+          {
+            "id": "integer",
+            "label": "integer"
+          },
+          {
+            "id": "list",
+            "label": "list"
+          },
+          {
+            "id": "map",
+            "label": "map"
+          },
+          {
+            "id": "string",
+            "label": "string"
+          }
+        ]
+      },
       "propertyFile",
       {
         "key": "resourceType",
@@ -9750,6 +9790,10 @@
           "type": "string",
           "title": "Property Value"
         },
+        "valueType": {
+          "type": "string",
+          "title": "Value Type"
+        },
         "propertyFile": {
           "type": "string",
           "title": "Property File"
@@ -9792,8 +9836,44 @@
       },
       "displayOrder",
       "required",
-      "propertyDesc",
+      {
+        "key": "propertyDesc",
+        "type": "textarea",
+        "placeholder": "Property Desc",
+        "rows": 5
+      },
       "propertyValue",
+      {
+        "key": "valueType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "boolean",
+            "label": "boolean"
+          },
+          {
+            "id": "float",
+            "label": "float"
+          },
+          {
+            "id": "integer",
+            "label": "integer"
+          },
+          {
+            "id": "list",
+            "label": "list"
+          },
+          {
+            "id": "map",
+            "label": "map"
+          },
+          {
+            "id": "string",
+            "label": "string"
+          }
+        ]
+      },
       "propertyFile",
       {
         "key": "resourceType",
