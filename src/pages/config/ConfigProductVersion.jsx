@@ -76,6 +76,7 @@ function Row(props) {
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
       <TableCell align="left">{row.propertyFile}</TableCell>
@@ -99,6 +100,7 @@ Row.propTypes = {
     productId: PropTypes.string.isRequired,
     productVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
     propertyValue: PropTypes.string, // Consider if directly displaying is appropriate
     propertyFile: PropTypes.string, // Consider if directly displaying is appropriate
@@ -195,7 +197,7 @@ export default function ConfigProductVersion() {
         setConfigProductVersions([]);
       } else {
         const data = await response.json();
-        setConfigProductVersions(data.configProductVersions || []); // Adjust response key
+        setConfigProductVersions(data.productVersionProperties || []);
         setTotal(data.total || 0);
       }
     } catch (e) {
