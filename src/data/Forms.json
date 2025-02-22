@@ -12352,7 +12352,18 @@
         "light4jVersion",
         "versionStatus",
         "releaseType"
-      ]
+      ],
+      "if": {
+        "properties": {
+          "current": { "const": true }
+        },
+        "required": ["current"]
+      },
+      "then": {
+        "properties": {
+          "releaseType": { "const": "Production Release" }
+        }
+      }
     },
     "form": [
       "hostId",
@@ -12493,7 +12504,18 @@
         "productVersion",
         "light4jVersion",
         "versionStatus"
-      ]
+      ],
+      "if": {
+        "properties": {
+          "current": { "const": true }
+        },
+        "required": ["current"]
+      },
+      "then": {
+        "properties": {
+          "releaseType": { "const": "Production Release" }
+        }
+      }
     },
     "form": [
       "hostId",
