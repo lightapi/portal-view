@@ -69,7 +69,7 @@ function Form() {
 
     const modelWithHostId = Object.assign({}, initialModel, { hostId: host });
     setModel(modelWithHostId);
-  }, [formId, location.state]);
+  }, [host, formId, location.state]);
 
   const onModelChange = (key, val, type) => {
     utils.selectOrSet(key, model, val, type);
@@ -115,7 +115,7 @@ function Form() {
       setFetching(false);
       if (!response.ok) {
         // code is not OK.
-        navigate(action.failure, { state: { error: data } });
+        navigate(action.failure, { state: { data } });
       } else {
         navigate(action.success, { state: { data } });
       }
