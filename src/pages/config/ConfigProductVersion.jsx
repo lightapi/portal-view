@@ -35,7 +35,7 @@ function Row(props) {
   const handleUpdate = (configProductVersion) => {
     navigate("/app/form/updateConfigProductVersion", {
       state: { data: { ...configProductVersion } },
-    }); // Adjust the path
+    });
   };
 
   const handleDelete = async (row) => {
@@ -45,10 +45,10 @@ function Row(props) {
       )
     ) {
       const cmd = {
-        host: "lightapi.net", // Adjust as needed
-        service: "config", // Adjust to your service name
-        action: "deleteConfigProductVersion", // Adjust action name
-        version: "0.1.0", // Adjust version
+        host: "lightapi.net",
+        service: "config",
+        action: "deleteConfigProductVersion",
+        version: "0.1.0",
         data: row,
       };
 
@@ -154,7 +154,8 @@ export default function ConfigProductVersion() {
   const debouncedConfigName = useDebounce(configName, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
-  const [propertyValue, setPropertyValue] = useState(""); // No debounce
+  const [propertyValue, setPropertyValue] = useState("");
+  const debouncedPropertyValue = useDebounce(propertyValue, 1000);
   const [propertyFile, setPropertyFile] = useState(""); // No debounce
 
   const [loading, setLoading] = useState(false);
@@ -208,9 +209,9 @@ export default function ConfigProductVersion() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust
-      service: "config", // Adjust to your service name
-      action: "getConfigProductVersion", // Adjust
+      host: "lightapi.net",
+      service: "config",
+      action: "getConfigProductVersion",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
@@ -219,10 +220,10 @@ export default function ConfigProductVersion() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         configId: debouncedConfigId,
-        configName: debouncedConfigName, // Include configName
+        configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Not debounced
-        propertyFile: propertyFile, // Not debounced
+        propertyValue: debouncedPropertyValue,
+        propertyFile: propertyFile,
       },
     };
 
@@ -240,7 +241,7 @@ export default function ConfigProductVersion() {
     debouncedConfigId,
     debouncedConfigName,
     debouncedPropertyName,
-    propertyValue, // Included in dependencies
+    debouncedPropertyValue,
     propertyFile, // Included in dependencies
     fetchData,
   ]);

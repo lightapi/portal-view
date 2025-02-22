@@ -10,6 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -64,6 +65,12 @@ function Row(props) {
     }
   };
 
+  const handleConfig = (productId, productVersion) => {
+    navigate("/app/config/configProductVersion", {
+      state: { data: { productId, productVersion } },
+    });
+  };
+
   return (
     <TableRow
       className={classes.root}
@@ -75,8 +82,9 @@ function Row(props) {
       <TableCell align="left">{row.light4jVersion}</TableCell>
       <TableCell align="left">{row.breakCode ? "Yes" : "No"}</TableCell>
       <TableCell align="left">{row.breakConfig ? "Yes" : "No"}</TableCell>
-      <TableCell align="left">{row.upgradeGuide}</TableCell>
+      <TableCell align="left">{row.releaseNote}</TableCell>
       <TableCell align="left">{row.versionDesc}</TableCell>
+      <TableCell align="left">{row.releaseType}</TableCell>
       <TableCell align="left">{row.current ? "Yes" : "No"}</TableCell>
       <TableCell align="left">{row.versionStatus}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
@@ -88,6 +96,11 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <AddToDriveIcon
+          onClick={() => handleConfig(row.productId, row.productVersion)}
+        />
       </TableCell>
     </TableRow>
   );
@@ -102,8 +115,9 @@ Row.propTypes = {
     light4jVersion: PropTypes.string,
     breakCode: PropTypes.bool,
     breakConfig: PropTypes.bool,
-    upgradeGuide: PropTypes.string,
+    releaseNote: PropTypes.string,
     versionDesc: PropTypes.string,
+    releaseType: PropTypes.string,
     current: PropTypes.bool,
     versionStatus: PropTypes.string.isRequired,
     updateUser: PropTypes.string,
@@ -154,8 +168,10 @@ export default function Product() {
   const debouncedBreakCode = useDebounce(breakCode, 1000);
   const [breakConfig, setBreakConfig] = useState("");
   const debouncedBreakConfig = useDebounce(breakConfig, 1000);
-  const [upgradeGuide, setUpgradeGuide] = useState("");
-  const debouncedUpgradeGuide = useDebounce(upgradeGuide, 1000);
+  const [releaseNote, setReleaseNote] = useState("");
+  const debouncedReleaseNote = useDebounce(releaseNote, 1000);
+  const [releaseType, setReleaseType] = useState("");
+  const debouncedReleaseType = useDebounce(releaseType, 1000);
   const [versionStatus, setVersionStatus] = useState("");
   const debouncedVersionStatus = useDebounce(versionStatus, 1000);
   const [versionDesc, setVersionDesc] = useState("");
@@ -182,8 +198,11 @@ export default function Product() {
   const handleBreakConfigChange = (event) => {
     setBreakConfig(event.target.value);
   };
-  const handleUpgradeGuideChange = (event) => {
-    setUpgradeGuide(event.target.value);
+  const handleReleaseNoteChange = (event) => {
+    setReleaseNote(event.target.value);
+  };
+  const handleReleaseTypeChange = (event) => {
+    setReleaseType(event.target.value);
   };
   const handleVersionStatusChange = (event) => {
     setVersionStatus(event.target.value);
@@ -233,7 +252,8 @@ export default function Product() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         light4jVersion: debouncedLight4jVersion,
-        upgradeGuide: debouncedUpgradeGuide,
+        releaseNote: debouncedReleaseNote,
+        releaseType: debouncedReleaseType,
         versionStatus: debouncedVersionStatus,
         versionDesc: debouncedVersionDesc,
         ...(debouncedCurrent && debouncedCurrent.trim() !== ""
@@ -262,7 +282,8 @@ export default function Product() {
     debouncedLight4jVersion,
     debouncedBreakCode,
     debouncedBreakConfig,
-    debouncedUpgradeGuide,
+    debouncedReleaseNote,
+    debouncedReleaseType,
     debouncedVersionStatus,
     debouncedVersionDesc,
     debouncedCurrent,
@@ -346,9 +367,9 @@ export default function Product() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Upgrade Guide"
-                    value={upgradeGuide}
-                    onChange={handleUpgradeGuideChange}
+                    placeholder="Release Note"
+                    value={releaseNote}
+                    onChange={handleReleaseNoteChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -357,6 +378,14 @@ export default function Product() {
                     placeholder="Version Desc"
                     value={versionDesc}
                     onChange={handleVersionDescChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Release Type"
+                    value={releaseType}
+                    onChange={handleReleaseTypeChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -379,6 +408,7 @@ export default function Product() {
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Config</TableCell>
               </TableRow>
             </TableHead>
             <ProductVersionList productVersions={productVersions} />

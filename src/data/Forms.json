@@ -12324,13 +12324,17 @@
           "type": "boolean",
           "title": "Break Config"
         },
-        "upgradeGuide": {
+        "releaseNote": {
           "type": "string",
-          "title": "Upgrade Guide"
+          "title": "Release Note"
         },
         "versionDesc": {
           "type": "string",
           "title": "Version Desc"
+        },
+        "releaseType": {
+          "type": "string",
+          "title": "Release Type"
         },
         "current": {
           "type": "boolean",
@@ -12346,7 +12350,8 @@
         "productId",
         "productVersion",
         "light4jVersion",
-        "versionStatus"
+        "versionStatus",
+        "releaseType"
       ]
     },
     "form": [
@@ -12373,11 +12378,38 @@
       "breakCode",
       "breakConfig",
       {
-        "key": "upgradeGuide",
+        "key": "releaseNote",
         "height": "200px",
         "type": "markdown"
       },
       "versionDesc",
+      {
+        "key": "releaseType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Alpha Version",
+            "label": "Alpha Version"
+          },
+          {
+            "id": "Beta Version",
+            "label": "Beta Version"
+          },
+          {
+            "id": "Release Candidate",
+            "label": "Release Candidate"
+          },
+          {
+            "id": "General Availability",
+            "label": "General Availability"
+          },
+          {
+            "id": "Production Release",
+            "label": "Production Release"
+          }
+        ]
+      },
       "current",
       {
         "key": "versionStatus",
@@ -12434,13 +12466,17 @@
           "type": "boolean",
           "title": "Break Config"
         },
-        "upgradeGuide": {
+        "releaseNote": {
           "type": "string",
-          "title": "Upgrade Guide"
+          "title": "Release Note"
         },
         "versionDesc": {
           "type": "string",
           "title": "Version Desc"
+        },
+        "releaseType": {
+          "type": "string",
+          "title": "Release Type"
         },
         "current": {
           "type": "boolean",
@@ -12475,11 +12511,38 @@
       "breakCode",
       "breakConfig",
       {
-        "key": "upgradeGuide",
+        "key": "releaseNote",
         "height": "200px",
         "type": "markdown"
       },
       "versionDesc",
+      {
+        "key": "releaseType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Alpha Version",
+            "label": "Alpha Version"
+          },
+          {
+            "id": "Beta Version",
+            "label": "Beta Version"
+          },
+          {
+            "id": "Release Candidate",
+            "label": "Release Candidate"
+          },
+          {
+            "id": "General Availability",
+            "label": "General Availability"
+          },
+          {
+            "id": "Production Release",
+            "label": "Production Release"
+          }
+        ]
+      },
       "current",
       {
         "key": "versionStatus",
