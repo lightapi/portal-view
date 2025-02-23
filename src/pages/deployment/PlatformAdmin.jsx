@@ -66,7 +66,6 @@ function Row(props) {
       <TableCell align="left">{row.platformId}</TableCell>
       <TableCell align="left">{row.platformName}</TableCell>
       <TableCell align="left">{row.platformVersion}</TableCell>
-      <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.clientType}</TableCell>
       <TableCell align="left">{row.clientUrl}</TableCell>
       {/* Credentials are sensitive, decide if you want to display */}
@@ -100,7 +99,6 @@ Row.propTypes = {
     platformId: PropTypes.string.isRequired,
     platformName: PropTypes.string,
     platformVersion: PropTypes.string,
-    pipelineId: PropTypes.string,
     clientType: PropTypes.string,
     clientUrl: PropTypes.string,
     credentials: PropTypes.string, // Consider if this should be displayed
@@ -150,8 +148,6 @@ export default function PlatformAdmin() {
   const debouncedPlatformName = useDebounce(platformName, 1000);
   const [platformVersion, setPlatformVersion] = useState("");
   const debouncedPlatformVersion = useDebounce(platformVersion, 1000);
-  const [pipelineId, setPipelineId] = useState("");
-  const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [clientType, setClientType] = useState("");
   const debouncedClientType = useDebounce(clientType, 1000);
   const [environment, setEnvironment] = useState("");
@@ -176,9 +172,6 @@ export default function PlatformAdmin() {
   };
   const handlePlatformVersionChange = (event) => {
     setPlatformVersion(event.target.value);
-  };
-  const handlePipelineIdChange = (event) => {
-    setPipelineId(event.target.value);
   };
   const handleClientTypeChange = (event) => {
     setClientType(event.target.value);
@@ -234,7 +227,6 @@ export default function PlatformAdmin() {
         platformId: debouncedPlatformId,
         platformName: debouncedPlatformName,
         platformVersion: debouncedPlatformVersion,
-        pipelineId: debouncedPipelineId,
         clientType: debouncedClientType,
         environment: debouncedEnvironment,
         zone: debouncedZone,
@@ -255,7 +247,6 @@ export default function PlatformAdmin() {
     debouncedPlatformId,
     debouncedPlatformName,
     debouncedPlatformVersion,
-    debouncedPipelineId,
     debouncedClientType,
     debouncedEnvironment,
     debouncedZone,
@@ -320,14 +311,6 @@ export default function PlatformAdmin() {
                     placeholder="Platform Version"
                     value={platformVersion}
                     onChange={handlePlatformVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Pipeline Id"
-                    value={pipelineId}
-                    onChange={handlePipelineIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
