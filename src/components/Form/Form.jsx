@@ -44,6 +44,7 @@ function Form() {
   const location = useLocation();
   const navigate = useNavigate();
   const [fetching, setFetching] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
   const [showErrors, setShowErrors] = useState(false);
   const [skipAuth, setSkipAuth] = useState(false);
   const [schema, setSchema] = useState(null);
@@ -82,6 +83,7 @@ function Form() {
     console.log(validationResult);
     if (!validationResult.valid) {
       setShowErrors(true);
+      setValidationResult(validationResult);
     } else {
       console.log("model = ", model);
       // submit the form to the portal service.
@@ -172,6 +174,16 @@ function Form() {
       wait = <div></div>;
     }
     let title = <h2>{schema.title}</h2>;
+    let error;
+    if (showErrors) {
+      error = (
+        <div>
+          <pre>{JSON.stringify(validationResult, undefined, 2)}</pre>
+        </div>
+      );
+    } else {
+      error = <div></div>;
+    }
     return (
       <div>
         {wait}
@@ -183,6 +195,7 @@ function Form() {
           showErrors={showErrors}
           onModelChange={onModelChange}
         />
+        {error}
         {buttons}
       </div>
     );
