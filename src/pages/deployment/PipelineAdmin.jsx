@@ -65,6 +65,7 @@ function Row(props) {
     <TableRow className={classes.root} key={`${row.hostId}-${row.pipelineId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.pipelineId}</TableCell>
+      <TableCell align="left">{row.platformId}</TableCell>
       <TableCell align="left">{row.endpoint}</TableCell>
       <TableCell align="left">{row.requestSchema}</TableCell>
       <TableCell align="left">{row.responseSchema}</TableCell>
@@ -86,6 +87,7 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     pipelineId: PropTypes.string.isRequired,
+    platformId: PropTypes.string.isRequired,
     endpoint: PropTypes.string.isRequired,
     requestSchema: PropTypes.string,
     responseSchema: PropTypes.string,
@@ -126,9 +128,10 @@ export default function PipelineAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [pipelineId, setPipelineId] = useState("");
   const debouncedPipelineId = useDebounce(pipelineId, 1000);
+  const [platformId, setPlatformId] = useState("");
+  const debouncedPlatformId = useDebounce(platformId, 1000);
   const [endpoint, setEndpoint] = useState("");
   const debouncedEndpoint = useDebounce(endpoint, 1000);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
@@ -140,6 +143,10 @@ export default function PipelineAdmin() {
 
   const handleEndpointChange = (event) => {
     setEndpoint(event.target.value);
+  };
+
+  const handlePlatformIdChange = (event) => {
+    setPlatformId(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -175,6 +182,7 @@ export default function PipelineAdmin() {
         limit: rowsPerPage,
         hostId: host,
         pipelineId: debouncedPipelineId,
+        platformId: debouncedPlatformId,
         endpoint: debouncedEndpoint,
       },
     };
@@ -189,6 +197,7 @@ export default function PipelineAdmin() {
     rowsPerPage,
     host,
     debouncedPipelineId,
+    debouncedPlatformId,
     debouncedEndpoint,
     fetchData,
   ]);
@@ -225,6 +234,14 @@ export default function PipelineAdmin() {
                     placeholder="Pipeline Id"
                     value={pipelineId}
                     onChange={handlePipelineIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="PlatformId"
+                    value={platformId}
+                    onChange={handlePlatformIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">

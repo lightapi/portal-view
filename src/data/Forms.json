@@ -12623,8 +12623,8 @@
           "title": "Instance Desc",
           "type": "string"
         },
-        "platformId": {
-          "title": "Platform Id",
+        "pipelineId": {
+          "title": "Pipeline Id",
           "type": "string"
         },
         "tagId": {
@@ -12638,7 +12638,7 @@
         "productId",
         "productVersion",
         "serviceId",
-        "platformId"
+        "pipelineId"
       ]
     },
     "form": [
@@ -12674,11 +12674,11 @@
       "serviceDesc",
       "instanceDesc",
       {
-        "key": "platformId",
+        "key": "pipelineId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -12736,8 +12736,8 @@
           "title": "Instance Desc",
           "type": "string"
         },
-        "platformId": {
-          "title": "Platform Id",
+        "pipelineId": {
+          "title": "Pipeline Id",
           "type": "string"
         },
         "tagId": {
@@ -12752,7 +12752,7 @@
         "productId",
         "productVersion",
         "serviceId",
-        "platformId"
+        "pipelineId"
       ]
     },
     "form": [
@@ -12789,11 +12789,11 @@
       "serviceDesc",
       "instanceDesc",
       {
-        "key": "platformId",
+        "key": "pipelineId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -12826,6 +12826,10 @@
           "type": "string",
           "title": "Pipeline Id"
         },
+        "platformId": {
+          "type": "string",
+          "title": "Platform Id"
+        },
         "endpoint": {
           "title": "Endpoint",
           "type": "string"
@@ -12842,6 +12846,7 @@
       "required": [
         "hostId",
         "pipelineId",
+        "platformId",
         "endpoint",
         "requestSchema",
         "responseSchema"
@@ -12851,6 +12856,15 @@
       "hostId",
       "pipelineId",
       "endpoint",
+      {
+        "key": "platformId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "requestSchema",
         "type": "textarea",
@@ -12892,6 +12906,10 @@
           "title": "Pipeline Id",
           "readonly": true
         },
+        "platformId": {
+          "title": "Platform Id",
+          "type": "string"
+        },
         "endpoint": {
           "title": "Endpoint",
           "type": "string"
@@ -12908,6 +12926,7 @@
       "required": [
         "hostId",
         "pipelineId",
+        "platformId",
         "endpoint",
         "requestSchema",
         "responseSchema"
@@ -12916,6 +12935,15 @@
     "form": [
       "hostId",
       "pipelineId",
+      {
+        "key": "platformId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
       "endpoint",
       {
         "key": "requestSchema",
@@ -12960,10 +12988,6 @@
         "platformVersion": {
           "title": "Platform Version",
           "type": "string"
-        },
-        "pipelineId": {
-          "type": "string",
-          "title": "Pipeline Id"
         },
         "clientType": {
           "title": "Client Type",
@@ -13014,7 +13038,6 @@
         "hostId",
         "platformName",
         "platformVersion",
-        "pipelineId",
         "clientType",
         "clientUrl",
         "credentials"
@@ -13030,15 +13053,6 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deploy_client_type"
-        }
-      },
-      {
-        "key": "pipelineId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
         }
       },
       "clientUrl",
@@ -13127,10 +13141,6 @@
           "title": "Platform Version",
           "type": "string"
         },
-        "pipelineId": {
-          "title": "Pipeline Id",
-          "type": "string"
-        },
         "clientUrl": {
           "title": "Client Url",
           "type": "string"
@@ -13177,7 +13187,6 @@
         "platformId",
         "platformName",
         "platformVersion",
-        "pipelineId",
         "clientType",
         "clientUrl",
         "credentials"
@@ -13194,15 +13203,6 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deploy_client_type"
-        }
-      },
-      {
-        "key": "pipelineId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
         }
       },
       "clientUrl",
