@@ -12615,16 +12615,20 @@
           "title": "Service Id",
           "type": "string"
         },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "pipelineId": {
+          "title": "Pipeline Id",
+          "type": "string"
+        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
         },
         "instanceDesc": {
           "title": "Instance Desc",
-          "type": "string"
-        },
-        "pipelineId": {
-          "title": "Pipeline Id",
           "type": "string"
         },
         "tagId": {
@@ -12671,8 +12675,15 @@
           "params": ["hostId"]
         }
       },
-      "serviceDesc",
-      "instanceDesc",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "pipelineId",
         "type": "dynaselect",
@@ -12682,6 +12693,8 @@
           "params": ["hostId"]
         }
       },
+      "serviceDesc",
+      "instanceDesc",
       "tagId"
     ]
   },
@@ -12728,16 +12741,20 @@
           "title": "Service Id",
           "type": "string"
         },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "pipelineId": {
+          "title": "Pipeline Id",
+          "type": "string"
+        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
         },
         "instanceDesc": {
           "title": "Instance Desc",
-          "type": "string"
-        },
-        "pipelineId": {
-          "title": "Pipeline Id",
           "type": "string"
         },
         "tagId": {
@@ -12786,8 +12803,15 @@
           "params": ["hostId"]
         }
       },
-      "serviceDesc",
-      "instanceDesc",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": ["hostId"]
+        }
+      },
       {
         "key": "pipelineId",
         "type": "dynaselect",
@@ -12797,6 +12821,8 @@
           "params": ["hostId"]
         }
       },
+      "serviceDesc",
+      "instanceDesc",
       "tagId"
     ]
   },

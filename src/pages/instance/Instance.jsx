@@ -68,7 +68,8 @@ function Row(props) {
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.serviceId}</TableCell>
-      <TableCell align="left">{row.platformId}</TableCell>
+      <TableCell align="left">{row.environment}</TableCell>
+      <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.serviceDesc}</TableCell>
       <TableCell align="left">{row.instanceDesc}</TableCell>
       <TableCell align="left">{row.tagId}</TableCell>
@@ -95,7 +96,8 @@ Row.propTypes = {
     productId: PropTypes.string,
     productVersion: PropTypes.string,
     serviceId: PropTypes.string,
-    platformId: PropTypes.string,
+    environment: PropTypes.string,
+    pipelineId: PropTypes.string,
     serviceDesc: PropTypes.string,
     instanceDesc: PropTypes.string,
     tagId: PropTypes.string,
@@ -141,8 +143,10 @@ export default function Instance() {
   const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [serviceId, setServiceId] = useState("");
   const debouncedServiceId = useDebounce(serviceId, 1000);
-  const [platformId, setPlatformId] = useState("");
-  const debouncedPlatformId = useDebounce(platformId, 1000);
+  const [environment, setEnvironment] = useState("");
+  const debouncedEnvironment = useDebounce(environment, 1000);
+  const [pipelineId, setPipelineId] = useState("");
+  const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [serviceDesc, setServiceDesc] = useState("");
   const debouncedServiceDesc = useDebounce(serviceDesc, 1000);
   const [instanceDesc, setInstanceDesc] = useState("");
@@ -170,8 +174,11 @@ export default function Instance() {
   const handleServiceIdChange = (event) => {
     setServiceId(event.target.value);
   };
-  const handlePlatformIdChange = (event) => {
-    setPlatformId(event.target.value);
+  const handleEnvironmentChange = (event) => {
+    setEnvironment(event.target.value);
+  };
+  const handlePipelineIdChange = (event) => {
+    setPipelineId(event.target.value);
   };
   const handleServiceDescChange = (event) => {
     setServiceDesc(event.target.value);
@@ -223,7 +230,8 @@ export default function Instance() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         serviceId: debouncedServiceId,
-        platformId: debouncedPlatformId,
+        environment: debouncedEnvironment,
+        pipelineId: debouncedPipelineId,
         serviceDesc: debouncedServiceDesc,
         instanceDesc: debouncedInstanceDesc,
         tagId: debouncedTagId,
@@ -244,7 +252,8 @@ export default function Instance() {
     debouncedProductId,
     debouncedProductVersion,
     debouncedServiceId,
-    debouncedPlatformId,
+    debouncedEnvironment,
+    debouncedPipelineId,
     debouncedServiceDesc,
     debouncedInstanceDesc,
     debouncedTagId,
@@ -328,9 +337,17 @@ export default function Instance() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Platform Id"
-                    value={platformId}
-                    onChange={handlePlatformIdChange}
+                    placeholder="Environment"
+                    value={environment}
+                    onChange={handleEnvironmentChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Pipeline Id"
+                    value={pipelineId}
+                    onChange={handlePipelineIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
