@@ -10,6 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
@@ -60,6 +61,12 @@ function Row(props) {
     }
   };
 
+  const handleConfig = (instanceId) => {
+    navigate("/app/config/configInstance", {
+      state: { data: { instanceId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={`${row.hostId}-${row.instanceId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
@@ -82,6 +89,9 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <AddToDriveIcon onClick={() => handleConfig(row.instanceId)} />
       </TableCell>
     </TableRow>
   );
@@ -217,9 +227,9 @@ export default function InstanceAdmin() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust if needed
-      service: "instance", // Assuming "instance" service
-      action: "getInstance", // Action from service code
+      host: "lightapi.net",
+      service: "instance",
+      action: "getInstance",
       version: "0.1.0",
       data: {
         hostId: host,
@@ -270,7 +280,7 @@ export default function InstanceAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createInstance"); // Adjust path as needed
+    navigate("/app/form/createInstance");
   };
 
   let content;
@@ -379,6 +389,7 @@ export default function InstanceAdmin() {
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Config</TableCell>
               </TableRow>
             </TableHead>
             <InstanceList instances={instances} />

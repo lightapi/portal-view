@@ -10313,7 +10313,8 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "title": "Host Id"
+          "title": "Host Id",
+          "readonly": true
         },
         "instanceId": {
           "type": "string",

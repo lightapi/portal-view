@@ -75,6 +75,7 @@ function Row(props) {
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
       <TableCell align="left">{row.propertyFile}</TableCell>
@@ -97,6 +98,7 @@ Row.propTypes = {
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
     propertyValue: PropTypes.string, // Consider if this should be displayed directly
     propertyFile: PropTypes.string, // Consider if this should be displayed directly
@@ -139,7 +141,7 @@ export default function ConfigInstance() {
   const { host } = useUserState(); // Get the host from the user context
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [instanceId, setInstanceId] = useState("");
+  const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
@@ -184,7 +186,8 @@ export default function ConfigInstance() {
         setConfigInstances([]);
       } else {
         const data = await response.json();
-        setConfigInstances(data.configInstances || []); // Adapt to your response key
+        console.log("data", data);
+        setConfigInstances(data.instanceProperties || []);
         setTotal(data.total || 0);
       }
     } catch (e) {
@@ -198,20 +201,20 @@ export default function ConfigInstance() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust if needed
-      service: "config", //  Adjust to your service name
-      action: "getConfigInstance", // Adjust based on your backend service
+      host: "lightapi.net",
+      service: "config",
+      action: "getConfigInstance",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from UserContext
+        hostId: host,
         instanceId: debouncedInstanceId,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Included, not debounced
-        propertyFile: propertyFile, // Included, not debounced
+        propertyValue: propertyValue,
+        propertyFile: propertyFile,
       },
     };
 
@@ -228,8 +231,8 @@ export default function ConfigInstance() {
     debouncedConfigId,
     debouncedConfigName,
     debouncedPropertyName,
-    propertyValue, // Included in dependencies
-    propertyFile, // Included in dependencies
+    propertyValue,
+    propertyFile,
     fetchData,
   ]);
 
@@ -242,9 +245,9 @@ export default function ConfigInstance() {
     setPage(0);
   };
 
-  const handleCreate = () => {
+  const handleCreate = (instanceId, configId) => {
     navigate("/app/form/createConfigInstance", {
-      state: { data: { configId } },
+      state: { data: { instanceId, configId } },
     });
   };
 
@@ -328,7 +331,7 @@ export default function ConfigInstance() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(configId)} />
+        <AddBoxIcon onClick={() => handleCreate(instanceId, configId)} />
       </div>
     );
   }
