@@ -75,6 +75,8 @@ function Row(props) {
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.serviceId}</TableCell>
+      <TableCell align="left">{row.apiId}</TableCell>
+      <TableCell align="left">{row.apiVersion}</TableCell>
       <TableCell align="left">{row.environment}</TableCell>
       <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.serviceDesc}</TableCell>
@@ -106,6 +108,8 @@ Row.propTypes = {
     productId: PropTypes.string,
     productVersion: PropTypes.string,
     serviceId: PropTypes.string,
+    apiId: PropTypes.string,
+    apiVersion: PropTypes.string,
     environment: PropTypes.string,
     pipelineId: PropTypes.string,
     serviceDesc: PropTypes.string,
@@ -153,6 +157,10 @@ export default function InstanceAdmin() {
   const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [serviceId, setServiceId] = useState("");
   const debouncedServiceId = useDebounce(serviceId, 1000);
+  const [apiId, setApiId] = useState("");
+  const debouncedApiId = useDebounce(apiId, 1000);
+  const [apiVersion, setApiVersion] = useState("");
+  const debouncedApiVersion = useDebounce(apiVersion, 1000);
   const [environment, setEnvironment] = useState("");
   const debouncedEnvironment = useDebounce(environment, 1000);
   const [pipelineId, setPipelineId] = useState("");
@@ -183,6 +191,12 @@ export default function InstanceAdmin() {
   };
   const handleServiceIdChange = (event) => {
     setServiceId(event.target.value);
+  };
+  const handleApiIdChange = (event) => {
+    setApiId(event.target.value);
+  };
+  const handleApiVersionChange = (event) => {
+    setApiVersion(event.target.value);
   };
   const handleEnvironmentChange = (event) => {
     setEnvironment(event.target.value);
@@ -240,6 +254,8 @@ export default function InstanceAdmin() {
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         serviceId: debouncedServiceId,
+        apiId: debouncedApiId,
+        apiVersion: debouncedApiVersion,
         environment: debouncedEnvironment,
         pipelineId: debouncedPipelineId,
         serviceDesc: debouncedServiceDesc,
@@ -262,6 +278,8 @@ export default function InstanceAdmin() {
     debouncedProductId,
     debouncedProductVersion,
     debouncedServiceId,
+    debouncedApiId,
+    debouncedApiVersion,
     debouncedEnvironment,
     debouncedPipelineId,
     debouncedServiceDesc,
@@ -342,6 +360,22 @@ export default function InstanceAdmin() {
                     placeholder="Service Id"
                     value={serviceId}
                     onChange={handleServiceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Id"
+                    value={apiId}
+                    onChange={handleApiIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version"
+                    value={apiVersion}
+                    onChange={handleApiVersionChange}
                   />
                 </TableCell>
                 <TableCell align="left">
