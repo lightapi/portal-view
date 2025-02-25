@@ -104,6 +104,7 @@ function Row(props) {
     <TableRow className={classes.root} key={row.configId}>
       <TableCell align="left">{row.configId}</TableCell>
       <TableCell align="left">{row.configName}</TableCell>
+      <TableCell align="left">{row.configPhase}</TableCell>
       <TableCell align="left">{row.configType}</TableCell>
       <TableCell align="left">{row.light4jVersion}</TableCell>
       <TableCell align="left">{row.classPath}</TableCell>
@@ -147,6 +148,7 @@ Row.propTypes = {
   row: PropTypes.shape({
     configId: PropTypes.string.isRequired,
     configName: PropTypes.string,
+    configPhase: PropTypes.string,
     configType: PropTypes.string,
     light4jVersion: PropTypes.string,
     classPath: PropTypes.string,
@@ -187,6 +189,8 @@ export default function ConfigAdmin() {
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
+  const [configPhase, setConfigPhase] = useState("");
+  const debouncedConfigPhase = useDebounce(configPhase, 1000);
   const [configType, setConfigType] = useState("");
   const debouncedConfigType = useDebounce(configType, 1000);
   const [light4jVersion, setLight4jVersion] = useState("");
@@ -205,6 +209,9 @@ export default function ConfigAdmin() {
   };
   const handleConfigNameChange = (event) => {
     setConfigName(event.target.value);
+  };
+  const handleConfigPhaseChange = (event) => {
+    setConfigPhase(event.target.value);
   };
 
   const handleConfigTypeChange = (event) => {
@@ -257,6 +264,7 @@ export default function ConfigAdmin() {
         hostId: host,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
+        configPhase: debouncedConfigPhase,
         configType: debouncedConfigType,
         light4jVersion: debouncedLight4jVersion,
         classPath: debouncedClassPath,
@@ -275,6 +283,7 @@ export default function ConfigAdmin() {
     host,
     debouncedConfigId,
     debouncedConfigName,
+    debouncedConfigPhase,
     debouncedConfigType,
     debouncedLight4jVersion,
     debouncedClassPath,
@@ -322,6 +331,14 @@ export default function ConfigAdmin() {
                     placeholder="Config Name"
                     value={configName}
                     onChange={handleConfigNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Config Phase"
+                    value={configPhase}
+                    onChange={handleConfigPhaseChange}
                   />
                 </TableCell>
                 <TableCell align="left">

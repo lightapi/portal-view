@@ -9422,6 +9422,10 @@
           "type": "string",
           "title": "Config Name"
         },
+        "configPhase": {
+          "type": "string",
+          "title": "Config Phase"
+        },
         "configType": {
           "type": "string",
           "title": "Config Type"
@@ -9439,10 +9443,25 @@
           "title": "Config Desc"
         }
       },
-      "required": ["configName", "configType"]
+      "required": ["configName", "configPhase", "configType"]
     },
     "form": [
       "configName",
+      {
+        "key": "configPhase",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "D",
+            "label": "Deployment"
+          },
+          {
+            "id": "R",
+            "label": "Runtime"
+          }
+        ]
+      },
       {
         "key": "configType",
         "type": "dynaselect",
@@ -9457,8 +9476,8 @@
             "label": "Module"
           },
           {
-            "id": "Deployment",
-            "label": "Deployment"
+            "id": "Template",
+            "label": "Template"
           }
         ]
       },
@@ -9504,6 +9523,10 @@
           "type": "string",
           "title": "Config Name"
         },
+        "configPhase": {
+          "type": "string",
+          "title": "Config Phase"
+        },
         "configType": {
           "type": "string",
           "title": "Config Type"
@@ -9521,11 +9544,26 @@
           "title": "Config Desc"
         }
       },
-      "required": ["configId", "configName", "configType"]
+      "required": ["configId", "configName", "configPhase", "configType"]
     },
     "form": [
       "configId",
       "configName",
+      {
+        "key": "configPhase",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "D",
+            "label": "Deployment"
+          },
+          {
+            "id": "R",
+            "label": "Runtime"
+          }
+        ]
+      },
       {
         "key": "configType",
         "type": "dynaselect",
