@@ -74,6 +74,7 @@ function Row(props) {
       <TableCell align="left">{row.deploymentType}</TableCell>
       <TableCell align="left">{row.scheduleTs}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
+      <TableCell align="left">{row.platformJobId}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
       </TableCell>
@@ -96,6 +97,7 @@ Row.propTypes = {
     deploymentStatus: PropTypes.string,
     deploymentType: PropTypes.string,
     scheduleTs: PropTypes.string,
+    platformJobId: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -138,6 +140,8 @@ export default function DeploymentAdmin() {
   const debouncedDeploymentStatus = useDebounce(deploymentStatus, 1000);
   const [deploymentType, setDeploymentType] = useState("");
   const debouncedDeploymentType = useDebounce(deploymentType, 1000);
+  const [platformJobId, setPlatformJobId] = useState("");
+  const debouncedPlatformJobId = useDebounce(platformJobId, 1000);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [total, setTotal] = useState(0);
@@ -154,6 +158,9 @@ export default function DeploymentAdmin() {
   };
   const handleDeploymentTypeChange = (event) => {
     setDeploymentType(event.target.value);
+  };
+  const handlePlatformJobIdChange = (event) => {
+    setPlatformJobId(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -195,6 +202,7 @@ export default function DeploymentAdmin() {
         instanceId: debouncedInstanceId,
         deploymentStatus: debouncedDeploymentStatus,
         deploymentType: debouncedDeploymentType,
+        platformJobId: debouncedPlatformJobId,
       },
     };
 
@@ -211,6 +219,7 @@ export default function DeploymentAdmin() {
     debouncedInstanceId,
     debouncedDeploymentStatus,
     debouncedDeploymentType,
+    debouncedPlatformJobId,
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
@@ -281,6 +290,14 @@ export default function DeploymentAdmin() {
                   />
                 </TableCell>
                 <TableCell align="left">Schedule Timestamp</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Platform Job Id"
+                    value={platformJobId}
+                    onChange={handlePlatformJobIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
