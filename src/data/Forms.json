@@ -9707,7 +9707,12 @@
         "placeholder": "Property Desc",
         "rows": 5
       },
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       {
         "key": "valueType",
         "type": "dynaselect",
@@ -9880,7 +9885,12 @@
         "placeholder": "Property Desc",
         "rows": 5
       },
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       {
         "key": "valueType",
         "type": "dynaselect",
@@ -10008,7 +10018,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10059,7 +10074,12 @@
       "environment",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10121,7 +10141,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10172,7 +10197,12 @@
       "productId",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10259,7 +10289,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10328,7 +10363,12 @@
       "productVersion",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10397,7 +10437,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10454,7 +10499,12 @@
       "instanceId",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10477,7 +10527,8 @@
       "properties": {
         "hostId": {
           "type": "string",
-          "title": "Host Id"
+          "title": "Host Id",
+          "readonly": true
         },
         "instanceId": {
           "type": "string",
@@ -10555,7 +10606,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10631,7 +10687,12 @@
       "apiVersion",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10716,7 +10777,12 @@
         }
       },
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
@@ -10792,7 +10858,12 @@
       "appVersion",
       "configId",
       "propertyName",
-      "propertyValue",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      },
       "propertyFile"
     ]
   },
