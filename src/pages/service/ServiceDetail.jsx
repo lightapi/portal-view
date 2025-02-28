@@ -12,6 +12,7 @@ import AddBoxIcon from "@mui/icons-material/AddBox";
 import InputIcon from "@mui/icons-material/Input";
 import SettingsIcon from "@mui/icons-material/Settings";
 import BugReportIcon from "@mui/icons-material/BugReport";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useApiGet } from "../../hooks/useApiGet";
 import Widget from "../../components/Widget/Widget";
 import useStyles from "./styles";
@@ -59,6 +60,12 @@ export default function ServiceDetail() {
         });
         break;
     }
+  };
+
+  const handleConfig = (hostId, apiId, apiVersion) => {
+    navigate("/app/config/configInstanceApi", {
+      state: { data: { hostId, apiId, apiVersion } },
+    });
   };
 
   const handleEndpoint = (hostId, apiId, apiVersion) => {
@@ -178,6 +185,7 @@ export default function ServiceDetail() {
                 <TableCell align="left">Api Version Desc</TableCell>
                 <TableCell align="left">Spec Link</TableCell>
                 <TableCell align="left">Spec Edit</TableCell>
+                <TableCell align="right">Config</TableCell>
                 <TableCell align="right">Endpoint</TableCell>
                 <TableCell align="right">Codegen</TableCell>
                 <TableCell align="right">Deploy</TableCell>
@@ -198,6 +206,13 @@ export default function ServiceDetail() {
                     <TableCell align="right">
                       <ImageAspectRatioIcon
                         onClick={() => handleSpecEdit(row)}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <AddToDriveIcon
+                        onClick={() =>
+                          handleConfig(row.hostId, row.apiId, row.apiVersion)
+                        }
                       />
                     </TableCell>
                     <TableCell align="right">
