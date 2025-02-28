@@ -132,6 +132,8 @@ import ProviderKey from "./pages/oauth/ProviderKey";
 import Product from "./pages/product/Product";
 import ProductAdmin from "./pages/product/ProductAdmin";
 import Instance from "./pages/instance/Instance";
+import InstanceApi from "./pages/instance/InstanceApi";
+import InstanceApp from "./pages/instance/InstanceApp";
 import InstanceAdmin from "./pages/instance/InstanceAdmin";
 import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
@@ -347,6 +349,8 @@ const App = () => {
           <Route path="product/Product" element={<Product />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="instance/Instance" element={<Instance />} />
+          <Route path="instance/InstanceApi" element={<InstanceApi />} />
+          <Route path="instance/InstanceApp" element={<InstanceApp />} />
           <Route path="instance/InstanceAdmin" element={<InstanceAdmin />} />
           <Route path="deployment/PipelineAdmin" element={<PipelineAdmin />} />
           <Route path="deployment/Platform" element={<Platform />} />

@@ -12997,6 +12997,125 @@
       "tagId"
     ]
   },
+  "createInstanceApi": {
+    "formId": "createInstanceApi",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "createInstanceApi",
+        "version": "0.1.0",
+        "title": "Create Instance Api",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Instance Api",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id"
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id"
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "Api Version"
+        },
+        "active": {
+          "type": "boolean",
+          "title": "Active"
+        }
+      },
+      "required": ["hostId", "instanceId", "apiId", "apiVersion"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
+          "params": ["hostId", "apiId"]
+        }
+      },
+      "active"
+    ]
+  },
+  "updateInstanceApi": {
+    "formId": "updateInstanceApi",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "updateInstanceApi",
+        "version": "0.1.0",
+        "title": "Update Instance Api",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Instance Api",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id",
+          "readonly": true
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id",
+          "readonly": true
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "Api Version",
+          "readonly": true
+        },
+        "active": {
+          "type": "boolean",
+          "title": "Active"
+        }
+      },
+      "required": ["hostId", "instanceId", "apiId", "apiVersion"]
+    },
+    "form": ["hostId", "instanceId", "apiId", "apiVersion", "active"]
+  },
   "createPipeline": {
     "formId": "createPipeline",
     "actions": [
