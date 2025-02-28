@@ -199,7 +199,7 @@ export default function ConfigInstanceApi() {
         setConfigInstanceApis([]);
       } else {
         const data = await response.json();
-        setConfigInstanceApis(data.configInstanceApis || []); // Adjust to your response key
+        setConfigInstanceApis(data.instanceApis || []); // Adjust to your response key
         setTotal(data.total || 0);
       }
     } catch (e) {
