@@ -45,10 +45,10 @@ function Row(props) {
       )
     ) {
       const cmd = {
-        host: "lightapi.net", // Adjust if needed
-        service: "config", // Adjust service name
-        action: "deleteConfigInstanceApi", // Adjust action name
-        version: "0.1.0", // Adjust version
+        host: "lightapi.net",
+        service: "config",
+        action: "deleteConfigInstanceApi",
+        version: "0.1.0",
         data: row,
       };
 
@@ -146,9 +146,9 @@ export default function ConfigInstanceApi() {
 
   const [instanceId, setInstanceId] = useState("");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [apiId, setApiId] = useState("");
+  const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
-  const [apiVersion, setApiVersion] = useState("");
+  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
@@ -213,9 +213,9 @@ export default function ConfigInstanceApi() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust
-      service: "config", //  Adjust to your service name
-      action: "getConfigInstanceApi", //  Adjust based on your backend.
+      host: "lightapi.net",
+      service: "config",
+      action: "getConfigInstanceApi",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
@@ -261,9 +261,9 @@ export default function ConfigInstanceApi() {
     setPage(0);
   };
 
-  const handleCreate = () => {
+  const handleCreate = (apiId, apiVersion, configId) => {
     navigate("/app/form/createConfigInstanceApi", {
-      state: { data: { configId } },
+      state: { data: { apiId, apiVersion, configId } },
     });
   };
 
@@ -363,7 +363,7 @@ export default function ConfigInstanceApi() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(configId)} />
+        <AddBoxIcon onClick={() => handleCreate(apiId, apiVersion, configId)} />
       </div>
     );
   }
