@@ -11,13 +11,13 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Ensure this hook exists
+import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Ensure this context exists
+import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming you have an apiPost function
+import { apiPost } from "../../api/apiPost.js";
 
 const useRowStyles = makeStyles({
   root: {
@@ -144,20 +144,20 @@ export default function ConfigInstanceApp() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
-  const [instanceId, setInstanceId] = useState("");
+  const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [appId, setAppId] = useState("");
+  const [appId, setAppId] = useState(() => data?.appId || "");
   const debouncedAppId = useDebounce(appId, 1000);
-  const [appVersion, setAppVersion] = useState("");
+  const [appVersion, setAppVersion] = useState(() => data?.appVersion || "");
   const debouncedAppVersion = useDebounce(appVersion, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
-  const [configName, setConfigName] = useState(""); // Not in table, but in spec
+  const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
-  const [propertyValue, setPropertyValue] = useState(""); // No debounce
-  const [propertyFile, setPropertyFile] = useState(""); // No debounce
+  const [propertyValue, setPropertyValue] = useState("");
+  const [propertyFile, setPropertyFile] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -261,9 +261,9 @@ export default function ConfigInstanceApp() {
     setPage(0);
   };
 
-  const handleCreate = () => {
+  const handleCreate = (instanceId, appId, appVersion, configId) => {
     navigate("/app/form/createConfigInstanceApp", {
-      state: { data: { configId } },
+      state: { data: { instanceId, appId, appVersion, configId } },
     });
   };
 
@@ -364,7 +364,9 @@ export default function ConfigInstanceApp() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(configId)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(instanceId, appId, appVersion, configId)}
+        />
       </div>
     );
   }
