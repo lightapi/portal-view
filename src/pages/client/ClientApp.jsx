@@ -11,6 +11,7 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useNavigate } from "react-router-dom";
@@ -68,8 +69,15 @@ function Row(props) {
     navigate("/app/client", { state: { data: { hostId, appId } } });
   };
 
+  const handleInstanceApp = (hostId, appId) => {
+    navigate("/app/instance/InstanceApp", {
+      state: { data: { hostId, appId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={row.appId}>
+      <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appName}</TableCell>
       <TableCell align="left">{row.appDesc}</TableCell>
@@ -89,6 +97,11 @@ function Row(props) {
       <TableCell align="right">
         <AirlineSeatReclineNormalIcon
           onClick={() => handleClient(row.hostId, row.appId)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <ContentCopyIcon
+          onClick={() => handleInstanceApp(row.hostId, row.appId)}
         />
       </TableCell>
     </TableRow>
@@ -271,6 +284,7 @@ export default function ClientApp() {
           <Table aria-label="collapsible table">
             <TableHead>
               <TableRow className={classes.root}>
+                <TableCell align="left">{host}</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -324,6 +338,7 @@ export default function ClientApp() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">OAuth Client</TableCell>
+                <TableCell align="right">Instance App</TableCell>
               </TableRow>
             </TableHead>
             <AppList apps={apps} />

@@ -13116,6 +13116,117 @@
     },
     "form": ["hostId", "instanceId", "apiId", "apiVersion", "active"]
   },
+  "createInstanceApp": {
+    "formId": "createInstanceApp",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "createInstanceApp",
+        "version": "0.1.0",
+        "title": "Create Instance App",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Instance App",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id"
+        },
+        "appId": {
+          "type": "string",
+          "title": "App Id"
+        },
+        "appVersion": {
+          "type": "string",
+          "title": "App Version"
+        },
+        "active": {
+          "type": "boolean",
+          "title": "Active"
+        }
+      },
+      "required": ["hostId", "instanceId", "appId", "appVersion"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "appId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "appVersion",
+      "active"
+    ]
+  },
+  "updateInstanceApp": {
+    "formId": "updateInstanceApp",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "updateInstanceApp",
+        "version": "0.1.0",
+        "title": "Update Instance App",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Instance App",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id",
+          "readonly": true
+        },
+        "appId": {
+          "type": "string",
+          "title": "App Id",
+          "readonly": true
+        },
+        "appVersion": {
+          "type": "string",
+          "title": "App Version",
+          "readonly": true
+        },
+        "active": {
+          "type": "boolean",
+          "title": "Active"
+        }
+      },
+      "required": ["hostId", "instanceId", "appId", "appVersion"]
+    },
+    "form": ["hostId", "instanceId", "appId", "appVersion", "active"]
+  },
   "createPipeline": {
     "formId": "createPipeline",
     "actions": [
