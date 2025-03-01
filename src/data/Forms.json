@@ -1850,7 +1850,8 @@
       "properties": {
         "hostId": {
           "title": "Host Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "appId": {
           "type": "string",

@@ -243,8 +243,10 @@ export default function InstanceApiAdmin() {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createInstanceApi");
+  const handleCreate = (instanceId, apiId, apiVersion) => {
+    navigate("/app/form/createInstanceApi", {
+      state: { data: { instanceId, apiId, apiVersion } },
+    });
   };
 
   let content;

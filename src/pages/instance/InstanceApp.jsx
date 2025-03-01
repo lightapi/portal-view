@@ -243,8 +243,10 @@ export default function InstanceAppAdmin() {
     setPage(0);
   };
 
-  const handleCreate = () => {
-    navigate("/app/form/createInstanceApp");
+  const handleCreate = (instanceId, appId) => {
+    navigate("/app/form/createInstanceApp", {
+      state: { data: { instanceId, appId } },
+    });
   };
 
   let content;
@@ -312,9 +314,7 @@ export default function InstanceAppAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon
-          onClick={() => handleCreate(instanceId, appId, appVersion)}
-        />
+        <AddBoxIcon onClick={() => handleCreate(instanceId, appId)} />
       </div>
     );
   }
