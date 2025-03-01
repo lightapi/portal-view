@@ -13173,7 +13173,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22client%22%2C%22action%22%3A%22getAppIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
