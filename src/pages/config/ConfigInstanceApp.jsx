@@ -35,7 +35,7 @@ function Row(props) {
   const handleUpdate = (configInstanceApp) => {
     navigate("/app/form/updateConfigInstanceApp", {
       state: { data: { ...configInstanceApp } },
-    }); // Adjust path
+    });
   };
 
   const handleDelete = async (row) => {
@@ -45,21 +45,21 @@ function Row(props) {
       )
     ) {
       const cmd = {
-        host: "lightapi.net", // Adjust if necessary
-        service: "config", // Adjust to your service name
-        action: "deleteConfigInstanceApp", // Adjust to your action name
-        version: "0.1.0", // Adjust
+        host: "lightapi.net",
+        service: "config",
+        action: "deleteConfigInstanceApp",
+        version: "0.1.0",
         data: row,
       };
 
       const result = await apiPost({
-        url: "/portal/command", // Adjust if your command endpoint is different
+        url: "/portal/command",
         headers: {},
         body: cmd,
       });
 
       if (result.data) {
-        window.location.reload(); // Consider a state update instead of reload
+        window.location.reload();
       } else if (result.error) {
         console.error("API Error:", result.error);
         // Optionally, show an error message to the user
@@ -74,6 +74,7 @@ function Row(props) {
     >
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
@@ -98,12 +99,14 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
     appId: PropTypes.string.isRequired,
     appVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, // Consider if you want to show in table
-    propertyFile: PropTypes.string, // Consider if you want to show in table
+    propertyValue: PropTypes.string,
+    propertyFile: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -146,6 +149,8 @@ export default function ConfigInstanceApp() {
 
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
   const [appId, setAppId] = useState(() => data?.appId || "");
   const debouncedAppId = useDebounce(appId, 1000);
   const [appVersion, setAppVersion] = useState(() => data?.appVersion || "");
@@ -166,6 +171,10 @@ export default function ConfigInstanceApp() {
 
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
+  };
+
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
   };
   const handleAppIdChange = (event) => {
     setAppId(event.target.value);
@@ -199,7 +208,7 @@ export default function ConfigInstanceApp() {
         setConfigInstanceApps([]);
       } else {
         const data = await response.json();
-        setConfigInstanceApps(data.configInstanceApps || []); // Adjust response key
+        setConfigInstanceApps(data.instanceApps || []);
         setTotal(data.total || 0);
       }
     } catch (e) {
@@ -213,22 +222,23 @@ export default function ConfigInstanceApp() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust
-      service: "config", // Adjust to your service name
-      action: "getConfigInstanceApp", // Adjust based on backend.
+      host: "lightapi.net",
+      service: "config",
+      action: "getConfigInstanceApp",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from UserContext
+        hostId: host,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
         appId: debouncedAppId,
         appVersion: debouncedAppVersion,
         configId: debouncedConfigId,
-        configName: debouncedConfigName, // Include configName
+        configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Not debounced
-        propertyFile: propertyFile, // Not debounced
+        propertyValue: propertyValue,
+        propertyFile: propertyFile,
       },
     };
 
@@ -242,13 +252,14 @@ export default function ConfigInstanceApp() {
     rowsPerPage,
     host,
     debouncedInstanceId,
+    debouncedInstanceName,
     debouncedAppId,
     debouncedAppVersion,
     debouncedConfigId,
-    debouncedConfigName, // Include configName
+    debouncedConfigName,
     debouncedPropertyName,
-    propertyValue, // Include in dependencies
-    propertyFile, // Include in dependencies
+    propertyValue,
+    propertyFile,
     fetchData,
   ]);
 
@@ -287,6 +298,14 @@ export default function ConfigInstanceApp() {
                     placeholder="Instance Id"
                     value={instanceId}
                     onChange={handleInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -345,7 +364,6 @@ export default function ConfigInstanceApp() {
                     onChange={handlePropertyFileChange}
                   />
                 </TableCell>
-
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>

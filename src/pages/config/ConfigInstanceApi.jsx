@@ -11,13 +11,13 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Ensure you have this hook
+import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Ensure you have this context
+import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming this exists
+import { apiPost } from "../../api/apiPost.js";
 
 const useRowStyles = makeStyles({
   root: {
@@ -35,13 +35,13 @@ function Row(props) {
   const handleUpdate = (configInstanceApi) => {
     navigate("/app/form/updateConfigInstanceApi", {
       state: { data: { ...configInstanceApi } },
-    }); // Adjust path
+    });
   };
 
   const handleDelete = async (row) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this config instance API property?",
+        "Are you sure you want to delete this config instance api property?",
       )
     ) {
       const cmd = {
@@ -53,13 +53,13 @@ function Row(props) {
       };
 
       const result = await apiPost({
-        url: "/portal/command", // Adjust if your command endpoint is different
+        url: "/portal/command",
         headers: {},
         body: cmd,
       });
 
       if (result.data) {
-        window.location.reload(); // Consider a state update instead of reload
+        window.location.reload();
       } else if (result.error) {
         console.error("API Error:", result.error);
         // Optionally show an error message to the user
@@ -74,6 +74,7 @@ function Row(props) {
     >
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
@@ -99,6 +100,7 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
     apiId: PropTypes.string.isRequired,
     apiVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
@@ -124,7 +126,7 @@ function ConfigInstanceApiList(props) {
           <TableCell colSpan={12} align="center">
             {" "}
             {/*Adjust colSpan*/}
-            No config instance API properties found.
+            No config instance api properties found.
           </TableCell>
         </TableRow>
       )}
@@ -146,20 +148,22 @@ export default function ConfigInstanceApi() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
-  const [instanceId, setInstanceId] = useState("");
+  const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
   const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
   const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
-  const [configName, setConfigName] = useState(""); // Not in the table, but in the spec
+  const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
-  const [propertyValue, setPropertyValue] = useState(""); // No debounce
-  const [propertyFile, setPropertyFile] = useState(""); // No debounce
+  const [propertyValue, setPropertyValue] = useState("");
+  const [propertyFile, setPropertyFile] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -168,6 +172,10 @@ export default function ConfigInstanceApi() {
 
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
+  };
+
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
   };
   const handleApiIdChange = (event) => {
     setApiId(event.target.value);
@@ -201,7 +209,7 @@ export default function ConfigInstanceApi() {
         setConfigInstanceApis([]);
       } else {
         const data = await response.json();
-        setConfigInstanceApis(data.instanceApis || []); // Adjust to your response key
+        setConfigInstanceApis(data.instanceApis || []);
         setTotal(data.total || 0);
       }
     } catch (e) {
@@ -224,6 +232,7 @@ export default function ConfigInstanceApi() {
         limit: rowsPerPage,
         hostId: host,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
         apiId: debouncedApiId,
         apiVersion: debouncedApiVersion,
         configId: debouncedConfigId,
@@ -244,6 +253,7 @@ export default function ConfigInstanceApi() {
     rowsPerPage,
     host,
     debouncedInstanceId,
+    debouncedInstanceName,
     debouncedApiId,
     debouncedApiVersion,
     debouncedConfigId,
@@ -263,9 +273,9 @@ export default function ConfigInstanceApi() {
     setPage(0);
   };
 
-  const handleCreate = (apiId, apiVersion, configId) => {
+  const handleCreate = (instanceId, apiId, apiVersion, configId) => {
     navigate("/app/form/createConfigInstanceApi", {
-      state: { data: { apiId, apiVersion, configId } },
+      state: { data: { instanceId, apiId, apiVersion, configId } },
     });
   };
 
@@ -279,7 +289,7 @@ export default function ConfigInstanceApi() {
     content = (
       <div>
         <TableContainer component={Paper}>
-          <Table aria-label="config instance API table">
+          <Table aria-label="config instance api table">
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
@@ -289,6 +299,14 @@ export default function ConfigInstanceApi() {
                     placeholder="Instance Id"
                     value={instanceId}
                     onChange={handleInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -365,7 +383,7 @@ export default function ConfigInstanceApi() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(apiId, apiVersion, configId)} />
+        <AddBoxIcon onClick={() => handleCreate(instanceId, apiId, apiVersion, configId)} />
       </div>
     );
   }
