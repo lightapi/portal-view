@@ -77,6 +77,7 @@ function Row(props) {
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
       <TableCell align="left">{row.propertyFile}</TableCell>
@@ -101,9 +102,10 @@ Row.propTypes = {
     apiId: PropTypes.string.isRequired,
     apiVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, // Consider if you want to show this in the table
-    propertyFile: PropTypes.string, // Consider if you want to show this in the table
+    propertyValue: PropTypes.string,
+    propertyFile: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -220,15 +222,15 @@ export default function ConfigInstanceApi() {
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from UserContext
+        hostId: host,
         instanceId: debouncedInstanceId,
         apiId: debouncedApiId,
         apiVersion: debouncedApiVersion,
         configId: debouncedConfigId,
-        configName: debouncedConfigName, // Include configName
+        configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Not debounced
-        propertyFile: propertyFile, // Not debounced
+        propertyValue: propertyValue,
+        propertyFile: propertyFile,
       },
     };
 
@@ -247,8 +249,8 @@ export default function ConfigInstanceApi() {
     debouncedConfigId,
     debouncedConfigName,
     debouncedPropertyName,
-    propertyValue, // Include in dependencies
-    propertyFile, // Include in dependencies
+    propertyValue,
+    propertyFile,
     fetchData,
   ]);
 
