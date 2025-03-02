@@ -10603,7 +10603,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22resourceType%22%3A%22api%22%7D%7D"
         }
       },
       {
@@ -10611,7 +10611,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%20%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22api%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -10783,10 +10783,18 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22resourceType%22%3A%22app%22%7D%7D"
         }
       },
-      "propertyName",
+      {
+        "key": "propertyName",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app%22%7D%7D",
+          "params": ["configId"]
+        }
+      },
       {
         "key": "propertyValue",
         "type": "textarea",
