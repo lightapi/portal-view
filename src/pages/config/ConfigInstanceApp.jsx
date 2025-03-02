@@ -78,6 +78,7 @@ function Row(props) {
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
       <TableCell align="left">{row.propertyFile}</TableCell>
