@@ -8908,141 +8908,62 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["host", "name", "categories"],
+      "required": ["hostId", "entityType", "categoryName"],
       "properties": {
-        "host": {
+        "hostId": {
           "type": "string",
-          "title": "Category Host"
+          "title": "Category Host Id",
+          "readonly": true
         },
-        "name": {
+        "entityType": {
+          "type": "string",
+          "title": "Entity Type"
+        },
+        "categoryName": {
           "type": "string",
           "title": "Category Name"
         },
-        "categories": {
-          "type": "array",
-          "title": "Categories",
-          "maxItems": 100,
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "title": "Label",
-                "type": "string"
-              },
-              "value": {
-                "title": "Value",
-                "type": "string"
-              },
-              "children": {
-                "title": "Children",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "label": {
-                      "title": "Label",
-                      "type": "string"
-                    },
-                    "value": {
-                      "title": "Value",
-                      "type": "string"
-                    },
-                    "children": {
-                      "title": "Children",
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "title": "Label",
-                            "type": "string"
-                          },
-                          "value": {
-                            "title": "Value",
-                            "type": "string"
-                          },
-                          "children": {
-                            "title": "Children",
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "title": "Label",
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "title": "Value",
-                                  "type": "string"
-                                }
-                              },
-                              "required": ["label", "value"]
-                            }
-                          }
-                        },
-                        "required": ["label", "value"]
-                      }
-                    }
-                  },
-                  "required": ["label", "value"]
-                }
-              }
-            },
-            "required": ["label", "value"]
-          }
+        "categoryDesc": {
+          "type": "string",
+          "title": "Category Desc"
+        },
+        "parentCategoryId": {
+          "type": "string",
+          "title": "Parent Category Id"
+        },
+        "sortOrder": {
+          "type": "string",
+          "title": "Sort Order"
         }
-      }
     },
     "form": [
       {
         "type": "help",
-        "description": "Construct categories. Try adding a couple of forms, reorder by drag'n'drop.",
+        "description": "Construct categories for an entity with hierachy structure.",
         "variant": "h4",
         "align": "left",
         "color": "secondary"
       },
+      "hostId",
       {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
+        "key": "entityType",
+        "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=host"
+          "url": "/r/data?name=category_entity"
         }
       },
-      "name",
+      "categoryName",
+      "categoryDesc",
       {
-        "key": "categories",
-        "add": "New",
-        "style": {
-          "add": "btn-success"
-        },
-        "items": [
-          "categories[].label",
-          "categories[].value",
-          {
-            "key": "categories[].children",
-            "items": [
-              "categories[].children[].label",
-              "categories[].children[].value",
-              {
-                "key": "categories[].children[].children",
-                "items": [
-                  "categories[].children[].children[].label",
-                  "categories[].children[].children[].value",
-                  {
-                    "key": "categories[].children[].children[].children",
-                    "items": [
-                      "categories[].children[].children[].children[].label",
-                      "categories[].children[].children[].children[].value"
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+        "key": "parentCategoryId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      "sortOrder"
     ]
   },
   "updateCategory": {
@@ -9061,136 +8982,69 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["host", "name", "categories"],
+      "required": ["hostId", "name", "categories"],
       "properties": {
-        "host": {
+        "hostId": {
           "type": "string",
-          "title": "Category Host",
+          "title": "Category Host Id",
           "readonly": true
         },
-        "name": {
+        "categoryId": {
           "type": "string",
-          "title": "Category Name",
+          "title": "Category Id",
           "readonly": true
         },
-        "categories": {
-          "type": "array",
-          "title": "Categories",
-          "maxItems": 100,
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "title": "Label",
-                "type": "string"
-              },
-              "value": {
-                "title": "Value",
-                "type": "string"
-              },
-              "children": {
-                "title": "Children",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "label": {
-                      "title": "Label",
-                      "type": "string"
-                    },
-                    "value": {
-                      "title": "Value",
-                      "type": "string"
-                    },
-                    "children": {
-                      "title": "Children",
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "title": "Label",
-                            "type": "string"
-                          },
-                          "value": {
-                            "title": "Value",
-                            "type": "string"
-                          },
-                          "children": {
-                            "title": "Children",
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "title": "Label",
-                                  "type": "string"
-                                },
-                                "value": {
-                                  "title": "Value",
-                                  "type": "string"
-                                }
-                              },
-                              "required": ["label", "value"]
-                            }
-                          }
-                        },
-                        "required": ["label", "value"]
-                      }
-                    }
-                  },
-                  "required": ["label", "value"]
-                }
-              }
-            },
-            "required": ["label", "value"]
-          }
+        "entityType": {
+          "type": "string",
+          "title": "Entity Type"
+        },
+        "categoryName": {
+          "type": "string",
+          "title": "Category Name"
+        },
+        "categoryDesc": {
+          "type": "string",
+          "title": "Category Desc"
+        },
+        "parentCategoryId": {
+          "type": "string",
+          "title": "Parent Category Id"
+        },
+        "sortOrder": {
+          "type": "string",
+          "title": "Sort Order"
         }
       }
     },
     "form": [
       {
         "type": "help",
-        "description": "Construct categories. Try adding a couple of forms, reorder by drag'n'drop.",
+        "description": "Construct categories for an entity with hierachy structure.",
         "variant": "h4",
         "align": "left",
         "color": "secondary"
       },
-      "host",
-      "name",
+      "hostId",
+      "categoryId",
       {
-        "key": "categories",
-        "add": "New",
-        "style": {
-          "add": "btn-success"
-        },
-        "items": [
-          "categories[].label",
-          "categories[].value",
-          {
-            "key": "categories[].children",
-            "items": [
-              "categories[].children[].label",
-              "categories[].children[].value",
-              {
-                "key": "categories[].children[].children",
-                "items": [
-                  "categories[].children[].children[].label",
-                  "categories[].children[].children[].value",
-                  {
-                    "key": "categories[].children[].children[].children",
-                    "items": [
-                      "categories[].children[].children[].children[].label",
-                      "categories[].children[].children[].children[].value"
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+        "key": "entityType",
+        "type": "dynaselect",
+        "action": {
+          "url": "/r/data?name=category_entity"
+        }
+      },
+      "categoryName",
+      "categoryDesc",
+      {
+        "key": "parentCategoryId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      "sortOrder"
     ]
   },
   "createBlog": {
