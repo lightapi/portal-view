@@ -8932,14 +8932,15 @@
           "title": "Parent Category Id"
         },
         "sortOrder": {
-          "type": "string",
+          "type": "integer",
           "title": "Sort Order"
         }
+      }
     },
     "form": [
       {
         "type": "help",
-        "description": "Construct categories for an entity with hierachy structure.",
+        "description": "Construct categories for an entity with hierarchical structure.",
         "variant": "h4",
         "align": "left",
         "color": "secondary"
@@ -9011,7 +9012,7 @@
           "title": "Parent Category Id"
         },
         "sortOrder": {
-          "type": "string",
+          "type": "integer",
           "title": "Sort Order"
         }
       }
@@ -9019,7 +9020,7 @@
     "form": [
       {
         "type": "help",
-        "description": "Construct categories for an entity with hierachy structure.",
+        "description": "Update categories for an entity with hierarchical structure.",
         "variant": "h4",
         "align": "left",
         "color": "secondary"
@@ -9045,6 +9046,453 @@
         }
       },
       "sortOrder"
+    ]
+  },
+  "createSchema": {
+    "formId": "createSchema",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "schema",
+        "action": "createSchema",
+        "version": "0.1.0",
+        "title": "Create Schema",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Schema",
+      "required": [
+        "hostId",
+        "schemaId",
+        "schemaVersion",
+        "schemaType",
+        "specVersion",
+        "schemaSource",
+        "schemaName",
+        "schemaBody",
+        "schemaOwner"
+      ],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "schemaId": {
+          "type": "string",
+          "title": "Schema Id that is unique within the hostId"
+        },
+        "schemaVersion": {
+          "type": "string",
+          "title": "Schema Version"
+        },
+        "schemaType": {
+          "type": "string",
+          "title": "Schema Type"
+        },
+        "specVersion": {
+          "type": "string",
+          "title": "Spec Version"
+        },
+        "schemaSource": {
+          "type": "string",
+          "title": "Schema Source Git Repository"
+        },
+        "schemaName": {
+          "type": "string",
+          "title": "Schema Name"
+        },
+        "schemaDesc": {
+          "type": "string",
+          "title": "Schema Desc"
+        },
+        "schemaBody": {
+          "type": "string",
+          "title": "Schema Body"
+        },
+        "schemaOwner": {
+          "type": "string",
+          "title": "Schema Owner"
+        },
+        "schemaStatus": {
+          "type": "string",
+          "title": "Schema Status"
+        },
+        "categoryIds": {
+          "type": "array",
+          "title": "Category Ids",
+          "itmes": {
+            "type": "string"
+          }
+        },
+        "tagIds": {
+          "type": "string",
+          "title": "Tag Ids"
+        },
+        "example": {
+          "type": "string",
+          "title": "example"
+        },
+        "commentStatus": {
+          "type": "string",
+          "title": "Comment Status"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "schemaId",
+      "schemaVesion",
+      {
+        "key": "schemaType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "json",
+            "label": "json"
+          },
+          {
+            "id": "yaml",
+            "label": "yaml"
+          }
+        ]
+      },
+      {
+        "key": "specVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "v4",
+            "label": "v4"
+          },
+          {
+            "id": "v6",
+            "label": "v6"
+          },
+          {
+            "id": "v7",
+            "label": "v7"
+          },
+          {
+            "id": "v2019-09",
+            "label": "v2019-09"
+          },
+          {
+            "id": "v2020-12",
+            "label": "v2020-12"
+          }
+        ]
+      },
+      "schemaSource",
+      "schemaName",
+      {
+        "key": "schemaDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
+      {
+        "key": "schemaBody",
+        "type": "textarea",
+        "placeholder": "Plain text body",
+        "rows": 15
+      },
+      {
+        "key": "schemaOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "schemaStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "D",
+            "label": "Draft"
+          },
+          {
+            "id": "P",
+            "label": "Published"
+          },
+          {
+            "id": "R",
+            "label": "Retired"
+          }
+        ]
+      },
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "example",
+        "type": "textarea",
+        "placeholder": "Plain text example",
+        "rows": 15
+      },
+      {
+        "key": "commentStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "O",
+            "label": "Open"
+          },
+          {
+            "id": "C",
+            "label": "Closed"
+          }
+        ]
+      }
+    ]
+  },
+  "updateSchema": {
+    "formId": "updateCategory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "category",
+        "action": "updateCategory",
+        "version": "0.1.0",
+        "title": "Update Category",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Category",
+      "required": [
+        "hostId",
+        "schemaId",
+        "schemaVersion",
+        "schemaType",
+        "specVersion",
+        "schemaSource",
+        "schemaName",
+        "schemaBody",
+        "schemaOwner"
+      ],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "schemaId": {
+          "type": "string",
+          "title": "Schema Id that is unique within the hostId",
+          "readonly": true
+        },
+        "schemaVersion": {
+          "type": "string",
+          "title": "Schema Version"
+        },
+        "schemaType": {
+          "type": "string",
+          "title": "Schema Type"
+        },
+        "specVersion": {
+          "type": "string",
+          "title": "Spec Version"
+        },
+        "schemaSource": {
+          "type": "string",
+          "title": "Schema Source Git Repository"
+        },
+        "schemaName": {
+          "type": "string",
+          "title": "Schema Name"
+        },
+        "schemaDesc": {
+          "type": "string",
+          "title": "Schema Desc"
+        },
+        "schemaBody": {
+          "type": "string",
+          "title": "Schema Body"
+        },
+        "schemaOwner": {
+          "type": "string",
+          "title": "Schema Owner"
+        },
+        "schemaStatus": {
+          "type": "string",
+          "title": "Schema Status"
+        },
+        "categoryIds": {
+          "type": "array",
+          "title": "Category Ids",
+          "itmes": {
+            "type": "string"
+          }
+        },
+        "tagIds": {
+          "type": "string",
+          "title": "Tag Ids"
+        },
+        "example": {
+          "type": "string",
+          "title": "example"
+        },
+        "commentStatus": {
+          "type": "string",
+          "title": "Comment Status"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "schemaId",
+      "schemaVesion",
+      {
+        "key": "schemaType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "json",
+            "label": "json"
+          },
+          {
+            "id": "yaml",
+            "label": "yaml"
+          }
+        ]
+      },
+      {
+        "key": "specVersion",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "v4",
+            "label": "v4"
+          },
+          {
+            "id": "v6",
+            "label": "v6"
+          },
+          {
+            "id": "v7",
+            "label": "v7"
+          },
+          {
+            "id": "v2019-09",
+            "label": "v2019-09"
+          },
+          {
+            "id": "v2020-12",
+            "label": "v2020-12"
+          }
+        ]
+      },
+      "schemaSource",
+      "schemaName",
+      {
+        "key": "schemaDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
+      {
+        "key": "schemaBody",
+        "type": "textarea",
+        "placeholder": "Plain text body",
+        "rows": 15
+      },
+      {
+        "key": "schemaOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "schemaStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "D",
+            "label": "Draft"
+          },
+          {
+            "id": "P",
+            "label": "Published"
+          },
+          {
+            "id": "R",
+            "label": "Retired"
+          }
+        ]
+      },
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "example",
+        "type": "textarea",
+        "placeholder": "Plain text example",
+        "rows": 15
+      },
+      {
+        "key": "commentStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "O",
+            "label": "Open"
+          },
+          {
+            "id": "C",
+            "label": "Closed"
+          }
+        ]
+      }
     ]
   },
   "createBlog": {
