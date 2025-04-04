@@ -6528,7 +6528,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "createTable",
+        "action": "createRefTable",
         "version": "0.1.0",
         "title": "Create Ref Table",
         "success": "/app/success",
@@ -6539,56 +6539,46 @@
       "title": "Ref Table",
       "type": "object",
       "properties": {
-        "host": {
-          "type": "string"
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
         },
         "tableId": {
-          "type": "string"
+          "type": "string",
+          "title": "Table Id"
         },
         "tableName": {
-          "type": "string"
+          "type": "string",
+          "title": "Table Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
         },
         "tableDesc": {
-          "type": "string"
+          "type": "string",
+          "title": "Table Desc"
         },
         "active": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Active"
         },
         "editable": {
-          "type": "string",
-          "enum": ["Y", "N"]
-        },
-        "common": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Editable"
         }
       },
-      "required": [
-        "host",
-        "tableId",
-        "tableName",
-        "tableDesc",
-        "active",
-        "editable",
-        "common"
-      ]
+      "required": ["host", "tableId", "tableName"]
     },
     "form": [
-      {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=host"
-        }
-      },
+      "hostId",
       "tableId",
       "tableName",
+      "globalFlag",
       "tableDesc",
       "active",
-      "editable",
-      "common"
+      "editable"
     ]
   },
   "updateRefTable": {
@@ -6597,7 +6587,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "updateTable",
+        "action": "updateRefTable",
         "version": "0.1.0",
         "title": "Update Ref Table",
         "success": "/app/success",
@@ -6608,57 +6598,47 @@
       "title": "Ref Table",
       "type": "object",
       "properties": {
-        "host": {
-          "type": "string"
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
         },
         "tableId": {
           "type": "string",
+          "title": "Table Id",
           "readonly": true
         },
         "tableName": {
-          "type": "string"
+          "type": "string",
+          "title": "Table Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
         },
         "tableDesc": {
-          "type": "string"
+          "type": "string",
+          "title": "Table Desc"
         },
         "active": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Active"
         },
         "editable": {
-          "type": "string",
-          "enum": ["Y", "N"]
-        },
-        "common": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Editable"
         }
       },
-      "required": [
-        "host",
-        "tableId",
-        "tableName",
-        "tableDesc",
-        "active",
-        "editable",
-        "common"
-      ]
+      "required": ["hostId", "tableId", "tableName"]
     },
     "form": [
-      {
-        "key": "host",
-        "type": "rc-select",
-        "filterOption": true,
-        "action": {
-          "url": "/r/data?name=host"
-        }
-      },
+      "hostId",
       "tableId",
       "tableName",
+      "globalFlag",
       "tableDesc",
       "active",
-      "editable",
-      "common"
+      "editable"
     ]
   },
   "createRefValue": {
@@ -6667,7 +6647,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "createValue",
+        "action": "createRefValue",
         "version": "0.1.0",
         "title": "Create Ref Value",
         "success": "/app/success",
@@ -6680,25 +6660,50 @@
       "properties": {
         "tableId": {
           "type": "string",
+          "title": "Table Id",
           "readonly": true
         },
         "valueId": {
-          "type": "string"
+          "type": "string",
+          "title": "Value Id"
         },
         "valueCode": {
-          "type": "string"
+          "type": "string",
+          "title": "Value Code"
+        },
+        "valueDesc": {
+          "type": "string",
+          "title": "Value Desc"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "endTs": {
+          "type": "string",
+          "title": "End Timestamp"
         },
         "displayOrder": {
-          "type": "integer"
+          "type": "integer",
+          "title": "Display Order"
         },
         "active": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Active"
         }
       },
-      "required": ["tableId", "valueId", "valueCode", "displayOrder", "active"]
+      "required": ["tableId", "valueId", "valueCode"]
     },
-    "form": ["tableId", "valueId", "valueCode", "displayOrder", "active"]
+    "form": [
+      "tableId",
+      "valueId",
+      "valueCode",
+      "valueDesc",
+      "startTs",
+      "endTs",
+      "displayOrder",
+      "active"
+    ]
   },
   "updateRefValue": {
     "formId": "updateRefValue",
@@ -6706,7 +6711,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "updateValue",
+        "action": "updateRefValue",
         "version": "0.1.0",
         "title": "Update Ref Value",
         "success": "/app/success",
@@ -6719,26 +6724,50 @@
       "properties": {
         "tableId": {
           "type": "string",
+          "title": "Table Id",
           "readonly": true
         },
         "valueId": {
           "type": "string",
-          "readonly": true
+          "title": "Value Id"
         },
         "valueCode": {
-          "type": "string"
+          "type": "string",
+          "title": "Value Code"
+        },
+        "valueDesc": {
+          "type": "string",
+          "title": "Value Desc"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "endTs": {
+          "type": "string",
+          "title": "End Timestamp"
         },
         "displayOrder": {
-          "type": "integer"
+          "type": "integer",
+          "title": "Display Order"
         },
         "active": {
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean",
+          "title": "Active"
         }
       },
-      "required": ["tableId", "valueId", "valueCode", "displayOrder", "active"]
+      "required": ["tableId", "valueId", "valueCode"]
     },
-    "form": ["tableId", "valueId", "valueCode", "displayOrder", "active"]
+    "form": [
+      "tableId",
+      "valueId",
+      "valueCode",
+      "valueDesc",
+      "startTs",
+      "endTs",
+      "displayOrder",
+      "active"
+    ]
   },
   "createRefLocale": {
     "formId": "createRefLocale",
@@ -6746,7 +6775,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "createLocale",
+        "action": "createRefLocale",
         "version": "0.1.0",
         "title": "Create Ref Locale",
         "success": "/app/success",
@@ -6759,28 +6788,31 @@
       "properties": {
         "valueId": {
           "type": "string",
+          "title": "Value Id",
           "readonly": true
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "title": "Language"
         },
-        "valueDesc": {
-          "type": "string"
+        "valueLabel": {
+          "type": "string",
+          "title": "Value Label"
         }
       },
-      "required": ["valueId", "language", "valueDesc"]
+      "required": ["valueId", "language", "valueLabel"]
     },
     "form": [
       "valueId",
       {
         "key": "language",
-        "type": "rc-select",
-        "filterOption": true,
+        "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=language"
         }
       },
-      "valueDesc"
+      "valueLabel"
     ]
   },
   "updateRefLocale": {
@@ -6789,7 +6821,7 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "updateLocale",
+        "action": "updateRefLocale",
         "version": "0.1.0",
         "title": "Update Ref Locale",
         "success": "/app/success",
@@ -6802,102 +6834,91 @@
       "properties": {
         "valueId": {
           "type": "string",
+          "title": "Value Id",
           "readonly": true
         },
         "language": {
           "type": "string",
+          "title": "Language",
           "readonly": true
         },
-        "valueDesc": {
-          "type": "string"
+        "valueLabel": {
+          "type": "string",
+          "title": "Value Label"
         }
       },
-      "required": ["valueId", "language", "valueDesc"]
+      "required": ["valueId", "language", "valueLabel"]
     },
-    "form": ["valueId", "language", "valueDesc"]
+    "form": ["valueId", "language", "valueLabel"]
   },
-  "createRefRelaType": {
-    "formId": "createRefRelaType",
+  "createRefRelationType": {
+    "formId": "createRefRelationType",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "createRelationType",
+        "action": "createRefRelationType",
         "version": "0.1.0",
-        "title": "Create Rela Type",
+        "title": "Create Relation Type",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Rela Type",
+      "title": "Ref Relation Type",
       "type": "object",
       "properties": {
         "relationId": {
-          "type": "string"
+          "type": "string",
+          "title": "Relation Id"
         },
         "relationName": {
-          "type": "string"
+          "type": "string",
+          "title": "Relation Name"
         },
         "relationDesc": {
-          "type": "string"
+          "type": "string",
+          "title": "Relation Desc"
         }
       },
       "required": ["relationId", "relationName", "relationDesc"]
     },
     "form": ["relationId", "relationName", "relationDesc"]
   },
-  "updateRefRelaType": {
-    "formId": "updateRefRelaType",
+  "updateRefRelationType": {
+    "formId": "updateRefRelationType",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "updateRelationType",
+        "action": "updateRefRelationType",
         "version": "0.1.0",
-        "title": "Update Rela Type",
+        "title": "Update Relation Type",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Rela Type",
+      "title": "Relation Type",
       "type": "object",
       "properties": {
         "relationId": {
           "type": "string",
+          "title": "Relation Id",
           "readonly": true
         },
         "relationName": {
-          "type": "string"
+          "type": "string",
+          "title": "Relation Name"
         },
         "relationDesc": {
-          "type": "string"
+          "type": "string",
+          "title": "Relation Desc"
         }
       },
       "required": ["relatioId", "relationName", "relationDesc"]
     },
     "form": ["relationId", "relationName", "relationDesc"]
-  },
-  "key": {
-    "schema": {
-      "type": "object",
-      "required": ["client_id", "client_secret", "key_id"],
-      "properties": {
-        "client_id": {
-          "title": "Client ID",
-          "type": "string"
-        },
-        "client_secret": {
-          "title": "Client Secret",
-          "type": "string"
-        },
-        "key_id": {
-          "title": "Key ID",
-          "type": "string"
-        }
-      }
-    }
   },
   "createRefRelation": {
     "formId": "createRefRelation",
@@ -6905,9 +6926,9 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "createRelation",
+        "action": "createRefRelation",
         "version": "0.1.0",
-        "title": "Create Relation",
+        "title": "Create Ref Relation",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -6930,8 +6951,7 @@
         },
         "active": {
           "title": "Active",
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean"
         }
       },
       "required": ["relationId", "valueIdFrom", "valueIdTo", "active"]
@@ -6944,15 +6964,15 @@
       {
         "host": "lightapi.net",
         "service": "ref",
-        "action": "updateRelation",
+        "action": "updateRefRelation",
         "version": "0.1.0",
-        "title": "Update Relation",
+        "title": "Update Ref Relation",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Relation",
+      "title": "Ref Relation",
       "type": "object",
       "properties": {
         "relationId": {
@@ -6969,47 +6989,12 @@
         },
         "active": {
           "title": "Active",
-          "type": "string",
-          "enum": ["Y", "N"]
+          "type": "boolean"
         }
       },
       "required": ["relationId", "valueIdFrom", "valueIdTo", "active"]
     },
     "form": ["relationId", "valueIdFrom", "valueIdTo", "active"]
-  },
-  "deleteRefRelation": {
-    "formId": "deleteRefRelation",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "ref",
-        "action": "deleteRelation",
-        "version": "0.1.0",
-        "title": "Delete Relation",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Relation",
-      "type": "object",
-      "properties": {
-        "relationId": {
-          "title": "Relation Id",
-          "type": "string"
-        },
-        "valueIdFrom": {
-          "title": "Value Id From",
-          "type": "string"
-        },
-        "valueIdTo": {
-          "title": "Value Id To",
-          "type": "string"
-        }
-      },
-      "required": ["relationId", "valueIdFrom", "valueIdTo"]
-    },
-    "form": ["relationId", "valueIdFrom", "valueIdTo"]
   },
   "listQuiz": {
     "formId": "listQuiz",
@@ -8301,6 +8286,7 @@
       {
         "key": "ruleType",
         "type": "dynaselect",
+        "multiple": false,
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
           "params": ["hostId"]
