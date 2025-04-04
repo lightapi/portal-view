@@ -8923,6 +8923,10 @@
           "type": "string",
           "title": "Category Name"
         },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
+        },
         "categoryDesc": {
           "type": "string",
           "title": "Category Desc"
@@ -8954,7 +8958,13 @@
         }
       },
       "categoryName",
-      "categoryDesc",
+      "globalFlag",
+      {
+        "key": "categoryDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
       {
         "key": "parentCategoryId",
         "type": "dynaselect",
@@ -8983,7 +8993,7 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["hostId", "name", "categories"],
+      "required": ["hostId", "categoryId", "entiryType", "categoryName"],
       "properties": {
         "hostId": {
           "type": "string",
@@ -9002,6 +9012,10 @@
         "categoryName": {
           "type": "string",
           "title": "Category Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
         },
         "categoryDesc": {
           "type": "string",
@@ -9035,7 +9049,13 @@
         }
       },
       "categoryName",
-      "categoryDesc",
+      "globalFlag",
+      {
+        "key": "categoryDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      },
       {
         "key": "parentCategoryId",
         "type": "dynaselect",
@@ -9046,6 +9066,146 @@
         }
       },
       "sortOrder"
+    ]
+  },
+  "createTag": {
+    "formId": "createTag",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "tag",
+        "action": "createTag",
+        "version": "0.1.0",
+        "title": "Create Tag",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Category",
+      "required": ["hostId", "entityType", "tagName"],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Tag Host Id",
+          "readonly": true
+        },
+        "entityType": {
+          "type": "string",
+          "title": "Entity Type"
+        },
+        "tagName": {
+          "type": "string",
+          "title": "Tag Name in lower case and url friendly"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
+        },
+        "tagDesc": {
+          "type": "string",
+          "title": "Tag Desc"
+        }
+      }
+    },
+    "form": [
+      {
+        "type": "help",
+        "description": "Construct tags for an entity.",
+        "variant": "h4",
+        "align": "left",
+        "color": "secondary"
+      },
+      "hostId",
+      {
+        "key": "entityType",
+        "type": "dynaselect",
+        "action": {
+          "url": "/r/data?name=category_entity"
+        }
+      },
+      "tagName",
+      "globalFlag",
+      {
+        "key": "tagDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      }
+    ]
+  },
+  "updateTag": {
+    "formId": "updateTag",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "tag",
+        "action": "updateTag",
+        "version": "0.1.0",
+        "title": "Update Tag",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Tag",
+      "required": ["hostId", "tagId", "entityType", "tagName"],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Tag Host Id",
+          "readonly": true
+        },
+        "tagId": {
+          "type": "string",
+          "title": "Tag Id",
+          "readonly": true
+        },
+        "entityType": {
+          "type": "string",
+          "title": "Entity Type"
+        },
+        "tagName": {
+          "type": "string",
+          "title": "Tag Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
+        },
+        "tagDesc": {
+          "type": "string",
+          "title": "Tag Desc"
+        }
+      }
+    },
+    "form": [
+      {
+        "type": "help",
+        "description": "Update tags for an entity with hierarchical structure.",
+        "variant": "h4",
+        "align": "left",
+        "color": "secondary"
+      },
+      "hostId",
+      "tagId",
+      {
+        "key": "entityType",
+        "type": "dynaselect",
+        "action": {
+          "url": "/r/data?name=category_entity"
+        }
+      },
+      "tagName",
+      "globalFlag",
+      {
+        "key": "tagDesc",
+        "type": "textarea",
+        "placeholder": "Plain text description",
+        "rows": 5
+      }
     ]
   },
   "createSchema": {
