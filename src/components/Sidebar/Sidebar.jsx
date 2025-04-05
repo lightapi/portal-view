@@ -270,12 +270,6 @@ const structure = [
     role: "admin",
     link: "/app/category/admin",
     icon: <CategoryIcon />,
-    children: [
-      { label: "List", link: "/app/category/list" },
-      { label: "Create", link: "/app/form/createCategory" },
-      { label: "Update", link: "/app/form/updateCategory" },
-      { label: "Delete", link: "/app/form/deleteCategory" },
-    ],
   },
   {
     id: 130,

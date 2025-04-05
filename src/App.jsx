@@ -47,7 +47,6 @@ import RelationForm from "./pages/ref/RelationForm";
 import RelationDelete from "./pages/ref/RelationDelete";
 import ClientDelete from "./pages/oauth/ClientDelete";
 import Category from "./pages/category/Category";
-import CategoryDelete from "./pages/category/CategoryDelete";
 import BlogAdmin from "./pages/blog/BlogAdmin";
 import BlogDelete from "./pages/blog/BlogDelete";
 import BlogItem from "./pages/blog/BlogItem";
@@ -221,8 +220,7 @@ const App = () => {
           <Route path="oauth/providerKey" element={<ProviderKey />} />
           <Route path="oauth/client" element={<Client />} />
           <Route path="oauth/deleteClient" element={<ClientDelete />} />
-          <Route path="category/list" element={<Category />} />
-          <Route path="category/deleteCategory" element={<CategoryDelete />} />
+          <Route path="category/admin" element={<Category />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />
           <Route path="blog/deleteBlog" element={<BlogDelete />} />
           <Route path="blog/:host/:id" element={<BlogItem />} />
