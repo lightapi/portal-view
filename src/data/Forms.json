@@ -2376,7 +2376,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=business_group&host={0}&rela=region-bgrp&from={1}",
+          "url": "/r/data?name=business_group&host={0}&rela=region_bgrp&from={1}",
           "params": ["hostId", "region"]
         }
       },
@@ -2385,7 +2385,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=lob&host={0}&rela=bgrp-lob&from={1}",
+          "url": "/r/data?name=lob&host={0}&rela=bgrp_lob&from={1}",
           "params": ["hostId", "businessGroup"]
         }
       },
@@ -2394,7 +2394,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=platform_journer&host={0}&rela=lob-platform&from={1}",
+          "url": "/r/data?name=platform_journer&host={0}&rela=lob_platform&from={1}",
           "params": ["hostId", "lob"]
         }
       },
@@ -2403,7 +2403,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=capability&host={0}&rela=platform-capability&from={1}",
+          "url": "/r/data?name=capability&host={0}&rela=platform_capability&from={1}",
           "params": ["hostId", "platform"]
         }
       },
@@ -2546,7 +2546,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=business_group&host={0}&rela=region-bgrp&from={1}",
+          "url": "/r/data?name=business_group&host={0}&rela=region_bgrp&from={1}",
           "params": ["hostId", "region"]
         }
       },
@@ -2555,7 +2555,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=lob&host={0}&rela=bgrp-lob&from={1}",
+          "url": "/r/data?name=lob&host={0}&rela=bgrp_lob&from={1}",
           "params": ["hostId", "businessGroup"]
         }
       },
@@ -2564,7 +2564,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=platform_journer&host={0}&rela=lob-platform&from={1}",
+          "url": "/r/data?name=platform_journer&host={0}&rela=lob_platform&from={1}",
           "params": ["hostId", "lob"]
         }
       },
@@ -2573,7 +2573,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=capability&host={0}&rela=platform-capability&from={1}",
+          "url": "/r/data?name=capability&host={0}&rela=platform_capability&from={1}",
           "params": ["hostId", "platform"]
         }
       },
@@ -8928,19 +8928,12 @@
       }
     },
     "form": [
-      {
-        "type": "help",
-        "description": "Construct categories for an entity with hierarchical structure.",
-        "variant": "h4",
-        "align": "left",
-        "color": "secondary"
-      },
       "hostId",
       {
         "key": "entityType",
         "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=category_entity"
+          "url": "/r/data?name=entity_type"
         }
       },
       "categoryName",
@@ -9031,7 +9024,7 @@
         "key": "entityType",
         "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=category_entity"
+          "url": "/r/data?name=entity_type"
         }
       },
       "categoryName",
@@ -9108,7 +9101,7 @@
         "key": "entityType",
         "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=category_entity"
+          "url": "/r/data?name=entity_type"
         }
       },
       "tagName",
@@ -9181,7 +9174,7 @@
         "key": "entityType",
         "type": "dynaselect",
         "action": {
-          "url": "/r/data?name=category_entity"
+          "url": "/r/data?name=entity_type"
         }
       },
       "tagName",
