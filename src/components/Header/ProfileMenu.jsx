@@ -28,8 +28,8 @@ export default function ProfileMenu({ classes }) {
   const signIn = () => {
     const defaultUrl =
       "https://devsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=1222";
-    const signInUrl = process.env.REACT_APP_SIGNIN_URL
-      ? `${process.env.REACT_APP_SIGNIN_URL}&user_type=customer&state=1222`
+    const signInUrl = import.meta.env.VITE_SIGNIN_URL
+      ? `${import.meta.env.VITE_SIGNIN_URL}&user_type=customer&state=1222`
       : defaultUrl;
     window.location.href = signInUrl;
   };
