@@ -57,6 +57,7 @@ import SchemaAdmin from "./pages/schema/SchemaAdmin";
 import SchemaDelete from "./pages/schema/SchemaDelete";
 import SchemaList from "./pages/schema/SchemaList";
 import SchemaItem from "./pages/schema/SchemaItem";
+import ScheduleAdmin from "./pages/schedule/ScheduleAdmin";
 import RuleAdmin from "./pages/rule/RuleAdmin";
 import RuleDelete from "./pages/rule/RuleDelete";
 import RuleItem from "./pages/rule/RuleItem";
@@ -228,6 +229,7 @@ const App = () => {
           <Route path="error/deleteBlog" element={<ErrorDelete />} />
           <Route path="error/:host/:errorCode" element={<ErrorItem />} />
           <Route path="schema/adminList" element={<SchemaAdmin />} />
+          <Route path="schedule/admin" element={<ScheduleAdmin />} />
           <Route path="schema/deleteSchema" element={<SchemaDelete />} />
           <Route path="schema/schemaList" element={<SchemaList />} />
           <Route path="schema/:host/:id" element={<SchemaItem />} />

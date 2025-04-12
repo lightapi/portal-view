@@ -34,6 +34,7 @@ import EventIcon from "@mui/icons-material/Event";
 import ApiIcon from "@mui/icons-material/Api";
 import RuleIcon from "@mui/icons-material/Rule";
 import CategoryIcon from "@mui/icons-material/Category";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import SchemaIcon from "@mui/icons-material/Schema";
@@ -281,6 +282,13 @@ const structure = [
     role: "admin",
     link: "/app/category/admin",
     icon: <CategoryIcon />,
+  },
+  {
+    id: 127,
+    label: "Schedule Admin",
+    role: "admin",
+    link: "/app/schedule/admin",
+    icon: <ScheduleIcon />,
   },
   {
     id: 130,

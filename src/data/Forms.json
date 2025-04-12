@@ -9634,6 +9634,255 @@
       }
     ]
   },
+  "createSchedule": {
+    "formId": "createSchedule",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "schedule",
+        "action": "createSchedule",
+        "version": "0.1.0",
+        "title": "Create Schedule",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Schedule",
+      "required": [
+        "hostId",
+        "scheduleName",
+        "frequencyUnit",
+        "frequencyTime",
+        "startTs",
+        "eventTopic",
+        "eventType",
+        "eventData"
+      ],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "scheduleName": {
+          "type": "string",
+          "title": "Schedule Name"
+        },
+        "frequencyUnit": {
+          "type": "string",
+          "title": "Frequency Unit"
+        },
+        "frequencyTime": {
+          "type": "string",
+          "title": "Frequency Time"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "eventTopic": {
+          "type": "string",
+          "title": "Event Topic"
+        },
+        "eventType": {
+          "type": "string",
+          "title": "Event Type"
+        },
+        "eventData": {
+          "type": "string",
+          "title": "Event Data"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "scheduleName",
+      {
+        "key": "frequencyUnit",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "MILLISECONDS",
+            "label": "MILLISECONDS"
+          },
+          {
+            "id": "SECONDS",
+            "label": "SECONDS"
+          },
+          {
+            "id": "MINUTES",
+            "label": "MINUTES"
+          },
+          {
+            "id": "HOURS",
+            "label": "HOURS"
+          },
+          {
+            "id": "DAYS",
+            "label": "DAYS"
+          }
+        ]
+      },
+      "frequencyTime",
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "eventTopic",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=scheduler_topic"
+        }
+      },
+      {
+        "key": "eventType",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=event_type"
+        }
+      },
+      {
+        "key": "eventData",
+        "type": "textarea",
+        "placeholder": "Json CloudEvent",
+        "rows": 15
+      }
+    ]
+  },
+  "updateSchedule": {
+    "formId": "updateSchedule",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "schedule",
+        "action": "updateSchedule",
+        "version": "0.1.0",
+        "title": "Update Schedule",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Schedule",
+      "required": [
+        "hostId",
+        "scheduleId",
+        "scheduleName",
+        "frequencyUnit",
+        "frequencyTime",
+        "startTs",
+        "eventTopic",
+        "eventType",
+        "eventData"
+      ],
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "scheduleId": {
+          "type": "string",
+          "title": "Schedule Id",
+          "readonly": true
+        },
+        "scheduleName": {
+          "type": "string",
+          "title": "Schedule Name"
+        },
+        "frequencyUnit": {
+          "type": "string",
+          "title": "Frequency Unit"
+        },
+        "frequencyTime": {
+          "type": "string",
+          "title": "Frequency Time"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "eventTopic": {
+          "type": "string",
+          "title": "Event Topic"
+        },
+        "eventType": {
+          "type": "string",
+          "title": "Event Type"
+        },
+        "eventData": {
+          "type": "string",
+          "title": "Event Data"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "scheduleId",
+      "scheduleName",
+      {
+        "key": "frequencyUnit",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "MILLISECONDS",
+            "label": "MILLISECONDS"
+          },
+          {
+            "id": "SECONDS",
+            "label": "SECONDS"
+          },
+          {
+            "id": "MINUTES",
+            "label": "MINUTES"
+          },
+          {
+            "id": "HOURS",
+            "label": "HOURS"
+          },
+          {
+            "id": "DAYS",
+            "label": "DAYS"
+          }
+        ]
+      },
+      "frequencyTime",
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "eventTopic",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=scheduler_topic"
+        }
+      },
+      {
+        "key": "eventType",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=event_type"
+        }
+      },
+      {
+        "key": "eventData",
+        "type": "textarea",
+        "placeholder": "Json CloudEvent",
+        "rows": 15
+      }
+    ]
+  },
   "createBlog": {
     "formId": "createBlog",
     "actions": [
