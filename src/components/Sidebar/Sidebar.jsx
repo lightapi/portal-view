@@ -30,6 +30,7 @@ import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstruct
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
 import AccessibleIcon from "@mui/icons-material/Accessible";
+import EventIcon from "@mui/icons-material/Event";
 import ApiIcon from "@mui/icons-material/Api";
 import RuleIcon from "@mui/icons-material/Rule";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -181,6 +182,17 @@ const structure = [
     icon: <PeopleAltIcon />,
   },
   {
+    id: 93,
+    label: "Event Admin",
+    role: "admin",
+    link: "/app/event/admin",
+    icon: <EventIcon />,
+    children: [
+      { label: "Export", link: "/app/form/exportPortalEvent" },
+      { label: "Import", link: "/app/form/importPortalEvent" },
+    ],
+  },
+  {
     id: 95,
     label: "OAuth Admin",
     role: "admin",
@@ -263,7 +275,6 @@ const structure = [
     link: "/app/rule/admin",
     icon: <RuleIcon />,
   },
-  { id: 122, type: "divider" },
   {
     id: 125,
     label: "Category Admin",

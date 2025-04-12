@@ -13113,6 +13113,135 @@
       }
     ]
   },
+  "exportPortalEvent": {
+    "formId": "exportPortalEvent",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "exportPortalEvent",
+        "version": "0.1.0",
+        "title": "Export Portal Event",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Export Portal Event",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "portalServices": {
+          "type": "string",
+          "title": "Portal Services"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string"
+        }
+      },
+      "required": ["hostId", "portalServices"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "portalServices",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=portal_service"
+        }
+      },
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
+    ]
+  },
+  "importPortalEvent": {
+    "formId": "importPortalEvent",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "importPortalEvent",
+        "version": "0.1.0",
+        "title": "Import Portal Event",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Import Portal Event",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "portalServices": {
+          "type": "string",
+          "title": "Portal Services"
+        },
+        "startTs": {
+          "type": "string",
+          "title": "Start Timestamp"
+        },
+        "endTs": {
+          "title": "End Timestamp",
+          "type": "string"
+        },
+        "eventText": {
+          "title": "Event Text",
+          "type": "string"
+        },
+        "eventUrl": {
+          "title": "Event Url",
+          "type": "string"
+        }
+      },
+      "required": ["hostId", "portalServices"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "portalServices",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=portal_service"
+        }
+      },
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "eventText",
+        "type": "textarea",
+        "rows": 25
+      },
+      "eventUrl"
+    ]
+  },
+
   "logRetrieval": {
     "formId": "logRetrieval",
     "actions": [
