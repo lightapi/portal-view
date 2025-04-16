@@ -9675,7 +9675,7 @@
           "title": "Frequency Unit"
         },
         "frequencyTime": {
-          "type": "string",
+          "type": "integer",
           "title": "Frequency Time"
         },
         "startTs": {
@@ -9744,7 +9744,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=event_type"
+          "url": "https://localhost/r/data?name=scheduler_event"
         }
       },
       {
@@ -9802,7 +9802,7 @@
           "title": "Frequency Unit"
         },
         "frequencyTime": {
-          "type": "string",
+          "type": "integer",
           "title": "Frequency Time"
         },
         "startTs": {
@@ -9872,7 +9872,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=event_type"
+          "url": "https://localhost/r/data?name=scheduler_event"
         }
       },
       {
