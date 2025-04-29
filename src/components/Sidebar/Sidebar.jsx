@@ -117,20 +117,6 @@ const structure = [
     icon: <GiteIcon />,
   },
   {
-    id: 25,
-    label: "Reference",
-    role: "admin",
-    link: "/app/reference",
-    icon: <TableIcon />,
-    children: [
-      { label: "Table", link: "/app/ref/table" },
-      { label: "Value", link: "/app/ref/tableForm" },
-      { label: "Locale", link: "/app/ref/valueForm" },
-      { label: "RelaType", link: "/app/ref/relatype" },
-      { label: "Relation", link: "/app/ref/relationForm" },
-    ],
-  },
-  {
     id: 30,
     label: "Notification",
     role: "user",
@@ -177,13 +163,20 @@ const structure = [
   },
   {
     id: 92,
+    label: "Ref Admin",
+    role: "admin",
+    link: "/app/ref/TableAdmin",
+    icon: <TableIcon />,
+  },
+  {
+    id: 93,
     label: "User Admin",
     role: "admin",
     link: "/app/user",
     icon: <PeopleAltIcon />,
   },
   {
-    id: 93,
+    id: 94,
     label: "Event Admin",
     role: "admin",
     link: "/app/event/admin",

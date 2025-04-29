@@ -6544,10 +6544,6 @@
           "title": "Host Id",
           "readonly": true
         },
-        "tableId": {
-          "type": "string",
-          "title": "Table Id"
-        },
         "tableName": {
           "type": "string",
           "title": "Table Name"
@@ -6569,11 +6565,10 @@
           "title": "Editable"
         }
       },
-      "required": ["host", "tableId", "tableName"]
+      "required": ["host", "tableName"]
     },
     "form": [
       "hostId",
-      "tableId",
       "tableName",
       "globalFlag",
       "tableDesc",
@@ -6636,7 +6631,11 @@
       "tableId",
       "tableName",
       "globalFlag",
-      "tableDesc",
+      {
+        "key": "tableDesc",
+        "type": "textarea",
+        "rows": 5
+      },
       "active",
       "editable"
     ]
@@ -6663,10 +6662,6 @@
           "title": "Table Id",
           "readonly": true
         },
-        "valueId": {
-          "type": "string",
-          "title": "Value Id"
-        },
         "valueCode": {
           "type": "string",
           "title": "Value Code"
@@ -6692,15 +6687,24 @@
           "title": "Active"
         }
       },
-      "required": ["tableId", "valueId", "valueCode"]
+      "required": ["tableId", "valueCode"]
     },
     "form": [
       "tableId",
-      "valueId",
       "valueCode",
-      "valueDesc",
-      "startTs",
-      "endTs",
+      {
+        "key": "valueDesc",
+        "type": "textarea",
+        "rows": 5
+      },
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      },
       "displayOrder",
       "active"
     ]
@@ -6729,7 +6733,8 @@
         },
         "valueId": {
           "type": "string",
-          "title": "Value Id"
+          "title": "Value Id",
+          "readonly": true
         },
         "valueCode": {
           "type": "string",
@@ -6762,9 +6767,19 @@
       "tableId",
       "valueId",
       "valueCode",
-      "valueDesc",
-      "startTs",
-      "endTs",
+      {
+        "key": "valueDesc",
+        "type": "textarea",
+        "rows": 5
+      },
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      },
       "displayOrder",
       "active"
     ]
@@ -6883,7 +6898,15 @@
       },
       "required": ["relationId", "relationName", "relationDesc"]
     },
-    "form": ["relationId", "relationName", "relationDesc"]
+    "form": [
+      "relationId",
+      "relationName",
+      {
+        "key": "relationDesc",
+        "type": "textarea",
+        "rows": 5
+      }
+    ]
   },
   "updateRefRelationType": {
     "formId": "updateRefRelationType",
@@ -6916,7 +6939,15 @@
           "title": "Relation Desc"
         }
       },
-      "required": ["relatioId", "relationName", "relationDesc"]
+      "required": [
+        "relatioId",
+        "relationName",
+        {
+          "key": "relationDesc",
+          "type": "textarea",
+          "rows": 5
+        }
+      ]
     },
     "form": ["relationId", "relationName", "relationDesc"]
   },
@@ -10503,10 +10534,14 @@
           "title": "Config Id",
           "readonly": true
         },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id",
+          "readonly": true
+        },
         "propertyName": {
           "type": "string",
-          "title": "Property Name",
-          "readonly": true
+          "title": "Property Name"
         },
         "propertyType": {
           "type": "string",
@@ -10545,10 +10580,11 @@
           "title": "Resource Type"
         }
       },
-      "required": ["configId", "propertyName"]
+      "required": ["configId", "propertyId", "propertyName"]
     },
     "form": [
       "configId",
+      "propertyId",
       "propertyName",
       {
         "key": "propertyType",
@@ -10676,17 +10712,17 @@
       "title": "Create Config Environment",
       "type": "object",
       "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id"
+        },
         "environment": {
           "type": "string",
           "title": "Environment"
         },
-        "configId": {
+        "propertyId": {
           "type": "string",
-          "title": "Config Id"
-        },
-        "propertyName": {
-          "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
@@ -10697,7 +10733,7 @@
           "title": "Property File"
         }
       },
-      "required": ["environment", "configId", "propertyName"]
+      "required": ["hostId", "environment", "propertyId"]
     },
     "form": [
       {

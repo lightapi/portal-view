@@ -33,18 +33,11 @@ import Client from "./pages/oauth/Client";
 import RefreshToken from "./pages/oauth/RefreshToken";
 import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
 import RefreshTokenDetail from "./pages/oauth/RefreshTokenDetail";
-import RefTable from "./pages/ref/RefTable";
-import TableDelete from "./pages/ref/TableDelete";
-import TableForm from "./pages/ref/TableForm";
-import RefValue from "./pages/ref/RefValue";
-import ValueDelete from "./pages/ref/ValueDelete";
-import ValueForm from "./pages/ref/ValueForm";
-import RefLocale from "./pages/ref/RefLocale";
-import LocaleDelete from "./pages/ref/LocaleDelete";
-import RefRelaType from "./pages/ref/RefRelaType";
-import RefRelation from "./pages/ref/RefRelation";
-import RelationForm from "./pages/ref/RelationForm";
-import RelationDelete from "./pages/ref/RelationDelete";
+import RefTableAdmin from "./pages/ref/RefTableAdmin";
+// import RefValueAdmin from "./pages/ref/RefValueAdmin";
+// import RefLocaleAdmin from "./pages/ref/RefLocaleAdmin";
+// import RefRelaTypeAdmin from "./pages/ref/RefRelaTypeAdmin";
+// import RefRelationAdmin from "./pages/ref/RefRelationAdmin";
 import ClientDelete from "./pages/oauth/ClientDelete";
 import Category from "./pages/category/Category";
 import BlogAdmin from "./pages/blog/BlogAdmin";
@@ -205,18 +198,7 @@ const App = () => {
           <Route path="refreshToken" element={<RefreshToken />} />
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
           <Route path="refreshTokenDetail" element={<RefreshTokenDetail />} />
-          <Route path="ref/table" element={<RefTable />} />
-          <Route path="ref/deleteTable" element={<TableDelete />} />
-          <Route path="ref/tableForm" element={<TableForm />} />
-          <Route path="ref/value" element={<RefValue />} />
-          <Route path="ref/deleteValue" element={<ValueDelete />} />
-          <Route path="ref/valueForm" element={<ValueForm />} />
-          <Route path="ref/locale" element={<RefLocale />} />
-          <Route path="ref/deleteLocale" element={<LocaleDelete />} />
-          <Route path="ref/relaType" element={<RefRelaType />} />
-          <Route path="ref/relation" element={<RefRelation />} />
-          <Route path="ref/relationForm" element={<RelationForm />} />
-          <Route path="ref/deleteRelation" element={<RelationDelete />} />
+          <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/providerKey" element={<ProviderKey />} />
           <Route path="oauth/client" element={<Client />} />
