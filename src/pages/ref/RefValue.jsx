@@ -17,6 +17,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import LanguageIcon from "@mui/icons-material/Language";
 import Tooltip from "@mui/material/Tooltip";
 import { useUserState } from "../../contexts/UserContext";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -94,6 +95,12 @@ function RefValueRow(props) {
     }
   };
 
+  const handleLocale = (valueId) => {
+    navigate("/app/ref/locale", {
+      state: { data: { valueId } },
+    });
+  };
+
   const truncateData = (data, maxLength = 50) => {
     if (!data) return "";
     if (data.length <= maxLength) return data;
@@ -144,6 +151,14 @@ function RefValueRow(props) {
           <DeleteForeverIcon
             className={classes.iconButton}
             onClick={() => handleDelete(row)}
+          />
+        </Tooltip>
+      </TableCell>
+      <TableCell align="right">
+        <Tooltip title="Value Locale">
+          <LanguageIcon
+            className={classes.iconButton}
+            onClick={() => handleLocale(row.valueId)}
           />
         </Tooltip>
       </TableCell>
@@ -198,7 +213,7 @@ export default function RefValue() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const { host } = useUserState();
-  const location = useLocation(); // Get state passed from previous page
+  const location = useLocation();
   const data = location.state?.data;
 
   const [tableId, setTableId] = useState(() => data?.tableId || "");

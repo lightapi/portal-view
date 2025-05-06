@@ -167,6 +167,10 @@ const structure = [
     role: "admin",
     link: "/app/ref/TableAdmin",
     icon: <TableIcon />,
+    children: [
+      { label: "Ref Table", link: "/app/ref/TableAdmin" },
+      { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" },
+    ],
   },
   {
     id: 93,
