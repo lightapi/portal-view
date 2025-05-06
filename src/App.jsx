@@ -34,7 +34,7 @@ import RefreshToken from "./pages/oauth/RefreshToken";
 import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
 import RefreshTokenDetail from "./pages/oauth/RefreshTokenDetail";
 import RefTableAdmin from "./pages/ref/RefTableAdmin";
-// import RefValueAdmin from "./pages/ref/RefValueAdmin";
+import RefValue from "./pages/ref/RefValue";
 // import RefLocaleAdmin from "./pages/ref/RefLocaleAdmin";
 // import RefRelaTypeAdmin from "./pages/ref/RefRelaTypeAdmin";
 // import RefRelationAdmin from "./pages/ref/RefRelationAdmin";
@@ -199,6 +199,7 @@ const App = () => {
           <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
           <Route path="refreshTokenDetail" element={<RefreshTokenDetail />} />
           <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
+          <Route path="ref/value" element={<RefValue />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/providerKey" element={<ProviderKey />} />
           <Route path="oauth/client" element={<Client />} />

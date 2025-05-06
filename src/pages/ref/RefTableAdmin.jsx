@@ -10,6 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import DataObjectIcon from "@mui/icons-material/DataObject";
 import Tooltip from "@mui/material/Tooltip";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
@@ -90,6 +91,12 @@ function RefTableRow(props) {
     }
   };
 
+  const handleRefValue = (tableId) => {
+    navigate("/app/ref/value", {
+      state: { data: { tableId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={row.tableId}>
       <TableCell align="left">{row.hostId ? row.hostId : "N/A"}</TableCell>
@@ -112,6 +119,12 @@ function RefTableRow(props) {
         <DeleteForeverIcon
           className={classes.iconButton}
           onClick={() => handleDelete(row)}
+        />
+      </TableCell>
+      <TableCell align="right">
+        <DataObjectIcon
+          className={classes.iconButton}
+          onClick={() => handleRefValue(row.tableId)}
         />
       </TableCell>
     </TableRow>
@@ -282,17 +295,14 @@ export default function RefTableAdmin() {
     setPage(0);
   };
 
-  // Create handler
   const handleCreate = () => {
     navigate("/app/form/createRefTable");
   };
 
-  // Refresh handler
   const handleDataRefresh = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  // Render logic
   let content;
   if (loading) {
     content = (
@@ -375,6 +385,7 @@ export default function RefTableAdmin() {
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Ref Value</TableCell>
               </TableRow>
             </TableHead>
             <RefTableList
