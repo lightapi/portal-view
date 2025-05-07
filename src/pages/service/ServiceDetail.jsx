@@ -178,6 +178,7 @@ export default function ServiceDetail() {
             <TableHead>
               <TableRow>
                 <TableCell align="left">Host Id</TableCell>
+                <TableCell align="left">Api Version Id</TableCell>
                 <TableCell align="left">Api Id</TableCell>
                 <TableCell align="left">Api Version</TableCell>
                 <TableCell align="left">Api Type</TableCell>
@@ -197,6 +198,7 @@ export default function ServiceDetail() {
                 data.map((row, index) => (
                   <TableRow key={index}>
                     <TableCell align="left">{row.hostId}</TableCell>
+                    <TableCell align="left">{row.apiVersionId}</TableCell>
                     <TableCell align="left">{row.apiId}</TableCell>
                     <TableCell align="left">{row.apiVersion}</TableCell>
                     <TableCell align="left">{row.apiType}</TableCell>
