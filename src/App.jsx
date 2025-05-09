@@ -130,8 +130,6 @@ import InstanceApp from "./pages/instance/InstanceApp";
 import InstanceAdmin from "./pages/instance/InstanceAdmin";
 import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
-import Platform from "./pages/deployment/Platform";
-import Deployment from "./pages/deployment/Deployment";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 
 const App = () => {
@@ -339,9 +337,7 @@ const App = () => {
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
           <Route path="instance/InstanceAdmin" element={<InstanceAdmin />} />
           <Route path="deployment/PipelineAdmin" element={<PipelineAdmin />} />
-          <Route path="deployment/Platform" element={<Platform />} />
           <Route path="deployment/PlatformAdmin" element={<PlatformAdmin />} />
-          <Route path="deployment/Deployment" element={<Deployment />} />
           <Route
             path="deployment/DeploymentAdmin"
             element={<DeploymentAdmin />}

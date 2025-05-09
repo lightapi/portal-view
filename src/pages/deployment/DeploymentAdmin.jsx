@@ -73,8 +73,8 @@ function Row(props) {
       <TableCell align="left">{row.deploymentStatus}</TableCell>
       <TableCell align="left">{row.deploymentType}</TableCell>
       <TableCell align="left">{row.scheduleTs}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">{row.platformJobId}</TableCell>
+      <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
       </TableCell>

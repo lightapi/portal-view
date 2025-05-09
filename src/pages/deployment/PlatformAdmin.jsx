@@ -72,9 +72,9 @@ function Row(props) {
       {/* <TableCell align="left">{row.credentials}</TableCell> */}
       <TableCell align="left">{row.proxyUrl}</TableCell>
       <TableCell align="left">{row.proxyPort}</TableCell>
+      <TableCell align="left">{row.handlerClass}</TableCell>
+      <TableCell align="left">{row.consoleUrl}</TableCell>
       <TableCell align="left">{row.environment}</TableCell>
-      <TableCell align="left">{row.systemEnv}</TableCell>
-      <TableCell align="left">{row.runtimeEnv}</TableCell>
       <TableCell align="left">{row.zone}</TableCell>
       <TableCell align="left">{row.region}</TableCell>
       <TableCell align="left">{row.lob}</TableCell>
@@ -100,13 +100,13 @@ Row.propTypes = {
     platformName: PropTypes.string,
     platformVersion: PropTypes.string,
     clientType: PropTypes.string,
+    handlerClass: PropTypes.string.isRequired,
     clientUrl: PropTypes.string,
     credentials: PropTypes.string, // Consider if this should be displayed
     proxyUrl: PropTypes.string,
     proxyPort: PropTypes.number,
+    consoleUrl: PropTypes.string,
     environment: PropTypes.string,
-    systemEnv: PropTypes.string,
-    runtimeEnv: PropTypes.string,
     zone: PropTypes.string,
     region: PropTypes.string,
     lob: PropTypes.string,
@@ -150,6 +150,10 @@ export default function PlatformAdmin() {
   const debouncedPlatformVersion = useDebounce(platformVersion, 1000);
   const [clientType, setClientType] = useState("");
   const debouncedClientType = useDebounce(clientType, 1000);
+  const [handlerClass, setHandlerClass] = useState("");
+  const debouncedHandlerClass = useDebounce(handlerClass, 1000);
+  const [consoleUrl, setConsoleUrl] = useState("");
+  const debouncedConsoleUrl = useDebounce(consoleUrl, 1000);
   const [environment, setEnvironment] = useState("");
   const debouncedEnvironment = useDebounce(environment, 1000);
   const [zone, setZone] = useState("");
@@ -175,6 +179,12 @@ export default function PlatformAdmin() {
   };
   const handleClientTypeChange = (event) => {
     setClientType(event.target.value);
+  };
+  const handleHandlerClassChange = (event) => {
+    setHandlerClass(event.target.value);
+  };
+  const handleConsoleUrlChange = (event) => {
+    setConsoleUrl(event.target.value);
   };
   const handleEnvironmentChange = (event) => {
     setEnvironment(event.target.value);
@@ -228,6 +238,8 @@ export default function PlatformAdmin() {
         platformName: debouncedPlatformName,
         platformVersion: debouncedPlatformVersion,
         clientType: debouncedClientType,
+        handlerClass: debouncedHandlerClass,
+        consoleUrl: debouncedConsoleUrl,
         environment: debouncedEnvironment,
         zone: debouncedZone,
         region: debouncedRegion,
@@ -248,6 +260,8 @@ export default function PlatformAdmin() {
     debouncedPlatformName,
     debouncedPlatformVersion,
     debouncedClientType,
+    debouncedHandlerClass,
+    debouncedConsoleUrl,
     debouncedEnvironment,
     debouncedZone,
     debouncedRegion,
@@ -349,25 +363,25 @@ export default function PlatformAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Handler Class"
+                    value={handlerClass}
+                    onChange={handleHandlerClassChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Console URL"
+                    value={consoleUrl}
+                    onChange={handleConsoleUrlChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Environment"
                     value={environment}
                     onChange={handleEnvironmentChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="System Env"
-                    value={platformVersion} // should be systemEnv, corrected below
-                    onChange={() => {}} // No handler as per previous components, corrected below
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Runtime Env"
-                    value={platformVersion} // should be runtimeEnv, corrected below
-                    onChange={() => {}} // No handler as per previous components, corrected below
                   />
                 </TableCell>
                 <TableCell align="left">
