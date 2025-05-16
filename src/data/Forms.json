@@ -6565,7 +6565,7 @@
           "title": "Editable"
         }
       },
-      "required": ["host", "tableName"]
+      "required": ["hostId", "tableName"]
     },
     "form": [
       "hostId",
@@ -6824,7 +6824,8 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=language"
+          "url": "/r/data?name=language&host={0}",
+          "params": ["hostId"]
         }
       },
       "valueLabel"
@@ -12798,16 +12799,36 @@
           "title": "Host Id",
           "readonly": true
         },
-        "pipelineId": {
-          "type": "string",
-          "title": "Pipeline Id"
-        },
         "platformId": {
           "type": "string",
           "title": "Platform Id"
         },
+        "pipelineVersion": {
+          "type": "string",
+          "title": "Pipeline Version"
+        },
+        "pipelineName": {
+          "type": "string",
+          "title": "Pipeline Name"
+        },
+        "current": {
+          "type": "boolean",
+          "title": "Current"
+        },
         "endpoint": {
           "title": "Endpoint",
+          "type": "string"
+        },
+        "versionStatus": {
+          "title": "Version Status",
+          "type": "string"
+        },
+        "systemEnv": {
+          "title": "System Env",
+          "type": "string"
+        },
+        "runtimeEnv": {
+          "title": "Runtime Env",
           "type": "string"
         },
         "requestSchema": {
@@ -12821,17 +12842,18 @@
       },
       "required": [
         "hostId",
-        "pipelineId",
         "platformId",
+        "pipelineVersion",
+        "pipelineName",
         "endpoint",
+        "versionStatus",
+        "systemEnv",
         "requestSchema",
         "responseSchema"
       ]
     },
     "form": [
       "hostId",
-      "pipelineId",
-      "endpoint",
       {
         "key": "platformId",
         "type": "dynaselect",
@@ -12839,6 +12861,35 @@
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
+        }
+      },
+      "pipelineVersion",
+      "pipelineName",
+      "current",
+      "endpoint",
+      {
+        "key": "versionStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=pipeline_version_status&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env"
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env"
         }
       },
       {
@@ -12985,16 +13036,16 @@
           "title": "Proxy Port",
           "type": "integer"
         },
+        "handlerClass": {
+          "title": "Handler Class",
+          "type": "string"
+        },
+        "consoleUrl": {
+          "title": "Console URL",
+          "type": "string"
+        },
         "environment": {
           "title": "Environment",
-          "type": "string"
-        },
-        "systemEnv": {
-          "title": "System Env",
-          "type": "string"
-        },
-        "runtimeEnv": {
-          "title": "Runtime Env",
           "type": "string"
         },
         "zone": {
@@ -13016,7 +13067,8 @@
         "platformVersion",
         "clientType",
         "clientUrl",
-        "credentials"
+        "credentials",
+        "handlerClass"
       ]
     },
     "form": [
@@ -13035,15 +13087,8 @@
       "credentials",
       "proxyUrl",
       "proxyPort",
-      {
-        "key": "environment",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
-        }
-      },
+      "handlerClass",
+      "consoleUrl",
       {
         "key": "systemEnv",
         "type": "dynaselect",
@@ -13059,6 +13104,15 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
           "params": ["hostId"]
         }
       },
