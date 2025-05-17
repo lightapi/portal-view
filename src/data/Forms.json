@@ -12273,32 +12273,24 @@
           "type": "string",
           "title": "Instance Name"
         },
-        "productId": {
+        "productVersionId": {
           "type": "string",
-          "title": "Product Id"
-        },
-        "productVersion": {
-          "title": "Product Version",
-          "type": "string"
+          "title": "Product Version Id"
         },
         "serviceId": {
           "title": "Service Id",
           "type": "string"
         },
-        "apiId": {
-          "title": "Api Id",
-          "type": "string"
+        "current": {
+          "title": "Current",
+          "type": "boolean"
         },
-        "apiVersion": {
-          "title": "Api Version",
-          "type": "string"
+        "readonly": {
+          "title": "Readonly",
+          "type": "boolean"
         },
         "environment": {
           "title": "Environment",
-          "type": "string"
-        },
-        "pipelineId": {
-          "title": "Pipeline Id",
           "type": "string"
         },
         "serviceDesc": {
@@ -12309,68 +12301,52 @@
           "title": "Instance Desc",
           "type": "string"
         },
-        "tagId": {
-          "title": "Tag Id",
+        "zone": {
+          "title": "Zone",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "lob": {
+          "title": "Lob",
+          "type": "string"
+        },
+        "resourceName": {
+          "title": "Resource Name",
+          "type": "string"
+        },
+        "businessName": {
+          "title": "Business Name",
+          "type": "string"
+        },
+        "envTag": {
+          "title": "Env Tag",
+          "type": "string"
+        },
+        "topicClassification": {
+          "title": "Topic Classification",
           "type": "string"
         }
       },
-      "required": [
-        "hostId",
-        "instanceName",
-        "productId",
-        "productVersion",
-        "serviceId",
-        "pipelineId"
-      ]
+      "required": ["hostId", "instanceName", "productVersionId", "serviceId"]
     },
     "form": [
       "hostId",
       "instanceName",
       {
-        "key": "productId",
+        "key": "productVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
-      {
-        "key": "productVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22productId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "productId"]
-        }
-      },
-      {
-        "key": "serviceId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getServiceIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
-          "params": ["hostId", "apiId"]
-        }
-      },
+      "serviceId",
+      "current",
+      "readonly",
       {
         "key": "environment",
         "type": "dynaselect",
@@ -12380,18 +12356,39 @@
           "params": ["hostId"]
         }
       },
+      "serviceDesc",
+      "instanceDesc",
       {
-        "key": "pipelineId",
+        "key": "zone",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/r/data?name=network_zone&host={0}",
           "params": ["hostId"]
         }
       },
-      "serviceDesc",
-      "instanceDesc",
-      "tagId"
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "lob",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lob&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "resourceName",
+      "businessName",
+      "envTag",
+      "topicClassification"
     ]
   },
   "updateInstance": {
@@ -12425,32 +12422,24 @@
           "type": "string",
           "title": "Instance Name"
         },
-        "productId": {
+        "productVersionId": {
           "type": "string",
-          "title": "Product Id"
-        },
-        "productVersion": {
-          "title": "Product Version",
-          "type": "string"
+          "title": "Product Version Id"
         },
         "serviceId": {
           "title": "Service Id",
           "type": "string"
         },
-        "apiId": {
-          "title": "Api Id",
-          "type": "string"
+        "current": {
+          "title": "Current",
+          "type": "boolean"
         },
-        "apiVersion": {
-          "title": "Api Version",
-          "type": "string"
+        "readonly": {
+          "title": "Readonly",
+          "type": "boolean"
         },
         "environment": {
           "title": "Environment",
-          "type": "string"
-        },
-        "pipelineId": {
-          "title": "Pipeline Id",
           "type": "string"
         },
         "serviceDesc": {
@@ -12461,8 +12450,32 @@
           "title": "Instance Desc",
           "type": "string"
         },
-        "tagId": {
-          "title": "Tag Id",
+        "zone": {
+          "title": "Network Zone",
+          "type": "string"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "lob": {
+          "title": "Lob",
+          "type": "string"
+        },
+        "resourceName": {
+          "title": "Resource Name",
+          "type": "string"
+        },
+        "businessName": {
+          "title": "Business Name",
+          "type": "string"
+        },
+        "envTag": {
+          "title": "Env Tag",
+          "type": "string"
+        },
+        "topicClassification": {
+          "title": "Topic Classification",
           "type": "string"
         }
       },
@@ -12470,10 +12483,8 @@
         "hostId",
         "instanceId",
         "instanceName",
-        "productId",
-        "productVersion",
-        "serviceId",
-        "pipelineId"
+        "productVersionId",
+        "serviceId"
       ]
     },
     "form": [
@@ -12481,49 +12492,17 @@
       "instanceId",
       "instanceName",
       {
-        "key": "productId",
+        "key": "productVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
-      {
-        "key": "productVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22productId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "productId"]
-        }
-      },
-      {
-        "key": "serviceId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getServiceIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22api%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%7D"
-        }
-      },
+      "serviceId",
+      "current",
+      "readonly",
       {
         "key": "environment",
         "type": "dynaselect",
@@ -12533,18 +12512,39 @@
           "params": ["hostId"]
         }
       },
+      "serviceDesc",
+      "instanceDesc",
       {
-        "key": "pipelineId",
+        "key": "zone",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/r/data?name=network_zone&host={0}",
           "params": ["hostId"]
         }
       },
-      "serviceDesc",
-      "instanceDesc",
-      "tagId"
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "lob",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lob&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      "resourceName",
+      "businessName",
+      "envTag",
+      "topicClassification"
     ]
   },
   "createInstanceApi": {
