@@ -67,6 +67,8 @@ function Row(props) {
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.platformId}</TableCell>
+      <TableCell align="left">{row.platformName}</TableCell>
+      <TableCell align="left">{row.platformVersion}</TableCell>
       <TableCell align="left">{row.pipelineName}</TableCell>
       <TableCell align="left">{row.pipelineVersion}</TableCell>
       <TableCell align="left">{row.current ? "Yes" : "No"}</TableCell>
@@ -95,6 +97,8 @@ Row.propTypes = {
     hostId: PropTypes.string.isRequired,
     pipelineId: PropTypes.string.isRequired,
     platformId: PropTypes.string.isRequired,
+    platformName: PropTypes.string.isRequired,
+    platformVersion: PropTypes.string.isRequired,
     pipelineName: PropTypes.string.isRequired,
     pipelineVersion: PropTypes.string.isRequired,
     endpoint: PropTypes.string.isRequired,
@@ -145,6 +149,10 @@ export default function PipelineAdmin() {
   const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [platformId, setPlatformId] = useState(() => data?.platformId || "");
   const debouncedPlatformId = useDebounce(platformId, 1000);
+  const [platformName, setPlatformName] = useState("");
+  const debouncedPlatformName = useDebounce(platformName, 1000);
+  const [platformVersion, setPlatformVersion] = useState("");
+  const debouncedPlatformVersion = useDebounce(platformVersion, 1000);
   const [pipelineName, setPipelineName] = useState("");
   const debouncedPipelineName = useDebounce(pipelineName, 1000);
   const [pipelineVersion, setPipelineVersion] = useState("");
@@ -192,6 +200,12 @@ export default function PipelineAdmin() {
   const handlePlatformIdChange = (event) => {
     setPlatformId(event.target.value);
   };
+  const handlePlatformNameChange = (event) => {
+    setPlatformName(event.target.value);
+  };
+  const handlePlatformVersionChange = (event) => {
+    setPlatformVersion(event.target.value);
+  };
 
   const fetchData = useCallback(async (url, headers) => {
     try {
@@ -229,6 +243,8 @@ export default function PipelineAdmin() {
         pipelineName: debouncedPipelineName,
         pipelineVersion: debouncedPipelineVersion,
         platformId: debouncedPlatformId,
+        platformName: debouncedPlatformName,
+        platformVersion: debouncedPlatformVersion,
         endpoint: debouncedEndpoint,
         versionStatus: debouncedVersionStatus,
         systemEnv: debouncedSystemEnv,
@@ -253,6 +269,8 @@ export default function PipelineAdmin() {
     debouncedPipelineVersion,
     debouncedCurrent,
     debouncedPlatformId,
+    debouncedPlatformName,
+    debouncedPlatformVersion,
     debouncedEndpoint,
     debouncedVersionStatus,
     debouncedSystemEnv,
@@ -297,9 +315,25 @@ export default function PipelineAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="PlatformId"
+                    placeholder="Platform Id"
                     value={platformId}
                     onChange={handlePlatformIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Platform Name"
+                    value={platformName}
+                    onChange={handlePlatformNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Platform Version"
+                    value={platformVersion}
+                    onChange={handlePlatformVersionChange}
                   />
                 </TableCell>
                 <TableCell align="left">
