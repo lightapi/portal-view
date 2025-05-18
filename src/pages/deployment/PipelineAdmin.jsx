@@ -12,7 +12,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Ensure this hook is implemented
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
 import { useUserState } from "../../contexts/UserContext.jsx"; // Ensure UserContext is available
 import { makeStyles } from "@mui/styles";
@@ -135,13 +135,15 @@ PipelineList.propTypes = {
 export default function PipelineAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState(); // Get host from UserContext
+  const location = useLocation();
+  const data = location.state?.data;
+  const { host } = useUserState();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [pipelineId, setPipelineId] = useState("");
   const debouncedPipelineId = useDebounce(pipelineId, 1000);
-  const [platformId, setPlatformId] = useState("");
+  const [platformId, setPlatformId] = useState(() => data?.platformId || "");
   const debouncedPlatformId = useDebounce(platformId, 1000);
   const [pipelineName, setPipelineName] = useState("");
   const debouncedPipelineName = useDebounce(pipelineName, 1000);

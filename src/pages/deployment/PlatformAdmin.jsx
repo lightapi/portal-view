@@ -10,6 +10,7 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import GridGoldenratioIcon from "@mui/icons-material/GridGoldenratio";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
@@ -60,6 +61,12 @@ function Row(props) {
     }
   };
 
+  const handlePipeline = (platformId) => {
+    navigate("/app/deployment/PipelineAdmin", {
+      state: { data: { platformId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={`${row.hostId}-${row.platformId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
@@ -87,6 +94,9 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
+      </TableCell>
+      <TableCell align="right">
+        <GridGoldenratioIcon onClick={() => handlePipeline(row.platformId)} />
       </TableCell>
     </TableRow>
   );
@@ -413,6 +423,7 @@ export default function PlatformAdmin() {
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
+                <TableCell align="right">Pipeline</TableCell>
               </TableRow>
             </TableHead>
             <PlatformList platforms={platforms} />
