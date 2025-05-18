@@ -124,6 +124,8 @@ import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
 import Product from "./pages/product/Product";
 import ProductAdmin from "./pages/product/ProductAdmin";
+import ProductEnvironment from "./pages/product/ProductEnvironment";
+import ProductPipeline from "./pages/product/ProductPipeline";
 import Instance from "./pages/instance/Instance";
 import InstanceApi from "./pages/instance/InstanceApi";
 import InstanceApp from "./pages/instance/InstanceApp";
@@ -131,6 +133,7 @@ import InstanceAdmin from "./pages/instance/InstanceAdmin";
 import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
+import DeploymentInstance from "./pages/deployment/DeploymentInstance";
 
 const App = () => {
   return (
@@ -332,6 +335,9 @@ const App = () => {
           <Route path="host/Host" element={<Host />} />
           <Route path="product/Product" element={<Product />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
+          <Route path="product/environment" element={<ProductEnvironment />} />
+          <Route path="product/pipeline" element={<ProductPipeline />} />
+
           <Route path="instance/Instance" element={<Instance />} />
           <Route path="instance/InstanceApi" element={<InstanceApi />} />
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
@@ -342,6 +348,7 @@ const App = () => {
             path="deployment/DeploymentAdmin"
             element={<DeploymentAdmin />}
           />
+          <Route path="deployment/instance" element={<DeploymentInstance />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

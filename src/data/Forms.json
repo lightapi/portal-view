@@ -12125,6 +12125,11 @@
           "type": "string",
           "readonly": true
         },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
         "productId": {
           "title": "Product Id",
           "type": "string",
@@ -12189,6 +12194,7 @@
     },
     "form": [
       "hostId",
+      "productVersionId",
       "productId",
       "productVersion",
       {
@@ -12242,6 +12248,152 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=product_version_status&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createProductVersionEnvironment": {
+    "formId": "createProductVersionEnvironment",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "createProductVersionEnvironment",
+        "version": "0.1.0",
+        "title": "Create Product Version Environment Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Product Version Environment Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productId": {
+          "title": "Product Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version",
+          "readonly": true
+        },
+        "systemEnv": {
+          "type": "string",
+          "title": "System Env"
+        },
+        "runtimeEnv": {
+          "type": "string",
+          "title": "Runtime Env"
+        }
+      },
+      "required": [
+        "hostId",
+        "productVersionId",
+        "productId",
+        "productVersion",
+        "systemEnv",
+        "runtimeEnv"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productVersionId",
+      "productId",
+      "productVersion",
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createProductVersionPipeline": {
+    "formId": "createProductVersionPipeline",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "createProductVersionPipeline",
+        "version": "0.1.0",
+        "title": "Create Product Version Pipeline Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Product Version Pipeline Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productId": {
+          "title": "Product Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version",
+          "readonly": true
+        },
+        "pipelineId": {
+          "type": "string",
+          "title": "Pipeline Id"
+        }
+      },
+      "required": [
+        "hostId",
+        "productVersionId",
+        "productId",
+        "productVersion",
+        "pipelineId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productVersionId",
+      "productId",
+      "productVersion",
+      {
+        "key": "pipelineId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       }
@@ -13281,6 +13433,189 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createDeploymentInstance": {
+    "formId": "createDeploymentInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "createDeploymentInstance",
+        "version": "0.1.0",
+        "title": "Create Deployment Instance Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Deployment Instance Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id",
+          "readonly": true
+        },
+        "serviceId": {
+          "type": "string",
+          "title": "Service Id",
+          "readonly": true
+        },
+        "legId": {
+          "type": "string",
+          "title": "Leg Id"
+        },
+        "ipAddress": {
+          "title": "IP Address",
+          "type": "string"
+        },
+        "portNumber": {
+          "title": "Port Number",
+          "type": "integer"
+        },
+        "systemEnv": {
+          "title": "System Env",
+          "type": "string"
+        },
+        "runtimeEnv": {
+          "title": "Runtime Env",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "serviceId",
+        "systemEnv",
+        "runtimeEnv"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      "serviceId",
+      "legId",
+      "ipAddress",
+      "portNumber",
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env&host={0}",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "updateDeploymentInstance": {
+    "formId": "updateDeploymentInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "deployment",
+        "action": "updateDeploymentInstance",
+        "version": "0.1.0",
+        "title": "Update Deployment Instance Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Deployment Instance Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id",
+          "readonly": true
+        },
+        "serviceId": {
+          "type": "string",
+          "title": "Service Id",
+          "readonly": true
+        },
+        "deploymentInstanceId": {
+          "type": "string",
+          "title": "Deployment Instance Id",
+          "readonly": true
+        },
+        "legId": {
+          "type": "string",
+          "title": "Leg Id"
+        },
+        "ipAddress": {
+          "title": "IP Address",
+          "type": "string"
+        },
+        "portNumber": {
+          "title": "Port Number",
+          "type": "integer"
+        },
+        "systemEnv": {
+          "title": "System Env",
+          "type": "string"
+        },
+        "runtimeEnv": {
+          "title": "Runtime Env",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "serviceId",
+        "deploymentInstanceId",
+        "systemEnv",
+        "runtimeEnv"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      "serviceId",
+      "deploymentInstanceId",
+      "legId",
+      "ipAddress",
+      "portNumber",
+      {
+        "key": "systemEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=system_env&host={0}",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "runtimeEnv",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=runtime_env&host={0}",
           "params": ["hostId"]
         }
       }

@@ -18,6 +18,7 @@ import { useUserState } from "../../contexts/UserContext.jsx"; // Ensure UserCon
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Make sure apiPost is correctly implemented
+import { stringToBoolean } from "../../utils/index.jsx";
 
 const useRowStyles = makeStyles({
   root: {
@@ -66,7 +67,13 @@ function Row(props) {
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.pipelineId}</TableCell>
       <TableCell align="left">{row.platformId}</TableCell>
+      <TableCell align="left">{row.pipelineName}</TableCell>
+      <TableCell align="left">{row.pipelineVersion}</TableCell>
+      <TableCell align="left">{row.current ? "Yes" : "No"}</TableCell>
       <TableCell align="left">{row.endpoint}</TableCell>
+      <TableCell align="left">{row.versionStatus}</TableCell>
+      <TableCell align="left">{row.systemEnv}</TableCell>
+      <TableCell align="left">{row.runtimeEnv}</TableCell>
       <TableCell align="left">{row.requestSchema}</TableCell>
       <TableCell align="left">{row.responseSchema}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
@@ -88,7 +95,13 @@ Row.propTypes = {
     hostId: PropTypes.string.isRequired,
     pipelineId: PropTypes.string.isRequired,
     platformId: PropTypes.string.isRequired,
+    pipelineName: PropTypes.string.isRequired,
+    pipelineVersion: PropTypes.string.isRequired,
     endpoint: PropTypes.string.isRequired,
+    current: PropTypes.bool,
+    versionStatus: PropTypes.string.isRequired,
+    systemEnv: PropTypes.string.isRequired,
+    runtimeEnv: PropTypes.string,
     requestSchema: PropTypes.string,
     responseSchema: PropTypes.string,
     updateUser: PropTypes.string,
@@ -130,8 +143,21 @@ export default function PipelineAdmin() {
   const debouncedPipelineId = useDebounce(pipelineId, 1000);
   const [platformId, setPlatformId] = useState("");
   const debouncedPlatformId = useDebounce(platformId, 1000);
+  const [pipelineName, setPipelineName] = useState("");
+  const debouncedPipelineName = useDebounce(pipelineName, 1000);
+  const [pipelineVersion, setPipelineVersion] = useState("");
+  const debouncedPipelineVersion = useDebounce(pipelineVersion, 1000);
+  const [current, setCurrent] = useState("");
+  const debouncedCurrent = useDebounce(current, 1000);
   const [endpoint, setEndpoint] = useState("");
   const debouncedEndpoint = useDebounce(endpoint, 1000);
+  const [versionStatus, setVersionStatus] = useState("");
+  const debouncedVersionStatus = useDebounce(versionStatus, 1000);
+  const [systemEnv, setSystemEnv] = useState("");
+  const debouncedSystemEnv = useDebounce(systemEnv, 1000);
+  const [runtimeEnv, setRuntimeEnv] = useState("");
+  const debouncedRuntimeEnv = useDebounce(runtimeEnv, 1000);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
@@ -140,11 +166,27 @@ export default function PipelineAdmin() {
   const handlePipelineIdChange = (event) => {
     setPipelineId(event.target.value);
   };
-
+  const handlePipelineNameChange = (event) => {
+    setPipelineName(event.target.value);
+  };
+  const handlePipelineVersionChange = (event) => {
+    setPipelineVersion(event.target.value);
+  };
+  const handleCurrentChange = (event) => {
+    setCurrent(event.target.value);
+  };
   const handleEndpointChange = (event) => {
     setEndpoint(event.target.value);
   };
-
+  const handleVersionStatusChange = (event) => {
+    setVersionStatus(event.target.value);
+  };
+  const handleSystemEnvChange = (event) => {
+    setSystemEnv(event.target.value);
+  };
+  const handleRuntimeEnvChange = (event) => {
+    setRuntimeEnv(event.target.value);
+  };
   const handlePlatformIdChange = (event) => {
     setPlatformId(event.target.value);
   };
@@ -182,8 +224,16 @@ export default function PipelineAdmin() {
         limit: rowsPerPage,
         hostId: host,
         pipelineId: debouncedPipelineId,
+        pipelineName: debouncedPipelineName,
+        pipelineVersion: debouncedPipelineVersion,
         platformId: debouncedPlatformId,
         endpoint: debouncedEndpoint,
+        versionStatus: debouncedVersionStatus,
+        systemEnv: debouncedSystemEnv,
+        runtimeEnv: debouncedRuntimeEnv,
+        ...(debouncedCurrent && debouncedCurrent.trim() !== ""
+          ? { current: stringToBoolean(debouncedCurrent) }
+          : {}),
       },
     };
 
@@ -197,8 +247,14 @@ export default function PipelineAdmin() {
     rowsPerPage,
     host,
     debouncedPipelineId,
+    debouncedPipelineName,
+    debouncedPipelineVersion,
+    debouncedCurrent,
     debouncedPlatformId,
     debouncedEndpoint,
+    debouncedVersionStatus,
+    debouncedSystemEnv,
+    debouncedRuntimeEnv,
     fetchData,
   ]);
 
@@ -247,9 +303,57 @@ export default function PipelineAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Pipeline Name"
+                    value={pipelineName}
+                    onChange={handlePipelineNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Pipeline Version"
+                    value={pipelineVersion}
+                    onChange={handlePipelineVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Current"
+                    value={current}
+                    onChange={handleCurrentChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Endpoint"
                     value={endpoint}
                     onChange={handleEndpointChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Version Status"
+                    value={versionStatus}
+                    onChange={handleVersionStatusChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="System Env"
+                    value={systemEnv}
+                    onChange={handleSystemEnvChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Runtime Env"
+                    value={runtimeEnv}
+                    onChange={handleRuntimeEnvChange}
                   />
                 </TableCell>
                 <TableCell align="left">Request Schema</TableCell>

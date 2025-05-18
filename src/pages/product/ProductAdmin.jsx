@@ -11,6 +11,8 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
+import LanguageIcon from "@mui/icons-material/Language";
+import GridGoldenratioIcon from "@mui/icons-material/GridGoldenratio";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -65,18 +67,31 @@ function Row(props) {
     }
   };
 
-  const handleConfig = (productId, productVersion) => {
+  const handleConfig = (productVersionId) => {
     navigate("/app/config/configProductVersion", {
-      state: { data: { productId, productVersion } },
+      state: { data: { productVersionId } },
+    });
+  };
+
+  const handleEnvironment = (productVersionId, productId, productVersion) => {
+    navigate("/app/product/environment", {
+      state: { data: { productVersionId, productId, productVersion } },
+    });
+  };
+
+  const handlePipeline = (productVersionId, productId, productVersion) => {
+    navigate("/app/product/pipeline", {
+      state: { data: { productVersionId, productId, productVersion } },
     });
   };
 
   return (
     <TableRow
       className={classes.root}
-      key={`${row.hostId}-${row.productId}-${row.productVersion}`}
+      key={`${row.hostId}-${row.productVersionId}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.productVersionId}</TableCell>
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.light4jVersion}</TableCell>
@@ -98,8 +113,28 @@ function Row(props) {
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
       <TableCell align="right">
-        <AddToDriveIcon
-          onClick={() => handleConfig(row.productId, row.productVersion)}
+        <AddToDriveIcon onClick={() => handleConfig(row.productVersionId)} />
+      </TableCell>
+      <TableCell align="right">
+        <LanguageIcon
+          onClick={() =>
+            handleEnvironment(
+              row.productVersionId,
+              row.productId,
+              row.productVersion,
+            )
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <GridGoldenratioIcon
+          onClick={() =>
+            handlePipeline(
+              row.productVersionId,
+              row.productId,
+              row.productVersion,
+            )
+          }
         />
       </TableCell>
     </TableRow>
@@ -110,6 +145,7 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    productVersionId: PropTypes.string.isRequired,
     productId: PropTypes.string.isRequired,
     productVersion: PropTypes.string.isRequired,
     light4jVersion: PropTypes.string,
@@ -156,6 +192,10 @@ export default function ProductAdmin() {
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [productVersionId, setProductVersionId] = useState(
+    () => data?.productVersionId || "",
+  );
+  const debouncedProductVersionId = useDebounce(productVersionId, 1000);
   const [productId, setProductId] = useState(() => data?.productId || "");
   const debouncedProductId = useDebounce(productId, 1000);
   const [productVersion, setProductVersion] = useState(
@@ -183,6 +223,9 @@ export default function ProductAdmin() {
   const [total, setTotal] = useState(0);
   const [productVersions, setProductVersions] = useState([]);
 
+  const handleProductVersionIdChange = (event) => {
+    setProductVersionId(event.target.value);
+  };
   const handleProductIdChange = (event) => {
     setProductId(event.target.value);
   };
@@ -249,6 +292,7 @@ export default function ProductAdmin() {
         hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
+        productVersionId: debouncedProductVersionId,
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         light4jVersion: debouncedLight4jVersion,
@@ -277,6 +321,7 @@ export default function ProductAdmin() {
     page,
     rowsPerPage,
     host,
+    debouncedProductVersionId,
     debouncedProductId,
     debouncedProductVersion,
     debouncedLight4jVersion,
@@ -324,6 +369,14 @@ export default function ProductAdmin() {
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Product Version Id"
+                    value={productVersionId}
+                    onChange={handleProductVersionIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -409,6 +462,8 @@ export default function ProductAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Config</TableCell>
+                <TableCell align="right">Environment</TableCell>
+                <TableCell align="right">Pipeline</TableCell>
               </TableRow>
             </TableHead>
             <ProductVersionList productVersions={productVersions} />
