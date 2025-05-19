@@ -69,9 +69,9 @@ function Row(props) {
     });
   };
 
-  const handleDeploymentInstance = (instanceId) => {
+  const handleDeploymentInstance = (instanceId, instanceName, serviceId) => {
     navigate("/app/deployment/instance", {
-      state: { data: { instanceId } },
+      state: { data: { instanceId, instanceName, serviceId } },
     });
   };
 
@@ -111,7 +111,13 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <InstallDesktopIcon
-          onClick={() => handleDeploymentInstance(row.instanceId)}
+          onClick={() =>
+            handleDeploymentInstance(
+              row.instanceId,
+              row.instanceName,
+              row.serviceId,
+            )
+          }
         />
       </TableCell>
     </TableRow>

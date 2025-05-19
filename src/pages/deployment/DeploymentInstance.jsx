@@ -161,11 +161,13 @@ export default function InstanceAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [instanceName, setInstanceName] = useState("");
+  const [instanceName, setInstanceName] = useState(
+    () => data?.instanceName || "",
+  );
   const debouncedInstanceName = useDebounce(instanceName, 1000);
   const [deploymentInstanceId, setDeploymentInstanceId] = useState("");
   const debouncedDeploymentInstanceId = useDebounce(deploymentInstanceId, 1000);
-  const [serviceId, setServiceId] = useState("");
+  const [serviceId, setServiceId] = useState(() => data?.serviceId || "");
   const debouncedServiceId = useDebounce(serviceId, 1000);
   const [ipAddress, setIpAddress] = useState("");
   const debouncedIpAddress = useDebounce(ipAddress, 1000);
@@ -254,8 +256,8 @@ export default function InstanceAdmin() {
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "instance",
-      action: "getInstance",
+      service: "deployment",
+      action: "getDeploymentInstance",
       version: "0.1.0",
       data: {
         hostId: host,
@@ -266,13 +268,15 @@ export default function InstanceAdmin() {
         deploymentInstanceId: debouncedDeploymentInstanceId,
         serviceId: debouncedServiceId,
         ipAddress: debouncedIpAddress,
-        portNumber: debouncedPortNumber,
         systemEnv: debouncedSystemEnv,
         runtimeEnv: debouncedRuntimeEnv,
         pipelineId: debouncedPipelineId,
         pipelineName: debouncedPipelineName,
         pipelineVersion: debouncedPipelineVersion,
         deployStatus: debouncedDeployStatus,
+        ...(debouncedPortNumber && {
+          portNumber: parseInt(debouncedPortNumber, 10),
+        }),
       },
     };
 
@@ -437,7 +441,6 @@ export default function InstanceAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Config</TableCell>
-                <TableCell align="right">Deployment Instance</TableCell>
               </TableRow>
             </TableHead>
             <InstanceList instances={instances} />
