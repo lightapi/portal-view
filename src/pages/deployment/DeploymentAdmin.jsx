@@ -69,7 +69,8 @@ function Row(props) {
     >
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.deploymentId}</TableCell>
-      <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.deploymentInstanceId}</TableCell>
+      <TableCell align="left">{row.serviceId}</TableCell>
       <TableCell align="left">{row.deploymentStatus}</TableCell>
       <TableCell align="left">{row.deploymentType}</TableCell>
       <TableCell align="left">{row.scheduleTs}</TableCell>
@@ -93,7 +94,8 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     deploymentId: PropTypes.string.isRequired,
-    instanceId: PropTypes.string,
+    deploymentInstanceId: PropTypes.string,
+    serviceId: PropTypes.string,
     deploymentStatus: PropTypes.string,
     deploymentType: PropTypes.string,
     scheduleTs: PropTypes.string,
@@ -134,8 +136,10 @@ export default function DeploymentAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [deploymentId, setDeploymentId] = useState("");
   const debouncedDeploymentId = useDebounce(deploymentId, 1000);
-  const [instanceId, setInstanceId] = useState("");
-  const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [deploymentInstanceId, setDeploymentInstanceId] = useState("");
+  const debouncedDeploymentInstanceId = useDebounce(deploymentInstanceId, 1000);
+  const [serviceId, setServiceId] = useState("");
+  const debouncedServiceId = useDebounce(serviceId, 1000);
   const [deploymentStatus, setDeploymentStatus] = useState("");
   const debouncedDeploymentStatus = useDebounce(deploymentStatus, 1000);
   const [deploymentType, setDeploymentType] = useState("");
@@ -150,8 +154,11 @@ export default function DeploymentAdmin() {
   const handleDeploymentIdChange = (event) => {
     setDeploymentId(event.target.value);
   };
-  const handleInstanceIdChange = (event) => {
-    setInstanceId(event.target.value);
+  const handleDeploymentInstanceIdChange = (event) => {
+    setDeploymentInstanceId(event.target.value);
+  };
+  const handleServiceIdChange = (event) => {
+    setServiceId(event.target.value);
   };
   const handleDeploymentStatusChange = (event) => {
     setDeploymentStatus(event.target.value);
@@ -199,7 +206,7 @@ export default function DeploymentAdmin() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         deploymentId: debouncedDeploymentId,
-        instanceId: debouncedInstanceId,
+        deploymentInstanceId: debouncedDeploymentInstanceId,
         deploymentStatus: debouncedDeploymentStatus,
         deploymentType: debouncedDeploymentType,
         platformJobId: debouncedPlatformJobId,
@@ -216,11 +223,12 @@ export default function DeploymentAdmin() {
     rowsPerPage,
     host,
     debouncedDeploymentId,
-    debouncedInstanceId,
+    debouncedDeploymentInstanceId,
+    debouncedServiceId,
     debouncedDeploymentStatus,
     debouncedDeploymentType,
     debouncedPlatformJobId,
-    fetchData, // Add fetchData to dependency array of useEffect
+    fetchData,
   ]);
 
   const handleChangePage = (event, newPage) => {
@@ -268,9 +276,17 @@ export default function DeploymentAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Instance Id"
-                    value={instanceId}
-                    onChange={handleInstanceIdChange}
+                    placeholder="Deployment Instance Id"
+                    value={deploymentInstanceId}
+                    onChange={handleDeploymentInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Service Id"
+                    value={serviceId}
+                    onChange={handleServiceIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">

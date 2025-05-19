@@ -13643,9 +13643,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "instanceId": {
+        "deploymentInstanceId": {
           "type": "string",
-          "title": "Instance Id"
+          "title": "Deployment Instance Id"
         },
         "deploymentStatus": {
           "title": "Deployment Status",
@@ -13661,16 +13661,21 @@
           "format": "date-time"
         }
       },
-      "required": ["hostId", "instanceId", "deploymentStatus", "deploymentType"]
+      "required": [
+        "hostId",
+        "deploymentInstanceId",
+        "deploymentStatus",
+        "deploymentType"
+      ]
     },
     "form": [
       "hostId",
       {
-        "key": "instanceId",
+        "key": "deploymentInstanceId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getDeploymentInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -13725,9 +13730,9 @@
           "title": "Deployment Id",
           "readonly": true
         },
-        "instanceId": {
+        "deploymentInstanceId": {
           "type": "string",
-          "title": "Instance Id"
+          "title": "Deployment Instance Id"
         },
         "deploymentStatus": {
           "title": "Deployment Status",
@@ -13746,7 +13751,7 @@
       "required": [
         "hostId",
         "deploymentId",
-        "instanceId",
+        "deploymentInstanceId",
         "deploymentStatus",
         "deploymentType"
       ]
@@ -13754,15 +13759,7 @@
     "form": [
       "hostId",
       "deploymentId",
-      {
-        "key": "instanceId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
+      "deploymentInstanceId",
       {
         "key": "deploymentStatus",
         "type": "dynaselect",
