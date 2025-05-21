@@ -74,9 +74,10 @@ function Row(props) {
     >
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
+      <TableCell align="left">{row.propertyId}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
-      <TableCell align="left">{row.propertyFile}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -95,9 +96,10 @@ Row.propTypes = {
   row: PropTypes.shape({
     productId: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
+    propertyId: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, // Consider if displaying directly is appropriate
-    propertyFile: PropTypes.string, // Consider if displaying directly is appropriate
+    propertyValue: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -144,10 +146,11 @@ export default function ConfigProduct() {
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState(""); // Not in table, but in spec
   const debouncedConfigName = useDebounce(configName, 1000);
+  const [propertyId, setPropertyId] = useState("");
+  const debouncedPropertyId = useDebounce(propertyId, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
   const [propertyValue, setPropertyValue] = useState(""); // No debounce
-  const [propertyFile, setPropertyFile] = useState(""); // No debounce
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -163,14 +166,14 @@ export default function ConfigProduct() {
   const handleConfigNameChange = (event) => {
     setConfigName(event.target.value);
   };
+  const handlePropertyIdChange = (event) => {
+    setPropertyId(event.target.value);
+  };
   const handlePropertyNameChange = (event) => {
     setPropertyName(event.target.value);
   };
   const handlePropertyValueChange = (event) => {
     setPropertyValue(event.target.value);
-  };
-  const handlePropertyFileChange = (event) => {
-    setPropertyFile(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -183,7 +186,8 @@ export default function ConfigProduct() {
         setConfigProducts([]);
       } else {
         const data = await response.json();
-        setConfigProducts(data.configProducts || []); // Adjust response key if needed
+        console.log("data = ", data);
+        setConfigProducts(data.productProperties || []); // Adjust response key if needed
         setTotal(data.total || 0);
       }
     } catch (e) {
@@ -197,20 +201,20 @@ export default function ConfigProduct() {
 
   useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust if needed
-      service: "config", // Adjust to your service name
-      action: "getConfigProduct", // Adjust based on your backend service
+      host: "lightapi.net",
+      service: "config",
+      action: "getConfigProduct",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from UserContext
+        hostId: host,
         productId: debouncedProductId,
         configId: debouncedConfigId,
-        configName: debouncedConfigName, // Include configName
+        configName: debouncedConfigName,
+        propertyId: debouncedPropertyId,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Not debounced
-        propertyFile: propertyFile, // Not debounced
+        propertyValue: propertyValue,
       },
     };
 
@@ -226,9 +230,9 @@ export default function ConfigProduct() {
     debouncedProductId,
     debouncedConfigId,
     debouncedConfigName,
+    debouncedPropertyId,
     debouncedPropertyName,
-    propertyValue, // Include in dependencies
-    propertyFile, // Include in dependencies
+    propertyValue,
     fetchData,
   ]);
 
@@ -287,6 +291,14 @@ export default function ConfigProduct() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Property Id"
+                    value={propertyId}
+                    onChange={handlePropertyIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Property Name"
                     value={propertyName}
                     onChange={handlePropertyNameChange}
@@ -298,14 +310,6 @@ export default function ConfigProduct() {
                     placeholder="Property Value"
                     value={propertyValue}
                     onChange={handlePropertyValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Property File"
-                    value={propertyFile}
-                    onChange={handlePropertyFileChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>

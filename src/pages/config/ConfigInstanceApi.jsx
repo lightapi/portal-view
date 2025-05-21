@@ -75,13 +75,14 @@ function Row(props) {
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.instanceName}</TableCell>
+      <TableCell align="left">{row.apiVersionId}</TableCell>
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
       <TableCell align="left">{row.configName}</TableCell>
+      <TableCell align="left">{row.propertyId}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
-      <TableCell align="left">{row.propertyFile}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -101,13 +102,14 @@ Row.propTypes = {
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
     instanceName: PropTypes.string.isRequired,
+    apiVersionId: PropTypes.string.isRequired,
     apiId: PropTypes.string.isRequired,
     apiVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
     configName: PropTypes.string.isRequired,
+    propertyId: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
     propertyValue: PropTypes.string,
-    propertyFile: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -144,7 +146,7 @@ export default function ConfigInstanceApi() {
   const location = useLocation();
   const data = location.state?.data;
 
-  const { host } = useUserState(); // Get host from UserContext
+  const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
@@ -152,6 +154,10 @@ export default function ConfigInstanceApi() {
   const debouncedInstanceId = useDebounce(instanceId, 1000);
   const [instanceName, setInstanceName] = useState("");
   const debouncedInstanceName = useDebounce(instanceName, 1000);
+  const [apiVersionId, setApiVersionId] = useState(
+    () => data?.apiVersionId || "",
+  );
+  const debouncedApiVersionId = useDebounce(apiVersionId, 1000);
   const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
   const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
@@ -160,10 +166,11 @@ export default function ConfigInstanceApi() {
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
+  const [propertyId, setPropertyId] = useState("");
+  const debouncedPropertyId = useDebounce(propertyId, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
   const [propertyValue, setPropertyValue] = useState("");
-  const [propertyFile, setPropertyFile] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -177,6 +184,9 @@ export default function ConfigInstanceApi() {
   const handleInstanceNameChange = (event) => {
     setInstanceName(event.target.value);
   };
+  const handleApiVersionIdChange = (event) => {
+    setApiVersionId(event.target.value);
+  };
   const handleApiIdChange = (event) => {
     setApiId(event.target.value);
   };
@@ -189,14 +199,14 @@ export default function ConfigInstanceApi() {
   const handleConfigNameChange = (event) => {
     setConfigName(event.target.value);
   };
+  const handlePropertyIdChange = (event) => {
+    setPropertyId(event.target.value);
+  };
   const handlePropertyNameChange = (event) => {
     setPropertyName(event.target.value);
   };
   const handlePropertyValueChange = (event) => {
     setPropertyValue(event.target.value);
-  };
-  const handlePropertyFileChange = (event) => {
-    setPropertyFile(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -233,13 +243,14 @@ export default function ConfigInstanceApi() {
         hostId: host,
         instanceId: debouncedInstanceId,
         instanceName: debouncedInstanceName,
+        apiVersionId: debouncedApiVersionId,
         apiId: debouncedApiId,
         apiVersion: debouncedApiVersion,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
+        propertyId: debouncedPropertyId,
         propertyName: debouncedPropertyName,
         propertyValue: propertyValue,
-        propertyFile: propertyFile,
       },
     };
 
@@ -254,13 +265,14 @@ export default function ConfigInstanceApi() {
     host,
     debouncedInstanceId,
     debouncedInstanceName,
+    debouncedApiVersionId,
     debouncedApiId,
     debouncedApiVersion,
     debouncedConfigId,
     debouncedConfigName,
+    debouncedPropertyId,
     debouncedPropertyName,
     propertyValue,
-    propertyFile,
     fetchData,
   ]);
 
@@ -273,9 +285,9 @@ export default function ConfigInstanceApi() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, apiId, apiVersion, configId) => {
+  const handleCreate = (instanceId, apiVersionId, configId) => {
     navigate("/app/form/createConfigInstanceApi", {
-      state: { data: { instanceId, apiId, apiVersion, configId } },
+      state: { data: { instanceId, apiVersionId, configId } },
     });
   };
 
@@ -307,6 +319,14 @@ export default function ConfigInstanceApi() {
                     placeholder="Instance Name"
                     value={instanceName}
                     onChange={handleInstanceNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="API Version Id"
+                    value={apiVersionId}
+                    onChange={handleApiVersionIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -344,6 +364,14 @@ export default function ConfigInstanceApi() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Property Id"
+                    value={propertyId}
+                    onChange={handlePropertyIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Property Name"
                     value={propertyName}
                     onChange={handlePropertyNameChange}
@@ -355,14 +383,6 @@ export default function ConfigInstanceApi() {
                     placeholder="Property Value"
                     value={propertyValue}
                     onChange={handlePropertyValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Property File"
-                    value={propertyFile}
-                    onChange={handlePropertyFileChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>
@@ -383,7 +403,9 @@ export default function ConfigInstanceApi() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(instanceId, apiId, apiVersion, configId)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(instanceId, apiVersionId, configId)}
+        />
       </div>
     );
   }

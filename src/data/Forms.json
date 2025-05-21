@@ -10395,15 +10395,7 @@
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
         }
       },
-      {
-        "key": "propertyName",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
-        }
-      },
+      "propertyName",
       {
         "key": "propertyType",
         "type": "dynaselect",
@@ -10721,6 +10713,10 @@
           "type": "string",
           "title": "Environment"
         },
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id"
@@ -10728,21 +10724,19 @@
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["hostId", "environment", "propertyId"]
+      "required": ["hostId", "environment", "configId", "propertyId"]
     },
     "form": [
+      "hostId",
       {
         "key": "environment",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/r/data?name=environment"
+          "url": "/r/data?name=environment&host={0}",
+          "params": ["hostId"]
         }
       },
       {
@@ -10754,11 +10748,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -10767,8 +10761,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigEnvironment": {
@@ -10788,6 +10781,11 @@
       "title": "Update Config Environment",
       "type": "object",
       "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
         "environment": {
           "type": "string",
           "title": "Environment",
@@ -10798,33 +10796,29 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["environment", "configId", "propertyName"]
+      "required": ["hostId", "environment", "configId", "propertyId"]
     },
     "form": [
+      "hostId",
       "environment",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "createConfigProduct": {
@@ -10852,20 +10846,16 @@
           "type": "string",
           "title": "Config Id"
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["productId", "configId", "propertyName"]
+      "required": ["productId", "configId", "propertyId"]
     },
     "form": [
       {
@@ -10885,11 +10875,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -10898,8 +10888,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigProduct": {
@@ -10929,7 +10918,7 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
           "title": "Property Name",
           "readonly": true
@@ -10937,25 +10926,20 @@
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["productId", "configId", "propertyName"]
+      "required": ["productId", "configId", "propertyId"]
     },
     "form": [
       "productId",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "createConfigProductVersion": {
@@ -10979,57 +10963,34 @@
           "type": "string",
           "title": "Host Id"
         },
-        "productId": {
+        "productVersionId": {
           "type": "string",
-          "title": "Product Id"
-        },
-        "productVersion": {
-          "type": "string",
-          "title": "Product Version"
+          "title": "Product Vesion Id"
         },
         "configId": {
           "type": "string",
           "title": "Config Id"
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": [
-        "hostId",
-        "productId",
-        "productVersion",
-        "configId",
-        "propertyName"
-      ]
+      "required": ["hostId", "productVersionId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
       {
-        "key": "productId",
+        "key": "productVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
-        }
-      },
-      {
-        "key": "productVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22productId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "productId"]
         }
       },
       {
@@ -11041,11 +11002,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -11054,8 +11015,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigProductVersion": {
@@ -11080,14 +11040,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "productId": {
+        "productVersionId": {
           "type": "string",
-          "title": "Product Id",
-          "readonly": true
-        },
-        "productVersion": {
-          "type": "string",
-          "title": "Product Version",
+          "title": "Product Version Id",
           "readonly": true
         },
         "configId": {
@@ -11095,41 +11050,29 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": [
-        "hostId",
-        "productId",
-        "productVersion",
-        "configId",
-        "propertyName"
-      ]
+      "required": ["hostId", "productVersionId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
-      "productId",
-      "productVersion",
+      "productVersionId",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "createConfigInstance": {
@@ -11162,20 +11105,16 @@
           "type": "string",
           "title": "Config Id"
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["hostId", "instanceId", "configId", "propertyName"]
+      "required": ["hostId", "instanceId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
@@ -11197,11 +11136,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -11210,8 +11149,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigInstance": {
@@ -11246,34 +11184,29 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
-      "required": ["hostId", "instanceId", "configId", "propertyName"]
+      "required": ["hostId", "instanceId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
       "instanceId",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "createConfigInstanceApi": {
@@ -11302,38 +11235,29 @@
           "type": "string",
           "title": "Instance Id"
         },
-        "apiId": {
+        "apiVersionId": {
           "type": "string",
-          "title": "Api Id"
-        },
-        "apiVersion": {
-          "type": "string",
-          "title": "Api Version"
+          "title": "Api Version Id"
         },
         "configId": {
           "type": "string",
           "title": "Config Id"
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
       "required": [
         "hostId",
         "instanceId",
-        "apiId",
-        "apiVersion",
+        "apiVersionId",
         "configId",
-        "propertyName"
+        "propertyId"
       ]
     },
     "form": [
@@ -11348,21 +11272,12 @@
         }
       },
       {
-        "key": "apiId",
+        "key": "apiVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
           "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
-          "params": ["hostId", "apiId"]
         }
       },
       {
@@ -11374,11 +11289,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22api%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22api%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -11387,8 +11302,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigInstanceApi": {
@@ -11433,18 +11347,14 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
       "required": [
@@ -11453,7 +11363,7 @@
         "apiId",
         "apiVersion",
         "configId",
-        "propertyName"
+        "propertyId"
       ]
     },
     "form": [
@@ -11462,14 +11372,13 @@
       "apiId",
       "apiVersion",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "createConfigInstanceApp": {
@@ -11510,17 +11419,13 @@
           "type": "string",
           "title": "Config Id"
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name"
+          "title": "Property Id"
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
       "required": [
@@ -11554,11 +11459,11 @@
         }
       },
       {
-        "key": "propertyName",
+        "key": "propertyId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyNameApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app%22%7D%7D",
           "params": ["configId"]
         }
       },
@@ -11567,8 +11472,7 @@
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateConfigInstanceApp": {
@@ -11613,18 +11517,14 @@
           "title": "Config Id",
           "readonly": true
         },
-        "propertyName": {
+        "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
-        },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
         }
       },
       "required": [
@@ -11633,7 +11533,7 @@
         "appId",
         "appVersion",
         "configId",
-        "propertyName"
+        "propertyId"
       ]
     },
     "form": [
@@ -11642,14 +11542,13 @@
       "appId",
       "appVersion",
       "configId",
-      "propertyName",
+      "propertyId",
       {
         "key": "propertyValue",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
-      },
-      "propertyFile"
+      }
     ]
   },
   "updateBlog": {
@@ -12725,20 +12624,16 @@
           "type": "string",
           "title": "Instance Id"
         },
-        "apiId": {
+        "apiVersionId": {
           "type": "string",
-          "title": "Api Id"
-        },
-        "apiVersion": {
-          "type": "string",
-          "title": "Api Version"
+          "title": "Api Version Id"
         },
         "active": {
           "type": "boolean",
           "title": "Active"
         }
       },
-      "required": ["hostId", "instanceId", "apiId", "apiVersion"]
+      "required": ["hostId", "instanceId", "apiVersionId"]
     },
     "form": [
       "hostId",
@@ -12752,21 +12647,12 @@
         }
       },
       {
-        "key": "apiId",
+        "key": "apiVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
           "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersion",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
-          "params": ["hostId", "apiId"]
         }
       },
       "active"
@@ -12799,14 +12685,9 @@
           "title": "Instance Id",
           "readonly": true
         },
-        "apiId": {
+        "apiVersionId": {
           "type": "string",
-          "title": "Api Id",
-          "readonly": true
-        },
-        "apiVersion": {
-          "type": "string",
-          "title": "Api Version",
+          "title": "Api Version Id",
           "readonly": true
         },
         "active": {
@@ -12814,9 +12695,9 @@
           "title": "Active"
         }
       },
-      "required": ["hostId", "instanceId", "apiId", "apiVersion"]
+      "required": ["hostId", "instanceId", "apiVersionId"]
     },
-    "form": ["hostId", "instanceId", "apiId", "apiVersion", "active"]
+    "form": ["hostId", "instanceId", "apiVersionId", "active"]
   },
   "createInstanceApp": {
     "formId": "createInstanceApp",

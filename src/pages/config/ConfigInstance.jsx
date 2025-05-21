@@ -74,11 +74,11 @@ function Row(props) {
     >
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
       <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
-      <TableCell align="left">{row.propertyFile}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -97,11 +97,11 @@ Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
     configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, // Consider if this should be displayed directly
-    propertyFile: PropTypes.string, // Consider if this should be displayed directly
+    propertyValue: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -143,6 +143,8 @@ export default function ConfigInstance() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
   const [configId, setConfigId] = useState(() => data?.configId || "");
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState("");
@@ -150,7 +152,6 @@ export default function ConfigInstance() {
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
   const [propertyValue, setPropertyValue] = useState(""); // No debounce
-  const [propertyFile, setPropertyFile] = useState(""); // No debounce
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -159,6 +160,9 @@ export default function ConfigInstance() {
 
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
+  };
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
   };
   const handleConfigIdChange = (event) => {
     setConfigId(event.target.value);
@@ -171,9 +175,6 @@ export default function ConfigInstance() {
   };
   const handlePropertyValueChange = (event) => {
     setPropertyValue(event.target.value);
-  };
-  const handlePropertyFileChange = (event) => {
-    setPropertyFile(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -210,11 +211,11 @@ export default function ConfigInstance() {
         limit: rowsPerPage,
         hostId: host,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
         propertyName: debouncedPropertyName,
         propertyValue: propertyValue,
-        propertyFile: propertyFile,
       },
     };
 
@@ -228,11 +229,11 @@ export default function ConfigInstance() {
     rowsPerPage,
     host,
     debouncedInstanceId,
+    debouncedInstanceName,
     debouncedConfigId,
     debouncedConfigName,
     debouncedPropertyName,
     propertyValue,
-    propertyFile,
     fetchData,
   ]);
 
@@ -276,6 +277,14 @@ export default function ConfigInstance() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Config Id"
                     value={configId}
                     onChange={handleConfigIdChange}
@@ -303,14 +312,6 @@ export default function ConfigInstance() {
                     placeholder="Property Value"
                     value={propertyValue}
                     onChange={handlePropertyValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Property File"
-                    value={propertyFile}
-                    onChange={handlePropertyFileChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>

@@ -73,13 +73,13 @@ function Row(props) {
       key={`${row.hostId}-${row.productId}-${row.productVersion}-${row.configId}-${row.propertyName}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.productVersionId}</TableCell>
       <TableCell align="left">{row.productId}</TableCell>
       <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
       <TableCell align="left">{row.configName}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
-      <TableCell align="left">{row.propertyFile}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -97,13 +97,13 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    productVersionId: PropTypes.string.isRequired,
     productId: PropTypes.string.isRequired,
     productVersion: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
     configName: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, // Consider if directly displaying is appropriate
-    propertyFile: PropTypes.string, // Consider if directly displaying is appropriate
+    propertyValue: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -144,6 +144,10 @@ export default function ConfigProductVersion() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [productVersionId, setProductVersionId] = useState(
+    () => data?.productVersionId || "",
+  );
+  const debouncedProductVersionId = useDebounce(productVersionId, 1000);
   const [productId, setProductId] = useState(() => data?.productId || "");
   const debouncedProductId = useDebounce(productId, 1000);
   const [productVersion, setProductVersion] = useState(
@@ -197,6 +201,7 @@ export default function ConfigProductVersion() {
         setConfigProductVersions([]);
       } else {
         const data = await response.json();
+        console.log("data = ", data);
         setConfigProductVersions(data.productVersionProperties || []);
         setTotal(data.total || 0);
       }
@@ -218,7 +223,7 @@ export default function ConfigProductVersion() {
       data: {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
-        hostId: host, // Use host from UserContext
+        hostId: host,
         productId: debouncedProductId,
         productVersion: debouncedProductVersion,
         configId: debouncedConfigId,
@@ -276,7 +281,8 @@ export default function ConfigProductVersion() {
           <Table aria-label="config product version table">
             <TableHead>
               <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">Host Id</TableCell>
+                <TableCell align="left">Product Version Id</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -323,14 +329,6 @@ export default function ConfigProductVersion() {
                     placeholder="Property Value"
                     value={propertyValue}
                     onChange={handlePropertyValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Property File"
-                    value={propertyFile}
-                    onChange={handlePropertyFileChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>

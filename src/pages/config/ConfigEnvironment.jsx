@@ -72,11 +72,13 @@ function Row(props) {
       className={classes.root}
       key={`${row.environment}-${row.configId}-${row.propertyName}`}
     >
+      <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.environment}</TableCell>
       <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
+      <TableCell align="left">{row.propertyId}</TableCell>
       <TableCell align="left">{row.propertyName}</TableCell>
       <TableCell align="left">{row.propertyValue}</TableCell>
-      <TableCell align="left">{row.propertyFile}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -93,11 +95,13 @@ function Row(props) {
 
 Row.propTypes = {
   row: PropTypes.shape({
+    hostId: PropTypes.string.isRequired,
     environment: PropTypes.string.isRequired,
     configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
+    propertyId: PropTypes.string.isRequired,
     propertyName: PropTypes.string.isRequired,
-    propertyValue: PropTypes.string, //  Can be long text.
-    propertyFile: PropTypes.string, //  Can be long text
+    propertyValue: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
@@ -142,10 +146,11 @@ export default function ConfigEnvironment() {
   const debouncedConfigId = useDebounce(configId, 1000);
   const [configName, setConfigName] = useState("");
   const debouncedConfigName = useDebounce(configName, 1000);
+  const [propertyId, setPropertyId] = useState("");
+  const debouncedPropertyId = useDebounce(propertyId, 1000);
   const [propertyName, setPropertyName] = useState("");
   const debouncedPropertyName = useDebounce(propertyName, 1000);
   const [propertyValue, setPropertyValue] = useState(""); // No debounce for value
-  const [propertyFile, setPropertyFile] = useState(""); // No debounce for file
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -161,16 +166,15 @@ export default function ConfigEnvironment() {
   const handleConfigNameChange = (event) => {
     setConfigName(event.target.value);
   };
+  const handlePropertyIdChange = (event) => {
+    setPropertyId(event.target.value);
+  };
   const handlePropertyNameChange = (event) => {
     setPropertyName(event.target.value);
   };
   const handlePropertyValueChange = (event) => {
     setPropertyValue(event.target.value);
   };
-  const handlePropertyFileChange = (event) => {
-    setPropertyFile(event.target.value);
-  };
-
   const fetchData = useCallback(async (url, headers) => {
     try {
       setLoading(true);
@@ -206,9 +210,9 @@ export default function ConfigEnvironment() {
         environment: debouncedEnvironment,
         configId: debouncedConfigId,
         configName: debouncedConfigName,
+        propertyId: debouncedPropertyId,
         propertyName: debouncedPropertyName,
-        propertyValue: propertyValue, // Sending, but not debounced
-        propertyFile: propertyFile, // Sending, but not debounced
+        propertyValue: propertyValue,
       },
     };
 
@@ -224,9 +228,9 @@ export default function ConfigEnvironment() {
     debouncedEnvironment,
     debouncedConfigId,
     debouncedConfigName,
+    debouncedPropertyId,
     debouncedPropertyName,
-    propertyValue, // Include in dependencies
-    propertyFile, // Include in dependencies
+    propertyValue,
     fetchData,
   ]);
 
@@ -258,6 +262,7 @@ export default function ConfigEnvironment() {
           <Table aria-label="config environment table">
             <TableHead>
               <TableRow className={classes.root}>
+                <TableCell align="left">Host Id</TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -285,6 +290,14 @@ export default function ConfigEnvironment() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Property Id"
+                    value={propertyId}
+                    onChange={handlePropertyIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Property Name"
                     value={propertyName}
                     onChange={handlePropertyNameChange}
@@ -296,14 +309,6 @@ export default function ConfigEnvironment() {
                     placeholder="Property Value"
                     value={propertyValue}
                     onChange={handlePropertyValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Property File"
-                    value={propertyFile}
-                    onChange={handlePropertyFileChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>
