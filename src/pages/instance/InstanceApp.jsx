@@ -65,9 +65,9 @@ function Row(props) {
     }
   };
 
-  const handleConfig = (instanceId, appId, appVersion) => {
+  const handleConfig = (instanceAppId, instanceId, appId, appVersion) => {
     navigate("/app/config/configInstanceApp", {
-      state: { data: { instanceId, appId, appVersion } },
+      state: { data: { instanceAppId, instanceId, appId, appVersion } },
     });
   };
 
@@ -77,6 +77,7 @@ function Row(props) {
       key={`${row.hostId}-${row.instanceId}-${row.appId}-${row.appVersion}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.instanceAppId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appVersion}</TableCell>
@@ -94,7 +95,12 @@ function Row(props) {
       <TableCell align="right">
         <AddToDriveIcon
           onClick={() =>
-            handleConfig(row.instanceId, row.appId, row.appVersion)
+            handleConfig(
+              row.instanceAppId,
+              row.instanceId,
+              row.appId,
+              row.appVersion,
+            )
           }
         />
       </TableCell>
@@ -105,6 +111,7 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    instanceAppId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
     appId: PropTypes.string.isRequired,
     appVersion: PropTypes.string.isRequired,
@@ -148,6 +155,10 @@ export default function InstanceAppAdmin() {
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [instanceAppId, setInstanceAppId] = useState(
+    () => data?.instanceAppId || "",
+  );
+  const debouncedInstanceAppId = useDebounce(instanceAppId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
   const [appId, setAppId] = useState(() => data?.appId || "");
@@ -161,6 +172,10 @@ export default function InstanceAppAdmin() {
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
   const [instanceApps, setInstanceApps] = useState([]);
+
+  const handleInstanceAppIdChange = (event) => {
+    setInstanceAppId(event.target.value);
+  };
 
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
@@ -209,6 +224,7 @@ export default function InstanceAppAdmin() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         hostId: host,
+        instanceAppId: debouncedInstanceAppId,
         instanceId: debouncedInstanceId,
         appId: debouncedAppId,
         appVersion: debouncedAppVersion,
@@ -227,6 +243,7 @@ export default function InstanceAppAdmin() {
     page,
     rowsPerPage,
     host,
+    debouncedInstanceAppId,
     debouncedInstanceId,
     debouncedAppId,
     debouncedAppVersion,
@@ -263,6 +280,14 @@ export default function InstanceAppAdmin() {
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance App Id"
+                    value={instanceAppId}
+                    onChange={handleInstanceAppIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
