@@ -77,7 +77,12 @@ function Row(props) {
       key={`${row.hostId}-${row.instanceId}-${row.apiId}-${row.apiVersion}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.instanceApiId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
+      <TableCell align="left">{row.productId}</TableCell>
+      <TableCell align="left">{row.productVersion}</TableCell>
+      <TableCell align="left">{row.apiVersionId}</TableCell>
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiVersion}</TableCell>
       <TableCell align="left">{row.active ? "Yes" : "No"}</TableCell>
@@ -105,7 +110,12 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    instanceApiId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
+    productId: PropTypes.string.isRequired,
+    productVersion: PropTypes.string.isRequired,
+    apiVersionId: PropTypes.string.isRequired,
     apiId: PropTypes.string.isRequired,
     apiVersion: PropTypes.string.isRequired,
     active: PropTypes.bool,
@@ -148,8 +158,21 @@ export default function InstanceApiAdmin() {
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+
+  const [instanceApiId, setInstanceApiId] = useState(
+    () => data?.instanceApiId || "",
+  );
+  const debouncedInstanceApiId = useDebounce(instanceApiId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
+  const [productId, setProductId] = useState("");
+  const debouncedProductId = useDebounce(productId, 1000);
+  const [productVersion, setProductVersion] = useState("");
+  const debouncedProductVersion = useDebounce(productVersion, 1000);
+  const [apiVersionId, setApiVersionId] = useState("");
+  const debouncedApiVersionId = useDebounce(apiVersionId, 1000);
   const [apiId, setApiId] = useState(() => data?.apiId || "");
   const debouncedApiId = useDebounce(apiId, 1000);
   const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
@@ -162,14 +185,28 @@ export default function InstanceApiAdmin() {
   const [total, setTotal] = useState(0);
   const [instanceApis, setInstanceApis] = useState([]);
 
+  const handleInstanceApiIdChange = (event) => {
+    setInstanceApiId(event.target.value);
+  };
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
   };
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
+  };
 
+  const handleProductIdChange = (event) => {
+    setProductId(event.target.value);
+  };
+  const handleProductVersionChange = (event) => {
+    setProductVersion(event.target.value);
+  };
+  const handleApiVersionIdChange = (event) => {
+    setApiVersionId(event.target.value);
+  };
   const handleApiIdChange = (event) => {
     setApiId(event.target.value);
   };
-
   const handleApiVersionChange = (event) => {
     setApiVersion(event.target.value);
   };
@@ -209,7 +246,12 @@ export default function InstanceApiAdmin() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         hostId: host,
+        instanceApiId: debouncedInstanceApiId,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
+        productId: debouncedProductId,
+        productVersion: debouncedProductVersion,
+        apiVersionId: debouncedApiVersionId,
         apiId: debouncedApiId,
         apiVersion: debouncedApiVersion,
         ...(debouncedActive && debouncedActive.trim() !== ""
@@ -227,7 +269,12 @@ export default function InstanceApiAdmin() {
     page,
     rowsPerPage,
     host,
+    debouncedInstanceApiId,
     debouncedInstanceId,
+    debouncedInstanceName,
+    debouncedProductId,
+    debouncedProductVersion,
+    debouncedApiVersionId,
     debouncedApiId,
     debouncedApiVersion,
     debouncedActive,
@@ -243,9 +290,9 @@ export default function InstanceApiAdmin() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, apiId, apiVersion) => {
+  const handleCreate = (instanceId, apiVersionId) => {
     navigate("/app/form/createInstanceApi", {
-      state: { data: { instanceId, apiId, apiVersion } },
+      state: { data: { instanceId, apiVersionId } },
     });
   };
 
@@ -266,9 +313,49 @@ export default function InstanceApiAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
+                    placeholder="Instance Api Id"
+                    value={instanceApiId}
+                    onChange={handleInstanceApiIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
                     placeholder="Instance Id"
                     value={instanceId}
                     onChange={handleInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Product Id"
+                    value={productId}
+                    onChange={handleProductIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Product Version"
+                    value={productVersion}
+                    onChange={handleProductVersionChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Api Version Id"
+                    value={apiVersionId}
+                    onChange={handleApiVersionIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -314,9 +401,7 @@ export default function InstanceApiAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon
-          onClick={() => handleCreate(instanceId, apiId, apiVersion)}
-        />
+        <AddBoxIcon onClick={() => handleCreate(instanceId, apiVersionId)} />
       </div>
     );
   }

@@ -79,6 +79,9 @@ function Row(props) {
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceAppId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
+      <TableCell align="left">{row.instanceName}</TableCell>
+      <TableCell align="left">{row.productId}</TableCell>
+      <TableCell align="left">{row.productVersion}</TableCell>
       <TableCell align="left">{row.appId}</TableCell>
       <TableCell align="left">{row.appVersion}</TableCell>
       <TableCell align="left">{row.active ? "Yes" : "No"}</TableCell>
@@ -113,6 +116,9 @@ Row.propTypes = {
     hostId: PropTypes.string.isRequired,
     instanceAppId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
+    productId: PropTypes.string.isRequired,
+    productVersion: PropTypes.string.isRequired,
     appId: PropTypes.string.isRequired,
     appVersion: PropTypes.string.isRequired,
     active: PropTypes.bool,
@@ -161,6 +167,12 @@ export default function InstanceAppAdmin() {
   const debouncedInstanceAppId = useDebounce(instanceAppId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
+  const [instanceName, setInstanceName] = useState("");
+  const debouncedInstanceName = useDebounce(instanceName, 1000);
+  const [productId, setProductId] = useState("");
+  const debouncedProductId = useDebounce(productId, 1000);
+  const [productVersion, setProductVersion] = useState("");
+  const debouncedProductVersion = useDebounce(productVersion, 1000);
   const [appId, setAppId] = useState(() => data?.appId || "");
   const debouncedAppId = useDebounce(appId, 1000);
   const [appVersion, setAppVersion] = useState(() => data?.appVersion || "");
@@ -176,15 +188,21 @@ export default function InstanceAppAdmin() {
   const handleInstanceAppIdChange = (event) => {
     setInstanceAppId(event.target.value);
   };
-
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
   };
-
+  const handleInstanceNameChange = (event) => {
+    setInstanceName(event.target.value);
+  };
+  const handleProductIdChange = (event) => {
+    setProductId(event.target.value);
+  };
+  const handleProductVersionChange = (event) => {
+    setProductVersion(event.target.value);
+  };
   const handleAppIdChange = (event) => {
     setAppId(event.target.value);
   };
-
   const handleAppVersionChange = (event) => {
     setAppVersion(event.target.value);
   };
@@ -226,6 +244,9 @@ export default function InstanceAppAdmin() {
         hostId: host,
         instanceAppId: debouncedInstanceAppId,
         instanceId: debouncedInstanceId,
+        instanceName: debouncedInstanceName,
+        productId: debouncedProductId,
+        productVersion: debouncedProductVersion,
         appId: debouncedAppId,
         appVersion: debouncedAppVersion,
         ...(debouncedActive && debouncedActive.trim() !== ""
@@ -245,6 +266,9 @@ export default function InstanceAppAdmin() {
     host,
     debouncedInstanceAppId,
     debouncedInstanceId,
+    debouncedInstanceName,
+    debouncedProductId,
+    debouncedProductVersion,
     debouncedAppId,
     debouncedAppVersion,
     debouncedActive,
@@ -260,9 +284,9 @@ export default function InstanceAppAdmin() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, appId) => {
+  const handleCreate = (instanceId, appId, appVersion) => {
     navigate("/app/form/createInstanceApp", {
-      state: { data: { instanceId, appId } },
+      state: { data: { instanceId, appId, appVersion } },
     });
   };
 
@@ -294,6 +318,30 @@ export default function InstanceAppAdmin() {
                     placeholder="Instance Id"
                     value={instanceId}
                     onChange={handleInstanceIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Name"
+                    value={instanceName}
+                    onChange={handleInstanceNameChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Product Id"
+                    value={productId}
+                    onChange={handleProductIdChange}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Product Version"
+                    value={productVersion}
+                    onChange={handleProductVersionChange}
                   />
                 </TableCell>
                 <TableCell align="left">
@@ -339,7 +387,9 @@ export default function InstanceAppAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(instanceId, appId)} />
+        <AddBoxIcon
+          onClick={() => handleCreate(instanceId, appId, appVersion)}
+        />
       </div>
     );
   }

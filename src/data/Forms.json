@@ -11231,13 +11231,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "instanceId": {
+        "instanceApiId": {
           "type": "string",
-          "title": "Instance Id"
-        },
-        "apiVersionId": {
-          "type": "string",
-          "title": "Api Version Id"
+          "title": "Instance Api Id"
         },
         "configId": {
           "type": "string",
@@ -11252,31 +11248,16 @@
           "title": "Property Value"
         }
       },
-      "required": [
-        "hostId",
-        "instanceId",
-        "apiVersionId",
-        "configId",
-        "propertyId"
-      ]
+      "required": ["hostId", "instanceApiId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
       {
-        "key": "instanceId",
+        "key": "instanceApiId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersionId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
@@ -11327,19 +11308,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "instanceId": {
+        "instanceApiId": {
           "type": "string",
-          "title": "Instance Id",
-          "readonly": true
-        },
-        "apiId": {
-          "type": "string",
-          "title": "Api Id",
-          "readonly": true
-        },
-        "apiVersion": {
-          "type": "string",
-          "title": "Api Version",
+          "title": "Instance Api Id",
           "readonly": true
         },
         "configId": {
@@ -11357,20 +11328,11 @@
           "title": "Property Value"
         }
       },
-      "required": [
-        "hostId",
-        "instanceId",
-        "apiId",
-        "apiVersion",
-        "configId",
-        "propertyId"
-      ]
+      "required": ["hostId", "instanceApiId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
-      "instanceId",
-      "apiId",
-      "apiVersion",
+      "instanceApiId",
       "configId",
       "propertyId",
       {
@@ -11403,17 +11365,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "instanceId": {
+        "instanceAppId": {
           "type": "string",
-          "title": "Instance Id"
-        },
-        "appId": {
-          "type": "string",
-          "title": "App Id"
-        },
-        "appVersion": {
-          "type": "string",
-          "title": "App Version"
+          "title": "Instance App Id"
         },
         "configId": {
           "type": "string",
@@ -11428,28 +11382,19 @@
           "title": "Property Value"
         }
       },
-      "required": [
-        "hostId",
-        "instanceId",
-        "appId",
-        "appVersion",
-        "configId",
-        "propertyName"
-      ]
+      "required": ["hostId", "instanceAppId", "configId", "propertyName"]
     },
     "form": [
       "hostId",
       {
-        "key": "instanceId",
+        "key": "instanceAppId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       },
-      "appId",
-      "appVersion",
       {
         "key": "configId",
         "type": "dynaselect",
@@ -11497,19 +11442,9 @@
           "title": "Host Id",
           "readonly": true
         },
-        "instanceId": {
+        "instanceAppId": {
           "type": "string",
-          "title": "Instance Id",
-          "readonly": true
-        },
-        "appId": {
-          "type": "string",
-          "title": "App Id",
-          "readonly": true
-        },
-        "appVersion": {
-          "type": "string",
-          "title": "App Version",
+          "title": "Instance App Id",
           "readonly": true
         },
         "configId": {
@@ -11527,20 +11462,11 @@
           "title": "Property Value"
         }
       },
-      "required": [
-        "hostId",
-        "instanceId",
-        "appId",
-        "appVersion",
-        "configId",
-        "propertyId"
-      ]
+      "required": ["hostId", "instanceAppId", "configId", "propertyId"]
     },
     "form": [
       "hostId",
-      "instanceId",
-      "appId",
-      "appVersion",
+      "instanceAppId",
       "configId",
       "propertyId",
       {

@@ -12,6 +12,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import InstallDesktopIcon from "@mui/icons-material/InstallDesktop";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
@@ -75,6 +76,18 @@ function Row(props) {
     });
   };
 
+  const handleInstanceApi = (instanceId, instanceName, serviceId) => {
+    navigate("/app/instance/instanceApi", {
+      state: { data: { instanceId, instanceName, serviceId } },
+    });
+  };
+
+  const handleInstanceApp = (instanceId, instanceName, serviceId) => {
+    navigate("/app/instance/instanceApp", {
+      state: { data: { instanceId, instanceName, serviceId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={`${row.hostId}-${row.instanceId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
@@ -108,6 +121,20 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <AddToDriveIcon onClick={() => handleConfig(row.instanceId)} />
+      </TableCell>
+      <TableCell align="right">
+        <ContentCopyIcon
+          onClick={() =>
+            handleInstanceApi(row.instanceId, row.instanceName, row.serviceId)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <ContentCopyIcon
+          onClick={() =>
+            handleInstanceApp(row.instanceId, row.instanceName, row.serviceId)
+          }
+        />
       </TableCell>
       <TableCell align="right">
         <InstallDesktopIcon
@@ -547,6 +574,8 @@ export default function InstanceAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Config</TableCell>
+                <TableCell align="right">Instance Api</TableCell>
+                <TableCell align="right">Instance App</TableCell>
                 <TableCell align="right">Deployment Instance</TableCell>
               </TableRow>
             </TableHead>
