@@ -88,6 +88,12 @@ function Row(props) {
     });
   };
 
+  const handleInstanceAppApi = (instanceId, instanceName, serviceId) => {
+    navigate("/app/instance/instanceAppApi", {
+      state: { data: { instanceId, instanceName, serviceId } },
+    });
+  };
+
   return (
     <TableRow className={classes.root} key={`${row.hostId}-${row.instanceId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
@@ -133,6 +139,17 @@ function Row(props) {
         <ContentCopyIcon
           onClick={() =>
             handleInstanceApp(row.instanceId, row.instanceName, row.serviceId)
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <ContentCopyIcon
+          onClick={() =>
+            handleInstanceAppApi(
+              row.instanceId,
+              row.instanceName,
+              row.serviceId,
+            )
           }
         />
       </TableCell>
@@ -576,6 +593,7 @@ export default function InstanceAdmin() {
                 <TableCell align="right">Config</TableCell>
                 <TableCell align="right">Instance Api</TableCell>
                 <TableCell align="right">Instance App</TableCell>
+                <TableCell align="right">Instance App Api</TableCell>
                 <TableCell align="right">Deployment Instance</TableCell>
               </TableRow>
             </TableHead>

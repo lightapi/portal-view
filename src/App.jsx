@@ -129,6 +129,7 @@ import ProductPipeline from "./pages/product/ProductPipeline";
 import Instance from "./pages/instance/Instance";
 import InstanceApi from "./pages/instance/InstanceApi";
 import InstanceApp from "./pages/instance/InstanceApp";
+import InstanceAppApi from "./pages/instance/InstanceAppApi";
 import InstanceAdmin from "./pages/instance/InstanceAdmin";
 import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
@@ -341,6 +342,7 @@ const App = () => {
           <Route path="instance/Instance" element={<Instance />} />
           <Route path="instance/InstanceApi" element={<InstanceApi />} />
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
+          <Route path="instance/InstanceAppApi" element={<InstanceAppApi />} />
           <Route path="instance/InstanceAdmin" element={<InstanceAdmin />} />
           <Route path="deployment/PipelineAdmin" element={<PipelineAdmin />} />
           <Route path="deployment/PlatformAdmin" element={<PlatformAdmin />} />
