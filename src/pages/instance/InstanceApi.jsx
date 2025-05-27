@@ -65,9 +65,9 @@ function Row(props) {
     }
   };
 
-  const handleConfig = (instanceId, apiId, apiVersion) => {
+  const handleConfig = (instanceApiId, instanceId, apiId, apiVersion) => {
     navigate("/app/config/configInstanceApi", {
-      state: { data: { instanceId, apiId, apiVersion } },
+      state: { data: { instanceApiId, instanceId, apiId, apiVersion } },
     });
   };
 
@@ -99,7 +99,12 @@ function Row(props) {
       <TableCell align="right">
         <AddToDriveIcon
           onClick={() =>
-            handleConfig(row.instanceId, row.apiId, row.apiVersion)
+            handleConfig(
+              row.instanceApiId,
+              row.instanceId,
+              row.apiId,
+              row.apiVersion,
+            )
           }
         />
       </TableCell>

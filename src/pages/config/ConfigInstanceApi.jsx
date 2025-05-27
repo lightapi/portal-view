@@ -70,9 +70,10 @@ function Row(props) {
   return (
     <TableRow
       className={classes.root}
-      key={`${row.hostId}-${row.instanceId}-${row.apiId}-${row.apiVersion}-${row.configId}-${row.propertyName}`}
+      key={`${row.hostId}-${row.instanceApiId}-${row.configId}-${row.propertyName}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.instanceApiId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.apiVersionId}</TableCell>
@@ -100,6 +101,7 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    instanceApiId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
     instanceName: PropTypes.string.isRequired,
     apiVersionId: PropTypes.string.isRequired,
@@ -150,6 +152,10 @@ export default function ConfigInstanceApi() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
+  const [instanceApiId, setInstanceApiId] = useState(
+    () => data?.instanceApiId || "",
+  );
+  const debouncedInstanceApiId = useDebounce(instanceApiId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
   const [instanceName, setInstanceName] = useState("");
@@ -177,10 +183,12 @@ export default function ConfigInstanceApi() {
   const [total, setTotal] = useState(0);
   const [configInstanceApis, setConfigInstanceApis] = useState([]);
 
+  const handleInstanceApiIdChange = (event) => {
+    setInstanceApiId(event.target.value);
+  };
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
   };
-
   const handleInstanceNameChange = (event) => {
     setInstanceName(event.target.value);
   };
@@ -241,6 +249,7 @@ export default function ConfigInstanceApi() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         hostId: host,
+        instanceApiId: debouncedInstanceApiId,
         instanceId: debouncedInstanceId,
         instanceName: debouncedInstanceName,
         apiVersionId: debouncedApiVersionId,
@@ -263,6 +272,7 @@ export default function ConfigInstanceApi() {
     page,
     rowsPerPage,
     host,
+    debouncedInstanceApiId,
     debouncedInstanceId,
     debouncedInstanceName,
     debouncedApiVersionId,
@@ -285,9 +295,9 @@ export default function ConfigInstanceApi() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, apiVersionId, configId) => {
+  const handleCreate = (instanceApiId, instanceId, apiVersionId, configId) => {
     navigate("/app/form/createConfigInstanceApi", {
-      state: { data: { instanceId, apiVersionId, configId } },
+      state: { data: { instanceApiId, instanceId, apiVersionId, configId } },
     });
   };
 
@@ -305,6 +315,14 @@ export default function ConfigInstanceApi() {
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance Api Id"
+                    value={instanceApiId}
+                    onChange={handleInstanceApiIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -404,7 +422,9 @@ export default function ConfigInstanceApi() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
         <AddBoxIcon
-          onClick={() => handleCreate(instanceId, apiVersionId, configId)}
+          onClick={() =>
+            handleCreate(instanceApiId, instanceId, apiVersionId, configId)
+          }
         />
       </div>
     );
