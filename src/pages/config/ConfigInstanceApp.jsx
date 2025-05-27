@@ -70,9 +70,10 @@ function Row(props) {
   return (
     <TableRow
       className={classes.root}
-      key={`${row.hostId}-${row.instanceId}-${row.appId}-${row.appVersion}-${row.configId}-${row.propertyName}`}
+      key={`${row.hostId}-${row.instanceAppId}-${row.configId}-${row.propertyName}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.instanceAppId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.instanceName}</TableCell>
       <TableCell align="left">{row.appId}</TableCell>
@@ -99,6 +100,7 @@ function Row(props) {
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
+    instanceAppId: PropTypes.string.isRequired,
     instanceId: PropTypes.string.isRequired,
     instanceName: PropTypes.string.isRequired,
     appId: PropTypes.string.isRequired,
@@ -148,6 +150,10 @@ export default function ConfigInstanceApp() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
+  const [instanceAppId, setInstanceAppId] = useState(
+    () => data?.instanceAppId || "",
+  );
+  const debouncedInstanceAppId = useDebounce(instanceAppId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
   const [instanceName, setInstanceName] = useState("");
@@ -170,10 +176,12 @@ export default function ConfigInstanceApp() {
   const [total, setTotal] = useState(0);
   const [configInstanceApps, setConfigInstanceApps] = useState([]);
 
+  const handleInstanceAppIdChange = (event) => {
+    setInstanceAppId(event.target.value);
+  };
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
   };
-
   const handleInstanceNameChange = (event) => {
     setInstanceName(event.target.value);
   };
@@ -231,6 +239,7 @@ export default function ConfigInstanceApp() {
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         hostId: host,
+        instanceAppId: debouncedInstanceAppId,
         instanceId: debouncedInstanceId,
         instanceName: debouncedInstanceName,
         appId: debouncedAppId,
@@ -252,6 +261,7 @@ export default function ConfigInstanceApp() {
     page,
     rowsPerPage,
     host,
+    debouncedInstanceAppId,
     debouncedInstanceId,
     debouncedInstanceName,
     debouncedAppId,
@@ -273,9 +283,17 @@ export default function ConfigInstanceApp() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, appId, appVersion, configId) => {
+  const handleCreate = (
+    instanceAppId,
+    instanceId,
+    appId,
+    appVersion,
+    configId,
+  ) => {
     navigate("/app/form/createConfigInstanceApp", {
-      state: { data: { instanceId, appId, appVersion, configId } },
+      state: {
+        data: { instanceAppId, instanceId, appId, appVersion, configId },
+      },
     });
   };
 
@@ -293,6 +311,14 @@ export default function ConfigInstanceApp() {
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Instance App Id"
+                    value={instanceAppId}
+                    onChange={handleInstanceAppIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -384,7 +410,9 @@ export default function ConfigInstanceApp() {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
         <AddBoxIcon
-          onClick={() => handleCreate(instanceId, appId, appVersion, configId)}
+          onClick={() =>
+            handleCreate(instanceAppId, instanceId, appId, appVersion, configId)
+          }
         />
       </div>
     );
