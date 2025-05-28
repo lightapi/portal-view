@@ -12842,6 +12842,89 @@
     },
     "form": ["hostId", "instanceId", "apiVersionId", "active"]
   },
+  "createInstanceApiPathPrefix": {
+    "formId": "createInstanceApiPathPrefix",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "createInstanceApiPathPrefix",
+        "version": "0.1.0",
+        "title": "Create Instance Api Path Prefix",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Instance Api Path Prefix",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceApiId": {
+          "type": "string",
+          "title": "Instance Api Id"
+        },
+        "pathPrefix": {
+          "type": "string",
+          "title": "Path Prefix"
+        }
+      },
+      "required": ["hostId", "instanceApiId", "pathPrefix"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceApiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "pathPrefix"
+    ]
+  },
+  "updateInstanceApiPathPrefix": {
+    "formId": "updateInstanceApiPathPrefix",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "updateInstanceApiPathPrefix",
+        "version": "0.1.0",
+        "title": "Update Instance Api Path Prefix",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Instance Api",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceApiId": {
+          "type": "string",
+          "title": "Instance Api Id",
+          "readonly": true
+        },
+        "pathPrefix": {
+          "type": "string",
+          "title": "Path Prefix"
+        }
+      },
+      "required": ["hostId", "instanceApiId", "pathPrefix"]
+    },
+    "form": ["hostId", "instanceApiId", "pathPrefix"]
+  },
   "createInstanceApp": {
     "formId": "createInstanceApp",
     "actions": [

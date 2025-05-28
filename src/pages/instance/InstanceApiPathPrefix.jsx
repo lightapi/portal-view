@@ -10,8 +10,6 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import AddToDriveIcon from "@mui/icons-material/AddToDrive";
-import RouteIcon from "@mui/icons-material/Route";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -20,7 +18,6 @@ import { useUserState } from "../../contexts/UserContext.jsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js";
-import { stringToBoolean } from "../../utils/index.jsx";
 
 const useRowStyles = makeStyles({
   root: {
@@ -35,18 +32,22 @@ function Row(props) {
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (instanceApi) => {
-    navigate("/app/form/updateInstanceApi", {
-      state: { data: { ...instanceApi } },
+  const handleUpdate = (instanceApiPathPrefix) => {
+    navigate("/app/form/updateInstanceApiPathPrefix", {
+      state: { data: { ...instanceApiPathPrefix } },
     });
   };
 
   const handleDelete = async (row) => {
-    if (window.confirm("Are you sure you want to delete this instance api?")) {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this instance api path prefix?",
+      )
+    ) {
       const cmd = {
         host: "lightapi.net",
         service: "instance",
-        action: "deleteInstanceApi",
+        action: "deleteInstanceApiPathPrefix",
         version: "0.1.0",
         data: row,
       };
@@ -66,22 +67,10 @@ function Row(props) {
     }
   };
 
-  const handleConfig = (instanceApiId, instanceId, apiId, apiVersion) => {
-    navigate("/app/config/configInstanceApi", {
-      state: { data: { instanceApiId, instanceId, apiId, apiVersion } },
-    });
-  };
-
-  const handlePathPrefix = (instanceApiId, instanceId, apiId, apiVersion) => {
-    navigate("/app/instance/instanceApiPathPrefix", {
-      state: { data: { instanceApiId, instanceId, apiId, apiVersion } },
-    });
-  };
-
   return (
     <TableRow
       className={classes.root}
-      key={`${row.hostId}-${row.instanceId}-${row.apiId}-${row.apiVersion}`}
+      key={`${row.hostId}-${row.instanceApiId}-${row.pathPrefix}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.instanceApiId}</TableCell>
@@ -92,7 +81,7 @@ function Row(props) {
       <TableCell align="left">{row.apiVersionId}</TableCell>
       <TableCell align="left">{row.apiId}</TableCell>
       <TableCell align="left">{row.apiVersion}</TableCell>
-      <TableCell align="left">{row.active ? "Yes" : "No"}</TableCell>
+      <TableCell align="left">{row.pathPrefix}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -102,30 +91,6 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <AddToDriveIcon
-          onClick={() =>
-            handleConfig(
-              row.instanceApiId,
-              row.instanceId,
-              row.apiId,
-              row.apiVersion,
-            )
-          }
-        />
-      </TableCell>
-      <TableCell align="right">
-        <RouteIcon
-          onClick={() =>
-            handlePathPrefix(
-              row.instanceApiId,
-              row.instanceId,
-              row.apiId,
-              row.apiVersion,
-            )
-          }
-        />
       </TableCell>
     </TableRow>
   );
@@ -142,19 +107,19 @@ Row.propTypes = {
     apiVersionId: PropTypes.string.isRequired,
     apiId: PropTypes.string.isRequired,
     apiVersion: PropTypes.string.isRequired,
-    active: PropTypes.bool,
+    pathPrefix: PropTypes.string.isRequired,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
 };
 
-function InstanceApiList(props) {
-  const { instanceApis } = props;
+function InstanceApiPathPrefixList(props) {
+  const { instanceApiPathPrefixes } = props;
   return (
     <TableBody>
-      {instanceApis && instanceApis.length > 0 ? (
-        instanceApis.map((instanceApi, index) => (
-          <Row key={index} row={instanceApi} />
+      {instanceApiPathPrefixes && instanceApiPathPrefixes.length > 0 ? (
+        instanceApiPathPrefixes.map((instanceApiPathPrefix, index) => (
+          <Row key={index} row={instanceApiPathPrefix} />
         ))
       ) : (
         <TableRow>
@@ -169,11 +134,11 @@ function InstanceApiList(props) {
   );
 }
 
-InstanceApiList.propTypes = {
-  instanceApis: PropTypes.arrayOf(PropTypes.object).isRequired,
+InstanceApiPathPrefixList.propTypes = {
+  instanceApiPathPrefixes: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function InstanceApiAdmin() {
+export default function InstanceApiPathPrefix() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
@@ -201,13 +166,13 @@ export default function InstanceApiAdmin() {
   const debouncedApiId = useDebounce(apiId, 1000);
   const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
   const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [active, setActive] = useState("");
-  const debouncedActive = useDebounce(active, 1000);
+  const [pathPrefix, setPathPrefix] = useState("");
+  const debouncedPathPrefix = useDebounce(pathPrefix, 1000);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
-  const [instanceApis, setInstanceApis] = useState([]);
+  const [instanceApiPathPrefixes, setInstanceApiPathPrefixes] = useState([]);
 
   const handleInstanceApiIdChange = (event) => {
     setInstanceApiId(event.target.value);
@@ -234,8 +199,8 @@ export default function InstanceApiAdmin() {
   const handleApiVersionChange = (event) => {
     setApiVersion(event.target.value);
   };
-  const handleActiveChange = (event) => {
-    setActive(event.target.value);
+  const handlePathPrefixChange = (event) => {
+    setPathPrefix(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
@@ -245,16 +210,16 @@ export default function InstanceApiAdmin() {
       if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.description || "An error occurred.");
-        setInstanceApis([]);
+        setInstanceApiPathPrefixes([]);
       } else {
         const data = await response.json();
-        setInstanceApis(data.instanceApis || []);
+        setInstanceApiPathPrefixes(data.instanceApiPathPrefixes || []);
         setTotal(data.total || 0);
       }
     } catch (e) {
       console.error("Fetch error:", e);
       setError("Network or server error.");
-      setInstanceApis([]);
+      setInstanceApiPathPrefixes([]);
     } finally {
       setLoading(false);
     }
@@ -264,7 +229,7 @@ export default function InstanceApiAdmin() {
     const cmd = {
       host: "lightapi.net",
       service: "instance",
-      action: "getInstanceApi",
+      action: "getInstanceApiPathPrefix",
       version: "0.1.0",
       data: {
         offset: page * rowsPerPage,
@@ -278,9 +243,7 @@ export default function InstanceApiAdmin() {
         apiVersionId: debouncedApiVersionId,
         apiId: debouncedApiId,
         apiVersion: debouncedApiVersion,
-        ...(debouncedActive && debouncedActive.trim() !== ""
-          ? { active: stringToBoolean(debouncedActive) }
-          : {}),
+        pathPrefix: debouncedPathPrefix,
       },
     };
 
@@ -301,7 +264,7 @@ export default function InstanceApiAdmin() {
     debouncedApiVersionId,
     debouncedApiId,
     debouncedApiVersion,
-    debouncedActive,
+    debouncedPathPrefix,
     fetchData,
   ]);
 
@@ -314,9 +277,9 @@ export default function InstanceApiAdmin() {
     setPage(0);
   };
 
-  const handleCreate = (instanceId, apiVersionId) => {
-    navigate("/app/form/createInstanceApi", {
-      state: { data: { instanceId, apiVersionId } },
+  const handleCreate = (instanceApiId) => {
+    navigate("/app/form/createInstanceApiPathPrefix", {
+      state: { data: { instanceApiId } },
     });
   };
 
@@ -330,7 +293,7 @@ export default function InstanceApiAdmin() {
     content = (
       <div>
         <TableContainer component={Paper}>
-          <Table aria-label="instance API table">
+          <Table aria-label="instance API path prefix table">
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
@@ -401,20 +364,20 @@ export default function InstanceApiAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Active"
-                    value={active}
-                    onChange={handleActiveChange}
+                    placeholder="Path Prefix"
+                    value={pathPrefix}
+                    onChange={handlePathPrefixChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Config</TableCell>
-                <TableCell align="right">Path Prefix</TableCell>
               </TableRow>
             </TableHead>
-            <InstanceApiList instanceApis={instanceApis} />
+            <InstanceApiPathPrefixList
+              instanceApiPathPrefixes={instanceApiPathPrefixes}
+            />
           </Table>
         </TableContainer>
         <TablePagination
@@ -426,10 +389,10 @@ export default function InstanceApiAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(instanceId, apiVersionId)} />
+        <AddBoxIcon onClick={() => handleCreate(instanceApiId)} />
       </div>
     );
   }
 
-  return <div className="InstanceApiAdmin">{content}</div>;
+  return <div className="InstanceApiPathPrefix">{content}</div>;
 }
