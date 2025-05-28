@@ -11515,6 +11515,185 @@
       }
     ]
   },
+  "createConfigInstanceAppApi": {
+    "formId": "createConfigInstanceAppApi",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigInstanceAppApi",
+        "version": "0.1.0",
+        "title": "Create Config Instance App Api",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Config Instance App Api",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id"
+        },
+        "instanceAppId": {
+          "type": "string",
+          "title": "Instance App Id"
+        },
+        "instanceApiId": {
+          "type": "string",
+          "title": "Instance Api Id"
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id"
+        },
+        "propertyValue": {
+          "type": "string",
+          "title": "Property Value"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "instanceAppId",
+        "instanceApiId",
+        "configId",
+        "propertyId"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "instanceAppId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "instanceId"]
+        }
+      },
+      {
+        "key": "instanceApiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "instanceId"]
+        }
+      },
+      {
+        "key": "configId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22resourceType%22%3A%22app_api%22%7D%7D"
+        }
+      },
+      {
+        "key": "propertyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app_api%22%7D%7D",
+          "params": ["configId"]
+        }
+      },
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      }
+    ]
+  },
+  "updateConfigInstanceAppApi": {
+    "formId": "updateConfigInstanceAppApi",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigInstanceAppApi",
+        "version": "0.1.0",
+        "title": "Update Config Instance App Api",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Config Instance App Api",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceAppId": {
+          "type": "string",
+          "title": "Instance App Id",
+          "readonly": true
+        },
+        "instanceApiId": {
+          "type": "string",
+          "title": "Instance Api Id",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id",
+          "readonly": true
+        },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id",
+          "readonly": true
+        },
+        "propertyValue": {
+          "type": "string",
+          "title": "Property Value"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceAppId",
+        "instanceApiId",
+        "configId",
+        "propertyId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceAppId",
+      "instanceApiId",
+      "configId",
+      "propertyId",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      }
+    ]
+  },
   "updateBlog": {
     "formId": "updateBlog",
     "actions": [
