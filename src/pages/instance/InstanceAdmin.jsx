@@ -13,6 +13,7 @@ import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import InstallDesktopIcon from "@mui/icons-material/InstallDesktop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
@@ -62,6 +63,12 @@ function Row(props) {
         console.error("Api Error", result.error);
       }
     }
+  };
+
+  const handleConfigInstanceFile = (instanceId) => {
+    navigate("/app/config/configInstanceFile", {
+      state: { data: { instanceId } },
+    });
   };
 
   const handleConfig = (instanceId) => {
@@ -127,6 +134,11 @@ function Row(props) {
       </TableCell>
       <TableCell align="right">
         <AddToDriveIcon onClick={() => handleConfig(row.instanceId)} />
+      </TableCell>
+      <TableCell align="right">
+        <AttachFileIcon
+          onClick={() => handleConfigInstanceFile(row.instanceId)}
+        />
       </TableCell>
       <TableCell align="right">
         <ContentCopyIcon
@@ -591,6 +603,7 @@ export default function InstanceAdmin() {
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
                 <TableCell align="right">Config</TableCell>
+                <TableCell align="right">Instance File</TableCell>
                 <TableCell align="right">Instance Api</TableCell>
                 <TableCell align="right">Instance App</TableCell>
                 <TableCell align="right">Instance App Api</TableCell>

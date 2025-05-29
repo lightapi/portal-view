@@ -11694,6 +11694,195 @@
       }
     ]
   },
+  "createConfigInstanceFile": {
+    "formId": "createConfigInstanceFile",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigInstanceFile",
+        "version": "0.1.0",
+        "title": "Create Config Instance File",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Config Instance File",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id"
+        },
+        "fileType": {
+          "type": "string",
+          "title": "File Type"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "File Name"
+        },
+        "fileValue": {
+          "type": "string",
+          "title": "File Value"
+        },
+        "fileDesc": {
+          "type": "string",
+          "title": "File Desc"
+        },
+        "expirationTs": {
+          "type": "string",
+          "title": "Expiration Ts",
+          "format": "date-time"
+        }
+      },
+      "required": ["hostId", "instanceId", "fileName", "fileValue", "fileDesc"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "fileType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      "fileName",
+      {
+        "key": "fileValue",
+        "type": "textarea",
+        "placeholder": "File Value",
+        "rows": 5
+      },
+      {
+        "key": "fileDesc",
+        "type": "textarea",
+        "placeholder": "File Desc",
+        "rows": 5
+      },
+      {
+        "key": "expirationTs",
+        "type": "timestamp"
+      }
+    ]
+  },
+  "updateConfigInstanceFile": {
+    "formId": "updateConfigInstanceFile",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigInstanceFile",
+        "version": "0.1.0",
+        "title": "Update Config Instance File",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Config Instance File",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceFileId": {
+          "type": "string",
+          "title": "Instance File Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id",
+          "readonly": true
+        },
+        "fileType": {
+          "type": "string",
+          "title": "File Type"
+        },
+        "fileName": {
+          "type": "string",
+          "title": "File Name"
+        },
+        "fileValue": {
+          "type": "string",
+          "title": "File Value"
+        },
+        "fileDesc": {
+          "type": "string",
+          "title": "File Desc"
+        },
+        "expirationTs": {
+          "type": "string",
+          "title": "Expiration Ts",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceFileId",
+        "instanceId",
+        "fileType",
+        "fileName",
+        "fileValue",
+        "fileDesc"
+      ]
+    },
+    "form": [
+      "hostId",
+      "instanceFileId",
+      "instanceId",
+      {
+        "key": "fileType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      "fileName",
+      {
+        "key": "fileValue",
+        "type": "textarea",
+        "placeholder": "File Value",
+        "rows": 5
+      },
+      {
+        "key": "fileDesc",
+        "type": "textarea",
+        "placeholder": "File Desc",
+        "rows": 5
+      },
+      {
+        "key": "expirationTs",
+        "type": "timestamp"
+      }
+    ]
+  },
   "updateBlog": {
     "formId": "updateBlog",
     "actions": [
