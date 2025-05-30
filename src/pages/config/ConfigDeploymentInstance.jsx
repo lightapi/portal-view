@@ -10,15 +10,14 @@ import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
+import useDebounce from "../../hooks/useDebounce.js"; // Ensure this hook is available
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
+import { useUserState } from "../../contexts/UserContext.jsx"; // Make sure UserContext exists
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
+import { apiPost } from "../../api/apiPost.js"; // Assuming this exists
 
 const useRowStyles = makeStyles({
   root: {
@@ -33,22 +32,22 @@ function Row(props) {
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (instance) => {
-    navigate("/app/form/updateDeploymentInstance", {
-      state: { data: { ...instance } },
+  const handleUpdate = (configDeploymentInstance) => {
+    navigate("/app/form/updateConfigDeploymentInstance", {
+      state: { data: { ...configDeploymentInstance } },
     });
   };
 
   const handleDelete = async (row) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this deployment instance?",
+        "Are you sure you want to delete this config deployment instance property?",
       )
     ) {
       const cmd = {
         host: "lightapi.net",
-        service: "deployment",
-        action: "deleteDeploymentInstance",
+        service: "config",
+        action: "deleteConfigDeploymentInstance",
         version: "0.1.0",
         data: row,
       };
@@ -58,18 +57,14 @@ function Row(props) {
         headers: {},
         body: cmd,
       });
+
       if (result.data) {
         window.location.reload();
       } else if (result.error) {
-        console.error("Api Error", result.error);
+        console.error("API Error:", result.error);
+        // Optionally display an error message to the user
       }
     }
-  };
-
-  const handleConfig = (instanceId, deploymentInstanceId) => {
-    navigate("/app/config/configDeploymentInstance", {
-      state: { data: { instanceId, deploymentInstanceId } },
-    });
   };
 
   return (
@@ -78,18 +73,16 @@ function Row(props) {
       key={`${row.hostId}-${row.deploymentInstanceId}`}
     >
       <TableCell align="left">{row.hostId}</TableCell>
+      <TableCell align="left">{row.deploymentInstanceId}</TableCell>
       <TableCell align="left">{row.instanceId}</TableCell>
       <TableCell align="left">{row.instanceName}</TableCell>
-      <TableCell align="left">{row.deploymentInstanceId}</TableCell>
       <TableCell align="left">{row.serviceId}</TableCell>
       <TableCell align="left">{row.ipAddress}</TableCell>
       <TableCell align="left">{row.portNumber}</TableCell>
-      <TableCell align="left">{row.systemEnv}</TableCell>
-      <TableCell align="left">{row.runtimeEnv}</TableCell>
-      <TableCell align="left">{row.pipelineId}</TableCell>
-      <TableCell align="left">{row.pipelineName}</TableCell>
-      <TableCell align="left">{row.pipelineVersion}</TableCell>
-      <TableCell align="left">{row.deployStatus}</TableCell>
+      <TableCell align="left">{row.configId}</TableCell>
+      <TableCell align="left">{row.configName}</TableCell>
+      <TableCell align="left">{row.propertyName}</TableCell>
+      <TableCell align="left">{row.propertyValue}</TableCell>
       <TableCell align="left">{row.updateUser}</TableCell>
       <TableCell align="left">
         {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
@@ -100,46 +93,42 @@ function Row(props) {
       <TableCell align="right">
         <DeleteForeverIcon onClick={() => handleDelete(row)} />
       </TableCell>
-      <TableCell align="right">
-        <AddToDriveIcon
-          onClick={() => handleConfig(row.instanceId, row.deploymentInstanceId)}
-        />
-      </TableCell>
     </TableRow>
   );
 }
 
-// Add propTypes validation for Row
 Row.propTypes = {
   row: PropTypes.shape({
     hostId: PropTypes.string.isRequired,
-    instanceId: PropTypes.string.isRequired,
-    instanceName: PropTypes.string,
     deploymentInstanceId: PropTypes.string.isRequired,
-    serviceId: PropTypes.string,
+    instanceId: PropTypes.string.isRequired,
+    instanceName: PropTypes.string.isRequired,
+    serviceId: PropTypes.string.isRequired,
     ipAddress: PropTypes.string,
-    portNumber: PropTypes.int,
-    systemEnv: PropTypes.string.isRequired,
-    runtimeEnv: PropTypes.string.isRequired,
-    pipelineId: PropTypes.string,
-    pipelineName: PropTypes.string,
-    pipelineVersion: PropTypes.string,
-    deployStatus: PropTypes.string,
+    portNumber: PropTypes.integer,
+    configId: PropTypes.string.isRequired,
+    configName: PropTypes.string.isRequired,
+    propertyName: PropTypes.string.isRequired,
+    propertyValue: PropTypes.string,
     updateUser: PropTypes.string,
     updateTs: PropTypes.string,
   }).isRequired,
 };
 
-function InstanceList(props) {
-  const { instances } = props;
+function ConfigDeploymentInstanceList(props) {
+  const { configDeploymentInstances } = props;
   return (
     <TableBody>
-      {instances && instances.length > 0 ? (
-        instances.map((instance, index) => <Row key={index} row={instance} />)
+      {configDeploymentInstances && configDeploymentInstances.length > 0 ? (
+        configDeploymentInstances.map((configDeploymentInstance, index) => (
+          <Row key={index} row={configDeploymentInstance} />
+        ))
       ) : (
         <TableRow>
-          <TableCell colSpan={2} align="center">
-            No deployment instances found.
+          <TableCell colSpan={9} align="center">
+            {" "}
+            {/*Adjust colSpan*/}
+            No config instance properties found.
           </TableCell>
         </TableRow>
       )}
@@ -147,58 +136,57 @@ function InstanceList(props) {
   );
 }
 
-InstanceList.propTypes = {
-  instances: PropTypes.arrayOf(PropTypes.object).isRequired,
+ConfigDeploymentInstanceList.propTypes = {
+  configDeploymentInstances: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function InstanceAdmin() {
+export default function ConfigInstance() {
   const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
   const data = location.state?.data;
+
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+
+  const [deploymentInstanceId, setDeploymentInstanceId] = useState(
+    () => data?.deploymentInstanceId || "",
+  );
+  const debouncedDeploymentInstanceId = useDebounce(deploymentInstanceId, 1000);
   const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
   const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [instanceName, setInstanceName] = useState(
-    () => data?.instanceName || "",
-  );
+  const [instanceName, setInstanceName] = useState("");
   const debouncedInstanceName = useDebounce(instanceName, 1000);
-  const [deploymentInstanceId, setDeploymentInstanceId] = useState("");
-  const debouncedDeploymentInstanceId = useDebounce(deploymentInstanceId, 1000);
-  const [serviceId, setServiceId] = useState(() => data?.serviceId || "");
+  const [serviceId, setServiceId] = useState("");
   const debouncedServiceId = useDebounce(serviceId, 1000);
   const [ipAddress, setIpAddress] = useState("");
   const debouncedIpAddress = useDebounce(ipAddress, 1000);
   const [portNumber, setPortNumber] = useState("");
   const debouncedPortNumber = useDebounce(portNumber, 1000);
-  const [systemEnv, setSystemEnv] = useState("");
-  const debouncedSystemEnv = useDebounce(systemEnv, 1000);
-  const [runtimeEnv, setRuntimeEnv] = useState("");
-  const debouncedRuntimeEnv = useDebounce(runtimeEnv, 1000);
-  const [pipelineId, setPipelineId] = useState("");
-  const debouncedPipelineId = useDebounce(pipelineId, 1000);
-  const [pipelineName, setPipelineName] = useState("");
-  const debouncedPipelineName = useDebounce(pipelineName, 1000);
-  const [pipelineVersion, setPipelineVersion] = useState("");
-  const debouncedPipelineVersion = useDebounce(pipelineVersion, 1000);
-  const [deployStatus, setDeployStatus] = useState("");
-  const debouncedDeployStatus = useDebounce(deployStatus, 1000);
+  const [configId, setConfigId] = useState(() => data?.configId || "");
+  const debouncedConfigId = useDebounce(configId, 1000);
+  const [configName, setConfigName] = useState("");
+  const debouncedConfigName = useDebounce(configName, 1000);
+  const [propertyName, setPropertyName] = useState("");
+  const debouncedPropertyName = useDebounce(propertyName, 1000);
+  const [propertyValue, setPropertyValue] = useState(""); // No debounce
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
-  const [instances, setInstances] = useState([]);
+  const [configDeploymentInstances, setConfigDeploymentInstances] = useState(
+    [],
+  );
 
+  const handleDeploymentInstanceIdChange = (event) => {
+    setDeploymentInstanceId(event.target.value);
+  };
   const handleInstanceIdChange = (event) => {
     setInstanceId(event.target.value);
   };
   const handleInstanceNameChange = (event) => {
     setInstanceName(event.target.value);
-  };
-  const handleDeploymentInstanceIdChange = (event) => {
-    setDeploymentInstanceId(event.target.value);
   };
   const handleServiceIdChange = (event) => {
     setServiceId(event.target.value);
@@ -209,78 +197,68 @@ export default function InstanceAdmin() {
   const handlePortNumberChange = (event) => {
     setPortNumber(event.target.value);
   };
-  const handleSystemEnvChange = (event) => {
-    setSystemEnv(event.target.value);
+  const handleConfigIdChange = (event) => {
+    setConfigId(event.target.value);
   };
-  const handleRuntimeEnvChange = (event) => {
-    setRuntimeEnv(event.target.value);
+  const handleConfigNameChange = (event) => {
+    setConfigName(event.target.value);
   };
-  const handlePipelineIdChange = (event) => {
-    setPipelineId(event.target.value);
+  const handlePropertyNameChange = (event) => {
+    setPropertyName(event.target.value);
   };
-  const handlePipelineNameChange = (event) => {
-    setPipelineName(event.target.value);
-  };
-  const handlePipelineVersionChange = (event) => {
-    setPipelineVersion(event.target.value);
-  };
-  const handleDeployStatusChange = (event) => {
-    setDeployStatus(event.target.value);
+  const handlePropertyValueChange = (event) => {
+    setPropertyValue(event.target.value);
   };
 
   const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
     try {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setInstances([]);
+        const errorData = await response.json();
+        setError(errorData.description || "An error occurred.");
+        setConfigDeploymentInstances([]);
       } else {
         const data = await response.json();
-        console.log(data);
-        setInstances(data.deploymentInstances);
-        setTotal(data.total);
+        console.log("data", data);
+        setConfigDeploymentInstances(data.deploymentInstances || []);
+        setTotal(data.total || 0);
       }
-      setLoading(false);
     } catch (e) {
-      console.log(e);
-      setError(e);
-      setInstances([]);
+      console.error("Fetch error:", e);
+      setError("Network or server error.");
+      setConfigDeploymentInstances([]);
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array for useCallback
+  }, []);
 
   useEffect(() => {
     const cmd = {
       host: "lightapi.net",
-      service: "deployment",
-      action: "getDeploymentInstance",
+      service: "config",
+      action: "getConfigDeploymentInstance",
       version: "0.1.0",
       data: {
-        hostId: host,
         offset: page * rowsPerPage,
         limit: rowsPerPage,
+        hostId: host,
+        deploymentInstanceId: debouncedDeploymentInstanceId,
         instanceId: debouncedInstanceId,
         instanceName: debouncedInstanceName,
-        deploymentInstanceId: debouncedDeploymentInstanceId,
         serviceId: debouncedServiceId,
         ipAddress: debouncedIpAddress,
-        systemEnv: debouncedSystemEnv,
-        runtimeEnv: debouncedRuntimeEnv,
-        pipelineId: debouncedPipelineId,
-        pipelineName: debouncedPipelineName,
-        pipelineVersion: debouncedPipelineVersion,
-        deployStatus: debouncedDeployStatus,
+        configId: debouncedConfigId,
+        configName: debouncedConfigName,
+        propertyName: debouncedPropertyName,
+        propertyValue: propertyValue,
         ...(debouncedPortNumber && {
           portNumber: parseInt(debouncedPortNumber, 10),
         }),
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = `/portal/query?cmd=${encodeURIComponent(JSON.stringify(cmd))}`;
     const cookies = new Cookies();
     const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
 
@@ -289,18 +267,16 @@ export default function InstanceAdmin() {
     page,
     rowsPerPage,
     host,
+    debouncedDeploymentInstanceId,
     debouncedInstanceId,
     debouncedInstanceName,
-    debouncedDeploymentInstanceId,
     debouncedServiceId,
     debouncedIpAddress,
     debouncedPortNumber,
-    debouncedSystemEnv,
-    debouncedRuntimeEnv,
-    debouncedPipelineId,
-    debouncedPipelineName,
-    debouncedPipelineVersion,
-    debouncedDeployStatus,
+    debouncedConfigId,
+    debouncedConfigName,
+    debouncedPropertyName,
+    propertyValue,
     fetchData,
   ]);
 
@@ -309,37 +285,38 @@ export default function InstanceAdmin() {
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const handleCreate = (instanceId, serviceId) => {
-    navigate("/app/form/createDeploymentInstance", {
-      state: { data: { instanceId, serviceId } },
+  const handleCreate = (instanceId, deploymentInstanceId, configId) => {
+    navigate("/app/form/createConfigDeploymentInstance", {
+      state: { data: { instanceId, deploymentInstanceId, configId } },
     });
   };
 
   let content;
+
   if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
+    content = <CircularProgress />;
   } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
+    content = <div style={{ color: "red" }}>Error: {error}</div>;
   } else {
     content = (
       <div>
         <TableContainer component={Paper}>
-          <Table aria-label="instance table">
+          <Table aria-label="config instance table">
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host ID</TableCell>
+                <TableCell align="left">
+                  <input
+                    type="text"
+                    placeholder="Deployment Instance Id"
+                    value={deploymentInstanceId}
+                    onChange={handleDeploymentInstanceIdChange}
+                  />
+                </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
@@ -359,14 +336,6 @@ export default function InstanceAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Deployment Instance Id"
-                    value={deploymentInstanceId}
-                    onChange={handleDeploymentInstanceIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
                     placeholder="Service Id"
                     value={serviceId}
                     onChange={handleServiceIdChange}
@@ -375,7 +344,7 @@ export default function InstanceAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="IP Address"
+                    placeholder="Ip Address"
                     value={ipAddress}
                     onChange={handleIpAddressChange}
                   />
@@ -391,59 +360,44 @@ export default function InstanceAdmin() {
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="System Env"
-                    value={systemEnv}
-                    onChange={handleSystemEnvChange}
+                    placeholder="Config Id"
+                    value={configId}
+                    onChange={handleConfigIdChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Runtime Env"
-                    value={runtimeEnv}
-                    onChange={handleRuntimeEnvChange}
+                    placeholder="Config Name"
+                    value={configName}
+                    onChange={handleConfigNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Pipeline Id"
-                    value={pipelineId}
-                    onChange={handlePipelineIdChange}
+                    placeholder="Property Name"
+                    value={propertyName}
+                    onChange={handlePropertyNameChange}
                   />
                 </TableCell>
                 <TableCell align="left">
                   <input
                     type="text"
-                    placeholder="Pipeline Name"
-                    value={pipelineName}
-                    onChange={handlePipelineNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Pipeline Version"
-                    value={pipelineVersion}
-                    onChange={handlePipelineVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Deploy Status"
-                    value={deployStatus}
-                    onChange={handleDeployStatusChange}
+                    placeholder="Property Value"
+                    value={propertyValue}
+                    onChange={handlePropertyValueChange}
                   />
                 </TableCell>
                 <TableCell align="left">Update User</TableCell>
                 <TableCell align="left">Update Time</TableCell>
                 <TableCell align="right">Update</TableCell>
                 <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Config</TableCell>
               </TableRow>
             </TableHead>
-            <InstanceList instances={instances} />
+            <ConfigDeploymentInstanceList
+              configDeploymentInstances={configDeploymentInstances}
+            />
           </Table>
         </TableContainer>
         <TablePagination
@@ -455,10 +409,14 @@ export default function InstanceAdmin() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate(instanceId, serviceId)} />
+        <AddBoxIcon
+          onClick={() =>
+            handleCreate(instanceId, deploymentInstanceId, configId)
+          }
+        />
       </div>
     );
   }
 
-  return <div className="DeploymentInstance">{content}</div>;
+  return <div className="ConfigDeploymentInstance">{content}</div>;
 }

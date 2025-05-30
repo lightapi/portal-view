@@ -75,6 +75,7 @@ import ConfigInstanceApi from "./pages/config/ConfigInstanceApi";
 import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
+import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import Properties from "./pages/config/Properties";
 import GlobalValues from "./pages/config/GlobalValues";
 import GlobalValueDelete from "./pages/config/GlobalValueDelete";
@@ -265,6 +266,10 @@ const App = () => {
           <Route
             path="config/configInstanceFile"
             element={<ConfigInstanceFile />}
+          />
+          <Route
+            path="config/configDeploymentInstance"
+            element={<ConfigDeploymentInstance />}
           />
           <Route path="config/properties" element={<Properties />} />
           <Route path="config/globalValues" element={<GlobalValues />} />

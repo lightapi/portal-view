@@ -11883,6 +11883,166 @@
       }
     ]
   },
+  "createConfigDeploymentInstance": {
+    "formId": "createConfigDeploymentInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigDeploymentInstance",
+        "version": "0.1.0",
+        "title": "Create Config Deployment Instance",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Config Deployment Instance",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "instanceId": {
+          "type": "string",
+          "title": "Instance Id"
+        },
+        "deploymentInstanceId": {
+          "type": "string",
+          "title": "Deployment Instance Id"
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id"
+        },
+        "propertyValue": {
+          "type": "string",
+          "title": "Property Value"
+        }
+      },
+      "required": [
+        "hostId",
+        "instanceId",
+        "deploymentInstanceId",
+        "configId",
+        "propertyId",
+        "propertyValue"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "instanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "deploymentInstanceId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getDeploymentInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "instanceId"]
+        }
+      },
+      {
+        "key": "configId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+        }
+      },
+      {
+        "key": "propertyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "params": ["configId"]
+        }
+      },
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      }
+    ]
+  },
+  "updateConfigDeploymentInstance": {
+    "formId": "updateConfigDeploymentInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigDeploymentInstance",
+        "version": "0.1.0",
+        "title": "Update Config Deployment Instance",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Config Deployment Instance",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "deploymentInstanceId": {
+          "type": "string",
+          "title": "Deployment Instance Id",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id",
+          "readonly": true
+        },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id",
+          "readonly": true
+        },
+        "propertyValue": {
+          "type": "string",
+          "title": "Property Value"
+        }
+      },
+      "required": [
+        "hostId",
+        "deploymentInstanceId",
+        "configId",
+        "propertyId",
+        "propertyValue"
+      ]
+    },
+    "form": [
+      "hostId",
+      "deploymentInstanceId",
+      "configId",
+      "propertyId",
+      {
+        "key": "propertyValue",
+        "type": "textarea",
+        "placeholder": "Property Value",
+        "rows": 5
+      }
+    ]
+  },
   "updateBlog": {
     "formId": "updateBlog",
     "actions": [
