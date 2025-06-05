@@ -125,10 +125,11 @@ import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
 import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
-import Product from "./pages/product/Product";
 import ProductAdmin from "./pages/product/ProductAdmin";
 import ProductEnvironment from "./pages/product/ProductEnvironment";
 import ProductPipeline from "./pages/product/ProductPipeline";
+import ProductConfig from "./pages/product/ProductConfig";
+import ProductConfigProperty from "./pages/product/ProductConfigProperty";
 import Instance from "./pages/instance/Instance";
 import InstanceApi from "./pages/instance/InstanceApi";
 import InstanceApiPathPrefix from "./pages/instance/InstanceApiPathPrefix";
@@ -350,10 +351,11 @@ const App = () => {
           <Route path="controller/chaos" element={<ChaosMonkey />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
-          <Route path="product/Product" element={<Product />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="product/environment" element={<ProductEnvironment />} />
           <Route path="product/pipeline" element={<ProductPipeline />} />
+          <Route path="product/config" element={<ProductConfig />} />
+          <Route path="product/property" element={<ProductConfigProperty />} />
 
           <Route path="instance/Instance" element={<Instance />} />
           <Route path="instance/InstanceApi" element={<InstanceApi />} />

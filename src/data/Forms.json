@@ -12790,6 +12790,113 @@
       }
     ]
   },
+  "createProductVersionConfig": {
+    "formId": "createProductVersionConfig",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "createProductVersionConfig",
+        "version": "0.1.0",
+        "title": "Create Product Version Config Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Product Version Config Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        }
+      },
+      "required": ["hostId", "productVersionId", "configId"]
+    },
+    "form": [
+      "hostId",
+      "productVersionId",
+      {
+        "key": "configId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+        }
+      }
+    ]
+  },
+  "createProductVersionConfigProperty": {
+    "formId": "createProductVersionConfigProperty",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "createProductVersionConfigProperty",
+        "version": "0.1.0",
+        "title": "Create Product Version Config Property Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Product Version Config Property Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id"
+        },
+        "propertyId": {
+          "type": "string",
+          "title": "Property Id"
+        }
+      },
+      "required": ["hostId", "productVersionId", "configId", "propertyId"]
+    },
+    "form": [
+      "hostId",
+      "productVersionId",
+      {
+        "key": "configId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getConfigIdLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+        }
+      },
+      {
+        "key": "propertyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
+          "params": ["configId"]
+        }
+      }
+    ]
+  },
   "createInstance": {
     "formId": "createInstance",
     "actions": [

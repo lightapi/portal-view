@@ -85,6 +85,22 @@ function Row(props) {
     });
   };
 
+  const handleProductConfig = (productVersionId, productId, productVersion) => {
+    navigate("/app/product/config", {
+      state: { data: { productVersionId, productId, productVersion } },
+    });
+  };
+
+  const handleProductProperty = (
+    productVersionId,
+    productId,
+    productVersion,
+  ) => {
+    navigate("/app/product/property", {
+      state: { data: { productVersionId, productId, productVersion } },
+    });
+  };
+
   return (
     <TableRow
       className={classes.root}
@@ -130,6 +146,28 @@ function Row(props) {
         <GridGoldenratioIcon
           onClick={() =>
             handlePipeline(
+              row.productVersionId,
+              row.productId,
+              row.productVersion,
+            )
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <GridGoldenratioIcon
+          onClick={() =>
+            handleProductConfig(
+              row.productVersionId,
+              row.productId,
+              row.productVersion,
+            )
+          }
+        />
+      </TableCell>
+      <TableCell align="right">
+        <GridGoldenratioIcon
+          onClick={() =>
+            handleProductProperty(
               row.productVersionId,
               row.productId,
               row.productVersion,
@@ -464,6 +502,8 @@ export default function ProductAdmin() {
                 <TableCell align="right">Config</TableCell>
                 <TableCell align="right">Environment</TableCell>
                 <TableCell align="right">Pipeline</TableCell>
+                <TableCell align="right">Product Config</TableCell>
+                <TableCell align="right">Product Property</TableCell>
               </TableRow>
             </TableHead>
             <ProductVersionList productVersions={productVersions} />
