@@ -26,11 +26,24 @@ const useRowStyles = makeStyles({
   },
 });
 
-function Row(props) {
+interface RowProps {
+  row: {
+    hostId: string;
+    productVersionId: string;
+    productId: string;
+    productVersion: string;
+    configId: string;
+    configName: string;
+    updateUser?: string;
+    updateTs?: string;
+  };
+}
+
+function Row(props: RowProps) {
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleDelete = async (row) => {
+  const handleDelete = async (row: RowProps['row']) => {
     if (
       window.confirm(
         "Are you sure you want to delete this product version config?",
@@ -93,12 +106,16 @@ Row.propTypes = {
   }).isRequired,
 };
 
-function ProductVersionConfigList(props) {
+interface ProductVersionConfigListProps {
+  productVersionConfigs: any[]; // TODO: Define the type of productVersionConfigs
+}
+
+function ProductVersionConfigList(props: ProductVersionConfigListProps) {
   const { productVersionConfigs } = props;
   return (
     <TableBody>
       {productVersionConfigs && productVersionConfigs.length > 0 ? (
-        productVersionConfigs.map((productVersionConfig, index) => (
+        productVersionConfigs.map((productVersionConfig: any, index: number) => (
           <Row key={index} row={productVersionConfig} />
         ))
       ) : (
@@ -121,7 +138,7 @@ export default function ProductConfig() {
   const navigate = useNavigate();
   const location = useLocation();
   const data = location.state?.data;
-  const { host } = useUserState();
+  const { host } = useUserState() as { host: string };
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [productVersionId, setProductVersionId] = useState(
@@ -140,27 +157,27 @@ export default function ProductConfig() {
   const debouncedConfigName = useDebounce(configName, 1000);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<string | undefined>();
   const [total, setTotal] = useState(0);
   const [productVersionConfigs, setProductVersionConfigs] = useState([]);
 
-  const handleProductVersionIdChange = (event) => {
+  const handleProductVersionIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductVersionId(event.target.value);
   };
-  const handleProductIdChange = (event) => {
+  const handleProductIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductId(event.target.value);
   };
-  const handleProductVersionChange = (event) => {
+  const handleProductVersionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductVersion(event.target.value);
   };
-  const handleConfigIdChange = (event) => {
+  const handleConfigIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setConfigId(event.target.value);
   };
-  const handleConfigNameChange = (event) => {
+  const handleConfigNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setConfigName(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url: string, headers: { [key: string]: string }) => {
     try {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
@@ -175,9 +192,9 @@ export default function ProductConfig() {
         setTotal(data.total);
       }
       setLoading(false);
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      setError(e);
+      setError(e.message);
       setProductVersionConfigs([]);
     } finally {
       setLoading(false);
@@ -219,16 +236,16 @@ export default function ProductConfig() {
     fetchData,
   ]);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: any, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  const handleCreate = (productVersionId, productId, productVersion) => {
+  const handleCreate = (productVersionId: string, productId: string, productVersion: string) => {
     navigate("/app/form/createProductVersionConfig", {
       state: { data: { productVersionId, productId, productVersion } },
     });
