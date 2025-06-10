@@ -18,8 +18,23 @@ import { useEffect, useState, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this context exists
+import { useSiteState } from "../../contexts/SiteContext.tsx";
 import { makeStyles } from "@mui/styles";
+
+interface SiteState {
+  site: {
+    hostId: string;
+    // other properties of site
+  } | null;
+  owner: any | null;
+  cart: any[];
+  delivery: any;
+  payment: any;
+  specDetail: any;
+  configDetail: any;
+  filter: string | null;
+  menu: string;
+}
 import PropTypes from "prop-types";
 import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
 import { stringToBoolean } from "../../utils/index.jsx";
@@ -32,16 +47,42 @@ const useRowStyles = makeStyles({
   },
 });
 
-function Row(props) {
+interface RowProps {
+  row: {
+    hostId: string;
+    instanceId: string;
+    instanceName?: string;
+    productVersionId: string;
+    productId?: string;
+    productVersion?: string;
+    serviceId?: string;
+    current?: boolean;
+    readonly?: boolean;
+    environment?: string;
+    serviceDesc?: string;
+    instanceDesc?: string;
+    zone?: string;
+    region?: string;
+    lob?: string;
+    resourceName?: string;
+    businessName?: string;
+    envTag?: string;
+    topicClassification?: string;
+    updateUser?: string;
+    updateTs?: string;
+  };
+}
+
+function Row(props: RowProps) {
   const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (instance) => {
+  const handleUpdate = (instance: any) => {
     navigate("/app/form/updateInstance", { state: { data: { ...instance } } }); // Adjust path as needed
   };
 
-  const handleDelete = async (row) => {
+  const handleDelete = async (row: any) => {
     if (window.confirm("Are you sure you want to delete this instance?")) {
       const cmd = {
         host: "lightapi.net", // Adjust if needed
@@ -65,37 +106,37 @@ function Row(props) {
     }
   };
 
-  const handleConfigInstanceFile = (instanceId) => {
+  const handleConfigInstanceFile = (instanceId: any) => {
     navigate("/app/config/configInstanceFile", {
       state: { data: { instanceId } },
     });
   };
 
-  const handleConfig = (instanceId) => {
+  const handleConfig = (instanceId: any) => {
     navigate("/app/config/configInstance", {
       state: { data: { instanceId } },
     });
   };
 
-  const handleDeploymentInstance = (instanceId, instanceName, serviceId) => {
+  const handleDeploymentInstance = (instanceId: any, instanceName: any, serviceId: any) => {
     navigate("/app/deployment/instance", {
       state: { data: { instanceId, instanceName, serviceId } },
     });
   };
 
-  const handleInstanceApi = (instanceId, instanceName, serviceId) => {
+  const handleInstanceApi = (instanceId: any, instanceName: any, serviceId: any) => {
     navigate("/app/instance/instanceApi", {
       state: { data: { instanceId, instanceName, serviceId } },
     });
   };
 
-  const handleInstanceApp = (instanceId, instanceName, serviceId) => {
+  const handleInstanceApp = (instanceId: any, instanceName: any, serviceId: any) => {
     navigate("/app/instance/instanceApp", {
       state: { data: { instanceId, instanceName, serviceId } },
     });
   };
 
-  const handleInstanceAppApi = (instanceId, instanceName, serviceId) => {
+  const handleInstanceAppApi = (instanceId: any, instanceName: any, serviceId: any) => {
     navigate("/app/instance/instanceAppApi", {
       state: { data: { instanceId, instanceName, serviceId } },
     });
@@ -207,12 +248,16 @@ Row.propTypes = {
   }).isRequired,
 };
 
-function InstanceList(props) {
+interface InstanceListProps {
+  instances: any[];
+}
+
+function InstanceList(props: InstanceListProps) {
   const { instances } = props;
   return (
     <TableBody>
       {instances && instances.length > 0 ? (
-        instances.map((instance, index) => <Row key={index} row={instance} />)
+        instances.map((instance: any, index: any) => <Row key={index} row={instance} />)
       ) : (
         <TableRow>
           <TableCell colSpan={2} align="center">
@@ -231,7 +276,18 @@ InstanceList.propTypes = {
 export default function InstanceAdmin() {
   const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const initialSiteState: SiteState = {
+    site: { hostId: "" } ,
+    owner: null,
+    cart: [],
+    delivery: {},
+    payment: {},
+    specDetail: {},
+    configDetail: {},
+    filter: null,
+    menu: 'catalog'
+  };
+  const siteContext: SiteState = useSiteState() === null ? initialSiteState : useSiteState() as SiteState;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [instanceId, setInstanceId] = useState("");
@@ -272,66 +328,66 @@ export default function InstanceAdmin() {
   const debouncedTopicClassification = useDebounce(topicClassification, 1000);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<any>();
   const [total, setTotal] = useState(0);
   const [instances, setInstances] = useState([]);
 
-  const handleInstanceIdChange = (event) => {
+  const handleInstanceIdChange = (event: any) => {
     setInstanceId(event.target.value);
   };
-  const handleInstanceNameChange = (event) => {
+  const handleInstanceNameChange = (event: any) => {
     setInstanceName(event.target.value);
   };
-  const handleProductVersionIdChange = (event) => {
+  const handleProductVersionIdChange = (event: any) => {
     setProductVersionId(event.target.value);
   };
-  const handleProductIdChange = (event) => {
+  const handleProductIdChange = (event: any) => {
     setProductId(event.target.value);
   };
-  const handleProductVersionChange = (event) => {
+  const handleProductVersionChange = (event: any) => {
     setProductVersion(event.target.value);
   };
-  const handleServiceIdChange = (event) => {
+  const handleServiceIdChange = (event: any) => {
     setServiceId(event.target.value);
   };
-  const handleCurrentChange = (event) => {
+  const handleCurrentChange = (event: any) => {
     setCurrent(event.target.value);
   };
-  const handleReadonlyChange = (event) => {
+  const handleReadonlyChange = (event: any) => {
     setReadonly(event.target.value);
   };
-  const handleEnvironmentChange = (event) => {
+  const handleEnvironmentChange = (event: any) => {
     setEnvironment(event.target.value);
   };
-  const handleServiceDescChange = (event) => {
+  const handleServiceDescChange = (event: any) => {
     setServiceDesc(event.target.value);
   };
-  const handleInstanceDescChange = (event) => {
+  const handleInstanceDescChange = (event: any) => {
     setInstanceDesc(event.target.value);
   };
-  const handleZoneChange = (event) => {
+  const handleZoneChange = (event: any) => {
     setZone(event.target.value);
   };
-  const handleRegionChange = (event) => {
+  const handleRegionChange = (event: any) => {
     setRegion(event.target.value);
   };
-  const handleLobChange = (event) => {
+  const handleLobChange = (event: any) => {
     setLob(event.target.value);
   };
-  const handleResourceNameChange = (event) => {
+  const handleResourceNameChange = (event: any) => {
     setResourceName(event.target.value);
   };
-  const handleBusinessNameChange = (event) => {
+  const handleBusinessNameChange = (event: any) => {
     setBusinessName(event.target.value);
   };
-  const handleEnvTagChange = (event) => {
+  const handleEnvTagChange = (event: any) => {
     setEnvTag(event.target.value);
   };
-  const handleTopicClassificationChange = (event) => {
+  const handleTopicClassificationChange = (event: any) => {
     setTopicClassification(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url: string, headers: any) => {
     // Wrap fetchData with useCallback
     try {
       setLoading(true);
@@ -347,9 +403,9 @@ export default function InstanceAdmin() {
         setTotal(data.total);
       }
       setLoading(false);
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      setError(e);
+      setError(e as Error);
       setInstances([]);
     } finally {
       setLoading(false);
@@ -363,7 +419,7 @@ export default function InstanceAdmin() {
       action: "getInstance",
       version: "0.1.0",
       data: {
-        hostId: host,
+        hostId: siteContext?.site?.hostId ?? "",
         offset: page * rowsPerPage,
         limit: rowsPerPage,
         instanceId: debouncedInstanceId,
@@ -398,7 +454,7 @@ export default function InstanceAdmin() {
   }, [
     page,
     rowsPerPage,
-    host,
+    siteContext?.site?.hostId ?? "",
     debouncedInstanceId,
     debouncedInstanceName,
     debouncedProductVersionId,
@@ -420,11 +476,11 @@ export default function InstanceAdmin() {
     fetchData,
   ]);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: any, newPage: any) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: any) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };

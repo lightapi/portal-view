@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client'
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
 import { theme } from './themes'
-import { LayoutProvider } from './contexts/LayoutContext.jsx'
-import { UserProvider } from './contexts/UserContext.jsx'
-import { SiteProvider } from './contexts/SiteContext.jsx'
-import { AppProvider } from './contexts/AppContext.jsx'
+import { LayoutProvider } from './contexts/LayoutContext.tsx'
+import { UserProvider } from './contexts/UserContext.tsx'
+import { SiteProvider } from './contexts/SiteContext.tsx'
+import { AppProvider } from './contexts/AppContext.tsx'
 import './index.css'
-import App from './App.jsx'
+import App from './App.tsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

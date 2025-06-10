@@ -11,13 +11,13 @@ import TableBody from "@mui/material/TableBody";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
+import useDebounce from "../../hooks/useDebounce.ts"; // Assuming this hook exists
 import { useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this context exists
+import { useUserState } from "../../contexts/UserContext.tsx"; // Assuming this context exists
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
+import { apiPost } from "../../api/apiPost.ts"; // Assuming this apiPost function exists
 
 const useRowStyles = makeStyles({
   root: {
@@ -27,18 +27,35 @@ const useRowStyles = makeStyles({
   },
 });
 
-function Row(props) {
+interface Deployment {
+  hostId: string;
+  deploymentId: string;
+  deploymentInstanceId?: string;
+  serviceId?: string;
+  deploymentStatus?: string;
+  deploymentType?: string;
+  scheduleTs?: string;
+  platformJobId?: string;
+  updateUser?: string;
+  updateTs?: string;
+}
+
+interface RowProps {
+  row: Deployment;
+}
+
+function Row(props: RowProps): JSX.Element {
   const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (deployment) => {
+  const handleUpdate = (deployment: Deployment) => {
     navigate("/app/form/updateDeployment", {
       state: { data: { ...deployment } },
     }); // Adjust path as needed
   };
 
-  const handleDelete = async (row) => {
+  const handleDelete = async (row: Deployment) => {
     if (window.confirm("Are you sure you want to delete this deployment?")) {
       const cmd = {
         host: "lightapi.net",
@@ -105,7 +122,11 @@ Row.propTypes = {
   }).isRequired,
 };
 
-function DeploymentList(props) {
+interface DeploymentListProps {
+  deployments: Deployment[];
+}
+
+function DeploymentList(props: DeploymentListProps): JSX.Element {
   const { deployments } = props;
   return (
     <TableBody>
@@ -128,10 +149,14 @@ DeploymentList.propTypes = {
   deployments: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-export default function DeploymentAdmin() {
+interface UserState {
+  host?: string;
+}
+
+export default function DeploymentAdmin(): JSX.Element {
   const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [deploymentId, setDeploymentId] = useState("");
@@ -147,37 +172,37 @@ export default function DeploymentAdmin() {
   const [platformJobId, setPlatformJobId] = useState("");
   const debouncedPlatformJobId = useDebounce(platformJobId, 1000);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<any>();
   const [total, setTotal] = useState(0);
-  const [deployments, setDeployments] = useState([]);
+  const [deployments, setDeployments] = useState<Deployment[]>([]);
 
-  const handleDeploymentIdChange = (event) => {
+  const handleDeploymentIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDeploymentId(event.target.value);
   };
-  const handleDeploymentInstanceIdChange = (event) => {
+  const handleDeploymentInstanceIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDeploymentInstanceId(event.target.value);
   };
-  const handleServiceIdChange = (event) => {
+  const handleServiceIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setServiceId(event.target.value);
   };
-  const handleDeploymentStatusChange = (event) => {
+  const handleDeploymentStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDeploymentStatus(event.target.value);
   };
-  const handleDeploymentTypeChange = (event) => {
+  const handleDeploymentTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDeploymentType(event.target.value);
   };
-  const handlePlatformJobIdChange = (event) => {
+  const handlePlatformJobIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPlatformJobId(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url: string, headers: HeadersInit) => {
     // Wrap fetchData with useCallback
     try {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
+        const errorData = await response.json();
+        setError(errorData.description);
         setDeployments([]);
       } else {
         const data = await response.json();
@@ -186,9 +211,9 @@ export default function DeploymentAdmin() {
         setTotal(data.total);
       }
       setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
+    } catch (error: any) {
+      console.log(error);
+      setError(error);
       setDeployments([]);
     } finally {
       setLoading(false);
@@ -231,12 +256,12 @@ export default function DeploymentAdmin() {
     fetchData,
   ]);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
