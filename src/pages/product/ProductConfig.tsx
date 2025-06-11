@@ -1,344 +1,234 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useUserState } from '../../contexts/UserContext.jsx';
+import { apiPost } from '../../api/apiPost.js';
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+// Define the shape of the API response
+type ProductConfigApiResponse = {
+  productConfigs: Array<ProductConfigType>;
+  total: number;
+};
 
-interface RowProps {
-  row: {
-    hostId: string;
-    productVersionId: string;
-    productId: string;
-    productVersion: string;
-    configId: string;
-    configName: string;
-    updateUser?: string;
-    updateTs?: string;
-  };
-}
+// Define the type for a single product configuration record
+type ProductConfigType = {
+  hostId: string;
+  productVersionId: string;
+  productId: string;
+  productVersion: string;
+  configId: string;
+  configName: string;
+  updateUser?: string;
+  updateTs?: string;
+};
 
-function Row(props: RowProps) {
-  const { row } = props;
-  const classes = useRowStyles();
+export default function ProductConfig() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { host } = useUserState() as { host: string };
+  
+  // Contextual data passed from the previous page, used for creating new entities
+  const contextData = location.state?.data;
 
-  const handleDelete = async (row: RowProps['row']) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this product version config?",
-      )
-    ) {
+  // Data and fetching state
+  const [data, setData] = useState<ProductConfigType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
+
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!data.length) {
+      setIsLoading(true);
+    } else {
+      setIsRefetching(true);
+    }
+
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'product',
+      action: 'getProductVersionConfig',
+      version: '0.1.0',
+      data: {
+        hostId: host,
+        offset: pagination.pageIndex * pagination.pageSize,
+        limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(columnFilters ?? []), // MRT uses 'filters', let's be consistent
+        globalFilter: globalFilter ?? '',
+      },
+    };
+
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as ProductConfigApiResponse;
+      setData(json.productConfigs);
+      setRowCount(json.total);
+    } catch (error) {
+      setIsError(true);
+      console.error(error);
+      return;
+    }
+    setIsError(false);
+    setIsLoading(false);
+    setIsRefetching(false);
+  }, [
+    host,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+    data.length, // Dependency to manage initial loading state
+  ]);
+
+  // useEffect to trigger fetchData when table state changes
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+  ]);
+
+  // Delete handler
+  const handleDelete = useCallback(
+    async (row: MRT_Row<ProductConfigType>) => {
+      if (
+        !window.confirm(
+          `Are you sure you want to delete config: ${row.original.configName}?`,
+        )
+      ) {
+        return;
+      }
       const cmd = {
-        host: "lightapi.net",
-        service: "product",
-        action: "deleteProductVersionConfig",
-        version: "0.1.0",
-        data: row,
+        host: 'lightapi.net',
+        service: 'product',
+        action: 'deleteProductVersionConfig',
+        version: '0.1.0',
+        data: row.original,
       };
-
       const result = await apiPost({
-        url: "/portal/command",
+        url: '/portal/command',
         headers: {},
         body: cmd,
       });
       if (result.data) {
-        window.location.reload();
+        // Refetch data after successful deletion
+        fetchData();
       } else if (result.error) {
-        console.error("Api Error", result.error);
+        console.error('API Error on delete:', result.error);
+        // Optionally, show an error to the user
       }
-    }
-  };
-
-  return (
-    <TableRow
-      className={classes.root}
-      key={`${row.hostId}-${row.productVersionId}-${row.configId}`}
-    >
-      <TableCell align="left">{row.hostId}</TableCell>
-      <TableCell align="left">{row.productVersionId}</TableCell>
-      <TableCell align="left">{row.productId}</TableCell>
-      <TableCell align="left">{row.productVersion}</TableCell>
-      <TableCell align="left">{row.configId}</TableCell>
-      <TableCell align="left">{row.configName}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-    </TableRow>
+    },
+    [fetchData],
   );
-}
 
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    productVersionId: PropTypes.string.isRequired,
-    productId: PropTypes.string.isRequired,
-    productVersion: PropTypes.string.isRequired,
-    configId: PropTypes.string.isRequired,
-    configName: PropTypes.string.isRequired,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
-};
-
-interface ProductVersionConfigListProps {
-  productVersionConfigs: any[]; // TODO: Define the type of productVersionConfigs
-}
-
-function ProductVersionConfigList(props: ProductVersionConfigListProps) {
-  const { productVersionConfigs } = props;
-  return (
-    <TableBody>
-      {productVersionConfigs && productVersionConfigs.length > 0 ? (
-        productVersionConfigs.map((productVersionConfig: any, index: number) => (
-          <Row key={index} row={productVersionConfig} />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No product version configs found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-ProductVersionConfigList.propTypes = {
-  productVersionConfigs: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
-
-export default function ProductConfig() {
-  const classes = useRowStyles();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const data = location.state?.data;
-  const { host } = useUserState() as { host: string };
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [productVersionId, setProductVersionId] = useState(
-    () => data?.productVersionId || "",
-  );
-  const debouncedProductVersionId = useDebounce(productVersionId, 1000);
-  const [productId, setProductId] = useState(() => data?.productId || "");
-  const debouncedProductId = useDebounce(productId, 1000);
-  const [productVersion, setProductVersion] = useState(
-    () => data?.productVersion || "",
-  );
-  const debouncedProductVersion = useDebounce(productVersion, 1000);
-  const [configId, setConfigId] = useState("");
-  const debouncedConfigId = useDebounce(configId, 1000);
-  const [configName, setConfigName] = useState("");
-  const debouncedConfigName = useDebounce(configName, 1000);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-  const [total, setTotal] = useState(0);
-  const [productVersionConfigs, setProductVersionConfigs] = useState([]);
-
-  const handleProductVersionIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setProductVersionId(event.target.value);
-  };
-  const handleProductIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setProductId(event.target.value);
-  };
-  const handleProductVersionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setProductVersion(event.target.value);
-  };
-  const handleConfigIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setConfigId(event.target.value);
-  };
-  const handleConfigNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setConfigName(event.target.value);
-  };
-
-  const fetchData = useCallback(async (url: string, headers: { [key: string]: string }) => {
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setProductVersionConfigs([]);
-      } else {
-        const data = await response.json();
-        console.log(data);
-        setProductVersionConfigs(data.productConfigs);
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e: any) {
-      console.log(e);
-      setError(e.message);
-      setProductVersionConfigs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
-
-  useEffect(() => {
-    const cmd = {
-      host: "lightapi.net",
-      service: "product",
-      action: "getProductVersionConfig",
-      version: "0.1.0",
-      data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        productVersionId: debouncedProductVersionId,
-        productId: debouncedProductId,
-        productVersion: debouncedProductVersion,
-        configId: debouncedConfigId,
-        configName: debouncedConfigName,
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<ProductConfigType>[]>(
+    () => [
+      { accessorKey: 'hostId', header: 'Host ID' },
+      { accessorKey: 'productVersionId', header: 'Product Version ID' },
+      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'productVersion', header: 'Product Version' },
+      { accessorKey: 'configId', header: 'Config ID' },
+      { accessorKey: 'configName', header: 'Config Name' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) =>
+          cell.getValue<string>()
+            ? new Date(cell.getValue<string>()).toLocaleString()
+            : '',
       },
-    };
+    ],
+    [],
+  );
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedProductVersionId,
-    debouncedProductId,
-    debouncedProductVersion,
-    debouncedConfigId,
-    debouncedConfigName,
-    fetchData,
-  ]);
-
-  const handleChangePage = (event: any, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
-
-  const handleCreate = (productVersionId: string, productId: string, productVersion: string) => {
-    navigate("/app/form/createProductVersionConfig", {
-      state: { data: { productVersionId, productId, productVersion } },
-    });
-  };
-
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="product version table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Version Id"
-                    value={productVersionId}
-                    onChange={handleProductVersionIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Id"
-                    value={productId}
-                    onChange={handleProductIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Version"
-                    value={productVersion}
-                    onChange={handleProductVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Config Id"
-                    value={configId}
-                    onChange={handleConfigIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Config Name"
-                    value={configName}
-                    onChange={handleConfigNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <ProductVersionConfigList
-              productVersionConfigs={productVersionConfigs}
-            />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon
-          onClick={() =>
-            handleCreate(productVersionId, productId, productVersion)
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: {
+      isLoading,
+      showAlertBanner: isError,
+      showProgressBars: isRefetching,
+      pagination,
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => `${row.productVersionId}-${row.configId}`,
+    muiToolbarAlertBannerProps: isError
+      ? { color: 'error', children: 'Error loading data' }
+      : undefined,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Delete">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => {
+          if (contextData) {
+            navigate('/app/form/createProductVersionConfig', {
+              state: { data: contextData },
+            });
+          } else {
+            // Handle case where context is missing, maybe disable the button or show a message
+            console.warn('Cannot create: No context data available.');
           }
-        />
-      </div>
-    );
-  }
+        }}
+        disabled={!contextData}
+      >
+        Create New Config
+      </Button>
+    ),
+  });
 
-  return <div className="ProductVersionConfig">{content}</div>;
+  return <MaterialReactTable table={table} />;
 }
