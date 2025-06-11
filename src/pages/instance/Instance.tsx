@@ -27,16 +27,16 @@ const useRowStyles = makeStyles({
   },
 });
 
-function Row(props) {
+function Row(props: { row: any }) {
   const navigate = useNavigate();
   const { row } = props;
   const classes = useRowStyles();
 
-  const handleUpdate = (instance) => {
+  const handleUpdate = (instance: any) => {
     navigate("/app/form/updateInstance", { state: { data: { ...instance } } }); // Adjust path as needed
   };
 
-  const handleDelete = async (row) => {
+  const handleDelete = async (row: any) => {
     if (window.confirm("Are you sure you want to delete this instance?")) {
       const cmd = {
         host: "lightapi.net", // Adjust if needed
@@ -106,12 +106,12 @@ Row.propTypes = {
   }).isRequired,
 };
 
-function InstanceList(props) {
+function InstanceList(props: { instances: any[] }) {
   const { instances } = props;
   return (
     <TableBody>
       {instances && instances.length > 0 ? (
-        instances.map((instance, index) => <Row key={index} row={instance} />)
+        instances.map((instance: any, index: number) => <Row key={index} row={instance} />)
       ) : (
         <TableRow>
           <TableCell colSpan={2} align="center">
@@ -130,7 +130,7 @@ InstanceList.propTypes = {
 export default function Instance() {
   const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const { host } = (useUserState() as { host?: string }) || {};
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [instanceId, setInstanceId] = useState("");
@@ -159,38 +159,38 @@ export default function Instance() {
   const [total, setTotal] = useState(0);
   const [instances, setInstances] = useState([]);
 
-  const handleInstanceIdChange = (event) => {
+  const handleInstanceIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstanceId(event.target.value);
   };
-  const handleInstanceNameChange = (event) => {
+  const handleInstanceNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstanceName(event.target.value);
   };
-  const handleProductIdChange = (event) => {
+  const handleProductIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductId(event.target.value);
   };
-  const handleProductVersionChange = (event) => {
+  const handleProductVersionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductVersion(event.target.value);
   };
-  const handleServiceIdChange = (event) => {
+  const handleServiceIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setServiceId(event.target.value);
   };
-  const handleEnvironmentChange = (event) => {
+  const handleEnvironmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEnvironment(event.target.value);
   };
-  const handlePipelineIdChange = (event) => {
+  const handlePipelineIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPipelineId(event.target.value);
   };
-  const handleServiceDescChange = (event) => {
+  const handleServiceDescChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setServiceDesc(event.target.value);
   };
-  const handleInstanceDescChange = (event) => {
+  const handleInstanceDescChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstanceDesc(event.target.value);
   };
-  const handleTagIdChange = (event) => {
+  const handleTagIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTagId(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url: string, headers: any) => {
     // Wrap fetchData with useCallback
     try {
       setLoading(true);
@@ -208,7 +208,7 @@ export default function Instance() {
       setLoading(false);
     } catch (e) {
       console.log(e);
-      setError(e);
+      setError(e as any);
       setInstances([]);
     } finally {
       setLoading(false);
@@ -260,11 +260,11 @@ export default function Instance() {
     fetchData, // Add fetchData to dependency array of useEffect
   ]);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };

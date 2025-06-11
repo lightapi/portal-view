@@ -12,13 +12,13 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
+import useDebounce from "../../hooks/useDebounce.ts";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
+import { useUserState } from "../../contexts/UserContext.tsx";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
+import { apiPost } from "../../api/apiPost.ts";
 
 const useRowStyles = makeStyles({
   root: {
@@ -234,11 +234,11 @@ export default function InstanceAdmin() {
       setLoading(true);
       const response = await fetch(url, { headers, credentials: "include" });
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.tson();
         setError(error.description);
         setInstances([]);
       } else {
-        const data = await response.json();
+        const data = await response.tson();
         console.log(data);
         setInstances(data.deploymentInstances);
         setTotal(data.total);
