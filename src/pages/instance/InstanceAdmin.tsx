@@ -1,687 +1,301 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import {
+  Box,
+  Button,
+  IconButton,
+  ListItemIcon,
+  Menu,
+  MenuItem,
+  Tooltip,
+} from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import InstallDesktopIcon from "@mui/icons-material/InstallDesktop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
-import { useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useSiteState } from "../../contexts/SiteContext.tsx";
-import { makeStyles } from "@mui/styles";
+import { useUserState } from '../../contexts/UserContext.jsx';
+import { apiPost } from '../../api/apiPost.js';
+import Cookies from 'universal-cookie';
 
-interface SiteState {
-  site: {
-    hostId: string;
-    // other properties of site
-  } | null;
-  owner: any | null;
-  cart: any[];
-  delivery: any;
-  payment: any;
-  specDetail: any;
-  configDetail: any;
-  filter: string | null;
-  menu: string;
-}
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
-import { stringToBoolean } from "../../utils/index.jsx";
+// Define the shape of the API response
+type InstanceApiResponse = {
+  instances: Array<InstanceType>;
+  total: number;
+};
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+// Define the type for a single instance record
+type InstanceType = {
+  hostId: string;
+  instanceId: string;
+  instanceName?: string;
+  productVersionId: string;
+  productId?: string;
+  productVersion?: string;
+  serviceId?: string;
+  current?: boolean;
+  readonly?: boolean;
+  environment?: string;
+  serviceDesc?: string;
+  instanceDesc?: string;
+  zone?: string;
+  region?: string;
+  lob?: string;
+  resourceName?: string;
+  businessName?: string;
+  envTag?: string;
+  topicClassification?: string;
+  updateUser?: string;
+  updateTs?: string;
+};
 
-interface RowProps {
-  row: {
-    hostId: string;
-    instanceId: string;
-    instanceName?: string;
-    productVersionId: string;
-    productId?: string;
-    productVersion?: string;
-    serviceId?: string;
-    current?: boolean;
-    readonly?: boolean;
-    environment?: string;
-    serviceDesc?: string;
-    instanceDesc?: string;
-    zone?: string;
-    region?: string;
-    lob?: string;
-    resourceName?: string;
-    businessName?: string;
-    envTag?: string;
-    topicClassification?: string;
-    updateUser?: string;
-    updateTs?: string;
-  };
-}
-
-function Row(props: RowProps) {
+// A component to handle the numerous row actions cleanly
+const RowActionMenu = ({ row }: { row: MRT_Row<InstanceType> }) => {
   const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
-  const handleUpdate = (instance: any) => {
-    navigate("/app/form/updateInstance", { state: { data: { ...instance } } }); // Adjust path as needed
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
   };
 
-  const handleDelete = async (row: any) => {
-    if (window.confirm("Are you sure you want to delete this instance?")) {
-      const cmd = {
-        host: "lightapi.net", // Adjust if needed
-        service: "instance", // Assuming "instance" service
-        action: "deleteInstance", // Assuming "deleteInstance" action
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  const handleConfigInstanceFile = (instanceId: any) => {
-    navigate("/app/config/configInstanceFile", {
-      state: { data: { instanceId } },
-    });
-  };
-
-  const handleConfig = (instanceId: any) => {
-    navigate("/app/config/configInstance", {
-      state: { data: { instanceId } },
-    });
-  };
-
-  const handleDeploymentInstance = (instanceId: any, instanceName: any, serviceId: any) => {
-    navigate("/app/deployment/instance", {
-      state: { data: { instanceId, instanceName, serviceId } },
-    });
-  };
-
-  const handleInstanceApi = (instanceId: any, instanceName: any, serviceId: any) => {
-    navigate("/app/instance/instanceApi", {
-      state: { data: { instanceId, instanceName, serviceId } },
-    });
-  };
-
-  const handleInstanceApp = (instanceId: any, instanceName: any, serviceId: any) => {
-    navigate("/app/instance/instanceApp", {
-      state: { data: { instanceId, instanceName, serviceId } },
-    });
-  };
-
-  const handleInstanceAppApi = (instanceId: any, instanceName: any, serviceId: any) => {
-    navigate("/app/instance/instanceAppApi", {
-      state: { data: { instanceId, instanceName, serviceId } },
-    });
+  const createNavHandler = (path: string, stateData: object) => () => {
+    navigate(path, { state: { data: stateData } });
+    handleCloseMenu();
   };
 
   return (
-    <TableRow className={classes.root} key={`${row.hostId}-${row.instanceId}`}>
-      <TableCell align="left">{row.hostId}</TableCell>
-      <TableCell align="left">{row.instanceId}</TableCell>
-      <TableCell align="left">{row.instanceName}</TableCell>
-      <TableCell align="left">{row.productVersionId}</TableCell>
-      <TableCell align="left">{row.productId}</TableCell>
-      <TableCell align="left">{row.productVersion}</TableCell>
-      <TableCell align="left">{row.serviceId}</TableCell>
-      <TableCell align="left">{row.current ? "Yes" : "No"}</TableCell>
-      <TableCell align="left">{row.readonly ? "Yes" : "No"}</TableCell>
-      <TableCell align="left">{row.environment}</TableCell>
-      <TableCell align="left">{row.serviceDesc}</TableCell>
-      <TableCell align="left">{row.instanceDesc}</TableCell>
-      <TableCell align="left">{row.zone}</TableCell>
-      <TableCell align="left">{row.region}</TableCell>
-      <TableCell align="left">{row.lob}</TableCell>
-      <TableCell align="left">{row.resourceName}</TableCell>
-      <TableCell align="left">{row.businessName}</TableCell>
-      <TableCell align="left">{row.envTag}</TableCell>
-      <TableCell align="left">{row.topicClassification}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <AddToDriveIcon onClick={() => handleConfig(row.instanceId)} />
-      </TableCell>
-      <TableCell align="right">
-        <AttachFileIcon
-          onClick={() => handleConfigInstanceFile(row.instanceId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <ContentCopyIcon
-          onClick={() =>
-            handleInstanceApi(row.instanceId, row.instanceName, row.serviceId)
-          }
-        />
-      </TableCell>
-      <TableCell align="right">
-        <ContentCopyIcon
-          onClick={() =>
-            handleInstanceApp(row.instanceId, row.instanceName, row.serviceId)
-          }
-        />
-      </TableCell>
-      <TableCell align="right">
-        <ContentCopyIcon
-          onClick={() =>
-            handleInstanceAppApi(
-              row.instanceId,
-              row.instanceName,
-              row.serviceId,
-            )
-          }
-        />
-      </TableCell>
-      <TableCell align="right">
-        <InstallDesktopIcon
-          onClick={() =>
-            handleDeploymentInstance(
-              row.instanceId,
-              row.instanceName,
-              row.serviceId,
-            )
-          }
-        />
-      </TableCell>
-    </TableRow>
+    <>
+      <Tooltip title="Update">
+        <IconButton onClick={createNavHandler('/app/form/updateInstance', { ...row.original })}>
+          <SystemUpdateIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="More Actions">
+        <IconButton onClick={handleOpenMenu}>
+          <MoreVertIcon />
+        </IconButton>
+      </Tooltip>
+      <Menu anchorEl={anchorEl} open={open} onClose={handleCloseMenu}>
+        <MenuItem onClick={createNavHandler('/app/config/configInstance', { instanceId: row.original.instanceId })}>
+          <ListItemIcon><AddToDriveIcon fontSize="small" /></ListItemIcon>
+          Config
+        </MenuItem>
+        <MenuItem onClick={createNavHandler('/app/config/configInstanceFile', { instanceId: row.original.instanceId })}>
+          <ListItemIcon><AttachFileIcon fontSize="small" /></ListItemIcon>
+          Config File
+        </MenuItem>
+        <MenuItem onClick={createNavHandler('/app/instance/instanceApi', { ...row.original })}>
+          <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+          Instance API
+        </MenuItem>
+        <MenuItem onClick={createNavHandler('/app/instance/instanceApp', { ...row.original })}>
+          <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+          Instance App
+        </MenuItem>
+        <MenuItem onClick={createNavHandler('/app/instance/instanceAppApi', { ...row.original })}>
+          <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+          Instance App API
+        </MenuItem>
+        <MenuItem onClick={createNavHandler('/app/deployment/instance', { ...row.original })}>
+          <ListItemIcon><InstallDesktopIcon fontSize="small" /></ListItemIcon>
+          Deployment
+        </MenuItem>
+      </Menu>
+    </>
   );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    instanceId: PropTypes.string.isRequired,
-    instanceName: PropTypes.string,
-    productVersionId: PropTypes.string.isRequired,
-    productId: PropTypes.string,
-    productVersion: PropTypes.string,
-    serviceId: PropTypes.string,
-    current: PropTypes.bool,
-    readonly: PropTypes.bool,
-    environment: PropTypes.string,
-    serviceDesc: PropTypes.string,
-    instanceDesc: PropTypes.string,
-    zone: PropTypes.string,
-    region: PropTypes.string,
-    lob: PropTypes.string,
-    resourceName: PropTypes.string,
-    businessName: PropTypes.string,
-    envTag: PropTypes.string,
-    topicClassification: PropTypes.string,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
 };
 
-interface InstanceListProps {
-  instances: any[];
-}
-
-function InstanceList(props: InstanceListProps) {
-  const { instances } = props;
-  return (
-    <TableBody>
-      {instances && instances.length > 0 ? (
-        instances.map((instance: any, index: any) => <Row key={index} row={instance} />)
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No instances found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-InstanceList.propTypes = {
-  instances: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
 
 export default function InstanceAdmin() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const initialSiteState: SiteState = {
-    site: { hostId: "" } ,
-    owner: null,
-    cart: [],
-    delivery: {},
-    payment: {},
-    specDetail: {},
-    configDetail: {},
-    filter: null,
-    menu: 'catalog'
-  };
-  const siteContext: SiteState = useSiteState() === null ? initialSiteState : useSiteState() as SiteState;
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [instanceId, setInstanceId] = useState("");
-  const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [instanceName, setInstanceName] = useState("");
-  const debouncedInstanceName = useDebounce(instanceName, 1000);
-  const [productVersionId, setProductVersionId] = useState("");
-  const debouncedProductVersionId = useDebounce(productVersionId, 1000);
-  const [productId, setProductId] = useState("");
-  const debouncedProductId = useDebounce(productId, 1000);
-  const [productVersion, setProductVersion] = useState("");
-  const debouncedProductVersion = useDebounce(productVersion, 1000);
-  const [serviceId, setServiceId] = useState("");
-  const debouncedServiceId = useDebounce(serviceId, 1000);
-  const [current, setCurrent] = useState("");
-  const debouncedCurrent = useDebounce(current, 1000);
-  const [readonly, setReadonly] = useState("");
-  const debouncedReadonly = useDebounce(readonly, 1000);
-  const [environment, setEnvironment] = useState("");
-  const debouncedEnvironment = useDebounce(environment, 1000);
-  const [serviceDesc, setServiceDesc] = useState("");
-  const debouncedServiceDesc = useDebounce(serviceDesc, 1000);
-  const [instanceDesc, setInstanceDesc] = useState("");
-  const debouncedInstanceDesc = useDebounce(instanceDesc, 1000);
-  const [zone, setZone] = useState("");
-  const debouncedZone = useDebounce(zone, 1000);
-  const [region, setRegion] = useState("");
-  const debouncedRegion = useDebounce(region, 1000);
-  const [lob, setLob] = useState("");
-  const debouncedLob = useDebounce(lob, 1000);
-  const [resourceName, setResourceName] = useState("");
-  const debouncedResourceName = useDebounce(resourceName, 1000);
-  const [businessName, setBusinessName] = useState("");
-  const debouncedBusinessName = useDebounce(businessName, 1000);
-  const [envTag, setEnvTag] = useState("");
-  const debouncedEnvTag = useDebounce(envTag, 1000);
-  const [topicClassification, setTopicClassification] = useState("");
-  const debouncedTopicClassification = useDebounce(topicClassification, 1000);
+  const { host } = useUserState() as { host: string };
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<any>();
-  const [total, setTotal] = useState(0);
-  const [instances, setInstances] = useState([]);
+  // Data and fetching state
+  const [data, setData] = useState<InstanceType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const handleInstanceIdChange = (event: any) => {
-    setInstanceId(event.target.value);
-  };
-  const handleInstanceNameChange = (event: any) => {
-    setInstanceName(event.target.value);
-  };
-  const handleProductVersionIdChange = (event: any) => {
-    setProductVersionId(event.target.value);
-  };
-  const handleProductIdChange = (event: any) => {
-    setProductId(event.target.value);
-  };
-  const handleProductVersionChange = (event: any) => {
-    setProductVersion(event.target.value);
-  };
-  const handleServiceIdChange = (event: any) => {
-    setServiceId(event.target.value);
-  };
-  const handleCurrentChange = (event: any) => {
-    setCurrent(event.target.value);
-  };
-  const handleReadonlyChange = (event: any) => {
-    setReadonly(event.target.value);
-  };
-  const handleEnvironmentChange = (event: any) => {
-    setEnvironment(event.target.value);
-  };
-  const handleServiceDescChange = (event: any) => {
-    setServiceDesc(event.target.value);
-  };
-  const handleInstanceDescChange = (event: any) => {
-    setInstanceDesc(event.target.value);
-  };
-  const handleZoneChange = (event: any) => {
-    setZone(event.target.value);
-  };
-  const handleRegionChange = (event: any) => {
-    setRegion(event.target.value);
-  };
-  const handleLobChange = (event: any) => {
-    setLob(event.target.value);
-  };
-  const handleResourceNameChange = (event: any) => {
-    setResourceName(event.target.value);
-  };
-  const handleBusinessNameChange = (event: any) => {
-    setBusinessName(event.target.value);
-  };
-  const handleEnvTagChange = (event: any) => {
-    setEnvTag(event.target.value);
-  };
-  const handleTopicClassificationChange = (event: any) => {
-    setTopicClassification(event.target.value);
-  };
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const fetchData = useCallback(async (url: string, headers: any) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setInstances([]);
-      } else {
-        const data = await response.json();
-        console.log(data);
-        setInstances(data.instances); // Assuming response is data.instances
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e: any) {
-      console.log(e);
-      setError(e as Error);
-      setInstances([]);
-    } finally {
-      setLoading(false);
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!data.length) {
+      setIsLoading(true);
+    } else {
+      setIsRefetching(true);
     }
-  }, []); // Empty dependency array for useCallback
 
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "instance",
-      action: "getInstance",
-      version: "0.1.0",
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'getInstance',
+      version: '0.1.0',
       data: {
-        hostId: siteContext?.site?.hostId ?? "",
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        instanceId: debouncedInstanceId,
-        instanceName: debouncedInstanceName,
-        productId: debouncedProductId,
-        productVersion: debouncedProductVersion,
-        serviceId: debouncedServiceId,
-        environment: debouncedEnvironment,
-        serviceDesc: debouncedServiceDesc,
-        instanceDesc: debouncedInstanceDesc,
-        zone: debouncedZone,
-        region: debouncedRegion,
-        lob: debouncedLob,
-        resourceName: debouncedResourceName,
-        businessName: debouncedBusinessName,
-        envTag: debouncedEnvTag,
-        topicClassification: debouncedTopicClassification,
-        ...(debouncedCurrent && debouncedCurrent.trim() !== ""
-          ? { current: stringToBoolean(debouncedCurrent) }
-          : {}),
-        ...(debouncedReadonly && debouncedReadonly.trim() !== ""
-          ? { readonly: stringToBoolean(debouncedReadonly) }
-          : {}),
+        hostId: host,
+        offset: pagination.pageIndex * pagination.pageSize,
+        limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(columnFilters ?? []),
+        globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    console.log("url", url);
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as InstanceApiResponse;
+      setData(json.instances);
+      setRowCount(json.total);
+    } catch (error) {
+      setIsError(true);
+      console.error(error);
+    } finally {
+      setIsError(false);
+      setIsLoading(false);
+      setIsRefetching(false);
+    }
   }, [
-    page,
-    rowsPerPage,
-    siteContext?.site?.hostId ?? "",
-    debouncedInstanceId,
-    debouncedInstanceName,
-    debouncedProductVersionId,
-    debouncedProductId,
-    debouncedProductVersion,
-    debouncedServiceId,
-    debouncedCurrent,
-    debouncedReadonly,
-    debouncedEnvironment,
-    debouncedServiceDesc,
-    debouncedInstanceDesc,
-    debouncedZone,
-    debouncedRegion,
-    debouncedLob,
-    debouncedResourceName,
-    debouncedBusinessName,
-    debouncedEnvTag,
-    debouncedTopicClassification,
-    fetchData,
+    host,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+    data.length,
   ]);
 
-  const handleChangePage = (event: any, newPage: any) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData when table state changes
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+  ]);
 
-  const handleChangeRowsPerPage = (event: any) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler
+  const handleDelete = useCallback(async (row: MRT_Row<InstanceType>) => {
+    if (!window.confirm(`Are you sure you want to delete instance: ${row.original.instanceName || row.original.instanceId}?`)) {
+      return;
+    }
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'deleteInstance',
+      version: '0.1.0',
+      data: row.original,
+    };
+    const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+    if (result.data) {
+      fetchData(); // Refetch data after successful deletion
+    } else if (result.error) {
+      console.error('API Error on delete:', result.error);
+    }
+  }, [fetchData]);
 
-  const handleCreate = () => {
-    navigate("/app/form/createInstance");
-  };
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<InstanceType>[]>(
+    () => [
+      { accessorKey: 'hostId', header: 'Host ID', enableColumnFilter: false },
+      { accessorKey: 'instanceId', header: 'Instance ID' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'productVersionId', header: 'Product Version ID' },
+      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'productVersion', header: 'Product Version' },
+      { accessorKey: 'serviceId', header: 'Service ID' },
+      { accessorKey: 'environment', header: 'Environment' },
+      { accessorKey: 'current', header: 'Current', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
+      { accessorKey: 'readonly', header: 'Readonly', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+    ],
+    [],
+  );
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="instance table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Id"
-                    value={instanceId}
-                    onChange={handleInstanceIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Name"
-                    value={instanceName}
-                    onChange={handleInstanceNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Version Id"
-                    value={productVersionId}
-                    onChange={handleProductVersionIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Id"
-                    value={productId}
-                    onChange={handleProductIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Version"
-                    value={productVersion}
-                    onChange={handleProductVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Service Id"
-                    value={serviceId}
-                    onChange={handleServiceIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Current"
-                    value={current}
-                    onChange={handleCurrentChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Readonly"
-                    value={readonly}
-                    onChange={handleReadonlyChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Environment"
-                    value={environment}
-                    onChange={handleEnvironmentChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Service Desc"
-                    value={serviceDesc}
-                    onChange={handleServiceDescChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Desc"
-                    value={instanceDesc}
-                    onChange={handleInstanceDescChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Zone"
-                    value={zone}
-                    onChange={handleZoneChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Region"
-                    value={region}
-                    onChange={handleRegionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Lob"
-                    value={lob}
-                    onChange={handleLobChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Resource Name"
-                    value={resourceName}
-                    onChange={handleResourceNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Business Name"
-                    value={businessName}
-                    onChange={handleBusinessNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Env Tag"
-                    value={envTag}
-                    onChange={handleEnvTagChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Topic Classification"
-                    value={topicClassification}
-                    onChange={handleTopicClassificationChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Config</TableCell>
-                <TableCell align="right">Instance File</TableCell>
-                <TableCell align="right">Instance Api</TableCell>
-                <TableCell align="right">Instance App</TableCell>
-                <TableCell align="right">Instance App Api</TableCell>
-                <TableCell align="right">Deployment Instance</TableCell>
-              </TableRow>
-            </TableHead>
-            <InstanceList instances={instances} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
-    );
-  }
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: {
+      isLoading,
+      showAlertBanner: isError,
+      showProgressBars: isRefetching,
+      pagination,
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.instanceId,
+    muiToolbarAlertBannerProps: isError
+      ? { color: 'error', children: 'Error loading data' }
+      : undefined,
+    enableRowActions: true,
+    positionActionsColumn: 'last',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <RowActionMenu row={row} />
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => navigate('/app/form/createInstance')}
+      >
+        Create New Instance
+      </Button>
+    ),
+  });
 
-  return <div className="InstanceAdmin">{content}</div>;
+  return <MaterialReactTable table={table} />;
 }

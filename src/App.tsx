@@ -130,7 +130,6 @@ import ProductEnvironment from "./pages/product/ProductEnvironment";
 import ProductPipeline from "./pages/product/ProductPipeline";
 import ProductConfig from "./pages/product/ProductConfig";
 import ProductConfigProperty from "./pages/product/ProductConfigProperty";
-import Instance from "./pages/instance/Instance";
 import InstanceApi from "./pages/instance/InstanceApi";
 import InstanceApiPathPrefix from "./pages/instance/InstanceApiPathPrefix";
 import InstanceApp from "./pages/instance/InstanceApp";
@@ -356,8 +355,6 @@ const App = () => {
           <Route path="product/pipeline" element={<ProductPipeline />} />
           <Route path="product/config" element={<ProductConfig />} />
           <Route path="product/property" element={<ProductConfigProperty />} />
-
-          <Route path="instance/Instance" element={<Instance />} />
           <Route path="instance/InstanceApi" element={<InstanceApi />} />
           <Route
             path="instance/InstanceApiPathPrefix"

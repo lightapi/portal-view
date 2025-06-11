@@ -1,398 +1,241 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useLocation, useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import { useUserState } from '../../contexts/UserContext.jsx';
+import { apiPost } from '../../api/apiPost.js';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (instanceApiPathPrefix) => {
-    navigate("/app/form/updateInstanceApiPathPrefix", {
-      state: { data: { ...instanceApiPathPrefix } },
-    });
-  };
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this instance api path prefix?",
-      )
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "instance",
-        action: "deleteInstanceApiPathPrefix",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-
-      if (result.data) {
-        window.location.reload();
-      } else if (result.error) {
-        console.error("API Error:", result.error);
-        // Optionally, show an error to the user
-      }
-    }
-  };
-
-  return (
-    <TableRow
-      className={classes.root}
-      key={`${row.hostId}-${row.instanceApiId}-${row.pathPrefix}`}
-    >
-      <TableCell align="left">{row.hostId}</TableCell>
-      <TableCell align="left">{row.instanceApiId}</TableCell>
-      <TableCell align="left">{row.instanceId}</TableCell>
-      <TableCell align="left">{row.instanceName}</TableCell>
-      <TableCell align="left">{row.productId}</TableCell>
-      <TableCell align="left">{row.productVersion}</TableCell>
-      <TableCell align="left">{row.apiVersionId}</TableCell>
-      <TableCell align="left">{row.apiId}</TableCell>
-      <TableCell align="left">{row.apiVersion}</TableCell>
-      <TableCell align="left">{row.pathPrefix}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    instanceApiId: PropTypes.string.isRequired,
-    instanceId: PropTypes.string.isRequired,
-    instanceName: PropTypes.string.isRequired,
-    productId: PropTypes.string.isRequired,
-    productVersion: PropTypes.string.isRequired,
-    apiVersionId: PropTypes.string.isRequired,
-    apiId: PropTypes.string.isRequired,
-    apiVersion: PropTypes.string.isRequired,
-    pathPrefix: PropTypes.string.isRequired,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
+// Define the shape of the API response
+type InstanceApiPathPrefixApiResponse = {
+  instanceApiPathPrefixes: Array<InstanceApiPathPrefixType>;
+  total: number;
 };
 
-function InstanceApiPathPrefixList(props) {
-  const { instanceApiPathPrefixes } = props;
-  return (
-    <TableBody>
-      {instanceApiPathPrefixes && instanceApiPathPrefixes.length > 0 ? (
-        instanceApiPathPrefixes.map((instanceApiPathPrefix, index) => (
-          <Row key={index} row={instanceApiPathPrefix} />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={9} align="center">
-            {" "}
-            {/* Adjust colSpan as necessary */}
-            No instance Apis found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-InstanceApiPathPrefixList.propTypes = {
-  instanceApiPathPrefixes: PropTypes.arrayOf(PropTypes.object).isRequired,
+// Define the type for a single record
+type InstanceApiPathPrefixType = {
+  hostId: string;
+  instanceApiId: string;
+  instanceId: string;
+  instanceName: string;
+  productId: string;
+  productVersion: string;
+  apiVersionId: string;
+  apiId: string;
+  apiVersion: string;
+  pathPrefix: string;
+  updateUser?: string;
+  updateTs?: string;
 };
 
 export default function InstanceApiPathPrefix() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const data = location.state?.data;
+  const userState: { host?: string } | null = useUserState();
+  const host = userState?.host || '';
+  
+  // Contextual data from previous page, used for creating a new prefix
+  const contextData = location.state?.data;
 
-  const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  // Data and fetching state
+  const [data, setData] = useState<InstanceApiPathPrefixType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const [instanceApiId, setInstanceApiId] = useState(
-    () => data?.instanceApiId || "",
-  );
-  const debouncedInstanceApiId = useDebounce(instanceApiId, 1000);
-  const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
-  const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [instanceName, setInstanceName] = useState("");
-  const debouncedInstanceName = useDebounce(instanceName, 1000);
-  const [productId, setProductId] = useState("");
-  const debouncedProductId = useDebounce(productId, 1000);
-  const [productVersion, setProductVersion] = useState("");
-  const debouncedProductVersion = useDebounce(productVersion, 1000);
-  const [apiVersionId, setApiVersionId] = useState("");
-  const debouncedApiVersionId = useDebounce(apiVersionId, 1000);
-  const [apiId, setApiId] = useState(() => data?.apiId || "");
-  const debouncedApiId = useDebounce(apiId, 1000);
-  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
-  const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [pathPrefix, setPathPrefix] = useState("");
-  const debouncedPathPrefix = useDebounce(pathPrefix, 1000);
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [total, setTotal] = useState(0);
-  const [instanceApiPathPrefixes, setInstanceApiPathPrefixes] = useState([]);
-
-  const handleInstanceApiIdChange = (event) => {
-    setInstanceApiId(event.target.value);
-  };
-  const handleInstanceIdChange = (event) => {
-    setInstanceId(event.target.value);
-  };
-  const handleInstanceNameChange = (event) => {
-    setInstanceName(event.target.value);
-  };
-
-  const handleProductIdChange = (event) => {
-    setProductId(event.target.value);
-  };
-  const handleProductVersionChange = (event) => {
-    setProductVersion(event.target.value);
-  };
-  const handleApiVersionIdChange = (event) => {
-    setApiVersionId(event.target.value);
-  };
-  const handleApiIdChange = (event) => {
-    setApiId(event.target.value);
-  };
-  const handleApiVersionChange = (event) => {
-    setApiVersion(event.target.value);
-  };
-  const handlePathPrefixChange = (event) => {
-    setPathPrefix(event.target.value);
-  };
-
-  const fetchData = useCallback(async (url, headers) => {
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.description || "An error occurred.");
-        setInstanceApiPathPrefixes([]);
-      } else {
-        const data = await response.json();
-        setInstanceApiPathPrefixes(data.instanceApiPathPrefixes || []);
-        setTotal(data.total || 0);
-      }
-    } catch (e) {
-      console.error("Fetch error:", e);
-      setError("Network or server error.");
-      setInstanceApiPathPrefixes([]);
-    } finally {
-      setLoading(false);
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) {
+      setIsLoading(true);
+    } else {
+      setIsRefetching(true);
     }
-  }, []);
 
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "instance",
-      action: "getInstanceApiPathPrefix",
-      version: "0.1.0",
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'getInstanceApiPathPrefix',
+      version: '0.1.0',
       data: {
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
         hostId: host,
-        instanceApiId: debouncedInstanceApiId,
-        instanceId: debouncedInstanceId,
-        instanceName: debouncedInstanceName,
-        productId: debouncedProductId,
-        productVersion: debouncedProductVersion,
-        apiVersionId: debouncedApiVersionId,
-        apiId: debouncedApiId,
-        apiVersion: debouncedApiVersion,
-        pathPrefix: debouncedPathPrefix,
+        offset: pagination.pageIndex * pagination.pageSize,
+        limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(columnFilters ?? []),
+        globalFilter: globalFilter ?? '',
       },
     };
 
     const url = `/portal/query?cmd=${encodeURIComponent(JSON.stringify(cmd))}`;
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as InstanceApiPathPrefixApiResponse;
+      setData(json.instanceApiPathPrefixes || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true);
+      console.error(error);
+    } finally {
+      setIsError(false);
+      setIsLoading(false);
+      setIsRefetching(false);
+    }
   }, [
-    page,
-    rowsPerPage,
     host,
-    debouncedInstanceApiId,
-    debouncedInstanceId,
-    debouncedInstanceName,
-    debouncedProductId,
-    debouncedProductVersion,
-    debouncedApiVersionId,
-    debouncedApiId,
-    debouncedApiVersion,
-    debouncedPathPrefix,
-    fetchData,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+    data.length,
   ]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+  // useEffect to trigger fetchData when table state changes
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    host,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+  ]);
+
+  const handleCreate = (instanceApiId?: string) => {
+    if (instanceApiId) {
+      navigate('/app/form/createInstanceApiPathPrefix', { state: { data: { instanceApiId } } });
+    } else {
+      console.error("Cannot create: instanceApiId is missing from context.");
+    }
   };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleUpdate = (rowData: InstanceApiPathPrefixType) => {
+    navigate('/app/form/updateInstanceApiPathPrefix', { state: { data: rowData } });
   };
 
-  const handleCreate = (instanceApiId) => {
-    navigate("/app/form/createInstanceApiPathPrefix", {
-      state: { data: { instanceApiId } },
-    });
-  };
+  const handleDelete = useCallback(async (row: MRT_Row<InstanceApiPathPrefixType>) => {
+    if (!window.confirm(`Are you sure you want to delete the path prefix: ${row.original.pathPrefix}?`)) {
+      return;
+    }
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'deleteInstanceApiPathPrefix',
+      version: '0.1.0',
+      data: row.original,
+    };
+    const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+    if (result.data) {
+      // Refetch data on the current page after successful deletion
+      fetchData();
+    } else if (result.error) {
+      console.error('API Error on delete:', result.error);
+    }
+  }, [fetchData]);
 
-  let content;
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<InstanceApiPathPrefixType>[]>(
+    () => [
+      { accessorKey: 'instanceApiId', header: 'Instance API ID' },
+      { accessorKey: 'pathPrefix', header: 'Path Prefix' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'apiId', header: 'API ID' },
+      { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+    ],
+    [],
+  );
 
-  if (loading) {
-    content = <CircularProgress />;
-  } else if (error) {
-    content = <div style={{ color: "red" }}>Error: {error}</div>;
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="instance API path prefix table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Api Id"
-                    value={instanceApiId}
-                    onChange={handleInstanceApiIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Id"
-                    value={instanceId}
-                    onChange={handleInstanceIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Name"
-                    value={instanceName}
-                    onChange={handleInstanceNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Id"
-                    value={productId}
-                    onChange={handleProductIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Product Version"
-                    value={productVersion}
-                    onChange={handleProductVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Api Version Id"
-                    value={apiVersionId}
-                    onChange={handleApiVersionIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="API Id"
-                    value={apiId}
-                    onChange={handleApiIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="API Version"
-                    value={apiVersion}
-                    onChange={handleApiVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Path Prefix"
-                    value={pathPrefix}
-                    onChange={handlePathPrefixChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <InstanceApiPathPrefixList
-              instanceApiPathPrefixes={instanceApiPathPrefixes}
-            />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate(instanceApiId)} />
-      </div>
-    );
-  }
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    // Turn on manual modes
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount, // Set the total number of rows from the server
+    initialState: {
+        showColumnFilters: true,
+        density: 'compact'
+    },
+    state: {
+      isLoading,
+      showAlertBanner: isError,
+      showProgressBars: isLoading,
+      pagination,
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
+    // Wire up the on-change handlers to update state
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => `${row.instanceApiId}-${row.pathPrefix}`,
+    muiToolbarAlertBannerProps: isError
+      ? { color: 'error', children: 'Error loading data' }
+      : undefined,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+        <Tooltip title="Update">
+          <IconButton onClick={() => handleUpdate(row.original)}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => handleCreate(contextData?.instanceApiId)}
+        disabled={!contextData?.instanceApiId}
+      >
+        Create New Prefix
+      </Button>
+    ),
+  });
 
-  return <div className="InstanceApiPathPrefix">{content}</div>;
+  return <MaterialReactTable table={table} />;
 }
