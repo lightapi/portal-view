@@ -10375,10 +10375,6 @@
           "type": "string",
           "title": "Value Type"
         },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
-        },
         "resourceType": {
           "type": "string",
           "title": "Resource Type"
@@ -10467,7 +10463,6 @@
           }
         ]
       },
-      "propertyFile",
       {
         "key": "resourceType",
         "type": "dynaselect",
@@ -10564,10 +10559,6 @@
           "type": "string",
           "title": "Value Type"
         },
-        "propertyFile": {
-          "type": "string",
-          "title": "Property File"
-        },
         "resourceType": {
           "type": "string",
           "title": "Resource Type"
@@ -10650,7 +10641,6 @@
           }
         ]
       },
-      "propertyFile",
       {
         "key": "resourceType",
         "type": "dynaselect",
