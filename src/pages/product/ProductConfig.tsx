@@ -76,7 +76,7 @@ export default function ProductConfig() {
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(columnFilters ?? []), // MRT uses 'filters', let's be consistent
+        filters: JSON.stringify(table.getState().columnFilters ?? []), // MRT uses 'filters', let's be consistent
         globalFilter: globalFilter ?? '',
       },
     };
@@ -118,6 +118,7 @@ export default function ProductConfig() {
     pagination.pageIndex,
     pagination.pageSize,
     sorting,
+    contextData,
   ]);
 
   // Delete handler
@@ -179,7 +180,16 @@ export default function ProductConfig() {
   const table = useMaterialReactTable({
     columns,
     data,
-    initialState: { showColumnFilters: true },
+    initialState: {
+      showColumnFilters: true,
+      columnFilters: [
+        ...(contextData?.productVersionId
+          ? [{ id: 'productVersionId', value: contextData.productVersionId }]
+          : []),
+        ...(contextData?.productId ? [{ id: 'productId', value: contextData.productId }] : []),
+        ...(contextData?.productVersion ? [{ id: 'productVersion', value: contextData.productVersion }] : []),
+      ],
+    },
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
