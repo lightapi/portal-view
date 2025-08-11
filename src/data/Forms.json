@@ -198,7 +198,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       }
@@ -265,8 +265,8 @@
       }
     ]
   },
-  "createHostForm": {
-    "formId": "createHostForm",
+  "createHost": {
+    "formId": "createHost",
     "actions": [
       {
         "host": "lightapi.net",
@@ -296,7 +296,7 @@
           "type": "string"
         },
         "hostOwner": {
-          "title": "Host description",
+          "title": "Host owner",
           "type": "string"
         }
       }
@@ -319,14 +319,14 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       }
     ]
   },
-  "updateHostForm": {
-    "formId": "updateHostForm",
+  "updateHost": {
+    "formId": "updateHost",
     "actions": [
       {
         "host": "lightapi.net",
@@ -376,7 +376,7 @@
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22N2CMw0HGQXeLvC1wBfln2A%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
       }
