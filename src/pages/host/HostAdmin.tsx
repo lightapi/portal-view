@@ -26,12 +26,14 @@ type HostApiResponse = {
 // Define the type for a single host record
 type HostType = {
   hostId: string;
+  currentHostId: string;
   domain: string;
   subDomain: string;
   hostDesc?: string;
   hostOwner?: string;
   updateUser?: string;
   updateTs?: string;
+  aggregateVersion?: number;
 };
 
 export default function HostAdmin() {
@@ -115,7 +117,8 @@ export default function HostAdmin() {
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<HostType>) => {
-    if (!window.confirm(`Are you sure you want to delete host: ${row.original.domain}?`)) {
+    console.log(row);
+    if (!window.confirm(`Are you sure you want to delete host: ${row.original.subDomain}?`)) {
       return;
     }
     const cmd = {
@@ -123,7 +126,7 @@ export default function HostAdmin() {
       service: 'host',
       action: 'deleteHost',
       version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.currentHostId, aggregateVersion: row.original.aggregateVersion },
     };
     const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
     if (result.data) {
@@ -136,11 +139,12 @@ export default function HostAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<HostType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host ID' },
+      { accessorKey: 'currentHostId', header: 'HostId' },
       { accessorKey: 'domain', header: 'Domain' },
       { accessorKey: 'subDomain', header: 'SubDomain' },
       { accessorKey: 'hostDesc', header: 'Description' },
       { accessorKey: 'hostOwner', header: 'Owner' },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',

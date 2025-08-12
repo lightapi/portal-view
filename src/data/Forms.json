@@ -343,6 +343,11 @@
       "title": "Host Request",
       "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
       "properties": {
+        "currentHostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "domain": {
           "title": "Domain",
           "type": "string",
@@ -364,6 +369,7 @@
       }
     },
     "form": [
+      "currentHostId",
       "domain",
       "subDomain",
       {
@@ -923,8 +929,7 @@
       "properties": {
         "hostId": {
           "title": "Host Id",
-          "type": "string",
-          "default": "N2CMw0HGQXeLvC1wBfln2A"
+          "type": "string"
         },
         "email": {
           "title": "Email",
