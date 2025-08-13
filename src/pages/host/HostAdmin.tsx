@@ -57,6 +57,7 @@ export default function HostAdmin() {
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
+    console.log("fetchData is called.", data);
     if (!data.length) {
       setIsLoading(true);
     } else {
@@ -82,8 +83,10 @@ export default function HostAdmin() {
     const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
+      console.log("call the fetch api");
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as HostApiResponse;
+      console.log(json);
       setData(json.hosts);
       setRowCount(json.total);
     } catch (error) {
@@ -100,7 +103,6 @@ export default function HostAdmin() {
     pagination.pageIndex,
     pagination.pageSize,
     sorting,
-    data.length,
   ]);
 
   // useEffect to trigger fetchData when table state changes
@@ -117,10 +119,17 @@ export default function HostAdmin() {
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<HostType>) => {
-    console.log(row);
     if (!window.confirm(`Are you sure you want to delete host: ${row.original.subDomain}?`)) {
       return;
     }
+
+    // Keep a copy of the current data in case we need to roll back
+    const originalData = [...data];
+
+    // Optimistically update the UI
+    setData(prevData => prevData.filter(host => host.currentHostId !== row.original.currentHostId));
+    setRowCount(prev => prev - 1); // Also optimistically update the total count
+
     const cmd = {
       host: 'lightapi.net',
       service: 'host',
@@ -128,13 +137,28 @@ export default function HostAdmin() {
       version: '0.1.0',
       data: { hostId: row.original.currentHostId, aggregateVersion: row.original.aggregateVersion },
     };
-    const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
-    if (result.data) {
-      fetchData(); // Refetch data after successful deletion
-    } else if (result.error) {
-      console.error('API Error on delete:', result.error);
+    
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        // On failure, revert the UI and show an error
+        console.error('API Error on delete:', result.error);
+        alert('Failed to delete host. Please try again.'); // Or use a snackbar
+        setData(originalData);
+        setRowCount(originalData.length); // Revert the count
+      }
+      // On success, do nothing! The UI is already correct.
+      // You could trigger a silent background refetch here if you want to be 100% in sync, but it's often not necessary.
+
+    } catch (e) {
+      // Also handle network errors
+      console.error('Network Error on delete:', e);
+      alert('Failed to delete host due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
     }
-  }, [fetchData]);
+  }, [data]); // The main dependency is the 'data' for rollback.
+
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<HostType>[]>(
@@ -177,7 +201,7 @@ export default function HostAdmin() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => row.hostId,
+    getRowId: (row) => row.currentHostId,
     muiToolbarAlertBannerProps: isError
       ? { color: 'error', children: 'Error loading data' }
       : undefined,
