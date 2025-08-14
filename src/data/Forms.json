@@ -1089,6 +1089,186 @@
       "postCode"
     ]
   },
+  "onboardUser": {
+    "formId": "onboardUser",
+    "skipAuth": true,
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "user",
+        "action": "onboardUser",
+        "version": "0.1.0",
+        "title": "Onboard",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "User Onboard",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string",
+          "pattern": "^\\S+@\\S+$",
+          "validationMessage": "Email must be of proper format: example@example.com"
+        },
+        "entityId": {
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "userType": {
+          "title": "User Type",
+          "type": "string"
+        },
+        "referralId": {
+          "type": "string",
+          "title": "Referral Id or Email"
+        },
+        "managerId": {
+          "type": "string",
+          "title": "Manager Id or Email"
+        },
+        "language": {
+          "type": "string",
+          "default": "en",
+          "enum": ["en"]
+        },
+        "password": {
+          "type": "string"
+        },
+        "passwordConfirm": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string",
+          "title": "First Name"
+        },
+        "lastName": {
+          "type": "string",
+          "title": "Last Name"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "title": "Phone Number"
+        },
+        "gender": {
+          "type": "string",
+          "title": "Gender"
+        },
+        "birthday": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "province": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "postCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "email",
+        "entityId",
+        "userType",
+        "language",
+        "password",
+        "passwordConfirm"
+      ]
+    },
+    "form": [
+      {
+        "key": "hostId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22host%22%2C%22action%22%3A%22getHostLabel%22%2C%22version%22%3A%220.1.0%22%7D"
+        }
+      },
+      "email",
+      "entityId",
+      {
+        "key": "userType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=user_type"
+        }
+      },
+      {
+        "condition": "model.userType === 'C'",
+        "key": "referralId"
+      },
+      {
+        "condition": "model.userType === 'E'",
+        "key": "managerId"
+      },
+      "language",
+      {
+        "key": "password",
+        "type": "password"
+      },
+      {
+        "key": "passwordConfirm",
+        "type": "password"
+      },
+      "firstName",
+      "lastName",
+      "phoneNumber",
+      {
+        "key": "gender",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "M",
+            "label": "Male"
+          },
+          {
+            "id": "F",
+            "label": "Female"
+          }
+        ]
+      },
+      {
+        "key": "birthday",
+        "type": "date"
+      },
+      {
+        "key": "country",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=country"
+        }
+      },
+      {
+        "key": "province",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=province&rela=country-province&from={0}",
+          "params": ["country"]
+        }
+      },
+      "city",
+      "address",
+      "postCode"
+    ]
+  },
   "changePasswordForm": {
     "formId": "changePasswordForm",
     "actions": [
