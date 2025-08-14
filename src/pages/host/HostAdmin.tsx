@@ -175,53 +175,8 @@ export default function HostAdmin() {
         header: 'Update Time',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'details',
-        header: 'Details',
-        enableSorting: false,
-        enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Details">
-            <IconButton onClick={() => navigate('/app/host/hostDetail', { state: { data: { hostId: row.original.hostId } } })}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'update',
-        header: 'Update',
-        enableSorting: false,
-        enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update">
-            <IconButton onClick={() => navigate('/app/form/updateHost', { state: { data: { ...row.original } } })}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete',
-        header: 'Delete',
-        enableSorting: false,
-        enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-    ],
-    [handleDelete, navigate], // Add dependencies for functions used inside
+    ],  
+    [],
   );
 
   // Table instance configuration
@@ -251,8 +206,28 @@ export default function HostAdmin() {
       ? { color: 'error', children: 'Error loading data' }
       : undefined,
     
-    enableRowActions: false, // This is now false
-
+    enableRowActions: true,
+    positionActionsColumn: 'last',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+        <Tooltip title="Details">
+          <IconButton onClick={() => navigate('/app/host/hostDetail', { state: { data: { hostId: row.original.hostId } } })}>
+            <SettingsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Update">
+          <IconButton onClick={() => navigate('/app/form/updateHost', { state: { data: { ...row.original } } })}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
