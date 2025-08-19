@@ -24,7 +24,6 @@ import ServiceDetail from "./pages/service/ServiceDetail";
 import OpenapiEditor from "./pages/service/OpenapiEditor";
 import HybridEditor from "./pages/service/HybridEditor";
 import GraphqlEditor from "./pages/service/GraphqlEditor";
-import SubmitSpec from "./pages/service/SubmitSpec";
 import ServiceEndpoint from "./pages/service/ServiceEndpoint";
 import ListScope from "./pages/service/ListScope";
 import ListRule from "./pages/service/ListRule";
@@ -175,7 +174,6 @@ const App = () => {
           <Route path="openapiEditor" element={<OpenapiEditor />} />
           <Route path="hybridEditor" element={<HybridEditor />} />
           <Route path="graphqlEditor" element={<GraphqlEditor />} />
-          <Route path="submitSpec" element={<SubmitSpec />} />
           <Route path="serviceEndpoint" element={<ServiceEndpoint />} />
           <Route path="listScope" element={<ListScope />} />
           <Route path="listRule" element={<ListRule />} />
