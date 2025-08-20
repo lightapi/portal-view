@@ -91,6 +91,7 @@ export default function ServiceDetail() {
         setIsLoading(true);
         const response = await fetch(url, { headers, credentials: 'include' });
         const data = await response.json();
+        console.log("data = ", data);
         setVersions(data || []);
       } catch (error) {
         console.error("Failed to fetch service versions:", error);
@@ -105,8 +106,10 @@ export default function ServiceDetail() {
   // Column definitions for the MaterialReactTable
   const columns = useMemo<MRT_ColumnDef<ServiceVersionType>[]>(
     () => [
-      { accessorKey: 'apiVersion', header: 'Version' },
-      { accessorKey: 'apiType', header: 'Type' },
+      { accessorKey: 'apiVersionId', header: 'Version Id' },
+      { accessorKey: 'apiId', header: 'Api Id' },
+      { accessorKey: 'apiVersion', header: 'Api Version' },
+      { accessorKey: 'apiType', header: 'Api Type' },
       { accessorKey: 'apiVersionDesc', header: 'Description' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'specLink', header: 'Spec Link' },
@@ -129,7 +132,7 @@ export default function ServiceDetail() {
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
           <Tooltip title="Instance API">
-            <IconButton onClick={() => navigate('/app/instance/InstanceApi', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+            <IconButton onClick={() => navigate('/app/instance/InstanceApi', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
               <ContentCopyIcon />
             </IconButton>
           </Tooltip>
@@ -140,7 +143,7 @@ export default function ServiceDetail() {
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
           <Tooltip title="Endpoint">
-            <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+            <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
               <FormatListBulletedIcon />
             </IconButton>
           </Tooltip>
