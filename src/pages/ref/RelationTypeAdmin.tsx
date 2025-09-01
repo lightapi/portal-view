@@ -1,405 +1,201 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom"; // Removed useLocation as it's not used here
-import Cookies from "universal-cookie";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import LinkIcon from '@mui/icons-material/Link';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost.js';
+import Cookies from 'universal-cookie';
 
-// MUI Imports
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import LinkIcon from "@mui/icons-material/Link";
-import Tooltip from "@mui/material/Tooltip";
-import { useUserState } from "../../contexts/UserContext"; // Assuming this is still relevant
-import useDebounce from "../../hooks/useDebounce.js";
-import { apiPost } from "../../api/apiPost.js";
-
-const useRowStyles = makeStyles((theme) => ({
-  // Added theme for potential primary color access
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-  input: {
-    fontSize: "inherit",
-    padding: "4px 8px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    width: "90%",
-    boxSizing: "border-box",
-  },
-  iconButton: {
-    cursor: "pointer",
-    padding: "4px",
-    "&:hover": {
-      color: theme?.palette?.primary?.main || "blue", // Fallback color
-    },
-  },
-}));
-
-function RelationTypeRow(props) {
-  const navigate = useNavigate();
-  const { row, onDeleteSuccess } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (relationRow) => {
-    console.log("Update Relation Type Row:", relationRow);
-    navigate("/app/form/updateRelationType", {
-      // <-- Navigate to updateRelationType form
-      state: {
-        data: { ...relationRow },
-      },
-    });
-  };
-
-  const handleDelete = async (relationRow) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete this relation type? (Name: ${relationRow.relationName}, ID: ${relationRow.relationId})`,
-      )
-    ) {
-      const cmd = {
-        host: "lightapi.net", // Assuming standard host
-        service: "ref", // Assuming 'ref' service
-        action: "deleteRefRelationType", // <-- Action to delete relation type
-        version: "0.1.0", // Use appropriate version
-        data: {
-          relationId: relationRow.relationId,
-        },
-      };
-      console.log("Delete command:", cmd);
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {}, // apiPost should handle auth/CSRF
-        body: cmd,
-      });
-
-      if (result && !result.error) {
-        // Check for non-error, result.data might be empty on success
-        alert("Relation Type deleted successfully.");
-        if (onDeleteSuccess) onDeleteSuccess(); // Trigger data refresh
-      } else if (result && result.error) {
-        console.error("API Error deleting Relation Type:", result.error);
-        alert(
-          `Error deleting Relation Type: ${result.error.description || result.error.message || "Unknown error"}`,
-        );
-      } else {
-        // Handle case where result is undefined or not structured as expected
-        console.error("Unexpected response from API during delete:", result);
-        alert(
-          "An unexpected error occurred while deleting. Check console for details.",
-        );
-      }
-    }
-  };
-
-  const handleRelation = (relationId) => {
-    navigate("/app/ref/relation", {
-      state: { data: { relationId } },
-    });
-  };
-
-  const truncateData = (data, maxLength = 70) => {
-    if (!data) return "";
-    if (data.length <= maxLength) return data;
-    return data.substring(0, maxLength) + "...";
-  };
-
-  return (
-    <TableRow className={classes.root} key={row.relationId}>
-      <TableCell align="left">{row.relationId}</TableCell>
-      <TableCell align="left">{row.relationName}</TableCell>
-      <TableCell
-        align="left"
-        style={{
-          maxWidth: 250,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        <Tooltip title={row.relationDesc || ""}>
-          <span>{truncateData(row.relationDesc)}</span>
-        </Tooltip>
-      </TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Update Relation Type">
-          <SystemUpdateIcon
-            className={classes.iconButton}
-            onClick={() => handleUpdate(row)}
-          />
-        </Tooltip>
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Delete Relation Type">
-          <DeleteForeverIcon
-            className={classes.iconButton}
-            onClick={() => handleDelete(row)}
-          />
-        </Tooltip>
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Ref Relation">
-          <LinkIcon
-            className={classes.iconButton}
-            onClick={() => handleRelation(row.relationId)}
-          />
-        </Tooltip>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-RelationTypeRow.propTypes = {
-  row: PropTypes.shape({
-    relationId: PropTypes.string.isRequired,
-    relationName: PropTypes.string.isRequired,
-    relationDesc: PropTypes.string.isRequired,
-    updateUser: PropTypes.string.isRequired,
-    updateTs: PropTypes.string.isRequired,
-  }).isRequired,
-  onDeleteSuccess: PropTypes.func,
+// --- Type Definitions ---
+type RelationTypeApiResponse = {
+  relationTypes: Array<RelationType>;
+  total: number;
 };
 
-function RelationTypeList(props) {
-  const { relationTypes, onDeleteSuccess } = props;
-  return (
-    <TableBody>
-      {relationTypes && relationTypes.length > 0 ? (
-        relationTypes.map((relationRow) => (
-          <RelationTypeRow
-            key={relationRow.relationId}
-            row={relationRow}
-            onDeleteSuccess={onDeleteSuccess}
-          />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={7} align="center">
-            {" "}
-            {/* Adjusted colSpan */}
-            No Relation Types found matching your criteria.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-RelationTypeList.propTypes = {
-  relationTypes: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onDeleteSuccess: PropTypes.func,
+type RelationType = {
+  hostId: string;
+  relationId: string;
+  relationName: string;
+  relationDesc: string;
+  updateUser: string;
+  updateTs: string;
+  aggregateVersion?: number;
 };
 
-// --- Main RelationTypeAdmin Component ---
 export default function RelationTypeAdmin() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const { host } = useUserState(); // Assuming host is needed for API calls
+  const { host } = useUserState();
 
-  // Filter State
-  const [relationId, setRelationId] = useState("");
-  const debouncedRelationId = useDebounce(relationId, 1000);
-  const [relationName, setRelationName] = useState("");
-  const debouncedRelationName = useDebounce(relationName, 1000);
-  const [relationDesc, setRelationDesc] = useState("");
-  const debouncedRelationDesc = useDebounce(relationDesc, 1000);
+  // Data and fetching state
+  const [data, setData] = useState<RelationType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [total, setTotal] = useState(0);
-  const [relationTypes, setRelationTypes] = useState([]); // State for relation types
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  // Filter Input Handlers
-  const handleRelationIdChange = (event) => setRelationId(event.target.value);
-  const handleRelationNameChange = (event) =>
-    setRelationName(event.target.value);
-  const handleRelationDescChange = (event) =>
-    setRelationDesc(event.target.value);
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-  // To force a re-fetch, e.g., after a delete
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const triggerDataRefresh = () => setRefreshTrigger((prev) => prev + 1);
-
-  const fetchData = useCallback(async (url, headers) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(url, { headers, credentials: "include" });
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        console.error("API Error Response:", responseData);
-        setError(
-          responseData.description ||
-            responseData.message ||
-            `HTTP error! status: ${response.status}`,
-        );
-        setRelationTypes([]);
-        setTotal(0);
-      } else {
-        console.log("API Success Response:", responseData);
-        // Assuming the API returns { relationTypes: [], total: 0 }
-        setRelationTypes(responseData.relationTypes || []);
-        setTotal(responseData.total || 0);
-      }
-    } catch (e) {
-      console.error("Fetch Error:", e);
-      setError(e.message || "An unexpected error occurred");
-      setRelationTypes([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // No direct dependencies for the function itself
-
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "ref",
-      action: "getRefRelationType", // Action from spec
-      version: "0.1.0", // Use appropriate version
+      host: 'lightapi.net', service: 'ref', action: 'getRefRelationType', version: '0.1.0',
       data: {
-        hostId: host, // Assuming hostId might be used by the backend
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        // Optional filters
-        ...(debouncedRelationId && { relationId: debouncedRelationId }),
-        ...(debouncedRelationName && { relationName: debouncedRelationName }),
-        ...(debouncedRelationDesc && { relationDesc: debouncedRelationDesc }),
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedRelationId,
-    debouncedRelationName,
-    debouncedRelationDesc,
-    fetchData,
-    refreshTrigger, // Add refreshTrigger as a dependency
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as RelationTypeApiResponse;
+      setData(json.relationTypes || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<RelationType>) => {
+    if (!window.confirm(`Are you sure you want to delete relation type: ${row.original.relationName}?`)) return;
 
-  const handleCreate = () => {
-    console.log("Navigate to create Relation Type page");
-    navigate("/app/form/createRelationType"); // No specific data needed for creation usually
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(rt => rt.relationId !== row.original.relationId));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div
-        style={{ display: "flex", justifyContent: "center", padding: "20px" }}
-      >
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div style={{ color: "red", padding: "20px" }}>
-        <h4>Error Fetching Relation Types:</h4>
-        <pre>
-          {typeof error === "string" ? error : JSON.stringify(error, null, 2)}
-        </pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="relation type table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Relation Id"
-                    value={relationId}
-                    onChange={handleRelationIdChange}
-                    className={classes.input}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Relation Name"
-                    value={relationName}
-                    onChange={handleRelationNameChange}
-                    className={classes.input}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Relation Desc"
-                    value={relationDesc}
-                    onChange={handleRelationDescChange}
-                    className={classes.input}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Relation</TableCell>
-              </TableRow>
-            </TableHead>
-            <RelationTypeList
-              relationTypes={relationTypes}
-              onDeleteSuccess={triggerDataRefresh}
-            />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <Tooltip title="Add New Relation Type">
-          <AddBoxIcon
-            onClick={handleCreate}
-            style={{ cursor: "pointer", margin: "10px", fontSize: "2rem" }}
-          />
-        </Tooltip>
-      </div>
-    );
-  }
+    const cmd = {
+      host: 'lightapi.net', service: 'ref', action: 'deleteRefRelationType', version: '0.1.0',
+      data: { relationId: row.original.relationId, aggregateVersion: row.original.aggregateVersion },
+    };
 
-  return <div className="RelationTypeAdmin">{content}</div>;
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete relation type. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete relation type due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<RelationType>[]>(
+    () => [
+      { accessorKey: 'relationId', header: 'Relation ID' },
+      { accessorKey: 'relationName', header: 'Relation Name' },
+      {
+        accessorKey: 'relationDesc',
+        header: 'Description',
+        Cell: ({ cell }) => (
+          <Tooltip title={cell.getValue<string>()}>
+            <Box component="span" sx={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {cell.getValue<string>()}
+            </Box>
+          </Tooltip>
+        ),
+      },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs', header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Update">
+            <IconButton onClick={() => navigate('/app/form/updateRelationType', { state: { data: { ...row.original } } })}>
+              <SystemUpdateIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Delete">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+      {
+        id: 'relation', header: 'Relation', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Manage Relations">
+            <IconButton onClick={() => navigate('/app/ref/relation', { state: { data: { relationId: row.original.relationId } } })}>
+              <LinkIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.relationId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRelationType')}>
+        Create New Relation Type
+      </Button>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }

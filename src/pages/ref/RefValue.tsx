@@ -1,424 +1,204 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import LanguageIcon from '@mui/icons-material/Language';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost.js';
+import Cookies from 'universal-cookie';
 
-// MUI Imports (keep relevant ones)
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import LanguageIcon from "@mui/icons-material/Language";
-import Tooltip from "@mui/material/Tooltip";
-import { useUserState } from "../../contexts/UserContext";
-import useDebounce from "../../hooks/useDebounce.js";
-import { apiPost } from "../../api/apiPost.js";
-
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-  input: {
-    fontSize: "inherit",
-    padding: "4px 8px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    width: "90%",
-    boxSizing: "border-box",
-  },
-  iconButton: {
-    cursor: "pointer",
-    padding: "4px",
-    "&:hover": {
-      color: "primary.main",
-    },
-  },
-});
-
-function RefValueRow(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (valueRow) => {
-    console.log("Update Ref Value Row:", valueRow);
-    navigate("/app/form/updateRefValue", {
-      state: {
-        data: { ...valueRow },
-      },
-    });
-  };
-
-  const handleDelete = async (row) => {
-    // *** Adjust confirmation message for values ***
-    if (
-      window.confirm(
-        `Are you sure you want to delete this value? (valueCode: ${row.valueCode})`,
-      )
-    ) {
-      // *** Construct command for deleting a value ***
-      const cmd = {
-        host: "lightapi.net",
-        service: "ref",
-        action: "deleteRefValue",
-        version: "0.1.0",
-        data: {
-          valueId: row.valueId,
-        },
-      };
-      console.log("Delete command:", cmd);
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        alert("RefValue deleted successfully.");
-      } else if (result.error) {
-        console.error("API Error deleting RefValue:", result.error);
-        alert(
-          `Error deleting RefValue: ${result.error.description || result.error.message || "Unknown error"}`,
-        );
-      }
-    }
-  };
-
-  const handleLocale = (valueId) => {
-    navigate("/app/ref/locale", {
-      state: { data: { valueId } },
-    });
-  };
-
-  const truncateData = (data, maxLength = 50) => {
-    if (!data) return "";
-    if (data.length <= maxLength) return data;
-    return data.substring(0, maxLength) + "...";
-  };
-
-  return (
-    <TableRow className={classes.root} key={row.valueId}>
-      <TableCell align="left">{row.valueId}</TableCell>
-      <TableCell align="left">{row.tableId}</TableCell>
-      <TableCell align="left">{row.tableName}</TableCell>
-      <TableCell align="left">{row.valueCode}</TableCell>
-      <TableCell
-        align="left"
-        style={{
-          maxWidth: 150,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        <Tooltip title={row.valueDesc || ""}>
-          <span>{truncateData(row.valueDesc)}</span>
-        </Tooltip>
-      </TableCell>
-      <TableCell align="left">{row.active ? "Yes" : "No"}</TableCell>
-      <TableCell align="left">
-        {row.startTs ? new Date(row.startTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="left">
-        {row.endTs ? new Date(row.endTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="left">{row.displayOrder}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Update Value">
-          <SystemUpdateIcon
-            className={classes.iconButton}
-            onClick={() => handleUpdate(row)}
-          />
-        </Tooltip>
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Delete Value">
-          <DeleteForeverIcon
-            className={classes.iconButton}
-            onClick={() => handleDelete(row)}
-          />
-        </Tooltip>
-      </TableCell>
-      <TableCell align="right">
-        <Tooltip title="Value Locale">
-          <LanguageIcon
-            className={classes.iconButton}
-            onClick={() => handleLocale(row.valueId)}
-          />
-        </Tooltip>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-RefValueRow.propTypes = {
-  row: PropTypes.shape({
-    tableId: PropTypes.string.isRequired,
-    tableName: PropTypes.string.isRequired,
-    valueId: PropTypes.string.isRequired,
-    displayOrder: PropTypes.integer,
-    valueCode: PropTypes.string.isRequired,
-    valueDesc: PropTypes.string,
-    active: PropTypes.bool.isRequired,
-    startTs: PropTypes.string,
-    endTs: PropTypes.string,
-    updateUser: PropTypes.string.isRequired,
-    updateTs: PropTypes.string.isRequired,
-  }),
+// --- Type Definitions ---
+type RefValueApiResponse = {
+  refValues: Array<RefValueType>;
+  total: number;
 };
 
-function RefValueList(props) {
-  const { refValues } = props;
-  return (
-    <TableBody>
-      {refValues && refValues.length > 0 ? (
-        refValues.map((valueRow) => (
-          <RefValueRow key={valueRow.valueId} row={valueRow} />
-        ))
-      ) : (
-        <TableRow>
-          {/* *** Adjust colSpan based on the number of columns in RefValueRow *** */}
-          <TableCell colSpan={8} align="center">
-            No Reference Values found for this table or matching your criteria.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-RefValueList.propTypes = {
-  refValues: PropTypes.arrayOf(PropTypes.object).isRequired,
+type RefValueType = {
+  hostId: string;
+  tableId: string;
+  tableName: string;
+  valueId: string;
+  valueCode: string;
+  valueDesc?: string;
+  active: boolean;
+  startTs?: string;
+  endTs?: string;
+  displayOrder?: number;
+  updateUser?: string;
+  updateTs?: string;
+  aggregateVersion?: number;
 };
 
-// --- Main RefValue Component ---
 export default function RefValue() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const { host } = useUserState();
   const location = useLocation();
-  const data = location.state?.data;
+  const { host } = useUserState();
+  const initialTableId = location.state?.data?.tableId;
 
-  const [tableId, setTableId] = useState(() => data?.tableId || "");
-  const debouncedTableId = useDebounce(tableId, 1000);
-  const [valueId, setValueId] = useState("");
-  const debouncedValueId = useDebounce(valueId, 1000);
-  const [valueCode, setValueCode] = useState("");
-  const debouncedValueCode = useDebounce(valueCode, 1000);
-  const [valueDesc, setValueDesc] = useState("");
-  const debouncedValueDesc = useDebounce(valueDesc, 1000);
-  const [displayOrder, setDisplayOrder] = useState("");
-  const debouncedDisplayOrder = useDebounce(displayOrder, 1000);
-  const [active, setActive] = useState("");
-  const debouncedActive = useDebounce(active, 1000);
+  // Data and fetching state
+  const [data, setData] = useState<RefValueType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [total, setTotal] = useState(0);
-  const [refValues, setRefValues] = useState([]); // State for values
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialTableId ? [{ id: 'tableId', value: initialTableId }] : [],
+  );
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const handleValueIdChange = (event) => setValueId(event.target.value);
-  const handleTableIdChange = (event) => setTableId(event.target.value);
-  const handleValueCodeChange = (event) => setValueCode(event.target.value);
-  const handleValueDescChange = (event) => setValueDesc(event.target.value);
-  const handleDisplayOrderChange = (event) =>
-    setDisplayOrder(event.target.value);
-  const handleActiveChange = (event) => setActive(event.target.value);
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-  const fetchData = useCallback(async (url, headers) => {
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setRefValues([]);
-      } else {
-        const data = await response.json();
-        console.log("data = ", data);
-        setRefValues(data.refValues || []);
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setRefValues([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "ref",
-      action: "getRefValue",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'ref', action: 'getRefValue', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        valueId: debouncedValueId,
-        tableId: debouncedTableId,
-        valueCode: debouncedValueCode,
-        valueDesc: debouncedValueDesc,
-        ...(debouncedDisplayOrder && {
-          displayOrder: parseInt(debouncedDisplayOrder, 10),
-        }),
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedValueId,
-    debouncedTableId,
-    debouncedValueCode,
-    debouncedValueDesc,
-    debouncedActive,
-    debouncedDisplayOrder,
-    fetchData,
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as RefValueApiResponse;
+      setData(json.refValues || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<RefValueType>) => {
+    if (!window.confirm(`Are you sure you want to delete value: ${row.original.valueCode}?`)) return;
 
-  const handleCreate = (tableId) => {
-    console.log("Create new value for table:", tableId);
-    navigate("/app/form/createRefValue", {
-      state: { data: { tableId } },
-    });
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(value => value.valueId !== row.original.valueId));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div
-        style={{ display: "flex", justifyContent: "center", padding: "20px" }}
+    const cmd = {
+      host: 'lightapi.net', service: 'ref', action: 'deleteRefValue', version: '0.1.0',
+      data: { valueId: row.original.valueId, aggregateVersion: row.original.aggregateVersion },
+    };
+
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete reference value. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete reference value due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<RefValueType>[]>(
+    () => [
+      { accessorKey: 'tableId', header: 'Table ID' },
+      { accessorKey: 'tableName', header: 'Table Name' },
+      { accessorKey: 'valueCode', header: 'Value Code' },
+      { accessorKey: 'valueDesc', header: 'Description' },
+      { accessorKey: 'displayOrder', header: 'Order' },
+      { accessorKey: 'active', header: 'Active', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Update Value">
+            <IconButton onClick={() => navigate('/app/form/updateRefValue', { state: { data: { ...row.original } } })}>
+              <SystemUpdateIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Delete Value">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+      {
+        id: 'locale', header: 'Locale', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Manage Locales">
+            <IconButton onClick={() => navigate('/app/ref/locale', { state: { data: { valueId: row.original.valueId } } })}>
+              <LanguageIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.valueId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => navigate('/app/form/createRefValue', { state: { data: { tableId: initialTableId } } })}
+        disabled={!initialTableId}
       >
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div style={{ color: "red", padding: "20px" }}>
-        <h4>Error Fetching Reference Values:</h4>
-        <pre>
-          {typeof error === "string" ? error : JSON.stringify(error, null, 2)}
-        </pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="instance app table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Value Id"
-                    value={valueId}
-                    onChange={handleValueIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Table Id"
-                    value={tableId}
-                    onChange={handleTableIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Table Name</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Value Code"
-                    value={valueCode}
-                    onChange={handleValueCodeChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Value Desc"
-                    value={valueDesc}
-                    onChange={handleValueDescChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Active"
-                    value={active}
-                    onChange={handleActiveChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Start Ts</TableCell>
-                <TableCell align="left">End Ts</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Display Order"
-                    value={displayOrder}
-                    onChange={handleDisplayOrderChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Locale</TableCell>
-              </TableRow>
-            </TableHead>
-            <RefValueList refValues={refValues} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate(tableId)} />
-      </div>
-    );
-  }
+        Create New Value
+      </Button>
+    ),
+  });
 
-  return <div className="RefValue">{content}</div>;
+  return <MaterialReactTable table={table} />;
 }
