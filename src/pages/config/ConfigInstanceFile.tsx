@@ -1,378 +1,187 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useLocation, useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import { useUserState } from '../../contexts/UserContext.jsx';
+import { apiPost } from '../../api/apiPost.js';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (configInstanceFile) => {
-    navigate("/app/form/updateConfigInstanceFile", {
-      state: { data: { ...configInstanceFile } },
-    });
-  };
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this config instance file?",
-      )
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "config",
-        action: "deleteConfigInstanceFile",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-
-      if (result.data) {
-        window.location.reload();
-      } else if (result.error) {
-        console.error("API Error:", result.error);
-        // Optionally show an error message to the user
-      }
-    }
-  };
-
-  return (
-    <TableRow
-      className={classes.root}
-      key={`${row.hostId}-${row.instanceFileId}`}
-    >
-      <TableCell align="left">{row.hostId}</TableCell>
-      <TableCell align="left">{row.instanceFileId}</TableCell>
-      <TableCell align="left">{row.instanceId}</TableCell>
-      <TableCell align="left">{row.instanceName}</TableCell>
-      <TableCell align="left">{row.fileType}</TableCell>
-      <TableCell align="left">{row.fileName}</TableCell>
-      <TableCell align="left">{row.fileValue}</TableCell>
-      <TableCell align="left">{row.fileDesc}</TableCell>
-      <TableCell align="left">{row.expirationTs}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    instanceFileId: PropTypes.string.isRequired,
-    instanceId: PropTypes.string.isRequired,
-    instanceName: PropTypes.string.isRequired,
-    fileType: PropTypes.string.isRequired,
-    fileName: PropTypes.string.isRequired,
-    fileValue: PropTypes.string.isRequired,
-    fileDesc: PropTypes.string.isRequired,
-    expirationTs: PropTypes.string.isRequired,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
+// --- Type Definitions ---
+type ConfigInstanceFileApiResponse = {
+  instanceFiles: Array<ConfigInstanceFileType>;
+  total: number;
 };
 
-function ConfigInstanceFileList(props) {
-  const { configInstanceFiles } = props;
-  return (
-    <TableBody>
-      {configInstanceFiles && configInstanceFiles.length > 0 ? (
-        configInstanceFiles.map((configInstanceFile, index) => (
-          <Row key={index} row={configInstanceFile} />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={12} align="center">
-            {" "}
-            {/*Adjust colSpan*/}
-            No config instance files found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-ConfigInstanceFileList.propTypes = {
-  configInstanceFiles: PropTypes.arrayOf(PropTypes.object).isRequired,
+type ConfigInstanceFileType = {
+  hostId: string;
+  instanceFileId: string;
+  instanceId: string;
+  instanceName: string;
+  fileType: string;
+  fileName: string;
+  fileValue: string;
+  fileDesc: string;
+  expirationTs: string;
+  updateUser?: string;
+  updateTs?: string;
+  aggregateVersion?: number;
 };
 
 export default function ConfigInstanceFile() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const data = location.state?.data;
-
   const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const initialInstanceId = location.state?.data?.instanceId;
 
-  const [instanceFileId, setInstanceFileId] = useState(
-    () => data?.instanceFileId || "",
+  // Data and fetching state
+  const [data, setData] = useState<ConfigInstanceFileType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
+
+  // Table state, pre-filtered by context if provided
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialInstanceId ? [{ id: 'instanceId', value: initialInstanceId }] : [],
   );
-  const debouncedInstanceFileId = useDebounce(instanceFileId, 1000);
-  const [instanceId, setInstanceId] = useState(() => data?.instanceId || "");
-  const debouncedInstanceId = useDebounce(instanceId, 1000);
-  const [instanceName, setInstanceName] = useState("");
-  const debouncedInstanceName = useDebounce(instanceName, 1000);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const [fileType, setFileType] = useState("");
-  const debouncedFileType = useDebounce(fileType, 1000);
-  const [fileName, setFileName] = useState("");
-  const debouncedFileName = useDebounce(fileName, 1000);
-  const [fileValue, setFileValue] = useState("");
-  const debouncedFileValue = useDebounce(fileValue, 1000);
-  const [fileDesc, setFileDesc] = useState("");
-  const debouncedFileDesc = useDebounce(fileDesc, 1000);
-  const [expirationTs, setExpirationTs] = useState("");
-  const debouncedExpirationTs = useDebounce(expirationTs, 1000);
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [total, setTotal] = useState(0);
-  const [configInstanceFiles, setConfigInstanceFiles] = useState([]);
-
-  const handleInstanceFileIdChange = (event) => {
-    setInstanceFileId(event.target.value);
-  };
-  const handleInstanceIdChange = (event) => {
-    setInstanceId(event.target.value);
-  };
-  const handleInstanceNameChange = (event) => {
-    setInstanceName(event.target.value);
-  };
-  const handleFileTypeChange = (event) => {
-    setFileType(event.target.value);
-  };
-  const handleFileNameChange = (event) => {
-    setFileName(event.target.value);
-  };
-  const handleFileValueChange = (event) => {
-    setFileValue(event.target.value);
-  };
-  const handleFileDescChange = (event) => {
-    setFileDesc(event.target.value);
-  };
-  const handleExpirationTsChange = (event) => {
-    setExpirationTs(event.target.value);
-  };
-
-  const fetchData = useCallback(async (url, headers) => {
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.description || "An error occurred.");
-        setConfigInstanceFiles([]);
-      } else {
-        const data = await response.json();
-        setConfigInstanceFiles(data.instanceFiles || []);
-        setTotal(data.total || 0);
-      }
-    } catch (e) {
-      console.error("Fetch error:", e);
-      setError("Network or server error.");
-      setConfigInstanceFiles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "config",
-      action: "getConfigInstanceFile",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'config', action: 'getConfigInstanceFile', version: '0.1.0',
       data: {
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        hostId: host,
-        instanceFileId: debouncedInstanceFileId,
-        instanceId: debouncedInstanceId,
-        instanceName: debouncedInstanceName,
-        fileType: debouncedFileType,
-        fileName: debouncedFileName,
-        fileValue: debouncedFileValue,
-        fileDesc: debouncedFileDesc,
-        expirationTs: debouncedExpirationTs,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = `/portal/query?cmd=${encodeURIComponent(JSON.stringify(cmd))}`;
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedInstanceFileId,
-    debouncedInstanceId,
-    debouncedInstanceName,
-    debouncedFileType,
-    debouncedFileName,
-    debouncedFileValue,
-    debouncedFileDesc,
-    debouncedExpirationTs,
-    fetchData,
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as ConfigInstanceFileApiResponse;
+      setData(json.instanceFiles || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<ConfigInstanceFileType>) => {
+    if (!window.confirm(`Are you sure you want to delete file: ${row.original.fileName}?`)) return;
 
-  const handleCreate = (instanceId) => {
-    navigate("/app/form/createConfigInstanceFile", {
-      state: { data: { instanceId } },
-    });
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(file => file.instanceFileId !== row.original.instanceFileId));
+    setRowCount(prev => prev - 1);
 
-  let content;
+    const cmd = {
+      host: 'lightapi.net', service: 'config', action: 'deleteConfigInstanceFile', version: '0.1.0',
+      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+    };
 
-  if (loading) {
-    content = <CircularProgress />;
-  } else if (error) {
-    content = <div style={{ color: "red" }}>Error: {error}</div>;
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="config instance file table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance File Id"
-                    value={instanceFileId}
-                    onChange={handleInstanceFileIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Id"
-                    value={instanceId}
-                    onChange={handleInstanceIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Instance Name"
-                    value={instanceName}
-                    onChange={handleInstanceNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="File Type"
-                    value={fileType}
-                    onChange={handleFileTypeChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="File Name"
-                    value={fileName}
-                    onChange={handleFileNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="File Value"
-                    value={fileValue}
-                    onChange={handleFileValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="File Desc"
-                    value={fileDesc}
-                    onChange={handleFileDescChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Expiration Ts"
-                    value={expirationTs}
-                    onChange={handleExpirationTsChange}
-                  />
-                </TableCell>
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <ConfigInstanceFileList configInstanceFiles={configInstanceFiles} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate(instanceId)} />
-      </div>
-    );
-  }
-  return <div className="ConfigInstanceFile">{content}</div>;
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete file. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete file due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<ConfigInstanceFileType>[]>(
+    () => [
+      { accessorKey: 'instanceId', header: 'Instance ID' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'fileName', header: 'File Name' },
+      { accessorKey: 'fileType', header: 'File Type' },
+      { accessorKey: 'fileDesc', header: 'Description' },
+      {
+        accessorKey: 'expirationTs', header: 'Expires',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : 'N/A',
+      },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (<Tooltip title="Update File"><IconButton onClick={() => navigate('/app/form/updateConfigInstanceFile', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (<Tooltip title="Delete File"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.instanceFileId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate('/app/form/createConfigInstanceFile', { state: { data: { instanceId: initialInstanceId } } })}
+          disabled={!initialInstanceId}
+        >
+          Add Instance File
+        </Button>
+        {initialInstanceId && (
+          <Typography variant="subtitle1">
+            For Instance: <strong>{initialInstanceId}</strong>
+          </Typography>
+        )}
+      </Box>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }
