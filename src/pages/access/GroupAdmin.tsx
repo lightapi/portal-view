@@ -1,295 +1,173 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
-import GroupsIcon from "@mui/icons-material/Groups";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import GroupsIcon from '@mui/icons-material/Groups';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (group) => {
-    navigate("/app/form/updateGroup", { state: { data: { ...group } } });
-  };
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm("Are you sure you want to delete the group for the host?")
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "group",
-        action: "deleteGroup",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  const handleApiGroup = (groupId) => {
-    navigate("/app/access/groupPermission", { state: { data: { groupId } } });
-  };
-
-  const handleGroupRowFilter = (groupId) => {
-    navigate("/app/access/groupRowFilter", { state: { data: { groupId } } });
-  };
-
-  const handleGroupColFilter = (groupId) => {
-    navigate("/app/access/groupColFilter", { state: { data: { groupId } } });
-  };
-
-  const handleUserGroup = (groupId) => {
-    navigate("/app/access/groupUser", { state: { data: { groupId } } });
-  };
-
-  return (
-    <TableRow className={classes.root}>
-      <TableCell align="left">{row.groupId}</TableCell>
-      <TableCell align="left">{row.groupDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleApiGroup(row.groupId)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowDownIcon
-          onClick={() => handleGroupRowFilter(row.groupId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowRightIcon
-          onClick={() => handleGroupColFilter(row.groupId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <GroupsIcon onClick={() => handleUserGroup(row.groupId)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    groupId: PropTypes.string.isRequired,
-    groupDesc: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
-  }).isRequired,
+// --- Type Definitions ---
+type GroupApiResponse = {
+  groups: Array<GroupType>;
+  total: number;
 };
 
-function GroupList(props) {
-  const { groups } = props;
-  return (
-    <TableBody>
-      {groups && groups.length > 0 ? (
-        groups.map((group, index) => <Row key={index} row={group} />)
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No groups found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-GroupList.propTypes = {
-  groups: PropTypes.arrayOf(PropTypes.object).isRequired,
+type GroupType = {
+  hostId: string;
+  groupId: string;
+  groupDesc?: string;
+  aggregateVersion?: number;
 };
 
 export default function GroupAdmin() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
   const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [groupId, setGroupId] = useState("");
-  const debouncedGroupId = useDebounce(groupId, 1000);
-  const [groupDesc, setGroupDesc] = useState("");
-  const debouncedGroupDesc = useDebounce(groupDesc, 1000);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
-  const [groups, setGroups] = useState([]);
 
-  const handleGroupIdChange = (event) => {
-    setGroupId(event.target.value);
-  };
-  const handleGroupDescChange = (event) => {
-    setGroupDesc(event.target.value);
-  };
+  // Data and fetching state
+  const [data, setData] = useState<GroupType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setGroups([]);
-      } else {
-        const data = await response.json();
-        setGroups(data.groups);
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setGroups([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  useEffect(() => {
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
+
     const cmd = {
-      host: "lightapi.net",
-      service: "group",
-      action: "getGroup",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'group', action: 'getGroup', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        groupId: debouncedGroupId,
-        groupDesc: debouncedGroupDesc,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedGroupId,
-    debouncedGroupDesc,
-    fetchData, // Add fetchData to dependency array of useEffect
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as GroupApiResponse;
+      setData(json.groups || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<GroupType>) => {
+    if (!window.confirm(`Are you sure you want to delete group: ${row.original.groupId}?`)) return;
 
-  const handleCreate = () => {
-    navigate("/app/form/createGroup");
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(group => group.groupId !== row.original.groupId));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Group Id"
-                    value={groupId}
-                    onChange={handleGroupIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Group Desc"
-                    value={groupDesc}
-                    onChange={handleGroupDescChange}
-                  />
-                </TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Group Permission</TableCell>
-                <TableCell align="right">Role Row Filter</TableCell>
-                <TableCell align="right">Role Col Filter</TableCell>
-                <TableCell align="right">Group User</TableCell>
-              </TableRow>
-            </TableHead>
-            <GroupList groups={groups} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
-    );
-  }
+    const cmd = {
+      host: 'lightapi.net', service: 'group', action: 'deleteGroup', version: '0.1.0',
+      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+    };
 
-  return <div className="App">{content}</div>;
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete group. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete group due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<GroupType>[]>(
+    () => [
+      { accessorKey: 'groupId', header: 'Group ID' },
+      { accessorKey: 'groupDesc', header: 'Description' },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (<Tooltip title="Update Group"><IconButton onClick={() => navigate('/app/form/updateGroup', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (<Tooltip title="Delete Group"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+      },
+      {
+        id: 'accessControl', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Tooltip title="Group Permissions"><IconButton onClick={() => navigate('/app/access/groupPermission', { state: { data: { groupId: row.original.groupId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
+            <Tooltip title="Group Row Filters"><IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: { data: { groupId: row.original.groupId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
+            <Tooltip title="Group Column Filters"><IconButton onClick={() => navigate('/app/access/groupColFilter', { state: { data: { groupId: row.original.groupId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
+            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/groupUser', { state: { data: { groupId: row.original.groupId } } })}><GroupsIcon /></IconButton></Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.groupId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createGroup')}>
+        Create New Group
+      </Button>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }

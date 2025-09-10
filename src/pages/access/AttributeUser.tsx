@@ -1,388 +1,187 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useLocation, useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete the attribute for the api?",
-      )
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "attribute",
-        action: "deleteAttributeUser",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  return (
-    <TableRow className={classes.root}>
-      <TableCell align="left">{row.attributeId}</TableCell>
-      <TableCell align="left">{row.attributeType}</TableCell>
-      <TableCell align="left">{row.attributeValue}</TableCell>
-      <TableCell align="left">{row.userId}</TableCell>
-      <TableCell align="left">{row.entityId}</TableCell>
-      <TableCell align="left">{row.email}</TableCell>
-      <TableCell align="left">{row.firstName}</TableCell>
-      <TableCell align="left">{row.lastName}</TableCell>
-      <TableCell align="left">{row.userType}</TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    attributeId: PropTypes.string.isRequired,
-    attributeType: PropTypes.string,
-    attributeValue: PropTypes.string,
-    userId: PropTypes.string,
-    entityId: PropTypes.string,
-    email: PropTypes.string,
-    firstName: PropTypes.string,
-    lastName: PropTypes.string,
-    userType: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
-  }).isRequired,
+// --- Type Definitions ---
+type AttributeUserApiResponse = {
+  attributeUsers: Array<AttributeUserType>;
+  total: number;
 };
 
-function AttributeUserList(props) {
-  const { attributeUsers } = props;
-  return (
-    <TableBody>
-      {attributeUsers && attributeUsers.length > 0 ? (
-        attributeUsers.map((attributeUser, index) => (
-          <Row key={index} row={attributeUser} />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No users assigned to this attribute.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-AttributeUserList.propTypes = {
-  attributeUsers: PropTypes.arrayOf(PropTypes.object).isRequired,
+type AttributeUserType = {
+  hostId: string;
+  attributeId: string;
+  attributeType?: string;
+  attributeValue?: string;
+  userId: string;
+  entityId?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  userType?: string;
+  aggregateVersion?: number;
 };
 
 export default function AttributeUser() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
   const location = useLocation();
-  const data = location.state?.data;
-  const [attributeId, setAttributeId] = useState(() => data?.attributeId || "");
-  const debouncedAttributeId = useDebounce(attributeId, 1000);
-  const [attributeType, setAttributeType] = useState("");
-  const debouncedAttributeType = useDebounce(attributeType, 1000);
-  const [attributeValue, setAttributeValue] = useState(
-    () => data?.attributeValue || "",
+  const { host } = useUserState();
+  const initialData = location.state?.data || {};
+
+  // Data and fetching state
+  const [data, setData] = useState<AttributeUserType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
+
+  // Table state, pre-filtered by context if provided
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
+    Object.entries(initialData)
+      .map(([id, value]) => ({ id, value: value as string }))
+      .filter(f => f.value),
   );
-  const debouncedAttributeValue = useDebounce(attributeValue, 1000);
-  const [userId, setUserId] = useState(() => data?.userId || "");
-  const debouncedUserId = useDebounce(userId, 1000);
-  const [entityId, setEntityId] = useState("");
-  const debouncedEntityId = useDebounce(entityId, 1000);
-  const [email, setEmail] = useState("");
-  const debouncedEmail = useDebounce(email, 1000);
-  const [firstName, setFirstName] = useState("");
-  const debouncedFirstName = useDebounce(firstName, 1000);
-  const [lastName, setLastName] = useState("");
-  const debouncedLastName = useDebounce(lastName, 1000);
-  const [userType, setUserType] = useState("");
-  const debouncedUserType = useDebounce(userType, 1000);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
-  const [attributeUsers, setAttributeUsers] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const handleAttributeIdChange = (event) => {
-    setAttributeId(event.target.value);
-  };
-  const handleAttributeTypeChange = (event) => {
-    setAttributeType(event.target.value);
-  };
-  const handleAttributeValueChange = (event) => {
-    setAttributeValue(event.target.value);
-  };
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-  const handleUserIdChange = (event) => {
-    setUserId(event.target.value);
-  };
-
-  const handleEntityIdChange = (event) => {
-    setEntityId(event.target.value);
-  };
-
-  const handleEmailChange = (event) => {
-    setEmail(event.target.value);
-  };
-
-  const handleFirstNameChange = (event) => {
-    setFirstName(event.target.value);
-  };
-
-  const handleLastNameChange = (event) => {
-    setLastName(event.target.value);
-  };
-
-  const handleUserTypeChange = (event) => {
-    setUserType(event.target.value);
-  };
-
-  const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setAttributeUsers([]);
-      } else {
-        const data = await response.json();
-        setAttributeUsers(data.attributeUsers);
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setAttributeUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
-
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "attribute",
-      action: "queryAttributeUser",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'attribute', action: 'queryAttributeUser', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        attributeId: debouncedAttributeId,
-        attributeType: debouncedAttributeType,
-        attributeValue: debouncedAttributeValue,
-        userId: debouncedUserId,
-        entityId: debouncedEntityId,
-        email: debouncedEmail,
-        firstName: debouncedFirstName,
-        lastName: debouncedLastName,
-        userType: debouncedUserType,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedAttributeId,
-    debouncedAttributeType,
-    debouncedAttributeValue,
-    debouncedUserId,
-    debouncedEntityId,
-    debouncedEmail,
-    debouncedFirstName,
-    debouncedLastName,
-    debouncedUserType,
-    fetchData, // Add fetchData to dependency array of useEffect
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as AttributeUserApiResponse;
+      setData(json.attributeUsers || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<AttributeUserType>) => {
+    if (!window.confirm(`Are you sure you want to remove this attribute from the user?`)) return;
 
-  const handleCreate = (attributeId, attributeValue, userId) => {
-    navigate("/app/form/createAttributeUser", {
-      state: {
-        data: {
-          attributeId,
-          attributeValue,
-          userId,
-        },
+    const originalData = [...data];
+    setData(prev => prev.filter(au => !(au.attributeId === row.original.attributeId && au.userId === row.original.userId)));
+    setRowCount(prev => prev - 1);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'attribute', action: 'deleteAttributeUser', version: '0.1.0',
+      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+    };
+
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to remove attribute from user. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to remove attribute from user due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<AttributeUserType>[]>(
+    () => [
+      { accessorKey: 'attributeId', header: 'Attribute ID' },
+      { accessorKey: 'attributeType', header: 'Type' },
+      { accessorKey: 'attributeValue', header: 'Value' },
+      { accessorKey: 'userId', header: 'User ID' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'firstName', header: 'First Name' },
+      { accessorKey: 'lastName', header: 'Last Name' },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Remove Attribute from User">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        ),
       },
-    });
-  };
+    ],
+    [handleDelete],
+  );
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Attribute Id"
-                    value={attributeId}
-                    onChange={handleAttributeIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Attribute Type"
-                    value={attributeId}
-                    onChange={handleAttributeTypeChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Attribute Value"
-                    value={attributeId}
-                    onChange={handleAttributeValueChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="User Id"
-                    value={userId}
-                    onChange={handleUserIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Entity Id"
-                    value={entityId}
-                    onChange={handleEntityIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Email"
-                    value={email}
-                    onChange={handleEmailChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="First Name"
-                    value={firstName}
-                    onChange={handleFirstNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Last Name"
-                    value={lastName}
-                    onChange={handleLastNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="User Type"
-                    value={userType}
-                    onChange={handleUserTypeChange}
-                  />
-                </TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <AttributeUserList attributeUsers={attributeUsers} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon
-          onClick={() => handleCreate(attributeId, attributeValue, userId)}
-        />
-      </div>
-    );
-  }
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => `${row.attributeId}-${row.userId}`,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate('/app/form/createAttributeUser', { state: { data: initialData } })}
+        >
+          Add User to Attribute
+        </Button>
+        {initialData.attributeId && (
+          <Typography variant="subtitle1">
+            For Attribute: <strong>{initialData.attributeId}</strong>
+          </Typography>
+        )}
+      </Box>
+    ),
+  });
 
-  return <div className="App">{content}</div>;
+  return <MaterialReactTable table={table} />;
 }
