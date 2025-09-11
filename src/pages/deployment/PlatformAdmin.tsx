@@ -1,447 +1,182 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import GridGoldenratioIcon from "@mui/icons-material/GridGoldenratio";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
-import { useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext.jsx"; // Assuming this context exists
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost.js"; // Assuming this apiPost function exists
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import GridGoldenratioIcon from '@mui/icons-material/GridGoldenratio';
+import { useUserState } from "../../contexts/UserContext.tsx";
+import { apiPost } from "../../api/apiPost.ts";
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (platform) => {
-    navigate("/app/form/updatePlatform", { state: { data: { ...platform } } }); // Adjust path as needed
-  };
-
-  const handleDelete = async (row) => {
-    if (window.confirm("Are you sure you want to delete this platform?")) {
-      const cmd = {
-        host: "lightapi.net", // Adjust if needed
-        service: "deployment", // Assuming "deployment" service
-        action: "deletePlatform", // Assuming "deletePlatform" action
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  const handlePipeline = (platformId) => {
-    navigate("/app/deployment/PipelineAdmin", {
-      state: { data: { platformId } },
-    });
-  };
-
-  return (
-    <TableRow className={classes.root} key={`${row.hostId}-${row.platformId}`}>
-      <TableCell align="left">{row.hostId}</TableCell>
-      <TableCell align="left">{row.platformId}</TableCell>
-      <TableCell align="left">{row.platformName}</TableCell>
-      <TableCell align="left">{row.platformVersion}</TableCell>
-      <TableCell align="left">{row.clientType}</TableCell>
-      <TableCell align="left">{row.clientUrl}</TableCell>
-      {/* Credentials are sensitive, decide if you want to display */}
-      {/* <TableCell align="left">{row.credentials}</TableCell> */}
-      <TableCell align="left">{row.proxyUrl}</TableCell>
-      <TableCell align="left">{row.proxyPort}</TableCell>
-      <TableCell align="left">{row.handlerClass}</TableCell>
-      <TableCell align="left">{row.consoleUrl}</TableCell>
-      <TableCell align="left">{row.environment}</TableCell>
-      <TableCell align="left">{row.zone}</TableCell>
-      <TableCell align="left">{row.region}</TableCell>
-      <TableCell align="left">{row.lob}</TableCell>
-      <TableCell align="left">{row.updateUser}</TableCell>
-      <TableCell align="left">
-        {row.updateTs ? new Date(row.updateTs).toLocaleString() : ""}
-      </TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <GridGoldenratioIcon onClick={() => handlePipeline(row.platformId)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    platformId: PropTypes.string.isRequired,
-    platformName: PropTypes.string,
-    platformVersion: PropTypes.string,
-    clientType: PropTypes.string,
-    handlerClass: PropTypes.string.isRequired,
-    clientUrl: PropTypes.string,
-    credentials: PropTypes.string, // Consider if this should be displayed
-    proxyUrl: PropTypes.string,
-    proxyPort: PropTypes.number,
-    consoleUrl: PropTypes.string,
-    environment: PropTypes.string,
-    zone: PropTypes.string,
-    region: PropTypes.string,
-    lob: PropTypes.string,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
+// --- Type Definitions ---
+type PlatformApiResponse = {
+  platforms: Array<PlatformType>;
+  total: number;
 };
 
-function PlatformList(props) {
-  const { platforms } = props;
-  return (
-    <TableBody>
-      {platforms && platforms.length > 0 ? (
-        platforms.map((platform, index) => <Row key={index} row={platform} />)
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No platforms found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-PlatformList.propTypes = {
-  platforms: PropTypes.arrayOf(PropTypes.object).isRequired,
+type PlatformType = {
+  hostId: string;
+  platformId: string;
+  platformName?: string;
+  platformVersion?: string;
+  clientType?: string;
+  handlerClass: string;
+  clientUrl?: string;
+  credentials?: string;
+  proxyUrl?: string;
+  proxyPort?: number;
+  consoleUrl?: string;
+  environment?: string;
+  zone?: string;
+  region?: string;
+  lob?: string;
+  updateUser?: string;
+  updateTs?: string;
+  aggregateVersion?: number;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function PlatformAdmin() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [platformId, setPlatformId] = useState("");
-  const debouncedPlatformId = useDebounce(platformId, 1000);
-  const [platformName, setPlatformName] = useState("");
-  const debouncedPlatformName = useDebounce(platformName, 1000);
-  const [platformVersion, setPlatformVersion] = useState("");
-  const debouncedPlatformVersion = useDebounce(platformVersion, 1000);
-  const [clientType, setClientType] = useState("");
-  const debouncedClientType = useDebounce(clientType, 1000);
-  const [handlerClass, setHandlerClass] = useState("");
-  const debouncedHandlerClass = useDebounce(handlerClass, 1000);
-  const [consoleUrl, setConsoleUrl] = useState("");
-  const debouncedConsoleUrl = useDebounce(consoleUrl, 1000);
-  const [environment, setEnvironment] = useState("");
-  const debouncedEnvironment = useDebounce(environment, 1000);
-  const [zone, setZone] = useState("");
-  const debouncedZone = useDebounce(zone, 1000);
-  const [region, setRegion] = useState("");
-  const debouncedRegion = useDebounce(region, 1000);
-  const [lob, setLob] = useState("");
-  const debouncedLob = useDebounce(lob, 1000);
+  const { host } = useUserState() as UserState;
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
-  const [platforms, setPlatforms] = useState([]);
+  // Data and fetching state
+  const [data, setData] = useState<PlatformType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const handlePlatformIdChange = (event) => {
-    setPlatformId(event.target.value);
-  };
-  const handlePlatformNameChange = (event) => {
-    setPlatformName(event.target.value);
-  };
-  const handlePlatformVersionChange = (event) => {
-    setPlatformVersion(event.target.value);
-  };
-  const handleClientTypeChange = (event) => {
-    setClientType(event.target.value);
-  };
-  const handleHandlerClassChange = (event) => {
-    setHandlerClass(event.target.value);
-  };
-  const handleConsoleUrlChange = (event) => {
-    setConsoleUrl(event.target.value);
-  };
-  const handleEnvironmentChange = (event) => {
-    setEnvironment(event.target.value);
-  };
-  const handleZoneChange = (event) => {
-    setZone(event.target.value);
-  };
-  const handleRegionChange = (event) => {
-    setRegion(event.target.value);
-  };
-  const handleLobChange = (event) => {
-    setLob(event.target.value);
-  };
+  // Table state
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
 
-  const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setPlatforms([]);
-      } else {
-        const data = await response.json();
-        console.log(data);
-        setPlatforms(data.platforms); // Assuming response is data.platforms
-        setTotal(data.total);
-      }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setPlatforms([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net", // Adjust if needed
-      service: "deployment", // Assuming "deployment" service
-      action: "getPlatform", // Action from service code
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'deployment', action: 'getPlatform', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        platformId: debouncedPlatformId,
-        platformName: debouncedPlatformName,
-        platformVersion: debouncedPlatformVersion,
-        clientType: debouncedClientType,
-        handlerClass: debouncedHandlerClass,
-        consoleUrl: debouncedConsoleUrl,
-        environment: debouncedEnvironment,
-        zone: debouncedZone,
-        region: debouncedRegion,
-        lob: debouncedLob,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedPlatformId,
-    debouncedPlatformName,
-    debouncedPlatformVersion,
-    debouncedClientType,
-    debouncedHandlerClass,
-    debouncedConsoleUrl,
-    debouncedEnvironment,
-    debouncedZone,
-    debouncedRegion,
-    debouncedLob,
-    fetchData, // Add fetchData to dependency array of useEffect
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as PlatformApiResponse;
+      setData(json.platforms || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<PlatformType>) => {
+    if (!window.confirm(`Are you sure you want to delete platform: ${row.original.platformName}?`)) return;
 
-  const handleCreate = () => {
-    navigate("/app/form/createPlatform"); // Adjust path as needed
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(p => p.platformId !== row.original.platformId));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="platform table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host ID</TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Platform Id"
-                    value={platformId}
-                    onChange={handlePlatformIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Platform Name"
-                    value={platformName}
-                    onChange={handlePlatformNameChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Platform Version"
-                    value={platformVersion}
-                    onChange={handlePlatformVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Client Type"
-                    value={clientType}
-                    onChange={handleClientTypeChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Client Url"
-                    value={platformVersion} // should be clientUrl, corrected below
-                    onChange={() => {}} // No handler as per previous components, corrected below
-                  />
-                </TableCell>
-                {/* Removed Credentials Input */}
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Proxy Url"
-                    value={platformVersion} // should be proxyUrl, corrected below
-                    onChange={() => {}} // No handler as per previous components, corrected below
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Proxy Port"
-                    value={platformVersion} // should be proxyPort, corrected below
-                    onChange={() => {}} // No handler as per previous components, corrected below
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Handler Class"
-                    value={handlerClass}
-                    onChange={handleHandlerClassChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Console URL"
-                    value={consoleUrl}
-                    onChange={handleConsoleUrlChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Environment"
-                    value={environment}
-                    onChange={handleEnvironmentChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Zone"
-                    value={zone}
-                    onChange={handleZoneChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Region"
-                    value={region}
-                    onChange={handleRegionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Lob"
-                    value={lob}
-                    onChange={handleLobChange}
-                  />
-                </TableCell>
+    const cmd = {
+      host: 'lightapi.net', service: 'deployment', action: 'deletePlatform', version: '0.1.0',
+      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+    };
 
-                <TableCell align="left">Update User</TableCell>
-                <TableCell align="left">Update Time</TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Pipeline</TableCell>
-              </TableRow>
-            </TableHead>
-            <PlatformList platforms={platforms} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
-    );
-  }
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete platform. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete platform due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
 
-  return <div className="PlatformAdmin">{content}</div>;
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<PlatformType>[]>(
+    () => [
+      { accessorKey: 'platformId', header: 'Platform ID' },
+      { accessorKey: 'platformName', header: 'Platform Name' },
+      { accessorKey: 'platformVersion', header: 'Version' },
+      { accessorKey: 'clientType', header: 'Client Type' },
+      { accessorKey: 'environment', header: 'Environment' },
+      { accessorKey: 'region', header: 'Region' },
+      { accessorKey: 'handlerClass', header: 'Handler Class' },
+      {
+        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Tooltip title="Update Platform"><IconButton onClick={() => navigate('/app/form/updatePlatform', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>
+            <Tooltip title="Delete Platform"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+            <Tooltip title="Manage Pipelines"><IconButton onClick={() => navigate('/app/deployment/PipelineAdmin', { state: { data: { platformId: row.original.platformId } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.platformId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPlatform')}>
+        Create New Platform
+      </Button>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }
