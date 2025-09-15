@@ -8,6 +8,7 @@ import {
   getOrders,
   getPayment,
   getProfile,
+  userHost,
   switchHostForm,
   createOrgForm,
   updateOrgForm,
@@ -39,7 +40,7 @@ export default function ProfileMenu({ classes }) {
   };
 
   const handleMenuItemClick = (action) => {
-    action(userDispatch, navigate);
+    action(userDispatch, navigate, userId);
     handleMenuClose();
   };
 
@@ -108,6 +109,15 @@ export default function ProfileMenu({ classes }) {
               onClick={() => handleMenuItemClick(getOrders)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Orders
+            </MenuItem>
+            <MenuItem
+              className={classNames(
+                classes.profileMenuItem,
+                classes.headerMenuItem,
+              )}
+              onClick={() => handleMenuItemClick(userHost)}
+            >
+              <AccountIcon className={classes.profileMenuIcon} /> User Host
             </MenuItem>
             <MenuItem
               className={classNames(

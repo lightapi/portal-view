@@ -130,6 +130,7 @@ export {
   createOrgForm,
   updateOrgForm,
   deleteOrgForm,
+  userHost,
   switchHostForm,
 };
 
@@ -182,8 +183,8 @@ function signUp(dispatch, navigate) {
   navigate("/app/form/signupForm");
 }
 
-function getProfile(dispatch, navigate) {
-  navigate("/app/profile");
+function getProfile(dispatch, navigate, userId) {
+  navigate(`/app/profile/${userId}`);
 }
 
 function getPayment(dispatch, navigate) {
@@ -214,7 +215,10 @@ function deleteOrgForm(dispatch, navigate) {
   navigate("/app/form/deleteOrgForm");
 }
 
-function switchHostForm(dispatch, navigate) {
-  // load the org associated with the user. The user is allowed to delete as it is org-admin role.
-  navigate("/app/form/switchHostForm");
+function switchHostForm(dispatch, navigate, userId) {
+  navigate('/app/form/switchHostForm', { state: { data: { userId } }});
+}
+
+function userHost(dispatch, navigate) {
+  navigate("/app/user/userHost");
 }

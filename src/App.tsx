@@ -18,6 +18,7 @@ import MerchantOrders from "./pages/profile/MerchantOrders";
 import UserOrders from "./pages/profile/UserOrders";
 import PublishApi from "./pages/publish/PublishApi";
 import User from "./pages/user/User";
+import UserHost from "./pages/user/UserHost";
 import Service from "./pages/service/Service";
 import ServiceDelete from "./pages/service/ServiceDelete";
 import ServiceDetail from "./pages/service/ServiceDetail";
@@ -168,6 +169,7 @@ const App = () => {
           <Route path="userOrders" element={<UserOrders />} />
           <Route path="publishApi" element={<PublishApi />} />
           <Route path="user" element={<User />} />
+          <Route path="userHost" element={<UserHost />} />
           <Route path="service/:apiType" element={<Service />} />
           <Route path="service/admin" element={<Service />} />
           <Route path="deleteService" element={<ServiceDelete />} />
