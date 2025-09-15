@@ -108,6 +108,7 @@ import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import Host from "./pages/host/Host";
 import HostAdmin from "./pages/host/HostAdmin";
+import HostUser from "./pages/host/HostUser";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
@@ -348,6 +349,7 @@ const App = () => {
           <Route path="controller/chaos" element={<ChaosMonkey />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
+          <Route path="host/hostUser" element={<HostUser />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="product/environment" element={<ProductEnvironment />} />
           <Route path="product/pipeline" element={<ProductPipeline />} />

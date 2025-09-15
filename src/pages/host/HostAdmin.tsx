@@ -14,6 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from '@mui/icons-material/Settings';
+import PersonIcon from '@mui/icons-material/Person';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
@@ -210,11 +211,6 @@ export default function HostAdmin() {
     positionActionsColumn: 'last',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title="Details">
-          <IconButton onClick={() => navigate('/app/host/hostDetail', { state: { data: { hostId: row.original.hostId } } })}>
-            <SettingsIcon />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Update">
           <IconButton onClick={() => navigate('/app/form/updateHost', { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
@@ -223,6 +219,16 @@ export default function HostAdmin() {
         <Tooltip title="Delete">
           <IconButton color="error" onClick={() => handleDelete(row)}>
             <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Details">
+          <IconButton onClick={() => navigate('/app/host/hostDetail', { state: { data: { hostId: row.original.currentHostId } } })}>
+            <SettingsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Host Users">
+          <IconButton onClick={() => navigate('/app/host/hostUser', { state: { data: { hostId: row.original.currentHostId } } })}>
+            <PersonIcon />
           </IconButton>
         </Tooltip>
       </Box>
