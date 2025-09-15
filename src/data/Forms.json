@@ -388,6 +388,48 @@
       }
     ]
   },
+  "createUserHost": {
+    "formId": "createUserHost",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "host",
+        "action": "createUserHost",
+        "version": "0.1.0",
+        "title": "Create User Host",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Create User Host Request",
+      "required": ["hostId", "userId"],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "userId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabelNotInHost%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
   "switchHostForm": {
     "formId": "switchHostForm",
     "actions": [
