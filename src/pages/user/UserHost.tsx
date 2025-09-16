@@ -6,10 +6,8 @@ import {
   type MRT_ColumnDef,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { useUserState } from "../../contexts/UserContext.tsx";
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
 import Cookies from 'universal-cookie';
 
@@ -22,10 +20,8 @@ type UserHostType = {
   domain?: string;
   subDomain?: string;
   userId: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
   current?: boolean;
+  email?: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -89,27 +85,21 @@ export default function UserHost() {
     fetchUserHosts();
   }, [initialUserId]);
 
-  // Delete handler with optimistic update
-  const handleDelete = useCallback(async (row: MRT_Row<UserHostType>) => {
-    if (!window.confirm(`Are you sure you want to remove this user from host: ${row.original.domain}?`)) return;
-
-    const originalData = [...data];
-    setData(prev => prev.filter(userHost => !(userHost.hostId === row.original.hostId && userHost.userId === row.original.userId)));
+  const handleSwitch = useCallback(async (row: MRT_Row<UserHostType>) => {
+    if (!window.confirm(`Are you sure you want to switch to this host: ${row.original.subDomain}.${row.original.domain}`)) return;
 
     const cmd = {
-      host: 'lightapi.net', service: 'host', action: 'deleteUserHost', version: '0.1.0', // Assuming this command exists
+      host: 'lightapi.net', service: 'host', action: 'switchUserHost', version: '0.1.0',
       data: { hostId: row.original.hostId, userId: row.original.userId, aggregateVersion: row.original.aggregateVersion },
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to remove user from host. Please try again.');
-        setData(originalData);
+        alert('Failed to switch user to host. Please try again.');
       }
     } catch (e) {
-      alert('Failed to remove user from host due to a network error.');
-      setData(originalData);
+      alert('Failed to switch user to host due to a network error.');
     }
   }, [data]);
 
@@ -123,12 +113,33 @@ export default function UserHost() {
         accessorKey: 'current', header: 'Current',
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Ts' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       {
-        id: 'remove', header: 'Remove', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Remove User from Host"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+        id: 'switch',
+        header: 'Switch',
+        enableSorting: false,
+        enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title={row.original.current ? "This is the current host" : "Switch to this host"}>
+            {/* Wrap IconButton in a span to ensure tooltip works when disabled */}
+            <span>
+              <IconButton
+                color="primary" // Changed from 'error' for better semantics
+                onClick={() => handleSwitch(row)}
+                disabled={row.original.current} // This is the key logic
+              >
+                <ToggleOnIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        ),
       },
     ],
-    [handleDelete],
+    [handleSwitch],
   );
 
   // Table instance configuration
@@ -146,14 +157,6 @@ export default function UserHost() {
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createUserHost', { state: { data: { userId: initialUserId } } })}
-          disabled={!initialUserId}
-        >
-          Add User to a Host
-        </Button>
         {initialUserId && (
           <Typography variant="subtitle1">
             Hosts for User: <strong>{userEmail || initialUserId}</strong>

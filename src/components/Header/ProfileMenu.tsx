@@ -9,7 +9,6 @@ import {
   getPayment,
   getProfile,
   userHost,
-  switchHostForm,
   createOrgForm,
   updateOrgForm,
   deleteOrgForm,
@@ -116,15 +115,6 @@ export default function ProfileMenu({ classes }) {
                 classes.headerMenuItem,
               )}
               onClick={() => handleMenuItemClick(userHost)}
-            >
-              <AccountIcon className={classes.profileMenuIcon} /> User Host
-            </MenuItem>
-            <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
-              onClick={() => handleMenuItemClick(switchHostForm)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Switch Host
             </MenuItem>

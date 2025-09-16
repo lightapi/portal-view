@@ -131,7 +131,6 @@ export {
   updateOrgForm,
   deleteOrgForm,
   userHost,
-  switchHostForm,
 };
 
 function loginUser(
@@ -215,10 +214,6 @@ function deleteOrgForm(dispatch, navigate) {
   navigate("/app/form/deleteOrgForm");
 }
 
-function switchHostForm(dispatch, navigate, userId) {
-  navigate('/app/form/switchHostForm', { state: { data: { userId } }});
-}
-
-function userHost(dispatch, navigate) {
-  navigate("/app/user/userHost");
+function userHost(dispatch, navigate, userId) {
+  navigate("/app/userHost", { state: { data: { userId } }});
 }
