@@ -154,6 +154,10 @@
           "title": "Org Desc",
           "type": "string"
         },
+        "orgOwner": {
+          "title": "Org Owner",
+          "type": "string"
+        },
         "subDomain": {
           "title": "Default SubDomain or Host",
           "type": "string",
@@ -181,6 +185,15 @@
         "key": "orgDesc",
         "type": "textarea",
         "rows": 5
+      },
+      {
+        "key": "orgOwner",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
       },
       {
         "type": "help",
