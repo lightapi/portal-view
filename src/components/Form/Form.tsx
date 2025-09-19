@@ -67,8 +67,13 @@ function Form() {
     const initialModel = location.state
       ? location.state.data || {}
       : formData.model || {};
+    console.log("model = ", initialModel);
 
-    const modelWithHostId = Object.assign({}, initialModel, { hostId: host });
+    // Use existing hostId or fall back to current host
+    const modelWithHostId = {
+      ...initialModel,
+      hostId: initialModel.hostId ?? host
+    };
     setModel(modelWithHostId);
   }, [host, formId, location.state]);
 
