@@ -140,6 +140,9 @@ export default function HostUser() {
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Ts' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       {
         accessorKey: 'current',
         header: 'Current',
