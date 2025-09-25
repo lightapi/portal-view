@@ -27,9 +27,13 @@ type AttributePermissionType = {
   attributeId: string;
   attributeType?: string;
   attributeValue?: string;
+  apiVersionId: string;
   apiId: string;
   apiVersion: string;
+  endpointId: string;
   endpoint: string;
+  updateUser?: string;
+  updateTs?: string;
   aggregateVersion?: number;
 };
 
@@ -126,9 +130,14 @@ export default function AttributePermission() {
       { accessorKey: 'attributeId', header: 'Attribute ID' },
       { accessorKey: 'attributeType', header: 'Type' },
       { accessorKey: 'attributeValue', header: 'Value' },
-      { accessorKey: 'apiId', header: 'API ID' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

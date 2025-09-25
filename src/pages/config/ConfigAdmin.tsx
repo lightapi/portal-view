@@ -134,6 +134,9 @@ export default function ConfigAdmin() {
       { accessorKey: 'configType', header: 'Type' },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
       { accessorKey: 'configDesc', header: 'Description' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
