@@ -26,8 +26,8 @@ type PositionUserType = {
   hostId: string;
   positionId: string;
   positionType?: string;
-  startDate?: string;
-  endDate?: string;
+  startTs?: string;
+  endTs?: string;
   userId: string;
   entityId?: string;
   email?: string;
@@ -35,6 +35,9 @@ type PositionUserType = {
   lastName?: string;
   userType?: string;
   aggregateVersion?: number;
+  updateUser?: string;
+  updateTs?: string;
+
 };
 
 export default function PositionUser() {
@@ -129,14 +132,20 @@ export default function PositionUser() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionUserType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'positionId', header: 'Position ID' },
       { accessorKey: 'userId', header: 'User ID' },
+      { accessorKey: 'startTs', header: 'Start Ts' },
+      { accessorKey: 'endTs', header: 'End Ts' },
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
       { accessorKey: 'positionType', header: 'Position Type' },
-      { accessorKey: 'startDate', header: 'Start Date', Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleDateString() : '' },
-      { accessorKey: 'endDate', header: 'End Date', Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleDateString() : '' },
+      { accessorKey: 'userType', header: 'User Type' },
+      { accessorKey: 'entityId', header: 'Entity Id' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

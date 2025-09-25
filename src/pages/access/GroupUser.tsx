@@ -34,6 +34,8 @@ type GroupUserType = {
   startTs?: string;
   endTs?: string;
   aggregateVersion?: number;
+  updateUser?: string;
+  updateTs?: string;
 };
 
 export default function GroupUser() {
@@ -128,12 +130,19 @@ export default function GroupUser() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<GroupUserType>[]>(
     () => [
-      { accessorKey: 'groupId', header: 'Group ID' },
-      { accessorKey: 'userId', header: 'User ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'groupId', header: 'Group Id' },
+      { accessorKey: 'userId', header: 'User Id' },
+      { accessorKey: 'startTs', header: 'Start Ts' },
+      { accessorKey: 'endTs', header: 'End Ts' },
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
-      { accessorKey: 'userType', header: 'Type' },
+      { accessorKey: 'userType', header: 'User Type' },
+      { accessorKey: 'entityId', header: 'Entity Id' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

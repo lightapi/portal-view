@@ -28,12 +28,16 @@ type AttributeUserType = {
   attributeType?: string;
   attributeValue?: string;
   userId: string;
+  startTs?: string;
+  endTs?: string;
   entityId?: string;
   email?: string;
   firstName?: string;
   lastName?: string;
   userType?: string;
   aggregateVersion?: number;
+  updateUser?: string;
+  updateTs?: string;
 };
 
 export default function AttributeUser() {
@@ -126,13 +130,21 @@ export default function AttributeUser() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributeUserType>[]>(
     () => [
-      { accessorKey: 'attributeId', header: 'Attribute ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'attributeId', header: 'Attribute Id' },
       { accessorKey: 'attributeType', header: 'Type' },
       { accessorKey: 'attributeValue', header: 'Value' },
       { accessorKey: 'userId', header: 'User ID' },
+      { accessorKey: 'startTs', header: 'Start Ts' },
+      { accessorKey: 'endTs', header: 'End Ts' },
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
+      { accessorKey: 'userType', header: 'User Type' },
+      { accessorKey: 'entityId', header: 'Entity Id' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

@@ -34,6 +34,8 @@ type RoleUserType = {
   startTs?: string;
   endTs?: string;
   aggregateVersion?: number;
+  updateUser?: string;
+  updateTs?: string;
 };
 
 export default function RoleUser() {
@@ -128,12 +130,19 @@ export default function RoleUser() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleUserType>[]>(
     () => [
-      { accessorKey: 'roleId', header: 'Role ID' },
-      { accessorKey: 'userId', header: 'User ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'roleId', header: 'Role Id' },
+      { accessorKey: 'userId', header: 'User Id' },
+      { accessorKey: 'startTs', header: 'Start Ts' },
+      { accessorKey: 'endTs', header: 'End Ts' },
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
       { accessorKey: 'userType', header: 'Type' },
+      { accessorKey: 'entityId', header: 'Entity Id' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
