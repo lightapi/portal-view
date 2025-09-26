@@ -3702,7 +3702,7 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId", "apiId", "apiVersion", "endpoint"],
+      "required": ["hostId", "roleId", "apiVersionId", "endpointId"],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3713,16 +3713,12 @@
           "title": "Role Id",
           "type": "string"
         },
-        "apiId": {
-          "title": "Api Id",
+        "apiVersionId": {
+          "title": "Api Version Id",
           "type": "string"
         },
-        "apiVersion": {
-          "title": "Api Version",
-          "type": "string"
-        },
-        "endpoint": {
-          "title": "Endpoint",
+        "endpointId": {
+          "title": "Endpoint Id",
           "type": "string"
         }
       }
@@ -3739,30 +3735,21 @@
         }
       },
       {
-        "key": "apiId",
+        "key": "apiVersionId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
           "params": ["hostId"]
         }
       },
       {
-        "key": "apiVersion",
+        "key": "endpointId",
         "type": "dynaselect",
         "multiple": false,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%7D%7D%0A%0A%0A",
-          "params": ["hostId", "apiId"]
-        }
-      },
-      {
-        "key": "endpoint",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiId%22%3A%22{1}%22%2C%22apiVersion%22%3A%22{2}%22%7D%7D",
-          "params": ["hostId", "apiId", "apiVersion"]
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
+          "params": ["hostId", "apiVersionId"]
         }
       }
     ]
