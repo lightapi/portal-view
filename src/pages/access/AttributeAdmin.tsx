@@ -33,6 +33,8 @@ type AttributeType = {
   attributeType?: string;
   attributeDesc?: string;
   aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string
 };
 
 export default function AttributeAdmin() {
@@ -122,6 +124,9 @@ export default function AttributeAdmin() {
       { accessorKey: 'attributeId', header: 'Attribute ID' },
       { accessorKey: 'attributeType', header: 'Type' },
       { accessorKey: 'attributeDesc', header: 'Description' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

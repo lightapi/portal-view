@@ -32,6 +32,8 @@ type RoleType = {
   roleId: string;
   roleDesc?: string;
   aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string
 };
 
 export default function RoleAdmin() {
@@ -120,6 +122,9 @@ export default function RoleAdmin() {
     () => [
       { accessorKey: 'roleId', header: 'Role ID' },
       { accessorKey: 'roleDesc', header: 'Description' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

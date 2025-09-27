@@ -26,11 +26,15 @@ type RoleColFilterApiResponse = {
 type RoleColFilterType = {
   hostId: string;
   roleId: string;
+  apiVersionId: string;
   apiId: string;
   apiVersion: string;
+  endpointId: string;
   endpoint: string;
-  columns: string; // This is a comma-separated list of column names
+  columns: string;
   aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string
 };
 
 export default function RoleColFilter() {
@@ -125,10 +129,15 @@ export default function RoleColFilter() {
   const columns = useMemo<MRT_ColumnDef<RoleColFilterType>[]>(
     () => [
       { accessorKey: 'roleId', header: 'Role ID' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API ID' },
       { accessorKey: 'apiVersion', header: 'Version' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'columns', header: 'Filtered Columns' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

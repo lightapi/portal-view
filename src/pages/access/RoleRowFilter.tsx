@@ -26,13 +26,17 @@ type RoleRowFilterApiResponse = {
 type RoleRowFilterType = {
   hostId: string;
   roleId: string;
+  apiVersionId: string;
   apiId: string;
   apiVersion: string;
+  endpointId: string;
   endpoint: string;
   colName: string;
   operator: string;
   colValue: string;
   aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string;
 };
 
 export default function RoleRowFilter() {
@@ -124,13 +128,18 @@ export default function RoleRowFilter() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleRowFilterType>[]>(
     () => [
-      { accessorKey: 'roleId', header: 'Role ID' },
-      { accessorKey: 'apiId', header: 'API ID' },
+      { accessorKey: 'roleId', header: 'Role Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'Version' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'colName', header: 'Column Name' },
       { accessorKey: 'operator', header: 'Operator' },
       { accessorKey: 'colValue', header: 'Column Value' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

@@ -34,6 +34,8 @@ type PositionType = {
   inheritToAncestor?: string;
   inheritToSibling?: string;
   aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string;
 };
 
 export default function PositionAdmin() {
@@ -124,6 +126,9 @@ export default function PositionAdmin() {
       { accessorKey: 'positionDesc', header: 'Description' },
       { accessorKey: 'inheritToAncestor', header: 'Inherit Ancestor' },
       { accessorKey: 'inheritToSibling', header: 'Inherit Sibling' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
