@@ -56,7 +56,7 @@ export default function RefLocale() {
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
-    pageSize: 25,
+    pageSize: 10,
   });
 
   // Data fetching logic
