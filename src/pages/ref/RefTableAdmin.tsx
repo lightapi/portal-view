@@ -57,38 +57,52 @@ export default function RefTableAdmin() {
   });
 
   // Data fetching logic
-  const fetchData = useCallback(async () => {
-    if (!host) return;
-    if (!data.length) setIsLoading(true); else setIsRefetching(true);
-
-    const cmd = {
-      host: 'lightapi.net', service: 'ref', action: 'getRefTable', version: '0.1.0',
-      data: {
-        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
-      },
-    };
-
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
-    try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RefTableApiResponse;
-      setData(json.refTables || []);
-      setRowCount(json.total || 0);
-    } catch (error) {
-      setIsError(true); console.error(error);
-    } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
-    }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
-
-  // useEffect to trigger fetchData
   useEffect(() => {
+    const fetchData = async () => {
+      if (!host) return;
+
+      // Set loading state correctly. The previous check `!data.length` was part of the problem.
+      setIsLoading(true);
+      setIsRefetching(true); // Can set both, MRT will show the right one
+
+      const cmd = {
+        host: 'lightapi.net', service: 'ref', action: 'getRefTable', version: '0.1.0',
+        data: {
+          hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+          sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        },
+      };
+
+      console.log("FETCHING DATA with cmd:", cmd); // This will now log the correct number of times
+
+      const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+      const cookies = new Cookies();
+      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+      
+      try {
+        const response = await fetch(url, { headers, credentials: 'include' });
+        const json = (await response.json()) as RefTableApiResponse;
+        console.log("json = ", json);
+        setData(json.refTables || []);
+        setRowCount(json.total || 0);
+      } catch (error) {
+        setIsError(true); console.error(error);
+      } finally {
+        setIsLoading(false);
+        setIsRefetching(false);
+      }
+    };
+    
     fetchData();
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ // The effect now depends ONLY on the inputs to the fetch.
+    host,
+    columnFilters,
+    globalFilter,
+    pagination.pageIndex,
+    pagination.pageSize,
+    sorting,
+  ]);
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<RefTableType>) => {

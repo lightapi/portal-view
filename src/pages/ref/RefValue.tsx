@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -44,7 +44,7 @@ export default function RefValue() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState();
-  const initialTableId = location.state?.data?.tableId;
+  const initialData = location.state?.data || {};
 
   // Data and fetching state
   const [data, setData] = useState<RefValueType[]>([]);
@@ -54,9 +54,12 @@ export default function RefValue() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialTableId ? [{ id: 'tableId', value: initialTableId }] : [],
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
+    Object.entries(initialData)
+      .map(([id, value]) => ({ id, value: value as string }))
+      .filter(f => f.value),
   );
+  
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -80,6 +83,7 @@ export default function RefValue() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
     const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+    console.log("cmd = ", cmd);
 
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
@@ -91,7 +95,7 @@ export default function RefValue() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -100,7 +104,7 @@ export default function RefValue() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<RefValueType>) => {
-    if (!window.confirm(`Are you sure you want to delete value: ${row.original.valueCode}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete ref value: ${row.original.valueCode}?`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(value => value.valueId !== row.original.valueId));
@@ -189,14 +193,20 @@ export default function RefValue() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button
-        variant="contained"
-        startIcon={<AddBoxIcon />}
-        onClick={() => navigate('/app/form/createRefValue', { state: { data: { tableId: initialTableId } } })}
-        disabled={!initialTableId}
-      >
-        Create New Value
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate('/app/form/createRefValue', { state: { data: initialData } })}
+        >
+          Create New Value
+        </Button>
+        {initialData.tableId && (
+          <Typography variant="subtitle1">
+            For Table Id: <strong>{initialData.tableId}</strong>
+          </Typography>
+        )}
+      </Box>
     ),
   });
 
