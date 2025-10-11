@@ -7020,10 +7020,6 @@
       "title": "Ref Relation Type",
       "type": "object",
       "properties": {
-        "relationId": {
-          "type": "string",
-          "title": "Relation Id"
-        },
         "relationName": {
           "type": "string",
           "title": "Relation Name"
@@ -7033,10 +7029,9 @@
           "title": "Relation Desc"
         }
       },
-      "required": ["relationId", "relationName", "relationDesc"]
+      "required": ["relationName", "relationDesc"]
     },
     "form": [
-      "relationId",
       "relationName",
       {
         "key": "relationDesc",
@@ -14588,6 +14583,14 @@
           "type": "string",
           "title": "Portal Services"
         },
+        "aggregateTypes": {
+          "type": "string",
+          "title": "Aggregate Types"
+        },
+        "eventTypes": {
+          "type": "string",
+          "title": "Event Types"
+        },
         "startTs": {
           "type": "string",
           "title": "Start Timestamp"
@@ -14597,7 +14600,7 @@
           "type": "string"
         }
       },
-      "required": ["hostId", "portalServices"]
+      "required": ["hostId", "startTs"]
     },
     "form": [
       "hostId",
@@ -14607,6 +14610,22 @@
         "multiple": true,
         "action": {
           "url": "https://localhost/r/data?name=portal_service"
+        }
+      },
+      {
+        "key": "aggregateTypes",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=aggregate_type"
+        }
+      },
+      {
+        "key": "eventTypes",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "https://localhost/r/data?name=event_type"
         }
       },
       {
