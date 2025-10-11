@@ -141,7 +141,7 @@ export default function RelationTypeAdmin() {
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
           <Tooltip title="Update">
-            <IconButton onClick={() => navigate('/app/form/updateRelationType', { state: { data: { ...row.original } } })}>
+            <IconButton onClick={() => navigate('/app/form/updateRefRelationType', { state: { data: { ...row.original } } })}>
               <SystemUpdateIcon />
             </IconButton>
           </Tooltip>
@@ -191,7 +191,7 @@ export default function RelationTypeAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRelationType')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRefRelationType')}>
         Create New Relation Type
       </Button>
     ),

@@ -134,6 +134,7 @@ export default function RefValue() {
     () => [
       { accessorKey: 'tableId', header: 'Table ID' },
       { accessorKey: 'tableName', header: 'Table Name' },
+      { accessorKey: 'valueId', header: 'Value Id' },
       { accessorKey: 'valueCode', header: 'Value Code' },
       { accessorKey: 'valueDesc', header: 'Description' },
       { accessorKey: 'displayOrder', header: 'Order' },
