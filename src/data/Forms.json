@@ -8278,7 +8278,7 @@
     ]
   },
   "createRule": {
-    "formId": "createYamlRule",
+    "formId": "createRule",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14680,6 +14680,52 @@
           "title": "End Timestamp",
           "type": "string"
         },
+        "replacements": {
+          "type": "array",
+          "title": "Replacements",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "fieldName": {
+                "title": "Field Name",
+                "type": "string"
+              },
+              "fromValue": {
+                "title": "From Value",
+                "type": "string"
+              },
+              "toValue": {
+                "title": "To Value",
+                "type": "string"
+              }
+            },
+            "required": ["fieldName", "fromValue", "toValue"]
+          }
+        },
+        "enrichments": {
+          "type": "array",
+          "title": "Enrichments",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "fieldName": {
+                "title": "Field Name",
+                "type": "string"
+              },
+              "action": {
+                "title": "Action",
+                "type": "string"
+              },
+              "sourceField": {
+                "title": "Source Field",
+                "type": "string"
+              }
+            },
+            "required": ["fieldName", "action"]
+          }
+        },
         "eventText": {
           "title": "Event Text",
           "type": "string"
@@ -14724,6 +14770,39 @@
       {
         "key": "endTs",
         "type": "timestamp"
+      },
+      {
+        "key": "replacements",
+        "add": "New",
+        "style": {
+          "add": "btn-success"
+        },
+        "items": ["replacements[].fieldName", "replacements[].fromValue", "replacements[].toValue"]
+      },
+      {
+        "key": "enrichments",
+        "add": "New",
+        "style": {
+          "add": "btn-success"
+        },
+        "items": [
+          "enrichments[].fieldName",
+          {
+            "key": "enrichments[].action",
+            "type": "dynaselect",
+            "multiple": false,
+            "options": [
+              {
+                "id": "generateUUID",
+                "label": "generateUUID"
+              },
+              {
+                "id": "mapRenerate",
+                "label": "mapGenerate"
+              }
+            ]
+          },
+          "enrichments[].sourceField"]
       },
       {
         "key": "eventText",
