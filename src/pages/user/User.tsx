@@ -159,11 +159,14 @@ export default function User() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<UserType>[]>(
     () => [
-      { accessorKey: 'userId', header: 'User ID', size: 300 },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'userId', header: 'User Id', size: 300 },
       { accessorKey: 'email', header: 'Email', size: 250 },
+      { accessorKey: 'language', header: 'Language' },
+      { accessorKey: 'userType', header: 'User Type' },
+      { accessorKey: 'entityId', header: 'Entity Id' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
-      { accessorKey: 'userType', header: 'Type' },
       { accessorKey: 'verified', header: 'Verified', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
       { accessorKey: 'locked', header: 'Locked', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
     ],
