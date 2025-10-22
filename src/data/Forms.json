@@ -9915,7 +9915,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=scheduler_topic"
+          "url": "/r/data?name=scheduler_topic"
         }
       },
       {
@@ -9923,7 +9923,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=scheduler_event"
+          "url": "/r/data?name=scheduler_event"
         }
       },
       {
@@ -10043,7 +10043,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=scheduler_topic"
+          "url": "/r/data?name=scheduler_topic"
         }
       },
       {
@@ -10051,7 +10051,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=scheduler_event"
+          "url": "/r/data?name=scheduler_event"
         }
       },
       {
@@ -14609,7 +14609,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=portal_service"
+          "url": "/r/data?name=portal_service"
         }
       },
       {
@@ -14617,7 +14617,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=aggregate_type"
+          "url": "/r/data?name=aggregate_type"
         }
       },
       {
@@ -14625,7 +14625,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=event_type"
+          "url": "/r/data?name=event_type"
         }
       },
       {
@@ -14744,7 +14744,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=portal_service"
+          "url": "/r/data?name=portal_service"
         }
       },
       {
@@ -14752,7 +14752,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=aggregate_type"
+          "url": "/r/data?name=aggregate_type"
         }
       },
       {
@@ -14760,7 +14760,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "https://localhost/r/data?name=event_type"
+          "url": "/r/data?name=event_type"
         }
       },
       {
