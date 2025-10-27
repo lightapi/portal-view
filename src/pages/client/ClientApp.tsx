@@ -36,6 +36,7 @@ type AppType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
 
 export default function ClientApp() {
@@ -50,7 +51,9 @@ export default function ClientApp() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+    { id: 'active', value: 'true' },
+  ]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -62,12 +65,26 @@ export default function ClientApp() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    // Transform string booleans from the UI filter state to real booleans for the API
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true', // This converts "true" to true and "false" (or anything else) to false
+        };
+      }
+      return filter; // Return all other filters unchanged
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'client', action: 'getApp', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -129,10 +146,20 @@ export default function ClientApp() {
         accessorKey: 'isKafkaApp',
         header: 'Kafka App',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'operationOwner', header: 'Ops Owner' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (<Tooltip title="Update App"><IconButton onClick={() => navigate('/app/form/updateApp', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
