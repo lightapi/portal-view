@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -41,6 +41,7 @@ type AppType = {
 
 export default function ClientApp() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState();
 
   // Data and fetching state
@@ -49,6 +50,8 @@ export default function ClientApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  // Add loading state for the update action
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null); // Will store the appId being fetched
 
   // Table state
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
@@ -136,6 +139,42 @@ export default function ClientApp() {
     }
   }, [data]);
 
+  // Handler to fetch fresh data before navigating to update form
+  const handleUpdate = useCallback(async (row: MRT_Row<AppType>) => {
+    const appId = row.original.appId;
+    setIsUpdateLoading(appId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'client', action: 'getAppById', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest app data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateApp', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch app for update:", error);
+      alert("Could not load the latest app data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AppType>[]>(
     () => [
@@ -162,7 +201,20 @@ export default function ClientApp() {
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Update App"><IconButton onClick={() => navigate('/app/form/updateApp', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
+        Cell: ({ row }) => (
+          <Tooltip title="Update App">
+            <IconButton 
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.appId}
+            >
+              {isUpdateLoading === row.original.appId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        ),
       },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
@@ -178,7 +230,7 @@ export default function ClientApp() {
         ),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
