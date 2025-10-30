@@ -29,16 +29,14 @@ import ServiceEndpoint from "./pages/service/ServiceEndpoint";
 import ListScope from "./pages/service/ListScope";
 import ListRule from "./pages/service/ListRule";
 import ClientApp from "./pages/client/ClientApp";
-import Client from "./pages/oauth/Client";
+import AuthClient from "./pages/oauth/AuthClient";
 import RefreshToken from "./pages/oauth/RefreshToken";
-import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
-import RefreshTokenDetail from "./pages/oauth/RefreshTokenDetail";
+import AuthCode from "./pages/oauth/AuthCode";
 import RefTableAdmin from "./pages/ref/RefTableAdmin";
 import RefValue from "./pages/ref/RefValue";
 import RefLocale from "./pages/ref/RefLocale";
 import RelationTypeAdmin from "./pages/ref/RelationTypeAdmin";
 import RefRelation from "./pages/ref/RefRelation";
-import ClientDelete from "./pages/oauth/ClientDelete";
 import Category from "./pages/category/Category";
 import BlogAdmin from "./pages/blog/BlogAdmin";
 import BlogDelete from "./pages/blog/BlogDelete";
@@ -201,10 +199,6 @@ const App = () => {
           />
           <Route path="access/positionUser" element={<PositionUser />} />
           <Route path="clientApp" element={<ClientApp />} />
-          <Route path="client" element={<Client />} />
-          <Route path="refreshToken" element={<RefreshToken />} />
-          <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
-          <Route path="refreshTokenDetail" element={<RefreshTokenDetail />} />
           <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
           <Route path="ref/value" element={<RefValue />} />
           <Route path="ref/locale" element={<RefLocale />} />
@@ -212,8 +206,9 @@ const App = () => {
           <Route path="ref/relation" element={<RefRelation />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/providerKey" element={<ProviderKey />} />
-          <Route path="oauth/client" element={<Client />} />
-          <Route path="oauth/deleteClient" element={<ClientDelete />} />
+          <Route path="oauth/authClient" element={<AuthClient />} />
+          <Route path="oauth/refreshToken" element={<RefreshToken />} />
+          <Route path="oauth/authCode" element={<AuthCode />} />
           <Route path="category/admin" element={<Category />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />
           <Route path="blog/deleteBlog" element={<BlogDelete />} />

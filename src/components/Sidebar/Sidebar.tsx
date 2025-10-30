@@ -196,6 +196,12 @@ const structure = [
     role: "admin",
     link: "/app/oauth/authProvider",
     icon: <SecurityIcon />,
+    children: [
+      { label: "Auth Provider", link: "/app/oauth/authProvider" },
+      { label: "Auth Client", link: "/app/oauth/authClient" },
+      { label: "Auth Code", link: "/app/oauth/authCode" },
+      { label: "Refresh Token", link: "/app/oauth/refreshToken" },
+    ],
   },
   {
     id: 100,
