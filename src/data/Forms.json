@@ -2193,15 +2193,15 @@
       }
     ]
   },
-  "createAppClient": {
-    "formId": "createAppClient",
+  "createClient": {
+    "formId": "createClient",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "oauth",
         "action": "createClient",
         "version": "0.1.0",
-        "title": "Create App Client",
+        "title": "Create Client",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -2211,7 +2211,6 @@
       "required": [
         "hostId",
         "clientName",
-        "appId",
         "clientType",
         "clientProfile"
       ],
@@ -2223,8 +2222,11 @@
         },
         "appId": {
           "type": "string",
-          "title": "App Id",
-          "readonly": true
+          "title": "App Id"
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id"
         },
         "clientName": {
           "title": "Client Name",
@@ -2252,6 +2254,7 @@
         },
         "authenticateClass": {
           "title": "Authenticate Class",
+          "default": "com.networknt.oauth.auth.LightPortalAuth",
           "type": "string"
         },
         "deRefClientId": {
@@ -2263,6 +2266,7 @@
     "form": [
       "hostId",
       "appId",
+      "apiId",
       "clientName",
       {
         "key": "clientType",
@@ -2325,8 +2329,8 @@
       "deRefClientId"
     ]
   },
-  "updateAppClient": {
-    "formId": "updateAppClient",
+  "updateClient": {
+    "formId": "updateClient",
     "actions": [
       {
         "host": "lightapi.net",

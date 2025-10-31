@@ -61,7 +61,8 @@ export default function AuthClient() {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
     Object.entries(initialData)
       .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+      .filter(f => f.value)
+      .concat([{ id: 'active', value: 'true' }])
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -122,8 +123,8 @@ export default function AuthClient() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'client', action: 'deleteClient', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      host: 'lightapi.net', service: 'oauth', action: 'deleteClient', version: '0.1.0',
+      data: row.original,
     };
 
     try {
@@ -141,20 +142,39 @@ export default function AuthClient() {
   }, [data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<AuthClientType>) => {
-    // Similar to ClientApp, fetch the latest data before navigating
     const clientId = row.original.clientId;
     setIsUpdateLoading(clientId);
 
-    const cmd = { /* ... command to get a single client by ID ... */ };
-    // ... fetch logic ...
-    
-    // On success:
-    // navigate('/app/form/updateClient', { state: { data: freshData, source: location.pathname } });
+    const cmd = {
+      host: 'lightapi.net', service: 'oauth', action: 'getFreshClient', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    // For now, let's just navigate with the potentially stale data
-    navigate('/app/form/updateClient', { state: { data: row.original, source: location.pathname } });
-    
-  }, [navigate, location.pathname]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateClient', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch data for update:", error);
+      alert("Could not load the latest data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
 
 
   // Column definitions
@@ -170,8 +190,8 @@ export default function AuthClient() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,

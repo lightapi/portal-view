@@ -69,16 +69,15 @@ export default function ClientApp() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
     
-    // Transform string booleans from the UI filter state to real booleans for the API
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
       if (filter.id === 'active' || filter.id === 'isKafkaApp') {
         return {
           ...filter,
-          value: filter.value === 'true', // This converts "true" to true and "false" (or anything else) to false
+          value: filter.value === 'true',
         };
       }
-      return filter; // Return all other filters unchanged
+      return filter;
     });
 
     const cmd = {
@@ -122,7 +121,7 @@ export default function ClientApp() {
 
     const cmd = {
       host: 'lightapi.net', service: 'client', action: 'deleteApp', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -224,7 +223,7 @@ export default function ClientApp() {
         id: 'relations', header: 'Relations', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="OAuth Clients"><IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}><AirlineSeatReclineNormalIcon /></IconButton></Tooltip>
+            <Tooltip title="OAuth Clients"><IconButton onClick={() => navigate('/app/oauth/authClient', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}><AirlineSeatReclineNormalIcon /></IconButton></Tooltip>
             <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/instance/InstanceApp', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}><ContentCopyIcon /></IconButton></Tooltip>
           </Box>
         ),
