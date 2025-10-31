@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -14,6 +14,7 @@ import {
   Button,
   IconButton,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -63,6 +64,7 @@ type UserType = {
 
 export default function User() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState();
 
   // Data and fetching state
@@ -80,6 +82,8 @@ export default function User() {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
@@ -156,6 +160,42 @@ export default function User() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<UserType>) => {
+    const userId = row.original.userId;
+    setIsUpdateLoading(userId);
+
+    // Assumes an action 'getUserById' that fetches a single user
+    const cmd = {
+      host: 'lightapi.net', service: 'user', action: 'getUserById', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest user data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateUser', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch user for update:", error);
+      alert("Could not load the latest user data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<UserType>[]>(
     () => [
@@ -194,7 +234,18 @@ export default function User() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem', flexWrap: 'nowrap' }}>
         <Tooltip title="Details"><IconButton onClick={() => navigate('/app/userDetail', { state: { user: row.original } })}><DetailsIcon /></IconButton></Tooltip>
-        <Tooltip title="Update"><IconButton onClick={() => navigate('/app/form/updateUser', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>
+        <Tooltip title="Update">
+          <IconButton 
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.userId}
+          >
+            {isUpdateLoading === row.original.userId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Lock User">
           <span>
             <IconButton onClick={() => handleStateChange(row, 'lockUser', { locked: true })} disabled={row.original.locked}>
