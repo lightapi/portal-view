@@ -111,8 +111,8 @@ export default function OrgAdmin() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'org', action: 'deleteOrg', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      host: 'lightapi.net', service: 'host', action: 'deleteOrg', version: '0.1.0',
+      data: row.original,
     };
 
     try {
@@ -135,8 +135,8 @@ export default function OrgAdmin() {
     setIsUpdateLoading(domain);
 
     const cmd = {
-      host: 'lightapi.net', service: 'org', action: 'getOrgByDomain', version: '0.1.0', // Assuming this action exists
-      data: { domain }, // Send only the primary key
+      host: 'lightapi.net', service: 'host', action: 'getFreshOrg', version: '0.1.0',
+      data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
