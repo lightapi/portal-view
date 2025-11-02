@@ -217,8 +217,8 @@
       }
     ]
   },
-  "updateOrgForm": {
-    "formId": "updateOrgForm",
+  "updateOrg": {
+    "formId": "updateOrg",
     "actions": [
       {
         "host": "lightapi.net",
@@ -356,7 +356,7 @@
       "title": "Host Request",
       "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
       "properties": {
-        "currentHostId": {
+        "hostId": {
           "title": "Host Id",
           "type": "string",
           "readonly": true
@@ -382,7 +382,7 @@
       }
     },
     "form": [
-      "currentHostId",
+      "hostId",
       "domain",
       "subDomain",
       {
@@ -390,15 +390,7 @@
         "type": "textarea",
         "rows": 5
       },
-      {
-        "key": "hostOwner",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      }
+      "hostOwner"
     ]
   },
   "createUserHost": {
