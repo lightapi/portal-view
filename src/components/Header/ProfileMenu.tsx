@@ -9,9 +9,7 @@ import {
   getPayment,
   getProfile,
   userHost,
-  createOrgForm,
-  updateOrgForm,
-  deleteOrgForm,
+  createOrg,
   signOut,
   signUp,
   updateRoles,
@@ -123,32 +121,10 @@ export default function ProfileMenu({ classes }) {
                 classes.profileMenuItem,
                 classes.headerMenuItem,
               )}
-              onClick={() => handleMenuItemClick(createOrgForm)}
+              onClick={() => handleMenuItemClick(createOrg)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Claim Org
             </MenuItem>
-            {roles.includes("org-admin") && (
-              <MenuItem
-                className={classNames(
-                  classes.profileMenuItem,
-                  classes.headerMenuItem,
-                )}
-                onClick={() => handleMenuItemClick(updateOrgForm)}
-              >
-                <AccountIcon className={classes.profileMenuIcon} /> Update Org
-              </MenuItem>
-            )}
-            {roles.includes("org-admin") && (
-              <MenuItem
-                className={classNames(
-                  classes.profileMenuItem,
-                  classes.headerMenuItem,
-                )}
-                onClick={() => handleMenuItemClick(deleteOrgForm)}
-              >
-                <AccountIcon className={classes.profileMenuIcon} /> Delete Org
-              </MenuItem>
-            )}
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,

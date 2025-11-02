@@ -105,6 +105,7 @@ import LogViewer from "./pages/controller/LogViewer";
 import LoggerConfig from "./pages/controller/LoggerConfig";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
+import OrgAdmin from "./pages/org/OrgAdmin";
 import Host from "./pages/host/Host";
 import HostAdmin from "./pages/host/HostAdmin";
 import HostUser from "./pages/host/HostUser";
@@ -344,6 +345,7 @@ const App = () => {
           <Route path="controller/loggerConfig" element={<LoggerConfig />} />
           <Route path="controller/logContent" element={<LogContent />} />
           <Route path="controller/chaos" element={<ChaosMonkey />} />
+          <Route path="org/OrgAdmin" element={<OrgAdmin />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
           <Route path="host/hostUser" element={<HostUser />} />

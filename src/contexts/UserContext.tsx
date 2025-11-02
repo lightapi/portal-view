@@ -127,9 +127,7 @@ export {
   getPayment,
   updateRoles,
   getOrders,
-  createOrgForm,
-  updateOrgForm,
-  deleteOrgForm,
+  createOrg,
   userHost,
 };
 
@@ -198,10 +196,8 @@ function getOrders(dispatch, navigate) {
   navigate("/app/userOrders");
 }
 
-function createOrgForm(dispatch, navigate) {
-  // make sure that the org associated with the user is not created yet.
-
-  navigate("/app/form/createOrgForm");
+function createOrg(dispatch, navigate) {
+  navigate("/app/form/createOrg");
 }
 
 function updateOrgForm(dispatch, navigate) {

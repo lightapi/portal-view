@@ -39,6 +39,7 @@ import NewspaperIcon from "@mui/icons-material/Newspaper";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import SchemaIcon from "@mui/icons-material/Schema";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -153,7 +154,14 @@ const structure = [
   //     { label: 'YAML Normalize', link: '/app/tool/yamlNormalize' },
   //   ],
   // },
-  { id: 90, type: "divider", role: "admin" },
+  { id: 85, type: "divider", role: "admin" },
+  {
+    id: 90,
+    label: "Org Admin",
+    role: "admin",
+    link: "/app/org/OrgAdmin",
+    icon: <CorporateFareIcon />,
+  },
   {
     id: 91,
     label: "Host Admin",

@@ -117,8 +117,8 @@
       }
     ]
   },
-  "createOrgForm": {
-    "formId": "createOrgForm",
+  "createOrg": {
+    "formId": "createOrg",
     "actions": [
       {
         "host": "lightapi.net",
