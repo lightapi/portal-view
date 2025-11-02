@@ -87,10 +87,10 @@ export default function AuthProvider() {
       if (filter.id === 'active') {
         return {
           ...filter,
-          value: filter.value === 'true', // This converts "true" to true and "false" (or anything else) to false
+          value: filter.value === 'true',
         };
       }
-      return filter; // Return all other filters unchanged
+      return filter;
     });
 
     const cmd = {
