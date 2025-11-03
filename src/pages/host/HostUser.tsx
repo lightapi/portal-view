@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
@@ -31,6 +31,7 @@ type UserHostType = {
   firstName?: string;
   lastName?: string;
   current?: boolean;
+  active: boolean;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -53,10 +54,18 @@ export default function HostUser() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialHostId ? [{ id: 'hostId', value: initialHostId }] : [],
+const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+  initialHostId 
+    ? [
+        { id: 'hostId', value: initialHostId },
+        { id: 'active', value: 'true' }
+      ]
+    : [
+        { id: 'active', value: 'true' }
+      ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -75,12 +84,23 @@ export default function HostUser() {
     }
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'current') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'getUserHost', version: '0.1.0',
       data: {
         hostId: initialHostId, 
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
@@ -115,7 +135,7 @@ export default function HostUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'deleteUserHost', version: '0.1.0', // Assuming this action exists
-      data: { hostId: row.original.hostId, userId: row.original.userId, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -147,8 +167,15 @@ export default function HostUser() {
         accessorKey: 'current',
         header: 'Current',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
         id: 'delete', header: 'Remove', enableSorting: false, enableColumnFilter: false,
