@@ -143,13 +143,6 @@ export default function ConfigAdmin() {
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Update Config"><IconButton onClick={() => navigate('/app/form/updateConfig', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>
             <Tooltip title="Delete Config"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
-      {
-        id: 'relations', header: 'Relations', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Properties"><IconButton onClick={() => navigate('/app/config/configProperty', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
             <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/config/configEnvironment', { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
             <Tooltip title="Products"><IconButton onClick={() => navigate('/app/config/configProduct', { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
