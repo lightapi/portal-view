@@ -16,13 +16,16 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import AddToDriveIcon from '@mui/icons-material/AddToDrive';
 import LanguageIcon from '@mui/icons-material/Language';
 import GridGoldenratioIcon from '@mui/icons-material/GridGoldenratio';
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import PermDataSettingIcon from "@mui/icons-material/PermDataSetting";
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
 type ProductVersionApiResponse = {
-  products: Array<ProductVersionType>; // Original component used 'products'
+  products: Array<ProductVersionType>;
   total: number;
 };
 
@@ -45,10 +48,25 @@ type ProductVersionType = {
   active: boolean;
 };
 
+interface UserState {
+  host?: string;
+}
+
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
+};
+
 export default function ProductVersionAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialData = location.state?.data || {};
 
   // Data and fetching state
@@ -79,7 +97,7 @@ export default function ProductVersionAdmin() {
 
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active' || filter.id === 'current' || filter.id === 'breakCode' || filter.id === 'breakConfig') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -182,8 +200,37 @@ export default function ProductVersionAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionType>[]>(
     () => [
-      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'productId', header: 'Product Id' },
       { accessorKey: 'productVersion', header: 'Version' },
+      { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      {
+        accessorKey: 'breakCode', 
+        header: 'Break Code', 
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'breakConfig', 
+        header: 'Break Config', 
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      { 
+        accessorKey: 'releaseNote', 
+        header: 'Release Note',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { 
+        accessorKey: 'versionDesc', 
+        header: 'Version Desc',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { accessorKey: 'releaseType', header: 'Release Type' },
       { accessorKey: 'versionStatus', header: 'Status' },
       {
         accessorKey: 'current', 
@@ -192,7 +239,9 @@ export default function ProductVersionAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       {
         accessorKey: 'active',
         header: 'Active',
@@ -217,24 +266,13 @@ export default function ProductVersionAdmin() {
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+          <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: {...row.original }}})}><AddToDriveIcon /></IconButton></Tooltip>
+          <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: {productVersionId: row.original.productVersionId }}})}><LanguageIcon /></IconButton></Tooltip>
+          <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: {...row.original }}})}><GridGoldenratioIcon /></IconButton></Tooltip>
+          <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: {...row.original }}})}><PermDataSettingIcon /></IconButton></Tooltip>
+          <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: {...row.original }}})}><FormatListBulletedIcon /></IconButton></Tooltip>
           </Box>
         ),
-      },
-      {
-        id: 'relations', header: 'Relations', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => {
-          const { productVersionId, productId, productVersion } = row.original;
-          const navState = { data: { productVersionId, productId, productVersion } };
-          return (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { productVersionId } } })}><AddToDriveIcon /></IconButton></Tooltip>
-              <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: navState })}><LanguageIcon /></IconButton></Tooltip>
-              <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: navState })}><GridGoldenratioIcon /></IconButton></Tooltip>
-              <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: navState })}><GridGoldenratioIcon /></IconButton></Tooltip>
-              <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: navState })}><GridGoldenratioIcon /></IconButton></Tooltip>
-            </Box>
-          );
-        },
       },
     ],
     [handleDelete, handleUpdate, isUpdateLoading, navigate],
