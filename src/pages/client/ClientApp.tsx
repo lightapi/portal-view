@@ -39,10 +39,14 @@ type AppType = {
   active: boolean;
 };
 
+interface UserState {
+  host?: string;
+}
+
 export default function ClientApp() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<AppType[]>([]);
@@ -188,9 +192,9 @@ export default function ClientApp() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'operationOwner', header: 'Ops Owner' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       {
         accessorKey: 'active',
         header: 'Active',
