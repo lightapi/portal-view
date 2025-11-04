@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
@@ -54,7 +54,6 @@ export default function HostUser() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
-  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state, pre-filtered by context if provided
 const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(

@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -42,6 +42,7 @@ type ProductVersionType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
 
 export default function ProductVersionAdmin() {
@@ -56,12 +57,13 @@ export default function ProductVersionAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by context if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
     Object.entries(initialData)
       .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+      .filter(f => f.value)
+      .concat([{ id: 'active', value: 'true' }])
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -75,11 +77,22 @@ export default function ProductVersionAdmin() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersion', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
@@ -99,14 +112,13 @@ export default function ProductVersionAdmin() {
     }
   }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  // useEffect to trigger fetchData
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<ProductVersionType>) => {
-    if (!window.confirm(`Are you sure you want to delete version: ${row.original.productVersion}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete the product version: ${row.original.productVersion}?`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(pv => pv.productVersionId !== row.original.productVersionId));
@@ -114,7 +126,7 @@ export default function ProductVersionAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersion', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -131,6 +143,42 @@ export default function ProductVersionAdmin() {
     }
   }, [data]);
 
+  // Handler to fetch fresh data before navigating to update form
+  const handleUpdate = useCallback(async (row: MRT_Row<ProductVersionType>) => {
+    const productVersion = row.original.productVersion;
+    setIsUpdateLoading(productVersion);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'product', action: 'getFreshProductVersion', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateProductVersion', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch data for update:", error);
+      alert("Could not load the latest data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionType>[]>(
     () => [
@@ -138,17 +186,37 @@ export default function ProductVersionAdmin() {
       { accessorKey: 'productVersion', header: 'Version' },
       { accessorKey: 'versionStatus', header: 'Status' },
       {
-        accessorKey: 'current', header: 'Current', filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+        accessorKey: 'current', 
+        header: 'Current', 
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update"><IconButton onClick={() => navigate('/app/form/updateProductVersion', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>
-            <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+          <Tooltip title="Update App">
+            <IconButton 
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.productVersion}
+            >
+              {isUpdateLoading === row.original.productVersion ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
           </Box>
         ),
       },
@@ -169,7 +237,7 @@ export default function ProductVersionAdmin() {
         },
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
