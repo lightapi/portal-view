@@ -32,12 +32,17 @@ type ProductVersionEnvironmentType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function ProductEnvironment() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialData = location.state?.data || {};
 
   // Data and fetching state
@@ -51,7 +56,8 @@ export default function ProductEnvironment() {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
     Object.entries(initialData)
       .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+      .filter(f => f.value)
+      .concat([{ id: 'active', value: 'true' }])
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -65,11 +71,21 @@ export default function ProductEnvironment() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    const apiFilters = columnFilters.map(filter => {
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersionEnvironment', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
       },
     };
 
@@ -107,7 +123,7 @@ export default function ProductEnvironment() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionEnvironment', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -127,11 +143,21 @@ export default function ProductEnvironment() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionEnvironmentType>[]>(
     () => [
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
-      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'productId', header: 'Product Id' },
       { accessorKey: 'productVersion', header: 'Version' },
       { accessorKey: 'systemEnv', header: 'System Env' },
       { accessorKey: 'runtimeEnv', header: 'Runtime Env' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' },
@@ -155,7 +181,7 @@ export default function ProductEnvironment() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.productVersionId}-${row.systemEnv}`,
+    getRowId: (row) => `${row.productVersionId}-${row.systemEnv}-${row.runtimeEnv}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
@@ -170,7 +196,7 @@ export default function ProductEnvironment() {
         </Button>
         {initialData.productVersionId && (
           <Typography variant="subtitle1">
-            For Product Version: <strong>{initialData.productVersion} ({initialData.productId})</strong>
+            For Product Version: <strong>{initialData.productVersionId}</strong>
           </Typography>
         )}
       </Box>
