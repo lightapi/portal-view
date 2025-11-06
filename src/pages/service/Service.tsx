@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -18,6 +18,7 @@ import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatRecline
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
 type ServiceApiResponse = {
@@ -41,11 +42,28 @@ type ServiceType = {
   apiTags?: string;
   apiStatus?: string;
   aggregateVersion?: number;
+  active: boolean;
+};
+
+interface UserState {
+  host?: string;
+}
+
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
 };
 
 export default function Service() {
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const location = useLocation();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<ServiceType[]>([]);
@@ -53,9 +71,12 @@ export default function Service() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+    { id: 'active', value: 'true' },
+  ]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -67,12 +88,25 @@ export default function Service() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'getService', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -107,7 +141,7 @@ export default function Service() {
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'deleteService', version: '0.1.0',
-      data: { hostId: row.original.hostId, apiId: row.original.apiId, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -124,17 +158,57 @@ export default function Service() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<ServiceType>) => {
+    const apiId = row.original.apiId;
+    setIsUpdateLoading(apiId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'service', action: 'getFreshService', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest service data.');
+      }
+      navigate('/app/form/updateService', { state: { data: freshData, source: location.pathname } });
+    } catch (error) {
+      console.error("Failed to fetch service for update:", error);
+      alert("Could not load the latest service data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceType>[]>(
     () => [
       { accessorKey: 'apiId', header: 'API ID' },
       { accessorKey: 'apiName', header: 'API Name' },
-      { accessorKey: 'apiDesc', header: 'Description' },
+      { 
+        accessorKey: 'apiDesc', 
+        header: 'Description',
+        Cell: TruncatedCell,
+      },
       { accessorKey: 'operationOwner', header: 'Ops Owner' },
       { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
       { accessorKey: 'apiStatus', header: 'Status' },
       { accessorKey: 'gitRepo', header: 'Git Repo' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'details', header: 'Details', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
@@ -148,11 +222,10 @@ export default function Service() {
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
-          <Tooltip title="Update">
-            <IconButton onClick={() => navigate('/app/form/updateService', { state: { service: row.original } })}>
-              <SystemUpdateIcon />
+          <Tooltip title="Update Service">
+            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.apiId}>
+              {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
             </IconButton>
           </Tooltip>
         ),

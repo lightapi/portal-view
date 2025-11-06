@@ -13,28 +13,25 @@ import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import DetailsIcon from '@mui/icons-material/Details';
+import PublicIcon from '@mui/icons-material/Public';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
-type RuleApiResponse = {
-  rules: Array<RuleType>;
+type TagApiResponse = {
+  tags: Array<TagType>;
   total: number;
 };
 
-type RuleType = {
-  hostId?: string;
-  ruleId: string;
-  ruleName?: string;
-  ruleVersion?: string;
-  ruleType?: string;
-  ruleGroup?: string;
-  common?: string;
-  ruleBody?: string;
-  ruleOwner?: string;
+type TagType = {
+  hostId?: string; // Can be null for global tags
+  tagId: string;
+  entityType: string;
+  tagName: string;
+  tagDesc?: string;
+  active: boolean;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -56,13 +53,13 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
     );
 };
 
-export default function RuleAdmin() {
+export default function TagAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
 
   // Data and fetching state
-  const [data, setData] = useState<RuleType[]>([]);
+  const [data, setData] = useState<TagType[]>([]);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -97,7 +94,7 @@ export default function RuleAdmin() {
     });
 
     const cmd = {
-      host: 'lightapi.net', service: 'rule', action: 'getRule', version: '0.1.0',
+      host: 'lightapi.net', service: 'tag', action: 'getTag', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []), 
@@ -105,14 +102,15 @@ export default function RuleAdmin() {
         globalFilter: globalFilter ?? '',
       },
     };
+
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
     const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RuleApiResponse;
-      setData(json.rules || []);
+      const json = (await response.json()) as CategoryApiResponse;
+      setData(json.tags || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true); console.error(error);
@@ -127,39 +125,39 @@ export default function RuleAdmin() {
   }, [fetchData]);
 
   // Delete handler with optimistic update
-  const handleDelete = useCallback(async (row: MRT_Row<RuleType>) => {
-    if (!window.confirm(`Are you sure you want to delete rule: ${row.original.ruleName}?`)) return;
+  const handleDelete = useCallback(async (row: MRT_Row<TagType>) => {
+    if (!window.confirm(`Are you sure you want to delete tag: ${row.original.tagName}?`)) return;
 
     const originalData = [...data];
-    setData(prev => prev.filter(rule => rule.ruleId !== row.original.ruleId));
+    setData(prev => prev.filter(tag => tag.tagId !== row.original.tagId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'rule', action: 'deleteRule', version: '0.1.0',
+      host: 'lightapi.net', service: 'tag', action: 'deleteTag', version: '0.1.0',
       data: row.original,
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete rule. Please try again.');
+        alert('Failed to delete tag. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
     } catch (e) {
-      alert('Failed to delete rule due to a network error.');
+      alert('Failed to delete tag due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
   }, [data]);
 
   // Handler to fetch fresh data before navigating to update form
-  const handleUpdate = useCallback(async (row: MRT_Row<RuleType>) => {
-    const ruleId = row.original.ruleId;
-    setIsUpdateLoading(ruleId);
+  const handleUpdate = useCallback(async (row: MRT_Row<TagType>) => {
+    const tagId = row.original.tagId;
+    setIsUpdateLoading(tagId);
 
     const cmd = {
-      host: 'lightapi.net', service: 'rule', action: 'getFreshRule', version: '0.1.0',
+      host: 'lightapi.net', service: 'tag', action: 'getFreshTag', version: '0.1.0',
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -169,48 +167,41 @@ export default function RuleAdmin() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const freshData = await response.json();
-      console.log("freshData", freshData);
       if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest rule data.');
+        throw new Error(freshData.description || 'Failed to fetch latest tag data.');
       }
       
-      // Navigate with the fresh data
-      navigate('/app/form/updateRule', { 
+      navigate('/app/form/updateTag', { 
         state: { 
           data: freshData, 
           source: location.pathname 
         } 
       });
     } catch (error) {
-      console.error("Failed to fetch rule for update:", error);
-      alert("Could not load the latest rule data. Please try again.");
+      console.error("Failed to fetch tag for update:", error);
+      alert("Could not load the latest tag data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [navigate, location.pathname]);
 
   // Column definitions
-  const columns = useMemo<MRT_ColumnDef<RuleType>[]>(
+  const columns = useMemo<MRT_ColumnDef<TagType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'ruleId', header: 'Rule Id' },
-      { accessorKey: 'ruleName', header: 'Rule Name' },
-      { accessorKey: 'ruleVersion', header: 'Version' },
-      { accessorKey: 'ruleType', header: 'Type' },
-      { accessorKey: 'ruleGroup', header: 'Group' },
-      { accessorKey: 'ruleOwner', header: 'Owner' },
       { 
-        accessorKey: 'ruleBody', 
-        header: 'Body',
+        accessorKey: 'hostId', 
+        header: 'Host ID',
+        Cell: ({ cell }) => cell.getValue<string>() ? cell.getValue<string>() : (
+          <Tooltip title="Global Tag"><PublicIcon fontSize="small" color="disabled" /></Tooltip>
+        ),
+       },
+      { accessorKey: 'tagId', header: 'Tag ID' },
+      { accessorKey: 'tagName', header: 'Tag Name' },
+      { accessorKey: 'entityType', header: 'Entity Type' },
+      { 
+        accessorKey: 'tagDesc', 
+        header: 'Tag Desc',
         Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      {
-        accessorKey: 'common',
-        header: 'Common',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
@@ -219,30 +210,18 @@ export default function RuleAdmin() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        id: 'detail', header: 'Detail', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Details">
-            <IconButton onClick={() => navigate('/app/ruleDetail', { state: { rule: row.original } })}>
-              <DetailsIcon />
-            </IconButton>
-          </Tooltip>
-        ),
+        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
-          <Tooltip title="Update Rule">
+          <Tooltip title="Update Tag">
             <IconButton 
               onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.ruleId}
+              disabled={isUpdateLoading === row.original.tagId}
             >
-              {isUpdateLoading === row.original.ruleId ? (
+              {isUpdateLoading === row.original.tagId ? (
                 <CircularProgress size={22} />
               ) : (
                 <SystemUpdateIcon />
@@ -253,17 +232,10 @@ export default function RuleAdmin() {
       },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
+        Cell: ({ row }) => (<Tooltip title="Delete Tag"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading],
   );
 
   // Table instance configuration
@@ -280,12 +252,12 @@ export default function RuleAdmin() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => row.ruleId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading rules' } : undefined,
+    getRowId: (row) => row.tagId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRule')}>
-        Create New Rule
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTag')}>
+        Create New Tag
       </Button>
     ),
   });

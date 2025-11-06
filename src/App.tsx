@@ -38,6 +38,7 @@ import RefLocale from "./pages/ref/RefLocale";
 import RelationTypeAdmin from "./pages/ref/RelationTypeAdmin";
 import RefRelation from "./pages/ref/RefRelation";
 import Category from "./pages/category/Category";
+import TagAdmin from "./pages/tag/TagAdmin";
 import BlogAdmin from "./pages/blog/BlogAdmin";
 import BlogDelete from "./pages/blog/BlogDelete";
 import BlogItem from "./pages/blog/BlogItem";
@@ -45,13 +46,8 @@ import ErrorAdmin from "./pages/error/ErrorAdmin";
 import ErrorDelete from "./pages/error/ErrorDelete";
 import ErrorItem from "./pages/error/ErrorItem";
 import SchemaAdmin from "./pages/schema/SchemaAdmin";
-import SchemaDelete from "./pages/schema/SchemaDelete";
-import SchemaList from "./pages/schema/SchemaList";
-import SchemaItem from "./pages/schema/SchemaItem";
 import ScheduleAdmin from "./pages/schedule/ScheduleAdmin";
 import RuleAdmin from "./pages/rule/RuleAdmin";
-import RuleDelete from "./pages/rule/RuleDelete";
-import RuleItem from "./pages/rule/RuleItem";
 import CityRegistry from "./pages/covid/CityRegistry";
 import CityProfile from "./pages/covid/CityProfile";
 import DeleteCity from "./pages/covid/DeleteCity";
@@ -211,20 +207,16 @@ const App = () => {
           <Route path="oauth/refreshToken" element={<RefreshToken />} />
           <Route path="oauth/authCode" element={<AuthCode />} />
           <Route path="category/admin" element={<Category />} />
+          <Route path="tag/admin" element={<TagAdmin />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />
           <Route path="blog/deleteBlog" element={<BlogDelete />} />
           <Route path="blog/:host/:id" element={<BlogItem />} />
           <Route path="error/adminList" element={<ErrorAdmin />} />
           <Route path="error/deleteBlog" element={<ErrorDelete />} />
           <Route path="error/:host/:errorCode" element={<ErrorItem />} />
-          <Route path="schema/adminList" element={<SchemaAdmin />} />
+          <Route path="schema/admin" element={<SchemaAdmin />} />
           <Route path="schedule/admin" element={<ScheduleAdmin />} />
-          <Route path="schema/deleteSchema" element={<SchemaDelete />} />
-          <Route path="schema/schemaList" element={<SchemaList />} />
-          <Route path="schema/:host/:id" element={<SchemaItem />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
-          <Route path="rule/deleteRule" element={<RuleDelete />} />
-          <Route path="rule/:host/:id" element={<RuleItem />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />
           <Route path="covid/deleteCity" element={<DeleteCity />} />

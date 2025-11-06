@@ -15,8 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { useUserState } from '../../contexts/UserContext.jsx';
-import { apiPost } from '../../api/apiPost.js';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---

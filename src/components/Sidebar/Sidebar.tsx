@@ -40,6 +40,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import SchemaIcon from "@mui/icons-material/Schema";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -288,6 +289,13 @@ const structure = [
     icon: <RuleIcon />,
   },
   {
+    id: 123,
+    label: "Tag Admin",
+    role: "admin",
+    link: "/app/tag/admin",
+    icon: <LocalOfferIcon />,
+  },
+  {
     id: 125,
     label: "Category Admin",
     role: "admin",
@@ -345,12 +353,6 @@ const structure = [
     role: "admin",
     link: "/app/schema/admin",
     icon: <SchemaIcon />,
-    children: [
-      { label: "List", link: "/app/schema/adminList" },
-      { label: "Create", link: "/app/form/createJsonSchema" },
-      { label: "Update", link: "/app/schema/update" },
-      { label: "Delete", link: "/app/schema/delete" },
-    ],
   },
   {
     id: 150,
