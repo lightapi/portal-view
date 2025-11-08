@@ -211,7 +211,6 @@ export default function Service() {
       },
       {
         id: 'details', header: 'Details', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
           <Tooltip title="Details">
             <IconButton onClick={() => navigate('/app/serviceDetail', { state: { service: row.original } })}>
@@ -231,23 +230,21 @@ export default function Service() {
         ),
       },
       {
-        id: 'clients', header: 'Clients', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Tooltip title="OAuth Clients">
-            <IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-              <AirlineSeatReclineNormalIcon />
+          <Tooltip title="Delete">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
             </IconButton>
           </Tooltip>
         ),
       },
       {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        id: 'clients', header: 'Clients', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
+          <Tooltip title="OAuth Clients">
+            <IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+              <AirlineSeatReclineNormalIcon />
             </IconButton>
           </Tooltip>
         ),
