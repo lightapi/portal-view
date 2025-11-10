@@ -20,8 +20,7 @@ import PublishApi from "./pages/publish/PublishApi";
 import User from "./pages/user/User";
 import UserHost from "./pages/user/UserHost";
 import Service from "./pages/service/Service";
-import ServiceDelete from "./pages/service/ServiceDelete";
-import ServiceDetail from "./pages/service/ServiceDetail";
+import ApiDetail from "./pages/service/ApiDetail";
 import OpenapiEditor from "./pages/service/OpenapiEditor";
 import HybridEditor from "./pages/service/HybridEditor";
 import GraphqlEditor from "./pages/service/GraphqlEditor";
@@ -167,8 +166,7 @@ const App = () => {
           <Route path="userHost" element={<UserHost />} />
           <Route path="service/:apiType" element={<Service />} />
           <Route path="service/admin" element={<Service />} />
-          <Route path="deleteService" element={<ServiceDelete />} />
-          <Route path="serviceDetail" element={<ServiceDetail />} />
+          <Route path="apiDetail" element={<ApiDetail />} />
           <Route path="openapiEditor" element={<OpenapiEditor />} />
           <Route path="hybridEditor" element={<HybridEditor />} />
           <Route path="graphqlEditor" element={<GraphqlEditor />} />

@@ -43,7 +43,7 @@ export default function OpenapiEditor() {
     const cmd = {
       host: "lightapi.net",
       service: "service",
-      action: "updateServiceSpec",
+      action: "updateApiVersionSpec",
       version: "0.1.0",
       data: updatedServiceVersion,
     };
@@ -56,7 +56,7 @@ export default function OpenapiEditor() {
       } else {
         alert("Specification submitted successfully!");
         // Navigate back to the service detail page after success
-        navigate("/app/serviceDetail", { 
+        navigate("/app/apiDetail", { 
           state: { 
             service: { 
               hostId: serviceVersion.hostId, 

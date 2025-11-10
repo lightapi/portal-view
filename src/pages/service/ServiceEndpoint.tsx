@@ -34,6 +34,7 @@ type EndpointType = {
   httpMethod: string;
   endpointPath: string;
   endpointDesc: string;
+  active: boolean;
 };
 
 export default function ServiceEndpoint() {
@@ -63,7 +64,7 @@ export default function ServiceEndpoint() {
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     const cmd = {
-      host: 'lightapi.net', service: 'service', action: 'getServiceEndpoint', version: '0.1.0',
+      host: 'lightapi.net', service: 'service', action: 'getApiEndpoint', version: '0.1.0',
       data: {
         hostId, apiVersionId,
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
@@ -98,6 +99,13 @@ export default function ServiceEndpoint() {
       { accessorKey: 'httpMethod', header: 'Method' },
       { accessorKey: 'endpointPath', header: 'Path' },
       { accessorKey: 'endpointDesc', header: 'Description' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'generalActions', header: 'General', enableSorting: false, enableColumnFilter: false, size: 120,
         Cell: ({ row }) => (

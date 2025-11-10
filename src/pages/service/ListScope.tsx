@@ -13,16 +13,16 @@ import useStyles from "./styles";
 export default function ListScope() {
   const classes = useStyles();
   const location = useLocation();
-  const { hostId, apiId, apiVersion, endpoint } = location.state;
+  const { hostId, endpointId } = location.state;
 
-  console.log(hostId, apiId, apiVersion, endpoint);
+  console.log(hostId, endpointId);
 
   const cmd = {
     host: "lightapi.net",
     service: "service",
-    action: "getEndpointScope",
+    action: "getApiEndpointScope",
     version: "0.1.0",
-    data: { hostId, apiId, apiVersion, endpoint },
+    data: { hostId, endpointId },
   };
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
@@ -46,11 +46,11 @@ export default function ListScope() {
             <TableHead>
               <TableRow className={classes.root}>
                 <TableCell align="left">Host Id</TableCell>
-                <TableCell align="left">Api Id</TableCell>
-                <TableCell align="left">Api Version</TableCell>
                 <TableCell align="left">Endpoint</TableCell>
+                <TableCell align="left">EndpointId</TableCell>
                 <TableCell align="left">Scope</TableCell>
                 <TableCell align="left">Scope Desc</TableCell>
+                <TableCell align="left">Active</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -58,11 +58,11 @@ export default function ListScope() {
                 data.map((row, index) => (
                   <TableRow key={index} className={classes.root}>
                     <TableCell align="left">{row.hostId}</TableCell>
-                    <TableCell align="left">{row.apiId}</TableCell>
-                    <TableCell align="left">{row.apiVersion}</TableCell>
                     <TableCell align="left">{row.endpoint}</TableCell>
+                    <TableCell align="left">{row.endpointId}</TableCell>
                     <TableCell align="left">{row.scope}</TableCell>
                     <TableCell align="left">{row.scopeDesc}</TableCell>
+                    <TableCell align="left">{row.active}</TableCell>
                   </TableRow>
                 ))}
             </TableBody>

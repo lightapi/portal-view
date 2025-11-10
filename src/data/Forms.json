@@ -2460,15 +2460,15 @@
       "deRefClientId"
     ]
   },
-  "createService": {
-    "formId": "createService",
+  "createApi": {
+    "formId": "createApi",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "service",
-        "action": "createService",
+        "action": "createApi",
         "version": "0.1.0",
-        "title": "Create Service",
+        "title": "Create Api",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -2629,13 +2629,13 @@
       }
     ]
   },
-  "updateService": {
-    "formId": "updateService",
+  "updateApi": {
+    "formId": "updateApi",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "service",
-        "action": "updateService",
+        "action": "updateApi",
         "version": "0.1.0",
         "title": "Update Service",
         "success": "/app/success",
@@ -2799,15 +2799,15 @@
       }
     ]
   },
-  "createServiceVersion": {
-    "formId": "createServiceVersion",
+  "createApiVersion": {
+    "formId": "createApiVersion",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "service",
-        "action": "createServiceVersion",
+        "action": "createApiVersion",
         "version": "0.1.0",
-        "title": "Create Service Version",
+        "title": "Create Api Version",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -2878,15 +2878,15 @@
       }
     ]
   },
-  "updateServiceVersion": {
-    "formId": "updateServiceVersion",
+  "updateApiVersion": {
+    "formId": "updateApiVersion",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "service",
-        "action": "updateServiceVersion",
+        "action": "updateApiVersion",
         "version": "0.1.0",
-        "title": "Update Service Version",
+        "title": "Update Api Version",
         "success": "/app/success",
         "failure": "/app/failure"
       }
@@ -3230,15 +3230,15 @@
       "deRefClientId"
     ]
   },
-  "createEndpointRule": {
-    "formId": "createEndpointRule",
+  "createApiEndpointRule": {
+    "formId": "createApiEndpointRule",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "service",
-        "action": "createEndpointRule",
+        "action": "createApiEndpointRule",
         "version": "0.1.0",
-        "title": "Create Endpoint Rule",
+        "title": "Create Api Endpoint Rule",
         "success": "/app/success",
         "failure": "/app/failure"
       }

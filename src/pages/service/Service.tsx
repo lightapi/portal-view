@@ -101,7 +101,7 @@ export default function Service() {
     });
 
     const cmd = {
-      host: 'lightapi.net', service: 'service', action: 'getService', version: '0.1.0',
+      host: 'lightapi.net', service: 'service', action: 'getApi', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
@@ -133,26 +133,26 @@ export default function Service() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<ServiceType>) => {
-    if (!window.confirm(`Are you sure you want to delete service: ${row.original.apiName}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete api: ${row.original.apiName}?`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(service => service.apiId !== row.original.apiId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'service', action: 'deleteService', version: '0.1.0',
+      host: 'lightapi.net', service: 'service', action: 'deleteApi', version: '0.1.0',
       data: row.original,
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete service. Please try again.');
+        alert('Failed to delete api. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
     } catch (e) {
-      alert('Failed to delete service due to a network error.');
+      alert('Failed to delete api due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
@@ -163,7 +163,7 @@ export default function Service() {
     setIsUpdateLoading(apiId);
 
     const cmd = {
-      host: 'lightapi.net', service: 'service', action: 'getFreshService', version: '0.1.0',
+      host: 'lightapi.net', service: 'service', action: 'getFreshApi', version: '0.1.0',
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -176,10 +176,10 @@ export default function Service() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest service data.');
       }
-      navigate('/app/form/updateService', { state: { data: freshData, source: location.pathname } });
+      navigate('/app/form/updateApi', { state: { data: freshData, source: location.pathname } });
     } catch (error) {
-      console.error("Failed to fetch service for update:", error);
-      alert("Could not load the latest service data. Please try again.");
+      console.error("Failed to fetch api for update:", error);
+      alert("Could not load the latest api data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
@@ -213,7 +213,7 @@ export default function Service() {
         id: 'details', header: 'Details', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Tooltip title="Details">
-            <IconButton onClick={() => navigate('/app/serviceDetail', { state: { service: row.original } })}>
+            <IconButton onClick={() => navigate('/app/apiDetail', { state: { service: row.original } })}>
               <DetailsIcon />
             </IconButton>
           </Tooltip>
@@ -222,7 +222,7 @@ export default function Service() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Tooltip title="Update Service">
+          <Tooltip title="Update Api">
             <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.apiId}>
               {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
             </IconButton>
@@ -232,7 +232,7 @@ export default function Service() {
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Tooltip title="Delete">
+          <Tooltip title="Delete Api">
             <IconButton color="error" onClick={() => handleDelete(row)}>
               <DeleteForeverIcon />
             </IconButton>
@@ -271,8 +271,8 @@ export default function Service() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createService')}>
-        Create New Service
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createApi')}>
+        Create New Api
       </Button>
     ),
   });
