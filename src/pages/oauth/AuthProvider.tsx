@@ -240,7 +240,7 @@ export default function AuthProvider() {
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Manage Keys"><IconButton onClick={() => navigate('/app/oauth/providerKey', { state: { data: { ...row.original } } })}><KeyIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Services"><IconButton onClick={() => navigate('/app/oauth/providerService', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
+            <Tooltip title="Manage Apis"><IconButton onClick={() => navigate('/app/oauth/providerApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
             <Tooltip title="Manage Clients"><IconButton onClick={() => navigate('/app/oauth/providerClient', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
           </Box>
         ),

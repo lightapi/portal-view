@@ -120,6 +120,8 @@ import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
 import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
+import ProviderApi from "./pages/oauth/ProviderApi";
+import ProviderClient from "./pages/oauth/ProviderClient";
 import ProductAdmin from "./pages/product/ProductAdmin";
 import ProductEnvironment from "./pages/product/ProductEnvironment";
 import ProductPipeline from "./pages/product/ProductPipeline";
@@ -201,6 +203,8 @@ const App = () => {
           <Route path="ref/relation" element={<RefRelation />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/providerKey" element={<ProviderKey />} />
+          <Route path="oauth/providerApi" element={<ProviderApi />} />
+          <Route path="oauth/providerClient" element={<ProviderClient />} />
           <Route path="oauth/authClient" element={<AuthClient />} />
           <Route path="oauth/refreshToken" element={<RefreshToken />} />
           <Route path="oauth/authCode" element={<AuthCode />} />

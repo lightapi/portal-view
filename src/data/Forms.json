@@ -12301,6 +12301,117 @@
       }
     ]
   },
+  "createProviderApi": {
+    "formId": "createProviderApi",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "createProviderApi",
+        "version": "0.1.0",
+        "title": "Create Provider Api Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Api Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id"
+        }
+      },
+      "required": ["hostId", "providerId", "apiId"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "providerId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "apiId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+  "createProviderClient": {
+    "formId": "createProviderClient",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "createProviderClient",
+        "version": "0.1.0",
+        "title": "Create Provider Client Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Client Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string",
+          "title": "Client Id"
+        }
+      },
+      "required": ["hostId", "providerId", "clientId"]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "providerId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "clientId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getClientIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      }
+    ]
+  },
+
   "createProductVersion": {
     "formId": "createProductVersion",
     "actions": [
