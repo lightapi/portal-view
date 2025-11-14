@@ -214,13 +214,13 @@ export default function HostAdmin() {
       { accessorKey: 'subDomain', header: 'SubDomain' },
       { accessorKey: 'hostDesc', header: 'Description' },
       { accessorKey: 'hostOwner', header: 'Owner' },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
         header: 'Update Time',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
       {
         accessorKey: 'active',
         header: 'Active',
