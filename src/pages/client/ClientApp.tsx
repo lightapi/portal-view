@@ -54,8 +54,7 @@ export default function ClientApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
-  // Add loading state for the update action
-  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null); // Will store the appId being fetched
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([

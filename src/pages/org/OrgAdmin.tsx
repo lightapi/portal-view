@@ -34,10 +34,14 @@ type OrgType = {
   aggregateVersion?: number;
 };
 
+interface UserState {
+  host?: string;
+}
+
 export default function OrgAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<OrgType[]>([]);

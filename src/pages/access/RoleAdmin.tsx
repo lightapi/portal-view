@@ -36,9 +36,13 @@ type RoleType = {
   updateTs: string
 };
 
+interface UserState {
+  host?: string;
+}
+
 export default function RoleAdmin() {
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<RoleType[]>([]);
