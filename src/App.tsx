@@ -69,7 +69,6 @@ import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
-import Properties from "./pages/config/Properties";
 import GlobalValues from "./pages/config/GlobalValues";
 import GlobalValueDelete from "./pages/config/GlobalValueDelete";
 import GlobalFiles from "./pages/config/GlobalFiles";
@@ -90,7 +89,6 @@ import ServiceCertUpload from "./pages/config/ServiceCertUpload";
 import ServiceCertUpdate from "./pages/config/ServiceCertUpdate";
 import ServiceCertDelete from "./pages/config/ServiceCertDelete";
 import ServiceProperties from "./pages/config/ServiceProperties";
-import DeleteProperty from "./pages/config/DeleteProperty";
 import DeleteService from "./pages/config/DeleteService";
 import DeleteServiceProperty from "./pages/config/DeleteServiceProperty";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
@@ -262,7 +260,6 @@ const App = () => {
             path="config/configDeploymentInstance"
             element={<ConfigDeploymentInstance />}
           />
-          <Route path="config/properties" element={<Properties />} />
           <Route path="config/globalValues" element={<GlobalValues />} />
           <Route
             path="config/globalValueDelete"
@@ -325,7 +322,6 @@ const App = () => {
             path="config/serviceProperties"
             element={<ServiceProperties />}
           />
-          <Route path="config/deleteProperty" element={<DeleteProperty />} />
           <Route path="config/deleteService" element={<DeleteService />} />
           <Route
             path="config/deleteServiceProperty"
