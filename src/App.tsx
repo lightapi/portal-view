@@ -69,28 +69,6 @@ import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
-import GlobalValues from "./pages/config/GlobalValues";
-import GlobalValueDelete from "./pages/config/GlobalValueDelete";
-import GlobalFiles from "./pages/config/GlobalFiles";
-import GlobalFileUpload from "./pages/config/GlobalFileUpload";
-import GlobalFileUpdate from "./pages/config/GlobalFileUpdate";
-import GlobalFileDelete from "./pages/config/GlobalFileDelete";
-import GlobalCerts from "./pages/config/GlobalCerts";
-import GlobalCertUpload from "./pages/config/GlobalCertUpload";
-import GlobalCertUpdate from "./pages/config/GlobalCertUpdate";
-import GlobalCertDelete from "./pages/config/GlobalCertDelete";
-import Services from "./pages/config/Services";
-import ServiceFiles from "./pages/config/ServiceFiles";
-import ServiceFileUpload from "./pages/config/ServiceFileUpload";
-import ServiceFileUpdate from "./pages/config/ServiceFileUpdate";
-import ServiceFileDelete from "./pages/config/ServiceFileDelete";
-import ServiceCerts from "./pages/config/ServiceCerts";
-import ServiceCertUpload from "./pages/config/ServiceCertUpload";
-import ServiceCertUpdate from "./pages/config/ServiceCertUpdate";
-import ServiceCertDelete from "./pages/config/ServiceCertDelete";
-import ServiceProperties from "./pages/config/ServiceProperties";
-import DeleteService from "./pages/config/DeleteService";
-import DeleteServiceProperty from "./pages/config/DeleteServiceProperty";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
@@ -259,73 +237,6 @@ const App = () => {
           <Route
             path="config/configDeploymentInstance"
             element={<ConfigDeploymentInstance />}
-          />
-          <Route path="config/globalValues" element={<GlobalValues />} />
-          <Route
-            path="config/globalValueDelete"
-            element={<GlobalValueDelete />}
-          />
-          <Route path="config/globalFiles" element={<GlobalFiles />} />
-          <Route
-            path="config/globalFileUpload"
-            element={<GlobalFileUpload />}
-          />
-          <Route
-            path="config/globalFileUpdate"
-            element={<GlobalFileUpdate />}
-          />
-          <Route
-            path="config/globalFileDelete"
-            element={<GlobalFileDelete />}
-          />
-          <Route path="config/globalCerts" element={<GlobalCerts />} />
-          <Route
-            path="config/globalCertUpload"
-            element={<GlobalCertUpload />}
-          />
-          <Route
-            path="config/globalCertUpdate"
-            element={<GlobalCertUpdate />}
-          />
-          <Route
-            path="config/globalCertDelete"
-            element={<GlobalCertDelete />}
-          />
-          <Route path="config/services" element={<Services />} />
-          <Route path="config/serviceFiles" element={<ServiceFiles />} />
-          <Route
-            path="config/serviceFileUpload"
-            element={<ServiceFileUpload />}
-          />
-          <Route
-            path="config/serviceFileUpdate"
-            element={<ServiceFileUpdate />}
-          />
-          <Route
-            path="config/serviceFileDelete"
-            element={<ServiceFileDelete />}
-          />
-          <Route path="config/serviceCerts" element={<ServiceCerts />} />
-          <Route
-            path="config/serviceCertUpload"
-            element={<ServiceCertUpload />}
-          />
-          <Route
-            path="config/serviceCertUpdate"
-            element={<ServiceCertUpdate />}
-          />
-          <Route
-            path="config/serviceCertDelete"
-            element={<ServiceCertDelete />}
-          />
-          <Route
-            path="config/serviceProperties"
-            element={<ServiceProperties />}
-          />
-          <Route path="config/deleteService" element={<DeleteService />} />
-          <Route
-            path="config/deleteServiceProperty"
-            element={<DeleteServiceProperty />}
           />
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
