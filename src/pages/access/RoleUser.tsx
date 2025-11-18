@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,9 +9,10 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
@@ -36,12 +37,17 @@ type RoleUserType = {
   aggregateVersion?: number;
   updateUser?: string;
   updateTs?: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function RoleUser() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialRoleId = location.state?.data?.roleId;
   const initialUserId = location.state?.data?.userId;
 
@@ -51,12 +57,14 @@ export default function RoleUser() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state, pre-filtered by context if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
     const initialFilters: MRT_ColumnFiltersState = [];
     if (initialRoleId) initialFilters.push({ id: 'roleId', value: initialRoleId });
     if (initialUserId) initialFilters.push({ id: 'userId', value: initialUserId });
+    initialFilters.push({ id: 'active', value: 'true' });
     return initialFilters;
   });
   const [globalFilter, setGlobalFilter] = useState('');
@@ -70,12 +78,25 @@ export default function RoleUser() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'queryRoleUser', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -86,6 +107,7 @@ export default function RoleUser() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as RoleUserApiResponse;
+      console.log("json = ", json);
       setData(json.roleUsers || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -127,6 +149,41 @@ export default function RoleUser() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<RoleUserType>) => {
+    const roleId = row.original.roleId;
+    setIsUpdateLoading(roleId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'role', action: 'getFreshRoleUser', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest role user data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateRoleUser', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch role user for update:", error);
+      alert("Could not load the latest role user data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleUserType>[]>(
     () => [
@@ -140,9 +197,36 @@ export default function RoleUser() {
       { accessorKey: 'lastName', header: 'Last Name' },
       { accessorKey: 'userType', header: 'Type' },
       { accessorKey: 'entityId', header: 'Entity Id' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+            <Tooltip title="Update Row User">
+              <IconButton 
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.roleId}
+              >
+                {isUpdateLoading === row.original.roleId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+      )},
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

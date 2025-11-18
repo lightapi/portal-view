@@ -3428,13 +3428,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -3458,8 +3456,14 @@
           "params": ["hostId"]
         }
       },
-      "startTs",
-      "endTs"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "updateRoleUser": {
@@ -3496,17 +3500,27 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
-    "form": ["hostId", "roleId", "userId", "startTs", "endTs"]
+    "form": [
+      "hostId", 
+      "roleId", 
+      "userId", 
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
+    ]
   },
   "createRolePermission": {
     "formId": "createRolePermission",
@@ -4046,13 +4060,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -4076,8 +4088,14 @@
           "params": ["hostId"]
         }
       },
-      "startTs",
-      "endTs"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "updateGroupUser": {
@@ -4114,17 +4132,27 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
-    "form": ["hostId", "groupId", "userId", "startTs", "endTs"]
+    "form": [
+      "hostId", 
+      "groupId", 
+      "userId", 
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
+    ]
   },
   "createGroupPermission": {
     "formId": "createGroupPermission",
@@ -4694,13 +4722,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -4725,8 +4751,14 @@
           "params": ["hostId"]
         }
       },
-      "startDate",
-      "endDate"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "updateAttributeUser": {
@@ -4767,13 +4799,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -4782,8 +4812,14 @@
       "attributeId",
       "attributeValue",
       "userId",
-      "startDate",
-      "endDate"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "createAttributePermission": {
@@ -5486,13 +5522,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -5516,8 +5550,14 @@
           "params": ["hostId"]
         }
       },
-      "startTs",
-      "endTs"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "updatePositionUser": {
@@ -5564,13 +5604,11 @@
         },
         "startTs": {
           "title": "Start Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "endTs": {
           "title": "End Timestamp",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -5580,8 +5618,14 @@
       "userId",
       "entityId",
       "email",
-      "startTs",
-      "endTs"
+      {
+        "key": "startTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "endTs",
+        "type": "timestamp"
+      }
     ]
   },
   "createPositionPermission": {
