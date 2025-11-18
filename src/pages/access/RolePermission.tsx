@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
@@ -33,13 +33,18 @@ type RolePermissionType = {
   aggregateVersion?: number;
   updateUser?: string;
   updateTs?: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function RolePermission() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as UserState;
+  const initialRoleId = location.state?.data?.roleId;
 
   // Data and fetching state
   const [data, setData] = useState<RolePermissionType[]>([]);
@@ -48,11 +53,15 @@ export default function RolePermission() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialRoleId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'roleId', value: initialRoleId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -65,12 +74,25 @@ export default function RolePermission() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'queryRolePermission', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -100,12 +122,12 @@ export default function RolePermission() {
     if (!window.confirm(`Are you sure you want to delete this permission?`)) return;
 
     const originalData = [...data];
-    setData(prev => prev.filter(p => !(p.roleId === row.original.roleId && p.endpoint === row.original.endpoint)));
+    setData(prev => prev.filter(p => !(p.roleId === row.original.roleId && p.endpointId === row.original.endpointId)));
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'role', action: 'deleteApiRole', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      host: 'lightapi.net', service: 'role', action: 'deleteRolePermission', version: '0.1.0',
+      data: row.original,
     };
 
     try {
@@ -131,9 +153,20 @@ export default function RolePermission() {
       { accessorKey: 'apiVersion', header: 'API Version' },
       { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
@@ -171,13 +204,13 @@ export default function RolePermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRolePermission', { state: { data: initialData } })}
+          onClick={() => navigate('/app/form/createRolePermission', { state: { data: { roleId: initialRoleId } } })}
         >
           Add Permission
         </Button>
-        {initialData.roleId && (
+        {initialRoleId && (
           <Typography variant="subtitle1">
-            For Role: <strong>{initialData.roleId}</strong>
+            For Role: <strong>{initialRoleId}</strong>
           </Typography>
         )}
       </Box>
