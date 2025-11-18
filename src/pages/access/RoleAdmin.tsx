@@ -177,7 +177,8 @@ export default function RoleAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleType>[]>(
     () => [
-      { accessorKey: 'roleId', header: 'Role ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'roleId', header: 'Role Id' },
       { accessorKey: 'roleDesc', header: 'Description' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {

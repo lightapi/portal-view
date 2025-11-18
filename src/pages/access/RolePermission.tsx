@@ -147,6 +147,7 @@ export default function RolePermission() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RolePermissionType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'roleId', header: 'Role Id' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
