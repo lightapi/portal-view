@@ -9,30 +9,31 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
-import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
-import RadarIcon from '@mui/icons-material/Radar';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
-type PositionApiResponse = {
-  positions: Array<PositionType>;
+type PositionRowFilterApiResponse = {
+  positionRowFilters: Array<PositionRowFilterType>;
   total: number;
 };
 
-type PositionType = {
+type PositionRowFilterType = {
   hostId: string;
   positionId: string;
-  positionDesc?: string;
-  inheritToAncestor?: string;
-  inheritToSibling?: string;
+  apiVersionId: string;
+  apiId: string;
+  apiVersion: string;
+  endpointId: string;
+  endpoint: string;
+  colName: string;
+  operator: string;
+  colValue: string;
   aggregateVersion?: number;
   updateUser: string;
   updateTs: string;
@@ -43,12 +44,14 @@ interface UserState {
   host?: string;
 }
 
-export default function PositionAdmin() {
+export default function PositionRowFilter() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const initialPositionId = location.state?.data?.positionId;
 
   // Data and fetching state
-  const [data, setData] = useState<PositionType[]>([]);
+  const [data, setData] = useState<PositionRowFilterType[]>([]);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -56,9 +59,14 @@ export default function PositionAdmin() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
-      { id: 'active', value: 'true' }
-    ]
+    initialPositionId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'positionId', value: initialPositionId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -74,7 +82,7 @@ export default function PositionAdmin() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active') {
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -84,7 +92,7 @@ export default function PositionAdmin() {
     });
 
     const cmd = {
-      host: 'lightapi.net', service: 'position', action: 'getPosition', version: '0.1.0',
+      host: 'lightapi.net', service: 'position', action: 'queryPositionRowFilter', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []), 
@@ -99,8 +107,8 @@ export default function PositionAdmin() {
 
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as PositionApiResponse;
-      setData(json.positions || []);
+      const json = (await response.json()) as PositionRowFilterApiResponse;
+      setData(json.positionRowFilters || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true); console.error(error);
@@ -115,38 +123,37 @@ export default function PositionAdmin() {
   }, [fetchData]);
 
   // Delete handler with optimistic update
-  const handleDelete = useCallback(async (row: MRT_Row<PositionType>) => {
-    if (!window.confirm(`Are you sure you want to delete position: ${row.original.positionId}?`)) return;
-
+  const handleDelete = useCallback(async (row: MRT_Row<PositionRowFilterType>) => {
+    if (!window.confirm(`Are you sure you want to delete this row filter?`)) return;
     const originalData = [...data];
-    setData(prev => prev.filter(pos => pos.positionId !== row.original.positionId));
+    setData(prev => prev.filter(r => r.positionId !== row.original.positionId || r.endpointId !== row.original.endpointId || r.colName !== row.original.colName));
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'position', action: 'deletePosition', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      host: 'lightapi.net', service: 'position', action: 'deletePositionRowFilter', version: '0.1.0',
+      data: row.original,
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete position. Please try again.');
+        alert('Failed to delete row filter. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
     } catch (e) {
-      alert('Failed to delete position due to a network error.');
+      alert('Failed to delete row filter due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
   }, [data]);
 
-  const handleUpdate = useCallback(async (row: MRT_Row<PositionType>) => {
+  const handleUpdate = useCallback(async (row: MRT_Row<PositionRowFilterType>) => {
     const positionId = row.original.positionId;
     setIsUpdateLoading(positionId);
 
     const cmd = {
-      host: 'lightapi.net', service: 'position', action: 'getFreshPosition', version: '0.1.0',
+      host: 'lightapi.net', service: 'position', action: 'getFreshPositionRowFilter', version: '0.1.0',
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -158,32 +165,37 @@ export default function PositionAdmin() {
       const freshData = await response.json();
       console.log("freshData", freshData);
       if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest position data.');
+        throw new Error(freshData.description || 'Failed to fetch latest position row filter data.');
       }
       
       // Navigate with the fresh data
-      navigate('/app/form/updatePosition', { 
+      navigate('/app/form/updatePositionRowFilter', { 
         state: { 
           data: freshData, 
           source: location.pathname 
         } 
       });
     } catch (error) {
-      console.error("Failed to fetch position for update:", error);
-      alert("Could not load the latest position data. Please try again.");
+      console.error("Failed to fetch position row filter for update:", error);
+      alert("Could not load the latest position row filter data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
   }, [host, navigate, location.pathname]);
 
   // Column definitions
-  const columns = useMemo<MRT_ColumnDef<PositionType>[]>(
+  const columns = useMemo<MRT_ColumnDef<PositionRowFilterType>[]>(
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'positionId', header: 'Position ID' },
-      { accessorKey: 'positionDesc', header: 'Description' },
-      { accessorKey: 'inheritToAncestor', header: 'Inherit Ancestor' },
-      { accessorKey: 'inheritToSibling', header: 'Inherit Sibling' },
+      { accessorKey: 'positionId', header: 'Position Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
+      { accessorKey: 'apiVersion', header: 'Version' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
+      { accessorKey: 'endpoint', header: 'Endpoint' },
+      { accessorKey: 'colName', header: 'Column Name' },
+      { accessorKey: 'operator', header: 'Operator' },
+      { accessorKey: 'colValue', header: 'Column Value' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -202,7 +214,7 @@ export default function PositionAdmin() {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
-            <Tooltip title="Update Position">
+            <Tooltip title="Update Position Row Filter">
               <IconButton 
                 onClick={() => handleUpdate(row)}
                 disabled={isUpdateLoading === row.original.positionId}
@@ -218,17 +230,12 @@ export default function PositionAdmin() {
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Position"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'accessControl', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Position Permissions"><IconButton onClick={() => navigate('/app/access/positionPermission', { state: { data: { positionId: row.original.positionId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-            <Tooltip title="Position Row Filters"><IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: { data: { positionId: row.original.positionId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-            <Tooltip title="Position Column Filters"><IconButton onClick={() => navigate('/app/access/positionColFilter', { state: { data: { positionId: row.original.positionId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/positionUser', { state: { data: { positionId: row.original.positionId } } })}><RadarIcon /></IconButton></Tooltip>
-          </Box>
+          <Tooltip title="Delete Filter">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
         ),
       },
     ],
@@ -249,13 +256,24 @@ export default function PositionAdmin() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => row.positionId,
+    getRowId: (row) => `${row.positionId}-${row.endpointId}-${row.colName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPosition')}>
-        Create New Position
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate('/app/form/createPositionRowFilter', { state: { data: { positionId: initialPositionId } } })}
+        >
+          Create New Filter
+        </Button>
+        {initialPositionId && (
+          <Typography variant="subtitle1">
+            For Position: <strong>{initialPositionId}</strong>
+          </Typography>
+        )}
+      </Box>
     ),
   });
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
@@ -18,14 +18,14 @@ import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
 type PositionPermissionApiResponse = {
-  positions: Array<PositionPermissionType>; // Note: Original component used 'positions'
+  positionPermissions: Array<PositionPermissionType>;
   total: number;
 };
 
 type PositionPermissionType = {
   hostId: string;
   positionId: string;
-  inheritToAncestor: string; // Assuming 'true'/'false' string or similar
+  inheritToAncestor: string;
   inheritToSibling: string;
   apiVersionId: string;
   apiId: string;
@@ -35,13 +35,18 @@ type PositionPermissionType = {
   aggregateVersion?: number;
   updateUser?: string;
   updateTs?: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function PositionPermission() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as UserState;
+  const initialPositionId = location.state?.data?.positionId;
 
   // Data and fetching state
   const [data, setData] = useState<PositionPermissionType[]>([]);
@@ -50,11 +55,15 @@ export default function PositionPermission() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialPositionId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'positionId', value: initialPositionId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -67,12 +76,25 @@ export default function PositionPermission() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'queryPositionPermission', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -83,7 +105,7 @@ export default function PositionPermission() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as PositionPermissionApiResponse;
-      setData(json.positions || []); // Using 'positions' key from original component
+      setData(json.positionPermissions || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true); console.error(error);
@@ -102,12 +124,12 @@ export default function PositionPermission() {
     if (!window.confirm(`Are you sure you want to delete this permission?`)) return;
 
     const originalData = [...data];
-    setData(prev => prev.filter(p => !(p.positionId === row.original.positionId && p.endpoint === row.original.endpoint)));
+    setData(prev => prev.filter(p => !(p.positionId === row.original.positionId && p.endpointId === row.original.endpointId)));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePositionPermission', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -127,6 +149,7 @@ export default function PositionPermission() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionPermissionType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'positionId', header: 'Position Id' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
@@ -137,7 +160,19 @@ export default function PositionPermission() {
       { accessorKey: 'inheritToSibling', header: 'Inherit Sibling' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
@@ -167,7 +202,7 @@ export default function PositionPermission() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.positionId}-${row.apiId}-${row.apiVersion}-${row.endpoint}`,
+    getRowId: (row) => `${row.positionId}-${row.apiId}-${row.endpointId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
@@ -175,13 +210,13 @@ export default function PositionPermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createPositionPermission', { state: { data: initialData } })}
+          onClick={() => navigate('/app/form/createPositionPermission', { state: { data: { positionId: initialPositionId } } })}
         >
           Add Permission
         </Button>
-        {initialData.positionId && (
+        {initialPositionId && (
           <Typography variant="subtitle1">
-            For Position: <strong>{initialData.positionId}</strong>
+            For Position: <strong>{initialPositionId}</strong>
           </Typography>
         )}
       </Box>
