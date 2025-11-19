@@ -54,7 +54,6 @@ export default function AttributeAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by configId if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     [
       { id: 'active', value: 'true' }
