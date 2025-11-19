@@ -107,7 +107,6 @@ export default function RoleUser() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as RoleUserApiResponse;
-      console.log("json = ", json);
       setData(json.roleUsers || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -132,7 +131,7 @@ export default function RoleUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRoleUser', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion }, // Send the full row data as per original component
+      data: row.original,
     };
 
     try {
