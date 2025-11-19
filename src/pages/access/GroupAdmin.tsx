@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -34,11 +34,16 @@ type GroupType = {
   aggregateVersion?: number;
   updateUser: string;
   updateTs: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function GroupAdmin() {
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<GroupType[]>([]);
@@ -46,9 +51,13 @@ export default function GroupAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [
+      { id: 'active', value: 'true' }
+    ]
+  );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -60,12 +69,25 @@ export default function GroupAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'getGroup', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -117,19 +139,78 @@ export default function GroupAdmin() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<GroupType>) => {
+    const groupId = row.original.groupId;
+    setIsUpdateLoading(groupId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'group', action: 'getFreshGroup', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest group data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateGroup', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch group for update:", error);
+      alert("Could not load the latest group data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<GroupType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'groupId', header: 'Group ID' },
       { accessorKey: 'groupDesc', header: 'Description' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Update Group"><IconButton onClick={() => navigate('/app/form/updateGroup', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
-      },
+        Cell: ({ row }) => (
+            <Tooltip title="Update Group">
+              <IconButton 
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.groupId}
+              >
+                {isUpdateLoading === row.original.groupId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+      )},
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
