@@ -197,7 +197,7 @@ export default function RolePermission() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.roleId}-${row.apiId}-${row.apiVersion}-${row.endpoint}`,
+    getRowId: (row) => `${row.roleId}-${row.endpointId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (

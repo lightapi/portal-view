@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
@@ -18,7 +18,7 @@ import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
 type GroupPermissionApiResponse = {
-  groups: Array<GroupPermissionType>; // Original component used 'groups', so we'll stick with that
+  groupPermissions: Array<GroupPermissionType>;
   total: number;
 };
 
@@ -33,13 +33,18 @@ type GroupPermissionType = {
   aggregateVersion?: number;
   updateUser?: string;
   updateTs?: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function GroupPermission() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as UserState;
+  const initialGroupId = location.state?.data?.groupId;
 
   // Data and fetching state
   const [data, setData] = useState<GroupPermissionType[]>([]);
@@ -48,11 +53,15 @@ export default function GroupPermission() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialGroupId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'groupId', value: initialGroupId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -65,12 +74,25 @@ export default function GroupPermission() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'queryGroupPermission', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -81,7 +103,7 @@ export default function GroupPermission() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as GroupPermissionApiResponse;
-      setData(json.groups || []);
+      setData(json.groupPermissions || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true); console.error(error);
@@ -100,12 +122,12 @@ export default function GroupPermission() {
     if (!window.confirm(`Are you sure you want to delete this permission?`)) return;
 
     const originalData = [...data];
-    setData(prev => prev.filter(p => !(p.groupId === row.original.groupId && p.endpoint === row.original.endpoint)));
+    setData(prev => prev.filter(p => !(p.groupId === row.original.groupId && p.endpointId === row.original.endpointId)));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'deleteGroupPermission', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -125,15 +147,27 @@ export default function GroupPermission() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<GroupPermissionType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'groupId', header: 'Group Id' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
       { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
@@ -163,7 +197,7 @@ export default function GroupPermission() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.groupId}-${row.apiId}-${row.apiVersion}-${row.endpoint}`,
+    getRowId: (row) => `${row.groupId}-${row.endpointId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
@@ -171,13 +205,13 @@ export default function GroupPermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createGroupPermission', { state: { data: initialData } })}
+          onClick={() => navigate('/app/form/createGroupPermission', { state: { data: { groupId: initialGroupId } } })}
         >
           Add Permission
         </Button>
-        {initialData.groupId && (
+        {initialGroupId && (
           <Typography variant="subtitle1">
-            For Group: <strong>{initialData.groupId}</strong>
+            For Group: <strong>{initialGroupId}</strong>
           </Typography>
         )}
       </Box>
