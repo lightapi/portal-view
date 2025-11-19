@@ -3705,7 +3705,6 @@
       "required": [
         "hostId",
         "roleId",
-        "apiVersionId",
         "endpointId",
         "colName",
         "operator",
@@ -3719,19 +3718,18 @@
         },
         "roleId": {
           "title": "Role Id",
-          "type": "string"
-        },
-        "apiVersionId": {
-          "title": "Api Version Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "endpointId": {
           "title": "Endpoint Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "colName": {
           "title": "Column Name",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "operator": {
           "title": "Operator",
@@ -3745,33 +3743,8 @@
     },
     "form": [
       "hostId",
-      {
-        "key": "roleId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersionId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "endpointId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
-        }
-      },
+      "roleId", 
+      "endpointId",
       "colName",
       {
         "key": "operator",
@@ -3881,7 +3854,6 @@
       "required": [
         "hostId",
         "roleId",
-        "apiVersionId",
         "endpointId",
         "columns"
       ],
@@ -3893,15 +3865,13 @@
         },
         "roleId": {
           "title": "Role Id",
-          "type": "string"
-        },
-        "apiVersionId": {
-          "title": "Api Version Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "endpointId": {
           "title": "Endpoint Id",
-          "type": "string"
+          "type": "string",
+          "readonly": true
         },
         "columns": {
           "title": "Columns",
@@ -3911,33 +3881,8 @@
     },
     "form": [
       "hostId",
-      {
-        "key": "roleId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "apiVersionId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
-        }
-      },
-      {
-        "key": "endpointId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
-        }
-      },
+      "roleId",
+      "endpointId",
       "columns"
     ]
   },

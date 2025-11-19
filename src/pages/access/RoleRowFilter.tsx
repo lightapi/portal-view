@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -37,13 +37,18 @@ type RoleRowFilterType = {
   aggregateVersion?: number;
   updateUser: string;
   updateTs: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function RoleRowFilter() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as UserState;
+  const initialRoleId = location.state?.data?.roleId;
 
   // Data and fetching state
   const [data, setData] = useState<RoleRowFilterType[]>([]);
@@ -51,12 +56,17 @@ export default function RoleRowFilter() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value), // Ensure we don't add filters for empty values
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialRoleId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'roleId', value: initialRoleId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -69,12 +79,25 @@ export default function RoleRowFilter() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'queryRoleRowFilter', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -108,7 +131,7 @@ export default function RoleRowFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRoleRowFilter', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -125,9 +148,45 @@ export default function RoleRowFilter() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<RoleRowFilterType>) => {
+    const roleId = row.original.roleId;
+    setIsUpdateLoading(roleId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'role', action: 'getFreshRoleRowFilter', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest role row filter data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updateRoleRowFilter', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch role row filter for update:", error);
+      alert("Could not load the latest role row filter data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleRowFilterType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'roleId', header: 'Role Id' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
@@ -137,20 +196,37 @@ export default function RoleRowFilter() {
       { accessorKey: 'colName', header: 'Column Name' },
       { accessorKey: 'operator', header: 'Operator' },
       { accessorKey: 'colValue', header: 'Column Value' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
-          <Tooltip title="Update Filter">
-            <IconButton onClick={() => navigate('/app/form/updateRoleRowFilter', { state: { data: { ...row.original } } })}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
+            <Tooltip title="Update Role Row Filter">
+              <IconButton 
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.roleId}
+              >
+                {isUpdateLoading === row.original.roleId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+      )},
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
@@ -188,13 +264,13 @@ export default function RoleRowFilter() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRoleRowFilter', { state: { data: initialData } })}
+          onClick={() => navigate('/app/form/createRoleRowFilter', { state: { data: { roleId: initialRoleId } } })}
         >
           Create New Filter
         </Button>
-        {initialData.roleId && (
+        {initialRoleId && (
           <Typography variant="subtitle1">
-            For Role: <strong>{initialData.roleId}</strong>
+            For Role: <strong>{initialRoleId}</strong>
           </Typography>
         )}
       </Box>
