@@ -107,7 +107,6 @@ export default function AttributePermission() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as AttributePermissionApiResponse;
-      console.log("json = ", json);
       setData(json.attributePermissions || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -187,6 +186,7 @@ export default function AttributePermission() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributePermissionType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'attributeId', header: 'Attribute Id' },
       { accessorKey: 'attributeType', header: 'Type' },
       { accessorKey: 'attributeValue', header: 'Value' },

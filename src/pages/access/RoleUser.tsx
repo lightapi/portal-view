@@ -213,7 +213,7 @@ export default function RoleUser() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-            <Tooltip title="Update Row User">
+            <Tooltip title="Update Role User">
               <IconButton 
                 onClick={() => handleUpdate(row)}
                 disabled={isUpdateLoading === row.original.roleId}

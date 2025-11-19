@@ -178,6 +178,7 @@ export default function AttributeAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributeType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'attributeId', header: 'Attribute ID' },
       { accessorKey: 'attributeType', header: 'Type' },
       { accessorKey: 'attributeDesc', header: 'Description' },
