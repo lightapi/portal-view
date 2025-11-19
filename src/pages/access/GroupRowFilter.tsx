@@ -18,14 +18,14 @@ import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
-type RoleRowFilterApiResponse = {
-  roleRowFilters: Array<RoleRowFilterType>;
+type GroupRowFilterApiResponse = {
+  groupRowFilters: Array<GroupRowFilterType>;
   total: number;
 };
 
-type RoleRowFilterType = {
+type GroupRowFilterType = {
   hostId: string;
-  roleId: string;
+  groupId: string;
   apiVersionId: string;
   apiId: string;
   apiVersion: string;
@@ -44,14 +44,14 @@ interface UserState {
   host?: string;
 }
 
-export default function RoleRowFilter() {
+export default function GroupRowFilter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialRoleId = location.state?.data?.roleId;
+  const initialGroupId = location.state?.data?.groupId;
 
   // Data and fetching state
-  const [data, setData] = useState<RoleRowFilterType[]>([]);
+  const [data, setData] = useState<GroupRowFilterType[]>([]);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -59,10 +59,10 @@ export default function RoleRowFilter() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialRoleId 
+    initialGroupId 
       ? [
           { id: 'active', value: 'true' },
-          { id: 'roleId', value: initialRoleId }
+          { id: 'groupId', value: initialGroupId }
         ]
       : [
           { id: 'active', value: 'true' }
@@ -92,7 +92,7 @@ export default function RoleRowFilter() {
     });
 
     const cmd = {
-      host: 'lightapi.net', service: 'role', action: 'queryRoleRowFilter', version: '0.1.0',
+      host: 'lightapi.net', service: 'group', action: 'queryGroupRowFilter', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []), 
@@ -107,8 +107,8 @@ export default function RoleRowFilter() {
 
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RoleRowFilterApiResponse;
-      setData(json.roleRowFilters || []);
+      const json = (await response.json()) as GroupRowFilterApiResponse;
+      setData(json.groupRowFilters || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true); console.error(error);
@@ -123,14 +123,14 @@ export default function RoleRowFilter() {
   }, [fetchData]);
 
   // Delete handler with optimistic update
-  const handleDelete = useCallback(async (row: MRT_Row<RoleRowFilterType>) => {
+  const handleDelete = useCallback(async (row: MRT_Row<GroupRowFilterType>) => {
     if (!window.confirm(`Are you sure you want to delete this row filter?`)) return;
     const originalData = [...data];
-    setData(prev => prev.filter(r => r.roleId !== row.original.roleId || r.endpointId !== row.original.endpointId || r.colName !== row.original.colName));
+    setData(prev => prev.filter(r => r.groupId !== row.original.groupId || r.endpointId !== row.original.endpointId || r.colName !== row.original.colName));
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'role', action: 'deleteRoleRowFilter', version: '0.1.0',
+      host: 'lightapi.net', service: 'group', action: 'deleteGroupRowFilter', version: '0.1.0',
       data: row.original,
     };
 
@@ -148,12 +148,12 @@ export default function RoleRowFilter() {
     }
   }, [data]);
 
-  const handleUpdate = useCallback(async (row: MRT_Row<RoleRowFilterType>) => {
-    const roleId = row.original.roleId;
-    setIsUpdateLoading(roleId);
+  const handleUpdate = useCallback(async (row: MRT_Row<GroupRowFilterType>) => {
+    const groupId = row.original.groupId;
+    setIsUpdateLoading(groupId);
 
     const cmd = {
-      host: 'lightapi.net', service: 'role', action: 'getFreshRoleRowFilter', version: '0.1.0',
+      host: 'lightapi.net', service: 'group', action: 'getFreshGroupRowFilter', version: '0.1.0',
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -165,29 +165,29 @@ export default function RoleRowFilter() {
       const freshData = await response.json();
       console.log("freshData", freshData);
       if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest role row filter data.');
+        throw new Error(freshData.description || 'Failed to fetch latest group row filter data.');
       }
       
       // Navigate with the fresh data
-      navigate('/app/form/updateRoleRowFilter', { 
+      navigate('/app/form/updateGroupRowFilter', { 
         state: { 
           data: freshData, 
           source: location.pathname 
         } 
       });
     } catch (error) {
-      console.error("Failed to fetch role row filter for update:", error);
-      alert("Could not load the latest role row filter data. Please try again.");
+      console.error("Failed to fetch group row filter for update:", error);
+      alert("Could not load the latest group row filter data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
   }, [host, navigate, location.pathname]);
 
   // Column definitions
-  const columns = useMemo<MRT_ColumnDef<RoleRowFilterType>[]>(
+  const columns = useMemo<MRT_ColumnDef<GroupRowFilterType>[]>(
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'roleId', header: 'Role Id' },
+      { accessorKey: 'groupId', header: 'Group Id' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'Version' },
@@ -214,12 +214,12 @@ export default function RoleRowFilter() {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
-            <Tooltip title="Update Role Row Filter">
+            <Tooltip title="Update Group Row Filter">
               <IconButton 
                 onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.roleId}
+                disabled={isUpdateLoading === row.original.groupId}
               >
-                {isUpdateLoading === row.original.roleId ? (
+                {isUpdateLoading === row.original.groupId ? (
                   <CircularProgress size={22} />
                 ) : (
                   <SystemUpdateIcon />
@@ -256,7 +256,7 @@ export default function RoleRowFilter() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.roleId}-${row.endpointId}-${row.colName}`,
+    getRowId: (row) => `${row.groupId}-${row.endpointId}-${row.colName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
@@ -264,13 +264,13 @@ export default function RoleRowFilter() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRoleRowFilter', { state: { data: { roleId: initialRoleId } } })}
+          onClick={() => navigate('/app/form/createGroupRowFilter', { state: { data: { groupId: initialGroupId } } })}
         >
           Create New Filter
         </Button>
-        {initialRoleId && (
+        {initialGroupId && (
           <Typography variant="subtitle1">
-            For Role: <strong>{initialRoleId}</strong>
+            For Group: <strong>{initialGroupId}</strong>
           </Typography>
         )}
       </Box>

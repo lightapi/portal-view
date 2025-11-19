@@ -55,7 +55,6 @@ export default function ConfigEnvironment() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by configId if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     initialConfigId 
       ? [
@@ -80,7 +79,7 @@ export default function ConfigEnvironment() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active') {
         return {
           ...filter,
           value: filter.value === 'true',

@@ -126,7 +126,7 @@ export default function RoleColFilter() {
 
     const originalData = [...data];
     // This assumes roleId + endpoint is a unique key for a filter, adjust if needed
-    setData(prev => prev.filter(r => !(r.roleId === row.original.roleId && r.endpoint === row.original.endpoint)));
+    setData(prev => prev.filter(r => !(r.roleId === row.original.roleId && r.endpointId === row.original.endpointId)));
     setRowCount(prev => prev - 1);
 
     const cmd = {
@@ -254,7 +254,7 @@ export default function RoleColFilter() {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => `${row.roleId}-${row.endpoint}`, // This might need to be more unique if a role can have multiple filters per endpoint
+    getRowId: (row) => `${row.roleId}-${row.endpointId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (

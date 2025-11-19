@@ -88,12 +88,18 @@ import RoleColFilter from "./pages/access/RoleColFilter";
 import GroupAdmin from "./pages/access/GroupAdmin";
 import GroupPermission from "./pages/access/GroupPermission";
 import GroupUser from "./pages/access/GroupUser";
+import GroupRowFilter from "./pages/access/GroupRowFilter";
+import GroupColFilter from "./pages/access/GroupColFilter";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
 import AttributePermission from "./pages/access/AttributePermission";
 import AttributeUser from "./pages/access/AttributeUser";
+import AttributeRowFilter from "./pages/access/AttributeRowFilter";
+import AttributeColFilter from "./pages/access/AttributeColFilter";
 import PositionAdmin from "./pages/access/PositionAdmin";
 import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
+import PositionRowFilter from "./pages/access/PositionRowFilter";
+import PositionColFilter from "./pages/access/PositionColFilter";
 import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
 import ProviderApi from "./pages/oauth/ProviderApi";
@@ -159,18 +165,24 @@ const App = () => {
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
           <Route path="access/groupPermission" element={<GroupPermission />} />
           <Route path="access/groupUser" element={<GroupUser />} />
+          <Route path="access/groupRowFilter" element={<GroupRowFilter />} />
+          <Route path="access/groupColFilter" element={<GroupColFilter />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
           <Route
             path="access/attributePermission"
             element={<AttributePermission />}
           />
           <Route path="access/attributeUser" element={<AttributeUser />} />
+          <Route path="access/attributeRowFilter" element={<AttributeRowFilter />} />
+          <Route path="access/attributeColFilter" element={<AttributeColFilter />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />
           <Route
             path="access/positionPermission"
             element={<PositionPermission />}
           />
           <Route path="access/positionUser" element={<PositionUser />} />
+          <Route path="access/positionRowFilter" element={<PositionRowFilter />} />
+          <Route path="access/positionColFilter" element={<PositionColFilter />} />
           <Route path="clientApp" element={<ClientApp />} />
           <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
           <Route path="ref/value" element={<RefValue />} />
