@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -9,13 +9,14 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import { useUserState } from "../../contexts/UserContext.tsx";
-import { apiPost } from "../../api/apiPost.ts";
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
 type PipelineApiResponse = {
@@ -41,17 +42,29 @@ type PipelineType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
 
 interface UserState {
   host?: string;
 }
 
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
+};
+
 export default function PipelineAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialData = location.state?.data || {};
+  const initialPlatformId = location.state?.data?.platformId;
 
   // Data and fetching state
   const [data, setData] = useState<PipelineType[]>([]);
@@ -59,12 +72,17 @@ export default function PipelineAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialPlatformId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'platformId', value: initialPlatformId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -77,12 +95,25 @@ export default function PipelineAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active' || filter.id === 'current') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'getPipeline', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -117,7 +148,7 @@ export default function PipelineAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'deletePipeline', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -134,25 +165,103 @@ export default function PipelineAdmin() {
     }
   }, [data]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<PipelineType>) => {
+    const pipelineId = row.original.pipelineId;
+    setIsUpdateLoading(pipelineId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'deployment', action: 'getFreshPipeline', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest pipeline data.');
+      }
+      
+      // Navigate with the fresh data
+      navigate('/app/form/updatePipeline', { 
+        state: { 
+          data: freshData, 
+          source: location.pathname 
+        } 
+      });
+    } catch (error) {
+      console.error("Failed to fetch pipeline for update:", error);
+      alert("Could not load the latest pipeline data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PipelineType>[]>(
     () => [
-      { accessorKey: 'pipelineId', header: 'Pipeline ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'platformId', header: 'Platform Id' },
+      { accessorKey: 'platformName', header: 'Platform Name' },
+      { accessorKey: 'pipelineId', header: 'Pipeline Id' },
       { accessorKey: 'pipelineName', header: 'Pipeline Name' },
       { accessorKey: 'pipelineVersion', header: 'Version' },
-      { accessorKey: 'platformName', header: 'Platform' },
+      { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'versionStatus', header: 'Status' },
+      { accessorKey: 'systemEnv', header: 'System Env' },
+      { accessorKey: 'runtimeEnv', header: 'Runtime Env' },
+      { 
+        accessorKey: 'requestSchema', 
+        header: 'Request Schema',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { 
+        accessorKey: 'responseSchema', 
+        header: 'Response Schema',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
       {
         accessorKey: 'current',
         header: 'Current',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Update Pipeline"><IconButton onClick={() => navigate('/app/form/updatePipeline', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
-      },
+        Cell: ({ row }) => (
+            <Tooltip title="Update Pipeline">
+              <IconButton 
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.pipelineId}
+              >
+                {isUpdateLoading === row.original.pipelineId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+      )},
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (<Tooltip title="Delete Pipeline"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),

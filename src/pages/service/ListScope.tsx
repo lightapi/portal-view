@@ -30,7 +30,7 @@ export default function ListScope() {
   const headers = {};
 
   const { isLoading, data } = useApiGet({ url, headers });
-
+  console.log("data", data);
   let content;
   if (isLoading) {
     content = (

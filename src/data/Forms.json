@@ -13325,13 +13325,13 @@
           "type": "string",
           "title": "Platform Id"
         },
-        "pipelineVersion": {
-          "type": "string",
-          "title": "Pipeline Version"
-        },
         "pipelineName": {
           "type": "string",
           "title": "Pipeline Name"
+        },
+        "pipelineVersion": {
+          "type": "string",
+          "title": "Pipeline Version"
         },
         "current": {
           "type": "boolean",
@@ -13365,8 +13365,8 @@
       "required": [
         "hostId",
         "platformId",
-        "pipelineVersion",
         "pipelineName",
+        "pipelineVersion",
         "endpoint",
         "versionStatus",
         "systemEnv",
@@ -13385,8 +13385,8 @@
           "params": ["hostId"]
         }
       },
-      "pipelineVersion",
       "pipelineName",
+      "pipelineVersion",
       "current",
       "endpoint",
       {
@@ -13459,6 +13459,14 @@
           "title": "Platform Id",
           "type": "string"
         },
+        "pipelineName": {
+          "type": "string",
+          "title": "Pipeline Name"
+        },
+        "pipelineVersion": {
+          "type": "string",
+          "title": "Pipeline Version"
+        },
         "current": {
           "type": "boolean",
           "title": "Current"
@@ -13492,6 +13500,8 @@
         "hostId",
         "pipelineId",
         "platformId",
+        "pipelineName",
+        "pipelineVersion",
         "endpoint",
         "requestSchema",
         "responseSchema"
@@ -13509,6 +13519,8 @@
           "params": ["hostId"]
         }
       },
+      "pipelineName",
+      "pipelineVersion",
       "current",
       "endpoint",
       {
