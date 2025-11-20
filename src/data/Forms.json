@@ -13726,6 +13726,10 @@
           "title": "Platform Version",
           "type": "string"
         },
+        "clientType": {
+          "title": "Client Type",
+          "type": "string"
+        },
         "clientUrl": {
           "title": "Client Url",
           "type": "string"
