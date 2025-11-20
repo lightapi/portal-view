@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -29,6 +29,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // Define the shape of the API response
 type InstanceApiResponse = {
@@ -59,6 +60,17 @@ type InstanceType = {
   topicClassification?: string;
   updateUser?: string;
   updateTs?: string;
+};
+
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
 };
 
 // A component to handle the numerous row actions cleanly
@@ -236,13 +248,45 @@ export default function InstanceAdmin() {
       { accessorKey: 'productVersion', header: 'Product Version' },
       { accessorKey: 'serviceId', header: 'Service ID' },
       { accessorKey: 'environment', header: 'Environment' },
-      { accessorKey: 'current', header: 'Current', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
-      { accessorKey: 'readonly', header: 'Readonly', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
+      {
+        accessorKey: 'current',
+        header: 'Current',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'readonly',
+        header: 'Readonly',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      { 
+        accessorKey: 'serviceDesc', 
+        header: 'Service Desc',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { 
+        accessorKey: 'instanceDesc', 
+        header: 'Instance Desc',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
         header: 'Update Time',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
     [],
