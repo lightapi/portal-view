@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip,  CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -63,7 +63,6 @@ export default function PlatformAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     [
       { id: 'active', value: 'true' }
@@ -80,7 +79,7 @@ export default function PlatformAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
+
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
       if (filter.id === 'active' || filter.id === 'isKafkaApp') {
