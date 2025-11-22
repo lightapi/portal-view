@@ -12946,10 +12946,6 @@
         "apiVersionId": {
           "type": "string",
           "title": "Api Version Id"
-        },
-        "active": {
-          "type": "boolean",
-          "title": "Active"
         }
       },
       "required": ["hostId", "instanceId", "apiVersionId"]
@@ -12973,50 +12969,8 @@
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
           "params": ["hostId"]
         }
-      },
-      "active"
-    ]
-  },
-  "updateInstanceApi": {
-    "formId": "updateInstanceApi",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "instance",
-        "action": "updateInstanceApi",
-        "version": "0.1.0",
-        "title": "Update Instance Api",
-        "success": "/app/success",
-        "failure": "/app/failure"
       }
-    ],
-    "schema": {
-      "title": "Update Instance Api",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "instanceId": {
-          "type": "string",
-          "title": "Instance Id",
-          "readonly": true
-        },
-        "apiVersionId": {
-          "type": "string",
-          "title": "Api Version Id",
-          "readonly": true
-        },
-        "active": {
-          "type": "boolean",
-          "title": "Active"
-        }
-      },
-      "required": ["hostId", "instanceId", "apiVersionId"]
-    },
-    "form": ["hostId", "instanceId", "apiVersionId", "active"]
+    ]
   },
   "createInstanceApiPathPrefix": {
     "formId": "createInstanceApiPathPrefix",
@@ -13134,10 +13088,6 @@
         "appVersion": {
           "type": "string",
           "title": "App Version"
-        },
-        "active": {
-          "type": "boolean",
-          "title": "Active"
         }
       },
       "required": ["hostId", "instanceId", "appId", "appVersion"]
@@ -13162,55 +13112,8 @@
           "params": ["hostId"]
         }
       },
-      "appVersion",
-      "active"
+      "appVersion"
     ]
-  },
-  "updateInstanceApp": {
-    "formId": "updateInstanceApp",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "instance",
-        "action": "updateInstanceApp",
-        "version": "0.1.0",
-        "title": "Update Instance App",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Update Instance App",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "instanceId": {
-          "type": "string",
-          "title": "Instance Id",
-          "readonly": true
-        },
-        "appId": {
-          "type": "string",
-          "title": "App Id",
-          "readonly": true
-        },
-        "appVersion": {
-          "type": "string",
-          "title": "App Version",
-          "readonly": true
-        },
-        "active": {
-          "type": "boolean",
-          "title": "Active"
-        }
-      },
-      "required": ["hostId", "instanceId", "appId", "appVersion"]
-    },
-    "form": ["hostId", "instanceId", "appId", "appVersion", "active"]
   },
   "createInstanceAppApi": {
     "formId": "createInstanceAppApi",
@@ -13245,10 +13148,6 @@
         "instanceApiId": {
           "type": "string",
           "title": "Instance Api Id"
-        },
-        "active": {
-          "type": "boolean",
-          "title": "Active"
         }
       },
       "required": ["hostId", "instanceId", "instanceAppId", "instanceApiId"]
@@ -13281,8 +13180,7 @@
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
           "params": ["hostId", "instanceId"]
         }
-      },
-      "active"
+      }
     ]
   },
   "createPipeline": {
