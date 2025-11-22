@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -12,8 +12,8 @@ import {
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { useUserState } from '../../contexts/UserContext.jsx';
-import { apiPost } from '../../api/apiPost.js';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
@@ -33,13 +33,18 @@ type ProductVersionPipelineType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function ProductVersionPipeline() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as UserState;
+  const initialProductVersionId = location.state?.data?.productVersionId;
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionPipelineType[]>([]);
@@ -48,11 +53,15 @@ export default function ProductVersionPipeline() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialProductVersionId 
+      ? [
+          { id: 'active', value: 'true' },
+          { id: 'productVersionId', value: initialProductVersionId }
+        ]
+      : [
+          { id: 'active', value: 'true' }
+        ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -65,12 +74,25 @@ export default function ProductVersionPipeline() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersionPipeline', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -81,6 +103,7 @@ export default function ProductVersionPipeline() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as ProductVersionPipelineApiResponse;
+      console.log("json = ", json);
       setData(json.productPipelines || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -108,7 +131,7 @@ export default function ProductVersionPipeline() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionPipeline', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
@@ -128,11 +151,26 @@ export default function ProductVersionPipeline() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionPipelineType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'productVersionId', header: 'Product Version ID' },
       { accessorKey: 'productId', header: 'Product ID' },
       { accessorKey: 'pipelineId', header: 'Pipeline ID' },
       { accessorKey: 'pipelineName', header: 'Pipeline Name' },
       { accessorKey: 'pipelineVersion', header: 'Pipeline Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' },
@@ -164,14 +202,14 @@ export default function ProductVersionPipeline() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProductVersionPipeline', { state: { data: initialData } })}
-          disabled={!initialData.productVersionId}
+          onClick={() => navigate('/app/form/createProductVersionPipeline', { state: { data: { productVersionId: initialProductVersionId } } })}
+          disabled={!initialProductVersionId}
         >
-          Add Pipeline
+          Add Pipeline to Product Version
         </Button>
-        {initialData.productVersionId && (
+        {initialProductVersionId && (
           <Typography variant="subtitle1">
-            For Product Version: <strong>{initialData.productVersion} ({initialData.productId})</strong>
+            For Product Version: <strong>{initialProductVersionId})</strong>
           </Typography>
         )}
       </Box>
