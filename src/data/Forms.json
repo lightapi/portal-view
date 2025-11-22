@@ -12485,16 +12485,6 @@
           "type": "string",
           "readonly": true
         },
-        "productId": {
-          "title": "Product Id",
-          "type": "string",
-          "readonly": true
-        },
-        "productVersion": {
-          "type": "string",
-          "title": "Product Version",
-          "readonly": true
-        },
         "pipelineId": {
           "type": "string",
           "title": "Pipeline Id"
@@ -12503,16 +12493,12 @@
       "required": [
         "hostId",
         "productVersionId",
-        "productId",
-        "productVersion",
         "pipelineId"
       ]
     },
     "form": [
       "hostId",
       "productVersionId",
-      "productId",
-      "productVersion",
       {
         "key": "pipelineId",
         "type": "dynaselect",
@@ -13965,10 +13951,6 @@
           "title": "Deployment Instance Id",
           "readonly": true
         },
-        "legId": {
-          "type": "string",
-          "title": "Leg Id"
-        },
         "ipAddress": {
           "title": "IP Address",
           "type": "string"
@@ -14000,7 +13982,6 @@
       "instanceId",
       "serviceId",
       "deploymentInstanceId",
-      "legId",
       "ipAddress",
       "portNumber",
       {

@@ -188,6 +188,7 @@ export default function ConfigEnvironment() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigEnvironmentType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'environment', header: 'Environment' },
       { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },

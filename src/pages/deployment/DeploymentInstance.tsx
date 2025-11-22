@@ -53,6 +53,7 @@ export default function DeploymentInstance() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialInstanceId = location.state?.data?.instanceId;
+  const initialServiceId = location.state?.data?.serviceId;
 
   // Data and fetching state
   const [data, setData] = useState<DeploymentInstanceType[]>([]);
@@ -159,7 +160,7 @@ export default function DeploymentInstance() {
     setIsUpdateLoading(deploymentInstanceId);
 
     const cmd = {
-      host: 'lightapi.net', service: 'config', action: 'getFreshDeploymentInstance', version: '0.1.0',
+      host: 'lightapi.net', service: 'deployment', action: 'getFreshDeploymentInstance', version: '0.1.0',
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -192,9 +193,11 @@ export default function DeploymentInstance() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<DeploymentInstanceType>[]>(
     () => [
-      { accessorKey: 'deploymentInstanceId', header: 'Deployment Instance ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
+      { accessorKey: 'deploymentInstanceId', header: 'Deploy Inst Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'serviceId', header: 'Service ID' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
       { accessorKey: 'ipAddress', header: 'IP Address' },
       { accessorKey: 'portNumber', header: 'Port' },
       { accessorKey: 'systemEnv', header: 'System Env' },
@@ -263,9 +266,9 @@ export default function DeploymentInstance() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createDeploymentInstance', { state: { data: { configId: initialInstanceId } } })}
+          onClick={() => navigate('/app/form/createDeploymentInstance', { state: { data: { instanceId: initialInstanceId, serviceId: initialServiceId } } })}
         >
-          Create New Instance
+          Create New Deployment Instance
         </Button>
         {initialInstanceId && (
           <Typography variant="subtitle1">
