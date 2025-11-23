@@ -152,9 +152,9 @@ export default function ProductVersionPipeline() {
   const columns = useMemo<MRT_ColumnDef<ProductVersionPipelineType>[]>(
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
-      { accessorKey: 'productId', header: 'Product ID' },
-      { accessorKey: 'pipelineId', header: 'Pipeline ID' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'pipelineId', header: 'Pipeline Id' },
       { accessorKey: 'pipelineName', header: 'Pipeline Name' },
       { accessorKey: 'pipelineVersion', header: 'Pipeline Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
