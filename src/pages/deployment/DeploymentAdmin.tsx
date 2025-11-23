@@ -55,7 +55,6 @@ export default function DeploymentAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by configId if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
       [
         { id: 'active', value: 'true' }
@@ -180,8 +179,10 @@ export default function DeploymentAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<DeploymentType>[]>(
     () => [
-      { accessorKey: 'deploymentId', header: 'Deployment ID' },
-      { accessorKey: 'serviceId', header: 'Service ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'deploymentId', header: 'Deployment Id' },
+      { accessorKey: 'deploymentInstanceId', header: 'Deploy Inst Id' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
       { accessorKey: 'deploymentStatus', header: 'Status' },
       { accessorKey: 'deploymentType', header: 'Type' },
       {

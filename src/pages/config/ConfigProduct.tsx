@@ -24,7 +24,6 @@ type ConfigProductApiResponse = {
 };
 
 type ConfigProductType = {
-  hostId: string;
   productId: string;
   configId: string;
   configName: string;
@@ -189,8 +188,8 @@ export default function ConfigProduct() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigProductType>[]>(
     () => [
-      { accessorKey: 'productId', header: 'Product ID' },
-      { accessorKey: 'configId', header: 'Config ID' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
