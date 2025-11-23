@@ -25,7 +25,6 @@ type ConfigPropertyApiResponse = {
 };
 
 type ConfigPropertyType = {
-  hostId: string;
   configId: string;
   configName?: string;
   propertyId: string;
@@ -37,7 +36,6 @@ type ConfigPropertyType = {
   propertyDesc?: string;
   propertyValue?: string;
   valueType?: string;
-  propertyFile?: string;
   resourceType?: string;
   updateUser?: string;
   updateTs?: string;
@@ -208,14 +206,9 @@ export default function ConfigPropertyAdmin() {
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { 
-        accessorKey: 'propertyDesc', 
-        header: 'Description',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
       { accessorKey: 'propertyType', header: 'Type' },
-      { accessorKey: 'propertyValue', header: 'Value' },
+      { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      { accessorKey: 'displayOrder', header: 'Display Order' },
       {
         accessorKey: 'required',
         header: 'Required',
@@ -223,6 +216,15 @@ export default function ConfigPropertyAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
+      { 
+        accessorKey: 'propertyDesc', 
+        header: 'Description',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { accessorKey: 'propertyValue', header: 'Value' },
+      { accessorKey: 'valueType', header: 'Value Type' },
+      { accessorKey: 'resourceType', header: 'Resource Type' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',

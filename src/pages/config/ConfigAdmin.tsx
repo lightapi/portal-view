@@ -32,7 +32,6 @@ type ConfigApiResponse = {
 };
 
 type ConfigType = {
-  hostId: string;
   configId: string;
   configName?: string;
   configPhase?: string;
@@ -202,6 +201,7 @@ export default function ConfigAdmin() {
       { accessorKey: 'configPhase', header: 'Phase' },
       { accessorKey: 'configType', header: 'Type' },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      { accessorKey: 'classPath', header: 'Class Path' },
       { 
         accessorKey: 'configDesc', 
         header: 'Description',
