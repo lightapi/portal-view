@@ -191,12 +191,15 @@ export default function ConfigProductVersion() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigProductVersionType>[]>(
     () => [
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'productVersion', header: 'Product Version' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       { accessorKey: 'propertyValue', header: 'Property Value' },
-      { accessorKey: 'productId', header: 'Product ID' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -260,7 +263,7 @@ export default function ConfigProductVersion() {
           onClick={() => navigate('/app/form/createConfigProductVersion', { state: { data: { configId: initialConfigId } } })}
           disabled={!initialConfigId}
         >
-          Add Property
+          Add Product Version Property
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">
