@@ -194,7 +194,8 @@ export default function ConfigInstanceApi() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceApiType>[]>(
     () => [
-      { accessorKey: 'instanceApiId', header: 'Instance API ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
       { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },

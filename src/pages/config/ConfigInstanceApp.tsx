@@ -193,12 +193,13 @@ export default function ConfigInstanceApp() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceAppType>[]>(
     () => [
-      { accessorKey: 'instanceAppId', header: 'Instance App ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'instanceAppId', header: 'Instance App Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       { accessorKey: 'propertyValue', header: 'Property Value' },
-      { accessorKey: 'appId', header: 'App ID' },
+      { accessorKey: 'appId', header: 'App Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',

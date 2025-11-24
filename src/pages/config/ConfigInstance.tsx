@@ -32,6 +32,14 @@ type ConfigInstanceType = {
   propertyId: string;
   propertyName: string;
   propertyValue?: string;
+  required?: boolean;
+  propertyDesc: string;
+  propertyType: string;
+  resourceType: string;
+  valueType: string;
+  configType: string;
+  configDesc: string;
+  classPath: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -190,13 +198,22 @@ export default function ConfigInstance() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceType>[]>(
     () => [
-      { accessorKey: 'instanceId', header: 'Instance ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'configId', header: 'Config ID' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       { accessorKey: 'propertyValue', header: 'Property Value' },
+      { accessorKey: 'required', header: 'Required' },
+      { accessorKey: 'propertyDesc', header: 'Property Desc' },
+      { accessorKey: 'propertyType', header: 'Property Type' },
+      { accessorKey: 'resourceType', header: 'Resource Type' },
+      { accessorKey: 'valueType', header: 'Value Type' },
+      { accessorKey: 'configType', header: 'Config Type' },
+      { accessorKey: 'configDesc', header: 'Config Desc' },
+      { accessorKey: 'classPath', header: 'Class Path' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
