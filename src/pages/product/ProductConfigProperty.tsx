@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -12,11 +12,10 @@ import {
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { useUserState } from '../../contexts/UserContext.jsx';
-import { apiPost } from '../../api/apiPost.js';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
-// --- Type Definitions ---
 type ProductVersionPropertyApiResponse = {
   productProperties: Array<ProductVersionPropertyType>;
   total: number;
@@ -34,13 +33,15 @@ type ProductVersionPropertyType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+  active: boolean;
 };
 
 export default function ProductVersionProperty() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
-  const initialData = location.state?.data || {};
+  const { host } = useUserState() as { host: string };
+  const initialProductVersionId = location.state?.data?.productVersionId;
+  const initialPropertyId = location.state?.data?.propertyId;
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionPropertyType[]>([]);
@@ -49,12 +50,14 @@ export default function ProductVersionProperty() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
-    Object.entries(initialData)
-      .map(([id, value]) => ({ id, value: value as string }))
-      .filter(f => f.value),
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [
+      { id: 'active', value: 'true' } // Default to active
+    ];
+    if (initialProductVersionId) initialFilters.push({ id: 'productVersionId', value: initialProductVersionId });
+    if (initialPropertyId) initialFilters.push({ id: 'propertyId', value: initialPropertyId });
+    return initialFilters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -67,11 +70,24 @@ export default function ProductVersionProperty() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    const apiFilters = columnFilters.map(filter => {
+      // Add the IDs of all your boolean columns to this check
+      if (filter.id === 'active') {
+        return {
+          ...filter,
+          value: filter.value === 'true',
+        };
+      }
+      return filter;
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersionConfigProperty', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -98,7 +114,7 @@ export default function ProductVersionProperty() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<ProductVersionPropertyType>) => {
-    if (!window.confirm(`Are you sure you want to delete this property?`)) return;
+    if (!window.confirm(`Are you sure you want to delete property: ${row.original.propertyName}?`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(item => !(
@@ -109,18 +125,18 @@ export default function ProductVersionProperty() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionConfigProperty', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: row.original,
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete property. Please try again.');
+        alert('Failed to delete product version and property mapping. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
     } catch (e) {
-      alert('Failed to delete property due to a network error.');
+      alert('Failed to delete product version and property mapping due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
@@ -129,14 +145,32 @@ export default function ProductVersionProperty() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionPropertyType>[]>(
     () => [
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'productVersion', header: 'Product Version' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+        Cell: ({ row }) => (<Tooltip title="Delete Product Version Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
     [handleDelete],
@@ -164,14 +198,19 @@ export default function ProductVersionProperty() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProductVersionConfigProperty', { state: { data: initialData } })}
-          disabled={!initialData.productVersionId}
+          onClick={() => navigate('/app/form/createProductVersionConfigProperty', { state: { data: { productVersionId: initialProductVersionId, propertyId: initialPropertyId } } })}
+          disabled={!initialProductVersionId && !initialPropertyId}
         >
-          Add Property
+          Add Property to Product Version
         </Button>
-        {initialData.productVersionId && (
+        {initialProductVersionId && (
           <Typography variant="subtitle1">
-            For Product Version: <strong>{initialData.productVersionId}</strong>
+            For Product Version: <strong>{initialProductVersionId})</strong>
+          </Typography>
+        )}
+        {initialPropertyId && (
+          <Typography variant="subtitle1">
+            For Property Id: <strong>{initialPropertyId})</strong>
           </Typography>
         )}
       </Box>

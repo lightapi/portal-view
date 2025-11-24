@@ -16,13 +16,11 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
-// Define the shape of the API response
 type ProductConfigApiResponse = {
   productConfigs: Array<ProductConfigType>;
   total: number;
 };
 
-// Define the type for a single product configuration record
 type ProductConfigType = {
   hostId: string;
   productVersionId: string;
