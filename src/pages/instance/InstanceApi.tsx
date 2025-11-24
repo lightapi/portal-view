@@ -53,7 +53,6 @@ export default function InstanceApi() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  // Table state, pre-filtered by context if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
     const initialFilters: MRT_ColumnFiltersState = [
       { id: 'active', value: 'true' } // Default to active
@@ -86,7 +85,10 @@ export default function InstanceApi() {
     });
 
     const cmd = {
-      host: 'lightapi.net', service: 'instance', action: 'getInstanceApi', version: '0.1.0',
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'getInstanceApi',
+      version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []), 

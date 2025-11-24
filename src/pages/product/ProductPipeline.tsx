@@ -74,7 +74,7 @@ export default function ProductVersionPipeline() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
+
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
       if (filter.id === 'active') {
@@ -103,7 +103,6 @@ export default function ProductVersionPipeline() {
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
       const json = (await response.json()) as ProductVersionPipelineApiResponse;
-      console.log("json = ", json);
       setData(json.productPipelines || []);
       setRowCount(json.total || 0);
     } catch (error) {
