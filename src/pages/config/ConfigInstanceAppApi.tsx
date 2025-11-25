@@ -88,7 +88,7 @@ export default function ConfigInstanceAppApi() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -199,7 +199,8 @@ export default function ConfigInstanceAppApi() {
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceAppId', header: 'Instance App Id' },
-      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
+      { accessorKey: 'instanceApiId', header: 'Instance Api Id' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
@@ -267,7 +268,7 @@ export default function ConfigInstanceAppApi() {
           onClick={() => navigate('/app/form/createConfigInstanceAppApi', { state: { data: { configId: initialConfigId } } })}
           disabled={!initialConfigId}
         >
-          Add Instance App Api Property
+          Add Property to Instance App Api
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">

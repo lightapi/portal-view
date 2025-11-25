@@ -82,7 +82,7 @@ export default function ConfigInstanceFile() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -187,6 +187,7 @@ export default function ConfigInstanceFile() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceFileType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceId', header: 'Instance Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
       { accessorKey: 'fileName', header: 'File Name' },

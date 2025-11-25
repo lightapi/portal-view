@@ -84,7 +84,7 @@ export default function ConfigInstanceApp() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -195,6 +195,7 @@ export default function ConfigInstanceApp() {
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceAppId', header: 'Instance App Id' },
+      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },

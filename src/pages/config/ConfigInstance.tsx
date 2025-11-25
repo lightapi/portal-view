@@ -89,7 +89,7 @@ export default function ConfigInstance() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active' || filter.id === 'required') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -206,7 +206,13 @@ export default function ConfigInstance() {
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       { accessorKey: 'propertyValue', header: 'Property Value' },
-      { accessorKey: 'required', header: 'Required' },
+      {
+        accessorKey: 'required',
+        header: 'Required',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
       { accessorKey: 'propertyDesc', header: 'Property Desc' },
       { accessorKey: 'propertyType', header: 'Property Type' },
       { accessorKey: 'resourceType', header: 'Resource Type' },

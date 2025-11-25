@@ -85,7 +85,7 @@ export default function ConfigInstanceApi() {
     
     const apiFilters = columnFilters.map(filter => {
       // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
+      if (filter.id === 'active') {
         return {
           ...filter,
           value: filter.value === 'true',
@@ -195,7 +195,7 @@ export default function ConfigInstanceApi() {
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceApiType>[]>(
     () => [
       { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
+      { accessorKey: 'instanceApiId', header: 'Instance Api Id' },
       { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
@@ -264,7 +264,7 @@ export default function ConfigInstanceApi() {
           startIcon={<AddBoxIcon />}
           onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data : { configId: initialConfigId }}})}
         >
-          Add Property to Config Id
+          Add Property to Instance Api
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">

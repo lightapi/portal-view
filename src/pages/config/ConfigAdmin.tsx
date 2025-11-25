@@ -20,6 +20,7 @@ import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import InstallMobileIcon from "@mui/icons-material/InstallMobile";
 import AppsIcon from "@mui/icons-material/Apps";
 import ApiIcon from "@mui/icons-material/Api";
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
@@ -242,6 +243,7 @@ export default function ConfigAdmin() {
             <Tooltip title="Instances"><IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
             <Tooltip title="Instance APIs"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
             <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/config/configInstanceApp', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
+            <Tooltip title="Instance App Api"><IconButton onClick={() => navigate('/app/config/configInstanceAppApi', { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
           </Box>
         ),
       },
