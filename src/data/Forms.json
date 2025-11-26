@@ -10949,11 +10949,6 @@
           "title": "Instance Api Id",
           "readonly": true
         },
-        "configId": {
-          "type": "string",
-          "title": "Config Id",
-          "readonly": true
-        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
@@ -10964,12 +10959,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceApiId", "configId", "propertyId"]
+      "required": ["hostId", "instanceApiId", "propertyId"]
     },
     "form": [
       "hostId",
       "instanceApiId",
-      "configId",
       "propertyId",
       {
         "key": "propertyValue",
@@ -11102,11 +11096,6 @@
           "title": "Instance App Id",
           "readonly": true
         },
-        "configId": {
-          "type": "string",
-          "title": "Config Id",
-          "readonly": true
-        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
@@ -11117,12 +11106,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceAppId", "configId", "propertyId"]
+      "required": ["hostId", "instanceAppId", "propertyId"]
     },
     "form": [
       "hostId",
       "instanceAppId",
-      "configId",
       "propertyId",
       {
         "key": "propertyValue",
@@ -11274,11 +11262,6 @@
           "title": "Instance Api Id",
           "readonly": true
         },
-        "configId": {
-          "type": "string",
-          "title": "Config Id",
-          "readonly": true
-        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
@@ -11293,7 +11276,6 @@
         "hostId",
         "instanceAppId",
         "instanceApiId",
-        "configId",
         "propertyId"
       ]
     },
@@ -11301,7 +11283,6 @@
       "hostId",
       "instanceAppId",
       "instanceApiId",
-      "configId",
       "propertyId",
       {
         "key": "propertyValue",
