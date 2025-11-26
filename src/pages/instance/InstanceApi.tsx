@@ -54,8 +54,8 @@ export default function InstanceApi() {
   const [rowCount, setRowCount] = useState(0);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
-    const initialFilters: MRT_ColumnFiltersState = [
-      { id: 'active', value: 'true' } // Default to active
+  const initialFilters: MRT_ColumnFiltersState = [
+    { id: 'active', value: 'true' } // Default to active
     ];
     if (initialData.instanceApiId) initialFilters.push({ id: 'instanceApiId', value: initialData.instanceApiId });
     if (initialData.instanceId) initialFilters.push({ id: 'instanceId', value: initialData.instanceId });

@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
 type ConfigInstanceAppApiApiResponse = {
@@ -49,11 +50,24 @@ interface UserState {
   host?: string;
 }
 
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
+};
+
 export default function ConfigInstanceAppApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialConfigId = location.state?.data?.configId;
+  const initialInstanceAppId = location.state?.data?.instanceAppId;
+  const initialInstanceApiId = location.state?.data?.instanceApiId;
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceAppApiType[]>([]);
@@ -63,17 +77,16 @@ export default function ConfigInstanceAppApi() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by configId if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialConfigId 
-      ? [
-          { id: 'active', value: 'true' },
-          { id: 'configId', value: initialConfigId }
-        ]
-      : [
-          { id: 'active', value: 'true' }
-        ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [
+    { id: 'active', value: 'true' }
+    ];
+    if (initialInstanceAppId) initialFilters.push({ id: 'instanceAppId', value: initialInstanceAppId });
+    if (initialInstanceApiId) initialFilters.push({ id: 'instanceApiId', value: initialInstanceApiId });
+    if (initialConfigId) initialFilters.push({ id: 'configId', value: initialConfigId });
+    return initialFilters;
+  });
+
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -204,7 +217,12 @@ export default function ConfigInstanceAppApi() {
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { accessorKey: 'propertyValue', header: 'Property Value' },
+      { 
+        accessorKey: 'propertyValue', 
+        header: 'Property Value',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -265,14 +283,24 @@ export default function ConfigInstanceAppApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceAppApi', { state: { data: { configId: initialConfigId } } })}
-          disabled={!initialConfigId}
+          onClick={() => navigate('/app/form/createConfigInstanceAppApi', { state: { data: { instanceApiId: initialInstanceApiId, instanceAppId: initialInstanceAppId, configId: initialConfigId } } })}
+          disabled={!initialConfigId && !initialInstanceApiId && !initialInstanceAppId}
         >
           Add Property to Instance App Api
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">
             For Config: <strong>{initialConfigId}</strong>
+          </Typography>
+        )}
+        {initialInstanceAppId && (
+          <Typography variant="subtitle1">
+            For Instance App: <strong>{initialInstanceAppId}</strong>
+          </Typography>
+        )}
+        {initialInstanceApiId && (
+          <Typography variant="subtitle1">
+            For Instance Api: <strong>{initialInstanceApiId}</strong>
           </Typography>
         )}
       </Box>

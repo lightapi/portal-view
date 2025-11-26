@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
+import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
 type ConfigInstanceApiApiResponse = {
@@ -46,11 +47,23 @@ interface UserState {
   host?: string;
 }
 
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
+};
+
 export default function ConfigInstanceApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialConfigId = location.state?.data?.configId;
+  const initialInstanceApiId = location.state?.data?.instanceApiId;
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceApiType[]>([]);
@@ -60,17 +73,15 @@ export default function ConfigInstanceApi() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  // Table state, pre-filtered by configId if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialConfigId 
-      ? [
-          { id: 'active', value: 'true' },
-          { id: 'configId', value: initialConfigId }
-        ]
-      : [
-          { id: 'active', value: 'true' }
-        ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [
+    { id: 'active', value: 'true' }
+    ];
+    if (initialInstanceApiId) initialFilters.push({ id: 'instanceApiId', value: initialInstanceApiId });
+    if (initialConfigId) initialFilters.push({ id: 'configId', value: initialConfigId });
+    return initialFilters;
+  });
+
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -200,7 +211,12 @@ export default function ConfigInstanceApi() {
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { accessorKey: 'propertyValue', header: 'Property Value' },
+      { 
+        accessorKey: 'propertyValue', 
+        header: 'Property Value',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
       { accessorKey: 'apiId', header: 'Api Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
@@ -262,13 +278,19 @@ export default function ConfigInstanceApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data : { configId: initialConfigId }}})}
+          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data : { instanceApiId: initialInstanceApiId, configId: initialConfigId }}})}
+          disabled={!initialConfigId && !initialInstanceApiId}
         >
           Add Property to Instance Api
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">
-            For Config Id: <strong>{initialConfigId}</strong>
+            For Config: <strong>{initialConfigId}</strong>
+          </Typography>
+        )}
+        {initialInstanceApiId && (
+          <Typography variant="subtitle1">
+            For Instance Api: <strong>{initialInstanceApiId}</strong>
           </Typography>
         )}
       </Box>
