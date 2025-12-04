@@ -130,7 +130,7 @@ export default function HostAdmin() {
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<HostType>) => {
-    if (!window.confirm(`Are you sure you want to delete host: ${row.original.subDomain}?`)) {
+    if (!window.confirm(`Are you sure you want to delete host: ${row.original.subDomain}? Once it is deleted, all entities created in this host will be cascade deleted with no way to recover.`)) {
       return;
     }
 

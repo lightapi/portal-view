@@ -108,7 +108,7 @@ export default function OrgAdmin() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<OrgType>) => {
-    if (!window.confirm(`Are you sure you want to delete organization: ${row.original.orgName}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete organization: ${row.original.orgName}? Once it is deleted, all entities created in this org will be cascade deleted with no way to recover.`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(org => org.domain !== row.original.domain));
