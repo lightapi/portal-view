@@ -18,8 +18,8 @@ import LanguageIcon from '@mui/icons-material/Language';
 import GridGoldenratioIcon from '@mui/icons-material/GridGoldenratio';
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import PermDataSettingIcon from "@mui/icons-material/PermDataSetting";
-import { useUserState } from '../../contexts/UserContext.jsx';
-import { apiPost } from '../../api/apiPost.js';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
@@ -110,7 +110,9 @@ export default function ProductVersionAdmin() {
       host: 'lightapi.net', service: 'product', action: 'getProductVersion', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []), 
+        filters: JSON.stringify(apiFilters ?? []), 
+        globalFilter: globalFilter ?? '',
       },
     };
 
@@ -200,6 +202,7 @@ export default function ProductVersionAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionType>[]>(
     () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'productVersionId', header: 'Product Version Id' },
       { accessorKey: 'productId', header: 'Product Id' },
       { accessorKey: 'productVersion', header: 'Version' },
@@ -240,8 +243,12 @@ export default function ProductVersionAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
       {
         accessorKey: 'active',
         header: 'Active',
