@@ -12380,16 +12380,6 @@
           "type": "string",
           "readonly": true
         },
-        "productId": {
-          "title": "Product Id",
-          "type": "string",
-          "readonly": true
-        },
-        "productVersion": {
-          "type": "string",
-          "title": "Product Version",
-          "readonly": true
-        },
         "systemEnv": {
           "type": "string",
           "title": "System Env"
@@ -12397,13 +12387,15 @@
         "runtimeEnv": {
           "type": "string",
           "title": "Runtime Env"
+        },
+        "current": {
+          "type": "boolean",
+          "title": "Default Env"
         }
       },
       "required": [
         "hostId",
         "productVersionId",
-        "productId",
-        "productVersion",
         "systemEnv",
         "runtimeEnv"
       ]
@@ -12411,8 +12403,6 @@
     "form": [
       "hostId",
       "productVersionId",
-      "productId",
-      "productVersion",
       {
         "key": "systemEnv",
         "type": "dynaselect",
@@ -12430,7 +12420,65 @@
           "url": "/r/data?name=runtime_env&host={0}",
           "params": ["hostId"]
         }
+      },
+      "current"
+    ]
+  },
+  "updateProductVersionEnvironment": {
+    "formId": "updateProductVersionEnvironment",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "product",
+        "action": "updateProductVersionEnvironment",
+        "version": "0.1.0",
+        "title": "Update Product Version Environment Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
       }
+    ],
+    "schema": {
+      "title": "Update Product Version Environment Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "productVersionId": {
+          "title": "Product Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "systemEnv": {
+          "type": "string",
+          "title": "System Env",
+          "readonly": true
+        },
+        "runtimeEnv": {
+          "type": "string",
+          "title": "Runtime Env",
+          "readonly": true
+        },
+        "current": {
+          "type": "boolean",
+          "title": "Default Env"
+        }
+      },
+      "required": [
+        "hostId",
+        "productVersionId",
+        "systemEnv",
+        "runtimeEnv"
+      ]
+    },
+    "form": [
+      "hostId",
+      "productVersionId",
+      "systemEnv",
+      "runtimeEnv",
+      "current"
     ]
   },
   "createProductVersionPipeline": {
