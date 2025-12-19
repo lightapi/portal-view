@@ -36,11 +36,14 @@ type RefRelationType = {
   updateTs: string;
   aggregateVersion?: number;
 };
+interface UserState {
+  host?: string;
+}
 
 export default function RefRelation() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialRelationId = location.state?.data?.relationId;
 
   // Data and fetching state
@@ -52,7 +55,12 @@ export default function RefRelation() {
 
   // Table state, pre-filtered by relationId if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialRelationId ? [{ id: 'relationId', value: initialRelationId }] : [],
+    initialRelationId ? [
+      { id: 'relationId', value: initialRelationId },
+      { id: 'active', value: 'true' },
+    ] : [
+      { id: 'active', value: 'true' }
+    ],
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -66,11 +74,27 @@ export default function RefRelation() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'ref', action: 'getRefRelation', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -136,7 +160,7 @@ export default function RefRelation() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{text: 'Yes', value: 'true'}, {text: 'No', value: 'false'}],
+        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
       {

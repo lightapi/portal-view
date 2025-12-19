@@ -36,11 +36,15 @@ type EndpointType = {
   endpointDesc: string;
   active: boolean;
 };
+interface UserState {
+  host?: string;
+}
 
 export default function ServiceEndpoint() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { hostId, apiVersionId } = location.state.data;
+  const { host } = useUserState() as UserState;
+  const initialApiVersionId = location.state?.data?.apiVersionId;
 
   // Data and fetching state (unchanged)
   const [data, setData] = useState<EndpointType[]>([]);
@@ -50,7 +54,14 @@ export default function ServiceEndpoint() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state (unchanged)
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialApiVersionId ? [
+      { id: 'apiVersionId', value: initialApiVersionId },
+      { id: 'active', value: 'true' },
+    ] : [
+      { id: 'active', value: 'true' },
+    ],
+  );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -60,15 +71,32 @@ export default function ServiceEndpoint() {
 
   // Data fetching logic (unchanged)
   const fetchData = useCallback(async () => {
-    if (!hostId || !apiVersionId ) return;
+    if (!host || !initialApiVersionId) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'getApiEndpoint', version: '0.1.0',
       data: {
-        hostId, apiVersionId,
+        hostId: host,
+        apiVersionId: initialApiVersionId,
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -85,7 +113,7 @@ export default function ServiceEndpoint() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [hostId, apiVersionId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+  }, [host, initialApiVersionId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
   // useEffect to trigger fetchData (unchanged)
   useEffect(() => {

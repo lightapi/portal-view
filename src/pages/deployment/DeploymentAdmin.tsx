@@ -56,9 +56,9 @@ export default function DeploymentAdmin() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-      [
-        { id: 'active', value: 'true' }
-      ]
+    [
+      { id: 'active', value: 'true' }
+    ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -71,25 +71,28 @@ export default function DeploymentAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'getDeployment', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -142,8 +145,8 @@ export default function DeploymentAdmin() {
   }, [data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<DeploymentType>) => {
-    const propertyId = row.original.propertyId;
-    setIsUpdateLoading(propertyId);
+    const deploymentId = row.original.deploymentId;
+    setIsUpdateLoading(deploymentId);
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'getFreshDeployment', version: '0.1.0',
@@ -160,13 +163,13 @@ export default function DeploymentAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest deployment data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateDeployment', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateDeployment', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch deployment for update:", error);
@@ -207,19 +210,20 @@ export default function DeploymentAdmin() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-            <Tooltip title="Update Deployment">
-              <IconButton 
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.deploymentId}
-              >
-                {isUpdateLoading === row.original.deploymentId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-      )},
+          <Tooltip title="Update Deployment">
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.deploymentId}
+            >
+              {isUpdateLoading === row.original.deploymentId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        )
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (<Tooltip title="Delete Deployment"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),

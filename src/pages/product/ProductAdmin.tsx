@@ -53,14 +53,14 @@ interface UserState {
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function ProductVersionAdmin() {
@@ -95,24 +95,30 @@ export default function ProductVersionAdmin() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'current' || filter.id === 'breakCode' || filter.id === 'breakConfig') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (filter.id === 'current' || filter.id === 'breakCode' || filter.id === 'breakConfig') {
+        // Handle boolean conversion for specific columns
+        apiFilters.push({ ...filter, value: filter.value === 'true' });
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersion', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -183,13 +189,13 @@ export default function ProductVersionAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateProductVersion', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateProductVersion', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch data for update:", error);
@@ -208,27 +214,27 @@ export default function ProductVersionAdmin() {
       { accessorKey: 'productVersion', header: 'Version' },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
       {
-        accessorKey: 'breakCode', 
-        header: 'Break Code', 
+        accessorKey: 'breakCode',
+        header: 'Break Code',
         filterVariant: 'select',
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        accessorKey: 'breakConfig', 
-        header: 'Break Config', 
+        accessorKey: 'breakConfig',
+        header: 'Break Config',
         filterVariant: 'select',
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { 
-        accessorKey: 'releaseNote', 
+      {
+        accessorKey: 'releaseNote',
         header: 'Release Note',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
-      { 
-        accessorKey: 'versionDesc', 
+      {
+        accessorKey: 'versionDesc',
         header: 'Version Desc',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
@@ -236,8 +242,8 @@ export default function ProductVersionAdmin() {
       { accessorKey: 'releaseType', header: 'Release Type' },
       { accessorKey: 'versionStatus', header: 'Status' },
       {
-        accessorKey: 'current', 
-        header: 'Current', 
+        accessorKey: 'current',
+        header: 'Current',
         filterVariant: 'select',
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
@@ -260,24 +266,24 @@ export default function ProductVersionAdmin() {
         id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-          <Tooltip title="Update App">
-            <IconButton 
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.productVersion}
-            >
-              {isUpdateLoading === row.original.productVersion ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-          <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: {...row.original }}})}><AddToDriveIcon /></IconButton></Tooltip>
-          <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: {productVersionId: row.original.productVersionId }}})}><LanguageIcon /></IconButton></Tooltip>
-          <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: {...row.original }}})}><GridGoldenratioIcon /></IconButton></Tooltip>
-          <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: {...row.original }}})}><PermDataSettingIcon /></IconButton></Tooltip>
-          <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: {...row.original }}})}><FormatListBulletedIcon /></IconButton></Tooltip>
+            <Tooltip title="Update App">
+              <IconButton
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.productVersion}
+              >
+                {isUpdateLoading === row.original.productVersion ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+            <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
+            <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: { productVersionId: row.original.productVersionId } } })}><LanguageIcon /></IconButton></Tooltip>
+            <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
+            <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
+            <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
           </Box>
         ),
       },

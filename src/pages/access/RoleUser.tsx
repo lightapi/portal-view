@@ -78,25 +78,28 @@ export default function RoleUser() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'queryRoleUser', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -167,13 +170,13 @@ export default function RoleUser() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest role user data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateRoleUser', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateRoleUser', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch role user for update:", error);
@@ -213,19 +216,20 @@ export default function RoleUser() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-            <Tooltip title="Update Role User">
-              <IconButton 
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.roleId}
-              >
-                {isUpdateLoading === row.original.roleId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-      )},
+          <Tooltip title="Update Role User">
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.roleId}
+            >
+              {isUpdateLoading === row.original.roleId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        )
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },

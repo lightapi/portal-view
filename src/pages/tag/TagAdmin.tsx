@@ -31,7 +31,6 @@ type TagType = {
   entityType: string;
   tagName: string;
   tagDesc?: string;
-  active: boolean;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -43,14 +42,14 @@ interface UserState {
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function TagAdmin() {
@@ -81,25 +80,28 @@ export default function TagAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'tag', action: 'getTag', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -109,7 +111,7 @@ export default function TagAdmin() {
 
     try {
       const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as CategoryApiResponse;
+      const json = (await response.json()) as TagApiResponse;
       setData(json.tags || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -170,12 +172,12 @@ export default function TagAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest tag data.');
       }
-      
-      navigate('/app/form/updateTag', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+
+      navigate('/app/form/updateTag', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch tag for update:", error);
@@ -188,18 +190,18 @@ export default function TagAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<TagType>[]>(
     () => [
-      { 
-        accessorKey: 'hostId', 
+      {
+        accessorKey: 'hostId',
         header: 'Host ID',
         Cell: ({ cell }) => cell.getValue<string>() ? cell.getValue<string>() : (
           <Tooltip title="Global Tag"><PublicIcon fontSize="small" color="disabled" /></Tooltip>
         ),
-       },
+      },
       { accessorKey: 'tagId', header: 'Tag ID' },
       { accessorKey: 'tagName', header: 'Tag Name' },
       { accessorKey: 'entityType', header: 'Entity Type' },
-      { 
-        accessorKey: 'tagDesc', 
+      {
+        accessorKey: 'tagDesc',
         header: 'Tag Desc',
         Cell: TruncatedCell,
       },
@@ -217,7 +219,7 @@ export default function TagAdmin() {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Tooltip title="Update Tag">
-            <IconButton 
+            <IconButton
               onClick={() => handleUpdate(row)}
               disabled={isUpdateLoading === row.original.tagId}
             >

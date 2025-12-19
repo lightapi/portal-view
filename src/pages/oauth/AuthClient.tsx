@@ -43,10 +43,14 @@ type AuthClientType = {
   aggregateVersion?: number;
 };
 
+interface UserState {
+  host?: string;
+}
+
 export default function AuthClient() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialData = location.state?.data || {};
 
   // Data and fetching state
@@ -75,21 +79,28 @@ export default function AuthClient() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return { ...filter, value: filter.value === 'true' };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getClient', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -160,13 +171,13 @@ export default function AuthClient() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateClient', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateClient', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch data for update:", error);
@@ -232,14 +243,14 @@ export default function AuthClient() {
           Create New Client
         </Button>
         {initialData.appId && (
-            <Typography variant="subtitle1">
-                For App: <strong>{initialData.appId}</strong>
-            </Typography>
+          <Typography variant="subtitle1">
+            For App: <strong>{initialData.appId}</strong>
+          </Typography>
         )}
         {initialData.apiId && (
-            <Typography variant="subtitle1">
-                For API: <strong>{initialData.apiId}</strong>
-            </Typography>
+          <Typography variant="subtitle1">
+            For API: <strong>{initialData.apiId}</strong>
+          </Typography>
         )}
       </Box>
     ),

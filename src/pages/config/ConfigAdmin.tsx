@@ -51,14 +51,14 @@ interface UserState {
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function ConfigAdmin() {
@@ -89,25 +89,28 @@ export default function ConfigAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getConfig', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -178,13 +181,13 @@ export default function ConfigAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest config data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateConfig', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateConfig', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch config for update:", error);
@@ -203,8 +206,8 @@ export default function ConfigAdmin() {
       { accessorKey: 'configType', header: 'Type' },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
       { accessorKey: 'classPath', header: 'Class Path' },
-      { 
-        accessorKey: 'configDesc', 
+      {
+        accessorKey: 'configDesc',
         header: 'Description',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
@@ -224,7 +227,7 @@ export default function ConfigAdmin() {
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Update Config">
-              <IconButton 
+              <IconButton
                 onClick={() => handleUpdate(row)}
                 disabled={isUpdateLoading === row.original.configId}
               >

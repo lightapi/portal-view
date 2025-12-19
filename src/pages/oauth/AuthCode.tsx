@@ -49,14 +49,14 @@ interface UserState {
 
 // Helper Cell component for truncating long text with a tooltip
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function AuthCodeAdmin() {
@@ -70,7 +70,11 @@ export default function AuthCodeAdmin() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [
+      { id: 'active', value: 'true' }
+    ]
+  );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -81,31 +85,47 @@ export default function AuthCodeAdmin() {
   // useEffect for data fetching
   useEffect(() => {
     const fetchData = async () => {
-        if (!host) return;
-        if (!data.length) setIsLoading(true); else setIsRefetching(true);
+      if (!host) return;
+      if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-        const cmd = {
-          host: 'lightapi.net', service: 'oauth', action: 'getAuthCode', version: '0.1.0',
-          data: {
-            hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-            sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
-          },
-        };
+      let activeStatus = true; // Default to true if not present
+      const apiFilters: MRT_ColumnFiltersState = [];
 
-        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-        const cookies = new Cookies();
-        const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
-        try {
-          const response = await fetch(url, { headers, credentials: 'include' });
-          const json = (await response.json()) as AuthCodeApiResponse;
-          setData(json.codes || []);
-          setRowCount(json.total || 0);
-        } catch (error) {
-          setIsError(true); console.error(error);
-        } finally {
-          setIsError(false); setIsLoading(false); setIsRefetching(false);
+      columnFilters.forEach(filter => {
+        if (filter.id === 'active') {
+          // Extract active status (assuming filter.value is 'true'/'false' string from select)
+          activeStatus = filter.value === 'true' || filter.value === true;
+        } else {
+          // Keep other filters as is
+          apiFilters.push(filter);
         }
+      });
+
+      const cmd = {
+        host: 'lightapi.net', service: 'oauth', action: 'getAuthCode', version: '0.1.0',
+        data: {
+          hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+          sorting: JSON.stringify(sorting ?? []),
+          filters: JSON.stringify(apiFilters ?? []),
+          globalFilter: globalFilter ?? '',
+          active: activeStatus,
+        },
+      };
+
+      const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+      const cookies = new Cookies();
+      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+      try {
+        const response = await fetch(url, { headers, credentials: 'include' });
+        const json = (await response.json()) as AuthCodeApiResponse;
+        setData(json.codes || []);
+        setRowCount(json.total || 0);
+      } catch (error) {
+        setIsError(true); console.error(error);
+      } finally {
+        setIsError(false); setIsLoading(false); setIsRefetching(false);
+      }
     };
     fetchData();
   }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
@@ -142,20 +162,20 @@ export default function AuthCodeAdmin() {
     () => [
       { accessorKey: 'userId', header: 'User ID' },
       { accessorKey: 'email', header: 'Email' },
-      { 
-        accessorKey: 'authCode', 
+      {
+        accessorKey: 'authCode',
         header: 'Auth Code',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '150px' } }
       },
-      { 
-        accessorKey: 'scope', 
+      {
+        accessorKey: 'scope',
         header: 'Scope',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
-      { 
-        accessorKey: 'redirectUri', 
+      {
+        accessorKey: 'redirectUri',
         header: 'Redirect URI',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
@@ -191,7 +211,7 @@ export default function AuthCodeAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-        <Typography variant="h5">Authorization Codes</Typography>
+      <Typography variant="h5">Authorization Codes</Typography>
     ),
   });
 

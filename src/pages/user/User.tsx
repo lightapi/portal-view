@@ -62,10 +62,14 @@ type UserType = {
   aggregateVersion?: number;
 };
 
+interface UserState {
+  host?: string;
+}
+
 export default function User() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<UserType[]>([]);
@@ -75,7 +79,9 @@ export default function User() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+    { id: 'active', value: 'true' },
+  ]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -90,11 +96,30 @@ export default function User() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (filter.id === 'verified' || filter.id === 'locked') {
+        // Handle boolean conversion for specific columns
+        apiFilters.push({ ...filter, value: filter.value === 'true' });
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'user', action: 'listUserByHostId', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -180,13 +205,13 @@ export default function User() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest user data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateUser', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateUser', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch user for update:", error);
@@ -235,7 +260,7 @@ export default function User() {
       <Box sx={{ display: 'flex', gap: '0.1rem', flexWrap: 'nowrap' }}>
         <Tooltip title="Details"><IconButton onClick={() => navigate('/app/userDetail', { state: { user: row.original } })}><DetailsIcon /></IconButton></Tooltip>
         <Tooltip title="Update">
-          <IconButton 
+          <IconButton
             onClick={() => handleUpdate(row)}
             disabled={isUpdateLoading === row.original.userId}
           >

@@ -34,11 +34,14 @@ type RefLocaleType = {
   updateTs: string;
   aggregateVersion?: number;
 };
+interface UserState {
+  host?: string;
+}
 
 export default function RefLocale() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
   const initialValueId = location.state?.data?.valueId;
 
   // Data and fetching state
@@ -50,7 +53,12 @@ export default function RefLocale() {
 
   // Table state, pre-filtered by valueId if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialValueId ? [{ id: 'valueId', value: initialValueId }] : [],
+    initialValueId ? [
+      { id: 'valueId', value: initialValueId },
+      { id: 'active', value: 'true' },
+    ] : [
+      { id: 'active', value: 'true' },
+    ],
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -64,11 +72,27 @@ export default function RefLocale() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'ref', action: 'getRefLocale', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -183,9 +207,9 @@ export default function RefLocale() {
           Create New Locale
         </Button>
         {initialValueId && (
-            <Typography variant="subtitle1">
-                For Value ID: <strong>{initialValueId}</strong>
-            </Typography>
+          <Typography variant="subtitle1">
+            For Value ID: <strong>{initialValueId}</strong>
+          </Typography>
         )}
       </Box>
     ),

@@ -45,7 +45,7 @@ export default function HostUser() {
   const navigate = useNavigate();
   const location = useLocation();
   // We still get the user's context host, but it's not the primary ID for the query anymore.
-  const { host: userContextHost } = useUserState() as UserState; 
+  const { host: userContextHost } = useUserState() as UserState;
   const initialHostId = location.state?.data?.hostId;
   console.log("initialHostId = ", initialHostId);
   // Data and fetching state
@@ -56,13 +56,13 @@ export default function HostUser() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state, pre-filtered by context if provided
-const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-  initialHostId 
-    ? [
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialHostId
+      ? [
         { id: 'hostId', value: initialHostId },
         { id: 'active', value: 'true' }
       ]
-    : [
+      : [
         { id: 'active', value: 'true' }
       ]
   );
@@ -77,29 +77,37 @@ const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
   const fetchData = useCallback(async () => {
     // Use initialHostId for the query. Do not proceed if it's missing.
     if (!initialHostId) {
-        console.error("No hostId provided to HostUser page.");
-        setIsError(true);
-        return;
+      console.error("No hostId provided to HostUser page.");
+      setIsError(true);
+      return;
     }
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'current') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (filter.id === 'current') {
+        // Handle boolean conversion for specific columns
+        apiFilters.push({ ...filter, value: filter.value === 'true' });
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'getUserHost', version: '0.1.0',
       data: {
-        hostId: initialHostId, 
+        hostId: initialHostId,
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 

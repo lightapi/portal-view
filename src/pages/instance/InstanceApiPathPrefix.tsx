@@ -44,7 +44,7 @@ export default function InstanceApiPathPrefix() {
   const location = useLocation();
   const userState: { host?: string } | null = useUserState();
   const host = userState?.host || '';
-  
+
   // Contextual data from previous page, used for creating a new prefix
   const contextData = location.state?.data;
 
@@ -56,7 +56,12 @@ export default function InstanceApiPathPrefix() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [
+      { id: 'active', value: 'true' }
+    ]
+  );
+
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -73,6 +78,19 @@ export default function InstanceApiPathPrefix() {
       setIsRefetching(true);
     }
 
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
+
     const cmd = {
       host: 'lightapi.net',
       service: 'instance',
@@ -83,8 +101,9 @@ export default function InstanceApiPathPrefix() {
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(columnFilters ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -189,8 +208,8 @@ export default function InstanceApiPathPrefix() {
     manualFiltering: true,
     rowCount, // Set the total number of rows from the server
     initialState: {
-        showColumnFilters: true,
-        density: 'compact'
+      showColumnFilters: true,
+      density: 'compact'
     },
     state: {
       isLoading,

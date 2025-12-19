@@ -71,25 +71,31 @@ export default function ClientApp() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (filter.id === 'isKafkaApp') {
+        // Handle boolean conversion for specific columns
+        apiFilters.push({ ...filter, value: filter.value === 'true' });
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'client', action: 'getApp', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -161,13 +167,13 @@ export default function ClientApp() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest app data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateApp', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateApp', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch app for update:", error);
@@ -205,7 +211,7 @@ export default function ClientApp() {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Tooltip title="Update App">
-            <IconButton 
+            <IconButton
               onClick={() => handleUpdate(row)}
               disabled={isUpdateLoading === row.original.appId}
             >

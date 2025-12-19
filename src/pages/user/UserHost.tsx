@@ -36,7 +36,7 @@ export default function UserHost() {
   const location = useLocation();
   const initialUserId = location.state?.data?.userId;
   const userEmail = location.state?.data?.email; // Optional: for display purposes
-  
+
   console.log("userId", initialUserId);
 
   // Data and fetching state

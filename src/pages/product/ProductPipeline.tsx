@@ -54,14 +54,14 @@ export default function ProductVersionPipeline() {
   const [rowCount, setRowCount] = useState(0);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialProductVersionId 
+    initialProductVersionId
       ? [
-          { id: 'active', value: 'true' },
-          { id: 'productVersionId', value: initialProductVersionId }
-        ]
+        { id: 'active', value: 'true' },
+        { id: 'productVersionId', value: initialProductVersionId }
+      ]
       : [
-          { id: 'active', value: 'true' }
-        ]
+        { id: 'active', value: 'true' }
+      ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -75,24 +75,27 @@ export default function ProductVersionPipeline() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getProductVersionPipeline', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 

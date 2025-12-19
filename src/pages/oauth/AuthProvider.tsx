@@ -43,20 +43,23 @@ type AuthProviderType = {
 
 // Helper Cell component for truncating long text with a tooltip
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
+interface UserState {
+  host?: string;
+}
 
 export default function AuthProvider() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<AuthProviderType[]>([]);
@@ -82,22 +85,27 @@ export default function AuthProvider() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    // Transform string booleans from the UI filter state to real booleans for the API
-    const apiFilters = columnFilters.map(filter => {
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getProvider', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -168,13 +176,13 @@ export default function AuthProvider() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateProvider', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateProvider', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch for update:", error);
@@ -189,16 +197,16 @@ export default function AuthProvider() {
     () => [
       { accessorKey: 'providerId', header: 'Provider ID' },
       { accessorKey: 'providerName', header: 'Provider Name' },
-      { 
-        accessorKey: 'providerDesc', 
+      {
+        accessorKey: 'providerDesc',
         header: 'Description',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '150px' } }
       },
       { accessorKey: 'operationOwner', header: 'Ops Owner' },
       { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
-      { 
-        accessorKey: 'jwk', 
+      {
+        accessorKey: 'jwk',
         header: 'JWK',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '150px' } }
@@ -217,7 +225,7 @@ export default function AuthProvider() {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Tooltip title="Update Provider">
-            <IconButton 
+            <IconButton
               onClick={() => handleUpdate(row)}
               disabled={isUpdateLoading === row.original.providerId}
             >

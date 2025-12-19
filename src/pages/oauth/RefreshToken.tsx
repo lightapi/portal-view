@@ -29,7 +29,7 @@ type RefreshTokenType = {
   userId: string;
   entityId: string;
   userType: string;
-  email: string;    
+  email: string;
   roles?: string;
   groups?: string;
   positions?: string;
@@ -43,22 +43,26 @@ type RefreshTokenType = {
   aggregateVersion?: number;
 };
 
+interface UserState {
+  host?: string;
+}
+
 // Helper Cell component for truncating long text with a tooltip
 // We make the component generic with `<T extends MRT_RowData>`
 // This means it can work with any specific row type, like RefreshTokenType.
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function RefreshTokenAdmin() {
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<RefreshTokenType[]>([]);
@@ -68,7 +72,11 @@ export default function RefreshTokenAdmin() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [
+      { id: 'active', value: 'true' }
+    ]
+  );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -80,14 +88,28 @@ export default function RefreshTokenAdmin() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
+      }
+    });
+
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getRefreshToken', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(columnFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -145,18 +167,18 @@ export default function RefreshTokenAdmin() {
       { accessorKey: 'userId', header: 'User ID' },
       { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'clientId', header: 'Client ID' },
-      { 
-        accessorKey: 'refreshToken', 
+      {
+        accessorKey: 'refreshToken',
         header: 'Refresh Token',
         Cell: TruncatedCell,
       },
-      { 
-        accessorKey: 'scope', 
+      {
+        accessorKey: 'scope',
         header: 'Scope',
         Cell: TruncatedCell,
       },
-      { 
-        accessorKey: 'roles', 
+      {
+        accessorKey: 'roles',
         header: 'Roles',
         Cell: TruncatedCell,
       },

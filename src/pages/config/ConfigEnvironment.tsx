@@ -56,14 +56,14 @@ export default function ConfigEnvironment() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialConfigId 
+    initialConfigId
       ? [
-          { id: 'active', value: 'true' },
-          { id: 'configId', value: initialConfigId }
-        ]
+        { id: 'active', value: 'true' },
+        { id: 'configId', value: initialConfigId }
+      ]
       : [
-          { id: 'active', value: 'true' }
-        ]
+        { id: 'active', value: 'true' }
+      ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -76,25 +76,28 @@ export default function ConfigEnvironment() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getConfigEnvironment', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -125,9 +128,9 @@ export default function ConfigEnvironment() {
 
     const originalData = [...data];
     setData(prev => prev.filter(item => !(
-        item.environment === row.original.environment &&
-        item.configId === row.original.configId &&
-        item.propertyName === row.original.propertyName
+      item.environment === row.original.environment &&
+      item.configId === row.original.configId &&
+      item.propertyName === row.original.propertyName
     )));
     setRowCount(prev => prev - 1);
 
@@ -169,13 +172,13 @@ export default function ConfigEnvironment() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest config environment property data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigEnvironment', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateConfigEnvironment', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch config environment property for update:", error);
@@ -212,19 +215,20 @@ export default function ConfigEnvironment() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-            <Tooltip title="Update Property">
-              <IconButton 
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.propertyId}
-              >
-                {isUpdateLoading === row.original.propertyId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-      )},
+          <Tooltip title="Update Property">
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.propertyId}
+            >
+              {isUpdateLoading === row.original.propertyId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        )
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),

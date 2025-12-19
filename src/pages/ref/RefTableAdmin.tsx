@@ -35,10 +35,13 @@ type RefTableType = {
   updateTs?: string;
   aggregateVersion?: number;
 };
+interface UserState {
+  host?: string;
+}
 
 export default function RefTableAdmin() {
   const navigate = useNavigate();
-  const { host } = useUserState();
+  const { host } = useUserState() as UserState;
 
   // Data and fetching state
   const [data, setData] = useState<RefTableType[]>([]);
@@ -48,7 +51,9 @@ export default function RefTableAdmin() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
+    { id: 'active', value: 'true' },
+  ]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -65,11 +70,30 @@ export default function RefTableAdmin() {
       setIsLoading(true);
       setIsRefetching(true); // Can set both, MRT will show the right one
 
+      let activeStatus = true; // Default to true if not present
+      const apiFilters: MRT_ColumnFiltersState = [];
+
+      columnFilters.forEach(filter => {
+        if (filter.id === 'active') {
+          // Extract active status (assuming filter.value is 'true'/'false' string from select)
+          activeStatus = filter.value === 'true' || filter.value === true;
+        } else if (filter.id === 'editable') {
+          // Handle boolean conversion for specific columns
+          apiFilters.push({ ...filter, value: filter.value === 'true' });
+        } else {
+          // Keep other filters as is
+          apiFilters.push(filter);
+        }
+      });
+
       const cmd = {
         host: 'lightapi.net', service: 'ref', action: 'getRefTable', version: '0.1.0',
         data: {
           hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-          sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(columnFilters ?? []), globalFilter: globalFilter ?? '',
+          sorting: JSON.stringify(sorting ?? []),
+          filters: JSON.stringify(apiFilters ?? []),
+          globalFilter: globalFilter ?? '',
+          active: activeStatus,
         },
       };
 
@@ -78,7 +102,7 @@ export default function RefTableAdmin() {
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
       const cookies = new Cookies();
       const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-      
+
       try {
         const response = await fetch(url, { headers, credentials: 'include' });
         const json = (await response.json()) as RefTableApiResponse;
@@ -92,7 +116,7 @@ export default function RefTableAdmin() {
         setIsRefetching(false);
       }
     };
-    
+
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ // The effect now depends ONLY on the inputs to the fetch.

@@ -56,14 +56,14 @@ type InstanceType = {
 };
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 
@@ -96,24 +96,30 @@ export default function InstanceAdmin() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (filter.id === 'current' || filter.id === 'readonly') {
+        // Handle boolean conversion for specific columns
+        apiFilters.push({ ...filter, value: filter.value === 'true' });
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'instance', action: 'getInstance', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -184,13 +190,13 @@ export default function InstanceAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest instance data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateInstance', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateInstance', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch instance for update:", error);
@@ -225,14 +231,14 @@ export default function InstanceAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { 
-        accessorKey: 'serviceDesc', 
+      {
+        accessorKey: 'serviceDesc',
         header: 'Service Desc',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
-      { 
-        accessorKey: 'instanceDesc', 
+      {
+        accessorKey: 'instanceDesc',
         header: 'Instance Desc',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
@@ -256,7 +262,7 @@ export default function InstanceAdmin() {
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Update Instance">
-              <IconButton 
+              <IconButton
                 onClick={() => handleUpdate(row)}
                 disabled={isUpdateLoading === row.original.instanceId}
               >
@@ -269,36 +275,36 @@ export default function InstanceAdmin() {
             </Tooltip>
 
             <Tooltip title="Delete Platform"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-	<Tooltip title="Config">
-	  <IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { instanceId: row.original.instanceId } } })}>
-	    <AddToDriveIcon />
-	  </IconButton>
-	</Tooltip>
-	<Tooltip title="Config File">
-	  <IconButton onClick={() => navigate('/app/config/configInstanceFile', { state: { data: { instanceId: row.original.instanceId } } })}>
-	    <AttachFileIcon />
-	  </IconButton>
-	</Tooltip>
-	<Tooltip title="Instance API">
-	  <IconButton onClick={() => navigate('/app/instance/instanceApi', { state: { data: { ...row.original } } })}>
-	    <ContentCopyIcon />
-	  </IconButton>
-	</Tooltip>
-	<Tooltip title="Instance App">
-	  <IconButton onClick={() => navigate('/app/instance/instanceApp', { state: { data: { ...row.original } } })}>
-	    <ContentCopyIcon />
-	  </IconButton>
-	</Tooltip>
-	<Tooltip title="Instance App API">
-	  <IconButton onClick={() => navigate('/app/instance/instanceAppApi', { state: { data: { ...row.original } } })}>
-	    <ContentCopyIcon />
-	  </IconButton>
-	</Tooltip>
-	<Tooltip title="Deployment">
-	  <IconButton onClick={() => navigate('/app/deployment/instance', { state: { data: { ...row.original } } })}>
-	    <InstallDesktopIcon />
-	  </IconButton>
-	</Tooltip>
+            <Tooltip title="Config">
+              <IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { instanceId: row.original.instanceId } } })}>
+                <AddToDriveIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Config File">
+              <IconButton onClick={() => navigate('/app/config/configInstanceFile', { state: { data: { instanceId: row.original.instanceId } } })}>
+                <AttachFileIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Instance API">
+              <IconButton onClick={() => navigate('/app/instance/instanceApi', { state: { data: { ...row.original } } })}>
+                <ContentCopyIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Instance App">
+              <IconButton onClick={() => navigate('/app/instance/instanceApp', { state: { data: { ...row.original } } })}>
+                <ContentCopyIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Instance App API">
+              <IconButton onClick={() => navigate('/app/instance/instanceAppApi', { state: { data: { ...row.original } } })}>
+                <ContentCopyIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Deployment">
+              <IconButton onClick={() => navigate('/app/deployment/instance', { state: { data: { ...row.original } } })}>
+                <InstallDesktopIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         ),
       },

@@ -69,15 +69,17 @@ export default function HostAdmin() {
       setIsRefetching(true);
     }
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
@@ -91,6 +93,7 @@ export default function HostAdmin() {
         sorting: JSON.stringify(sorting ?? []),
         filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -148,7 +151,7 @@ export default function HostAdmin() {
       version: '0.1.0',
       data: row.original,
     };
-    
+
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
@@ -190,13 +193,13 @@ export default function HostAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest app data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateHost', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateHost', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch data for update:", error);
@@ -228,7 +231,7 @@ export default function HostAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-    ],  
+    ],
     [],
   );
 
@@ -258,13 +261,13 @@ export default function HostAdmin() {
     muiToolbarAlertBannerProps: isError
       ? { color: 'error', children: 'Error loading data' }
       : undefined,
-    
+
     enableRowActions: true,
     positionActionsColumn: 'last',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.5rem' }}>
         <Tooltip title="Update">
-          <IconButton 
+          <IconButton
             onClick={() => handleUpdate(row)}
             disabled={isUpdateLoading === row.original.hostId}
           >
@@ -292,7 +295,7 @@ export default function HostAdmin() {
         </Tooltip>
       </Box>
     ),
-    
+
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"

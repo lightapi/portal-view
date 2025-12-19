@@ -80,24 +80,27 @@ export default function PlatformAdmin() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
-      if (filter.id === 'active' || filter.id === 'isKafkaApp') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'getPlatform', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -168,13 +171,13 @@ export default function PlatformAdmin() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest platform data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updatePlatform', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updatePlatform', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch platform for update:", error);
@@ -221,7 +224,7 @@ export default function PlatformAdmin() {
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
             <Tooltip title="Update Platform">
-              <IconButton 
+              <IconButton
                 onClick={() => handleUpdate(row)}
                 disabled={isUpdateLoading === row.original.platformId}
               >

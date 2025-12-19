@@ -51,14 +51,14 @@ interface UserState {
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function ConfigInstanceAppApi() {
@@ -79,7 +79,7 @@ export default function ConfigInstanceAppApi() {
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
     const initialFilters: MRT_ColumnFiltersState = [
-    { id: 'active', value: 'true' }
+      { id: 'active', value: 'true' }
     ];
     if (initialInstanceAppId) initialFilters.push({ id: 'instanceAppId', value: initialInstanceAppId });
     if (initialInstanceApiId) initialFilters.push({ id: 'instanceApiId', value: initialInstanceApiId });
@@ -98,25 +98,28 @@ export default function ConfigInstanceAppApi() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getConfigInstanceAppApi', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), 
-        filters: JSON.stringify(apiFilters ?? []), 
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -191,13 +194,13 @@ export default function ConfigInstanceAppApi() {
       if (!response.ok) {
         throw new Error(freshData.description || 'Failed to fetch latest config instance app api property data.');
       }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigInstanceAppApi', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateConfigInstanceAppApi', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch config instance app api property for update:", error);
@@ -217,8 +220,8 @@ export default function ConfigInstanceAppApi() {
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { 
-        accessorKey: 'propertyValue', 
+      {
+        accessorKey: 'propertyValue',
         header: 'Property Value',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
@@ -240,19 +243,20 @@ export default function ConfigInstanceAppApi() {
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-            <Tooltip title="Update Property">
-              <IconButton 
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.propertyId}
-              >
-                {isUpdateLoading === row.original.propertyId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-      )},
+          <Tooltip title="Update Property">
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.propertyId}
+            >
+              {isUpdateLoading === row.original.propertyId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        )
+      },
       {
         id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),

@@ -44,14 +44,14 @@ interface UserState {
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-    const value = cell.getValue<string>() ?? '';
-    return (
-        <Tooltip title={value} placement="top-start">
-            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                {value}
-            </Box>
-        </Tooltip>
-    );
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
 };
 
 export default function Category() {
@@ -82,16 +82,18 @@ export default function Category() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
-    
-    const apiFilters = columnFilters.map(filter => {
-      // Add the IDs of all your boolean columns to this check
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return {
-          ...filter,
-          value: filter.value === 'true',
-        };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
@@ -101,6 +103,7 @@ export default function Category() {
         sorting: JSON.stringify(sorting ?? []),
         filters: JSON.stringify(apiFilters ?? []),
         globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
@@ -185,14 +188,14 @@ export default function Category() {
       {
         accessorKey: 'hostId', header: 'Host ID',
         Cell: ({ cell }) => cell.getValue<string>() ? cell.getValue<string>() : (
-            <Tooltip title="Global"><PublicIcon fontSize="small" color="disabled" /></Tooltip>
+          <Tooltip title="Global"><PublicIcon fontSize="small" color="disabled" /></Tooltip>
         ),
       },
       { accessorKey: 'categoryId', header: 'Category ID' },
       { accessorKey: 'categoryName', header: 'Name' },
       { accessorKey: 'entityType', header: 'Entity Type' },
-      { 
-        accessorKey: 'categoryDesc', 
+      {
+        accessorKey: 'categoryDesc',
         header: 'Category Desc',
         Cell: TruncatedCell,
       },

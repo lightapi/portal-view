@@ -53,12 +53,12 @@ export default function ProviderApi() {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     initialProviderId
       ? [
-          { id: 'providerId', value: initialProviderId },
-          { id: 'active', value: 'true' }
-        ]
+        { id: 'providerId', value: initialProviderId },
+        { id: 'active', value: 'true' }
+      ]
       : [
-          { id: 'active', value: 'true' }
-        ]
+        { id: 'active', value: 'true' }
+      ]
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -72,19 +72,28 @@ export default function ProviderApi() {
     if (!host) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-    const apiFilters = columnFilters.map(filter => {
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        return { ...filter, value: filter.value === 'true' };
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
+      } else {
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      return filter;
     });
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getProviderApi', version: '0.1.0', // Assuming this is the correct action
       data: {
-        hostId: host, 
+        hostId: host,
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []), filters: JSON.stringify(apiFilters ?? []), globalFilter: globalFilter ?? '',
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
