@@ -17,6 +17,7 @@ import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import InstallDesktopIcon from "@mui/icons-material/InstallDesktop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CameraIcon from '@mui/icons-material/Camera';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
@@ -275,6 +276,12 @@ export default function InstanceAdmin() {
             </Tooltip>
 
             <Tooltip title="Delete Platform"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+
+            <Tooltip title="Snapshot">
+              <IconButton onClick={() => navigate('/app/config/configSnapshot', { state: { data: { instanceId: row.original.instanceId } } })}>
+                <CameraIcon />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Config">
               <IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { instanceId: row.original.instanceId } } })}>
                 <AddToDriveIcon />

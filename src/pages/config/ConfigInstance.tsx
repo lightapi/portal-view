@@ -55,6 +55,7 @@ export default function ConfigInstance() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialConfigId = location.state?.data?.configId;
+  const initialInstanceId = location.state?.data?.instanceId;
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceType[]>([]);
@@ -65,16 +66,14 @@ export default function ConfigInstance() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state, pre-filtered by configId if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialConfigId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'configId', value: initialConfigId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [];
+    if (initialConfigId) initialFilters.push({ id: 'configId', value: initialConfigId });
+    if (initialInstanceId) initialFilters.push({ id: 'instanceId', value: initialInstanceId });
+    initialFilters.push({ id: 'active', value: 'true' });
+    return initialFilters;
+  });
+
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -274,14 +273,19 @@ export default function ConfigInstance() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstance', { state: { data: { configId: initialConfigId } } })}
-          disabled={!initialConfigId}
+          onClick={() => navigate('/app/form/createConfigInstance', { state: { data: { configId: initialConfigId, instanceId: initialInstanceId } } })}
+          disabled={!initialConfigId && !initialInstanceId}
         >
           Add Property to Instance
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">
             For Config: <strong>{initialConfigId}</strong>
+          </Typography>
+        )}
+        {initialInstanceId && (
+          <Typography variant="subtitle1">
+            For Instance: <strong>{initialInstanceId}</strong>
           </Typography>
         )}
       </Box>

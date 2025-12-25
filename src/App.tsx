@@ -68,6 +68,7 @@ import ConfigInstanceApi from "./pages/config/ConfigInstanceApi";
 import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
+import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
@@ -249,6 +250,10 @@ const App = () => {
           <Route
             path="config/configDeploymentInstance"
             element={<ConfigDeploymentInstance />}
+          />
+          <Route
+            path="config/configSnapshot"
+            element={<ConfigSnapshot />}
           />
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
