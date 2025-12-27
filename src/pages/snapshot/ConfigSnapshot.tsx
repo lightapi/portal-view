@@ -213,7 +213,7 @@ export default function ConfigSnapshot() {
             { accessorKey: 'apiVersion', header: 'Api Version' },
             {
                 id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Update Property"><IconButton onClick={() => navigate('/app/form/updateConfigSnapshot', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
+                Cell: ({ row }) => (<Tooltip title="Update Property"><IconButton onClick={() => handleUpdate(row)}><SystemUpdateIcon /></IconButton></Tooltip>),
             },
             {
                 id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
