@@ -79,7 +79,9 @@
           }
         }
       },
-      "required": ["email"]
+      "required": [
+        "email"
+      ]
     },
     "form": [
       "email",
@@ -192,7 +194,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -212,7 +216,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -233,7 +239,12 @@
     "schema": {
       "type": "object",
       "title": "Org Request",
-      "required": ["domain", "orgName", "orgDesc", "orgOwner"],
+      "required": [
+        "domain",
+        "orgName",
+        "orgDesc",
+        "orgOwner"
+      ],
       "properties": {
         "domain": {
           "title": "Org Domain",
@@ -273,7 +284,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -294,7 +307,12 @@
     "schema": {
       "type": "object",
       "title": "Create Host Request",
-      "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
+      "required": [
+        "domain",
+        "subDomain",
+        "hostDesc",
+        "hostOwner"
+      ],
       "properties": {
         "domain": {
           "title": "Domain",
@@ -333,7 +351,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -354,7 +374,12 @@
     "schema": {
       "type": "object",
       "title": "Host Request",
-      "required": ["domain", "subDomain", "hostDesc", "hostOwner"],
+      "required": [
+        "domain",
+        "subDomain",
+        "hostDesc",
+        "hostOwner"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -409,7 +434,10 @@
     "schema": {
       "type": "object",
       "title": "Create User Host Request",
-      "required": ["hostId", "userId"],
+      "required": [
+        "hostId",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -430,7 +458,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabelNotInHost%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -450,12 +480,17 @@
     "schema": {
       "type": "object",
       "title": "Delivery",
-      "required": ["payment"],
+      "required": [
+        "payment"
+      ],
       "properties": {
         "payment": {
           "title": "Payment Option",
           "type": "string",
-          "enum": ["Pickup", "Online"]
+          "enum": [
+            "Pickup",
+            "Online"
+          ]
         }
       }
     },
@@ -491,12 +526,23 @@
     "schema": {
       "type": "object",
       "title": "Delivery",
-      "required": ["pickupTime"],
+      "required": [
+        "pickupTime"
+      ],
       "properties": {
         "pickupTime": {
           "title": "Pick up Time",
           "type": "string",
-          "enum": ["0", "5", "10", "20", "30", "60", "120", "240"]
+          "enum": [
+            "0",
+            "5",
+            "10",
+            "20",
+            "30",
+            "60",
+            "120",
+            "240"
+          ]
         },
         "instruction": {
           "title": "Additional Instruction",
@@ -570,7 +616,9 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["co"],
+      "required": [
+        "co"
+      ],
       "properties": {
         "co": {
           "title": "Component",
@@ -581,7 +629,9 @@
         "home": {
           "type": "object",
           "title": "Home",
-          "required": ["render"],
+          "required": [
+            "render"
+          ],
           "properties": {
             "render": {
               "type": "boolean",
@@ -624,7 +674,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["label", "menu"]
+                "required": [
+                  "label",
+                  "menu"
+                ]
               }
             }
           }
@@ -632,7 +685,9 @@
         "about": {
           "type": "object",
           "title": "About",
-          "required": ["render"],
+          "required": [
+            "render"
+          ],
           "properties": {
             "render": {
               "type": "boolean",
@@ -670,7 +725,9 @@
         "catalog": {
           "type": "object",
           "title": "Online Order",
-          "required": ["render"],
+          "required": [
+            "render"
+          ],
           "properties": {
             "render": {
               "type": "boolean",
@@ -721,7 +778,9 @@
         "reservation": {
           "type": "object",
           "title": "Reservation",
-          "required": ["render"],
+          "required": [
+            "render"
+          ],
           "properties": {
             "render": {
               "type": "boolean",
@@ -736,7 +795,9 @@
         "contact": {
           "type": "object",
           "title": "Contact",
-          "required": ["render"],
+          "required": [
+            "render"
+          ],
           "properties": {
             "render": {
               "type": "boolean",
@@ -756,7 +817,14 @@
         }
       }
     },
-    "form": ["co", "home", "about", "catalog", "reservation", "contact"]
+    "form": [
+      "co",
+      "home",
+      "about",
+      "catalog",
+      "reservation",
+      "contact"
+    ]
   },
   "websiteForm": {
     "formId": "websiteForm",
@@ -813,7 +881,9 @@
                       "type": "string"
                     }
                   },
-                  "required": ["u"]
+                  "required": [
+                    "u"
+                  ]
                 }
               },
               "vs": {
@@ -828,11 +898,17 @@
                       "type": "string"
                     }
                   },
-                  "required": ["u"]
+                  "required": [
+                    "u"
+                  ]
                 }
               }
             },
-            "required": ["t", "s", "d"]
+            "required": [
+              "t",
+              "s",
+              "d"
+            ]
           }
         }
       }
@@ -862,7 +938,9 @@
             "style": {
               "add": "btn-success"
             },
-            "items": ["ss[].is[].u"]
+            "items": [
+              "ss[].is[].u"
+            ]
           },
           {
             "key": "ss[].vs",
@@ -870,7 +948,9 @@
             "style": {
               "add": "btn-success"
             },
-            "items": ["ss[].vs[].u"]
+            "items": [
+              "ss[].vs[].u"
+            ]
           }
         ]
       }
@@ -891,7 +971,9 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["client_id"],
+      "required": [
+        "client_id"
+      ],
       "title": "JWT Claims",
       "properties": {
         "exp": {
@@ -919,7 +1001,9 @@
         }
       }
     },
-    "form": ["*"]
+    "form": [
+      "*"
+    ]
   },
   "signupForm": {
     "formId": "signupForm",
@@ -968,7 +1052,9 @@
         "language": {
           "type": "string",
           "default": "en",
-          "enum": ["en"]
+          "enum": [
+            "en"
+          ]
         },
         "password": {
           "type": "string"
@@ -1093,7 +1179,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=province&rela=country-province&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       "city",
@@ -1148,7 +1236,9 @@
         "language": {
           "type": "string",
           "default": "en",
-          "enum": ["en"]
+          "enum": [
+            "en"
+          ]
         },
         "password": {
           "type": "string"
@@ -1273,7 +1363,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=province&rela=country-province&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       "city",
@@ -1308,7 +1400,11 @@
           "type": "string"
         }
       },
-      "required": ["oldPassword", "newPassword", "passwordConfirm"]
+      "required": [
+        "oldPassword",
+        "newPassword",
+        "passwordConfirm"
+      ]
     },
     "form": [
       {
@@ -1380,7 +1476,9 @@
         "language": {
           "type": "string",
           "title": "Language",
-          "enum": ["en"]
+          "enum": [
+            "en"
+          ]
         },
         "firstName": {
           "type": "string",
@@ -1477,7 +1575,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=province&rela=country-province&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       "city",
@@ -1519,7 +1619,12 @@
           "type": "string"
         }
       },
-      "required": ["country", "province", "city", "category"]
+      "required": [
+        "country",
+        "province",
+        "city",
+        "category"
+      ]
     },
     "form": [
       {
@@ -1536,7 +1641,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=province&rela=ctry-prov&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       {
@@ -1545,7 +1652,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=city&rela=prov-city&from={0}",
-          "params": ["province"]
+          "params": [
+            "province"
+          ]
         }
       },
       {
@@ -1562,7 +1671,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=covid-subcategory&rela=cov-cat&from={0}",
-          "params": ["category"]
+          "params": [
+            "category"
+          ]
         }
       }
     ]
@@ -1595,7 +1706,11 @@
           "type": "string"
         }
       },
-      "required": ["country", "province", "city"]
+      "required": [
+        "country",
+        "province",
+        "city"
+      ]
     },
     "form": [
       {
@@ -1612,7 +1727,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=province&rela=ctry-prov&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       {
@@ -1621,7 +1738,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=city&rela=prov-city&from={0}",
-          "params": ["province"]
+          "params": [
+            "province"
+          ]
         }
       }
     ]
@@ -1689,7 +1808,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=province&rela=ctry-prov&from={0}",
-          "params": ["country"]
+          "params": [
+            "country"
+          ]
         }
       },
       {
@@ -1698,7 +1819,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=city&rela=prov-city&from={0}",
-          "params": ["province"]
+          "params": [
+            "province"
+          ]
         }
       },
       "latitude",
@@ -1757,7 +1880,14 @@
         "zoom"
       ]
     },
-    "form": ["country", "province", "city", "latitude", "longitude", "zoom"]
+    "form": [
+      "country",
+      "province",
+      "city",
+      "latitude",
+      "longitude",
+      "zoom"
+    ]
   },
   "createCovidEntity": {
     "formId": "createCovidEntity",
@@ -1818,7 +1948,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=covid-subcategory&rela=cov-cat&from={0}",
-          "params": ["category"]
+          "params": [
+            "category"
+          ]
         }
       },
       "latitude",
@@ -1885,7 +2017,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=covid-subcategory&rela=cov-cat&from={0}",
-          "params": ["category"]
+          "params": [
+            "category"
+          ]
         }
       },
       "latitude",
@@ -1920,7 +2054,11 @@
           "type": "string"
         }
       },
-      "required": ["userId", "subject", "content"]
+      "required": [
+        "userId",
+        "subject",
+        "content"
+      ]
     },
     "form": [
       "userId",
@@ -1935,7 +2073,12 @@
   "service": {
     "schema": {
       "type": "object",
-      "required": ["serviceId", "serviceName", "serviceType", "scope"],
+      "required": [
+        "serviceId",
+        "serviceName",
+        "serviceType",
+        "scope"
+      ],
       "properties": {
         "serviceId": {
           "title": "Service ID",
@@ -1944,7 +2087,12 @@
         "serviceType": {
           "title": "Service Type",
           "type": "string",
-          "enum": ["swagger", "openapi", "graphql", "hybrid"]
+          "enum": [
+            "swagger",
+            "openapi",
+            "graphql",
+            "hybrid"
+          ]
         },
         "serviceName": {
           "title": "Serivce Name",
@@ -1968,7 +2116,13 @@
   "user": {
     "schema": {
       "type": "object",
-      "required": ["userId", "userType", "firstName", "lastName", "email"],
+      "required": [
+        "userId",
+        "userType",
+        "firstName",
+        "lastName",
+        "email"
+      ],
       "properties": {
         "userId": {
           "title": "User ID",
@@ -1977,7 +2131,12 @@
         "userType": {
           "title": "User Type",
           "type": "string",
-          "enum": ["admin", "employee", "customer", "partner"]
+          "enum": [
+            "admin",
+            "employee",
+            "customer",
+            "partner"
+          ]
         },
         "firstName": {
           "title": "First Name",
@@ -2008,7 +2167,11 @@
   "password": {
     "schema": {
       "type": "object",
-      "required": ["password", "newPassword", "newPasswordConfirm"],
+      "required": [
+        "password",
+        "newPassword",
+        "newPasswordConfirm"
+      ],
       "properties": {
         "password": {
           "title": "Password",
@@ -2043,7 +2206,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "appId", "appName"],
+      "required": [
+        "hostId",
+        "appId",
+        "appName"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2092,7 +2259,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2101,7 +2270,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -2121,7 +2292,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "appId", "appName"],
+      "required": [
+        "hostId",
+        "appId",
+        "appName"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2171,7 +2346,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2180,7 +2357,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -2475,7 +2654,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "apiId", "apiName", "apiStatus"],
+      "required": [
+        "hostId",
+        "apiId",
+        "apiName",
+        "apiStatus"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2551,7 +2735,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2560,7 +2746,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2569,7 +2757,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2578,7 +2768,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=business_group&host={0}&rela=region_bgrp&from={1}",
-          "params": ["hostId", "region"]
+          "params": [
+            "hostId",
+            "region"
+          ]
         }
       },
       {
@@ -2587,7 +2780,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}&rela=bgrp_lob&from={1}",
-          "params": ["hostId", "businessGroup"]
+          "params": [
+            "hostId",
+            "businessGroup"
+          ]
         }
       },
       {
@@ -2596,7 +2792,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=platform_journer&host={0}&rela=lob_platform&from={1}",
-          "params": ["hostId", "lob"]
+          "params": [
+            "hostId",
+            "lob"
+          ]
         }
       },
       {
@@ -2605,7 +2804,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=capability&host={0}&rela=platform_capability&from={1}",
-          "params": ["hostId", "platform"]
+          "params": [
+            "hostId",
+            "platform"
+          ]
         }
       },
       "gitRepo",
@@ -2615,7 +2817,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=api_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2624,7 +2828,9 @@
         "multiple": true,
         "action": {
           "url": "/r/data?name=api_tag&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -2644,7 +2850,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "apiId", "apiName", "apiStatus"],
+      "required": [
+        "hostId",
+        "apiId",
+        "apiName",
+        "apiStatus"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2721,7 +2932,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2730,7 +2943,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2739,7 +2954,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2748,7 +2965,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=business_group&host={0}&rela=region_bgrp&from={1}",
-          "params": ["hostId", "region"]
+          "params": [
+            "hostId",
+            "region"
+          ]
         }
       },
       {
@@ -2757,7 +2977,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}&rela=bgrp_lob&from={1}",
-          "params": ["hostId", "businessGroup"]
+          "params": [
+            "hostId",
+            "businessGroup"
+          ]
         }
       },
       {
@@ -2766,7 +2989,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=platform_journer&host={0}&rela=lob_platform&from={1}",
-          "params": ["hostId", "lob"]
+          "params": [
+            "hostId",
+            "lob"
+          ]
         }
       },
       {
@@ -2775,7 +3001,10 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=capability&host={0}&rela=platform_capability&from={1}",
-          "params": ["hostId", "platform"]
+          "params": [
+            "hostId",
+            "platform"
+          ]
         }
       },
       "gitRepo",
@@ -2785,7 +3014,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=api_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -2794,7 +3025,9 @@
         "multiple": true,
         "action": {
           "url": "/r/data?name=api_tag&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -2814,7 +3047,13 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "apiId", "apiVersion", "apiType", "serviceId"],
+      "required": [
+        "hostId",
+        "apiId",
+        "apiVersion",
+        "apiType",
+        "serviceId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2861,7 +3100,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=api_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceId",
@@ -2893,7 +3134,13 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "apiId", "apiVersion", "apiType", "serviceId"],
+      "required": [
+        "hostId",
+        "apiId",
+        "apiVersion",
+        "apiType",
+        "serviceId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2942,7 +3189,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=api_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceId",
@@ -3295,7 +3544,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3304,7 +3555,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22rule%22%2C%22action%22%3A%22getRuleByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22ruleType%22%3A%22{1}%22%7D%7D%0A%0A",
-          "params": ["hostId", "ruleType"]
+          "params": [
+            "hostId",
+            "ruleType"
+          ]
         }
       }
     ]
@@ -3324,7 +3578,10 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId"],
+      "required": [
+        "hostId",
+        "roleId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3367,7 +3624,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId", "roleDesc"],
+      "required": [
+        "hostId",
+        "roleId",
+        "roleDesc"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3411,7 +3672,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId", "userId"],
+      "required": [
+        "hostId",
+        "roleId",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3444,7 +3709,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3453,7 +3720,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3481,7 +3750,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId", "userId"],
+      "required": [
+        "hostId",
+        "roleId",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3509,9 +3782,9 @@
       }
     },
     "form": [
-      "hostId", 
-      "roleId", 
-      "userId", 
+      "hostId",
+      "roleId",
+      "userId",
       {
         "key": "startTs",
         "type": "timestamp"
@@ -3537,7 +3810,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "roleId", "apiVersionId", "endpointId"],
+      "required": [
+        "hostId",
+        "roleId",
+        "apiVersionId",
+        "endpointId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3566,7 +3844,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3575,7 +3855,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3584,7 +3866,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       }
     ]
@@ -3653,7 +3938,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3662,7 +3949,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3671,7 +3960,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "colName",
@@ -3681,7 +3973,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -3743,7 +4037,7 @@
     },
     "form": [
       "hostId",
-      "roleId", 
+      "roleId",
       "endpointId",
       "colName",
       {
@@ -3752,7 +4046,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -3812,7 +4108,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22role%22%2C%22action%22%3A%22getRoleLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3821,7 +4119,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -3830,7 +4130,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "columns"
@@ -3901,7 +4204,10 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId"],
+      "required": [
+        "hostId",
+        "groupId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3944,7 +4250,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId", "groupDesc"],
+      "required": [
+        "hostId",
+        "groupId",
+        "groupDesc"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -3988,7 +4298,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId", "userId"],
+      "required": [
+        "hostId",
+        "groupId",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4021,7 +4335,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22group%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4030,7 +4346,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4058,7 +4376,10 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId"],
+      "required": [
+        "hostId",
+        "groupId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4086,9 +4407,9 @@
       }
     },
     "form": [
-      "hostId", 
-      "groupId", 
-      "userId", 
+      "hostId",
+      "groupId",
+      "userId",
       {
         "key": "startTs",
         "type": "timestamp"
@@ -4114,7 +4435,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "groupId", "apiVersionId", "endpointId"],
+      "required": [
+        "hostId",
+        "groupId",
+        "apiVersionId",
+        "endpointId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4143,7 +4469,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22group%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4152,7 +4480,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4161,7 +4491,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       }
     ]
@@ -4230,7 +4563,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22group%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4239,7 +4574,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4248,7 +4585,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "colName",
@@ -4258,7 +4598,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -4329,7 +4671,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -4389,7 +4733,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22group%22%2C%22action%22%3A%22getGroupLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4398,7 +4744,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4407,7 +4755,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "columns"
@@ -4478,7 +4829,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeType"],
+      "required": [
+        "hostId",
+        "attributeId",
+        "attributeType"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4508,7 +4863,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=attribute_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4534,7 +4891,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeType", "attributeDesc"],
+      "required": [
+        "hostId",
+        "attributeId",
+        "attributeType",
+        "attributeDesc"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4565,7 +4927,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=attribute_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4591,7 +4955,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeValue", "userId"],
+      "required": [
+        "hostId",
+        "attributeId",
+        "attributeValue",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4628,7 +4997,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "attributeValue",
@@ -4638,7 +5009,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4666,7 +5039,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "attributeId", "attributeValue", "userId"],
+      "required": [
+        "hostId",
+        "attributeId",
+        "attributeValue",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -4766,7 +5144,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "attributeValue",
@@ -4776,7 +5156,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4785,7 +5167,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       }
     ]
@@ -4909,7 +5294,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "attributeValue",
@@ -4919,7 +5306,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -4928,7 +5317,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "colName",
@@ -4938,7 +5330,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -5015,7 +5409,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -5080,7 +5476,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22attribute%22%2C%22action%22%3A%22getAttributeLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "attributeValue",
@@ -5090,7 +5488,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5099,7 +5499,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "columns"
@@ -5176,7 +5579,10 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId"],
+      "required": [
+        "hostId",
+        "positionId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -5257,7 +5663,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId", "positionDesc"],
+      "required": [
+        "hostId",
+        "positionId",
+        "positionDesc"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -5339,7 +5749,11 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId", "userId"],
+      "required": [
+        "hostId",
+        "positionId",
+        "userId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -5372,7 +5786,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5381,7 +5797,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5409,7 +5827,10 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId"],
+      "required": [
+        "hostId",
+        "positionId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -5477,7 +5898,12 @@
     ],
     "schema": {
       "type": "object",
-      "required": ["hostId", "positionId", "apiVersionId", "endpointId"],
+      "required": [
+        "hostId",
+        "positionId",
+        "apiVersionId",
+        "endpointId"
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -5506,7 +5932,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5515,7 +5943,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5524,7 +5954,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       }
     ]
@@ -5593,7 +6026,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5602,7 +6037,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5611,7 +6048,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "colName",
@@ -5621,7 +6061,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -5692,7 +6134,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=filter_operator&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "colValue"
@@ -5752,7 +6196,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5761,7 +6207,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -5770,7 +6218,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22apiVersionId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "apiVersionId"]
+          "params": [
+            "hostId",
+            "apiVersionId"
+          ]
         }
       },
       "columns"
@@ -5826,11 +6277,14 @@
       "columns"
     ]
   },
-
   "token": {
     "schema": {
       "type": "object",
-      "required": ["client_id", "client_secret", "grant_type"],
+      "required": [
+        "client_id",
+        "client_secret",
+        "grant_type"
+      ],
       "properties": {
         "client_id": {
           "title": "Client ID",
@@ -5843,7 +6297,10 @@
         "grant_type": {
           "title": "Grant Type",
           "type": "string",
-          "enum": ["authorization_code", "client_credentials"]
+          "enum": [
+            "authorization_code",
+            "client_credentials"
+          ]
         }
       }
     }
@@ -5894,7 +6351,11 @@
         "style": {
           "title": "API Style",
           "type": "string",
-          "enum": ["Restful", "GraphQL", "Hybrid"]
+          "enum": [
+            "Restful",
+            "GraphQL",
+            "Hybrid"
+          ]
         },
         "name": {
           "title": "API Name",
@@ -5911,7 +6372,12 @@
         "status": {
           "title": "API Status",
           "type": "string",
-          "enum": ["published", "implemented", "deployed", "decommissioned"]
+          "enum": [
+            "published",
+            "implemented",
+            "deployed",
+            "decommissioned"
+          ]
         },
         "tags": {
           "title": "Tags",
@@ -5936,7 +6402,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=lob&rela=host-lob&from={0}",
-          "params": ["host"]
+          "params": [
+            "host"
+          ]
         }
       },
       "style",
@@ -6187,7 +6655,10 @@
           "title": "Editable"
         }
       },
-      "required": ["hostId", "tableName"]
+      "required": [
+        "hostId",
+        "tableName"
+      ]
     },
     "form": [
       "hostId",
@@ -6246,7 +6717,11 @@
           "title": "Editable"
         }
       },
-      "required": ["hostId", "tableId", "tableName"]
+      "required": [
+        "hostId",
+        "tableId",
+        "tableName"
+      ]
     },
     "form": [
       "hostId",
@@ -6309,7 +6784,10 @@
           "title": "Active"
         }
       },
-      "required": ["tableId", "valueCode"]
+      "required": [
+        "tableId",
+        "valueCode"
+      ]
     },
     "form": [
       "tableId",
@@ -6383,7 +6861,11 @@
           "title": "Active"
         }
       },
-      "required": ["tableId", "valueId", "valueCode"]
+      "required": [
+        "tableId",
+        "valueId",
+        "valueCode"
+      ]
     },
     "form": [
       "tableId",
@@ -6437,7 +6919,11 @@
           "title": "Value Label"
         }
       },
-      "required": ["valueId", "language", "valueLabel"]
+      "required": [
+        "valueId",
+        "language",
+        "valueLabel"
+      ]
     },
     "form": [
       "valueId",
@@ -6447,7 +6933,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=language&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "valueLabel"
@@ -6485,9 +6973,17 @@
           "title": "Value Label"
         }
       },
-      "required": ["valueId", "language", "valueLabel"]
+      "required": [
+        "valueId",
+        "language",
+        "valueLabel"
+      ]
     },
-    "form": ["valueId", "language", "valueLabel"]
+    "form": [
+      "valueId",
+      "language",
+      "valueLabel"
+    ]
   },
   "createRefRelationType": {
     "formId": "createRefRelationType",
@@ -6515,7 +7011,10 @@
           "title": "Relation Desc"
         }
       },
-      "required": ["relationName", "relationDesc"]
+      "required": [
+        "relationName",
+        "relationDesc"
+      ]
     },
     "form": [
       "relationName",
@@ -6567,7 +7066,11 @@
         }
       ]
     },
-    "form": ["relationId", "relationName", "relationDesc"]
+    "form": [
+      "relationId",
+      "relationName",
+      "relationDesc"
+    ]
   },
   "createRefRelation": {
     "formId": "createRefRelation",
@@ -6603,9 +7106,19 @@
           "type": "boolean"
         }
       },
-      "required": ["relationId", "valueIdFrom", "valueIdTo", "active"]
+      "required": [
+        "relationId",
+        "valueIdFrom",
+        "valueIdTo",
+        "active"
+      ]
     },
-    "form": ["relationId", "valueIdFrom", "valueIdTo", "active"]
+    "form": [
+      "relationId",
+      "valueIdFrom",
+      "valueIdTo",
+      "active"
+    ]
   },
   "updateRefRelation": {
     "formId": "updateRefRelation",
@@ -6641,9 +7154,19 @@
           "type": "boolean"
         }
       },
-      "required": ["relationId", "valueIdFrom", "valueIdTo", "active"]
+      "required": [
+        "relationId",
+        "valueIdFrom",
+        "valueIdTo",
+        "active"
+      ]
     },
-    "form": ["relationId", "valueIdFrom", "valueIdTo", "active"]
+    "form": [
+      "relationId",
+      "valueIdFrom",
+      "valueIdTo",
+      "active"
+    ]
   },
   "listQuiz": {
     "formId": "listQuiz",
@@ -6677,12 +7200,25 @@
         "active": {
           "title": "Active",
           "type": "string",
-          "enum": ["Y", "N"]
+          "enum": [
+            "Y",
+            "N"
+          ]
         }
       },
-      "required": ["quizType", "category", "subCategory", "active"]
+      "required": [
+        "quizType",
+        "category",
+        "subCategory",
+        "active"
+      ]
     },
-    "form": ["quizType", "category", "subCategory", "active"]
+    "form": [
+      "quizType",
+      "category",
+      "subCategory",
+      "active"
+    ]
   },
   "createQuiz": {
     "formId": "createQuiz",
@@ -6733,7 +7269,14 @@
           "type": "string",
           "title": "Answer Type",
           "default": "single",
-          "enum": ["single", "multiple", "text", "image", "audio", "video"]
+          "enum": [
+            "single",
+            "multiple",
+            "text",
+            "image",
+            "audio",
+            "video"
+          ]
         },
         "answerOptions": {
           "type": "array",
@@ -6757,7 +7300,10 @@
         "active": {
           "title": "Active",
           "type": "string",
-          "enum": ["Y", "N"]
+          "enum": [
+            "Y",
+            "N"
+          ]
         }
       },
       "required": [
@@ -6856,7 +7402,14 @@
           "type": "string",
           "title": "Answer Type",
           "default": "single",
-          "enum": ["single", "multiple", "text", "image", "audio", "video"]
+          "enum": [
+            "single",
+            "multiple",
+            "text",
+            "image",
+            "audio",
+            "video"
+          ]
         },
         "answerOptions": {
           "type": "array",
@@ -6880,7 +7433,10 @@
         "active": {
           "title": "Active",
           "type": "string",
-          "enum": ["Y", "N"]
+          "enum": [
+            "Y",
+            "N"
+          ]
         }
       },
       "required": [
@@ -6948,9 +7504,13 @@
           "type": "string"
         }
       },
-      "required": ["quizId"]
+      "required": [
+        "quizId"
+      ]
     },
-    "form": ["quizId"]
+    "form": [
+      "quizId"
+    ]
   },
   "schemaFormFilter": {
     "formId": "schemaFormFilter",
@@ -6979,7 +7539,10 @@
           "title": "Sub Category"
         }
       },
-      "required": ["category", "subcategory"]
+      "required": [
+        "category",
+        "subcategory"
+      ]
     },
     "form": [
       {
@@ -6996,7 +7559,9 @@
         "filterOption": true,
         "action": {
           "url": "/r/data?name=schema-subcategory&rela=schema-cat-sub&from={0}",
-          "params": ["category"]
+          "params": [
+            "category"
+          ]
         }
       }
     ]
@@ -7208,9 +7773,15 @@
           "type": "string"
         }
       },
-      "required": ["host", "id"]
+      "required": [
+        "host",
+        "id"
+      ]
     },
-    "form": ["host", "id"]
+    "form": [
+      "host",
+      "id"
+    ]
   },
   "createError": {
     "formId": "createError",
@@ -7268,7 +7839,12 @@
         "severity": {
           "type": "string",
           "description": "Severity Level",
-          "enum": ["S0", "S1", "S2", "S3"]
+          "enum": [
+            "S0",
+            "S1",
+            "S2",
+            "S3"
+          ]
         },
         "resolution": {
           "type": "string",
@@ -7371,7 +7947,12 @@
         "severity": {
           "type": "string",
           "description": "Severity Level",
-          "enum": ["S0", "S1", "S2", "S3"]
+          "enum": [
+            "S0",
+            "S1",
+            "S2",
+            "S3"
+          ]
         },
         "resolution": {
           "type": "string",
@@ -7431,9 +8012,15 @@
           "type": "string"
         }
       },
-      "required": ["host", "errorCode"]
+      "required": [
+        "host",
+        "errorCode"
+      ]
     },
-    "form": ["host", "errorCode"]
+    "form": [
+      "host",
+      "errorCode"
+    ]
   },
   "createJsonSchema": {
     "formId": "createJsonSchema",
@@ -7463,14 +8050,22 @@
         "status": {
           "type": "string",
           "description": "Status",
-          "enum": ["draft", "published"]
+          "enum": [
+            "draft",
+            "published"
+          ]
         },
         "version": {
           "title": "Schema Version",
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["v4", "v6", "v7", "v2019-09"]
+            "enum": [
+              "v4",
+              "v6",
+              "v7",
+              "v2019-09"
+            ]
           }
         },
         "name": {
@@ -7513,7 +8108,10 @@
           "type": "string",
           "description": "Comment Open or Closed",
           "default": "O",
-          "enum": ["O", "C"]
+          "enum": [
+            "O",
+            "C"
+          ]
         }
       },
       "required": [
@@ -7628,14 +8226,22 @@
         "status": {
           "type": "string",
           "description": "Status",
-          "enum": ["draft", "published"]
+          "enum": [
+            "draft",
+            "published"
+          ]
         },
         "version": {
           "title": "Schema Version",
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["v4", "v6", "v7", "v2019-09"]
+            "enum": [
+              "v4",
+              "v6",
+              "v7",
+              "v2019-09"
+            ]
           }
         },
         "name": {
@@ -7683,7 +8289,10 @@
           "type": "string",
           "description": "Comment Open or Closed",
           "default": "O",
-          "enum": ["O", "C"]
+          "enum": [
+            "O",
+            "C"
+          ]
         }
       },
       "required": [
@@ -7864,11 +8473,18 @@
                       "type": "string"
                     }
                   },
-                  "required": ["conditionValue"]
+                  "required": [
+                    "conditionValue"
+                  ]
                 }
               }
             },
-            "required": ["conditionId", "propertyPath", "operatorCode", "index"]
+            "required": [
+              "conditionId",
+              "propertyPath",
+              "operatorCode",
+              "index"
+            ]
           }
         },
         "conditionExpression": {
@@ -7908,11 +8524,17 @@
                       "title": "Value Type Code"
                     }
                   },
-                  "required": ["actionValueId", "value"]
+                  "required": [
+                    "actionValueId",
+                    "value"
+                  ]
                 }
               }
             },
-            "required": ["actionId", "actionClassName"]
+            "required": [
+              "actionId",
+              "actionClassName"
+            ]
           }
         }
       },
@@ -7938,7 +8560,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "ruleGroup",
@@ -7949,7 +8573,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -8240,11 +8866,18 @@
                       "type": "string"
                     }
                   },
-                  "required": ["conditionValue"]
+                  "required": [
+                    "conditionValue"
+                  ]
                 }
               }
             },
-            "required": ["conditionId", "propertyPath", "operatorCode", "index"]
+            "required": [
+              "conditionId",
+              "propertyPath",
+              "operatorCode",
+              "index"
+            ]
           }
         },
         "conditionExpression": {
@@ -8284,11 +8917,17 @@
                       "title": "Value Type Code"
                     }
                   },
-                  "required": ["actionValueId", "value"]
+                  "required": [
+                    "actionValueId",
+                    "value"
+                  ]
                 }
               }
             },
-            "required": ["actionId", "actionClassName"]
+            "required": [
+              "actionId",
+              "actionClassName"
+            ]
           }
         }
       },
@@ -8313,7 +8952,9 @@
         "type": "dynaselect",
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "ruleGroup",
@@ -8324,7 +8965,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -8539,9 +9182,15 @@
           "type": "string"
         }
       },
-      "required": ["hostId", "ruleId"]
+      "required": [
+        "hostId",
+        "ruleId"
+      ]
     },
-    "form": ["hostId", "ruleId"]
+    "form": [
+      "hostId",
+      "ruleId"
+    ]
   },
   "createCategory": {
     "formId": "createCategory",
@@ -8559,7 +9208,11 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["hostId", "entityType", "categoryName"],
+      "required": [
+        "hostId",
+        "entityType",
+        "categoryName"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
@@ -8615,7 +9268,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "sortOrder"
@@ -8637,7 +9292,12 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["hostId", "categoryId", "entiryType", "categoryName"],
+      "required": [
+        "hostId",
+        "categoryId",
+        "entiryType",
+        "categoryName"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
@@ -8706,7 +9366,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "sortOrder"
@@ -8728,7 +9390,11 @@
     "schema": {
       "type": "object",
       "title": "Category",
-      "required": ["hostId", "entityType", "tagName"],
+      "required": [
+        "hostId",
+        "entityType",
+        "tagName"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
@@ -8795,7 +9461,12 @@
     "schema": {
       "type": "object",
       "title": "Tag",
-      "required": ["hostId", "tagId", "entityType", "tagName"],
+      "required": [
+        "hostId",
+        "tagId",
+        "entityType",
+        "tagName"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
@@ -9012,7 +9683,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9040,7 +9713,9 @@
         "multiple": true,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9049,7 +9724,9 @@
         "multiple": true,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9236,7 +9913,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9264,7 +9943,9 @@
         "multiple": true,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9273,7 +9954,9 @@
         "multiple": true,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -9369,10 +10052,6 @@
         "type": "dynaselect",
         "multiple": false,
         "options": [
-          {
-            "id": "MILLISECONDS",
-            "label": "MILLISECONDS"
-          },
           {
             "id": "SECONDS",
             "label": "SECONDS"
@@ -9498,10 +10177,6 @@
         "multiple": false,
         "options": [
           {
-            "id": "MILLISECONDS",
-            "label": "MILLISECONDS"
-          },
-          {
             "id": "SECONDS",
             "label": "SECONDS"
           },
@@ -9575,7 +10250,10 @@
         },
         "status": {
           "type": "string",
-          "enum": ["draft", "published"]
+          "enum": [
+            "draft",
+            "published"
+          ]
         },
         "title": {
           "type": "string"
@@ -9609,7 +10287,10 @@
         "commentStatus": {
           "type": "string",
           "default": "O",
-          "enum": ["O", "C"]
+          "enum": [
+            "O",
+            "C"
+          ]
         }
       },
       "required": [
@@ -9667,8 +10348,14 @@
       {
         "key": "commentStatus",
         "titleMap": [
-          { "value": "O", "name": "Open" },
-          { "value": "C", "name": "Closed" }
+          {
+            "value": "O",
+            "name": "Open"
+          },
+          {
+            "value": "C",
+            "name": "Closed"
+          }
         ]
       }
     ]
@@ -9722,7 +10409,9 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=cap&host={0}",
-          "params": ["host"]
+          "params": [
+            "host"
+          ]
         }
       },
       {
@@ -9732,7 +10421,10 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=project&host={0}&cap={1}",
-          "params": ["host", "cap"]
+          "params": [
+            "host",
+            "cap"
+          ]
         }
       },
       {
@@ -9742,7 +10434,11 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=projver&host={0}&cap={1}&project={2}",
-          "params": ["host", "cap", "project"]
+          "params": [
+            "host",
+            "cap",
+            "project"
+          ]
         }
       },
       {
@@ -9752,7 +10448,12 @@
         "combobox": true,
         "action": {
           "url": "/config-server/configs/property/ref?name=scope&host={0}&cap={1}&project={2}&projver={3}",
-          "params": ["host", "cap", "project", "projver"]
+          "params": [
+            "host",
+            "cap",
+            "project",
+            "projver"
+          ]
         }
       }
     ]
@@ -9799,7 +10500,11 @@
           "title": "Config Desc"
         }
       },
-      "required": ["configName", "configPhase", "configType"]
+      "required": [
+        "configName",
+        "configPhase",
+        "configType"
+      ]
     },
     "form": [
       "configName",
@@ -9900,7 +10605,12 @@
           "title": "Config Desc"
         }
       },
-      "required": ["configId", "configName", "configPhase", "configType"]
+      "required": [
+        "configId",
+        "configName",
+        "configPhase",
+        "configType"
+      ]
     },
     "form": [
       "configId",
@@ -10013,7 +10723,10 @@
           "title": "Resource Type"
         }
       },
-      "required": ["configId", "propertyName"]
+      "required": [
+        "configId",
+        "propertyName"
+      ]
     },
     "form": [
       {
@@ -10197,7 +10910,11 @@
           "title": "Resource Type"
         }
       },
-      "required": ["configId", "propertyId", "propertyName"]
+      "required": [
+        "configId",
+        "propertyId",
+        "propertyName"
+      ]
     },
     "form": [
       "configId",
@@ -10349,7 +11066,12 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "environment", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "environment",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10359,7 +11081,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -10376,7 +11100,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -10429,7 +11155,12 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "environment", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "environment",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10478,7 +11209,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["productId", "configId", "propertyId"]
+      "required": [
+        "productId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       {
@@ -10503,7 +11238,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -10551,7 +11288,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["productId", "configId", "propertyId"]
+      "required": [
+        "productId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "productId",
@@ -10603,7 +11344,12 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "productVersionId", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "productVersionId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10613,7 +11359,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -10630,7 +11378,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -10678,7 +11428,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "productVersionId", "propertyId"]
+      "required": [
+        "hostId",
+        "productVersionId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10731,7 +11485,12 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceId", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10741,7 +11500,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -10758,7 +11519,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -10811,7 +11574,12 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceId", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -10885,7 +11653,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -10894,7 +11664,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -10911,7 +11684,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22api%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -10959,7 +11734,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceApiId", "propertyId"]
+      "required": [
+        "hostId",
+        "instanceApiId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -11032,7 +11811,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11041,7 +11822,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -11058,7 +11842,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -11106,7 +11892,11 @@
           "title": "Property Value"
         }
       },
-      "required": ["hostId", "instanceAppId", "propertyId"]
+      "required": [
+        "hostId",
+        "instanceAppId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -11184,7 +11974,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11193,7 +11985,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -11202,7 +11997,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -11219,7 +12017,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdApiAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%2C%22resourceType%22%3A%22app_api%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -11340,7 +12140,13 @@
           "format": "date-time"
         }
       },
-      "required": ["hostId", "instanceId", "fileName", "fileValue", "fileDesc"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "fileName",
+        "fileValue",
+        "fileDesc"
+      ]
     },
     "form": [
       "hostId",
@@ -11350,7 +12156,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11541,7 +12349,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11550,7 +12360,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getDeploymentInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -11567,7 +12380,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       },
       {
@@ -11671,7 +12486,10 @@
         "status": {
           "type": "string",
           "title": "Status",
-          "enum": ["draft", "published"]
+          "enum": [
+            "draft",
+            "published"
+          ]
         },
         "title": {
           "type": "string",
@@ -11719,7 +12537,10 @@
           "type": "string",
           "title": "Comment Open or Closed",
           "default": "O",
-          "enum": ["O", "C"]
+          "enum": [
+            "O",
+            "C"
+          ]
         },
         "commentCount": {
           "type": "integer",
@@ -11779,8 +12600,14 @@
       {
         "key": "commentStatus",
         "titleMap": [
-          { "value": "O", "name": "Open" },
-          { "value": "C", "name": "Closed" }
+          {
+            "value": "O",
+            "name": "Open"
+          },
+          {
+            "value": "C",
+            "name": "Closed"
+          }
         ]
       }
     ]
@@ -11828,7 +12655,10 @@
           "title": "Delivery Owner"
         }
       },
-      "required": ["hostId", "providerName"]
+      "required": [
+        "hostId",
+        "providerName"
+      ]
     },
     "form": [
       "hostId",
@@ -11851,7 +12681,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11860,7 +12692,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -11909,7 +12743,11 @@
           "title": "Delivery Owner"
         }
       },
-      "required": ["hostId", "providerId", "providerName"]
+      "required": [
+        "hostId",
+        "providerId",
+        "providerName"
+      ]
     },
     "form": [
       "hostId",
@@ -11927,7 +12765,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11936,7 +12776,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -11972,7 +12814,11 @@
           "title": "Api Id"
         }
       },
-      "required": ["hostId", "providerId", "apiId"]
+      "required": [
+        "hostId",
+        "providerId",
+        "apiId"
+      ]
     },
     "form": [
       "hostId",
@@ -11982,7 +12828,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -11991,7 +12839,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -12027,7 +12877,11 @@
           "title": "Client Id"
         }
       },
-      "required": ["hostId", "providerId", "clientId"]
+      "required": [
+        "hostId",
+        "providerId",
+        "clientId"
+      ]
     },
     "form": [
       "hostId",
@@ -12037,7 +12891,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12046,12 +12902,13 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getClientIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
   },
-
   "createProductVersion": {
     "formId": "createProductVersion",
     "actions": [
@@ -12125,13 +12982,19 @@
       ],
       "if": {
         "properties": {
-          "current": { "const": true }
+          "current": {
+            "const": true
+          }
         },
-        "required": ["current"]
+        "required": [
+          "current"
+        ]
       },
       "then": {
         "properties": {
-          "releaseType": { "const": "Production Release" }
+          "releaseType": {
+            "const": "Production Release"
+          }
         }
       }
     },
@@ -12143,7 +13006,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=platform_product&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "productVersion",
@@ -12153,7 +13018,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=light4j_version&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "breakCode",
@@ -12198,7 +13065,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=product_version_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -12282,13 +13151,19 @@
       ],
       "if": {
         "properties": {
-          "current": { "const": true }
+          "current": {
+            "const": true
+          }
         },
-        "required": ["current"]
+        "required": [
+          "current"
+        ]
       },
       "then": {
         "properties": {
-          "releaseType": { "const": "Production Release" }
+          "releaseType": {
+            "const": "Production Release"
+          }
         }
       }
     },
@@ -12303,7 +13178,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=light4j_version&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "breakCode",
@@ -12348,7 +13225,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=product_version_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -12409,7 +13288,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=system_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12418,7 +13299,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "current"
@@ -12528,7 +13411,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPipelineLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -12565,7 +13450,11 @@
           "title": "Config Id"
         }
       },
-      "required": ["hostId", "productVersionId", "configId"]
+      "required": [
+        "hostId",
+        "productVersionId",
+        "configId"
+      ]
     },
     "form": [
       "hostId",
@@ -12616,7 +13505,12 @@
           "title": "Property Id"
         }
       },
-      "required": ["hostId", "productVersionId", "configId", "propertyId"]
+      "required": [
+        "hostId",
+        "productVersionId",
+        "configId",
+        "propertyId"
+      ]
     },
     "form": [
       "hostId",
@@ -12635,7 +13529,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22config%22%2C%22action%22%3A%22getPropertyIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22configId%22%3A%22{0}%22%7D%7D",
-          "params": ["configId"]
+          "params": [
+            "configId"
+          ]
         }
       }
     ]
@@ -12723,7 +13619,12 @@
           "type": "string"
         }
       },
-      "required": ["hostId", "instanceName", "productVersionId", "serviceId"]
+      "required": [
+        "hostId",
+        "instanceName",
+        "productVersionId",
+        "serviceId"
+      ]
     },
     "form": [
       "hostId",
@@ -12734,7 +13635,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceId",
@@ -12746,7 +13649,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceDesc",
@@ -12757,7 +13662,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=network_zone&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12766,7 +13673,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12775,7 +13684,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "resourceName",
@@ -12890,7 +13801,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22product%22%2C%22action%22%3A%22getProductVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceId",
@@ -12902,7 +13815,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "serviceDesc",
@@ -12913,7 +13828,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=network_zone&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12922,7 +13839,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12931,7 +13850,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "resourceName",
@@ -12971,7 +13892,11 @@
           "title": "Api Version Id"
         }
       },
-      "required": ["hostId", "instanceId", "apiVersionId"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "apiVersionId"
+      ]
     },
     "form": [
       "hostId",
@@ -12981,7 +13906,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -12990,7 +13917,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -13026,7 +13955,11 @@
           "title": "Path Prefix"
         }
       },
-      "required": ["hostId", "instanceApiId", "pathPrefix"]
+      "required": [
+        "hostId",
+        "instanceApiId",
+        "pathPrefix"
+      ]
     },
     "form": [
       "hostId",
@@ -13036,7 +13969,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "pathPrefix"
@@ -13074,9 +14009,17 @@
           "title": "Path Prefix"
         }
       },
-      "required": ["hostId", "instanceApiId", "pathPrefix"]
+      "required": [
+        "hostId",
+        "instanceApiId",
+        "pathPrefix"
+      ]
     },
-    "form": ["hostId", "instanceApiId", "pathPrefix"]
+    "form": [
+      "hostId",
+      "instanceApiId",
+      "pathPrefix"
+    ]
   },
   "createInstanceApp": {
     "formId": "createInstanceApp",
@@ -13113,7 +14056,12 @@
           "title": "App Version"
         }
       },
-      "required": ["hostId", "instanceId", "appId", "appVersion"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "appId",
+        "appVersion"
+      ]
     },
     "form": [
       "hostId",
@@ -13123,7 +14071,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13132,7 +14082,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22client%22%2C%22action%22%3A%22getAppIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "appVersion"
@@ -13173,7 +14125,12 @@
           "title": "Instance Api Id"
         }
       },
-      "required": ["hostId", "instanceId", "instanceAppId", "instanceApiId"]
+      "required": [
+        "hostId",
+        "instanceId",
+        "instanceAppId",
+        "instanceApiId"
+      ]
     },
     "form": [
       "hostId",
@@ -13183,7 +14140,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13192,7 +14151,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceAppLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       },
       {
@@ -13201,7 +14163,10 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22instanceId%22%3A%22{1}%22%7D%7D",
-          "params": ["hostId", "instanceId"]
+          "params": [
+            "hostId",
+            "instanceId"
+          ]
         }
       }
     ]
@@ -13289,7 +14254,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "pipelineName",
@@ -13302,7 +14269,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=pipeline_version_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13423,7 +14392,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getPlatformLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       "pipelineName",
@@ -13436,7 +14407,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=pipeline_version_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13578,7 +14551,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13587,7 +14562,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=network_zone&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13596,7 +14573,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13605,7 +14584,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -13715,7 +14696,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=environment&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13724,7 +14707,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=network_zone&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13733,7 +14718,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=region&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13742,7 +14729,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=lob&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -13821,7 +14810,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=system_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13830,7 +14821,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -13911,7 +14904,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=system_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13920,7 +14915,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       }
     ]
@@ -13980,7 +14977,9 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22deployment%22%2C%22action%22%3A%22getDeploymentInstanceLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13989,7 +14988,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deployment_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -13998,7 +14999,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deployment_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -14070,7 +15073,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deployment_status&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -14079,7 +15084,9 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=deployment_type&host={0}",
-          "params": ["hostId"]
+          "params": [
+            "hostId"
+          ]
         }
       },
       {
@@ -14131,7 +15138,10 @@
           "type": "string"
         }
       },
-      "required": ["hostId", "startTs"]
+      "required": [
+        "hostId",
+        "startTs"
+      ]
     },
     "form": [
       "hostId",
@@ -14231,7 +15241,11 @@
                 "type": "string"
               }
             },
-            "required": ["fieldName", "fromValue", "toValue"]
+            "required": [
+              "fieldName",
+              "fromValue",
+              "toValue"
+            ]
           }
         },
         "enrichments": {
@@ -14254,7 +15268,10 @@
                 "type": "string"
               }
             },
-            "required": ["fieldName", "action"]
+            "required": [
+              "fieldName",
+              "action"
+            ]
           }
         },
         "eventText": {
@@ -14266,7 +15283,9 @@
           "type": "string"
         }
       },
-      "required": ["hostId"]
+      "required": [
+        "hostId"
+      ]
     },
     "form": [
       "hostId",
@@ -14308,7 +15327,11 @@
         "style": {
           "add": "btn-success"
         },
-        "items": ["replacements[].fieldName", "replacements[].fromValue", "replacements[].toValue"]
+        "items": [
+          "replacements[].fieldName",
+          "replacements[].fromValue",
+          "replacements[].toValue"
+        ]
       },
       {
         "key": "enrichments",
@@ -14333,7 +15356,8 @@
               }
             ]
           },
-          "enrichments[].sourceField"]
+          "enrichments[].sourceField"
+        ]
       },
       {
         "key": "eventText",
@@ -14343,7 +15367,6 @@
       "eventUrl"
     ]
   },
-
   "logRetrieval": {
     "formId": "logRetrieval",
     "actions": [
@@ -14381,7 +15404,13 @@
         "loggerLevel": {
           "title": "Logger Level",
           "type": "string",
-          "enum": ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
+          "enum": [
+            "ERROR",
+            "WARN",
+            "INFO",
+            "DEBUG",
+            "TRACE"
+          ]
         },
         "startTime": {
           "type": "string",
@@ -14392,7 +15421,12 @@
           "title": "End Time"
         }
       },
-      "required": ["protocol", "address", "port", "loggerLevel"]
+      "required": [
+        "protocol",
+        "address",
+        "port",
+        "loggerLevel"
+      ]
     },
     "form": [
       "protocol",
@@ -14424,7 +15458,12 @@
     "schema": {
       "type": "object",
       "title": "Logger Config",
-      "required": ["protocol", "address", "port", "loggers"],
+      "required": [
+        "protocol",
+        "address",
+        "port",
+        "loggers"
+      ],
       "properties": {
         "protocol": {
           "type": "string",
@@ -14455,10 +15494,19 @@
               "level": {
                 "title": "Level",
                 "type": "string",
-                "enum": ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
+                "enum": [
+                  "ERROR",
+                  "WARN",
+                  "INFO",
+                  "DEBUG",
+                  "TRACE"
+                ]
               }
             },
-            "required": ["name", "level"]
+            "required": [
+              "name",
+              "level"
+            ]
           }
         }
       }
@@ -14473,7 +15521,10 @@
         "style": {
           "add": "btn-success"
         },
-        "items": ["loggers[].name", "loggers[].level"]
+        "items": [
+          "loggers[].name",
+          "loggers[].level"
+        ]
       }
     ]
   }
