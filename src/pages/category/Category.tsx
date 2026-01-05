@@ -132,38 +132,13 @@ export default function Category() {
   const handleDelete = useCallback(async (row: MRT_Row<CategoryType>) => {
     if (!window.confirm(`Are you sure you want to delete category: ${row.original.categoryName}?`)) return;
 
-    // Get fresh category data to ensure latest aggregate version
-    const cmdFetch = {
-      host: 'lightapi.net', service: 'category', action: 'getFreshCategory', version: '0.1.0',
-      data: row.original,
-    };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdFetch));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
-    let freshData = row.original;
-    try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      if (response.ok) {
-        freshData = await response.json();
-      } else {
-        const errorData = await response.json();
-        alert(errorData.description || 'Failed to fetch fresh category data.');
-        return;
-      }
-    } catch (e) {
-      console.error(e);
-      alert('Failed to fetch fresh category data due to network error.');
-      return;
-    }
-
     const originalData = [...data];
     setData(prev => prev.filter(cat => cat.categoryId !== row.original.categoryId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'category', action: 'deleteCategory', version: '0.1.0',
-      data: freshData,
+      data: row.original,
     };
 
     try {

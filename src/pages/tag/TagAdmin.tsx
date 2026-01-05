@@ -130,38 +130,13 @@ export default function TagAdmin() {
   const handleDelete = useCallback(async (row: MRT_Row<TagType>) => {
     if (!window.confirm(`Are you sure you want to delete tag: ${row.original.tagName}?`)) return;
 
-    // Get fresh tag data to ensure latest aggregate version
-    const cmdFetch = {
-      host: 'lightapi.net', service: 'tag', action: 'getFreshTag', version: '0.1.0',
-      data: row.original,
-    };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdFetch));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
-    let freshData = row.original;
-    try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      if (response.ok) {
-        freshData = await response.json();
-      } else {
-        const errorData = await response.json();
-        alert(errorData.description || 'Failed to fetch fresh tag data.');
-        return;
-      }
-    } catch (e) {
-      console.error(e);
-      alert('Failed to fetch fresh tag data due to network error.');
-      return;
-    }
-
     const originalData = [...data];
     setData(prev => prev.filter(tag => tag.tagId !== row.original.tagId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'tag', action: 'deleteTag', version: '0.1.0',
-      data: freshData,
+      data: row.original,
     };
 
     try {
