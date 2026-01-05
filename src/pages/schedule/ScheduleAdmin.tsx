@@ -133,17 +133,41 @@ export default function ScheduleAdmin() {
   const handleDelete = useCallback(async (row: MRT_Row<ScheduleType>) => {
     if (!window.confirm(`Are you sure you want to delete schedule: ${row.original.scheduleName}?`)) return;
 
+    // Get fresh schedule data to ensure latest aggregate version
+    const cmdFetch = {
+      host: 'lightapi.net', service: 'schedule', action: 'getFreshSchedule', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdFetch));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    let freshData = row.original;
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      if (response.ok) {
+        freshData = await response.json();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.description || 'Failed to fetch fresh schedule data.');
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to fetch fresh schedule data due to network error.');
+      return;
+    }
+
     const originalData = [...data];
     setData(prev => prev.filter(schedule => schedule.scheduleId !== row.original.scheduleId));
     setRowCount(prev => prev - 1);
 
-    const cmd = {
+    const cmdDelete = {
       host: 'lightapi.net', service: 'schedule', action: 'deleteSchedule', version: '0.1.0',
-      data: row.original,
+      data: freshData,
     };
-
     try {
-      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmdDelete });
       if (result.error) {
         alert('Failed to delete schedule. Please try again.');
         setData(originalData);
@@ -154,7 +178,7 @@ export default function ScheduleAdmin() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data, host]);
+  }, [data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<ScheduleType>) => {
     const scheduleId = row.original.scheduleId;

@@ -136,18 +136,43 @@ export default function SchemaAdmin() {
   const handleDelete = useCallback(async (row: MRT_Row<SchemaType>) => {
     if (!window.confirm(`Are you sure you want to delete the schema: ${row.original.schemaId}?`)) return;
 
+    // Get fresh schema data to ensure latest aggregate version
+    const cmdQuery = {
+      host: 'lightapi.net', service: 'schema', action: 'getFreshSchema', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdQuery));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    let freshData = row.original;
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      if (response.ok) {
+        freshData = await response.json();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.description || 'Failed to fetch fresh schema data.');
+        return;
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to fetch fresh schema data due to network error.');
+      return;
+    }
+
     const originalData = [...data];
     setData(prev => prev.filter(schema => schema.schemaId !== row.original.schemaId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'schema', action: 'deleteJsonSchema', version: '0.1.0',
-      data: row.original,
+      data: freshData,
     };
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete rule. Please try again.');
+        alert('Failed to delete schema. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
