@@ -43,7 +43,7 @@ function UserProvider({ children }) {
   const host = cookies.get("host");
   const email = cookies.get("email");
   const eid = cookies.get("eid");
-  const roles = cookies.get("roles");
+  const roles = cookies.get("roles") ? atob(cookies.get("roles")) : null;
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
@@ -80,7 +80,7 @@ function UserProvider({ children }) {
             type: "LOGIN_SUCCESS",
             isAuthenticated: !!cookies.get("userId"),
             email: cookies.get("userId"),
-            roles: cookies.get("roles"),
+            roles: cookies.get("roles") ? atob(cookies.get("roles")) : null,
           });
         }
       } catch (e) {
@@ -211,5 +211,5 @@ function deleteOrgForm(dispatch, navigate) {
 }
 
 function userHost(dispatch, navigate, userId) {
-  navigate("/app/userHost", { state: { data: { userId } }});
+  navigate("/app/userHost", { state: { data: { userId } } });
 }
