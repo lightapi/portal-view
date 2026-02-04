@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Cookies from 'universal-cookie';
 import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
@@ -10,27 +10,36 @@ import Dot from '../../components/Sidebar/components/Dot';
 import Widget from '../../components/Widget/Widget';
 import { Typography } from '../../components/Wrappers/Wrappers';
 import { useUserDispatch, useUserState } from '../../contexts/UserContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useStyles from './styles';
 
 export default function Dashboard(props) {
   var classes = useStyles();
   const location = useLocation();
+  const navigate = useNavigate();
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const state = searchParams.get('state');
-    if (state) {
+
+    // Check if we have a state and haven't attempted verification yet in this mount
+    if (state && !verificationAttempted.current) {
+      verificationAttempted.current = true;
       const storedState = localStorage.getItem('portal_auth_state');
       if (storedState === state) {
         console.log('OAuth state verified successfully.');
         localStorage.removeItem('portal_auth_state');
+        // Remove state from URL to prevent re-verification
+        const newSearchParams = new URLSearchParams(location.search);
+        newSearchParams.delete('state');
+        navigate({ search: newSearchParams.toString() }, { replace: true });
       } else {
         console.error('OAuth state mismatch. Potential CSRF attack.');
         alert('OAuth state mismatch. Please try logging in again.');
       }
     }
-  }, [location]);
+  }, [location, navigate]);
   /*
   // can not remember why we need to query user profile here
   const { email } = useUserState();

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Navigate, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Navigate, Route, useLocation, useNavigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -119,6 +119,39 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import { useEffect } from "react";
+
+const RedirectWithQuery = ({ to }: { to: string }) => {
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if there is a hash that looks like a path (e.g. #/app/dashboard?state=...)
+    // This happens if variables passed back from OAuth provider are in the hash or if using HashRouter style links
+    const hash = window.location.hash;
+
+    // Check if we are already at the target path (to avoid loops or double redirects)
+    // Note: window.location.pathname includes the leading slash
+    if (window.location.pathname === to) {
+      console.log('RedirectWithQuery: already at target path', to, '- aborting redirect to prevent loop/stripping params.');
+      return;
+    }
+
+    let target = to + search;
+
+    if (hash && hash.startsWith('#/')) {
+      target = hash.substring(1); // Remove the #
+      console.log('RedirectWithQuery: detected hash path, using it as target:', target);
+    } else {
+      console.log('RedirectWithQuery: no hash path detected, using default:', target);
+    }
+
+    // console.log('RedirectWithQuery: window.location.href=', window.location.href);
+    navigate(target, { replace: true });
+  }, [to, search, navigate]);
+
+  return null;
+};
 
 const App = () => {
   return (
@@ -126,8 +159,8 @@ const App = () => {
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <Routes>
-        {/* Redirect from root to dashboard */}
-        <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+        {/* Redirect from root to dashboard preserving query parameters */}
+        <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
 
         {/* Layout routes */}
         <Route path="/app/*" element={<Layout />}>
