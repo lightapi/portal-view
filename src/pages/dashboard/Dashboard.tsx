@@ -9,7 +9,7 @@ import Dot from '../../components/Sidebar/components/Dot';
 // components
 import Widget from '../../components/Widget/Widget';
 import { Typography } from '../../components/Wrappers/Wrappers';
-import { useUserDispatch, useUserState } from '../../contexts/UserContext';
+import { useUserDispatch, useUserState, signOut } from '../../contexts/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import useStyles from './styles';
 
@@ -17,6 +17,7 @@ export default function Dashboard(props) {
   var classes = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
+  const userDispatch = useUserDispatch();
   const verificationAttempted = useRef(false);
 
   useEffect(() => {
@@ -36,10 +37,11 @@ export default function Dashboard(props) {
         navigate({ search: newSearchParams.toString() }, { replace: true });
       } else {
         console.error('OAuth state mismatch. Potential CSRF attack.');
-        alert('OAuth state mismatch. Please try logging in again.');
+        alert('OAuth state mismatch. Potential CSRF attack. Logging out...');
+        signOut(userDispatch, navigate);
       }
     }
-  }, [location, navigate]);
+  }, [location, navigate, userDispatch]);
   /*
   // can not remember why we need to query user profile here
   const { email } = useUserState();
