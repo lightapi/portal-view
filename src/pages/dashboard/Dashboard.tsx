@@ -10,10 +10,27 @@ import Dot from '../../components/Sidebar/components/Dot';
 import Widget from '../../components/Widget/Widget';
 import { Typography } from '../../components/Wrappers/Wrappers';
 import { useUserDispatch, useUserState } from '../../contexts/UserContext';
+import { useLocation } from 'react-router-dom';
 import useStyles from './styles';
 
 export default function Dashboard(props) {
   var classes = useStyles();
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const state = searchParams.get('state');
+    if (state) {
+      const storedState = localStorage.getItem('portal_auth_state');
+      if (storedState === state) {
+        console.log('OAuth state verified successfully.');
+        localStorage.removeItem('portal_auth_state');
+      } else {
+        console.error('OAuth state mismatch. Potential CSRF attack.');
+        alert('OAuth state mismatch. Please try logging in again.');
+      }
+    }
+  }, [location]);
   /*
   // can not remember why we need to query user profile here
   const { email } = useUserState();

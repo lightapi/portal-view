@@ -24,10 +24,14 @@ export default function ProfileMenu({ classes }) {
   const navigate = useNavigate();
 
   const signIn = () => {
+    // Generate a random state for CSRF protection
+    const state = Math.random().toString(36).substring(7);
+    localStorage.setItem('portal_auth_state', state);
+
     const defaultUrl =
-      "https://locsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=1222";
+      `https://locsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=${state}`;
     const signInUrl = import.meta.env.VITE_SIGNIN_URL
-      ? `${import.meta.env.VITE_SIGNIN_URL}&user_type=customer&state=1222`
+      ? `${import.meta.env.VITE_SIGNIN_URL}&user_type=customer&state=${state}`
       : defaultUrl;
     window.location.href = signInUrl;
   };
