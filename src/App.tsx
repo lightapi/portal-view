@@ -133,7 +133,7 @@ const RedirectWithQuery = ({ to }: { to: string }) => {
     // Check if we are already at the target path (to avoid loops or double redirects)
     // Note: window.location.pathname includes the leading slash
     if (window.location.pathname === to) {
-      console.log('RedirectWithQuery: already at target path', to, '- aborting redirect to prevent loop/stripping params.');
+      // console.log('RedirectWithQuery: already at target path', to, '- aborting redirect to prevent loop/stripping params.');
       return;
     }
 
@@ -141,9 +141,9 @@ const RedirectWithQuery = ({ to }: { to: string }) => {
 
     if (hash && hash.startsWith('#/')) {
       target = hash.substring(1); // Remove the #
-      console.log('RedirectWithQuery: detected hash path, using it as target:', target);
+      // console.log('RedirectWithQuery: detected hash path, using it as target:', target);
     } else {
-      console.log('RedirectWithQuery: no hash path detected, using default:', target);
+      // console.log('RedirectWithQuery: no hash path detected, using default:', target);
     }
 
     // console.log('RedirectWithQuery: window.location.href=', window.location.href);
