@@ -119,6 +119,22 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import WfDefinition from "./pages/genai/WfDefinition";
+import Worklist from "./pages/genai/Worklist";
+import ProcessInfo from "./pages/genai/ProcessInfo";
+import AgentDefinition from "./pages/genai/AgentDefinition";
+import TaskInfo from "./pages/genai/TaskInfo";
+import TaskAsst from "./pages/genai/TaskAsst";
+import AuditLog from "./pages/genai/AuditLog";
+import Skill from "./pages/genai/Skill";
+import SkillParam from "./pages/genai/SkillParam";
+import SkillDependency from "./pages/genai/SkillDependency";
+import AgentSkill from "./pages/genai/AgentSkill";
+import AgentSessionHistory from "./pages/genai/AgentSessionHistory";
+import SessionMemory from "./pages/genai/SessionMemory";
+import UserMemory from "./pages/genai/UserMemory";
+import AgentMemory from "./pages/genai/AgentMemory";
+import OrgMemory from "./pages/genai/OrgMemory";
 import { useEffect } from "react";
 
 const RedirectWithQuery = ({ to }: { to: string }) => {
@@ -320,6 +336,22 @@ const App = () => {
             element={<DeploymentAdmin />}
           />
           <Route path="deployment/instance" element={<DeploymentInstance />} />
+          <Route path="genai/WfDefinition" element={<WfDefinition />} />
+          <Route path="genai/Worklist" element={<Worklist />} />
+          <Route path="genai/ProcessInfo" element={<ProcessInfo />} />
+          <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
+          <Route path="genai/TaskInfo" element={<TaskInfo />} />
+          <Route path="genai/TaskAsst" element={<TaskAsst />} />
+          <Route path="genai/AuditLog" element={<AuditLog />} />
+          <Route path="genai/Skill" element={<Skill />} />
+          <Route path="genai/SkillParam" element={<SkillParam />} />
+          <Route path="genai/SkillDependency" element={<SkillDependency />} />
+          <Route path="genai/AgentSkill" element={<AgentSkill />} />
+          <Route path="genai/AgentSessionHistory" element={<AgentSessionHistory />} />
+          <Route path="genai/SessionMemory" element={<SessionMemory />} />
+          <Route path="genai/UserMemory" element={<UserMemory />} />
+          <Route path="genai/AgentMemory" element={<AgentMemory />} />
+          <Route path="genai/OrgMemory" element={<OrgMemory />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

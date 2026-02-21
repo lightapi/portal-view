@@ -41,6 +41,7 @@ import SchemaIcon from "@mui/icons-material/Schema";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -263,6 +264,31 @@ const structure = [
   },
   {
     id: 116,
+    label: "GenAI Admin",
+    role: "admin",
+    link: "/app/genai/WfDefinition",
+    icon: <PrecisionManufacturingIcon />,
+    children: [
+      { label: "Wf Definition", link: "/app/genai/WfDefinition" },
+      { label: "Worklist", link: "/app/genai/Worklist" },
+      { label: "Process Info", link: "/app/genai/ProcessInfo" },
+      { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
+      { label: "Task Info", link: "/app/genai/TaskInfo" },
+      { label: "Task Asst", link: "/app/genai/TaskAsst" },
+      { label: "Audit Log", link: "/app/genai/AuditLog" },
+      { label: "Skill", link: "/app/genai/Skill" },
+      { label: "Skill Param", link: "/app/genai/SkillParam" },
+      { label: "Skill Dependency", link: "/app/genai/SkillDependency" },
+      { label: "Agent Skill", link: "/app/genai/AgentSkill" },
+      { label: "Agent Session", link: "/app/genai/AgentSessionHistory" },
+      { label: "Session Memory", link: "/app/genai/SessionMemory" },
+      { label: "User Memory", link: "/app/genai/UserMemory" },
+      { label: "Agent Memory", link: "/app/genai/AgentMemory" },
+      { label: "Org Memory", link: "/app/genai/OrgMemory" },
+    ],
+  },
+  {
+    id: 117,
     label: "Access Admin",
     role: "admin",
     link: "/app/access/admin",

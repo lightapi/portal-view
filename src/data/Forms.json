@@ -15095,6 +15095,1104 @@
       }
     ]
   },
+  "createWfDefinition": {
+    "formId": "createWfDefinition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createWfDefinition",
+        "version": "0.1.0",
+        "title": "Create Workflow Definition Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Workflow Definition Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "namespace": {
+          "title": "Namespace",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "definition": {
+          "title": "Definition (YAML)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "namespace",
+        "name",
+        "version",
+        "definition"
+      ]
+    },
+    "form": [
+      "hostId",
+      "namespace",
+      "name",
+      "version",
+      {
+        "key": "definition",
+        "type": "textarea",
+        "rows": 10
+      }
+    ]
+  },
+  "updateWfDefinition": {
+    "formId": "updateWfDefinition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateWfDefinition",
+        "version": "0.1.0",
+        "title": "Update Workflow Definition Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Workflow Definition Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "wfDefId": {
+          "type": "string",
+          "title": "Workflow Definition Id",
+          "readonly": true
+        },
+        "namespace": {
+          "title": "Namespace",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "definition": {
+          "title": "Definition (YAML)",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "wfDefId",
+        "namespace",
+        "name",
+        "version",
+        "definition"
+      ]
+    },
+    "form": [
+      "hostId",
+      "wfDefId",
+      "namespace",
+      "name",
+      "version",
+      {
+        "key": "definition",
+        "type": "textarea",
+        "rows": 10
+      },
+      "active"
+    ]
+  },
+  "createWorklist": {
+    "formId": "createWorklist",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createWorklist",
+        "version": "0.1.0",
+        "title": "Create Worklist Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Worklist Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "assigneeId": {
+          "title": "Assignee Id",
+          "type": "string"
+        },
+        "categoryId": {
+          "title": "Category Id",
+          "type": "string",
+          "default": "(all)"
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string",
+          "default": "Active"
+        },
+        "appId": {
+          "title": "App Id",
+          "type": "string",
+          "default": "global"
+        }
+      },
+      "required": [
+        "hostId",
+        "assigneeId",
+        "categoryId",
+        "statusCode",
+        "appId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "assigneeId",
+      "categoryId",
+      "statusCode",
+      "appId"
+    ]
+  },
+  "updateWorklist": {
+    "formId": "updateWorklist",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateWorklist",
+        "version": "0.1.0",
+        "title": "Update Worklist Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Worklist Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "assigneeId": {
+          "title": "Assignee Id",
+          "type": "string",
+          "readonly": true
+        },
+        "categoryId": {
+          "title": "Category Id",
+          "type": "string",
+          "readonly": true
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string"
+        },
+        "appId": {
+          "title": "App Id",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "assigneeId",
+        "categoryId",
+        "statusCode",
+        "appId",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "assigneeId",
+      "categoryId",
+      "statusCode",
+      "appId",
+      "active"
+    ]
+  },
+  "createProcessInfo": {
+    "formId": "createProcessInfo",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createProcessInfo",
+        "version": "0.1.0",
+        "title": "Create Process Info Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Process Info Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "wfDefId": {
+          "title": "Wf Def Id",
+          "type": "string"
+        },
+        "wfInstanceId": {
+          "title": "Wf Instance Id",
+          "type": "string"
+        },
+        "appId": {
+          "title": "App Id",
+          "type": "string",
+          "default": "global"
+        },
+        "processType": {
+          "title": "Process Type",
+          "type": "string"
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string",
+          "enum": [
+            "A",
+            "C"
+          ],
+          "default": "A"
+        },
+        "exTriggerTs": {
+          "title": "Ex Trigger Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "processSubtypeCode": {
+          "title": "Process Subtype Code",
+          "type": "string"
+        },
+        "owningGroupName": {
+          "title": "Owning Group Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "wfDefId",
+        "wfInstanceId",
+        "appId",
+        "processType",
+        "statusCode",
+        "exTriggerTs"
+      ]
+    },
+    "form": [
+      "hostId",
+      "wfDefId",
+      "wfInstanceId",
+      "appId",
+      "processType",
+      "statusCode",
+      {
+        "key": "exTriggerTs",
+        "type": "timestamp"
+      },
+      "processSubtypeCode",
+      "owningGroupName"
+    ]
+  },
+  "updateProcessInfo": {
+    "formId": "updateProcessInfo",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateProcessInfo",
+        "version": "0.1.0",
+        "title": "Update Process Info Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Process Info Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "processId": {
+          "title": "Process Id",
+          "type": "string",
+          "readonly": true
+        },
+        "wfDefId": {
+          "title": "Wf Def Id",
+          "type": "string"
+        },
+        "wfInstanceId": {
+          "title": "Wf Instance Id",
+          "type": "string"
+        },
+        "appId": {
+          "title": "App Id",
+          "type": "string"
+        },
+        "processType": {
+          "title": "Process Type",
+          "type": "string"
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string",
+          "enum": [
+            "A",
+            "C"
+          ]
+        },
+        "exTriggerTs": {
+          "title": "Ex Trigger Timestamp",
+          "type": "string",
+          "format": "date-time"
+        },
+        "processSubtypeCode": {
+          "title": "Process Subtype Code",
+          "type": "string"
+        },
+        "owningGroupName": {
+          "title": "Owning Group Name",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "processId",
+        "wfDefId",
+        "wfInstanceId",
+        "appId",
+        "processType",
+        "statusCode",
+        "exTriggerTs",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "processId",
+      "wfDefId",
+      "wfInstanceId",
+      "appId",
+      "processType",
+      "statusCode",
+      {
+        "key": "exTriggerTs",
+        "type": "timestamp"
+      },
+      "processSubtypeCode",
+      "owningGroupName",
+      "active"
+    ]
+  },
+  "createAgentDefinition": {
+    "formId": "createAgentDefinition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createAgentDefinition",
+        "version": "0.1.0",
+        "title": "Create Agent Definition Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Agent Definition Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "agentName": {
+          "title": "Agent Name",
+          "type": "string"
+        },
+        "modelProvider": {
+          "title": "Model Provider",
+          "type": "string"
+        },
+        "modelName": {
+          "title": "Model Name",
+          "type": "string"
+        },
+        "apiKeyRef": {
+          "title": "API Key Ref",
+          "type": "string"
+        },
+        "temperature": {
+          "title": "Temperature",
+          "type": "number",
+          "default": 0.7
+        },
+        "maxTokens": {
+          "title": "Max Tokens",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hostId",
+        "agentName",
+        "modelProvider",
+        "modelName"
+      ]
+    },
+    "form": [
+      "hostId",
+      "agentName",
+      "modelProvider",
+      "modelName",
+      "apiKeyRef",
+      "temperature",
+      "maxTokens"
+    ]
+  },
+  "updateAgentDefinition": {
+    "formId": "updateAgentDefinition",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateAgentDefinition",
+        "version": "0.1.0",
+        "title": "Update Agent Definition Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Agent Definition Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string",
+          "readonly": true
+        },
+        "agentName": {
+          "title": "Agent Name",
+          "type": "string"
+        },
+        "modelProvider": {
+          "title": "Model Provider",
+          "type": "string"
+        },
+        "modelName": {
+          "title": "Model Name",
+          "type": "string"
+        },
+        "apiKeyRef": {
+          "title": "API Key Ref",
+          "type": "string"
+        },
+        "temperature": {
+          "title": "Temperature",
+          "type": "number"
+        },
+        "maxTokens": {
+          "title": "Max Tokens",
+          "type": "integer"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "agentDefId",
+        "agentName",
+        "modelProvider",
+        "modelName",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "agentDefId",
+      "agentName",
+      "modelProvider",
+      "modelName",
+      "apiKeyRef",
+      "temperature",
+      "maxTokens",
+      "active"
+    ]
+  },
+  "createTaskInfo": {
+    "formId": "createTaskInfo",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createTaskInfo",
+        "version": "0.1.0",
+        "title": "Create Task Info Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Task Info Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "taskType": {
+          "title": "Task Type",
+          "type": "string"
+        },
+        "processId": {
+          "title": "Process Id",
+          "type": "string"
+        },
+        "wfInstanceId": {
+          "title": "Wf Instance Id",
+          "type": "string"
+        },
+        "wfTaskId": {
+          "title": "Wf Task Id",
+          "type": "string"
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string",
+          "enum": [
+            "U",
+            "A",
+            "C"
+          ],
+          "default": "U"
+        },
+        "locked": {
+          "title": "Locked",
+          "type": "string"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hostId",
+        "agentDefId",
+        "taskType",
+        "processId",
+        "wfInstanceId",
+        "wfTaskId",
+        "statusCode",
+        "locked",
+        "priority"
+      ]
+    },
+    "form": [
+      "hostId",
+      "agentDefId",
+      "taskType",
+      "processId",
+      "wfInstanceId",
+      "wfTaskId",
+      "statusCode",
+      "locked",
+      "priority"
+    ]
+  },
+  "updateTaskInfo": {
+    "formId": "updateTaskInfo",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateTaskInfo",
+        "version": "0.1.0",
+        "title": "Update Task Info Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Task Info Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "taskId": {
+          "title": "Task Id",
+          "type": "string",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "taskType": {
+          "title": "Task Type",
+          "type": "string"
+        },
+        "processId": {
+          "title": "Process Id",
+          "type": "string"
+        },
+        "wfInstanceId": {
+          "title": "Wf Instance Id",
+          "type": "string"
+        },
+        "wfTaskId": {
+          "title": "Wf Task Id",
+          "type": "string"
+        },
+        "statusCode": {
+          "title": "Status Code",
+          "type": "string",
+          "enum": [
+            "U",
+            "A",
+            "C"
+          ]
+        },
+        "locked": {
+          "title": "Locked",
+          "type": "string"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "taskId",
+        "agentDefId",
+        "taskType",
+        "processId",
+        "wfInstanceId",
+        "wfTaskId",
+        "statusCode",
+        "locked",
+        "priority",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "taskId",
+      "agentDefId",
+      "taskType",
+      "processId",
+      "wfInstanceId",
+      "wfTaskId",
+      "statusCode",
+      "locked",
+      "priority",
+      "active"
+    ]
+  },
+  "createTaskAsst": {
+    "formId": "createTaskAsst",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createTaskAsst",
+        "version": "0.1.0",
+        "title": "Create Task Asst Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Task Asst Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "taskId": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "assigneeId": {
+          "title": "Assignee Id",
+          "type": "string"
+        },
+        "reasonCode": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "categoryCode": {
+          "title": "Category Code",
+          "type": "string"
+        },
+        "unassignedTs": {
+          "title": "Unassigned Ts",
+          "type": "string",
+          "format": "date-time"
+        },
+        "unassignedReason": {
+          "title": "Unassigned Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "taskId",
+        "assigneeId",
+        "reasonCode"
+      ]
+    },
+    "form": [
+      "hostId",
+      "taskId",
+      "assigneeId",
+      "reasonCode",
+      "categoryCode",
+      {
+        "key": "unassignedTs",
+        "type": "timestamp"
+      },
+      "unassignedReason"
+    ]
+  },
+  "updateTaskAsst": {
+    "formId": "updateTaskAsst",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateTaskAsst",
+        "version": "0.1.0",
+        "title": "Update Task Asst Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Task Asst Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "taskAsstId": {
+          "title": "Task Asst Id",
+          "type": "string",
+          "readonly": true
+        },
+        "taskId": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "assigneeId": {
+          "title": "Assignee Id",
+          "type": "string"
+        },
+        "reasonCode": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "categoryCode": {
+          "title": "Category Code",
+          "type": "string"
+        },
+        "unassignedTs": {
+          "title": "Unassigned Ts",
+          "type": "string",
+          "format": "date-time"
+        },
+        "unassignedReason": {
+          "title": "Unassigned Reason",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "taskAsstId",
+        "taskId",
+        "assigneeId",
+        "reasonCode",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "taskAsstId",
+      "taskId",
+      "assigneeId",
+      "reasonCode",
+      "categoryCode",
+      {
+        "key": "unassignedTs",
+        "type": "timestamp"
+      },
+      "unassignedReason",
+      "active"
+    ]
+  },
+  "createAuditLog": {
+    "formId": "createAuditLog",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createAuditLog",
+        "version": "0.1.0",
+        "title": "Create Audit Log Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Audit Log Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "sourceTypeId": {
+          "title": "Source Type Id",
+          "type": "string"
+        },
+        "correlationId": {
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "success": {
+          "title": "Success",
+          "type": "string",
+          "enum": [
+            "Y",
+            "N"
+          ]
+        },
+        "message0": {
+          "title": "Message 0",
+          "type": "string"
+        },
+        "message1": {
+          "title": "Message 1",
+          "type": "string"
+        },
+        "message2": {
+          "title": "Message 2",
+          "type": "string"
+        },
+        "message3": {
+          "title": "Message 3",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "userComment": {
+          "title": "User Comment",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "sourceTypeId",
+      "correlationId",
+      "userId",
+      "success",
+      "message0",
+      "message1",
+      "message2",
+      "message3",
+      {
+        "key": "message",
+        "type": "textarea"
+      },
+      {
+        "key": "userComment",
+        "type": "textarea"
+      }
+    ]
+  },
+  "updateAuditLog": {
+    "formId": "updateAuditLog",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateAuditLog",
+        "version": "0.1.0",
+        "title": "Update Audit Log Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Audit Log Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "auditLogId": {
+          "title": "Audit Log Id",
+          "type": "string",
+          "readonly": true
+        },
+        "sourceTypeId": {
+          "title": "Source Type Id",
+          "type": "string"
+        },
+        "correlationId": {
+          "title": "Correlation Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "success": {
+          "title": "Success",
+          "type": "string",
+          "enum": [
+            "Y",
+            "N"
+          ]
+        },
+        "message0": {
+          "title": "Message 0",
+          "type": "string"
+        },
+        "message1": {
+          "title": "Message 1",
+          "type": "string"
+        },
+        "message2": {
+          "title": "Message 2",
+          "type": "string"
+        },
+        "message3": {
+          "title": "Message 3",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "userComment": {
+          "title": "User Comment",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "auditLogId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "auditLogId",
+      "sourceTypeId",
+      "correlationId",
+      "userId",
+      "success",
+      "message0",
+      "message1",
+      "message2",
+      "message3",
+      {
+        "key": "message",
+        "type": "textarea"
+      },
+      {
+        "key": "userComment",
+        "type": "textarea"
+      }
+    ]
+  },
   "exportPortalEvent": {
     "formId": "exportPortalEvent",
     "actions": [
@@ -15526,6 +16624,1541 @@
           "loggers[].level"
         ]
       }
+    ]
+  },
+  "createSkill": {
+    "formId": "createSkill",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSkill",
+        "version": "0.1.0",
+        "title": "Create Skill Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Skill Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "parentSkillId": {
+          "title": "Parent Skill Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "contentMarkdown": {
+          "title": "Content Markdown",
+          "type": "string"
+        },
+        "implementationType": {
+          "title": "Implementation Type",
+          "type": "string",
+          "enum": [
+            "java",
+            "python",
+            "javascript",
+            "rest"
+          ]
+        },
+        "implementationClass": {
+          "title": "Implementation Class",
+          "type": "string"
+        },
+        "scriptContent": {
+          "title": "Script Content",
+          "type": "string"
+        },
+        "apiEndpoint": {
+          "title": "API Endpoint",
+          "type": "string"
+        },
+        "apiMethod": {
+          "title": "API Method",
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST"
+          ]
+        },
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        }
+      },
+      "required": [
+        "hostId",
+        "name",
+        "contentMarkdown",
+        "implementationClass"
+      ]
+    },
+    "form": [
+      "hostId",
+      "parentSkillId",
+      "name",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      {
+        "key": "contentMarkdown",
+        "type": "textarea",
+        "rows": 10
+      },
+      "implementationType",
+      "implementationClass",
+      {
+        "key": "scriptContent",
+        "type": "textarea",
+        "rows": 10,
+        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      {
+        "key": "apiEndpoint",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "apiMethod",
+        "condition": "model.implementationType === 'rest'"
+      },
+      "author",
+      "version"
+    ]
+  },
+  "updateSkill": {
+    "formId": "updateSkill",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSkill",
+        "version": "0.1.0",
+        "title": "Update Skill Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Skill Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "type": "string",
+          "title": "Skill Id",
+          "readonly": true
+        },
+        "parentSkillId": {
+          "title": "Parent Skill Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "contentMarkdown": {
+          "title": "Content Markdown",
+          "type": "string"
+        },
+        "implementationType": {
+          "title": "Implementation Type",
+          "type": "string",
+          "enum": [
+            "java",
+            "python",
+            "javascript",
+            "rest"
+          ]
+        },
+        "implementationClass": {
+          "title": "Implementation Class",
+          "type": "string"
+        },
+        "scriptContent": {
+          "title": "Script Content",
+          "type": "string"
+        },
+        "apiEndpoint": {
+          "title": "API Endpoint",
+          "type": "string"
+        },
+        "apiMethod": {
+          "title": "API Method",
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST"
+          ]
+        },
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "name",
+        "contentMarkdown",
+        "implementationClass",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "parentSkillId",
+      "name",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      {
+        "key": "contentMarkdown",
+        "type": "textarea",
+        "rows": 10
+      },
+      "implementationType",
+      "implementationClass",
+      {
+        "key": "scriptContent",
+        "type": "textarea",
+        "rows": 10,
+        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      {
+        "key": "apiEndpoint",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "apiMethod",
+        "condition": "model.implementationType === 'rest'"
+      },
+      "author",
+      "version",
+      "active"
+    ]
+  },
+  "createSkillParam": {
+    "formId": "createSkillParam",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSkillParam",
+        "version": "0.1.0",
+        "title": "Create Skill Parameter Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Skill Parameter Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "paramType": {
+          "title": "Param Type",
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ]
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean",
+          "default": true
+        },
+        "defaultValue": {
+          "title": "Default Value",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "validationSchema": {
+          "title": "Validation Schema",
+          "type": "string"
+        },
+        "orderIndex": {
+          "title": "Order Index",
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "name",
+        "paramType"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "name",
+      "paramType",
+      "required",
+      {
+        "key": "defaultValue",
+        "type": "textarea"
+      },
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      {
+        "key": "validationSchema",
+        "type": "textarea"
+      },
+      "orderIndex"
+    ]
+  },
+  "updateSkillParam": {
+    "formId": "updateSkillParam",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSkillParam",
+        "version": "0.1.0",
+        "title": "Update Skill Parameter Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Skill Parameter Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "paramId": {
+          "type": "string",
+          "title": "Param Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "paramType": {
+          "title": "Param Type",
+          "type": "string",
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ]
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean",
+          "default": true
+        },
+        "defaultValue": {
+          "title": "Default Value",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "validationSchema": {
+          "title": "Validation Schema",
+          "type": "string"
+        },
+        "orderIndex": {
+          "title": "Order Index",
+          "type": "integer",
+          "default": 0
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "paramId",
+        "skillId",
+        "name",
+        "paramType",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "paramId",
+      "skillId",
+      "name",
+      "paramType",
+      "required",
+      {
+        "key": "defaultValue",
+        "type": "textarea"
+      },
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      {
+        "key": "validationSchema",
+        "type": "textarea"
+      },
+      "orderIndex",
+      "active"
+    ]
+  },
+  "createSkillDependency": {
+    "formId": "createSkillDependency",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSkillDependency",
+        "version": "0.1.0",
+        "title": "Create Skill Dependency Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Skill Dependency Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "dependsOnSkillId": {
+          "title": "Depends On Skill Id",
+          "type": "string"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "dependsOnSkillId",
+        "required"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "dependsOnSkillId",
+      "required"
+    ]
+  },
+  "updateSkillDependency": {
+    "formId": "updateSkillDependency",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSkillDependency",
+        "version": "0.1.0",
+        "title": "Update Skill Dependency Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Skill Dependency Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string",
+          "readonly": true
+        },
+        "dependsOnSkillId": {
+          "title": "Depends On Skill Id",
+          "type": "string",
+          "readonly": true
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean",
+          "default": true
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "dependsOnSkillId",
+        "required",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "dependsOnSkillId",
+      "required",
+      "active"
+    ]
+  },
+  "createAgentSkill": {
+    "formId": "createAgentSkill",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createAgentSkill",
+        "version": "0.1.0",
+        "title": "Create Agent Skill Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Agent Skill Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "config": {
+          "title": "Config",
+          "type": "string"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer",
+          "default": 0
+        },
+        "timeoutSeconds": {
+          "title": "Timeout Seconds",
+          "type": "integer",
+          "default": 30
+        },
+        "maxRetries": {
+          "title": "Max Retries",
+          "type": "integer",
+          "default": 3
+        },
+        "sequenceId": {
+          "title": "Sequence Id",
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "hostId",
+        "agentDefId",
+        "skillId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "agentDefId",
+      "skillId",
+      {
+        "key": "config",
+        "type": "textarea",
+        "rows": 10
+      },
+      "priority",
+      "timeoutSeconds",
+      "maxRetries",
+      "sequenceId"
+    ]
+  },
+  "updateAgentSkill": {
+    "formId": "updateAgentSkill",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateAgentSkill",
+        "version": "0.1.0",
+        "title": "Update Agent Skill Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Agent Skill Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string",
+          "readonly": true
+        },
+        "config": {
+          "title": "Config",
+          "type": "string"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "integer",
+          "default": 0
+        },
+        "timeoutSeconds": {
+          "title": "Timeout Seconds",
+          "type": "integer",
+          "default": 30
+        },
+        "maxRetries": {
+          "title": "Max Retries",
+          "type": "integer",
+          "default": 3
+        },
+        "sequenceId": {
+          "title": "Sequence Id",
+          "type": "integer",
+          "default": 0
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "agentDefId",
+        "skillId",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "agentDefId",
+      "skillId",
+      {
+        "key": "config",
+        "type": "textarea",
+        "rows": 10
+      },
+      "priority",
+      "timeoutSeconds",
+      "maxRetries",
+      "sequenceId",
+      "active"
+    ]
+  },
+  "createAgentSessionHistory": {
+    "formId": "createAgentSessionHistory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createAgentSessionHistory",
+        "version": "0.1.0",
+        "title": "Create Agent Session History Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Agent Session History Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "sessionHistoryId": {
+          "title": "Session History Id",
+          "type": "string"
+        },
+        "processId": {
+          "title": "Process Id",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string",
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ]
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "toolCallId": {
+          "title": "Tool Call Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "sessionHistoryId",
+        "processId",
+        "role",
+        "content"
+      ]
+    },
+    "form": [
+      "hostId",
+      "sessionHistoryId",
+      "processId",
+      "taskId",
+      "role",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 10
+      },
+      "toolCallId"
+    ]
+  },
+  "updateAgentSessionHistory": {
+    "formId": "updateAgentSessionHistory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateAgentSessionHistory",
+        "version": "0.1.0",
+        "title": "Update Agent Session History Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Agent Session History Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "sessionHistoryId": {
+          "title": "Session History Id",
+          "type": "string",
+          "readonly": true
+        },
+        "processId": {
+          "title": "Process Id",
+          "type": "string"
+        },
+        "taskId": {
+          "title": "Task Id",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string",
+          "enum": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ]
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "toolCallId": {
+          "title": "Tool Call Id",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "sessionHistoryId",
+        "processId",
+        "role",
+        "content",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "sessionHistoryId",
+      "processId",
+      "taskId",
+      "role",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 10
+      },
+      "toolCallId",
+      "active"
+    ]
+  },
+  "createSessionMemory": {
+    "formId": "createSessionMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSessionMemory",
+        "version": "0.1.0",
+        "title": "Create Session Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Session Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string"
+        },
+        "sessionId": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "importanceScore": {
+          "title": "Importance Score",
+          "type": "number",
+          "default": 1.0
+        },
+        "expiresAt": {
+          "title": "Expires At",
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "sessionId",
+        "agentDefId",
+        "content"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "sessionId",
+      "agentDefId",
+      "userId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "importanceScore",
+      "expiresAt",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      }
+    ]
+  },
+  "updateSessionMemory": {
+    "formId": "updateSessionMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSessionMemory",
+        "version": "0.1.0",
+        "title": "Update Session Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Session Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string",
+          "readonly": true
+        },
+        "sessionId": {
+          "title": "Session Id",
+          "type": "string"
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "importanceScore": {
+          "title": "Importance Score",
+          "type": "number",
+          "default": 1.0
+        },
+        "expiresAt": {
+          "title": "Expires At",
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "sessionId",
+        "agentDefId",
+        "content",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "sessionId",
+      "agentDefId",
+      "userId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "importanceScore",
+      "expiresAt",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      },
+      "active"
+    ]
+  },
+  "createUserMemory": {
+    "formId": "createUserMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createUserMemory",
+        "version": "0.1.0",
+        "title": "Create User Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create User Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string"
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "memoryType": {
+          "title": "Memory Type",
+          "type": "string",
+          "enum": [
+            "fact",
+            "preference",
+            "summary"
+          ]
+        },
+        "importanceScore": {
+          "title": "Importance Score",
+          "type": "number",
+          "default": 1.0
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "userId",
+        "content"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "userId",
+      "agentDefId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "memoryType",
+      "importanceScore",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      }
+    ]
+  },
+  "updateUserMemory": {
+    "formId": "updateUserMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateUserMemory",
+        "version": "0.1.0",
+        "title": "Update User Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update User Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string",
+          "readonly": true
+        },
+        "userId": {
+          "title": "User Id",
+          "type": "string"
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "memoryType": {
+          "title": "Memory Type",
+          "type": "string",
+          "enum": [
+            "fact",
+            "preference",
+            "summary"
+          ]
+        },
+        "importanceScore": {
+          "title": "Importance Score",
+          "type": "number",
+          "default": 1.0
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "userId",
+        "content",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "userId",
+      "agentDefId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "memoryType",
+      "importanceScore",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      },
+      "active"
+    ]
+  },
+  "createAgentMemory": {
+    "formId": "createAgentMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createAgentMemory",
+        "version": "0.1.0",
+        "title": "Create Agent Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Agent Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string"
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "memoryType": {
+          "title": "Memory Type",
+          "type": "string",
+          "enum": [
+            "learning",
+            "state",
+            "persona",
+            "scratchpad"
+          ]
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "agentDefId",
+        "content"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "agentDefId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "memoryType",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      }
+    ]
+  },
+  "updateAgentMemory": {
+    "formId": "updateAgentMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateAgentMemory",
+        "version": "0.1.0",
+        "title": "Update Agent Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Agent Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string",
+          "readonly": true
+        },
+        "agentDefId": {
+          "title": "Agent Def Id",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "memoryType": {
+          "title": "Memory Type",
+          "type": "string",
+          "enum": [
+            "learning",
+            "state",
+            "persona",
+            "scratchpad"
+          ]
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "agentDefId",
+        "content",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "agentDefId",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "memoryType",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      },
+      "active"
+    ]
+  },
+  "createOrgMemory": {
+    "formId": "createOrgMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createOrgMemory",
+        "version": "0.1.0",
+        "title": "Create Org Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Org Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "chunkIndex": {
+          "title": "Chunk Index",
+          "type": "integer"
+        },
+        "documentId": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "domain",
+        "content"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "domain",
+      "source",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "chunkIndex",
+      "documentId",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      }
+    ]
+  },
+  "updateOrgMemory": {
+    "formId": "updateOrgMemory",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateOrgMemory",
+        "version": "0.1.0",
+        "title": "Update Org Memory Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Org Memory Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "memId": {
+          "title": "Mem Id",
+          "type": "string",
+          "readonly": true
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "content": {
+          "title": "Content",
+          "type": "string"
+        },
+        "chunkIndex": {
+          "title": "Chunk Index",
+          "type": "integer"
+        },
+        "documentId": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "metadata": {
+          "title": "Metadata",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "memId",
+        "domain",
+        "content",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "memId",
+      "domain",
+      "source",
+      {
+        "key": "content",
+        "type": "textarea",
+        "rows": 5
+      },
+      "chunkIndex",
+      "documentId",
+      {
+        "key": "metadata",
+        "type": "textarea",
+        "rows": 3
+      },
+      "active"
     ]
   }
 }
