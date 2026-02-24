@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
       "process.env.MAPBOX_TOKEN": JSON.stringify(
         process.env.REACT_APP_MAPBOX_TOKEN,
       ),
+      "process.env.REACT_APP_MAPBOX_TOKEN": JSON.stringify(
+        process.env.REACT_APP_MAPBOX_TOKEN,
+      ),
     },
     optimizeDeps: {
       include: ["ag-grid-community", "ag-grid-react"],
