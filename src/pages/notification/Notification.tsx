@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import useDebounce from "../../hooks/useDebounce";
 import { useUserState } from "../../contexts/UserContext";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import {
   Table,
   TableBody,
@@ -128,19 +128,12 @@ export default function Notification() {
     setError(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setFetchError(error.description);
-        setNotifications([]);
-      } else {
-        const data = await response.json();
-        setNotifications(data.notifications);
-        setTotal(data.total);
-      }
+      const data = await fetchClient(url);
+      setNotifications(data.notifications);
+      setTotal(data.total);
       setLoading(false);
     } catch (e) {
       console.log(e);
@@ -172,10 +165,8 @@ export default function Notification() {
     };
 
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
 
-    fetchData(url, headers);
+    fetchData(url);
   }, [
     page,
     rowsPerPage,

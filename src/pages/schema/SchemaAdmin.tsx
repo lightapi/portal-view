@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import DetailsIcon from '@mui/icons-material/Details';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
@@ -112,12 +112,9 @@ export default function SchemaAdmin() {
       },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as SchemaApiResponse;
+      const json = await fetchClient(url) as SchemaApiResponse;
       setData(json.schemas || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -168,15 +165,9 @@ export default function SchemaAdmin() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest schema data.');
-      }
+      const freshData = await fetchClient(url);
       navigate('/app/form/updateJsonSchema', { state: { data: freshData } });
     } catch (error) {
       console.error("Failed to fetch schema for update:", error);

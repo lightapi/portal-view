@@ -15,7 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type AttributeUserApiResponse = {
@@ -106,12 +106,8 @@ export default function AttributeUser() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as AttributeUserApiResponse;
+      const json = await fetchClient(url);
       setData(json.attributeUsers || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -162,16 +158,9 @@ export default function AttributeUser() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest attribute user data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateAttributeUser', {
@@ -180,9 +169,9 @@ export default function AttributeUser() {
           source: location.pathname
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch attribute user for update:", error);
-      alert("Could not load the latest attribute user data. Please try again.");
+      alert(error.message || "Could not load the latest attribute user data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }

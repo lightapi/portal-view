@@ -6,7 +6,7 @@ import {
   type MRT_ColumnDef,
 } from 'material-react-table';
 import { Box, Tooltip, Typography } from '@mui/material';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type ProviderKeyType = {
@@ -46,15 +46,9 @@ export default function ProviderKey() {
         data: { providerId }, // Only send providerId to get all keys
       };
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-      const cookies = new Cookies();
-      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
       try {
-        const response = await fetch(url, { headers, credentials: 'include' });
-        const jsonData = await response.json();
-        if (!response.ok) {
-            throw new Error(jsonData.description || 'Failed to fetch data');
-        }
+        const jsonData = await fetchClient(url);
         setData(jsonData || []);
       } catch (error) {
         console.error(error);
@@ -86,12 +80,12 @@ export default function ProviderKey() {
         header: 'Public Key',
         // Truncate long keys for better display
         muiTableBodyCellProps: {
-            sx: {
-                maxWidth: '200px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-            }
+          sx: {
+            maxWidth: '200px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }
         },
         Cell: ({ cell }) => <Tooltip title={cell.getValue<string>()}><span>{cell.getValue<string>()}</span></Tooltip>
       },
@@ -99,12 +93,12 @@ export default function ProviderKey() {
         accessorKey: 'privateKey',
         header: 'Private Key',
         muiTableBodyCellProps: {
-            sx: {
-                maxWidth: '200px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-            }
+          sx: {
+            maxWidth: '200px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }
         },
         Cell: ({ cell }) => <Tooltip title={cell.getValue<string>() ?? ''}><span>{cell.getValue<string>()}</span></Tooltip>
       },

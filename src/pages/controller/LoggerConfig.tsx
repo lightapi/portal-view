@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CircularProgress from '@mui/material/CircularProgress';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import { makeStyles } from '@mui/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -33,38 +33,21 @@ export default function LoggerConfig(props) {
     const url = '/services/logger' + '?protocol=' + node.protocol + '&address=' + node.address + '&port=' + node.port;
     console.log(url);
     useEffect(() => {
-        const cookies = new Cookies();
-        const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
-        const abortController = new AbortController();
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(url, { headers, credentials: 'include', signal: abortController.signal });
-                if (!response.ok) {
-                    const data = await response.json();
-                    console.log(data);
-                    setError(data);
-                    setLoading(false);
-                } else {
-                    const data = await response.json();
-                    console.log(data);
-                    setLoggers(data);
-                    setLoading(false);
-                }
-            } catch (e) {
-                if (!abortController.signal.aborted) {
-                    console.log(e);
-                    setLoading(false);
-                }
+                const data = await fetchClient(url);
+                console.log(data);
+                setLoggers(data);
+                setLoading(false);
+            } catch (error) {
+                console.log(error);
+                setError(error);
+                setLoading(false);
             }
         };
 
         fetchData();
-
-        return () => {
-            abortController.abort();
-        };
     }, []);
 
     console.log(loading, loggers, error);
@@ -75,27 +58,27 @@ export default function LoggerConfig(props) {
     } else if (loggers) {
         wait = (
             <>
-            <TableContainer component={Paper}>
-                <Table className={classes.table} aria-label="simple table">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell align="right">Level</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loggers.map((logger) => (
-                            <TableRow key={logger.name}>
-                                <TableCell component="th" scope="row">
-                                    {logger.name}
-                                </TableCell>
-                                <TableCell align="right">{logger.level}</TableCell>
+                <TableContainer component={Paper}>
+                    <Table className={classes.table} aria-label="simple table">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Name</TableCell>
+                                <TableCell align="right">Level</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <Button variant="contained" color="primary" onClick={e => handleLogger()}>Update Logger Level</Button>
+                        </TableHead>
+                        <TableBody>
+                            {loggers.map((logger) => (
+                                <TableRow key={logger.name}>
+                                    <TableCell component="th" scope="row">
+                                        {logger.name}
+                                    </TableCell>
+                                    <TableCell align="right">{logger.level}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <Button variant="contained" color="primary" onClick={e => handleLogger()}>Update Logger Level</Button>
             </>
         )
 

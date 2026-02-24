@@ -2,9 +2,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import UserOrderList from './UserOrderList';
+import fetchClient from '../../utils/fetchClient';
 
 const useRowStyles = makeStyles({
   root: {
@@ -38,28 +38,19 @@ export default function UserOrders(props) {
   const queryOrders = async (url, headers) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: 'include' });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setOrders([]);
-      } else {
-        const data = await response.json();
-        setOrders(data.orders);
-        setCount(data.total);
-      }
-      setLoading(false);
+      const data = await fetchClient(url, { headers });
+      setOrders(data.orders);
+      setCount(data.total);
     } catch (e) {
       console.log(e);
       setError(e);
       setOrders([]);
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
     queryOrders(url, headers);
   }, [page, rowsPerPage]);
 

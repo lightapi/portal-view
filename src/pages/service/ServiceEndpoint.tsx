@@ -17,7 +17,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import { useUserState } from "../../contexts/UserContext";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 
 // --- Type Definitions ---
 type EndpointApiResponse = {
@@ -100,12 +100,9 @@ export default function ServiceEndpoint() {
       },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as EndpointApiResponse;
+      const json = await fetchClient(url);
       setData(json.endpoints || []);
       setRowCount(json.total || 0);
     } catch (error) {

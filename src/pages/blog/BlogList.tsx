@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 // import Paper from '@mui/material/Paper';
 // import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 // import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
 import BlogListItem from "./BlogListItem";
 import useStyles from "./styles";
@@ -36,32 +36,23 @@ export default function BlogList(props) {
   };
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const query = async (url, headers) => {
+  const query = async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setBlogs([]);
-      } else {
-        const data = await response.json();
-        setBlogs(data.blogs);
-        setCount(data.total);
-      }
+      const data = await fetchClient(url);
+      setBlogs(data.blogs);
+      setCount(data.total);
       setLoading(false);
     } catch (e) {
       console.log(e);
-      setError(e);
+      setError(e.description || e.message || e);
       setBlogs([]);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    query(url, headers);
+    query(url);
   }, [page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => {

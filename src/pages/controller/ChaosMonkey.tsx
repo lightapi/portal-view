@@ -1,5 +1,5 @@
 import CircularProgress from '@mui/material/CircularProgress';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import CssBaseline from '@mui/material/CssBaseline';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
@@ -59,40 +59,16 @@ export default function ChaosMonkey(props) {
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
     const abortController = new AbortController();
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(url, {
-          headers, credentials: 'include',
-          signal: abortController.signal,
-        });
-        if (!response.ok) {
-          const data = await response.json();
-          setLoading(false);
-          if (
-            data.code === 'ERR10002' ||
-            data.code === 'ERR10046' ||
-            data.code === 'ERR10047'
-          ) {
-            history.push({
-              pathname: '/login',
-              state: { from: props.location },
-            });
-          } else {
-            setError(data);
-          }
-        } else {
-          const data = await response.json();
-          setChaosMonkeyGetData(data);
-          setLoading(false);
-        }
-      } catch (e) {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-        }
+        const json = await fetchClient(url.toString());
+        setChaosMonkeyGetData(json);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        setError(error);
       }
     };
 

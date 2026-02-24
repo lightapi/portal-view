@@ -8,8 +8,8 @@ import Grid from '@mui/material/Grid';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Switch from '@mui/material/Switch';
-import ChaosInfoPopper from './ChaosInfoPopper';
 import Typography from '@mui/material/Typography';
+import fetchClient from '../../../utils/fetchClient';
 
 export default function ExeptionForm(props) {
   const classes = useStyles();
@@ -48,15 +48,14 @@ export default function ExeptionForm(props) {
 
   const handleExceptionSubmit = (event) => {
     event.preventDefault();
-    var headers = {
+    const headers = {
       Authorization: 'Basic ' + localStorage.getItem('user'),
-      'Content-Type': 'application/json',
     };
     let url;
-    let data;
+    let body;
     if (formType === 'initAssault') {
-      url = new URL(props.baseUrl + '/services/chaosmonkey/assault');
-      data = JSON.stringify({
+      url = props.baseUrl + '/services/chaosmonkey/assault';
+      body = JSON.stringify({
         protocol: protocol,
         address: address,
         assaultType: assaultType,
@@ -65,8 +64,8 @@ export default function ExeptionForm(props) {
         requests: requests,
       });
     } else if (formType === 'configAssault') {
-      url = new URL(props.baseUrl + '/services/chaosmonkey');
-      data = JSON.stringify({
+      url = props.baseUrl + '/services/chaosmonkey';
+      body = JSON.stringify({
         protocol: protocol,
         port: port,
         address: address,
@@ -78,19 +77,18 @@ export default function ExeptionForm(props) {
         },
       });
     }
-    return fetch(url, {
-      method: 'POST',
-      body: data,
-      headers: headers,
-    })
-      .then((response) => {
-        if (response.status >= 200 && response.status < 300) {
-          window.location.reload();
-        } else {
-          console.log('something went wrong');
-        }
-      })
-      .catch((err) => err);
+
+    if (url) {
+      fetchClient(url, {
+        method: 'POST',
+        body,
+        headers,
+      }).then(() => {
+        window.location.reload();
+      }).catch((err) => {
+        console.error(err);
+      });
+    }
   };
 
   let formTitle = '';

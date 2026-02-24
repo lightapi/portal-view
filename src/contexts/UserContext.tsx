@@ -1,5 +1,5 @@
-import React from "react";
 import Cookies from "universal-cookie";
+import fetchClient from "../utils/fetchClient";
 
 var UserStateContext = React.createContext();
 var UserDispatchContext = React.createContext();
@@ -66,11 +66,9 @@ function UserProvider({ children }) {
     };
 
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const headers = {};
     const fetchData = async () => {
       try {
-        const response = await fetch(url, { headers, credentials: "include" });
-        const data = await response.json();
+        const data = await fetchClient(url);
         //console.log("data = ", data);
         //console.log("userId = " + cookies.get('userId'));
         if (data.statusCode === 404) {
@@ -159,13 +157,9 @@ function loginUser(
 
 function signOut(dispatch, navigate) {
   dispatch({ type: "SIGN_OUT_SUCCESS" });
-  fetch("/logout", { credentials: "include" })
-    .then((response) => {
-      if (response.ok) {
-        navigate("/app/dashboard");
-      } else {
-        throw Error(response.statusText);
-      }
+  fetchClient("/logout")
+    .then((data) => {
+      navigate("/app/dashboard");
     })
     .catch((error) => {
       console.log("error=", error);

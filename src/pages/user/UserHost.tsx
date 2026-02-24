@@ -9,7 +9,7 @@ import {
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 // The API returns an array directly
@@ -63,16 +63,9 @@ export default function UserHost() {
       };
 
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-      const cookies = new Cookies();
-      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
       try {
-        const response = await fetch(url, { headers, credentials: 'include' });
-        const jsonData = (await response.json()) as UserHostApiResponse;
-        if (!response.ok) {
-          // Assuming the error response has a 'description' field
-          throw new Error((jsonData as any).description || 'Failed to fetch data');
-        }
+        const jsonData = await fetchClient(url) as UserHostApiResponse;
         setData(jsonData || []);
       } catch (error) {
         console.error(error);

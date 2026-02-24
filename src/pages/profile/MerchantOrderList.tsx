@@ -14,9 +14,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { makeStyles } from '@mui/styles';
 import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import { timeConversion } from '../../utils';
+import fetchClient from '../../utils/fetchClient';
 
 const useRowStyles = makeStyles({
   root: {
@@ -62,31 +62,16 @@ function Row(props) {
   const postApi = async (url, headers, action) => {
     setFetching(true);
     try {
-      const cookies = new Cookies();
-      Object.assign(headers, { 'X-CSRF-TOKEN': cookies.get('csrf') });
-      const response = await fetch(url, {
+      const data = await fetchClient(url, {
         method: 'POST',
-        body: JSON.stringify(action),
+        body: action,
         headers,
-        credentials: 'include',
       });
-      // we have tried out best to response json from our APIs; however, some services return text instead like light-oauth2.
-      const s = await response.text();
-      console.log('submit error', s);
-      const data = JSON.parse(s);
       setFetching(false);
-      if (!response.ok) {
-        // code is not OK.
-        props.history.push({
-          pathname: action.failure,
-          state: { error: data },
-        });
-      } else {
-        props.history.push({ pathname: action.success, state: { data } });
-      }
+      props.history.push({ pathname: action.success, state: { data } });
     } catch (e) {
-      // network error here.
       console.log(e);
+      setFetching(false);
       // convert it to json as the failure component can only deal with JSON.
       const error = { error: e };
       props.history.push({ pathname: action.failure, state: { error } });

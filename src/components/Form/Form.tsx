@@ -3,11 +3,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { makeStyles } from "@mui/styles";
 import { useEffect, useState } from "react";
 import { SchemaForm, utils } from "react-schema-form";
-import Cookies from "universal-cookie";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
-import Typography from "@mui/material/Typography"; // Import Typography for better text rendering
+import Typography from "@mui/material/Typography";
+import fetchClient from "../../utils/fetchClient";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -102,32 +102,17 @@ function Form() {
     }
   }
 
-  const submitForm = async (url, headers, action) => {
+  const submitForm = async (url, _headers, action) => {
     setFetching(true);
     try {
-      const cookies = new Cookies();
-      Object.assign(headers, { "X-CSRF-TOKEN": cookies.get("csrf") });
-      const response = await fetch(url, {
+      const data = await fetchClient(url, {
         method: action.method ? action.method : "POST",
-        body: action.rest
-          ? JSON.stringify(action.data)
-          : JSON.stringify(action),
-        headers,
-        credentials: "include",
+        body: action.rest ? action.data : action,
       });
-      // we have tried out best to response json from our APIs; however, some services return text instead like light-oauth2.
-      const s = await response.text();
-      console.log("submit error", s);
-      const data = JSON.parse(s);
       setFetching(false);
-      if (!response.ok) {
-        // code is not OK.
-        navigate(action.failure, { state: { data } });
-      } else {
-        navigate(action.success, { state: { data } });
-      }
+      navigate(action.success, { state: { data } });
     } catch (e) {
-      // network error here.
+      setFetching(false);
       console.log(e);
       // convert it to json as the failure component can only deal with JSON.
       const error = { error: e };

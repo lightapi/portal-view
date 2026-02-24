@@ -30,7 +30,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Widget from "../../components/Widget/Widget";
 import useStyles from "./styles";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
 
 // --- Type Definitions ---
@@ -92,13 +92,10 @@ export default function ApiDetail() {
         data: { hostId, apiId, offset: 0, limit: Number.MAX_SAFE_INTEGER },
       };
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-      const cookies = new Cookies();
-      const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
 
       try {
         setIsLoading(true);
-        const response = await fetch(url, { headers, credentials: 'include' });
-        const data = await response.json();
+        const data = await fetchClient(url);
         console.log("data = ", data);
         setData(data || []);
       } catch (error) {
@@ -143,23 +140,17 @@ export default function ApiDetail() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest api version data.');
-      }
-      
+
       // Navigate with the fresh data
-      navigate('/app/form/updateApiVersion', { 
-        state: { 
-          data: freshData, 
-          source: location.pathname 
-        } 
+      navigate('/app/form/updateApiVersion', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
       });
     } catch (error) {
       console.error("Failed to fetch api version for update:", error);
@@ -193,7 +184,7 @@ export default function ApiDetail() {
         muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
         Cell: ({ row }) => (
           <Tooltip title="Update Api Version">
-            <IconButton 
+            <IconButton
               onClick={() => handleUpdate(row)}
               disabled={isUpdateLoading === row.original.apiVersionId}
             >

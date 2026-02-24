@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import LanguageIcon from '@mui/icons-material/Language';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type RefValueApiResponse = {
@@ -103,13 +103,10 @@ export default function RefValue() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
     console.log("cmd = ", cmd);
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RefValueApiResponse;
+      const json = await fetchClient(url) as RefValueApiResponse;
       setData(json.refValues || []);
       setRowCount(json.total || 0);
     } catch (error) {

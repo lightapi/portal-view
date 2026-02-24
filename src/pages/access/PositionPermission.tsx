@@ -14,7 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type PositionPermissionApiResponse = {
@@ -102,12 +102,8 @@ export default function PositionPermission() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as PositionPermissionApiResponse;
+      const json = await fetchClient(url);
       setData(json.positionPermissions || []);
       setRowCount(json.total || 0);
     } catch (error) {

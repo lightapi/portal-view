@@ -1,6 +1,5 @@
-import CircularProgress from "@mui/material/CircularProgress";
 import React, { useEffect, useState } from "react";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import { timeConversion } from "../../utils";
 import useStyles from "./styles";
@@ -24,17 +23,11 @@ export default function BlogItem(props) {
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const queryBlogFn = async (url, headers) => {
+  const queryBlogFn = async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      //console.log(response);
-      if (!response.ok) {
-        const error = await response.json();
-      } else {
-        const data = await response.json();
-        setBlog(data);
-      }
+      const data = await fetchClient(url);
+      setBlog(data);
       setLoading(false);
     } catch (e) {
       console.log(e);
@@ -43,9 +36,7 @@ export default function BlogItem(props) {
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    queryBlogFn(url, headers);
+    queryBlogFn(url);
   }, []);
 
   let wait;

@@ -12,7 +12,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext.tsx';
 import { apiPost } from '../../api/apiPost.ts';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
@@ -113,12 +113,9 @@ export default function AuthCodeAdmin() {
       };
 
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-      const cookies = new Cookies();
-      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
       try {
-        const response = await fetch(url, { headers, credentials: 'include' });
-        const json = (await response.json()) as AuthCodeApiResponse;
+        const json = await fetchClient(url);
         setData(json.codes || []);
         setRowCount(json.total || 0);
       } catch (error) {

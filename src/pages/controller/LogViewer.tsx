@@ -11,11 +11,12 @@ import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { AgGridReact } from 'ag-grid-react';
+import fetchClient from '../../utils/fetchClient';
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
 
 // Todo: Put in a library for reuse
-const getCookieValue = (name) => document?.cookie?.split('; ')?.find(a => a.startsWith(`${name}=`))?.split('=')?.[1] || undefined;
+// Removed getCookieValue
 
 class LogViewer extends React.Component {
   constructor(props) {
@@ -26,15 +27,15 @@ class LogViewer extends React.Component {
     this.node = props?.location?.state?.data?.node || {};
     // console.log('LogViewer ctor: props=', props)
 
-    this.logLevels = ['All','ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+    this.logLevels = ['All', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
     this.timePresets = [
-      {label: '1m', seconds: 60},
-      {label: '5m', seconds: 300},
-      {label: '10m', seconds: 600},
-      {label: '30m', seconds: 1800},
-      {label: '1h', seconds: 3600},
-      {label: '1d', seconds: 86400},
-      {label: '1w', seconds: 604800},
+      { label: '1m', seconds: 60 },
+      { label: '5m', seconds: 300 },
+      { label: '10m', seconds: 600 },
+      { label: '30m', seconds: 1800 },
+      { label: '1h', seconds: 3600 },
+      { label: '1d', seconds: 86400 },
+      { label: '1w', seconds: 604800 },
     ];
 
     this.state = {
@@ -50,7 +51,7 @@ class LogViewer extends React.Component {
 
     this.defaultColDef = {
       flex: 1,
-//      minWidth: 80,
+      //      minWidth: 80,
       editable: false,
       sortable: true,
       resizable: true,
@@ -115,42 +116,32 @@ class LogViewer extends React.Component {
   componentDidMount = async () => {
     try {
       const { protocol, address, port } = this.node;
-      const response = await fetch(`/services/logger?protocol=${protocol}&address=${address}&port=${port}`, {
-        method: 'GET',
-        headers: {
-          'X-CSRF-TOKEN': getCookieValue('csrf'),
-        },
-      });
-      // console.log('result=', response)
-      if (!response.ok) throw new Error(response);
-      const logNames = await response.json();
-      // console.log('logNames=', logNames)
-      this.setState({logNames});
+      const logNames = await fetchClient(`/services/logger?protocol=${protocol}&address=${address}&port=${port}`);
+      this.setState({ logNames });
     } catch (error) {
-      this.setState({logNames: []});
-      // Todo: Invoke a snackbar
+      this.setState({ logNames: [] });
     }
   };
 
   onChangeLogName = event => {
-    this.setState({logName: event.target.value});
+    this.setState({ logName: event.target.value });
   };
 
   onChangeLogLevel = event => {
-    this.setState({logLevel: event.target.value});
+    this.setState({ logLevel: event.target.value });
   };
 
   onChangeFrom = moment => {
-    this.setState({from: moment.valueOf(), preset: null});
+    this.setState({ from: moment.valueOf(), preset: null });
   };
 
   onChangeTo = moment => {
-    this.setState({to: moment.valueOf(), preset: null});
+    this.setState({ to: moment.valueOf(), preset: null });
   };
 
   onChangePreset = event => {
     const seconds = event.target.value;
-    this.setState({preset: seconds});
+    this.setState({ preset: seconds });
   };
 
   onClickRefresh = async () => {
@@ -160,13 +151,8 @@ class LogViewer extends React.Component {
 
     // console.log('cookie, CSRF=', document.cookie, getCookieValue('csrf'));
     try {
-      const response = await fetch(this.logUrl, {
+      const data = await fetchClient(this.logUrl, {
         method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': getCookieValue('csrf'),
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
         body: JSON.stringify({
           protocol,
           address,
@@ -177,16 +163,14 @@ class LogViewer extends React.Component {
           loggerLevel: this.state.logLevel === 'All' ? 'TRACE' : this.state.logLevel,
         })
       });
-      if (!response.ok) throw new Error(response);
-      const data = await response.json();
 
       const logData = Object.entries(data).reduce((a, [k, v]) => a.concat((v.logs || []).map(l => ({ ...l, logName: k }))), []);
-      this.setState({logData});
+      this.setState({ logData });
       // console.log('logData=', logData)
 
     } catch (error) {
       // console.log('Refresh: error=', error)
-      this.setState({logData: []});
+      this.setState({ logData: [] });
       // Todo: Invoke a snackbar
     }
   };
@@ -198,126 +182,126 @@ class LogViewer extends React.Component {
         <Grid container spacing={2}>
           <Grid item xs={4} />
           <Grid item xs={4}>
-          <Card elevation={2} style={{backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%'}}>
-            <CardHeader title={<Typography variant='h6' style={{textAlign: 'center'}}>{this.node?.apiName}</Typography>} />
-          </Card>
+            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
+              <CardHeader title={<Typography variant='h6' style={{ textAlign: 'center' }}>{this.node?.apiName}</Typography>} />
+            </Card>
           </Grid>
           <Grid item xs={4} />
           <Grid item xs={12}>
-            <Card elevation={2} style={{backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%'}}>
+            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
               <CardHeader title={<Typography variant='h6'>Filters</Typography>} />
               <CardContent>
-              <Grid container spacing={3}>
-                <Grid item xs={2}>
-                <FormControl fullWidth>
-                    <InputLabel id='log-name-label'>Log Name</InputLabel>
-                    <Select
-                      labelId='log-name-label-id'
-                      id='log-name-id'
-                      value={this.state.logName}
-                      onChange={this.onChangeLogName}
-                      label='Log Name'
-                    >
-                      <MenuItem key={0} value={'All'}>All</MenuItem>  
-                      {this.state.logNames.map((l, i) => (
-                        <MenuItem key={i+1} value={l.name}>{l.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={1}>
-                  <FormControl fullWidth>
-                    <InputLabel id='log-level-label'>Log Level</InputLabel>
-                    <Select
-                      labelId='log-level-label-id'
-                      id='log-level-id'
-                      value={this.state.logLevel}
-                      onChange={this.onChangeLogLevel}
-                      label='Log Level'
-                    >
-                      {this.logLevels.map((logLevel, i) => (
-                        <MenuItem key={i} value={logLevel}>{logLevel}</MenuItem>  
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                <Grid container spacing={3}>
+                  <Grid item xs={2}>
+                    <FormControl fullWidth>
+                      <InputLabel id='log-name-label'>Log Name</InputLabel>
+                      <Select
+                        labelId='log-name-label-id'
+                        id='log-name-id'
+                        value={this.state.logName}
+                        onChange={this.onChangeLogName}
+                        label='Log Name'
+                      >
+                        <MenuItem key={0} value={'All'}>All</MenuItem>
+                        {this.state.logNames.map((l, i) => (
+                          <MenuItem key={i + 1} value={l.name}>{l.name}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={1}>
+                    <FormControl fullWidth>
+                      <InputLabel id='log-level-label'>Log Level</InputLabel>
+                      <Select
+                        labelId='log-level-label-id'
+                        id='log-level-id'
+                        value={this.state.logLevel}
+                        onChange={this.onChangeLogLevel}
+                        label='Log Level'
+                      >
+                        {this.logLevels.map((logLevel, i) => (
+                          <MenuItem key={i} value={logLevel}>{logLevel}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                <Grid item xs={2}>
-                  <DateTimePicker
-                    label='From'
-                    value={this.state.from}
-                    onChange={this.onChangeFrom}
-                    renderInput={(params) => <TextField {...params} />}
-                    showTodayButton={true}
-                  />
-                </Grid>
-                <Grid item xs={2}>
-                  <DateTimePicker
-                    label='To'
-                    value={this.state.to}
-                    onChange={this.onChangeTo}
-                    renderInput={(params) => <TextField {...params} />}
-                  />
-                </Grid>
+                  <Grid item xs={2}>
+                    <DateTimePicker
+                      label='From'
+                      value={this.state.from}
+                      onChange={this.onChangeFrom}
+                      renderInput={(params) => <TextField {...params} />}
+                      showTodayButton={true}
+                    />
+                  </Grid>
+                  <Grid item xs={2}>
+                    <DateTimePicker
+                      label='To'
+                      value={this.state.to}
+                      onChange={this.onChangeTo}
+                      renderInput={(params) => <TextField {...params} />}
+                    />
+                  </Grid>
 
-                <Grid item xs={4}>
-                  <Card elevation={1} style={{backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%', borderRadius: 10}}>
-                  <FormControl component="fieldset">
-                    <Grid container spacing={1} border={0} style={{width: '500px'}}>
-                      <Grid item xs={1}>
-                        <FormLabel component='legend' style={{paddingLeft: 3, paddingTop: 14}}><Typography variant='body2' style={{fontWeight: 600}}>Last</Typography></FormLabel>
-                      </Grid>
-                      <Grid item xs={11}>
-                        <RadioGroup
-                          row
-                          aria-label="data-source-type"
-                          name="controlled-radio-buttons-group"
-                          value={this.state.preset}
-                          onChange={this.onChangePreset}
-                          sx={{
-                            paddingTop: 1,
-                            paddingBottom: 1,
-                          }}
-                        >
-                          {this.timePresets.map((p, i) => (
-                            <FormControlLabel
-                              key={i}
-                              value={p.seconds}
-                              control={<Radio
-                                sx={{
-                                  '& .MuiSvgIcon-root': {
-                                    fontSize: 14,
-                                  },
-                                  padding: .5,
-                                }}
+                  <Grid item xs={4}>
+                    <Card elevation={1} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%', borderRadius: 10 }}>
+                      <FormControl component="fieldset">
+                        <Grid container spacing={1} border={0} style={{ width: '500px' }}>
+                          <Grid item xs={1}>
+                            <FormLabel component='legend' style={{ paddingLeft: 3, paddingTop: 14 }}><Typography variant='body2' style={{ fontWeight: 600 }}>Last</Typography></FormLabel>
+                          </Grid>
+                          <Grid item xs={11}>
+                            <RadioGroup
+                              row
+                              aria-label="data-source-type"
+                              name="controlled-radio-buttons-group"
+                              value={this.state.preset}
+                              onChange={this.onChangePreset}
+                              sx={{
+                                paddingTop: 1,
+                                paddingBottom: 1,
+                              }}
+                            >
+                              {this.timePresets.map((p, i) => (
+                                <FormControlLabel
+                                  key={i}
+                                  value={p.seconds}
+                                  control={<Radio
+                                    sx={{
+                                      '& .MuiSvgIcon-root': {
+                                        fontSize: 14,
+                                      },
+                                      padding: .5,
+                                    }}
                                   />}
-                              label={<Typography variant='body2'>{p.label}</Typography>}
-                              labelPlacement='top'
-                            />
-                          ))}
-                        </RadioGroup>
-                      </Grid>
-                    </Grid>
-                  </FormControl>
-                  </Card>
-                </Grid>
+                                  label={<Typography variant='body2'>{p.label}</Typography>}
+                                  labelPlacement='top'
+                                />
+                              ))}
+                            </RadioGroup>
+                          </Grid>
+                        </Grid>
+                      </FormControl>
+                    </Card>
+                  </Grid>
 
-                <Grid item xs={1}>
-                  <Tooltip title="Refresh">
-                    <IconButton
-                      onClick={this.onClickRefresh}
-                    >
-                      <RefreshIcon sx={{color: 'green', fontSize: 40}} />
-                    </IconButton>
-                  </Tooltip>
+                  <Grid item xs={1}>
+                    <Tooltip title="Refresh">
+                      <IconButton
+                        onClick={this.onClickRefresh}
+                      >
+                        <RefreshIcon sx={{ color: 'green', fontSize: 40 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
                 </Grid>
-              </Grid>
 
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12}>
-            <Card elevation={2} style={{backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%'}}>
+            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
               <CardHeader title={<Typography variant='h6'>Logs</Typography>} />
               <CardContent>
                 <div
