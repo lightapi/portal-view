@@ -170,9 +170,12 @@ const RedirectWithQuery = ({ to }: { to: string }) => {
   return null;
 };
 
+const basename = import.meta.env.VITE_BASE_PATH || '/';
+
 const App = () => {
   return (
     <BrowserRouter
+      basename={basename}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <Routes>
