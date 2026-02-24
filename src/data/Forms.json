@@ -17309,6 +17309,138 @@
       "active"
     ]
   },
+  "createSkillTool": {
+    "formId": "createSkillTool",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSkillTool",
+        "version": "0.1.0",
+        "title": "Create Skill Tool Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Skill Tool Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "toolId": {
+          "title": "Tool Id",
+          "type": "string"
+        },
+        "config": {
+          "title": "Config",
+          "type": "string",
+          "default": "{}"
+        },
+        "accessLevel": {
+          "title": "Access Level",
+          "type": "string",
+          "default": "read",
+          "enum": [
+            "read",
+            "write",
+            "execute"
+          ]
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "toolId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "toolId",
+      {
+        "key": "config",
+        "type": "textarea"
+      },
+      "accessLevel"
+    ]
+  },
+  "updateSkillTool": {
+    "formId": "updateSkillTool",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSkillTool",
+        "version": "0.1.0",
+        "title": "Update Skill Tool Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Skill Tool Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string",
+          "readonly": true
+        },
+        "toolId": {
+          "title": "Tool Id",
+          "type": "string",
+          "readonly": true
+        },
+        "config": {
+          "title": "Config",
+          "type": "string"
+        },
+        "accessLevel": {
+          "title": "Access Level",
+          "type": "string",
+          "enum": [
+            "read",
+            "write",
+            "execute"
+          ]
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "toolId",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "toolId",
+      {
+        "key": "config",
+        "type": "textarea"
+      },
+      "accessLevel",
+      "active"
+    ]
+  },
   "createAgentSkill": {
     "formId": "createAgentSkill",
     "actions": [
