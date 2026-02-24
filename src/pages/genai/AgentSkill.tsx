@@ -29,8 +29,6 @@ type AgentSkillType = {
     skillId: string;
     config?: string;
     priority?: number;
-    timeoutSeconds?: number;
-    maxRetries?: number;
     sequenceId?: number;
     aggregateVersion: number;
     active: boolean;
@@ -183,8 +181,6 @@ export default function AgentSkill() {
             { accessorKey: 'skillId', header: 'Skill Id' },
             { accessorKey: 'config', header: 'Config' },
             { accessorKey: 'priority', header: 'Priority' },
-            { accessorKey: 'timeoutSeconds', header: 'Timeout Seconds' },
-            { accessorKey: 'maxRetries', header: 'Max Retries' },
             { accessorKey: 'sequenceId', header: 'Sequence Id' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {

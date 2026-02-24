@@ -127,7 +127,8 @@ import TaskInfo from "./pages/genai/TaskInfo";
 import TaskAsst from "./pages/genai/TaskAsst";
 import AuditLog from "./pages/genai/AuditLog";
 import Skill from "./pages/genai/Skill";
-import SkillParam from "./pages/genai/SkillParam";
+import Tool from "./pages/genai/Tool";
+import ToolParam from "./pages/genai/ToolParam";
 import SkillDependency from "./pages/genai/SkillDependency";
 import AgentSkill from "./pages/genai/AgentSkill";
 import AgentSessionHistory from "./pages/genai/AgentSessionHistory";
@@ -344,7 +345,8 @@ const App = () => {
           <Route path="genai/TaskAsst" element={<TaskAsst />} />
           <Route path="genai/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
-          <Route path="genai/SkillParam" element={<SkillParam />} />
+          <Route path="genai/Tool" element={<Tool />} />
+          <Route path="genai/ToolParam" element={<ToolParam />} />
           <Route path="genai/SkillDependency" element={<SkillDependency />} />
           <Route path="genai/AgentSkill" element={<AgentSkill />} />
           <Route path="genai/AgentSessionHistory" element={<AgentSessionHistory />} />

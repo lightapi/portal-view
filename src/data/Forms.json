@@ -16626,6 +16626,239 @@
       }
     ]
   },
+  "createTool": {
+    "formId": "createTool",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createTool",
+        "version": "0.1.0",
+        "title": "Create Tool Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Tool Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "implementationType": {
+          "title": "Implementation Type",
+          "type": "string",
+          "enum": [
+            "java",
+            "mcp_server",
+            "rest",
+            "python",
+            "javascript"
+          ]
+        },
+        "implementationClass": {
+          "title": "Implementation Class",
+          "type": "string"
+        },
+        "mcpServerName": {
+          "title": "MCP Server Name",
+          "type": "string"
+        },
+        "apiEndpoint": {
+          "title": "API Endpoint",
+          "type": "string"
+        },
+        "apiMethod": {
+          "title": "API Method",
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST"
+          ]
+        },
+        "scriptContent": {
+          "title": "Script Content",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        }
+      },
+      "required": [
+        "hostId",
+        "name",
+        "description"
+      ]
+    },
+    "form": [
+      "hostId",
+      "name",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      "implementationType",
+      {
+        "key": "implementationClass",
+        "condition": "model.implementationType === 'java'"
+      },
+      {
+        "key": "mcpServerName",
+        "condition": "model.implementationType === 'mcp_server'"
+      },
+      {
+        "key": "apiEndpoint",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "apiMethod",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "scriptContent",
+        "type": "textarea",
+        "rows": 10,
+        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      "version"
+    ]
+  },
+  "updateTool": {
+    "formId": "updateTool",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateTool",
+        "version": "0.1.0",
+        "title": "Update Tool Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Tool Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "toolId": {
+          "type": "string",
+          "title": "Tool Id",
+          "readonly": true
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "implementationType": {
+          "title": "Implementation Type",
+          "type": "string",
+          "enum": [
+            "java",
+            "mcp_server",
+            "rest",
+            "python",
+            "javascript"
+          ]
+        },
+        "implementationClass": {
+          "title": "Implementation Class",
+          "type": "string"
+        },
+        "mcpServerName": {
+          "title": "MCP Server Name",
+          "type": "string"
+        },
+        "apiEndpoint": {
+          "title": "API Endpoint",
+          "type": "string"
+        },
+        "apiMethod": {
+          "title": "API Method",
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST"
+          ]
+        },
+        "scriptContent": {
+          "title": "Script Content",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "toolId",
+        "name",
+        "description",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "toolId",
+      "name",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      "implementationType",
+      {
+        "key": "implementationClass",
+        "condition": "model.implementationType === 'java'"
+      },
+      {
+        "key": "mcpServerName",
+        "condition": "model.implementationType === 'mcp_server'"
+      },
+      {
+        "key": "apiEndpoint",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "apiMethod",
+        "condition": "model.implementationType === 'rest'"
+      },
+      {
+        "key": "scriptContent",
+        "type": "textarea",
+        "rows": 10,
+        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      "version",
+      "active"
+    ]
+  },
   "createSkill": {
     "formId": "createSkill",
     "actions": [
@@ -16664,40 +16897,6 @@
           "title": "Content Markdown",
           "type": "string"
         },
-        "implementationType": {
-          "title": "Implementation Type",
-          "type": "string",
-          "enum": [
-            "java",
-            "python",
-            "javascript",
-            "rest"
-          ]
-        },
-        "implementationClass": {
-          "title": "Implementation Class",
-          "type": "string"
-        },
-        "scriptContent": {
-          "title": "Script Content",
-          "type": "string"
-        },
-        "apiEndpoint": {
-          "title": "API Endpoint",
-          "type": "string"
-        },
-        "apiMethod": {
-          "title": "API Method",
-          "type": "string",
-          "enum": [
-            "GET",
-            "POST"
-          ]
-        },
-        "author": {
-          "title": "Author",
-          "type": "string"
-        },
         "version": {
           "title": "Version",
           "type": "string",
@@ -16707,8 +16906,7 @@
       "required": [
         "hostId",
         "name",
-        "contentMarkdown",
-        "implementationClass"
+        "contentMarkdown"
       ]
     },
     "form": [
@@ -16724,23 +16922,6 @@
         "type": "textarea",
         "rows": 10
       },
-      "implementationType",
-      "implementationClass",
-      {
-        "key": "scriptContent",
-        "type": "textarea",
-        "rows": 10,
-        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
-      },
-      {
-        "key": "apiEndpoint",
-        "condition": "model.implementationType === 'rest'"
-      },
-      {
-        "key": "apiMethod",
-        "condition": "model.implementationType === 'rest'"
-      },
-      "author",
       "version"
     ]
   },
@@ -16787,40 +16968,6 @@
           "title": "Content Markdown",
           "type": "string"
         },
-        "implementationType": {
-          "title": "Implementation Type",
-          "type": "string",
-          "enum": [
-            "java",
-            "python",
-            "javascript",
-            "rest"
-          ]
-        },
-        "implementationClass": {
-          "title": "Implementation Class",
-          "type": "string"
-        },
-        "scriptContent": {
-          "title": "Script Content",
-          "type": "string"
-        },
-        "apiEndpoint": {
-          "title": "API Endpoint",
-          "type": "string"
-        },
-        "apiMethod": {
-          "title": "API Method",
-          "type": "string",
-          "enum": [
-            "GET",
-            "POST"
-          ]
-        },
-        "author": {
-          "title": "Author",
-          "type": "string"
-        },
         "version": {
           "title": "Version",
           "type": "string",
@@ -16836,7 +16983,6 @@
         "skillId",
         "name",
         "contentMarkdown",
-        "implementationClass",
         "active"
       ]
     },
@@ -16854,42 +17000,25 @@
         "type": "textarea",
         "rows": 10
       },
-      "implementationType",
-      "implementationClass",
-      {
-        "key": "scriptContent",
-        "type": "textarea",
-        "rows": 10,
-        "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
-      },
-      {
-        "key": "apiEndpoint",
-        "condition": "model.implementationType === 'rest'"
-      },
-      {
-        "key": "apiMethod",
-        "condition": "model.implementationType === 'rest'"
-      },
-      "author",
       "version",
       "active"
     ]
   },
-  "createSkillParam": {
-    "formId": "createSkillParam",
+  "createToolParam": {
+    "formId": "createToolParam",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "genai",
-        "action": "createSkillParam",
+        "action": "createToolParam",
         "version": "0.1.0",
-        "title": "Create Skill Parameter Form",
+        "title": "Create Tool Parameter Form",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Create Skill Parameter Form",
+      "title": "Create Tool Parameter Form",
       "type": "object",
       "properties": {
         "hostId": {
@@ -16897,8 +17026,8 @@
           "title": "Host Id",
           "readonly": true
         },
-        "skillId": {
-          "title": "Skill Id",
+        "toolId": {
+          "title": "Tool Id",
           "type": "string"
         },
         "name": {
@@ -16941,14 +17070,14 @@
       },
       "required": [
         "hostId",
-        "skillId",
+        "toolId",
         "name",
         "paramType"
       ]
     },
     "form": [
       "hostId",
-      "skillId",
+      "toolId",
       "name",
       "paramType",
       "required",
@@ -16967,21 +17096,21 @@
       "orderIndex"
     ]
   },
-  "updateSkillParam": {
-    "formId": "updateSkillParam",
+  "updateToolParam": {
+    "formId": "updateToolParam",
     "actions": [
       {
         "host": "lightapi.net",
         "service": "genai",
-        "action": "updateSkillParam",
+        "action": "updateToolParam",
         "version": "0.1.0",
-        "title": "Update Skill Parameter Form",
+        "title": "Update Tool Parameter Form",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
-      "title": "Update Skill Parameter Form",
+      "title": "Update Tool Parameter Form",
       "type": "object",
       "properties": {
         "hostId": {
@@ -16994,8 +17123,8 @@
           "title": "Param Id",
           "readonly": true
         },
-        "skillId": {
-          "title": "Skill Id",
+        "toolId": {
+          "title": "Tool Id",
           "type": "string"
         },
         "name": {
@@ -17043,7 +17172,7 @@
       "required": [
         "hostId",
         "paramId",
-        "skillId",
+        "toolId",
         "name",
         "paramType",
         "active"
@@ -17052,7 +17181,7 @@
     "form": [
       "hostId",
       "paramId",
-      "skillId",
+      "toolId",
       "name",
       "paramType",
       "required",
@@ -17219,16 +17348,6 @@
           "type": "integer",
           "default": 0
         },
-        "timeoutSeconds": {
-          "title": "Timeout Seconds",
-          "type": "integer",
-          "default": 30
-        },
-        "maxRetries": {
-          "title": "Max Retries",
-          "type": "integer",
-          "default": 3
-        },
         "sequenceId": {
           "title": "Sequence Id",
           "type": "integer",
@@ -17251,8 +17370,6 @@
         "rows": 10
       },
       "priority",
-      "timeoutSeconds",
-      "maxRetries",
       "sequenceId"
     ]
   },
@@ -17297,16 +17414,6 @@
           "type": "integer",
           "default": 0
         },
-        "timeoutSeconds": {
-          "title": "Timeout Seconds",
-          "type": "integer",
-          "default": 30
-        },
-        "maxRetries": {
-          "title": "Max Retries",
-          "type": "integer",
-          "default": 3
-        },
         "sequenceId": {
           "title": "Sequence Id",
           "type": "integer",
@@ -17334,8 +17441,6 @@
         "rows": 10
       },
       "priority",
-      "timeoutSeconds",
-      "maxRetries",
       "sequenceId",
       "active"
     ]

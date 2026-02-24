@@ -18,15 +18,15 @@ import { apiPost } from '../../api/apiPost';
 import Cookies from 'universal-cookie';
 
 // --- Type Definitions ---
-type SkillParamApiResponse = {
-    skillParams: Array<SkillParamType>;
+type ToolParamApiResponse = {
+    toolParams: Array<ToolParamType>;
     total: number;
 };
 
-type SkillParamType = {
+type ToolParamType = {
     hostId: string;
     paramId: string;
-    skillId: string;
+    toolId: string;
     name: string;
     paramType: string;
     required: boolean;
@@ -44,13 +44,13 @@ interface UserState {
     host?: string;
 }
 
-export default function SkillParam() {
+export default function ToolParam() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<SkillParamType[]>([]);
+    const [data, setData] = useState<ToolParamType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
@@ -84,7 +84,7 @@ export default function SkillParam() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getSkillParam', version: '0.1.0',
+            host: 'lightapi.net', service: 'genai', action: 'getToolParam', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -100,8 +100,8 @@ export default function SkillParam() {
 
         try {
             const response = await fetch(url, { headers, credentials: 'include' });
-            const json = (await response.json()) as SkillParamApiResponse;
-            setData(json.skillParams || []);
+            const json = (await response.json()) as ToolParamApiResponse;
+            setData(json.toolParams || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -116,7 +116,7 @@ export default function SkillParam() {
     }, [fetchData]);
 
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<SkillParamType>) => {
+    const handleDelete = useCallback(async (row: MRT_Row<ToolParamType>) => {
         if (!window.confirm(`Are you sure you want to delete parameter: ${row.original.paramId}?`)) return;
 
         const originalData = [...data];
@@ -124,7 +124,7 @@ export default function SkillParam() {
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteSkillParam', version: '0.1.0',
+            host: 'lightapi.net', service: 'genai', action: 'deleteToolParam', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
@@ -142,12 +142,12 @@ export default function SkillParam() {
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<SkillParamType>) => {
+    const handleUpdate = useCallback(async (row: MRT_Row<ToolParamType>) => {
         const paramId = row.original.paramId;
         setIsUpdateLoading(paramId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshSkillParam', version: '0.1.0',
+            host: 'lightapi.net', service: 'genai', action: 'getFreshToolParam', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -163,7 +163,7 @@ export default function SkillParam() {
             }
 
             // Navigate with the fresh data
-            navigate('/app/form/updateSkillParam', {
+            navigate('/app/form/updateToolParam', {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -178,11 +178,11 @@ export default function SkillParam() {
     }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<SkillParamType>[]>(
+    const columns = useMemo<MRT_ColumnDef<ToolParamType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
             { accessorKey: 'paramId', header: 'Param Id' },
-            { accessorKey: 'skillId', header: 'Skill Id' },
+            { accessorKey: 'toolId', header: 'Tool Id' },
             { accessorKey: 'name', header: 'Name' },
             { accessorKey: 'paramType', header: 'Param Type' },
             {
@@ -253,7 +253,7 @@ export default function SkillParam() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: false,
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createSkillParam')}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createToolParam')}>
                 Create New Parameter
             </Button>
         ),
