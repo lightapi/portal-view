@@ -1,6 +1,6 @@
 import Cookies from "universal-cookie";
 
-export const apiPost = async ({ url, headers, body }) => {
+export const apiPost = async ({ url, headers, body }: { url: string; headers: Record<string, string>; body: any }) => {
   try {
     const abortController = new AbortController();
     const cookies = new Cookies();
@@ -25,16 +25,15 @@ export const apiPost = async ({ url, headers, body }) => {
       return { error: errorData }; // Return error data
     } else {
       const data = await response.json();
-      console.log(data);
       return { data }; // Return the successful data
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.name === "AbortError") {
       console.log("API Post request aborted");
       return { aborted: true };
     } else {
       console.error("API Post error:", error);
-      return { error: error.message }; // Return the error message
+      return { error: error.message };
     }
   } finally {
     // No need for explicit abort cleanup here

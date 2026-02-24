@@ -39,6 +39,9 @@ import NewspaperIcon from "@mui/icons-material/Newspaper";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import SchemaIcon from "@mui/icons-material/Schema";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
+import CorporateFareIcon from '@mui/icons-material/CorporateFare';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import { Drawer, IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/styles";
 import classNames from "classnames";
@@ -153,7 +156,14 @@ const structure = [
   //     { label: 'YAML Normalize', link: '/app/tool/yamlNormalize' },
   //   ],
   // },
-  { id: 90, type: "divider", role: "admin" },
+  { id: 85, type: "divider", role: "admin" },
+  {
+    id: 90,
+    label: "Org Admin",
+    role: "admin",
+    link: "/app/org/OrgAdmin",
+    icon: <CorporateFareIcon />,
+  },
   {
     id: 91,
     label: "Host Admin",
@@ -196,6 +206,12 @@ const structure = [
     role: "admin",
     link: "/app/oauth/authProvider",
     icon: <SecurityIcon />,
+    children: [
+      { label: "Auth Provider", link: "/app/oauth/authProvider" },
+      { label: "Auth Client", link: "/app/oauth/authClient" },
+      { label: "Auth Code", link: "/app/oauth/authCode" },
+      { label: "Refresh Token", link: "/app/oauth/refreshToken" },
+    ],
   },
   {
     id: 100,
@@ -248,6 +264,32 @@ const structure = [
   },
   {
     id: 116,
+    label: "GenAI Admin",
+    role: "admin",
+    link: "/app/genai/WfDefinition",
+    icon: <PrecisionManufacturingIcon />,
+    children: [
+      { label: "Wf Definition", link: "/app/genai/WfDefinition" },
+      { label: "Worklist", link: "/app/genai/Worklist" },
+      { label: "Process Info", link: "/app/genai/ProcessInfo" },
+      { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
+      { label: "Task Info", link: "/app/genai/TaskInfo" },
+      { label: "Task Asst", link: "/app/genai/TaskAsst" },
+      { label: "Audit Log", link: "/app/genai/AuditLog" },
+      { label: "Skill", link: "/app/genai/Skill" },
+      { label: "Tool", link: "/app/genai/Tool" },
+      { label: "Tool Param", link: "/app/genai/ToolParam" },
+      { label: "Skill Dependency", link: "/app/genai/SkillDependency" },
+      { label: "Agent Skill", link: "/app/genai/AgentSkill" },
+      { label: "Agent Session", link: "/app/genai/AgentSessionHistory" },
+      { label: "Session Memory", link: "/app/genai/SessionMemory" },
+      { label: "User Memory", link: "/app/genai/UserMemory" },
+      { label: "Agent Memory", link: "/app/genai/AgentMemory" },
+      { label: "Org Memory", link: "/app/genai/OrgMemory" },
+    ],
+  },
+  {
+    id: 117,
     label: "Access Admin",
     role: "admin",
     link: "/app/access/admin",
@@ -272,6 +314,13 @@ const structure = [
     role: "admin",
     link: "/app/rule/admin",
     icon: <RuleIcon />,
+  },
+  {
+    id: 123,
+    label: "Tag Admin",
+    role: "admin",
+    link: "/app/tag/admin",
+    icon: <LocalOfferIcon />,
   },
   {
     id: 125,
@@ -331,12 +380,6 @@ const structure = [
     role: "admin",
     link: "/app/schema/admin",
     icon: <SchemaIcon />,
-    children: [
-      { label: "List", link: "/app/schema/adminList" },
-      { label: "Create", link: "/app/form/createJsonSchema" },
-      { label: "Update", link: "/app/schema/update" },
-      { label: "Delete", link: "/app/schema/delete" },
-    ],
   },
   {
     id: 150,

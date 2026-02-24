@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Navigate, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Navigate, Route, useLocation, useNavigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -18,28 +18,26 @@ import MerchantOrders from "./pages/profile/MerchantOrders";
 import UserOrders from "./pages/profile/UserOrders";
 import PublishApi from "./pages/publish/PublishApi";
 import User from "./pages/user/User";
+import UserHost from "./pages/user/UserHost";
 import Service from "./pages/service/Service";
-import ServiceDelete from "./pages/service/ServiceDelete";
-import ServiceDetail from "./pages/service/ServiceDetail";
+import ApiDetail from "./pages/service/ApiDetail";
 import OpenapiEditor from "./pages/service/OpenapiEditor";
 import HybridEditor from "./pages/service/HybridEditor";
 import GraphqlEditor from "./pages/service/GraphqlEditor";
-import SubmitSpec from "./pages/service/SubmitSpec";
 import ServiceEndpoint from "./pages/service/ServiceEndpoint";
 import ListScope from "./pages/service/ListScope";
 import ListRule from "./pages/service/ListRule";
 import ClientApp from "./pages/client/ClientApp";
-import Client from "./pages/oauth/Client";
+import AuthClient from "./pages/oauth/AuthClient";
 import RefreshToken from "./pages/oauth/RefreshToken";
-import RefreshTokenDelete from "./pages/oauth/RefreshTokenDelete";
-import RefreshTokenDetail from "./pages/oauth/RefreshTokenDetail";
+import AuthCode from "./pages/oauth/AuthCode";
 import RefTableAdmin from "./pages/ref/RefTableAdmin";
 import RefValue from "./pages/ref/RefValue";
 import RefLocale from "./pages/ref/RefLocale";
 import RelationTypeAdmin from "./pages/ref/RelationTypeAdmin";
 import RefRelation from "./pages/ref/RefRelation";
-import ClientDelete from "./pages/oauth/ClientDelete";
 import Category from "./pages/category/Category";
+import TagAdmin from "./pages/tag/TagAdmin";
 import BlogAdmin from "./pages/blog/BlogAdmin";
 import BlogDelete from "./pages/blog/BlogDelete";
 import BlogItem from "./pages/blog/BlogItem";
@@ -47,13 +45,8 @@ import ErrorAdmin from "./pages/error/ErrorAdmin";
 import ErrorDelete from "./pages/error/ErrorDelete";
 import ErrorItem from "./pages/error/ErrorItem";
 import SchemaAdmin from "./pages/schema/SchemaAdmin";
-import SchemaDelete from "./pages/schema/SchemaDelete";
-import SchemaList from "./pages/schema/SchemaList";
-import SchemaItem from "./pages/schema/SchemaItem";
 import ScheduleAdmin from "./pages/schedule/ScheduleAdmin";
 import RuleAdmin from "./pages/rule/RuleAdmin";
-import RuleDelete from "./pages/rule/RuleDelete";
-import RuleItem from "./pages/rule/RuleItem";
 import CityRegistry from "./pages/covid/CityRegistry";
 import CityProfile from "./pages/covid/CityProfile";
 import DeleteCity from "./pages/covid/DeleteCity";
@@ -75,31 +68,8 @@ import ConfigInstanceApi from "./pages/config/ConfigInstanceApi";
 import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
+import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
-import Properties from "./pages/config/Properties";
-import GlobalValues from "./pages/config/GlobalValues";
-import GlobalValueDelete from "./pages/config/GlobalValueDelete";
-import GlobalFiles from "./pages/config/GlobalFiles";
-import GlobalFileUpload from "./pages/config/GlobalFileUpload";
-import GlobalFileUpdate from "./pages/config/GlobalFileUpdate";
-import GlobalFileDelete from "./pages/config/GlobalFileDelete";
-import GlobalCerts from "./pages/config/GlobalCerts";
-import GlobalCertUpload from "./pages/config/GlobalCertUpload";
-import GlobalCertUpdate from "./pages/config/GlobalCertUpdate";
-import GlobalCertDelete from "./pages/config/GlobalCertDelete";
-import Services from "./pages/config/Services";
-import ServiceFiles from "./pages/config/ServiceFiles";
-import ServiceFileUpload from "./pages/config/ServiceFileUpload";
-import ServiceFileUpdate from "./pages/config/ServiceFileUpdate";
-import ServiceFileDelete from "./pages/config/ServiceFileDelete";
-import ServiceCerts from "./pages/config/ServiceCerts";
-import ServiceCertUpload from "./pages/config/ServiceCertUpload";
-import ServiceCertUpdate from "./pages/config/ServiceCertUpdate";
-import ServiceCertDelete from "./pages/config/ServiceCertDelete";
-import ServiceProperties from "./pages/config/ServiceProperties";
-import DeleteProperty from "./pages/config/DeleteProperty";
-import DeleteService from "./pages/config/DeleteService";
-import DeleteServiceProperty from "./pages/config/DeleteServiceProperty";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
@@ -107,8 +77,10 @@ import LogViewer from "./pages/controller/LogViewer";
 import LoggerConfig from "./pages/controller/LoggerConfig";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
+import OrgAdmin from "./pages/org/OrgAdmin";
 import Host from "./pages/host/Host";
 import HostAdmin from "./pages/host/HostAdmin";
+import HostUser from "./pages/host/HostUser";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
@@ -117,14 +89,22 @@ import RoleColFilter from "./pages/access/RoleColFilter";
 import GroupAdmin from "./pages/access/GroupAdmin";
 import GroupPermission from "./pages/access/GroupPermission";
 import GroupUser from "./pages/access/GroupUser";
+import GroupRowFilter from "./pages/access/GroupRowFilter";
+import GroupColFilter from "./pages/access/GroupColFilter";
 import AttributeAdmin from "./pages/access/AttributeAdmin";
 import AttributePermission from "./pages/access/AttributePermission";
 import AttributeUser from "./pages/access/AttributeUser";
+import AttributeRowFilter from "./pages/access/AttributeRowFilter";
+import AttributeColFilter from "./pages/access/AttributeColFilter";
 import PositionAdmin from "./pages/access/PositionAdmin";
 import PositionPermission from "./pages/access/PositionPermission";
 import PositionUser from "./pages/access/PositionUser";
+import PositionRowFilter from "./pages/access/PositionRowFilter";
+import PositionColFilter from "./pages/access/PositionColFilter";
 import AuthProvider from "./pages/oauth/AuthProvider";
 import ProviderKey from "./pages/oauth/ProviderKey";
+import ProviderApi from "./pages/oauth/ProviderApi";
+import ProviderClient from "./pages/oauth/ProviderClient";
 import ProductAdmin from "./pages/product/ProductAdmin";
 import ProductEnvironment from "./pages/product/ProductEnvironment";
 import ProductPipeline from "./pages/product/ProductPipeline";
@@ -139,15 +119,68 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import WfDefinition from "./pages/genai/WfDefinition";
+import Worklist from "./pages/genai/Worklist";
+import ProcessInfo from "./pages/genai/ProcessInfo";
+import AgentDefinition from "./pages/genai/AgentDefinition";
+import TaskInfo from "./pages/genai/TaskInfo";
+import TaskAsst from "./pages/genai/TaskAsst";
+import AuditLog from "./pages/genai/AuditLog";
+import Skill from "./pages/genai/Skill";
+import Tool from "./pages/genai/Tool";
+import ToolParam from "./pages/genai/ToolParam";
+import SkillDependency from "./pages/genai/SkillDependency";
+import AgentSkill from "./pages/genai/AgentSkill";
+import AgentSessionHistory from "./pages/genai/AgentSessionHistory";
+import SessionMemory from "./pages/genai/SessionMemory";
+import UserMemory from "./pages/genai/UserMemory";
+import AgentMemory from "./pages/genai/AgentMemory";
+import OrgMemory from "./pages/genai/OrgMemory";
+import { useEffect } from "react";
+
+const RedirectWithQuery = ({ to }: { to: string }) => {
+  const { search } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if there is a hash that looks like a path (e.g. #/app/dashboard?state=...)
+    // This happens if variables passed back from OAuth provider are in the hash or if using HashRouter style links
+    const hash = window.location.hash;
+
+    // Check if we are already at the target path (to avoid loops or double redirects)
+    // Note: window.location.pathname includes the leading slash
+    if (window.location.pathname === to) {
+      // console.log('RedirectWithQuery: already at target path', to, '- aborting redirect to prevent loop/stripping params.');
+      return;
+    }
+
+    let target = to + search;
+
+    if (hash && hash.startsWith('#/')) {
+      target = hash.substring(1); // Remove the #
+      // console.log('RedirectWithQuery: detected hash path, using it as target:', target);
+    } else {
+      // console.log('RedirectWithQuery: no hash path detected, using default:', target);
+    }
+
+    // console.log('RedirectWithQuery: window.location.href=', window.location.href);
+    navigate(target, { replace: true });
+  }, [to, search, navigate]);
+
+  return null;
+};
+
+const basename = import.meta.env.VITE_BASE_PATH || '/';
 
 const App = () => {
   return (
     <BrowserRouter
+      basename={basename}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <Routes>
-        {/* Redirect from root to dashboard */}
-        <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+        {/* Redirect from root to dashboard preserving query parameters */}
+        <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
 
         {/* Layout routes */}
         <Route path="/app/*" element={<Layout />}>
@@ -168,14 +201,13 @@ const App = () => {
           <Route path="userOrders" element={<UserOrders />} />
           <Route path="publishApi" element={<PublishApi />} />
           <Route path="user" element={<User />} />
+          <Route path="userHost" element={<UserHost />} />
           <Route path="service/:apiType" element={<Service />} />
           <Route path="service/admin" element={<Service />} />
-          <Route path="deleteService" element={<ServiceDelete />} />
-          <Route path="serviceDetail" element={<ServiceDetail />} />
+          <Route path="apiDetail" element={<ApiDetail />} />
           <Route path="openapiEditor" element={<OpenapiEditor />} />
           <Route path="hybridEditor" element={<HybridEditor />} />
           <Route path="graphqlEditor" element={<GraphqlEditor />} />
-          <Route path="submitSpec" element={<SubmitSpec />} />
           <Route path="serviceEndpoint" element={<ServiceEndpoint />} />
           <Route path="listScope" element={<ListScope />} />
           <Route path="listRule" element={<ListRule />} />
@@ -187,23 +219,25 @@ const App = () => {
           <Route path="access/groupAdmin" element={<GroupAdmin />} />
           <Route path="access/groupPermission" element={<GroupPermission />} />
           <Route path="access/groupUser" element={<GroupUser />} />
+          <Route path="access/groupRowFilter" element={<GroupRowFilter />} />
+          <Route path="access/groupColFilter" element={<GroupColFilter />} />
           <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
           <Route
             path="access/attributePermission"
             element={<AttributePermission />}
           />
           <Route path="access/attributeUser" element={<AttributeUser />} />
+          <Route path="access/attributeRowFilter" element={<AttributeRowFilter />} />
+          <Route path="access/attributeColFilter" element={<AttributeColFilter />} />
           <Route path="access/positionAdmin" element={<PositionAdmin />} />
           <Route
             path="access/positionPermission"
             element={<PositionPermission />}
           />
           <Route path="access/positionUser" element={<PositionUser />} />
+          <Route path="access/positionRowFilter" element={<PositionRowFilter />} />
+          <Route path="access/positionColFilter" element={<PositionColFilter />} />
           <Route path="clientApp" element={<ClientApp />} />
-          <Route path="client" element={<Client />} />
-          <Route path="refreshToken" element={<RefreshToken />} />
-          <Route path="deleteRefreshToken" element={<RefreshTokenDelete />} />
-          <Route path="refreshTokenDetail" element={<RefreshTokenDetail />} />
           <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
           <Route path="ref/value" element={<RefValue />} />
           <Route path="ref/locale" element={<RefLocale />} />
@@ -211,23 +245,22 @@ const App = () => {
           <Route path="ref/relation" element={<RefRelation />} />
           <Route path="oauth/authProvider" element={<AuthProvider />} />
           <Route path="oauth/providerKey" element={<ProviderKey />} />
-          <Route path="oauth/client" element={<Client />} />
-          <Route path="oauth/deleteClient" element={<ClientDelete />} />
+          <Route path="oauth/providerApi" element={<ProviderApi />} />
+          <Route path="oauth/providerClient" element={<ProviderClient />} />
+          <Route path="oauth/authClient" element={<AuthClient />} />
+          <Route path="oauth/refreshToken" element={<RefreshToken />} />
+          <Route path="oauth/authCode" element={<AuthCode />} />
           <Route path="category/admin" element={<Category />} />
+          <Route path="tag/admin" element={<TagAdmin />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />
           <Route path="blog/deleteBlog" element={<BlogDelete />} />
           <Route path="blog/:host/:id" element={<BlogItem />} />
           <Route path="error/adminList" element={<ErrorAdmin />} />
           <Route path="error/deleteBlog" element={<ErrorDelete />} />
           <Route path="error/:host/:errorCode" element={<ErrorItem />} />
-          <Route path="schema/adminList" element={<SchemaAdmin />} />
+          <Route path="schema/admin" element={<SchemaAdmin />} />
           <Route path="schedule/admin" element={<ScheduleAdmin />} />
-          <Route path="schema/deleteSchema" element={<SchemaDelete />} />
-          <Route path="schema/schemaList" element={<SchemaList />} />
-          <Route path="schema/:host/:id" element={<SchemaItem />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
-          <Route path="rule/deleteRule" element={<RuleDelete />} />
-          <Route path="rule/:host/:id" element={<RuleItem />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />
           <Route path="covid/deleteCity" element={<DeleteCity />} />
@@ -271,74 +304,9 @@ const App = () => {
             path="config/configDeploymentInstance"
             element={<ConfigDeploymentInstance />}
           />
-          <Route path="config/properties" element={<Properties />} />
-          <Route path="config/globalValues" element={<GlobalValues />} />
           <Route
-            path="config/globalValueDelete"
-            element={<GlobalValueDelete />}
-          />
-          <Route path="config/globalFiles" element={<GlobalFiles />} />
-          <Route
-            path="config/globalFileUpload"
-            element={<GlobalFileUpload />}
-          />
-          <Route
-            path="config/globalFileUpdate"
-            element={<GlobalFileUpdate />}
-          />
-          <Route
-            path="config/globalFileDelete"
-            element={<GlobalFileDelete />}
-          />
-          <Route path="config/globalCerts" element={<GlobalCerts />} />
-          <Route
-            path="config/globalCertUpload"
-            element={<GlobalCertUpload />}
-          />
-          <Route
-            path="config/globalCertUpdate"
-            element={<GlobalCertUpdate />}
-          />
-          <Route
-            path="config/globalCertDelete"
-            element={<GlobalCertDelete />}
-          />
-          <Route path="config/services" element={<Services />} />
-          <Route path="config/serviceFiles" element={<ServiceFiles />} />
-          <Route
-            path="config/serviceFileUpload"
-            element={<ServiceFileUpload />}
-          />
-          <Route
-            path="config/serviceFileUpdate"
-            element={<ServiceFileUpdate />}
-          />
-          <Route
-            path="config/serviceFileDelete"
-            element={<ServiceFileDelete />}
-          />
-          <Route path="config/serviceCerts" element={<ServiceCerts />} />
-          <Route
-            path="config/serviceCertUpload"
-            element={<ServiceCertUpload />}
-          />
-          <Route
-            path="config/serviceCertUpdate"
-            element={<ServiceCertUpdate />}
-          />
-          <Route
-            path="config/serviceCertDelete"
-            element={<ServiceCertDelete />}
-          />
-          <Route
-            path="config/serviceProperties"
-            element={<ServiceProperties />}
-          />
-          <Route path="config/deleteProperty" element={<DeleteProperty />} />
-          <Route path="config/deleteService" element={<DeleteService />} />
-          <Route
-            path="config/deleteServiceProperty"
-            element={<DeleteServiceProperty />}
+            path="config/configSnapshot"
+            element={<ConfigSnapshot />}
           />
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
@@ -348,8 +316,10 @@ const App = () => {
           <Route path="controller/loggerConfig" element={<LoggerConfig />} />
           <Route path="controller/logContent" element={<LogContent />} />
           <Route path="controller/chaos" element={<ChaosMonkey />} />
+          <Route path="org/OrgAdmin" element={<OrgAdmin />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
+          <Route path="host/hostUser" element={<HostUser />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="product/environment" element={<ProductEnvironment />} />
           <Route path="product/pipeline" element={<ProductPipeline />} />
@@ -370,6 +340,23 @@ const App = () => {
             element={<DeploymentAdmin />}
           />
           <Route path="deployment/instance" element={<DeploymentInstance />} />
+          <Route path="genai/WfDefinition" element={<WfDefinition />} />
+          <Route path="genai/Worklist" element={<Worklist />} />
+          <Route path="genai/ProcessInfo" element={<ProcessInfo />} />
+          <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
+          <Route path="genai/TaskInfo" element={<TaskInfo />} />
+          <Route path="genai/TaskAsst" element={<TaskAsst />} />
+          <Route path="genai/AuditLog" element={<AuditLog />} />
+          <Route path="genai/Skill" element={<Skill />} />
+          <Route path="genai/Tool" element={<Tool />} />
+          <Route path="genai/ToolParam" element={<ToolParam />} />
+          <Route path="genai/SkillDependency" element={<SkillDependency />} />
+          <Route path="genai/AgentSkill" element={<AgentSkill />} />
+          <Route path="genai/AgentSessionHistory" element={<AgentSessionHistory />} />
+          <Route path="genai/SessionMemory" element={<SessionMemory />} />
+          <Route path="genai/UserMemory" element={<UserMemory />} />
+          <Route path="genai/AgentMemory" element={<AgentMemory />} />
+          <Route path="genai/OrgMemory" element={<OrgMemory />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

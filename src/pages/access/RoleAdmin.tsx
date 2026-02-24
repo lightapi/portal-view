@@ -1,295 +1,265 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
-import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
-import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
-import CameraRollIcon from "@mui/icons-material/CameraRoll";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import CameraRollIcon from '@mui/icons-material/CameraRoll';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const navigate = useNavigate();
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleUpdate = (role) => {
-    navigate("/app/form/updateRole", { state: { data: { ...role } } });
-  };
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm("Are you sure you want to delete the role for the host?")
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "role",
-        action: "deleteRole",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  const handleRolePermission = (roleId) => {
-    navigate("/app/access/rolePermission", { state: { data: { roleId } } });
-  };
-
-  const handleRoleRowFilter = (roleId) => {
-    navigate("/app/access/roleRowFilter", { state: { data: { roleId } } });
-  };
-
-  const handleRoleColFilter = (roleId) => {
-    navigate("/app/access/roleColFilter", { state: { data: { roleId } } });
-  };
-
-  const handleRoleUser = (roleId) => {
-    navigate("/app/access/roleUser", { state: { data: { roleId } } });
-  };
-
-  return (
-    <TableRow className={classes.root}>
-      <TableCell align="left">{row.roleId}</TableCell>
-      <TableCell align="left">{row.roleDesc}</TableCell>
-      <TableCell align="right">
-        <SystemUpdateIcon onClick={() => handleUpdate(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-      <TableCell align="right">
-        <DoNotTouchIcon onClick={() => handleRolePermission(row.roleId)} />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowDownIcon
-          onClick={() => handleRoleRowFilter(row.roleId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <KeyboardDoubleArrowRightIcon
-          onClick={() => handleRoleColFilter(row.roleId)}
-        />
-      </TableCell>
-      <TableCell align="right">
-        <CameraRollIcon onClick={() => handleRoleUser(row.roleId)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    roleId: PropTypes.string.isRequired,
-    roleDesc: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
-  }).isRequired,
+// --- Type Definitions ---
+type RoleApiResponse = {
+  roles: Array<RoleType>;
+  total: number;
 };
 
-function RoleList(props) {
-  const { roles } = props;
-  return (
-    <TableBody>
-      {roles && roles.length > 0 ? (
-        roles.map((role, index) => <Row key={index} row={role} />)
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No roles found.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-RoleList.propTypes = {
-  roles: PropTypes.arrayOf(PropTypes.object).isRequired,
+type RoleType = {
+  hostId: string;
+  roleId: string;
+  roleDesc?: string;
+  aggregateVersion?: number;
+  updateUser: string;
+  updateTs: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function RoleAdmin() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
-  const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [roleId, setRoleId] = useState("");
-  const debouncedRoleId = useDebounce(roleId, 1000);
-  const [roleDesc, setRoleDesc] = useState("");
-  const debouncedRoleDesc = useDebounce(roleDesc, 1000);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
-  const [roles, setRoles] = useState([]);
+  const { host } = useUserState() as UserState;
 
-  const handleRoleIdChange = (event) => {
-    setRoleId(event.target.value);
-  };
-  const handleRoleDescChange = (event) => {
-    setRoleDesc(event.target.value);
-  };
+  // Data and fetching state
+  const [data, setData] = useState<RoleType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setRoles([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [
+      { id: 'active', value: 'true' }
+    ]
+  );
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
       } else {
-        const data = await response.json();
-        setRoles(data.roles);
-        setTotal(data.total);
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setRoles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
+    });
 
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "role",
-      action: "getRole",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'role', action: 'getRole', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        roleId: debouncedRoleId,
-        roleDesc: debouncedRoleDesc,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedRoleId,
-    debouncedRoleDesc,
-    fetchData, // Add fetchData to dependency array of useEffect
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as RoleApiResponse;
+      setData(json.roles || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<RoleType>) => {
+    if (!window.confirm(`Are you sure you want to delete role: ${row.original.roleId}?`)) return;
 
-  const handleCreate = () => {
-    navigate("/app/form/createRole");
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(role => role.roleId !== row.original.roleId));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Role Id"
-                    value={roleId}
-                    onChange={handleRoleIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Role Desc"
-                    value={roleDesc}
-                    onChange={handleRoleDescChange}
-                  />
-                </TableCell>
-                <TableCell align="right">Update</TableCell>
-                <TableCell align="right">Delete</TableCell>
-                <TableCell align="right">Role Permission</TableCell>
-                <TableCell align="right">Role Row Filter</TableCell>
-                <TableCell align="right">Role Col Filter</TableCell>
-                <TableCell align="right">Role User</TableCell>
-              </TableRow>
-            </TableHead>
-            <RoleList roles={roles} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
-    );
-  }
+    const cmd = {
+      host: 'lightapi.net', service: 'role', action: 'deleteRole', version: '0.1.0',
+      data: row.original,
+    };
 
-  return <div className="App">{content}</div>;
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete role. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete role due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  const handleUpdate = useCallback(async (row: MRT_Row<RoleType>) => {
+    const roleId = row.original.roleId;
+    setIsUpdateLoading(roleId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'role', action: 'getFreshRole', version: '0.1.0',
+      data: row.original,
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const cookies = new Cookies();
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
+
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const freshData = await response.json();
+      console.log("freshData", freshData);
+      if (!response.ok) {
+        throw new Error(freshData.description || 'Failed to fetch latest role data.');
+      }
+
+      // Navigate with the fresh data
+      navigate('/app/form/updateRole', {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
+      });
+    } catch (error) {
+      console.error("Failed to fetch role for update:", error);
+      alert("Could not load the latest role data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [host, navigate, location.pathname]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<RoleType>[]>(
+    () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'roleId', header: 'Role Id' },
+      { accessorKey: 'roleDesc', header: 'Description' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Update Role">
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={isUpdateLoading === row.original.roleId}
+            >
+              {isUpdateLoading === row.original.roleId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </Tooltip>
+        )
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Delete Role"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+        ),
+      },
+      {
+        id: 'permissions', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Tooltip title="Role Permissions"><IconButton onClick={() => navigate('/app/access/rolePermission', { state: { data: { roleId: row.original.roleId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
+            <Tooltip title="Role Row Filters"><IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: { data: { roleId: row.original.roleId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
+            <Tooltip title="Role Column Filters"><IconButton onClick={() => navigate('/app/access/roleColFilter', { state: { data: { roleId: row.original.roleId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
+            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/roleUser', { state: { data: { roleId: row.original.roleId } } })}><CameraRollIcon /></IconButton></Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [handleDelete, navigate],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => row.roleId,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRole')}>
+        Create New Role
+      </Button>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }

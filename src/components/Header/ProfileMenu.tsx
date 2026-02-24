@@ -8,10 +8,8 @@ import {
   getOrders,
   getPayment,
   getProfile,
-  switchHostForm,
-  createOrgForm,
-  updateOrgForm,
-  deleteOrgForm,
+  userHost,
+  createOrg,
   signOut,
   signUp,
   updateRoles,
@@ -26,10 +24,14 @@ export default function ProfileMenu({ classes }) {
   const navigate = useNavigate();
 
   const signIn = () => {
+    // Generate a random state for CSRF protection
+    const state = Math.random().toString(36).substring(7);
+    localStorage.setItem('portal_auth_state', state);
+
     const defaultUrl =
-      "https://devsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=customer&state=1222";
+      `https://locsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=C&state=${state}`;
     const signInUrl = import.meta.env.VITE_SIGNIN_URL
-      ? `${import.meta.env.VITE_SIGNIN_URL}&user_type=customer&state=1222`
+      ? `${import.meta.env.VITE_SIGNIN_URL}&user_type=C&state=${state}`
       : defaultUrl;
     window.location.href = signInUrl;
   };
@@ -39,7 +41,7 @@ export default function ProfileMenu({ classes }) {
   };
 
   const handleMenuItemClick = (action) => {
-    action(userDispatch, navigate);
+    action(userDispatch, navigate, userId);
     handleMenuClose();
   };
 
@@ -114,7 +116,7 @@ export default function ProfileMenu({ classes }) {
                 classes.profileMenuItem,
                 classes.headerMenuItem,
               )}
-              onClick={() => handleMenuItemClick(switchHostForm)}
+              onClick={() => handleMenuItemClick(userHost)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Switch Host
             </MenuItem>
@@ -123,32 +125,10 @@ export default function ProfileMenu({ classes }) {
                 classes.profileMenuItem,
                 classes.headerMenuItem,
               )}
-              onClick={() => handleMenuItemClick(createOrgForm)}
+              onClick={() => handleMenuItemClick(createOrg)}
             >
               <AccountIcon className={classes.profileMenuIcon} /> Claim Org
             </MenuItem>
-            {roles.includes("org-admin") && (
-              <MenuItem
-                className={classNames(
-                  classes.profileMenuItem,
-                  classes.headerMenuItem,
-                )}
-                onClick={() => handleMenuItemClick(updateOrgForm)}
-              >
-                <AccountIcon className={classes.profileMenuIcon} /> Update Org
-              </MenuItem>
-            )}
-            {roles.includes("org-admin") && (
-              <MenuItem
-                className={classNames(
-                  classes.profileMenuItem,
-                  classes.headerMenuItem,
-                )}
-                onClick={() => handleMenuItemClick(deleteOrgForm)}
-              >
-                <AccountIcon className={classes.profileMenuIcon} /> Delete Org
-              </MenuItem>
-            )}
             <MenuItem
               className={classNames(
                 classes.profileMenuItem,

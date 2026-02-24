@@ -1,287 +1,225 @@
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import TablePagination from "@mui/material/TablePagination";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
-import TableCell from "@mui/material/TableCell";
-import TableRow from "@mui/material/TableRow";
-import TableBody from "@mui/material/TableBody"; // Import TableBody
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js";
-import { useLocation, useNavigate } from "react-router-dom";
-import Cookies from "universal-cookie";
-import { useUserState } from "../../contexts/UserContext";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
-import { apiPost } from "../../api/apiPost";
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
+  type MRT_PaginationState,
+  type MRT_SortingState,
+  type MRT_Row,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
+import Cookies from 'universal-cookie';
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
-
-function Row(props) {
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const handleDelete = async (row) => {
-    if (
-      window.confirm("Are you sure you want to delete the group for the api?")
-    ) {
-      const cmd = {
-        host: "lightapi.net",
-        service: "group",
-        action: "deleteGroupPermission",
-        version: "0.1.0",
-        data: row,
-      };
-
-      const result = await apiPost({
-        url: "/portal/command",
-        headers: {},
-        body: cmd,
-      });
-      if (result.data) {
-        // Refresh the data after successful deletion
-        window.location.reload();
-      } else if (result.error) {
-        console.error("Api Error", result.error);
-      }
-    }
-  };
-
-  return (
-    <TableRow className={classes.root}>
-      <TableCell align="left">{row.groupId}</TableCell>
-      <TableCell align="left">{row.apiId}</TableCell>
-      <TableCell align="left">{row.apiVersion}</TableCell>
-      <TableCell align="left">{row.endpoint}</TableCell>
-      <TableCell align="right">
-        <DeleteForeverIcon onClick={() => handleDelete(row)} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    groupId: PropTypes.string.isRequired,
-    apiId: PropTypes.string,
-    apiVersion: PropTypes.string,
-    endpoint: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
-  }).isRequired,
+// --- Type Definitions ---
+type GroupPermissionApiResponse = {
+  groupPermissions: Array<GroupPermissionType>;
+  total: number;
 };
 
-function GroupPermissionList(props) {
-  const { groupPermissions } = props;
-  return (
-    <TableBody>
-      {groupPermissions && groupPermissions.length > 0 ? (
-        groupPermissions.map((groupPermission, index) => (
-          <Row key={index} row={groupPermission} />
-        ))
-      ) : (
-        <TableRow>
-          <TableCell colSpan={2} align="center">
-            No permissions assigned to this group.
-          </TableCell>
-        </TableRow>
-      )}
-    </TableBody>
-  );
-}
-
-GroupPermissionList.propTypes = {
-  groupPermissions: PropTypes.arrayOf(PropTypes.object).isRequired,
+type GroupPermissionType = {
+  hostId: string;
+  groupId: string;
+  apiVersionId: string;
+  apiId: string;
+  apiVersion: string;
+  endpointId: string;
+  endpoint: string;
+  aggregateVersion?: number;
+  updateUser?: string;
+  updateTs?: string;
+  active: boolean;
 };
+
+interface UserState {
+  host?: string;
+}
 
 export default function GroupPermission() {
-  const classes = useRowStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const data = location.state?.data;
-  const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [groupId, setGroupId] = useState(() => data?.groupId || "");
-  const debouncedGroupId = useDebounce(groupId, 1000);
-  const [apiId, setApiId] = useState(() => data?.apiId || "");
-  const debouncedApiId = useDebounce(apiId, 1000);
-  const [apiVersion, setApiVersion] = useState(() => data?.apiVersion || "");
-  const debouncedApiVersion = useDebounce(apiVersion, 1000);
-  const [endpoint, setEndpoint] = useState(() => data?.endpoint || "");
-  const debouncedEndpoint = useDebounce(endpoint, 1000);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [total, setTotal] = useState(0);
-  const [groupPermissions, setGroupPermissions] = useState([]);
+  const { host } = useUserState() as UserState;
+  const initialGroupId = location.state?.data?.groupId;
 
-  const handleGroupIdChange = (event) => {
-    setGroupId(event.target.value);
-  };
-  const handleApiIdChange = (event) => {
-    setApiId(event.target.value);
-  };
-  const handleApiVersionChange = (event) => {
-    setApiVersion(event.target.value);
-  };
-  const handleEndpointChange = (event) => {
-    setEndpoint(event.target.value);
-  };
+  // Data and fetching state
+  const [data, setData] = useState<GroupPermissionType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
+  const [rowCount, setRowCount] = useState(0);
 
-  const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
-    try {
-      setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setGroupPermissions([]);
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    initialGroupId
+      ? [
+        { id: 'active', value: 'true' },
+        { id: 'groupId', value: initialGroupId }
+      ]
+      : [
+        { id: 'active', value: 'true' }
+      ]
+  );
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [sorting, setSorting] = useState<MRT_SortingState>([]);
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Data fetching logic
+  const fetchData = useCallback(async () => {
+    if (!host) return;
+    if (!data.length) setIsLoading(true); else setIsRefetching(true);
+
+    let activeStatus = true; // Default to true if not present
+    const apiFilters: MRT_ColumnFiltersState = [];
+
+    columnFilters.forEach(filter => {
+      if (filter.id === 'active') {
+        // Extract active status (assuming filter.value is 'true'/'false' string from select)
+        activeStatus = filter.value === 'true' || filter.value === true;
       } else {
-        const data = await response.json();
-        setGroupPermissions(data.groups);
-        setTotal(data.total);
+        // Keep other filters as is
+        apiFilters.push(filter);
       }
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e);
-      setGroupPermissions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Empty dependency array for useCallback
+    });
 
-  useEffect(() => {
     const cmd = {
-      host: "lightapi.net",
-      service: "group",
-      action: "queryGroupPermission",
-      version: "0.1.0",
+      host: 'lightapi.net', service: 'group', action: 'queryGroupPermission', version: '0.1.0',
       data: {
-        hostId: host,
-        offset: page * rowsPerPage,
-        limit: rowsPerPage,
-        groupId: debouncedGroupId,
-        apiId: debouncedApiId,
-        apiVersion: debouncedApiVersion,
-        endpoint: debouncedEndpoint,
+        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
+        sorting: JSON.stringify(sorting ?? []),
+        filters: JSON.stringify(apiFilters ?? []),
+        globalFilter: globalFilter ?? '',
+        active: activeStatus,
       },
     };
 
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
+    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
-    fetchData(url, headers);
-  }, [
-    page,
-    rowsPerPage,
-    host,
-    debouncedGroupId,
-    debouncedApiId,
-    debouncedApiVersion,
-    debouncedEndpoint,
-    fetchData, // Add fetchData to dependency array of useEffect
-  ]);
+    try {
+      const response = await fetch(url, { headers, credentials: 'include' });
+      const json = (await response.json()) as GroupPermissionApiResponse;
+      setData(json.groupPermissions || []);
+      setRowCount(json.total || 0);
+    } catch (error) {
+      setIsError(true); console.error(error);
+    } finally {
+      setIsError(false); setIsLoading(false); setIsRefetching(false);
+    }
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // useEffect to trigger fetchData
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(+event.target.value);
-    setPage(0);
-  };
+  // Delete handler with optimistic update
+  const handleDelete = useCallback(async (row: MRT_Row<GroupPermissionType>) => {
+    if (!window.confirm(`Are you sure you want to delete this permission?`)) return;
 
-  const handleCreate = (groupId, apiId, apiVersion, endpoint) => {
-    navigate("/app/form/createGroupPermission", {
-      state: { data: { groupId, apiId, apiVersion, endpoint } },
-    });
-  };
+    const originalData = [...data];
+    setData(prev => prev.filter(p => !(p.groupId === row.original.groupId && p.endpointId === row.original.endpointId)));
+    setRowCount(prev => prev - 1);
 
-  let content;
-  if (loading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table aria-label="collapsible table">
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Group Id"
-                    value={groupId}
-                    onChange={handleGroupIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Api Id"
-                    value={apiId}
-                    onChange={handleApiIdChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Api Version"
-                    value={apiVersion}
-                    onChange={handleApiVersionChange}
-                  />
-                </TableCell>
-                <TableCell align="left">
-                  <input
-                    type="text"
-                    placeholder="Endpoint"
-                    value={endpoint}
-                    onChange={handleEndpointChange}
-                  />
-                </TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <GroupPermissionList groupPermissions={groupPermissions} />
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <AddBoxIcon
-          onClick={() => handleCreate(groupId, apiId, apiVersion, endpoint)}
-        />
-      </div>
-    );
-  }
+    const cmd = {
+      host: 'lightapi.net', service: 'group', action: 'deleteGroupPermission', version: '0.1.0',
+      data: row.original,
+    };
 
-  return <div className="App">{content}</div>;
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to delete permission. Please try again.');
+        setData(originalData);
+        setRowCount(originalData.length);
+      }
+    } catch (e) {
+      alert('Failed to delete permission due to a network error.');
+      setData(originalData);
+      setRowCount(originalData.length);
+    }
+  }, [data]);
+
+  // Column definitions
+  const columns = useMemo<MRT_ColumnDef<GroupPermissionType>[]>(
+    () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'groupId', header: 'Group Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
+      { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
+      { accessorKey: 'endpoint', header: 'Endpoint' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
+        Cell: ({ row }) => (
+          <Tooltip title="Delete Permission">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+    ],
+    [handleDelete],
+  );
+
+  // Table instance configuration
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    initialState: { showColumnFilters: true, density: 'compact' },
+    manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
+    rowCount,
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getRowId: (row) => `${row.groupId}-${row.endpointId}`,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    enableRowActions: false,
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate('/app/form/createGroupPermission', { state: { data: { groupId: initialGroupId } } })}
+        >
+          Add Permission
+        </Button>
+        {initialGroupId && (
+          <Typography variant="subtitle1">
+            For Group: <strong>{initialGroupId}</strong>
+          </Typography>
+        )}
+      </Box>
+    ),
+  });
+
+  return <MaterialReactTable table={table} />;
 }

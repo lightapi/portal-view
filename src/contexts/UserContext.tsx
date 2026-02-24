@@ -43,7 +43,7 @@ function UserProvider({ children }) {
   const host = cookies.get("host");
   const email = cookies.get("email");
   const eid = cookies.get("eid");
-  const roles = cookies.get("roles");
+  const roles = cookies.get("roles") ? atob(cookies.get("roles")) : null;
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
@@ -80,7 +80,7 @@ function UserProvider({ children }) {
             type: "LOGIN_SUCCESS",
             isAuthenticated: !!cookies.get("userId"),
             email: cookies.get("userId"),
-            roles: cookies.get("roles"),
+            roles: cookies.get("roles") ? atob(cookies.get("roles")) : null,
           });
         }
       } catch (e) {
@@ -127,10 +127,8 @@ export {
   getPayment,
   updateRoles,
   getOrders,
-  createOrgForm,
-  updateOrgForm,
-  deleteOrgForm,
-  switchHostForm,
+  createOrg,
+  userHost,
 };
 
 function loginUser(
@@ -182,8 +180,8 @@ function signUp(dispatch, navigate) {
   navigate("/app/form/signupForm");
 }
 
-function getProfile(dispatch, navigate) {
-  navigate("/app/profile");
+function getProfile(dispatch, navigate, userId) {
+  navigate(`/app/profile/${userId}`);
 }
 
 function getPayment(dispatch, navigate) {
@@ -198,10 +196,8 @@ function getOrders(dispatch, navigate) {
   navigate("/app/userOrders");
 }
 
-function createOrgForm(dispatch, navigate) {
-  // make sure that the org associated with the user is not created yet.
-
-  navigate("/app/form/createOrgForm");
+function createOrg(dispatch, navigate) {
+  navigate("/app/form/createOrg");
 }
 
 function updateOrgForm(dispatch, navigate) {
@@ -214,7 +210,6 @@ function deleteOrgForm(dispatch, navigate) {
   navigate("/app/form/deleteOrgForm");
 }
 
-function switchHostForm(dispatch, navigate) {
-  // load the org associated with the user. The user is allowed to delete as it is org-admin role.
-  navigate("/app/form/switchHostForm");
+function userHost(dispatch, navigate, userId) {
+  navigate("/app/userHost", { state: { data: { userId } } });
 }
