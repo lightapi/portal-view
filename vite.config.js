@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3000,
+      cors: true,
       https: {
         key: fs.readFileSync("./server.key"),
         cert: fs.readFileSync("./server.pem"),
