@@ -102,12 +102,13 @@ function Form() {
     }
   }
 
-  const submitForm = async (url, _headers, action) => {
+  const submitForm = async (url, headers, action) => {
     setFetching(true);
     try {
       const data = await fetchClient(url, {
         method: action.method ? action.method : "POST",
         body: action.rest ? action.data : action,
+        headers: headers
       });
       setFetching(false);
       navigate(action.success, { state: { data } });
@@ -115,8 +116,7 @@ function Form() {
       setFetching(false);
       console.log(e);
       // convert it to json as the failure component can only deal with JSON.
-      const error = { error: e };
-      navigate(action.failure, { state: { error } });
+      navigate(action.failure, { state: { data: e } });
     }
   };
 

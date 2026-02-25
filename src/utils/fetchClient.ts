@@ -27,6 +27,9 @@ async function fetchClient(endpoint: string, options: any = {}) {
             ...defaultHeaders,
             ...options.headers,
         },
+        body: (options.body && typeof options.body === 'object' && !(options.body instanceof FormData))
+            ? JSON.stringify(options.body)
+            : options.body,
         credentials: 'include',
     };
 
