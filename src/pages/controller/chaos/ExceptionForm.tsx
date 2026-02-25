@@ -98,7 +98,7 @@ export default function ExeptionForm(props) {
     formTitle = 'Trigger';
     form = (
       <React.Fragment>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="text"
             fullWidth
@@ -108,7 +108,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="number"
             onChange={handleChangeRequests}
@@ -118,7 +118,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -130,7 +130,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -142,7 +142,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -154,7 +154,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -172,7 +172,7 @@ export default function ExeptionForm(props) {
     formTitle = 'Configuration';
     form = (
       <React.Fragment>
-        <Grid item xs={8}>
+        <Grid size={8}>
           <FormGroup row>
             <FormControlLabel
               control={
@@ -196,7 +196,7 @@ export default function ExeptionForm(props) {
             />
           </FormGroup>
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -208,7 +208,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -220,7 +220,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -232,7 +232,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -244,7 +244,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -277,7 +277,7 @@ export default function ExeptionForm(props) {
               spacing={2}
               direction="row"
             >
-              <Grid item xs={12} style={{ padding: 0, margin: 0 }}>
+              <Grid size={12} style={{ padding: 0, margin: 0 }}>
                 <Typography
                   variant="h4"
                   component="h1"
@@ -292,7 +292,7 @@ export default function ExeptionForm(props) {
                 </Typography>
               </Grid>
               {form}
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Button
                   type="submit"
                   fullWidth

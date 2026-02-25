@@ -33,7 +33,7 @@ export default function NotificationsPage(props) {
           closeOnClick={false}
           progressClassName={classes.notificationProgress}
         />
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Layout Options" disableWidgetMenu>
             <Typography>
               There are few position options available for notifications. You
@@ -86,7 +86,7 @@ export default function NotificationsPage(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Notifications Types" disableWidgetMenu>
             <Typography>
               Different types of notifications for lost of use cases. Custom
@@ -120,7 +120,7 @@ export default function NotificationsPage(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Usage" disableWidgetMenu>
             <Typography>
               Notifications are created with the help of{' '}
@@ -153,7 +153,7 @@ export default function NotificationsPage(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Notification Types Examples" disableWidgetMenu>
             <Notification
               className={classes.notificationItem}
@@ -205,7 +205,7 @@ export default function NotificationsPage(props) {
             />
           </Widget>
         </Grid>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Notification Types Examples" disableWidgetMenu>
             <Notification
               className={classes.notificationItem}
@@ -245,7 +245,7 @@ export default function NotificationsPage(props) {
             />
           </Widget>
         </Grid>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <Widget title="Notification Types Examples" disableWidgetMenu>
             <Notification
               className={classes.notificationItem}

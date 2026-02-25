@@ -53,7 +53,7 @@ export default function Dashboard(props) {
         </Button>
       </Box>
       <Grid container spacing={4}>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Share Knowledge"
             upperTitle
@@ -83,7 +83,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Marketplace"
             upperTitle
@@ -112,7 +112,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Security"
             upperTitle
@@ -141,7 +141,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Service"
             upperTitle
@@ -171,7 +171,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Widget bodyClass={classes.mainChartBody}>
             <div className={classes.performanceLegendWrapper}>
               <div>
@@ -211,7 +211,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={4} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
           <Widget
             title="Youtube Channel"
             upperTitle
@@ -220,7 +220,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -243,7 +243,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Open Source"
             upperTitle
@@ -252,7 +252,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -272,7 +272,7 @@ export default function Dashboard(props) {
                 </Grid>
               </div>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -295,7 +295,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Document"
             upperTitle
@@ -304,7 +304,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -326,11 +326,11 @@ export default function Dashboard(props) {
             </Grid>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={4} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
           <Widget title="Contact" upperTitle className={classes.card}>
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -347,7 +347,7 @@ export default function Dashboard(props) {
               </div>
 
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography

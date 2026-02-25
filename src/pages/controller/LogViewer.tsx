@@ -192,7 +192,7 @@ class LogViewer extends React.Component {
               <CardHeader title={<Typography variant='h6'>Filters</Typography>} />
               <CardContent>
                 <Grid container spacing={3}>
-                  <Grid item xs={2}>
+                  <Grid size={2}>
                     <FormControl fullWidth>
                       <InputLabel id='log-name-label'>Log Name</InputLabel>
                       <Select
@@ -209,7 +209,7 @@ class LogViewer extends React.Component {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={1}>
+                  <Grid size={1}>
                     <FormControl fullWidth>
                       <InputLabel id='log-level-label'>Log Level</InputLabel>
                       <Select
@@ -226,7 +226,7 @@ class LogViewer extends React.Component {
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={2}>
+                  <Grid size={2}>
                     <DateTimePicker
                       label='From'
                       value={this.state.from}
@@ -235,7 +235,7 @@ class LogViewer extends React.Component {
                       showTodayButton={true}
                     />
                   </Grid>
-                  <Grid item xs={2}>
+                  <Grid size={2}>
                     <DateTimePicker
                       label='To'
                       value={this.state.to}
@@ -244,14 +244,14 @@ class LogViewer extends React.Component {
                     />
                   </Grid>
 
-                  <Grid item xs={4}>
+                  <Grid size={4}>
                     <Card elevation={1} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%', borderRadius: 10 }}>
                       <FormControl component="fieldset">
                         <Grid container spacing={1} border={0} style={{ width: '500px' }}>
-                          <Grid item xs={1}>
+                          <Grid size={1}>
                             <FormLabel component='legend' style={{ paddingLeft: 3, paddingTop: 14 }}><Typography variant='body2' style={{ fontWeight: 600 }}>Last</Typography></FormLabel>
                           </Grid>
-                          <Grid item xs={11}>
+                          <Grid size={11}>
                             <RadioGroup
                               row
                               aria-label="data-source-type"
@@ -286,7 +286,7 @@ class LogViewer extends React.Component {
                     </Card>
                   </Grid>
 
-                  <Grid item xs={1}>
+                  <Grid size={1}>
                     <Tooltip title="Refresh">
                       <IconButton
                         onClick={this.onClickRefresh}
@@ -300,7 +300,7 @@ class LogViewer extends React.Component {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
               <CardHeader title={<Typography variant='h6'>Logs</Typography>} />
               <CardContent>

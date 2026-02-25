@@ -151,7 +151,7 @@ export default function ChaosMonkey(props) {
           direction="row"
         >
           <CssBaseline />
-          <Grid item xs={6}>
+          <Grid size={6}>
             <ChaosFormSettings
               label="Assault Type"
               options={chaosAssaultTypes}
@@ -160,7 +160,7 @@ export default function ChaosMonkey(props) {
               onChange={handleAssaultChange}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <ChaosFormSettings
               label="Form Type"
               options={chaosFormTypes}
@@ -169,7 +169,8 @@ export default function ChaosMonkey(props) {
               onChange={handleFormTypeChange}
             />
           </Grid>
-          <Grid item>{activeForm}</Grid>
+          <Grid size="auto">
+            {activeForm}</Grid>
         </Grid>
       </Paper>
     );

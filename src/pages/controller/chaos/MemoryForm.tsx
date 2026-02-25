@@ -134,7 +134,7 @@ export default function MemoryForm(props) {
     formTitle = 'Trigger';
     form = (
       <React.Fragment>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="text"
             fullWidth
@@ -144,7 +144,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="number"
             fullWidth
@@ -154,7 +154,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -166,7 +166,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -178,7 +178,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -190,7 +190,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -208,7 +208,7 @@ export default function MemoryForm(props) {
     formTitle = 'Configuration';
     form = (
       <React.Fragment>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <FormGroup row>
             <FormControlLabel
               control={
@@ -232,7 +232,7 @@ export default function MemoryForm(props) {
             />
           </FormGroup>
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -244,7 +244,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -256,7 +256,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -268,7 +268,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -280,7 +280,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -292,7 +292,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -304,7 +304,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -316,7 +316,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -328,7 +328,7 @@ export default function MemoryForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -357,7 +357,7 @@ export default function MemoryForm(props) {
               spacing={2}
               direction="row"
             >
-              <Grid item xs={12} style={{ padding: 0, margin: 0 }}>
+              <Grid size={12} style={{ padding: 0, margin: 0 }}>
                 <Typography
                   variant="h4"
                   component="h1"
@@ -372,7 +372,7 @@ export default function MemoryForm(props) {
                 </Typography>
               </Grid>
               {form}
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Button
                   type="submit"
                   fullWidth
