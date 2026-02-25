@@ -9,7 +9,7 @@ import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
 import fetchClient from "../../utils/fetchClient";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: any) => ({
   root: {
     display: "flex",
     flexWrap: "wrap",
@@ -56,7 +56,8 @@ function Form() {
 
   useEffect(() => {
     console.log(formId);
-    let formData = forms[formId];
+    let formData = formId ? forms[formId] : {};
+    if (!formData) formData = {};
     setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
     setForm(formData.form);
@@ -77,12 +78,12 @@ function Form() {
     setModel(modelWithHostId);
   }, [host, formId, location.state]);
 
-  const onModelChange = (key, val, type) => {
+  const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
     setModel({ ...model }); // here we must create a new object to force re-render.
   };
 
-  function onButtonClick(action) {
+  function onButtonClick(action: any) {
     console.log("onButtonClick is called", action);
     let validationResult = utils.validateBySchema(schema, model);
     console.log(validationResult);
@@ -102,7 +103,7 @@ function Form() {
     }
   }
 
-  const submitForm = async (url, headers, action) => {
+  const submitForm = async (url: string, headers: any, action: any) => {
     setFetching(true);
     try {
       const data = await fetchClient(url, {
@@ -137,21 +138,23 @@ function Form() {
   }
 
   if (schema) {
-    var buttons = [];
-    actions.map((item, index) => {
-      buttons.push(
-        <Button
-          variant="contained"
-          className={classes.button}
-          color="primary"
-          key={index}
-          onClick={() => onButtonClick(item)}
-        >
-          {item.title}
-        </Button>,
-      );
-      return buttons;
-    });
+    const buttons: any[] = [];
+    if (actions) {
+      (actions as any[]).map((item: any, index: number) => {
+        buttons.push(
+          <Button
+            variant="contained"
+            className={classes.button}
+            color="primary"
+            key={index}
+            onClick={() => onButtonClick(item)}
+          >
+            {item.title}
+          </Button>,
+        );
+        return buttons;
+      });
+    }
 
     let wait;
     if (fetching) {

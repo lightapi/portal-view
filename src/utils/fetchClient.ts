@@ -1,6 +1,6 @@
 import Cookies from 'universal-cookie';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "";
 
 /**
  * Custom fetch wrapper with automatic base URL prefixing and CSRF handling
