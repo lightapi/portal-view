@@ -3,13 +3,13 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { makeStyles } from "@mui/styles";
 import { useEffect, useState } from "react";
 import { SchemaForm, utils } from "react-schema-form";
-import Cookies from "universal-cookie";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
-import Typography from "@mui/material/Typography"; // Import Typography for better text rendering
+import Typography from "@mui/material/Typography";
+import fetchClient from "../../utils/fetchClient";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: any) => ({
   root: {
     display: "flex",
     flexWrap: "wrap",
@@ -56,7 +56,8 @@ function Form() {
 
   useEffect(() => {
     console.log(formId);
-    let formData = forms[formId];
+    let formData = formId ? forms[formId] : {};
+    if (!formData) formData = {};
     setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
     setForm(formData.form);
@@ -77,12 +78,12 @@ function Form() {
     setModel(modelWithHostId);
   }, [host, formId, location.state]);
 
-  const onModelChange = (key, val, type) => {
+  const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
     setModel({ ...model }); // here we must create a new object to force re-render.
   };
 
-  function onButtonClick(action) {
+  function onButtonClick(action: any) {
     console.log("onButtonClick is called", action);
     let validationResult = utils.validateBySchema(schema, model);
     console.log(validationResult);
@@ -102,36 +103,21 @@ function Form() {
     }
   }
 
-  const submitForm = async (url, headers, action) => {
+  const submitForm = async (url: string, headers: any, action: any) => {
     setFetching(true);
     try {
-      const cookies = new Cookies();
-      Object.assign(headers, { "X-CSRF-TOKEN": cookies.get("csrf") });
-      const response = await fetch(url, {
+      const data = await fetchClient(url, {
         method: action.method ? action.method : "POST",
-        body: action.rest
-          ? JSON.stringify(action.data)
-          : JSON.stringify(action),
-        headers,
-        credentials: "include",
+        body: action.rest ? action.data : action,
+        headers: headers
       });
-      // we have tried out best to response json from our APIs; however, some services return text instead like light-oauth2.
-      const s = await response.text();
-      console.log("submit error", s);
-      const data = JSON.parse(s);
       setFetching(false);
-      if (!response.ok) {
-        // code is not OK.
-        navigate(action.failure, { state: { data } });
-      } else {
-        navigate(action.success, { state: { data } });
-      }
+      navigate(action.success, { state: { data } });
     } catch (e) {
-      // network error here.
+      setFetching(false);
       console.log(e);
       // convert it to json as the failure component can only deal with JSON.
-      const error = { error: e };
-      navigate(action.failure, { state: { error } });
+      navigate(action.failure, { state: { data: e } });
     }
   };
 
@@ -152,21 +138,23 @@ function Form() {
   }
 
   if (schema) {
-    var buttons = [];
-    actions.map((item, index) => {
-      buttons.push(
-        <Button
-          variant="contained"
-          className={classes.button}
-          color="primary"
-          key={index}
-          onClick={() => onButtonClick(item)}
-        >
-          {item.title}
-        </Button>,
-      );
-      return buttons;
-    });
+    const buttons: any[] = [];
+    if (actions) {
+      (actions as any[]).map((item: any, index: number) => {
+        buttons.push(
+          <Button
+            variant="contained"
+            className={classes.button}
+            color="primary"
+            key={index}
+            onClick={() => onButtonClick(item)}
+          >
+            {item.title}
+          </Button>,
+        );
+        return buttons;
+      });
+    }
 
     let wait;
     if (fetching) {

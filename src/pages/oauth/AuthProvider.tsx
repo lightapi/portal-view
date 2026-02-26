@@ -18,7 +18,7 @@ import ApiIcon from '@mui/icons-material/Api';
 import AppsIcon from '@mui/icons-material/Apps';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // --- Type Definitions ---
@@ -110,12 +110,9 @@ export default function AuthProvider() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as AuthProviderApiResponse;
+      const json = await fetchClient(url);
       setData(json.providers || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -166,16 +163,10 @@ export default function AuthProvider() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateProvider', {

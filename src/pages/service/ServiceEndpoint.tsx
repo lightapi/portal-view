@@ -17,7 +17,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import { useUserState } from "../../contexts/UserContext";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 
 // --- Type Definitions ---
 type EndpointApiResponse = {
@@ -33,12 +33,25 @@ type EndpointType = {
   endpoint: string;
   httpMethod: string;
   endpointPath: string;
+  toolSchema?: string;
+  toolMetadata?: string;
   endpointDesc: string;
   active: boolean;
 };
 interface UserState {
   host?: string;
 }
+
+const TruncatedCell = ({ cell }: { cell: any }) => {
+  const value = cell.getValue() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
+};
 
 export default function ServiceEndpoint() {
   const navigate = useNavigate();
@@ -100,12 +113,9 @@ export default function ServiceEndpoint() {
       },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as EndpointApiResponse;
+      const json = await fetchClient(url);
       setData(json.endpoints || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -126,7 +136,9 @@ export default function ServiceEndpoint() {
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'httpMethod', header: 'Method' },
       { accessorKey: 'endpointPath', header: 'Path' },
-      { accessorKey: 'endpointDesc', header: 'Description' },
+      { accessorKey: 'toolSchema', header: 'Tool Schema', Cell: TruncatedCell },
+      { accessorKey: 'toolMetadata', header: 'Tool Metadata', Cell: TruncatedCell },
+      { accessorKey: 'endpointDesc', header: 'Description', Cell: TruncatedCell },
       {
         accessorKey: 'active',
         header: 'Active',

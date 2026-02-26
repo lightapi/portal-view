@@ -1,7 +1,7 @@
 // This is the component to display the entire blog for readers.
 import { CircularProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import useStyles from "./styles";
 
@@ -24,17 +24,11 @@ export default function ErrorItem(props) {
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const queryErrorFn = async (url, headers) => {
+  const queryErrorFn = async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      //console.log(response);
-      if (!response.ok) {
-        const error = await response.json();
-      } else {
-        const data = await response.json();
-        setErrorItem(data);
-      }
+      const data = await fetchClient(url);
+      setErrorItem(data);
       setLoading(false);
     } catch (e) {
       console.log(e);
@@ -43,9 +37,7 @@ export default function ErrorItem(props) {
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    queryErrorFn(url, headers);
+    queryErrorFn(url);
   }, []);
 
   let wait;

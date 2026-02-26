@@ -1,6 +1,6 @@
 import Button from '@mui/material/Button';
 import React, { useState } from 'react';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
 import Subject from './Subject';
 
@@ -57,9 +57,6 @@ export default function StatusContainer(props) {
   const submitStatus = () => {
     console.log('submit status is clicked!');
     const url = '/portal/command';
-    const headers = {
-      'Content-Type': 'application/json',
-    };
     const action = {
       host: 'lightapi.net',
       service: 'covid',
@@ -67,7 +64,7 @@ export default function StatusContainer(props) {
       version: '0.1.0',
       data: subjects,
     };
-    submit(url, headers, action);
+    submit(url, action);
   };
 
   const updatePeerStatus = () => {
@@ -86,36 +83,22 @@ export default function StatusContainer(props) {
         userId: props.userId,
       },
     };
-    submit(url, headers, action);
+    submit(url, action);
   };
 
-  const submit = async (url, headers, action) => {
+  const submit = async (url, action) => {
     try {
-      const cookies = new Cookies();
-      Object.assign(headers, { 'X-CSRF-TOKEN': cookies.get('csrf') });
-      const response = await fetch(url, {
+      const data = await fetchClient(url, {
         method: 'POST',
         body: JSON.stringify(action),
-        headers,
-        credentials: 'include',
       });
-      const s = await response.text();
-      console.log('submit response', s);
-      const data = JSON.parse(s);
-      if (!response.ok) {
-        // code is not OK.
-        props.history.push({
-          pathname: '/app/failure',
-          state: { error: data },
-        });
-      } else {
-        props.history.push({ pathname: '/app/success', state: { data } });
-      }
+      console.log('submit response', data);
+      props.history.push({ pathname: '/app/success', state: { data } });
     } catch (e) {
       // network error here.
       console.log(e);
       // convert it to json as the failure component can only deal with JSON.
-      const error = { error: e };
+      const error = { error: e.description || e.message || e };
       props.history.push({ pathname: '/app/failure', state: { error } });
     }
   };

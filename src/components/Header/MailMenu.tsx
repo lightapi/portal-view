@@ -7,7 +7,7 @@ import { Fab, IconButton, Menu, MenuItem } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
 import { useInterval } from "../../hooks/useInterval";
 import { timeConversion } from "../../utils";
@@ -33,19 +33,11 @@ export default function MailMenu(props) {
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const queryMessageFn = async (url, headers) => {
+  const queryMessageFn = async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      //console.log(response);
-      if (!response.ok) {
-        const error = await response.json();
-        //console.log(error);
-        setMessages([]);
-      } else {
-        const data = await response.json();
-        setMessages(data);
-      }
+      const data = await fetchClient(url);
+      setMessages(data || []);
       setLoading(false);
     } catch (e) {
       console.log(e);
@@ -55,15 +47,11 @@ export default function MailMenu(props) {
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    queryMessageFn(url, headers);
+    queryMessageFn(url);
   }, []);
 
   useInterval(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    queryMessageFn(url, headers);
+    queryMessageFn(url);
   }, 600000);
 
   const sendMessage = () => {

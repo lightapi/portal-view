@@ -7,12 +7,12 @@ import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
 import { useEffect, useState, useCallback } from "react";
-import useDebounce from "../../hooks/useDebounce.js"; // Assuming this hook exists
-import Cookies from "universal-cookie";
+import useDebounce from "../../hooks/useDebounce.js";
 import { makeStyles } from "@mui/styles";
 import PropTypes from "prop-types";
 import { useUserState } from "../../contexts/UserContext";
 import { extractDomainFromEmail } from "../../utils";
+import fetchClient from "../../utils/fetchClient";
 
 const useRowStyles = makeStyles({
   root: {
@@ -100,19 +100,11 @@ export default function Host() {
   };
 
   const fetchData = useCallback(async (url, headers) => {
-    // Wrap fetchData with useCallback
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setHosts([]);
-      } else {
-        const data = await response.json();
-        console.log(data);
-        setHosts(data);
-      }
+      const data = await fetchClient(url, { headers });
+      console.log(data);
+      setHosts(data);
       setLoading(false);
     } catch (e) {
       console.log(e);
@@ -139,9 +131,7 @@ export default function Host() {
     };
 
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    fetchData(url, headers);
+    fetchData(url);
   }, [domain, debouncedSubDomain, debouncedHostDesc, fetchData]);
 
   let content;

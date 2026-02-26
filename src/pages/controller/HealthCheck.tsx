@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import CircularProgress from '@mui/material/CircularProgress';
 
 export default function HealthCheck(props) {
@@ -12,32 +12,17 @@ export default function HealthCheck(props) {
 
   const url = '/services/check/' + id;
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-    const abortController = new AbortController();
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(url, {
-          headers, credentials: 'include',
-          signal: abortController.signal,
-        });
-        if (!response.ok) {
-          const data = await response.json();
-          console.log(data);
-          setError(data);
-          setLoading(false);
-        } else {
-          const data = await response.json();
-          console.log(data);
-          setCheck(data);
-          setLoading(false);
-        }
-      } catch (e) {
-        if (!abortController.signal.aborted) {
-          console.log(e);
-          setLoading(false);
-        }
+        const json = await fetchClient(url);
+        console.log(json);
+        setCheck(json);
+        setLoading(false);
+      } catch (error) {
+        console.log(error);
+        setError(error);
+        setLoading(false);
       }
     };
 

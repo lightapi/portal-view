@@ -3087,6 +3087,10 @@
         "spec": {
           "title": "Spec",
           "type": "string"
+        },
+        "transportConfig": {
+          "title": "Transport Config",
+          "type": "string"
         }
       }
     },
@@ -3114,6 +3118,11 @@
       "specLink",
       {
         "key": "spec",
+        "type": "textarea",
+        "rows": 5
+      },
+      {
+        "key": "transportConfig",
         "type": "textarea",
         "rows": 5
       }
@@ -3176,6 +3185,10 @@
         "spec": {
           "title": "Spec",
           "type": "string"
+        },
+        "transportConfig": {
+          "title": "Transport Config",
+          "type": "string"
         }
       }
     },
@@ -3203,6 +3216,11 @@
       "specLink",
       {
         "key": "spec",
+        "type": "textarea",
+        "rows": 5
+      },
+      {
+        "key": "transportConfig",
         "type": "textarea",
         "rows": 5
       }

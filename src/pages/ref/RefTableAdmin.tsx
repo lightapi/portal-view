@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type RefTableApiResponse = {
@@ -100,12 +100,9 @@ export default function RefTableAdmin() {
       console.log("FETCHING DATA with cmd:", cmd); // This will now log the correct number of times
 
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-      const cookies = new Cookies();
-      const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
       try {
-        const response = await fetch(url, { headers, credentials: 'include' });
-        const json = (await response.json()) as RefTableApiResponse;
+        const json = await fetchClient(url) as RefTableApiResponse;
         console.log("json = ", json);
         setData(json.refTables || []);
         setRowCount(json.total || 0);
