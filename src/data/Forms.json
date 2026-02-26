@@ -2431,6 +2431,10 @@
         "deRefClientId": {
           "title": "Dereference Client Id",
           "type": "string"
+        },
+        "tokenExType": {
+          "title": "Token Exchange Type",
+          "type": "string"
         }
       }
     },
@@ -2497,7 +2501,8 @@
       },
       "redirectUri",
       "authenticateClass",
-      "deRefClientId"
+      "deRefClientId",
+      "tokenExType"
     ]
   },
   "updateClient": {
@@ -2570,6 +2575,10 @@
         "deRefClientId": {
           "title": "Dereference Client Id",
           "type": "string"
+        },
+        "tokenExType": {
+          "title": "Token Exchange Type",
+          "type": "string"
         }
       }
     },
@@ -2636,7 +2645,8 @@
       },
       "redirectUri",
       "authenticateClass",
-      "deRefClientId"
+      "deRefClientId",
+      "tokenExType"
     ]
   },
   "createApi": {
@@ -3224,277 +3234,6 @@
         "type": "textarea",
         "rows": 5
       }
-    ]
-  },
-  "createApiClient": {
-    "formId": "createApiClient",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "oauth",
-        "action": "createClient",
-        "version": "0.1.0",
-        "title": "Create Api Client",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "type": "object",
-      "required": [
-        "hostId",
-        "clientName",
-        "apiId",
-        "clientType",
-        "clientProfile"
-      ],
-      "properties": {
-        "hostId": {
-          "title": "Host Id",
-          "type": "string",
-          "readonly": true
-        },
-        "apiId": {
-          "type": "string",
-          "title": "Api Id",
-          "readonly": true
-        },
-        "clientName": {
-          "title": "Client Name",
-          "type": "string"
-        },
-        "clientType": {
-          "title": "Client Type",
-          "type": "string"
-        },
-        "clientProfile": {
-          "title": "Client Profile",
-          "type": "string"
-        },
-        "clientScope": {
-          "title": "Client Scope",
-          "type": "string"
-        },
-        "customClaim": {
-          "title": "Custom Claim",
-          "type": "string"
-        },
-        "redirectUri": {
-          "title": "Redirect URI",
-          "type": "string"
-        },
-        "authenticateClass": {
-          "title": "Authenticate Class",
-          "type": "string"
-        },
-        "deRefClientId": {
-          "title": "Dereference Client Id",
-          "type": "string"
-        }
-      }
-    },
-    "form": [
-      "hostId",
-      "apiId",
-      "clientName",
-      {
-        "key": "clientType",
-        "type": "dynaselect",
-        "multiple": false,
-        "options": [
-          {
-            "id": "public",
-            "label": "public"
-          },
-          {
-            "id": "confidential",
-            "label": "confidential"
-          },
-          {
-            "id": "trusted",
-            "label": "trusted"
-          },
-          {
-            "id": "external",
-            "label": "external"
-          }
-        ]
-      },
-      {
-        "key": "clientProfile",
-        "type": "dynaselect",
-        "multiple": false,
-        "options": [
-          {
-            "id": "webserver",
-            "label": "webserver"
-          },
-          {
-            "id": "mobile",
-            "label": "mobile"
-          },
-          {
-            "id": "browser",
-            "label": "browser"
-          },
-          {
-            "id": "service",
-            "label": "service"
-          },
-          {
-            "id": "batch",
-            "label": "batch"
-          }
-        ]
-      },
-      "clientScope",
-      {
-        "key": "customClaim",
-        "type": "textarea",
-        "rows": 5
-      },
-      "redirectUri",
-      "authenticateClass",
-      "deRefClientId"
-    ]
-  },
-  "updateApiClient": {
-    "formId": "updateApiClient",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "oauth",
-        "action": "updateClient",
-        "version": "0.1.0",
-        "title": "Update Client",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "type": "object",
-      "required": [
-        "hostId",
-        "clientId",
-        "clientName",
-        "apiId",
-        "clientType",
-        "clientProfile"
-      ],
-      "properties": {
-        "hostId": {
-          "title": "Host Id",
-          "type": "string",
-          "readonly": true
-        },
-        "clientId": {
-          "title": "Client Id",
-          "type": "string",
-          "readonly": true
-        },
-        "apiId": {
-          "type": "string",
-          "title": "Api Id",
-          "readonly": true
-        },
-        "clientName": {
-          "title": "Client Name",
-          "type": "string"
-        },
-        "clientType": {
-          "title": "Client Type",
-          "type": "string"
-        },
-        "clientProfile": {
-          "title": "Client Profile",
-          "type": "string"
-        },
-        "clientScope": {
-          "title": "Client Scope",
-          "type": "string"
-        },
-        "customClaim": {
-          "title": "Custom Claim",
-          "type": "string"
-        },
-        "redirectUri": {
-          "title": "Redirect URI",
-          "type": "string"
-        },
-        "authenticateClass": {
-          "title": "Authenticate Class",
-          "type": "string"
-        },
-        "deRefClientId": {
-          "title": "Dereference Client Id",
-          "type": "string"
-        }
-      }
-    },
-    "form": [
-      "hostId",
-      "clientId",
-      "apiId",
-      "clientName",
-      {
-        "key": "clientType",
-        "type": "dynaselect",
-        "multiple": false,
-        "options": [
-          {
-            "id": "public",
-            "label": "public"
-          },
-          {
-            "id": "confidential",
-            "label": "confidential"
-          },
-          {
-            "id": "trusted",
-            "label": "trusted"
-          },
-          {
-            "id": "external",
-            "label": "external"
-          }
-        ]
-      },
-      {
-        "key": "clientProfile",
-        "type": "dynaselect",
-        "multiple": false,
-        "options": [
-          {
-            "id": "webserver",
-            "label": "webserver"
-          },
-          {
-            "id": "mobile",
-            "label": "mobile"
-          },
-          {
-            "id": "browser",
-            "label": "browser"
-          },
-          {
-            "id": "service",
-            "label": "service"
-          },
-          {
-            "id": "batch",
-            "label": "batch"
-          }
-        ]
-      },
-      "clientScope",
-      {
-        "key": "customClaim",
-        "type": "textarea",
-        "rows": 5
-      },
-      "redirectUri",
-      "authenticateClass",
-      "deRefClientId"
     ]
   },
   "createApiEndpointRule": {

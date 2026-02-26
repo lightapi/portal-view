@@ -36,6 +36,7 @@ type AuthClientType = {
   customClaim?: string;
   redirectUri?: string;
   authenticateClass?: string;
+  tokenExType?: string;
   derefClientId?: string;
   active: boolean;
   updateUser?: string;
@@ -188,6 +189,7 @@ export default function AuthClient() {
       { accessorKey: 'apiId', header: 'API ID' },
       { accessorKey: 'clientType', header: 'Type' },
       { accessorKey: 'clientProfile', header: 'Profile' },
+      { accessorKey: 'tokenExType', header: 'Token Ex Type' },
       {
         accessorKey: 'active',
         header: 'Active',
