@@ -64,6 +64,7 @@ type ServiceVersionType = {
   serviceId?: string;
   apiVersionDesc?: string;
   specLink?: string;
+  transportConfig?: string;
   aggregateVerison?: number;
 };
 
@@ -169,6 +170,7 @@ export default function ApiDetail() {
       { accessorKey: 'apiType', header: 'Api Type' },
       { accessorKey: 'apiVersionDesc', header: 'Description' },
       { accessorKey: 'specLink', header: 'Spec Link' },
+      { accessorKey: 'transportConfig', header: 'Transport Config' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
