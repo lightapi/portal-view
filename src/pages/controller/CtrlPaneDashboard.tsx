@@ -16,7 +16,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useState } from 'react';
 import { useAppState } from '../../contexts/AppContext';
@@ -43,29 +43,15 @@ function CtrlPaneDashboard(props) {
   const url = '/services';
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const abortController = new AbortController();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(url, {
-          headers, credentials: 'include',
-          signal: abortController.signal,
-        });
-        if (!response.ok) {
-          const data = await response.json();
-          setLoading(false);
-          setError(data);
-        } else {
-          const data = await response.json();
-          setServices(data);
-          setLoading(false);
-        }
-      } catch (e) {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-        }
+        const json = await fetchClient(url);
+        setServices(json);
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        setError(error);
       }
     };
 

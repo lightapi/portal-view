@@ -20,7 +20,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CameraIcon from '@mui/icons-material/Camera';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 
 // Define the shape of the API response
@@ -125,12 +125,9 @@ export default function InstanceAdmin() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as InstanceApiResponse;
+      const json = await fetchClient(url);
       setData(json.instances || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -181,16 +178,10 @@ export default function InstanceAdmin() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest instance data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateInstance', {

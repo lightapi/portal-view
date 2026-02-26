@@ -17,9 +17,10 @@ import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import AttributionIcon from '@mui/icons-material/Attribution';
+import CameraRollIcon from '@mui/icons-material/CameraRoll';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type AttributeApiResponse = {
@@ -96,12 +97,8 @@ export default function AttributeAdmin() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as AttributeApiResponse;
+      const json = await fetchClient(url);
       setData(json.attributes || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -152,16 +149,9 @@ export default function AttributeAdmin() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
-
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest attribute data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateAttribute', {
@@ -170,9 +160,9 @@ export default function AttributeAdmin() {
           source: location.pathname
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch attribute for update:", error);
-      alert("Could not load the latest attribute data. Please try again.");
+      alert(error.message || "Could not load the latest attribute data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }

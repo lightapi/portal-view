@@ -13,9 +13,9 @@ import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import { useUserState } from '../../contexts/UserContext.jsx';
-import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import { useUserState } from '../../contexts/UserContext';
+import { apiPost } from '../../api/apiPost';
+import fetchClient from '../../utils/fetchClient';
 
 // Define the shape of the API response
 type InstanceApiPathPrefixApiResponse = {
@@ -108,12 +108,9 @@ export default function InstanceApiPathPrefix() {
     };
 
     const url = `/portal/query?cmd=${encodeURIComponent(JSON.stringify(cmd))}`;
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as InstanceApiPathPrefixApiResponse;
+      const json = await fetchClient(url);
       setData(json.instanceApiPathPrefixes || []);
       setRowCount(json.total || 0);
     } catch (error) {

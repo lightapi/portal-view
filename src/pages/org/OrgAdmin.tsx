@@ -15,7 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type OrgApiResponse = {
@@ -92,12 +92,9 @@ export default function OrgAdmin() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as OrgApiResponse;
+      const json = await fetchClient(url);
       console.log("json = ", json);
       setData(json.orgs || []);
       setRowCount(json.total || 0);
@@ -150,16 +147,9 @@ export default function OrgAdmin() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest org data.');
-      }
-
+      const freshData = await fetchClient(url);
       navigate('/app/form/updateOrg', {
         state: {
           data: freshData,

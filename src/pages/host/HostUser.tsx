@@ -14,7 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
 import { apiPost } from "../../api/apiPost.ts";
-import Cookies from 'universal-cookie';
+import fetchClient from "../../utils/fetchClient";
 
 // --- Type Definitions ---
 type UserHostApiResponse = {
@@ -112,12 +112,9 @@ export default function HostUser() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as UserHostApiResponse;
+      const json = await fetchClient(url) as UserHostApiResponse;
       setData(json.userHosts || []);
       setRowCount(json.total || 0);
     } catch (error) {

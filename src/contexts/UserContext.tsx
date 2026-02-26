@@ -1,22 +1,38 @@
 import React from "react";
 import Cookies from "universal-cookie";
+import fetchClient from "../utils/fetchClient";
 
-var UserStateContext = React.createContext();
-var UserDispatchContext = React.createContext();
+interface UserState {
+  isAuthenticated: boolean;
+  email: string | null;
+  userId: string | null;
+  eid: string | null;
+  roles: string | null;
+  host: string | null;
+}
 
-function userReducer(state, action) {
+type UserAction =
+  | { type: "LOGIN_SUCCESS"; isAuthenticated?: boolean; email?: string | null; userId?: string | null; eid?: string | null; roles?: string | null; host?: string | null }
+  | { type: "SIGN_OUT_SUCCESS" }
+  | { type: "UPDATE_PROFILE"; userId: string; host: string }
+  | { type: "LOGIN_FAILURE" };
+
+var UserStateContext = React.createContext<UserState | undefined>(undefined);
+var UserDispatchContext = React.createContext<React.Dispatch<UserAction> | undefined>(undefined);
+
+function userReducer(state: UserState, action: UserAction): UserState {
   console.log("state = ", state);
   console.log("action = ", action);
   switch (action.type) {
     case "LOGIN_SUCCESS":
       return {
         ...state,
-        isAuthenticated: action.isAuthenticated,
-        email: action.email,
-        userId: action.userId,
-        eid: action.eid,
-        roles: action.roles,
-        host: action.host,
+        isAuthenticated: action.isAuthenticated ?? state.isAuthenticated,
+        email: action.email ?? state.email,
+        userId: action.userId ?? state.userId,
+        eid: action.eid ?? state.eid,
+        roles: action.roles ?? state.roles,
+        host: action.host ?? state.host,
       };
     case "SIGN_OUT_SUCCESS":
       return {
@@ -36,7 +52,7 @@ function userReducer(state, action) {
   }
 }
 
-function UserProvider({ children }) {
+function UserProvider({ children }: { children: React.ReactNode }) {
   const cookies = new Cookies();
   const userId = cookies.get("userId");
   const refreshToken = cookies.get("refreshToken");
@@ -66,11 +82,9 @@ function UserProvider({ children }) {
     };
 
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const headers = {};
     const fetchData = async () => {
       try {
-        const response = await fetch(url, { headers, credentials: "include" });
-        const data = await response.json();
+        const data = await fetchClient(url);
         //console.log("data = ", data);
         //console.log("userId = " + cookies.get('userId'));
         if (data.statusCode === 404) {
@@ -132,19 +146,19 @@ export {
 };
 
 function loginUser(
-  dispatch,
-  login,
-  password,
-  navigate,
-  setIsLoading,
-  setError,
+  dispatch: React.Dispatch<UserAction>,
+  login: string | null,
+  password: string | null,
+  navigate: (path: string, options?: any) => void,
+  setIsLoading: (loading: boolean) => void,
+  setError: (error: boolean | null) => void,
 ) {
   setError(false);
   setIsLoading(true);
   console.log("login = ", login, "password = ", password);
   if (!!login && !!password) {
     setTimeout(() => {
-      localStorage.setItem("id_token", 1);
+      localStorage.setItem("id_token", "1");
       setError(null);
       setIsLoading(false);
       dispatch({ type: "LOGIN_SUCCESS" });
@@ -157,59 +171,55 @@ function loginUser(
   }
 }
 
-function signOut(dispatch, navigate) {
+function signOut(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   dispatch({ type: "SIGN_OUT_SUCCESS" });
-  fetch("/logout", { credentials: "include" })
-    .then((response) => {
-      if (response.ok) {
-        navigate("/app/dashboard");
-      } else {
-        throw Error(response.statusText);
-      }
+  fetchClient("/logout")
+    .then((data) => {
+      navigate("/app/dashboard");
     })
     .catch((error) => {
       console.log("error=", error);
     });
 }
 
-function changePassword(dispatch, navigate) {
+function changePassword(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/form/changePasswordForm");
 }
 
-function signUp(dispatch, navigate) {
+function signUp(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/form/signupForm");
 }
 
-function getProfile(dispatch, navigate, userId) {
+function getProfile(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void, userId: string) {
   navigate(`/app/profile/${userId}`);
 }
 
-function getPayment(dispatch, navigate) {
+function getPayment(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/payment");
 }
 
-function updateRoles(dispatch, navigate) {
+function updateRoles(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/updateRoles");
 }
 
-function getOrders(dispatch, navigate) {
+function getOrders(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/userOrders");
 }
 
-function createOrg(dispatch, navigate) {
+function createOrg(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   navigate("/app/form/createOrg");
 }
 
-function updateOrgForm(dispatch, navigate) {
+function updateOrgForm(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   // load the org associated with the user. The user is allowed to update as it is org-admin role.
   navigate("/app/form/updateOrgForm");
 }
 
-function deleteOrgForm(dispatch, navigate) {
+function deleteOrgForm(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   // load the org associated with the user. The user is allowed to delete as it is org-admin role.
   navigate("/app/form/deleteOrgForm");
 }
 
-function userHost(dispatch, navigate, userId) {
+function userHost(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void, userId: string) {
   navigate("/app/userHost", { state: { data: { userId } } });
 }

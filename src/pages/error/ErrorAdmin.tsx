@@ -12,7 +12,7 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { makeStyles } from "@mui/styles";
 import React, { useEffect, useState } from "react";
-import Cookies from "universal-cookie";
+import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
 import useStyles from "./styles";
 
@@ -39,34 +39,19 @@ function Row(props) {
       version: "0.1.0",
       data: { host, errorCode },
     };
-    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    const callback = (data) => {
-      console.log("data = ", data);
-      history.push({ pathname: "/app/form/updateError", state: { data } });
-    };
-
-    const query = async (url, headers, callback) => {
+    const query = async (url, callback) => {
       try {
         setLoading(true);
-        const response = await fetch(url, { headers, credentials: "include" });
-        if (!response.ok) {
-          const error = await response.json();
-          setLoading(false);
-          setError(error.description);
-        } else {
-          const data = await response.json();
-          setLoading(false);
-          callback(data);
-        }
+        const data = await fetchClient(url);
+        setLoading(false);
+        callback(data);
       } catch (e) {
         console.log(e);
-        setError(e);
+        setError(e.description || e.message || e);
         setLoading(false);
       }
     };
-    query(url, headers, callback);
+    query(url, callback);
   };
 
   const handleDelete = () => {
@@ -143,32 +128,23 @@ export default function ErrorAdmin(props) {
   };
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const query = async (url, headers) => {
+  const query = async (url) => {
     try {
       setLoading(true);
-      const response = await fetch(url, { headers, credentials: "include" });
-      if (!response.ok) {
-        const error = await response.json();
-        setError(error.description);
-        setErrors([]);
-      } else {
-        const data = await response.json();
-        setErrors(data.errors);
-        setCount(data.total);
-      }
+      const data = await fetchClient(url);
+      setErrors(data.errors);
+      setCount(data.total);
       setLoading(false);
     } catch (e) {
       console.log(e);
-      setError(e);
+      setError(e.description || e.message || e);
       setErrors([]);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const cookies = new Cookies();
-    const headers = { "X-CSRF-TOKEN": cookies.get("csrf") };
-    query(url, headers);
+    query(url);
   }, [page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => {

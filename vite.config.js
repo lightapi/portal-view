@@ -5,12 +5,13 @@ import fs from "fs";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd());
-  const base = env.VITE_BASE_PATH || "/";
+  // Load environment variables based on the current mode (development, production, etc.)
+  // The third argument "" ensures that all environment variables are loaded without a specific prefix.
+  const env = loadEnv(mode, process.cwd(), "");
 
   return {
     plugins: [react()],
-    base: base,
+    base: env.VITE_BASE_PATH || "/",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -20,12 +21,16 @@ export default defineConfig(({ mode }) => {
       "process.env.MAPBOX_TOKEN": JSON.stringify(
         process.env.REACT_APP_MAPBOX_TOKEN,
       ),
+      "process.env.REACT_APP_MAPBOX_TOKEN": JSON.stringify(
+        process.env.REACT_APP_MAPBOX_TOKEN,
+      ),
     },
     optimizeDeps: {
       include: ["ag-grid-community", "ag-grid-react"],
     },
     server: {
       port: 3000,
+      cors: true,
       https: {
         key: fs.readFileSync("./server.key"),
         cert: fs.readFileSync("./server.pem"),

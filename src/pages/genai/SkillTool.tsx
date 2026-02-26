@@ -15,7 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type SkillToolApiResponse = {
@@ -90,12 +90,9 @@ export default function SkillTool() {
         };
 
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-        const cookies = new Cookies();
-        const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
         try {
-            const response = await fetch(url, { headers, credentials: 'include' });
-            const json = (await response.json()) as SkillToolApiResponse;
+            const json = await fetchClient(url);
             setData(json.skillTools || []);
             setRowCount(json.total || 0);
         } catch (error) {
@@ -123,15 +120,9 @@ export default function SkillTool() {
             data: { hostId: row.original.hostId, skillId: row.original.skillId, toolId: row.original.toolId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-        const cookies = new Cookies();
-        const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
         try {
-            const freshResponse = await fetch(url, { headers, credentials: 'include' });
-            const freshData = await freshResponse.json();
-            if (!freshResponse.ok) {
-                throw new Error(freshData.description || 'Failed to fetch fresh skill tool for deletion.');
-            }
+            const freshData = await fetchClient(url);
 
             const deleteCmd = {
                 host: 'lightapi.net', service: 'genai', action: 'deleteSkillTool', version: '0.1.0',
@@ -161,15 +152,9 @@ export default function SkillTool() {
             data: { hostId: row.original.hostId, skillId: row.original.skillId, toolId: row.original.toolId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-        const cookies = new Cookies();
-        const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
         try {
-            const response = await fetch(url, { headers, credentials: 'include' });
-            const freshData = await response.json();
-            if (!response.ok) {
-                throw new Error(freshData.description || 'Failed to fetch latest skill tool data.');
-            }
+            const freshData = await fetchClient(url);
 
             // Navigate with the fresh data
             navigate('/app/form/updateSkillTool', {

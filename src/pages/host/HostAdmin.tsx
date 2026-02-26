@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PersonIcon from '@mui/icons-material/Person';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // Define the shape of the API response
 type HostApiResponse = {
@@ -98,13 +98,10 @@ export default function HostAdmin() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
       console.log("call the fetch api");
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as HostApiResponse;
+      const json = await fetchClient(url) as HostApiResponse;
       console.log(json);
       setData(json.hosts);
       setRowCount(json.total);
@@ -183,16 +180,10 @@ export default function HostAdmin() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest app data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateHost', {

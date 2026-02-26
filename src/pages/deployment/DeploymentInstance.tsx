@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import AddToDriveIcon from '@mui/icons-material/AddToDrive';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type DeploymentInstanceApiResponse = {
@@ -111,12 +111,9 @@ export default function DeploymentInstance() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as DeploymentInstanceApiResponse;
+      const json = await fetchClient(url) as DeploymentInstanceApiResponse;
       setData(json.deploymentInstances || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -167,16 +164,10 @@ export default function DeploymentInstance() {
       data: row.original,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const freshData = await response.json();
+      const freshData = await fetchClient(url);
       console.log("freshData", freshData);
-      if (!response.ok) {
-        throw new Error(freshData.description || 'Failed to fetch latest deployment instance data.');
-      }
 
       // Navigate with the fresh data
       navigate('/app/form/updateDeploymentInstance', {

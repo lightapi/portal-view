@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import LinkIcon from '@mui/icons-material/Link';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type RelationTypeApiResponse = {
@@ -89,12 +89,9 @@ export default function RelationTypeAdmin() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RelationTypeApiResponse;
+      const json = await fetchClient(url) as RelationTypeApiResponse;
       setData(json.relationTypes || []);
       setRowCount(json.total || 0);
     } catch (error) {

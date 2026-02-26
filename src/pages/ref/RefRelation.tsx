@@ -15,7 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
-import Cookies from 'universal-cookie';
+import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type RefRelationApiResponse = {
@@ -99,12 +99,9 @@ export default function RefRelation() {
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-    const cookies = new Cookies();
-    const headers = { 'X-CSRF-TOKEN': cookies.get('csrf') };
 
     try {
-      const response = await fetch(url, { headers, credentials: 'include' });
-      const json = (await response.json()) as RefRelationApiResponse;
+      const json = await fetchClient(url) as RefRelationApiResponse;
       setData(json.relations || []);
       setRowCount(json.total || 0);
     } catch (error) {

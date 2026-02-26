@@ -24,7 +24,7 @@ export default function Products(props) {
   let productList = [];
   for (let i = 0; i < filteredProducts.length; i++) {
     productList.push(
-      <Grid key={filteredProducts[i].sku} item>
+      <Grid key={filteredProducts[i].sku} size="auto">
         <Product
           key={filteredProducts[i].sku}
           price={filteredProducts[i].price}

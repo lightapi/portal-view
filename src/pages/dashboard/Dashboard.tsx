@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import React, { useEffect, useRef } from 'react';
-import Cookies from 'universal-cookie';
 import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
 // components
@@ -42,60 +41,6 @@ export default function Dashboard(props) {
       }
     }
   }, [location, navigate, userDispatch]);
-  /*
-  // can not remember why we need to query user profile here
-  const { email } = useUserState();
-  const userDispatch = useUserDispatch();
-  const cmd = {
-    host: 'lightapi.net',
-    service: 'user',
-    action: 'queryUserByEmail',
-    version: '0.1.0',
-    data: { email },
-  };
-  const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-  const headers = {};
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    const fetchData = async () => {
-      try {
-        const cookies = new Cookies();
-        Object.assign(headers, { 'X-CSRF-TOKEN': cookies.get('csrf') });
-        const response = await fetch(url, {
-          headers,
-          credentials: 'include',
-          signal: abortController.signal,
-        });
-        //console.log(response);
-        if (!response.ok) {
-          throw response;
-        }
-
-        const data = await response.json();
-        //console.log(data);
-        userDispatch({
-          type: 'UPDATE_PROFILE',
-          userId: data.userId,
-          host: data.host,
-        });
-      } catch (e) {
-        // only call dispatch when we know the fetch was not aborted
-        if (!abortController.signal.aborted) {
-          const error = await e.json();
-          console.log(error);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      abortController.abort();
-    };
-  }, []);
-  */
   return (
     <>
       <Box className={classes.mainHeader}>
@@ -108,7 +53,7 @@ export default function Dashboard(props) {
         </Button>
       </Box>
       <Grid container spacing={4}>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Share Knowledge"
             upperTitle
@@ -138,7 +83,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Marketplace"
             upperTitle
@@ -167,7 +112,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Security"
             upperTitle
@@ -196,7 +141,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Service"
             upperTitle
@@ -226,7 +171,7 @@ export default function Dashboard(props) {
             </div>
           </Widget>
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Widget bodyClass={classes.mainChartBody}>
             <div className={classes.performanceLegendWrapper}>
               <div>
@@ -266,7 +211,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={4} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
           <Widget
             title="Youtube Channel"
             upperTitle
@@ -275,7 +220,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -298,7 +243,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Open Source"
             upperTitle
@@ -307,7 +252,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -327,7 +272,7 @@ export default function Dashboard(props) {
                 </Grid>
               </div>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -350,7 +295,7 @@ export default function Dashboard(props) {
           </Widget>
         </Grid>
 
-        <Grid item lg={3} md={8} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Document"
             upperTitle
@@ -359,7 +304,7 @@ export default function Dashboard(props) {
           >
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -381,11 +326,11 @@ export default function Dashboard(props) {
             </Grid>
           </Widget>
         </Grid>
-        <Grid item lg={3} md={4} sm={6} xs={12}>
+        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
           <Widget title="Contact" upperTitle className={classes.card}>
             <Grid container spacing={2}>
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography
@@ -402,7 +347,7 @@ export default function Dashboard(props) {
               </div>
 
               <div className={classes.performanceLegendWrapper}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <div className={classes.legendElement}>
                     <Dot color="primary" />
                     <Typography

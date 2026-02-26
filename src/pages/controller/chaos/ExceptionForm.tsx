@@ -8,8 +8,8 @@ import Grid from '@mui/material/Grid';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Switch from '@mui/material/Switch';
-import ChaosInfoPopper from './ChaosInfoPopper';
 import Typography from '@mui/material/Typography';
+import fetchClient from '../../../utils/fetchClient';
 
 export default function ExeptionForm(props) {
   const classes = useStyles();
@@ -48,15 +48,14 @@ export default function ExeptionForm(props) {
 
   const handleExceptionSubmit = (event) => {
     event.preventDefault();
-    var headers = {
+    const headers = {
       Authorization: 'Basic ' + localStorage.getItem('user'),
-      'Content-Type': 'application/json',
     };
     let url;
-    let data;
+    let body;
     if (formType === 'initAssault') {
-      url = new URL(props.baseUrl + '/services/chaosmonkey/assault');
-      data = JSON.stringify({
+      url = props.baseUrl + '/services/chaosmonkey/assault';
+      body = JSON.stringify({
         protocol: protocol,
         address: address,
         assaultType: assaultType,
@@ -65,8 +64,8 @@ export default function ExeptionForm(props) {
         requests: requests,
       });
     } else if (formType === 'configAssault') {
-      url = new URL(props.baseUrl + '/services/chaosmonkey');
-      data = JSON.stringify({
+      url = props.baseUrl + '/services/chaosmonkey';
+      body = JSON.stringify({
         protocol: protocol,
         port: port,
         address: address,
@@ -78,19 +77,18 @@ export default function ExeptionForm(props) {
         },
       });
     }
-    return fetch(url, {
-      method: 'POST',
-      body: data,
-      headers: headers,
-    })
-      .then((response) => {
-        if (response.status >= 200 && response.status < 300) {
-          window.location.reload();
-        } else {
-          console.log('something went wrong');
-        }
-      })
-      .catch((err) => err);
+
+    if (url) {
+      fetchClient(url, {
+        method: 'POST',
+        body,
+        headers,
+      }).then(() => {
+        window.location.reload();
+      }).catch((err) => {
+        console.error(err);
+      });
+    }
   };
 
   let formTitle = '';
@@ -100,7 +98,7 @@ export default function ExeptionForm(props) {
     formTitle = 'Trigger';
     form = (
       <React.Fragment>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="text"
             fullWidth
@@ -110,7 +108,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={6}>
           <TextField
             type="number"
             onChange={handleChangeRequests}
@@ -120,7 +118,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -132,7 +130,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -144,7 +142,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -156,7 +154,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -174,7 +172,7 @@ export default function ExeptionForm(props) {
     formTitle = 'Configuration';
     form = (
       <React.Fragment>
-        <Grid item xs={8}>
+        <Grid size={8}>
           <FormGroup row>
             <FormControlLabel
               control={
@@ -198,7 +196,7 @@ export default function ExeptionForm(props) {
             />
           </FormGroup>
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="number"
             variant="outlined"
@@ -210,7 +208,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             type="text"
             variant="filled"
@@ -222,7 +220,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -234,7 +232,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -246,7 +244,7 @@ export default function ExeptionForm(props) {
             margin="none"
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid size={4}>
           <TextField
             type="text"
             variant="filled"
@@ -279,7 +277,7 @@ export default function ExeptionForm(props) {
               spacing={2}
               direction="row"
             >
-              <Grid item xs={12} style={{ padding: 0, margin: 0 }}>
+              <Grid size={12} style={{ padding: 0, margin: 0 }}>
                 <Typography
                   variant="h4"
                   component="h1"
@@ -294,7 +292,7 @@ export default function ExeptionForm(props) {
                 </Typography>
               </Grid>
               {form}
-              <Grid item xs={3}>
+              <Grid size={3}>
                 <Button
                   type="submit"
                   fullWidth
