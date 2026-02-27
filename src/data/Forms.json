@@ -2070,49 +2070,6 @@
       }
     ]
   },
-  "service": {
-    "schema": {
-      "type": "object",
-      "required": [
-        "serviceId",
-        "serviceName",
-        "serviceType",
-        "scope"
-      ],
-      "properties": {
-        "serviceId": {
-          "title": "Service ID",
-          "type": "string"
-        },
-        "serviceType": {
-          "title": "Service Type",
-          "type": "string",
-          "enum": [
-            "swagger",
-            "openapi",
-            "graphql",
-            "hybrid"
-          ]
-        },
-        "serviceName": {
-          "title": "Serivce Name",
-          "type": "string"
-        },
-        "serviceDesc": {
-          "title": "Service Description",
-          "type": "string"
-        },
-        "ownerId": {
-          "title": "Owner ID",
-          "type": "string"
-        },
-        "scope": {
-          "title": "Scope",
-          "type": "string"
-        }
-      }
-    }
-  },
   "user": {
     "schema": {
       "type": "object",
