@@ -14550,6 +14550,10 @@
           "title": "Port Number",
           "type": "integer"
         },
+        "platformJobId": {
+          "title": "Platform Job Id",
+          "type": "string"
+        },
         "systemEnv": {
           "title": "System Env",
           "type": "string"
@@ -14574,6 +14578,7 @@
       "legId",
       "ipAddress",
       "portNumber",
+      "platformJobId",
       {
         "key": "systemEnv",
         "type": "dynaselect",
@@ -14643,6 +14648,10 @@
           "title": "Port Number",
           "type": "integer"
         },
+        "platformJobId": {
+          "title": "Platform Job Id",
+          "type": "string"
+        },
         "systemEnv": {
           "title": "System Env",
           "type": "string"
@@ -14668,6 +14677,7 @@
       "deploymentInstanceId",
       "ipAddress",
       "portNumber",
+      "platformJobId",
       {
         "key": "systemEnv",
         "type": "dynaselect",

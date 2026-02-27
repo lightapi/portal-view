@@ -38,6 +38,7 @@ type DeploymentInstanceType = {
   pipelineName?: string;
   pipelineVersion?: string;
   deployStatus?: string;
+  platformJobId?: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -195,6 +196,7 @@ export default function DeploymentInstance() {
       { accessorKey: 'ipAddress', header: 'IP Address' },
       { accessorKey: 'portNumber', header: 'Port' },
       { accessorKey: 'systemEnv', header: 'System Env' },
+      { accessorKey: 'platformJobId', header: 'Platform Job Id' },
       { accessorKey: 'deployStatus', header: 'Status' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
