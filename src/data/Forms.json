@@ -2502,7 +2502,14 @@
       "redirectUri",
       "authenticateClass",
       "deRefClientId",
-      "tokenExType"
+      {
+        "key": "tokenExType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=token_ex_type"
+        }
+      }
     ]
   },
   "updateClient": {
@@ -2524,7 +2531,6 @@
         "hostId",
         "clientId",
         "clientName",
-        "appId",
         "clientType",
         "clientProfile"
       ],
@@ -2646,7 +2652,14 @@
       "redirectUri",
       "authenticateClass",
       "deRefClientId",
-      "tokenExType"
+      {
+        "key": "tokenExType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=token_ex_type"
+        }
+      }
     ]
   },
   "createApi": {
