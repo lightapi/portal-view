@@ -5715,10 +5715,10 @@ react-router@6.30.3:
   dependencies:
     "@remix-run/router" "1.23.2"
 
-react-schema-form@^1.0.17:
-  version "1.0.17"
-  resolved "https://registry.yarnpkg.com/react-schema-form/-/react-schema-form-1.0.17.tgz#dbc3b116d797746108e8aadaeb95d7d2d792a9e6"
-  integrity sha512-DP1nXR/8r+T8zdUWQs0RQG1i6ANsqGsTizx4rKwW2wHo8WB5dy8wdcee+fBwOInPSF8hWuBznMq6f3kY6+OB0g==
+react-schema-form@^1.0.18:
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/react-schema-form/-/react-schema-form-1.0.18.tgz#38e989e64cc63d4cfd6804b7bf9b94c642fa61c2"
+  integrity sha512-ZpHHD+TO+tsIEkbz2g2vHvmOKEqlcUiIh4TRGPBG+HJPaot6HkXwn93i7zGXEaHxWDX5/d2gssM2e+XZwP3Hvw==
   dependencies:
     ajv "^8.18.0"
     ajv-formats "^3.0.1"
