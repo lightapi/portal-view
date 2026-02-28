@@ -24,25 +24,39 @@ async function fetchClient(endpoint: string, options: any = {}) {
     let finalBody = options.body;
     let isJsonRpc = false;
 
-    if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
-        // Detect explicit JSON-RPC
-        if (options.body.jsonrpc === "2.0") {
-            isJsonRpc = true;
+    if (options.body) {
+        let bodyObj = options.body;
+
+        // If the body is a string, try to parse it into an object first
+        if (typeof options.body === 'string') {
+            try {
+                bodyObj = JSON.parse(options.body);
+            } catch (e) {
+                // Not valid JSON, leave bodyObj as the original string
+            }
         }
-        // Convert legacy command/query payloads
-        else if (options.body.host && options.body.service && options.body.action && options.body.version && !options.body.rest) {
-            const method = `${options.body.host}/${options.body.service}/${options.body.action}/${options.body.version}`;
-            const params = options.body.data || {};
-            const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 10);
-            finalBody = {
-                jsonrpc: "2.0",
-                method: method,
-                params: params,
-                id: id
-            };
-            isJsonRpc = true;
+
+        if (typeof bodyObj === 'object' && !(bodyObj instanceof FormData)) {
+            // Detect explicit JSON-RPC
+            if (bodyObj.jsonrpc === "2.0") {
+                isJsonRpc = true;
+            }
+            // Convert legacy command/query payloads
+            else if (bodyObj.host && bodyObj.service && bodyObj.action && bodyObj.version && !bodyObj.rest) {
+                const method = `${bodyObj.host}/${bodyObj.service}/${bodyObj.action}/${bodyObj.version}`;
+                const params = bodyObj.data || {};
+                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 10);
+                bodyObj = {
+                    jsonrpc: "2.0",
+                    method: method,
+                    params: params,
+                    id: id
+                };
+                isJsonRpc = true;
+            }
+            // Always stringify the final object payload
+            finalBody = JSON.stringify(bodyObj);
         }
-        finalBody = JSON.stringify(finalBody);
     }
 
     const config = {
