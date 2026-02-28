@@ -3070,6 +3070,7 @@
         },
         "transportConfig": {
           "title": "Transport Config",
+          "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
         }
       }
@@ -3103,6 +3104,7 @@
       },
       {
         "key": "transportConfig",
+        "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
       }
@@ -3168,6 +3170,7 @@
         },
         "transportConfig": {
           "title": "Transport Config",
+          "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
         }
       }
@@ -3201,6 +3204,7 @@
       },
       {
         "key": "transportConfig",
+        "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
       }
