@@ -21,15 +21,37 @@ async function fetchClient(endpoint: string, options: any = {}) {
         defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
     }
 
+    let finalBody = options.body;
+    let isJsonRpc = false;
+
+    if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+        // Detect explicit JSON-RPC
+        if (options.body.jsonrpc === "2.0") {
+            isJsonRpc = true;
+        }
+        // Convert legacy command/query payloads
+        else if (options.body.host && options.body.service && options.body.action && options.body.version && !options.body.rest) {
+            const method = `${options.body.host}/${options.body.service}/${options.body.action}/${options.body.version}`;
+            const params = options.body.data || {};
+            const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 10);
+            finalBody = {
+                jsonrpc: "2.0",
+                method: method,
+                params: params,
+                id: id
+            };
+            isJsonRpc = true;
+        }
+        finalBody = JSON.stringify(finalBody);
+    }
+
     const config = {
         ...options,
         headers: {
             ...defaultHeaders,
             ...options.headers,
         },
-        body: (options.body && typeof options.body === 'object' && !(options.body instanceof FormData))
-            ? JSON.stringify(options.body)
-            : options.body,
+        body: finalBody,
         credentials: 'include',
     };
 
@@ -39,6 +61,10 @@ async function fetchClient(endpoint: string, options: any = {}) {
         let error;
         try {
             error = await response.json();
+            // Unwrap JSON-RPC error if formatted
+            if (isJsonRpc && error && error.jsonrpc === "2.0" && error.error) {
+                error = error.error;
+            }
         } catch (e) {
             error = response.statusText;
         }
@@ -49,7 +75,17 @@ async function fetchClient(endpoint: string, options: any = {}) {
         return {};
     }
 
-    return response.json();
+    const json = await response.json();
+
+    // Unwrap JSON-RPC result if formatted
+    if (isJsonRpc && json && json.jsonrpc === "2.0") {
+        if (json.error) {
+            throw json.error;
+        }
+        return json.result;
+    }
+
+    return json;
 }
 
 export default fetchClient;
