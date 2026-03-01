@@ -165,13 +165,26 @@ export default function RuleAdmin() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
-      const freshData = await fetchClient(url);
+      const freshData = await fetchClient(url) as any;
       console.log("freshData", freshData);
 
-      // Navigate with the fresh data
+      // Parse the stringified ruleBody to inflate conditions and actions for the form
+      let parsedData = { ...freshData };
+      if (parsedData.ruleBody) {
+        try {
+          const bodyObj = JSON.parse(parsedData.ruleBody);
+          // Omit ruleBody string from the merged object to avoid recursive conflicts if needed,
+          // but we spread bodyObj so its properties (like conditions and actions) become top-level.
+          parsedData = { ...parsedData, ...bodyObj };
+        } catch (e) {
+          console.error("Failed to parse ruleBody JSON:", e);
+        }
+      }
+
+      // Navigate with the fresh data mapped correctly for updateRule form schema
       navigate('/app/form/updateRule', {
         state: {
-          data: freshData,
+          data: parsedData,
           source: location.pathname
         }
       });
