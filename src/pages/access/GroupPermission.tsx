@@ -227,7 +227,7 @@ export default function GroupPermission() {
         )}
         {initialEndpointId && (
           <Typography variant="subtitle1">
-            Endpoint: <strong>{initialEndpointId}</strong>
+            Endpoint Id: <strong>{initialEndpointId}</strong>
           </Typography>
         )}
       </Box>
