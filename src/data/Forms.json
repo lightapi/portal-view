@@ -11906,9 +11906,8 @@
       "fileName",
       {
         "key": "fileValue",
-        "type": "textarea",
-        "placeholder": "File Value",
-        "rows": 5
+        "type": "file",
+        "placeholder": "File Value"
       },
       {
         "key": "fileDesc",
@@ -12004,9 +12003,8 @@
       "fileName",
       {
         "key": "fileValue",
-        "type": "textarea",
-        "placeholder": "File Value",
-        "rows": 5
+        "type": "file",
+        "placeholder": "File Value"
       },
       {
         "key": "fileDesc",
