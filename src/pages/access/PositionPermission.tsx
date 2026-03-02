@@ -227,7 +227,7 @@ export default function PositionPermission() {
         )}
         {initialApiVersionId && (
           <Typography variant="subtitle1">
-            API Version: <strong>{initialApiVersionId}</strong>
+            API Version Id: <strong>{initialApiVersionId}</strong>
           </Typography>
         )}
         {initialEndpointId && (
