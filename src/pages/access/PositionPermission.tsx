@@ -47,6 +47,8 @@ export default function PositionPermission() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialPositionId = location.state?.data?.positionId;
+  const initialApiVersionId = location.state?.data?.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId;
 
   // Data and fetching state
   const [data, setData] = useState<PositionPermissionType[]>([]);
@@ -55,16 +57,13 @@ export default function PositionPermission() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialPositionId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'positionId', value: initialPositionId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialPositionId) filters.push({ id: 'positionId', value: initialPositionId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -209,13 +208,31 @@ export default function PositionPermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createPositionPermission', { state: { data: { positionId: initialPositionId } } })}
+          onClick={() => navigate('/app/form/createPositionPermission', {
+            state: {
+              data: {
+                positionId: initialPositionId,
+                apiVersionId: initialApiVersionId,
+                endpointId: initialEndpointId
+              }
+            }
+          })}
         >
           Add Permission
         </Button>
         {initialPositionId && (
           <Typography variant="subtitle1">
             For Position: <strong>{initialPositionId}</strong>
+          </Typography>
+        )}
+        {initialApiVersionId && (
+          <Typography variant="subtitle1">
+            API Version Id: <strong>{initialApiVersionId}</strong>
+          </Typography>
+        )}
+        {initialEndpointId && (
+          <Typography variant="subtitle1">
+            Endpoint Id: <strong>{initialEndpointId}</strong>
           </Typography>
         )}
       </Box>
