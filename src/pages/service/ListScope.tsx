@@ -4,6 +4,7 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
+  type MRT_Cell,
 } from 'material-react-table';
 import { Box, Tooltip } from '@mui/material';
 import fetchClient from "../../utils/fetchClient";
@@ -17,8 +18,8 @@ type ScopeType = {
   active: boolean;
 };
 
-const TruncatedCell = ({ cell }: { cell: any }) => {
-  const value = cell.getValue() ?? '';
+const TruncatedCell = <T extends Record<string, any>>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+  const value = String(cell.getValue() ?? '');
   return (
     <Tooltip title={value} placement="top-start">
       <Box component="span" sx={{ display: 'block', maxWidth: '300px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
@@ -35,11 +36,11 @@ export default function ListScope() {
   const [data, setData] = useState<ScopeType[]>([]);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefetching, setIsRefetching] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!hostId || !endpointId) return;
-    if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    setIsError(false);
+    setIsLoading(true);
 
     const cmd = {
       host: "lightapi.net",
@@ -57,11 +58,9 @@ export default function ListScope() {
       setIsError(true);
       console.error(error);
     } finally {
-      setIsError(false);
       setIsLoading(false);
-      setIsRefetching(false);
     }
-  }, [hostId, endpointId, data.length]);
+  }, [hostId, endpointId]);
 
   useEffect(() => {
     fetchData();
@@ -94,7 +93,7 @@ export default function ListScope() {
     enableColumnFilters: true,
     initialState: { density: 'compact', showColumnFilters: true },
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading scopes' } : undefined,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching },
+    state: { isLoading, showAlertBanner: isError },
   });
 
   return <MaterialReactTable table={table} />;
