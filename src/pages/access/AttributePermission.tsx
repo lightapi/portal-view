@@ -48,6 +48,8 @@ export default function AttributePermission() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialAttributeId = location.state?.data?.attributeId;
+  const initialApiVersionId = location.state?.data?.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId;
 
   // Data and fetching state
   const [data, setData] = useState<AttributePermissionType[]>([]);
@@ -57,16 +59,13 @@ export default function AttributePermission() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialAttributeId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'attributeId', value: initialAttributeId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialAttributeId) filters.push({ id: 'attributeId', value: initialAttributeId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -255,7 +254,15 @@ export default function AttributePermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createAttributePermission', { state: { data: { attributeId: initialAttributeId } } })}
+          onClick={() => navigate('/app/form/createAttributePermission', {
+            state: {
+              data: {
+                attributeId: initialAttributeId,
+                apiVersionId: initialApiVersionId,
+                endpointId: initialEndpointId
+              }
+            }
+          })}
           disabled={!initialAttributeId}
         >
           Add Permission
@@ -263,6 +270,16 @@ export default function AttributePermission() {
         {initialAttributeId && (
           <Typography variant="subtitle1">
             For Attribute: <strong>{initialAttributeId}</strong>
+          </Typography>
+        )}
+        {initialApiVersionId && (
+          <Typography variant="subtitle1">
+            API Version: <strong>{initialApiVersionId}</strong>
+          </Typography>
+        )}
+        {initialEndpointId && (
+          <Typography variant="subtitle1">
+            Endpoint: <strong>{initialEndpointId}</strong>
           </Typography>
         )}
       </Box>

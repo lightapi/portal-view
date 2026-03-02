@@ -45,6 +45,8 @@ export default function GroupPermission() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialGroupId = location.state?.data?.groupId;
+  const initialApiVersionId = location.state?.data?.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId;
 
   // Data and fetching state
   const [data, setData] = useState<GroupPermissionType[]>([]);
@@ -53,16 +55,13 @@ export default function GroupPermission() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialGroupId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'groupId', value: initialGroupId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialGroupId) filters.push({ id: 'groupId', value: initialGroupId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -204,13 +203,31 @@ export default function GroupPermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createGroupPermission', { state: { data: { groupId: initialGroupId } } })}
+          onClick={() => navigate('/app/form/createGroupPermission', {
+            state: {
+              data: {
+                groupId: initialGroupId,
+                apiVersionId: initialApiVersionId,
+                endpointId: initialEndpointId
+              }
+            }
+          })}
         >
           Add Permission
         </Button>
         {initialGroupId && (
           <Typography variant="subtitle1">
             For Group: <strong>{initialGroupId}</strong>
+          </Typography>
+        )}
+        {initialApiVersionId && (
+          <Typography variant="subtitle1">
+            API Version: <strong>{initialApiVersionId}</strong>
+          </Typography>
+        )}
+        {initialEndpointId && (
+          <Typography variant="subtitle1">
+            Endpoint: <strong>{initialEndpointId}</strong>
           </Typography>
         )}
       </Box>
