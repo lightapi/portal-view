@@ -53,7 +53,7 @@ export default function ListRule() {
     } finally {
       setIsLoading(false);
     }
-  }, [hostId, apiId, apiVersion, endpoint]);
+  }, [hostId, endpointId]);
 
   useEffect(() => {
     fetchData();
