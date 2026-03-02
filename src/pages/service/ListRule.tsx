@@ -1,53 +1,76 @@
-import { CircularProgress } from "@mui/material";
-import { useApiGet } from "../../hooks/useApiGet";
-import { apiPost } from "../../api/apiPost";
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Paper,
-  TableContainer,
-} from "@mui/material";
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+} from 'material-react-table';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import fetchClient from "../../utils/fetchClient";
+import { apiPost } from "../../api/apiPost";
 
-import useStyles from "./styles";
+type RuleType = {
+  hostId: string;
+  endpointId: string;
+  apiId: string;
+  apiVersion: string;
+  endpoint: string;
+  ruleType: string;
+  ruleId: string;
+};
 
 export default function ListRule() {
-  const classes = useStyles();
   const location = useLocation();
-  const { hostId, apiId, apiVersion, endpoint } = location.state;
   const navigate = useNavigate();
+  const { hostId, endpointId, apiId, apiVersion, endpoint } = location.state || {};
 
-  const cmd = {
-    host: "lightapi.net",
-    service: "service",
-    action: "getEndpointRule",
-    version: "0.1.0",
-    data: { hostId, apiId, apiVersion, endpoint },
-  };
+  const [data, setData] = useState<RuleType[]>([]);
+  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  console.log(url);
-  const headers = {};
+  const fetchData = useCallback(async () => {
+    if (!hostId || !endpointId) return;
+    setIsError(false);
+    setIsLoading(true);
 
-  const { isLoading, data } = useApiGet({ url, headers });
+    const cmd = {
+      host: "lightapi.net",
+      service: "service",
+      action: "getApiEndpointRule",
+      version: "0.1.0",
+      data: { hostId, endpointId },
+    };
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const handleDelete = async (row) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete the rule for the endpoint?",
-      )
-    ) {
+    try {
+      const json = await fetchClient(url);
+      setData(json || []);
+    } catch (error) {
+      setIsError(true);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hostId, endpointId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleDelete = async (row: RuleType) => {
+    if (window.confirm("Are you sure you want to delete the rule for the endpoint?")) {
       const cmd = {
         host: "lightapi.net",
         service: "service",
-        action: "deleteEndpointRule",
+        action: "deleteApiEndpointRule",
         version: "0.1.0",
-        data: row,
+        data: {
+          hostId: row.hostId,
+          endpointId: row.endpointId,
+          ruleId: row.ruleId,
+        },
       };
 
       const result = await apiPost({
@@ -56,66 +79,63 @@ export default function ListRule() {
         body: cmd,
       });
       if (result.data) {
-        console.log("delete rule successfully", data);
-        // Refresh the data after successful deletion
-        window.location.reload();
+        console.log("delete rule successfully", result.data);
+        fetchData();
       } else if (result.error) {
         console.error("Api Error", result.error);
       }
     }
   };
 
-  const handleAddRule = () => {
-    navigate("/app/form/createEndpointRule", {
-      state: { data: { hostId, apiId, apiVersion, endpoint } },
+  const handleCreateRule = () => {
+    navigate("/app/form/createApiEndpointRule", {
+      state: { data: { hostId, endpointId, apiId, apiVersion, endpoint } },
     });
   };
 
-  let content;
-  if (isLoading) {
-    content = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else {
-    content = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow className={classes.root}>
-                <TableCell align="left">Host Id</TableCell>
-                <TableCell align="left">Api Id</TableCell>
-                <TableCell align="left">Api Version</TableCell>
-                <TableCell align="left">Endpoint</TableCell>
-                <TableCell align="left">Rule Type</TableCell>
-                <TableCell align="left">Rule Id</TableCell>
-                <TableCell align="right">Delete</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data &&
-                data.map((row, index) => (
-                  <TableRow key={index} className={classes.root}>
-                    <TableCell align="left">{row.hostId}</TableCell>
-                    <TableCell align="left">{row.apiId}</TableCell>
-                    <TableCell align="left">{row.apiVersion}</TableCell>
-                    <TableCell align="left">{row.endpoint}</TableCell>
-                    <TableCell align="left">{row.ruleType}</TableCell>
-                    <TableCell align="left">{row.ruleId}</TableCell>
-                    <TableCell align="right">
-                      <DeleteForeverIcon onClick={() => handleDelete(row)} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <AddBoxIcon onClick={() => handleAddRule()} />
-      </div>
-    );
-  }
+  const columns = useMemo<MRT_ColumnDef<RuleType>[]>(
+    () => [
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'apiId', header: 'Api Id' },
+      { accessorKey: 'apiVersion', header: 'Api Version' },
+      { accessorKey: 'endpoint', header: 'Endpoint' },
+      { accessorKey: 'ruleType', header: 'Rule Type' },
+      { accessorKey: 'ruleId', header: 'Rule Id' },
+    ],
+    [],
+  );
 
-  return <div className="App">{content}</div>;
+  const table = useMaterialReactTable({
+    columns,
+    data,
+    enablePagination: false,
+    enableRowActions: true,
+    enableGlobalFilter: true,
+    enableColumnFilters: true,
+    positionActionsColumn: 'last',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row.original)}>
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Button
+        color="primary"
+        onClick={handleCreateRule}
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+      >
+        Create Rule
+      </Button>
+    ),
+    initialState: { density: 'compact', showColumnFilters: true },
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading rules' } : undefined,
+    state: { isLoading, showAlertBanner: isError },
+  });
+
+  return <MaterialReactTable table={table} />;
 }
