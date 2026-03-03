@@ -11097,7 +11097,7 @@
         },
         "propertyId": {
           "type": "string",
-          "title": "Property Name",
+          "title": "Property Id",
           "readonly": true
         },
         "propertyType": {
