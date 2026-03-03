@@ -136,7 +136,7 @@ export default function AuthCodeAdmin() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'oauth', action: 'deleteAuthCode', version: '0.1.0', // Assuming this action exists
+      host: 'lightapi.net', service: 'oauth', action: 'deleteAuthCode', version: '0.1.0',
       data: { authCode: row.original.authCode, aggregateVersion: row.original.aggregateVersion },
     };
 

@@ -140,7 +140,7 @@ export default function RefreshTokenAdmin() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0', // Assuming this action exists
+      host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0',
       data: { refreshToken: row.original.refreshToken, aggregateVersion: row.original.aggregateVersion },
     };
 
