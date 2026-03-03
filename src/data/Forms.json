@@ -10505,9 +10505,16 @@
       },
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       },
       {
         "key": "valueType",
@@ -10687,9 +10694,16 @@
       },
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       },
       {
         "key": "valueType",
