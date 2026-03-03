@@ -12238,6 +12238,10 @@
           "type": "string",
           "title": "Property Id"
         },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
@@ -12297,10 +12301,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -12341,6 +12371,10 @@
           "title": "Property Id",
           "readonly": true
         },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
@@ -12359,11 +12393,19 @@
       "deploymentInstanceId",
       "configId",
       "propertyId",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
