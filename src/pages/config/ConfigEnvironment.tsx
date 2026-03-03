@@ -30,6 +30,7 @@ type ConfigEnvironmentType = {
   configName: string;
   propertyId: string;
   propertyName: string;
+  propertyType: string;
   propertyValue?: string;
   updateUser?: string;
   updateTs?: string;
@@ -186,6 +187,7 @@ export default function ConfigEnvironment() {
       { accessorKey: 'configName', header: 'Config Name' },
       { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
+      { accessorKey: 'propertyType', header: 'Property Type' },
       { accessorKey: 'propertyValue', header: 'Property Value' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
