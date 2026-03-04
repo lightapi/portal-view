@@ -26,6 +26,9 @@ type ProviderClientType = {
   hostId: string;
   clientId: string;
   providerId: string;
+  clientName?: string;
+  appId?: string;
+  apiId?: string;
   active: boolean;
   updateUser?: string;
   updateTs?: string;
@@ -145,9 +148,12 @@ export default function ProviderClient() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProviderClientType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host ID' },
-      { accessorKey: 'clientId', header: 'Client ID' },
-      { accessorKey: 'providerId', header: 'Provider ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'clientId', header: 'Client Id' },
+      { accessorKey: 'providerId', header: 'Provider Id' },
+      { accessorKey: 'clientName', header: 'Client Name' },
+      { accessorKey: 'appId', header: 'App Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Ts', Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '' },
       {
