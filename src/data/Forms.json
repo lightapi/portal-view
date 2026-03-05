@@ -18495,5 +18495,107 @@
       "serviceId",
       "daysToExpiration"
     ]
+  },
+  "createConfigSnapshot": {
+    "formId": "createConfigSnapshot",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigSnapshot",
+        "version": "0.1.0",
+        "title": "Create Config Snapshot",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Create Config Snapshot",
+      "required": [
+        "hostId",
+        "instanceId",
+        "snapshotType",
+        "description"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "instanceId": {
+          "title": "Instance Id",
+          "type": "string",
+          "readonly": true
+        },
+        "snapshotType": {
+          "title": "Snapshot Type",
+          "type": "string",
+          "default": "USER_SAVE",
+          "readonly": true
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      "snapshotType",
+      {
+        "key": "description",
+        "type": "textarea"
+      }
+    ]
+  },
+  "updateConfigSnapshot": {
+    "formId": "updateConfigSnapshot",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigSnapshot",
+        "version": "0.1.0",
+        "title": "Update Config Snapshot",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Update Config Snapshot",
+      "required": [
+        "hostId",
+        "snapshotId",
+        "description"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "snapshotId": {
+          "title": "Snapshot Id",
+          "type": "string",
+          "readonly": true
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "snapshotId",
+      {
+        "key": "description",
+        "type": "textarea"
+      }
+    ]
   }
 }

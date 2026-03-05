@@ -29,6 +29,7 @@ type ConfigSnapshotType = {
     snapshotType: string;
     hostId: string;
     instanceId: string;
+    instanceName: string;
     current: boolean;
     description: string;
     userId: string;
@@ -186,6 +187,7 @@ export default function ConfigSnapshot() {
             { accessorKey: 'snapshotType', header: 'Snapshot Type' },
             { accessorKey: 'hostId', header: 'Host Id' },
             { accessorKey: 'instanceId', header: 'Instance Id' },
+            { accessorKey: 'instanceName', header: 'Instance Name' },
             {
                 accessorKey: 'current',
                 header: 'Current',
