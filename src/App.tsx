@@ -31,6 +31,7 @@ import ClientApp from "./pages/client/ClientApp";
 import AuthClient from "./pages/oauth/AuthClient";
 import RefreshToken from "./pages/oauth/RefreshToken";
 import AuthCode from "./pages/oauth/AuthCode";
+import ClientToken from "./pages/oauth/ClientToken";
 import RefTableAdmin from "./pages/ref/RefTableAdmin";
 import RefValue from "./pages/ref/RefValue";
 import RefLocale from "./pages/ref/RefLocale";
@@ -249,6 +250,7 @@ const App = () => {
           <Route path="oauth/authClient" element={<AuthClient />} />
           <Route path="oauth/refreshToken" element={<RefreshToken />} />
           <Route path="oauth/authCode" element={<AuthCode />} />
+          <Route path="oauth/clientToken" element={<ClientToken />} />
           <Route path="category/admin" element={<Category />} />
           <Route path="tag/admin" element={<TagAdmin />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />

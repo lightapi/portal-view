@@ -11460,9 +11460,19 @@
           "title": "Instance Id",
           "readonly": true
         },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name",
+          "readonly": true
+        },
         "configId": {
           "type": "string",
           "title": "Config Id",
+          "readonly": true
+        },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
           "readonly": true
         },
         "propertyId": {
@@ -11470,9 +11480,15 @@
           "title": "Property Id",
           "readonly": true
         },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
         "propertyType": {
           "type": "string",
-          "title": "Property Type"
+          "title": "Property Type",
+          "readonly": true
         },
         "propertyValue": {
           "type": "string",
@@ -11489,8 +11505,11 @@
     "form": [
       "hostId",
       "instanceId",
+      "instanceName",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
       "propertyType",
       {
         "key": "propertyValue",
@@ -17742,7 +17761,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "expiresAt": {
           "title": "Expires At",
@@ -17828,7 +17847,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "expiresAt": {
           "title": "Expires At",
@@ -17924,7 +17943,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "metadata": {
           "title": "Metadata",
@@ -18008,7 +18027,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "metadata": {
           "title": "Metadata",
@@ -18359,6 +18378,65 @@
         "rows": 3
       },
       "active"
+    ]
+  },
+  "createClientToken": {
+    "formId": "createClientToken",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "createClientToken",
+        "version": "0.1.0",
+        "title": "Create Token",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Create Client Token Request",
+      "required": [
+        "hostId",
+        "clientId",
+        "clientSecret",
+        "serviceId"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host ID",
+          "type": "string",
+          "readonly": true
+        },
+        "clientId": {
+          "title": "Client ID",
+          "type": "string",
+          "readonly": true
+        },
+        "clientSecret": {
+          "title": "Client Secret",
+          "type": "password"
+        },
+        "serviceId": {
+          "title": "Service ID",
+          "type": "string",
+          "default": "AAATB5k7QQa8wX6iQWkwtA"
+        },
+        "daysToExpiration": {
+          "title": "Days to Expiration",
+          "type": "integer"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "clientId",
+      {
+        "key": "clientSecret",
+        "type": "password"
+      },
+      "serviceId",
+      "daysToExpiration"
     ]
   }
 }

@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
@@ -196,6 +197,10 @@ export default function AuthClient() {
         filterVariant: 'select',
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        id: 'tokens', header: 'Tokens', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (<Tooltip title="Client Tokens"><IconButton color="primary" onClick={() => navigate('/app/oauth/clientToken', { state: { data: { clientId: row.original.clientId } } })}><VpnKeyIcon /></IconButton></Tooltip>),
       },
       {
         id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
