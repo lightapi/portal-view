@@ -10920,14 +10920,25 @@
           "title": "Config Id",
           "readonly": true
         },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
           "readonly": true
         },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
         "propertyType": {
           "type": "string",
-          "title": "Property Type"
+          "title": "Property Type",
+          "readonly": true
         },
         "propertyValue": {
           "type": "string",
@@ -10945,7 +10956,9 @@
       "hostId",
       "environment",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
       "propertyType",
       {
         "key": "propertyValue",
@@ -11095,14 +11108,25 @@
           "title": "Config Id",
           "readonly": true
         },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
           "readonly": true
         },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
         "propertyType": {
           "type": "string",
-          "title": "Property Type"
+          "title": "Property Type",
+          "readonly": true
         },
         "propertyValue": {
           "type": "string",
@@ -11118,7 +11142,9 @@
     "form": [
       "productId",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
       "propertyType",
       {
         "key": "propertyValue",
@@ -11277,14 +11303,40 @@
           "title": "Product Version Id",
           "readonly": true
         },
+        "productId": {
+          "type": "string",
+          "title": "Product Id",
+          "readonly": true
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id",
+          "readonly": true
+        },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
           "readonly": true
         },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
         "propertyType": {
           "type": "string",
-          "title": "Property Type"
+          "title": "Property Type",
+          "readonly": true
         },
         "propertyValue": {
           "type": "string",
@@ -11300,7 +11352,12 @@
     "form": [
       "hostId",
       "productVersionId",
+      "productId",
+      "productVersion",
+      "configId",
+      "configName",
       "propertyId",
+      "propertyName",
       "propertyType",
       {
         "key": "propertyValue",
