@@ -18538,6 +18538,11 @@
         "description": {
           "title": "Description",
           "type": "string"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean",
+          "default": false
         }
       }
     },
@@ -18548,7 +18553,8 @@
       {
         "key": "description",
         "type": "textarea"
-      }
+      },
+      "current"
     ]
   },
   "updateConfigSnapshot": {
@@ -18586,6 +18592,11 @@
         "description": {
           "title": "Description",
           "type": "string"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean",
+          "default": false
         }
       }
     },
@@ -18595,7 +18606,8 @@
       {
         "key": "description",
         "type": "textarea"
-      }
+      },
+      "current"
     ]
   }
 }
