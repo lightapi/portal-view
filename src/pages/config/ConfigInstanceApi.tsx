@@ -63,6 +63,7 @@ export default function ConfigInstanceApi() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialConfigId = location.state?.data?.configId;
+  const initialInstanceId = location.state?.data?.instanceId;
   const initialInstanceApiId = location.state?.data?.instanceApiId;
 
   // Data and fetching state
@@ -197,11 +198,8 @@ export default function ConfigInstanceApi() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceApiType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceApiId', header: 'Instance Api Id' },
-      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
-      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       {
         accessorKey: 'propertyValue',
@@ -210,6 +208,10 @@ export default function ConfigInstanceApi() {
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
       { accessorKey: 'apiId', header: 'Api Id' },
+      { accessorKey: 'apiVersion', header: 'Api Version' },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -224,29 +226,8 @@ export default function ConfigInstanceApi() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Property">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.propertyId}
-            >
-              {isUpdateLoading === row.original.propertyId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration
@@ -265,13 +246,34 @@ export default function ConfigInstanceApi() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.instanceApiId}-${row.configId}-${row.propertyName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+        <Tooltip title="Update Property">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.propertyId}
+          >
+            {isUpdateLoading === row.original.propertyId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Property">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
+          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
           disabled={!initialConfigId && !initialInstanceApiId}
         >
           Add Property to Instance Api
