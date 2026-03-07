@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import SyncIcon from '@mui/icons-material/Sync';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -276,7 +277,15 @@ export default function ConfigInstanceApi() {
           onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
           disabled={!initialConfigId && !initialInstanceApiId}
         >
-          Add Property to Instance Api
+          Add Config to Instance Api
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<SyncIcon />}
+          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
+          disabled={!initialInstanceApiId}
+        >
+          Sync Config from Api
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">
