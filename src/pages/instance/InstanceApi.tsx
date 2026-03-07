@@ -149,28 +149,8 @@ export default function InstanceApi() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceApiType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'apiId', header: 'API Id' },
-      { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'productId', header: 'Product Id' },
-      { accessorKey: 'updateUser', header: 'Update User' },
       {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+        id: 'delete', header: 'Delete', size: 40, muiTableHeadCellProps: { align: 'center', sx: { padding: 0 } }, muiTableBodyCellProps: { align: 'center', sx: { padding: 0 } }, enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Tooltip title="Delete Instance API">
             <IconButton color="error" onClick={() => handleDelete(row)}>
@@ -180,14 +160,37 @@ export default function InstanceApi() {
         ),
       },
       {
-        id: 'relations', header: 'Config/Path', enableSorting: false, enableColumnFilter: false,
+        id: 'config', header: 'Config', size: 40, muiTableHeadCellProps: { align: 'center', sx: { padding: 0 } }, muiTableBodyCellProps: { align: 'center', sx: { padding: 0 } }, enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Config"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
-            <Tooltip title="Path Prefix"><IconButton onClick={() => navigate('/app/instance/instanceApiPathPrefix', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><RouteIcon /></IconButton></Tooltip>
-          </Box>
+          <Tooltip title="Config"><IconButton color="primary" onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
         ),
       },
+      {
+        id: 'path', header: 'Path', size: 40, muiTableHeadCellProps: { align: 'center', sx: { padding: 0 } }, muiTableBodyCellProps: { align: 'center', sx: { padding: 0 } }, enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Tooltip title="Path Prefix"><IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiPathPrefix', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><RouteIcon /></IconButton></Tooltip>
+        ),
+      },
+      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
+      { accessorKey: 'apiVersion', header: 'API Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
     [handleDelete, navigate],
   );
