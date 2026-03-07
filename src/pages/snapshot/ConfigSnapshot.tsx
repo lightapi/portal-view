@@ -13,16 +13,16 @@ import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import DescriptionIcon from '@mui/icons-material/Description';
-import SettingsIcon from '@mui/icons-material/Settings';
-import ApiIcon from '@mui/icons-material/Api';
-import AppsIcon from '@mui/icons-material/Apps';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import YardIcon from "@mui/icons-material/Yard";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import AddToDriveIcon from "@mui/icons-material/AddToDrive";
+import InstallMobileIcon from "@mui/icons-material/InstallMobile";
+import AppsIcon from "@mui/icons-material/Apps";
+import ApiIcon from "@mui/icons-material/Api";
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import TuneIcon from '@mui/icons-material/Tune';
-import LanguageIcon from '@mui/icons-material/Language';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import FactCheckIcon from '@mui/icons-material/FactCheck';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -192,11 +192,82 @@ export default function ConfigSnapshot() {
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ConfigSnapshotType>[]>(
         () => [
-            { accessorKey: 'snapshotId', header: 'Snapshot Id' },
+            {
+                id: 'actions',
+                header: 'Actions',
+                enableSorting: false,
+                enableColumnFilter: false,
+                size: 350,
+                Cell: ({ row }) => (
+                    <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                        <Tooltip title="Update Snapshot">
+                            <IconButton
+                                onClick={() => handleUpdate(row)}
+                                disabled={isUpdateLoading === row.original.snapshotId}
+                            >
+                                <SystemUpdateIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Snapshot">
+                            <IconButton color="error" onClick={() => handleDelete(row)}>
+                                <DeleteForeverIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Snapshot Properties">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}>
+                                <FormatListBulletedIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Snapshot Files">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}>
+                                <DescriptionIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Deployment Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}>
+                                <InstallMobileIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="API Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}>
+                                <ApiIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="App Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}>
+                                <AppsIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="App API Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}>
+                                <FormatIndentIncreaseIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Inst Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}>
+                                <TuneIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Env Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}>
+                                <YardIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Prd Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}>
+                                <Inventory2Icon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="PV Props">
+                            <IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}>
+                                <AddToDriveIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Box>
+                ),
+            },
             { accessorKey: 'snapshotTs', header: 'Snapshot Ts' },
             { accessorKey: 'snapshotType', header: 'Snapshot Type' },
-            { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'instanceId', header: 'Instance Id' },
             { accessorKey: 'instanceName', header: 'Instance Name' },
             {
                 accessorKey: 'current',
@@ -207,61 +278,16 @@ export default function ConfigSnapshot() {
             },
             { accessorKey: 'description', header: 'Description' },
             { accessorKey: 'userId', header: 'User Id' },
-            { accessorKey: 'deploymentId', header: 'Deployment Id' },
-            { accessorKey: 'environment', header: 'Environment' },
             { accessorKey: 'productId', header: 'Product Id' },
             { accessorKey: 'productVersion', header: 'Product Version' },
+            { accessorKey: 'environment', header: 'Environment' },
             { accessorKey: 'serviceId', header: 'Service Id' },
             { accessorKey: 'apiId', header: 'Api Id' },
             { accessorKey: 'apiVersion', header: 'Api Version' },
-            {
-                id: 'properties', header: 'Properties', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Properties"><IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}><ReceiptIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'files', header: 'Files', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Files"><IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}><DescriptionIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'deploymentProps', header: 'Deployment Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Deployment Props"><IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}><SettingsIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'apiProps', header: 'API Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View API Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}><ApiIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'appProps', header: 'App Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View App Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}><AppsIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'appApiProps', header: 'App API Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View App API Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}><AccountTreeIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'instProps', header: 'Inst Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Inst Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}><TuneIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'envProps', header: 'Env Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Env Props"><IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}><LanguageIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'prdProps', header: 'Prd Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View Prd Props"><IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}><Inventory2Icon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'pvProps', header: 'PV Props', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="View PV Props"><IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}><FactCheckIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Update Property"><IconButton onClick={() => handleUpdate(row)}><SystemUpdateIcon /></IconButton></Tooltip>),
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
+            { accessorKey: 'snapshotId', header: 'Snapshot Id' },
+            { accessorKey: 'hostId', header: 'Host Id' },
+            { accessorKey: 'instanceId', header: 'Instance Id' },
+            { accessorKey: 'deploymentId', header: 'Deployment Id' },
         ],
         [handleDelete, navigate],
     );
