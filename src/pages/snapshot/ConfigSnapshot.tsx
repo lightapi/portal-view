@@ -13,6 +13,16 @@ import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import DescriptionIcon from '@mui/icons-material/Description';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ApiIcon from '@mui/icons-material/Api';
+import AppsIcon from '@mui/icons-material/Apps';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import TuneIcon from '@mui/icons-material/Tune';
+import LanguageIcon from '@mui/icons-material/Language';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -204,6 +214,46 @@ export default function ConfigSnapshot() {
             { accessorKey: 'serviceId', header: 'Service Id' },
             { accessorKey: 'apiId', header: 'Api Id' },
             { accessorKey: 'apiVersion', header: 'Api Version' },
+            {
+                id: 'properties', header: 'Properties', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Properties"><IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}><ReceiptIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'files', header: 'Files', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Files"><IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}><DescriptionIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'deploymentProps', header: 'Deployment Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Deployment Props"><IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}><SettingsIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'apiProps', header: 'API Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View API Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}><ApiIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'appProps', header: 'App Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View App Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}><AppsIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'appApiProps', header: 'App API Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View App API Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}><AccountTreeIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'instProps', header: 'Inst Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Inst Props"><IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}><TuneIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'envProps', header: 'Env Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Env Props"><IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}><LanguageIcon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'prdProps', header: 'Prd Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View Prd Props"><IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}><Inventory2Icon /></IconButton></Tooltip>),
+            },
+            {
+                id: 'pvProps', header: 'PV Props', enableSorting: false, enableColumnFilter: false,
+                Cell: ({ row }) => (<Tooltip title="View PV Props"><IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}><FactCheckIcon /></IconButton></Tooltip>),
+            },
             {
                 id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
                 Cell: ({ row }) => (<Tooltip title="Update Property"><IconButton onClick={() => handleUpdate(row)}><SystemUpdateIcon /></IconButton></Tooltip>),

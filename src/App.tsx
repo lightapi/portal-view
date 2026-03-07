@@ -70,6 +70,16 @@ import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
 import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
+import ConfigSnapshotProperty from "./pages/snapshot/ConfigSnapshotProperty";
+import ConfigSnapshotFile from "./pages/snapshot/ConfigSnapshotFile";
+import ConfigSnapshotDeploymentInstanceProperty from "./pages/snapshot/ConfigSnapshotDeploymentInstanceProperty";
+import ConfigSnapshotInstanceApiProperty from "./pages/snapshot/ConfigSnapshotInstanceApiProperty";
+import ConfigSnapshotInstanceAppProperty from "./pages/snapshot/ConfigSnapshotInstanceAppProperty";
+import ConfigSnapshotInstanceAppApiProperty from "./pages/snapshot/ConfigSnapshotInstanceAppApiProperty";
+import ConfigSnapshotInstanceProperty from "./pages/snapshot/ConfigSnapshotInstanceProperty";
+import ConfigSnapshotEnvironmentProperty from "./pages/snapshot/ConfigSnapshotEnvironmentProperty";
+import ConfigSnapshotProductProperty from "./pages/snapshot/ConfigSnapshotProductProperty";
+import ConfigSnapshotProductVersionProperty from "./pages/snapshot/ConfigSnapshotProductVersionProperty";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
@@ -308,6 +318,46 @@ const App = () => {
           <Route
             path="config/configSnapshot"
             element={<ConfigSnapshot />}
+          />
+          <Route
+            path="config/configSnapshotProperty"
+            element={<ConfigSnapshotProperty />}
+          />
+          <Route
+            path="config/configSnapshotFile"
+            element={<ConfigSnapshotFile />}
+          />
+          <Route
+            path="config/configSnapshotDeploymentInstanceProperty"
+            element={<ConfigSnapshotDeploymentInstanceProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceApiProperty"
+            element={<ConfigSnapshotInstanceApiProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceAppProperty"
+            element={<ConfigSnapshotInstanceAppProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceAppApiProperty"
+            element={<ConfigSnapshotInstanceAppApiProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceProperty"
+            element={<ConfigSnapshotInstanceProperty />}
+          />
+          <Route
+            path="config/configSnapshotEnvironmentProperty"
+            element={<ConfigSnapshotEnvironmentProperty />}
+          />
+          <Route
+            path="config/configSnapshotProductProperty"
+            element={<ConfigSnapshotProductProperty />}
+          />
+          <Route
+            path="config/configSnapshotProductVersionProperty"
+            element={<ConfigSnapshotProductVersionProperty />}
           />
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
