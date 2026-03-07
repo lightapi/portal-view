@@ -66,6 +66,8 @@ export default function ConfigInstanceApi() {
   const initialConfigId = location.state?.data?.configId;
   const initialInstanceId = location.state?.data?.instanceId;
   const initialInstanceApiId = location.state?.data?.instanceApiId;
+  const initialApiId = location.state?.data?.apiId;
+  const initialApiVersion = location.state?.data?.apiVersion;
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceApiType[]>([]);
@@ -74,6 +76,7 @@ export default function ConfigInstanceApi() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+  const [isSyncLoading, setIsSyncLoading] = useState(false);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
     const initialFilters: MRT_ColumnFiltersState = [
@@ -196,6 +199,48 @@ export default function ConfigInstanceApi() {
     }
   }, [host, navigate, location.pathname]);
 
+
+  const handleSync = useCallback(async () => {
+    if (!host) {
+      alert("Host is required.");
+      return;
+    }
+    if (!initialInstanceId || !initialInstanceApiId || !initialApiId || !initialApiVersion) {
+      alert("Missing required context data (Instance ID, Instance API ID, API ID, or API Version) to sync.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to sync config from the API definition? This will fetch access-control and rules configuration and publish them to this instance API.`)) return;
+
+    setIsSyncLoading(true);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'config', action: 'syncConfigInstanceApi', version: '0.1.0',
+      data: {
+        hostId: host,
+        instanceId: initialInstanceId,
+        instanceApiId: initialInstanceApiId,
+        apiId: initialApiId,
+        apiVersion: initialApiVersion
+      },
+    };
+
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert(`Failed to sync config from api: ${result.error}`);
+      } else {
+        alert("Config synchronized successfully!");
+        fetchData();
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to sync config due to a network error.');
+    } finally {
+      setIsSyncLoading(false);
+    }
+  }, [host, initialInstanceId, initialInstanceApiId, initialApiId, initialApiVersion, fetchData]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceApiType>[]>(
     () => [
@@ -281,11 +326,11 @@ export default function ConfigInstanceApi() {
         </Button>
         <Button
           variant="contained"
-          startIcon={<SyncIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
-          disabled={!initialInstanceApiId}
+          startIcon={isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
+          onClick={handleSync}
+          disabled={!initialInstanceApiId || isSyncLoading}
         >
-          Sync Config from Api
+          {isSyncLoading ? 'Syncing...' : 'Sync Config from Api'}
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">

@@ -189,28 +189,6 @@ export default function ConfigAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigType>[]>(
     () => [
-      { accessorKey: 'configId', header: 'Config Id' },
-      { accessorKey: 'configName', header: 'Name' },
-      { accessorKey: 'configPhase', header: 'Phase' },
-      { accessorKey: 'configType', header: 'Type' },
-      { accessorKey: 'light4jVersion', header: 'Light4j Version' },
-      { accessorKey: 'classPath', header: 'Class Path' },
-      {
-        accessorKey: 'configDesc',
-        header: 'Description',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
       {
         id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
@@ -239,6 +217,28 @@ export default function ConfigAdmin() {
           </Box>
         ),
       },
+      { accessorKey: 'configName', header: 'Name' },
+      { accessorKey: 'configPhase', header: 'Phase' },
+      { accessorKey: 'configType', header: 'Type' },
+      { accessorKey: 'light4jVersion', header: 'Light4j Version' },
+      { accessorKey: 'classPath', header: 'Class Path' },
+      {
+        accessorKey: 'configDesc',
+        header: 'Description',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
     ],
     [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );

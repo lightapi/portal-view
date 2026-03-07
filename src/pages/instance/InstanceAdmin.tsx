@@ -201,54 +201,6 @@ export default function InstanceAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host ID', enableColumnFilter: false },
-      { accessorKey: 'instanceId', header: 'Instance ID' },
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
-      { accessorKey: 'productId', header: 'Product ID' },
-      { accessorKey: 'productVersion', header: 'Product Version' },
-      { accessorKey: 'serviceId', header: 'Service ID' },
-      { accessorKey: 'environment', header: 'Environment' },
-      {
-        accessorKey: 'current',
-        header: 'Current',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        accessorKey: 'readonly',
-        header: 'Readonly',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        accessorKey: 'serviceDesc',
-        header: 'Service Desc',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      {
-        accessorKey: 'instanceDesc',
-        header: 'Instance Desc',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
       {
         id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
@@ -306,6 +258,54 @@ export default function InstanceAdmin() {
           </Box>
         ),
       },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'productId', header: 'Product ID' },
+      { accessorKey: 'productVersion', header: 'Product Version' },
+      { accessorKey: 'serviceId', header: 'Service ID' },
+      { accessorKey: 'environment', header: 'Environment' },
+      {
+        accessorKey: 'current',
+        header: 'Current',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'readonly',
+        header: 'Readonly',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+      {
+        accessorKey: 'serviceDesc',
+        header: 'Service Desc',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      {
+        accessorKey: 'instanceDesc',
+        header: 'Instance Desc',
+        Cell: TruncatedCell,
+        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+      },
+      { accessorKey: 'hostId', header: 'Host Id', enableColumnFilter: false },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
+      { accessorKey: 'productVersionId', header: 'Product Version ID' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      {
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
     [handleDelete, navigate],
   );
