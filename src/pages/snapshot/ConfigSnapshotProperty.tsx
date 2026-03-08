@@ -8,8 +8,10 @@ import {
     type MRT_ColumnFiltersState,
     type MRT_PaginationState,
     type MRT_SortingState,
+    type MRT_Cell,
+    type MRT_RowData
 } from 'material-react-table';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Tooltip } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
@@ -24,6 +26,17 @@ type ConfigSnapshotPropertyType = {
     propertyValue: string;
     valueType: string;
     sourceLevel: string;
+};
+
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+    const value = cell.getValue<string>() ?? '';
+    return (
+        <Tooltip title={value} placement="top-start">
+            <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                {value}
+            </Box>
+        </Tooltip>
+    );
 };
 
 export default function ConfigSnapshotProperty() {
@@ -82,16 +95,20 @@ export default function ConfigSnapshotProperty() {
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ConfigSnapshotPropertyType>[]>(
         () => [
-            { accessorKey: 'snapshotPropertyId', header: 'Snapshot Property Id' },
-            { accessorKey: 'snapshotId', header: 'Snapshot Id' },
             { accessorKey: 'configPhase', header: 'Phase' },
-            { accessorKey: 'configId', header: 'Config Id' },
-            { accessorKey: 'propertyId', header: 'Property Id' },
             { accessorKey: 'propertyName', header: 'Property Name' },
             { accessorKey: 'propertyType', header: 'Property Type' },
-            { accessorKey: 'propertyValue', header: 'Property Value' },
+            {
+                accessorKey: 'propertyValue',
+                header: 'Property Value',
+                Cell: TruncatedCell,
+            },
             { accessorKey: 'valueType', header: 'Value Type' },
             { accessorKey: 'sourceLevel', header: 'Source Level' },
+            { accessorKey: 'snapshotPropertyId', header: 'Snapshot Property Id' },
+            { accessorKey: 'snapshotId', header: 'Snapshot Id' },
+            { accessorKey: 'configId', header: 'Config Id' },
+            { accessorKey: 'propertyId', header: 'Property Id' },
         ],
         [],
     );
