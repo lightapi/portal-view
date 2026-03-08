@@ -8,6 +8,8 @@ import {
   type MRT_PaginationState,
   type MRT_SortingState,
   type MRT_Row,
+  type MRT_Cell,
+  type MRT_RowData
 } from 'material-react-table';
 import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -49,6 +51,17 @@ type ConfigInstanceType = {
 interface UserState {
   host?: string;
 }
+
+const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
+  const value = cell.getValue<string>() ?? '';
+  return (
+    <Tooltip title={value} placement="top-start">
+      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+        {value}
+      </Box>
+    </Tooltip>
+  );
+};
 
 export default function ConfigInstance() {
   const navigate = useNavigate();
@@ -192,14 +205,38 @@ export default function ConfigInstance() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'instanceId', header: 'Instance Id' },
+      {
+        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Tooltip title="Update Property">
+              <IconButton
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.propertyId}
+              >
+                {isUpdateLoading === row.original.propertyId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete Property">
+              <IconButton color="error" onClick={() => handleDelete(row)}>
+                <DeleteForeverIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
       { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
-      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { accessorKey: 'propertyValue', header: 'Property Value' },
+      {
+        accessorKey: 'propertyValue',
+        header: 'Property Value',
+        Cell: TruncatedCell,
+      },
       {
         accessorKey: 'required',
         header: 'Required',
@@ -207,13 +244,25 @@ export default function ConfigInstance() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { accessorKey: 'propertyDesc', header: 'Property Desc' },
+      {
+        accessorKey: 'propertyDesc',
+        header: 'Property Desc',
+        Cell: TruncatedCell,
+      },
       { accessorKey: 'propertyType', header: 'Property Type' },
       { accessorKey: 'resourceType', header: 'Resource Type' },
       { accessorKey: 'valueType', header: 'Value Type' },
       { accessorKey: 'configType', header: 'Config Type' },
-      { accessorKey: 'configDesc', header: 'Config Desc' },
+      {
+        accessorKey: 'configDesc',
+        header: 'Config Desc',
+        Cell: TruncatedCell,
+      },
       { accessorKey: 'classPath', header: 'Class Path' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -228,16 +277,8 @@ export default function ConfigInstance() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Update Property"><IconButton onClick={() => navigate('/app/form/updateConfigInstance', { state: { data: { ...row.original } } })}><SystemUpdateIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
