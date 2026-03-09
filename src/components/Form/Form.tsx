@@ -7,7 +7,26 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
-import fetchClient from "../../utils/fetchClient";
+import fetchClient, { BASE_URL } from "../../utils/fetchClient";
+const withBaseUrlForDynaSelect = (items: any[] | null) => {
+  if (!items) return items;
+  return items.map((item) => {
+    if (item?.type !== "dynaselect") {
+      return item;
+    }
+    const actionUrl = item?.action?.url;
+    if (actionUrl === undefined || actionUrl === null || actionUrl === "") {
+      return item;
+    }
+    return {
+      ...item,
+      action: {
+        ...item.action,
+        url: `${BASE_URL}${actionUrl}`,
+      },
+    };
+  });
+};
 
 const useStyles = makeStyles((theme: any) => ({
   root: {
@@ -47,9 +66,9 @@ function Form() {
   const [validationResult, setValidationResult] = useState(null);
   const [showErrors, setShowErrors] = useState(false);
   const [skipAuth, setSkipAuth] = useState(false);
-  const [schema, setSchema] = useState(null);
-  const [form, setForm] = useState(null);
-  const [actions, setActions] = useState(null);
+  const [schema, setSchema] = useState<any>(null);
+  const [form, setForm] = useState<any[] | null>(null);
+  const [actions, setActions] = useState<any[] | null>(null);
   const [model, setModel] = useState({});
   const classes = useStyles();
   const { isAuthenticated, host } = useUserState();
@@ -60,7 +79,7 @@ function Form() {
     if (!formData) formData = {};
     setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
-    setForm(formData.form);
+    setForm(withBaseUrlForDynaSelect(formData.form));
     setActions(formData.actions);
     console.log("host = ", host);
 
