@@ -147,74 +147,11 @@ export default function ServiceEndpoint() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'generalActions', header: 'General', enableSorting: false, enableColumnFilter: false, size: 120,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="List Scopes"><IconButton onClick={() => navigate('/app/listScope', { state: row.original })}><AccessibleForwardIcon /></IconButton></Tooltip>
-            <Tooltip title="List Rules"><IconButton onClick={() => navigate('/app/listRule', { state: row.original })}><FilterListIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
-      {
-        id: 'roleActions', header: 'Role Access', enableSorting: false, enableColumnFilter: false, size: 160,
-        Cell: ({ row }) => {
-          const s = { data: { ...row.original } };
-          return (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Role Permission"><IconButton onClick={() => navigate('/app/access/rolePermission', { state: s })}><DoNotTouchIcon /></IconButton></Tooltip>
-              <Tooltip title="Role Row Filter"><IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: s })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-              <Tooltip title="Role Col Filter"><IconButton onClick={() => navigate('/app/access/roleColFilter', { state: s })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            </Box>
-          );
-        },
-      },
-      {
-        id: 'groupActions', header: 'Group Access', enableSorting: false, enableColumnFilter: false, size: 160,
-        Cell: ({ row }) => {
-          const s = { data: { ...row.original } };
-          return (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Group Permission"><IconButton onClick={() => navigate('/app/access/groupPermission', { state: s })}><DoNotTouchIcon /></IconButton></Tooltip>
-              <Tooltip title="Group Row Filter"><IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: s })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-              <Tooltip title="Group Col Filter"><IconButton onClick={() => navigate('/app/access/groupColFilter', { state: s })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            </Box>
-          );
-        },
-      },
-      {
-        id: 'positionActions', header: 'Position Access', enableSorting: false, enableColumnFilter: false, size: 160,
-        Cell: ({ row }) => {
-          const s = { data: { ...row.original } };
-          return (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Position Permission"><IconButton onClick={() => navigate('/app/access/positionPermission', { state: s })}><DoNotTouchIcon /></IconButton></Tooltip>
-              <Tooltip title="Position Row Filter"><IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: s })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-              <Tooltip title="Position Col Filter"><IconButton onClick={() => navigate('/app/access/positionColFilter', { state: s })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            </Box>
-          );
-        },
-      },
-      {
-        id: 'attributeActions', header: 'Attribute Access', enableSorting: false, enableColumnFilter: false, size: 160,
-        Cell: ({ row }) => {
-          const s = { data: { ...row.original } };
-          return (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Attribute Permission"><IconButton onClick={() => navigate('/app/access/attributePermission', { state: s })}><DoNotTouchIcon /></IconButton></Tooltip>
-              <Tooltip title="Attribute Row Filter"><IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: s })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-              <Tooltip title="Attribute Col Filter"><IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: s })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            </Box>
-          );
-        },
-      },
-      {
-        id: 'userActions', header: 'User Access', enableSorting: false, enableColumnFilter: false, size: 120,
-        Cell: ({ row }) => {
-          const s = { data: { ...row.original } };
-          return (
-            <Tooltip title="User Permission"><IconButton onClick={() => navigate('/app/access/userPermission', { state: s })}><AccessibilityIcon /></IconButton></Tooltip>
-          );
-        },
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
     [navigate],
@@ -224,7 +161,89 @@ export default function ServiceEndpoint() {
   const table = useMaterialReactTable({
     columns,
     data,
-    enableRowActions: false, // Disable the single action column
+    enableRowActions: true,
+    renderRowActions: ({ row }) => {
+      const s = { data: { ...row.original } };
+      return (
+        <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+          <Tooltip title="List Scopes">
+            <IconButton onClick={() => navigate('/app/listScope', { state: row.original })}>
+              <AccessibleForwardIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="List Rules">
+            <IconButton onClick={() => navigate('/app/listRule', { state: row.original })}>
+              <FilterListIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Role Permission">
+            <IconButton onClick={() => navigate('/app/access/rolePermission', { state: s })}>
+              <DoNotTouchIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Role Row Filter">
+            <IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: s })}>
+              <KeyboardDoubleArrowDownIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Role Col Filter">
+            <IconButton onClick={() => navigate('/app/access/roleColFilter', { state: s })}>
+              <KeyboardDoubleArrowRightIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Group Permission">
+            <IconButton onClick={() => navigate('/app/access/groupPermission', { state: s })}>
+              <DoNotTouchIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Group Row Filter">
+            <IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: s })}>
+              <KeyboardDoubleArrowDownIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Group Col Filter">
+            <IconButton onClick={() => navigate('/app/access/groupColFilter', { state: s })}>
+              <KeyboardDoubleArrowRightIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Position Permission">
+            <IconButton onClick={() => navigate('/app/access/positionPermission', { state: s })}>
+              <DoNotTouchIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Position Row Filter">
+            <IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: s })}>
+              <KeyboardDoubleArrowDownIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Position Col Filter">
+            <IconButton onClick={() => navigate('/app/access/positionColFilter', { state: s })}>
+              <KeyboardDoubleArrowRightIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Attribute Permission">
+            <IconButton onClick={() => navigate('/app/access/attributePermission', { state: s })}>
+              <DoNotTouchIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Attribute Row Filter">
+            <IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: s })}>
+              <KeyboardDoubleArrowDownIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Attribute Col Filter">
+            <IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: s })}>
+              <KeyboardDoubleArrowRightIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="User Permission">
+            <IconButton onClick={() => navigate('/app/access/userPermission', { state: s })}>
+              <AccessibilityIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      );
+    },
     initialState: { showColumnFilters: true, density: 'compact' },
     manualPagination: true,
     manualSorting: true,

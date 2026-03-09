@@ -210,30 +210,8 @@ export default function PlatformAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Platform">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.platformId}
-              >
-                {isUpdateLoading === row.original.platformId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Delete Platform"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Pipelines"><IconButton onClick={() => navigate('/app/deployment/PipelineAdmin', { state: { data: { platformId: row.original.platformId } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -252,7 +230,33 @@ export default function PlatformAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.platformId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Platform">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.platformId}
+          >
+            {isUpdateLoading === row.original.platformId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Pipelines">
+          <IconButton onClick={() => navigate('/app/deployment/PipelineAdmin', { state: { data: { platformId: row.original.platformId } } })}>
+            <GridGoldenratioIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Platform">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPlatform')}>
         Create New Platform

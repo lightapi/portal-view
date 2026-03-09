@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -173,29 +173,9 @@ export default function AuditLog() {
             { accessorKey: 'message3', header: 'Message 3' },
             { accessorKey: 'message', header: 'Message' },
             { accessorKey: 'userComment', header: 'User Comment' },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (
-                    <Tooltip title="Update Audit Log">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === row.original.auditLogId}
-                        >
-                            {isUpdateLoading === row.original.auditLogId ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                )
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Audit Log"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
+            { accessorKey: 'userComment', header: 'User Comment' },
         ],
-        [handleDelete, handleUpdate, isUpdateLoading],
+        [handleDelete, handleUpdate, navigate],
     );
 
     // Table instance configuration
@@ -214,7 +194,28 @@ export default function AuditLog() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.auditLogId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        renderRowActions: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                <Tooltip title="Update Audit Log">
+                    <IconButton
+                        onClick={() => handleUpdate(row)}
+                        disabled={isUpdateLoading === row.original.auditLogId}
+                    >
+                        {isUpdateLoading === row.original.auditLogId ? (
+                            <CircularProgress size={22} />
+                        ) : (
+                            <SystemUpdateIcon />
+                        )}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Audit Log">
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        ),
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAuditLog')}>
                 Create New Audit Log

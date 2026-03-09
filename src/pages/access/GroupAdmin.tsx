@@ -187,41 +187,14 @@ export default function GroupAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Group">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.groupId}
-            >
-              {isUpdateLoading === row.original.groupId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Group"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'accessControl', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Group Permissions"><IconButton onClick={() => navigate('/app/access/groupPermission', { state: { data: { groupId: row.original.groupId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-            <Tooltip title="Group Row Filters"><IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: { data: { groupId: row.original.groupId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-            <Tooltip title="Group Column Filters"><IconButton onClick={() => navigate('/app/access/groupColFilter', { state: { data: { groupId: row.original.groupId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/groupUser', { state: { data: { groupId: row.original.groupId } } })}><GroupsIcon /></IconButton></Tooltip>
-          </Box>
-        ),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -240,7 +213,48 @@ export default function GroupAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.groupId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Group">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.groupId}
+          >
+            {isUpdateLoading === row.original.groupId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Group Permissions">
+          <IconButton onClick={() => navigate('/app/access/groupPermission', { state: { data: { groupId: row.original.groupId } } })}>
+            <DoNotTouchIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Group Row Filters">
+          <IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: { data: { groupId: row.original.groupId } } })}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Group Column Filters">
+          <IconButton onClick={() => navigate('/app/access/groupColFilter', { state: { data: { groupId: row.original.groupId } } })}>
+            <KeyboardDoubleArrowRightIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Users">
+          <IconButton onClick={() => navigate('/app/access/groupUser', { state: { data: { groupId: row.original.groupId } } })}>
+            <GroupsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Group">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createGroup')}>
         Create New Group

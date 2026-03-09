@@ -203,20 +203,6 @@ export default function SchemaAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Schema">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.schemaId}>
-              {isUpdateLoading === row.original.schemaId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Schema"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
     [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
@@ -237,7 +223,35 @@ export default function SchemaAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.schemaId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Details">
+          <IconButton
+            onClick={() => navigate('/app/schemaDetail', { state: { schema: row.original } })}
+          >
+            <DetailsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Update Schema">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.schemaId}
+          >
+            {isUpdateLoading === row.original.schemaId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Schema">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createJsonSchema')}>
         Create New Schema

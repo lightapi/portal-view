@@ -163,10 +163,6 @@ export default function ProviderClient() {
         filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
-      {
-        id: 'delete', header: 'Remove', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Remove Client from Provider"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
     [handleDelete],
   );
@@ -187,7 +183,14 @@ export default function ProviderClient() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.hostId}-${row.clientId}-${row.providerId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Remove Client from Provider">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

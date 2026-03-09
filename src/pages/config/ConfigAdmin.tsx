@@ -189,34 +189,6 @@ export default function ConfigAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Config">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.configId}
-              >
-                {isUpdateLoading === row.original.configId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Config"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-            <Tooltip title="Properties"><IconButton onClick={() => navigate('/app/config/configProperty', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
-            <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/config/configEnvironment', { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
-            <Tooltip title="Products"><IconButton onClick={() => navigate('/app/config/configProduct', { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
-            <Tooltip title="Product Versions"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-            <Tooltip title="Instances"><IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
-            <Tooltip title="Instance APIs"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
-            <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/config/configInstanceApp', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
-            <Tooltip title="Instance App Api"><IconButton onClick={() => navigate('/app/config/configInstanceAppApi', { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
       { accessorKey: 'configName', header: 'Name' },
       { accessorKey: 'configPhase', header: 'Phase' },
       { accessorKey: 'configType', header: 'Type' },
@@ -240,7 +212,7 @@ export default function ConfigAdmin() {
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -259,7 +231,36 @@ export default function ConfigAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.configId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Config">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.configId}
+          >
+            {isUpdateLoading === row.original.configId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Properties"><IconButton onClick={() => navigate('/app/config/configProperty', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
+        <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/config/configEnvironment', { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
+        <Tooltip title="Products"><IconButton onClick={() => navigate('/app/config/configProduct', { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
+        <Tooltip title="Product Versions"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
+        <Tooltip title="Instances"><IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance APIs"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/config/configInstanceApp', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance App Api"><IconButton onClick={() => navigate('/app/config/configInstanceAppApi', { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
+        <Tooltip title="Delete Config">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createConfig')}>
         Create New Config

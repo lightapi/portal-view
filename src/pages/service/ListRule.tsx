@@ -112,7 +112,7 @@ export default function ListRule() {
     enableRowActions: true,
     enableGlobalFilter: true,
     enableColumnFilters: true,
-    positionActionsColumn: 'last',
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Delete">

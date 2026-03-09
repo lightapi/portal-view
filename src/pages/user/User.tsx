@@ -226,7 +226,7 @@ export default function User() {
       { accessorKey: 'verified', header: 'Verified', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
       { accessorKey: 'locked', header: 'Locked', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
     ],
-    [],
+    [handleDelete, handleUpdate, handleStateChange, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
@@ -246,7 +246,7 @@ export default function User() {
     getRowId: (row) => row.userId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
-    positionActionsColumn: 'last',
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem', flexWrap: 'nowrap' }}>
         <Tooltip title="Details"><IconButton onClick={() => navigate('/app/userDetail', { state: { user: row.original } })}><DetailsIcon /></IconButton></Tooltip>

@@ -164,10 +164,6 @@ export default function ClientToken() {
                 accessorKey: 'updateTs', header: 'Last Updated',
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
-            {
-                id: 'delete', header: 'Revoke', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Revoke Token"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
         ],
         [handleDelete],
     );
@@ -188,7 +184,14 @@ export default function ClientToken() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.tokenId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        renderRowActions: ({ row }) => (
+            <Tooltip title="Revoke Token">
+                <IconButton color="error" onClick={() => handleDelete(row)}>
+                    <DeleteForeverIcon />
+                </IconButton>
+            </Tooltip>
+        ),
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button

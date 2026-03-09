@@ -181,30 +181,6 @@ export default function ConfigEnvironment() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigEnvironmentType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Property">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.propertyId}
-              >
-                {isUpdateLoading === row.original.propertyId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Property">
-              <IconButton color="error" onClick={() => handleDelete(row)}>
-                <DeleteForeverIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'environment', header: 'Environment' },
       { accessorKey: 'configId', header: 'Config Id' },
@@ -247,7 +223,28 @@ export default function ConfigEnvironment() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.environment}-${row.configId}-${row.propertyName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Property">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.propertyId}
+          >
+            {isUpdateLoading === row.original.propertyId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Property">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

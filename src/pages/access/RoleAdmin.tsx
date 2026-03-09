@@ -187,43 +187,14 @@ export default function RoleAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Role">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.roleId}
-            >
-              {isUpdateLoading === row.original.roleId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Role"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-        ),
-      },
-      {
-        id: 'permissions', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Role Permissions"><IconButton onClick={() => navigate('/app/access/rolePermission', { state: { data: { roleId: row.original.roleId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-            <Tooltip title="Role Row Filters"><IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: { data: { roleId: row.original.roleId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-            <Tooltip title="Role Column Filters"><IconButton onClick={() => navigate('/app/access/roleColFilter', { state: { data: { roleId: row.original.roleId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/roleUser', { state: { data: { roleId: row.original.roleId } } })}><CameraRollIcon /></IconButton></Tooltip>
-          </Box>
-        ),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -242,7 +213,48 @@ export default function RoleAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.roleId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Role">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.roleId}
+          >
+            {isUpdateLoading === row.original.roleId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Role Permissions">
+          <IconButton onClick={() => navigate('/app/access/rolePermission', { state: { data: { roleId: row.original.roleId } } })}>
+            <DoNotTouchIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Role Row Filters">
+          <IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: { data: { roleId: row.original.roleId } } })}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Role Column Filters">
+          <IconButton onClick={() => navigate('/app/access/roleColFilter', { state: { data: { roleId: row.original.roleId } } })}>
+            <KeyboardDoubleArrowRightIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Users">
+          <IconButton onClick={() => navigate('/app/access/roleUser', { state: { data: { roleId: row.original.roleId } } })}>
+            <CameraRollIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Role">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRole')}>
         Create New Role

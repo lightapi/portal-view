@@ -182,10 +182,6 @@ export default function AuthCodeAdmin() {
         accessorKey: 'updateTs', header: 'Last Updated',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'delete', header: 'Revoke', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Revoke Code"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
     [handleDelete],
   );
@@ -206,7 +202,14 @@ export default function AuthCodeAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.authCode,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Revoke Code">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">Authorization Codes</Typography>
     ),

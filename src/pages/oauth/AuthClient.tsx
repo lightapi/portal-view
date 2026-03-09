@@ -199,19 +199,14 @@ export default function AuthClient() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'tokens', header: 'Tokens', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Client Tokens"><IconButton color="primary" onClick={() => navigate('/app/oauth/clientToken', { state: { data: { clientId: row.original.clientId } } })}><VpnKeyIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Update Client"><IconButton onClick={() => handleUpdate(row)}><SystemUpdateIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Client"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, handleUpdate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -230,7 +225,26 @@ export default function AuthClient() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.clientId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Client Tokens">
+          <IconButton color="primary" onClick={() => navigate('/app/oauth/clientToken', { state: { data: { clientId: row.original.clientId } } })}>
+            <VpnKeyIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Update Client">
+          <IconButton onClick={() => handleUpdate(row)}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Client">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
