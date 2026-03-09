@@ -7,10 +7,7 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
-import fetchClient from "../../utils/fetchClient";
-
-const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "";
-
+import fetchClient, { BASE_URL } from "../../utils/fetchClient";
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
   return items.map((item) => {
