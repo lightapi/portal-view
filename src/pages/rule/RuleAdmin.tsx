@@ -199,13 +199,10 @@ export default function RuleAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RuleType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'ruleId', header: 'Rule Id' },
       { accessorKey: 'ruleName', header: 'Rule Name' },
       { accessorKey: 'ruleVersion', header: 'Version' },
       { accessorKey: 'ruleType', header: 'Type' },
-      { accessorKey: 'ruleGroup', header: 'Group' },
-      { accessorKey: 'ruleOwner', header: 'Owner' },
       {
         accessorKey: 'ruleBody',
         header: 'Body',
@@ -219,9 +216,6 @@ export default function RuleAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       {
         accessorKey: 'active',
         header: 'Active',
@@ -229,46 +223,12 @@ export default function RuleAdmin() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'detail', header: 'Detail', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Details">
-            <IconButton onClick={() => navigate('/app/ruleDetail', { state: { rule: row.original } })}>
-              <DetailsIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Rule">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.ruleId}
-            >
-              {isUpdateLoading === row.original.ruleId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
+      { accessorKey: 'ruleOwner', header: 'Owner' },
+      { accessorKey: 'ruleGroup', header: 'Group' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
     ],
     [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
@@ -289,7 +249,36 @@ export default function RuleAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.ruleId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading rules' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Details">
+          <IconButton
+            onClick={() => navigate('/app/ruleDetail', { state: { rule: row.original } })}
+          >
+            <DetailsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Update Rule">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.ruleId}
+          >
+            {isUpdateLoading === row.original.ruleId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRule')}>
         Create New Rule

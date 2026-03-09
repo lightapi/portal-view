@@ -18,6 +18,9 @@ import InstallDesktopIcon from "@mui/icons-material/InstallDesktop";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CameraIcon from '@mui/icons-material/Camera';
+import ApiIcon from "@mui/icons-material/Api";
+import AppsIcon from "@mui/icons-material/Apps";
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -201,63 +204,6 @@ export default function InstanceAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Instance">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.instanceId}
-              >
-                {isUpdateLoading === row.original.instanceId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="Delete Platform"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-
-            <Tooltip title="Snapshot">
-              <IconButton onClick={() => navigate('/app/config/configSnapshot', { state: { data: { instanceId: row.original.instanceId } } })}>
-                <CameraIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Config">
-              <IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { instanceId: row.original.instanceId } } })}>
-                <AddToDriveIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Config File">
-              <IconButton onClick={() => navigate('/app/config/configInstanceFile', { state: { data: { instanceId: row.original.instanceId } } })}>
-                <AttachFileIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Instance API">
-              <IconButton onClick={() => navigate('/app/instance/instanceApi', { state: { data: { ...row.original } } })}>
-                <ContentCopyIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Instance App">
-              <IconButton onClick={() => navigate('/app/instance/instanceApp', { state: { data: { ...row.original } } })}>
-                <ContentCopyIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Instance App API">
-              <IconButton onClick={() => navigate('/app/instance/instanceAppApi', { state: { data: { ...row.original } } })}>
-                <ContentCopyIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Deployment">
-              <IconButton onClick={() => navigate('/app/deployment/instance', { state: { data: { ...row.original } } })}>
-                <InstallDesktopIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
-      },
       { accessorKey: 'instanceName', header: 'Instance Name' },
       { accessorKey: 'productId', header: 'Product ID' },
       { accessorKey: 'productVersion', header: 'Product Version' },
@@ -307,7 +253,7 @@ export default function InstanceAdmin() {
       },
       { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
@@ -326,7 +272,97 @@ export default function InstanceAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.instanceId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Instance">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.instanceId}
+          >
+            {isUpdateLoading === row.original.instanceId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Snapshot">
+          <IconButton
+            onClick={() =>
+              navigate('/app/config/configSnapshot', {
+                state: { data: { instanceId: row.original.instanceId } },
+              })
+            }
+          >
+            <CameraIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Config">
+          <IconButton
+            onClick={() =>
+              navigate('/app/config/configInstance', {
+                state: { data: { instanceId: row.original.instanceId } },
+              })
+            }
+          >
+            <AddToDriveIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Config File">
+          <IconButton
+            onClick={() =>
+              navigate('/app/config/configInstanceFile', {
+                state: { data: { instanceId: row.original.instanceId } },
+              })
+            }
+          >
+            <AttachFileIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance APIs">
+          <IconButton
+            onClick={() =>
+              navigate('/app/instance/InstanceApi', { state: { data: { ...row.original } } })
+            }
+          >
+            <ApiIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance Apps">
+          <IconButton
+            onClick={() =>
+              navigate('/app/instance/InstanceApp', { state: { data: { ...row.original } } })
+            }
+          >
+            <AppsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance App API">
+          <IconButton
+            onClick={() =>
+              navigate('/app/instance/InstanceAppApi', { state: { data: { ...row.original } } })
+            }
+          >
+            <FormatIndentIncreaseIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Deployment">
+          <IconButton
+            onClick={() =>
+              navigate('/app/deployment/instance', { state: { data: { ...row.original } } })
+            }
+          >
+            <InstallDesktopIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Platform">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createInstance')}>
         Create New Instance
