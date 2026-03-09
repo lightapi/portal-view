@@ -130,6 +130,7 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/genai/WfDefinition";
 import Worklist from "./pages/genai/Worklist";
 import ProcessInfo from "./pages/genai/ProcessInfo";
@@ -272,6 +273,7 @@ const App = () => {
           <Route path="schema/admin" element={<SchemaAdmin />} />
           <Route path="schedule/admin" element={<ScheduleAdmin />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
+          <Route path="ruleDetail" element={<RuleDetail />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />
           <Route path="covid/deleteCity" element={<DeleteCity />} />
