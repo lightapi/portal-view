@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -192,8 +192,8 @@ export default function PromotionDiffView() {
                                     const execStatus = statusConfig[item.executionStatus];
 
                                     return (
-                                        <>
-                                            <TableRow key={rowKey} hover>
+                                        <React.Fragment key={rowKey}>
+                                            <TableRow hover>
                                                 <TableCell>
                                                     {hasDiff && (
                                                         <IconButton size="small" onClick={() => toggleRow(rowKey)}>
@@ -251,7 +251,7 @@ export default function PromotionDiffView() {
                                                     </TableCell>
                                                 </TableRow>
                                             )}
-                                        </>
+                                        </React.Fragment>
                                     );
                                 })}
                             </TableBody>
