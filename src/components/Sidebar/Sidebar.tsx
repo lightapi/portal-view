@@ -28,6 +28,7 @@ import ProductionQuantityLimitsIcon from "@mui/icons-material/ProductionQuantity
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
 import AccessibleIcon from "@mui/icons-material/Accessible";
 import EventIcon from "@mui/icons-material/Event";
@@ -335,6 +336,18 @@ const structure = [
     role: "admin",
     link: "/app/schedule/admin",
     icon: <ScheduleIcon />,
+  },
+  {
+    id: 128,
+    label: "Promotion",
+    role: "admin",
+    link: "/app/promotion/export",
+    icon: <CompareArrowsIcon />,
+    children: [
+      { label: "Export", link: "/app/promotion/export" },
+      { label: "Import", link: "/app/promotion/import" },
+      { label: "History", link: "/app/promotion/history" },
+    ],
   },
   {
     id: 130,

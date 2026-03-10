@@ -5,6 +5,16 @@ import React, { useState } from 'react';
 // styles
 import useStyles from './styles';
 
+interface WidgetProps {
+  children?: React.ReactNode;
+  title?: string;
+  noBodyPadding?: boolean;
+  bodyClass?: string;
+  disableWidgetMenu?: boolean;
+  header?: React.ReactNode;
+  [key: string]: any;
+}
+
 export default function Widget({
   children,
   title,
@@ -13,11 +23,11 @@ export default function Widget({
   disableWidgetMenu,
   header,
   ...props
-}) {
+}: WidgetProps) {
   var classes = useStyles();
 
   // local
-  var [moreButtonRef, setMoreButtonRef] = useState(null);
+  var [moreButtonRef, setMoreButtonRef] = useState<HTMLElement | null>(null);
   var [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
 
   return (
@@ -47,9 +57,8 @@ export default function Widget({
           )}
         </div>
         <div
-          className={classnames(classes.widgetBody, {
+          className={classnames(classes.widgetBody, bodyClass, {
             [classes.noPadding]: noBodyPadding,
-            [bodyClass]: bodyClass,
           })}
         >
           {children}

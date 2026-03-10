@@ -1,8 +1,9 @@
 import { makeStyles } from '@mui/styles';
+import { Theme } from '@mui/material';
 
 const drawerWidth = 240;
 
-export default makeStyles((theme) => ({
+export default makeStyles((theme: Theme) => ({
   menuButton: {
     marginLeft: 12,
     marginRight: 36,
@@ -45,9 +46,15 @@ export default makeStyles((theme) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
   },
-  /* sidebarList: {
+  sidebarList: {
     marginTop: theme.spacing(6),
-  }, */
+  },
+  headerIcon: {
+    color: 'rgba(255, 255, 255, 0.35)',
+  },
+  headerIconCollapse: {
+    color: 'white',
+  },
   mobileBackButton: {
     marginTop: theme.spacing(0.5),
     marginLeft: theme.spacing(3),
