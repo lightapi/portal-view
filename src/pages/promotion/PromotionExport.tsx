@@ -194,7 +194,7 @@ export default function PromotionExport() {
         } finally {
             setIsLoadingEntities(false);
         }
-    }, [sourceHostId, activeStep, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [sourceHostId, activeStep, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, entityType]);
 
     useEffect(() => {
         if (activeStep >= 1) {
