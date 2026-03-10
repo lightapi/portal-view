@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -299,8 +299,8 @@ export default function PromotionImport() {
                                         const hasDiff = item.diff && Object.keys(item.diff).length > 0;
 
                                         return (
-                                            <>
-                                                <TableRow key={rowKey} hover>
+                                            <React.Fragment key={rowKey}>
+                                                <TableRow hover>
                                                     <TableCell>
                                                         {hasDiff && (
                                                             <IconButton size="small" onClick={() => toggleRow(rowKey)}>
@@ -353,7 +353,7 @@ export default function PromotionImport() {
                                                         </TableCell>
                                                     </TableRow>
                                                 )}
-                                            </>
+                                            </React.Fragment>
                                         );
                                     })}
                                 </TableBody>
