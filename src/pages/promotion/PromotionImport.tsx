@@ -20,7 +20,6 @@ import {
     TableRow,
     Collapse,
     IconButton,
-    Tooltip,
     FormControlLabel,
     Radio,
     RadioGroup,
@@ -31,12 +30,10 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/Preview';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
-import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
@@ -61,10 +58,6 @@ type DiffPlan = {
     items: DiffItem[];
 };
 
-interface UserState {
-    host?: string;
-}
-
 const actionConfig = {
     CREATE: { icon: <AddCircleIcon />, color: 'success' as const, label: 'New' },
     UPDATE: { icon: <ChangeCircleIcon />, color: 'warning' as const, label: 'Changed' },
@@ -75,15 +68,12 @@ const actionConfig = {
 export default function PromotionImport() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host: userContextHost } = useUserState() as UserState;
 
     // State from navigation (from export page)
     const navSnapshot = location.state?.snapshot;
     const navTargetHostId = location.state?.targetHostId;
     const fromExport = location.state?.fromExport;
 
-    // Import mode
-    const [importMode, setImportMode] = useState<'upload' | 'fromExport'>(fromExport ? 'fromExport' : 'upload');
     const [snapshot, setSnapshot] = useState<object | null>(navSnapshot || null);
     const [targetHostId, setTargetHostId] = useState(navTargetHostId || '');
     const [hosts, setHosts] = useState<HostType[]>([]);
