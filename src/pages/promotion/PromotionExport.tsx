@@ -186,7 +186,7 @@ export default function PromotionExport() {
 
         try {
             const json = await fetchClient(url) as any;
-            const dataKey = entityType === 'relation_type' ? 'refRelationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
+            const dataKey = entityType === 'relation_type' ? 'relationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
             setEntities(json[`${dataKey}s`] || []);
             setRowCount(json.total || 0);
         } catch (error) {
