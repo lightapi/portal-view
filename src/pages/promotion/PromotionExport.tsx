@@ -547,7 +547,21 @@ export default function PromotionExport() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.instanceId || row.configId || row.tableId || row.email || row.positionId || row.roleId || row.groupId || row.attributeId || row.providerId || row.clientId || row.scheduleId || row.tagId || row.categoryId,
+        getRowId: (row) =>
+            row.instanceId ||
+            row.configId ||
+            row.tableId ||
+            row.relationId ||
+            row.email ||
+            row.positionId ||
+            row.roleId ||
+            row.groupId ||
+            row.attributeId ||
+            row.providerId ||
+            row.clientId ||
+            row.scheduleId ||
+            row.tagId ||
+            row.categoryId,
     });
 
     const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
