@@ -236,10 +236,10 @@ export default function PromotionDiffView() {
                                                                         {Object.entries(item.diffSummary!).map(([field, values]) => (
                                                                             <TableRow key={field}>
                                                                                 <TableCell sx={{ fontWeight: 'bold' }}>{field}</TableCell>
-                                                                                <TableCell sx={{ color: 'success.main', fontFamily: 'monospace' }}>
+                                                                                <TableCell sx={{ color: 'error.main', fontFamily: 'monospace' }}>
                                                                                     {values.from}
                                                                                 </TableCell>
-                                                                                <TableCell sx={{ color: 'error.main', fontFamily: 'monospace' }}>
+                                                                                <TableCell sx={{ color: 'success.main', fontFamily: 'monospace' }}>
                                                                                     {values.to}
                                                                                 </TableCell>
                                                                             </TableRow>
