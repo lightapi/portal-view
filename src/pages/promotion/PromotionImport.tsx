@@ -125,7 +125,7 @@ export default function PromotionImport() {
         if (fromExport && navSnapshot && navTargetHostId) {
             handleDryRun();
         }
-    }, [fromExport]);
+    }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
 
     // File upload handler
     const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {

@@ -186,7 +186,7 @@ export default function PromotionExport() {
 
         try {
             const json = await fetchClient(url) as any;
-            const dataKey = entityType === 'relation_type' ? 'refRelationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
+            const dataKey = entityType === 'relation_type' ? 'relationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
             setEntities(json[`${dataKey}s`] || []);
             setRowCount(json.total || 0);
         } catch (error) {
@@ -194,7 +194,7 @@ export default function PromotionExport() {
         } finally {
             setIsLoadingEntities(false);
         }
-    }, [sourceHostId, activeStep, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [sourceHostId, activeStep, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, entityType]);
 
     useEffect(() => {
         if (activeStep >= 1) {
@@ -250,7 +250,7 @@ export default function PromotionExport() {
         try {
             // First export the snapshot
             const exportCmd = {
-                host: 'lightapi.net', service: 'promotion', action: 'exportSnapshot', version: '0.1.0',
+                host: 'lightapi.net', service: 'user', action: 'exportSnapshot', version: '0.1.0',
                 data: {
                     sourceHostId,
                     entityType,
@@ -347,9 +347,9 @@ export default function PromotionExport() {
 
     const refRelationTypeColumns = useMemo<MRT_ColumnDef<any>[]>(
         () => [
-            { accessorKey: 'relationType', header: 'Relation Type' },
+            { accessorKey: 'relationId', header: 'Relation ID' },
+            { accessorKey: 'relationName', header: 'Relation Type' },
             { accessorKey: 'relationDesc', header: 'Description' },
-            { accessorKey: 'direction', header: 'Direction' },
             {
                 accessorKey: 'active',
                 header: 'Active',
@@ -547,7 +547,21 @@ export default function PromotionExport() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.instanceId || row.configId || row.tableId || row.email || row.positionId || row.roleId || row.groupId || row.attributeId || row.providerId || row.clientId || row.scheduleId || row.tagId || row.categoryId,
+        getRowId: (row) =>
+            row.instanceId ||
+            row.configId ||
+            row.tableId ||
+            row.relationId ||
+            row.email ||
+            row.positionId ||
+            row.roleId ||
+            row.groupId ||
+            row.attributeId ||
+            row.providerId ||
+            row.clientId ||
+            row.scheduleId ||
+            row.tagId ||
+            row.categoryId,
     });
 
     const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
