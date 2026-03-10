@@ -148,6 +148,10 @@ import SessionMemory from "./pages/genai/SessionMemory";
 import UserMemory from "./pages/genai/UserMemory";
 import AgentMemory from "./pages/genai/AgentMemory";
 import OrgMemory from "./pages/genai/OrgMemory";
+import PromotionExport from "./pages/promotion/PromotionExport";
+import PromotionImport from "./pages/promotion/PromotionImport";
+import PromotionHistory from "./pages/promotion/PromotionHistory";
+import PromotionDiffView from "./pages/promotion/PromotionDiffView";
 import { useEffect } from "react";
 
 const RedirectWithQuery = ({ to }: { to: string }) => {
@@ -410,6 +414,10 @@ const App = () => {
           <Route path="genai/UserMemory" element={<UserMemory />} />
           <Route path="genai/AgentMemory" element={<AgentMemory />} />
           <Route path="genai/OrgMemory" element={<OrgMemory />} />
+          <Route path="promotion/export" element={<PromotionExport />} />
+          <Route path="promotion/import" element={<PromotionImport />} />
+          <Route path="promotion/history" element={<PromotionHistory />} />
+          <Route path="promotion/diff" element={<PromotionDiffView />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />
