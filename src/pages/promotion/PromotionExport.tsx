@@ -347,9 +347,9 @@ export default function PromotionExport() {
 
     const refRelationTypeColumns = useMemo<MRT_ColumnDef<any>[]>(
         () => [
-            { accessorKey: 'relationType', header: 'Relation Type' },
+            { accessorKey: 'relationId', header: 'Relation ID' },
+            { accessorKey: 'relationName', header: 'Relation Type' },
             { accessorKey: 'relationDesc', header: 'Description' },
-            { accessorKey: 'direction', header: 'Direction' },
             {
                 accessorKey: 'active',
                 header: 'Active',
