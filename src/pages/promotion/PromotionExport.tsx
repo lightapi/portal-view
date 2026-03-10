@@ -250,7 +250,7 @@ export default function PromotionExport() {
         try {
             // First export the snapshot
             const exportCmd = {
-                host: 'lightapi.net', service: 'promotion', action: 'exportSnapshot', version: '0.1.0',
+                host: 'lightapi.net', service: 'user', action: 'exportSnapshot', version: '0.1.0',
                 data: {
                     sourceHostId,
                     entityType,
