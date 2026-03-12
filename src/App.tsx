@@ -130,6 +130,7 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import InstanceApiMcpTool from "./pages/instance/InstanceApiMcpTool";
 import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/genai/WfDefinition";
 import Worklist from "./pages/genai/Worklist";
@@ -386,6 +387,10 @@ const App = () => {
           <Route
             path="instance/InstanceApiPathPrefix"
             element={<InstanceApiPathPrefix />}
+          />
+          <Route
+            path="instance/InstanceApiMcpTool"
+            element={<InstanceApiMcpTool />}
           />
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
           <Route path="instance/InstanceAppApi" element={<InstanceAppApi />} />
