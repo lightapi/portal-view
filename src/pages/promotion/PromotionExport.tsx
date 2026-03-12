@@ -89,6 +89,9 @@ const ENTITY_TYPES = [
     { value: 'schedule', label: 'Schedule' },
     { value: 'tag', label: 'Tag' },
     { value: 'category', label: 'Category' },
+    { value: 'rule', label: 'Rule' },
+    { value: 'api', label: 'API' },
+    { value: 'app', label: 'App' },
 ];
 
 const steps = ['Select Source & Type', 'Select Entities', 'Preview & Export'];
@@ -168,8 +171,8 @@ export default function PromotionExport() {
 
         const cmd = {
             host: 'lightapi.net',
-            service: entityType === 'ref_table' || entityType === 'relation_type' ? 'ref' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute') ? entityType : (entityType === 'auth_provider' || entityType === 'auth_client') ? 'oauth-query' : (entityType === 'schedule' || entityType === 'tag' || entityType === 'category') ? entityType : entityType,
-            action: entityType === 'instance' ? 'getInstance' : entityType === 'config' ? 'getConfig' : entityType === 'ref_table' ? 'getRefTable' : entityType === 'user' ? 'listUserByHostId' : entityType === 'position' ? 'getPosition' : entityType === 'role' ? 'getRole' : entityType === 'group' ? 'getGroup' : entityType === 'attribute' ? 'getAttribute' : entityType === 'auth_provider' ? 'queryAuthProvider' : entityType === 'auth_client' ? 'queryAuthClient' : entityType === 'schedule' ? 'getSchedule' : entityType === 'tag' ? 'getTag' : entityType === 'category' ? 'getCategory' : 'getRefRelationType',
+            service: entityType === 'ref_table' || entityType === 'relation_type' ? 'ref' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'rule') ? entityType : (entityType === 'auth_provider' || entityType === 'auth_client') ? 'oauth-query' : (entityType === 'schedule' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'app' ? 'client' : entityType,
+            action: entityType === 'instance' ? 'getInstance' : entityType === 'config' ? 'getConfig' : entityType === 'ref_table' ? 'getRefTable' : entityType === 'user' ? 'listUserByHostId' : entityType === 'position' ? 'getPosition' : entityType === 'role' ? 'getRole' : entityType === 'group' ? 'getGroup' : entityType === 'attribute' ? 'getAttribute' : entityType === 'auth_provider' ? 'queryAuthProvider' : entityType === 'auth_client' ? 'queryAuthClient' : entityType === 'schedule' ? 'getSchedule' : entityType === 'tag' ? 'getTag' : entityType === 'category' ? 'getCategory' : entityType === 'rule' ? 'getRule' : entityType === 'api' ? 'getApi' : entityType === 'app' ? 'getApp' : 'getRefRelationType',
             version: '0.1.0',
             data: {
                 hostId: sourceHostId,
@@ -186,7 +189,7 @@ export default function PromotionExport() {
 
         try {
             const json = await fetchClient(url) as any;
-            const dataKey = entityType === 'relation_type' ? 'relationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
+            const dataKey = entityType === 'relation_type' ? 'relationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category' || entityType === 'rule' || entityType === 'api' || entityType === 'app') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
             setEntities(json[`${dataKey}s`] || []);
             setRowCount(json.total || 0);
         } catch (error) {
@@ -522,7 +525,57 @@ export default function PromotionExport() {
         [],
     );
 
-    const columns = entityType === 'config' ? configColumns : entityType === 'ref_table' ? refTableColumns : entityType === 'relation_type' ? refRelationTypeColumns : entityType === 'user' ? userColumns : entityType === 'position' ? positionColumns : entityType === 'role' ? roleColumns : entityType === 'group' ? groupColumns : entityType === 'attribute' ? attributeColumns : entityType === 'auth_provider' ? authProviderColumns : entityType === 'auth_client' ? authClientColumns : entityType === 'schedule' ? scheduleColumns : entityType === 'tag' ? tagColumns : entityType === 'category' ? categoryColumns : instanceColumns;
+    const ruleColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'ruleId', header: 'Rule ID' },
+            { accessorKey: 'ruleName', header: 'Rule Name' },
+            { accessorKey: 'ruleType', header: 'Rule Type' },
+            { accessorKey: 'ruleGroup', header: 'Group' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const apiColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'apiId', header: 'API ID' },
+            { accessorKey: 'apiName', header: 'API Name' },
+            { accessorKey: 'apiVersion', header: 'Version' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const appColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'appId', header: 'App ID' },
+            { accessorKey: 'appName', header: 'App Name' },
+            { accessorKey: 'appType', header: 'Type' },
+            { accessorKey: 'appDesc', header: 'Description' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const columns = entityType === 'config' ? configColumns : entityType === 'ref_table' ? refTableColumns : entityType === 'relation_type' ? refRelationTypeColumns : entityType === 'user' ? userColumns : entityType === 'position' ? positionColumns : entityType === 'role' ? roleColumns : entityType === 'group' ? groupColumns : entityType === 'attribute' ? attributeColumns : entityType === 'auth_provider' ? authProviderColumns : entityType === 'auth_client' ? authClientColumns : entityType === 'schedule' ? scheduleColumns : entityType === 'tag' ? tagColumns : entityType === 'category' ? categoryColumns : entityType === 'rule' ? ruleColumns : entityType === 'api' ? apiColumns : entityType === 'app' ? appColumns : instanceColumns;
 
 
     const table = useMaterialReactTable({
@@ -561,7 +614,10 @@ export default function PromotionExport() {
             row.clientId ||
             row.scheduleId ||
             row.tagId ||
-            row.categoryId,
+            row.categoryId ||
+            row.ruleId ||
+            row.apiId ||
+            row.appId,
     });
 
     const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
