@@ -104,7 +104,6 @@ export default function ServiceEndpoint() {
       host: 'lightapi.net', service: 'service', action: 'getApiEndpoint', version: '0.1.0',
       data: {
         hostId: host,
-        apiVersionId: initialApiVersionId,
         offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
         filters: JSON.stringify(apiFilters ?? []),
@@ -146,15 +145,8 @@ export default function ServiceEndpoint() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
     ],
-    [navigate],
+    [],
   );
 
   // Table instance configuration

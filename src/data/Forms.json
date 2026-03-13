@@ -3072,6 +3072,23 @@
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
+        },
+        "protocol": {
+          "title": "Protocol",
+          "type": "string",
+          "enum": [
+            "https",
+            "http"
+          ],
+          "default": "https"
+        },
+        "envTag": {
+          "title": "Environment Tag",
+          "type": "string"
+        },
+        "targetHost": {
+          "title": "Target Host",
+          "type": "string"
         }
       }
     },
@@ -3107,7 +3124,10 @@
         "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
-      }
+      },
+      "protocol",
+      "envTag",
+      "targetHost"
     ]
   },
   "updateApiVersion": {
@@ -3172,6 +3192,23 @@
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
+        },
+        "protocol": {
+          "title": "Protocol",
+          "type": "string",
+          "enum": [
+            "https",
+            "http"
+          ],
+          "default": "https"
+        },
+        "envTag": {
+          "title": "Environment Tag",
+          "type": "string"
+        },
+        "targetHost": {
+          "title": "Target Host",
+          "type": "string"
         }
       }
     },
@@ -3207,7 +3244,10 @@
         "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
-      }
+      },
+      "protocol",
+      "envTag",
+      "targetHost"
     ]
   },
   "createApiEndpointRule": {
