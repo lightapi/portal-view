@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, ReactNode } from "react";
 import CircularProgress from '@mui/material/CircularProgress';
 import fetchClient from '../../utils/fetchClient';
-import { makeStyles } from '@mui/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -10,34 +9,42 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import { useLocation, useNavigate } from "react-router-dom";
 
-const useStyles = makeStyles({
-    table: {
-        minWidth: 650,
-    },
-});
+interface Logger {
+    name: string;
+    level: string;
+}
 
-export default function LoggerConfig(props) {
-    const classes = useStyles();
-    console.log(props.location.state.data);
-    const node = props.location.state.data.node;
-    const [loggers, setLoggers] = useState([]);
-    const [error, setError] = useState();
+interface NodeData {
+    protocol: string;
+    address: string;
+    port: number;
+    apiName?: string;
+}
+
+export default function LoggerConfig() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const data = (location.state as any)?.data;
+    const node: NodeData = data?.node;
+
+    const [loggers, setLoggers] = useState<Logger[]>([]);
+    const [error, setError] = useState<any>();
     const [loading, setLoading] = useState(true);
 
     const handleLogger = () => {
-        console.log(node, loggers);
-        props.history.push({ pathname: '/app/form/loggerConfig', state: { data: { ...node, loggers } } });
+        navigate('/app/form/loggerConfig', { state: { data: { ...node, loggers } } });
     }
 
-    const url = '/services/logger' + '?protocol=' + node.protocol + '&address=' + node.address + '&port=' + node.port;
-    console.log(url);
     useEffect(() => {
+        if (!node) return;
+        const url = `/services/logger?protocol=${node.protocol}&address=${node.address}&port=${node.port}`;
         const fetchData = async () => {
             setLoading(true);
             try {
                 const data = await fetchClient(url);
-                console.log(data);
                 setLoggers(data);
                 setLoading(false);
             } catch (error) {
@@ -48,18 +55,16 @@ export default function LoggerConfig(props) {
         };
 
         fetchData();
-    }, []);
+    }, [node]);
 
-    console.log(loading, loggers, error);
-
-    let wait;
+    let content: ReactNode;
     if (loading) {
-        wait = <div><CircularProgress /></div>;
-    } else if (loggers) {
-        wait = (
-            <>
-                <TableContainer component={Paper}>
-                    <Table className={classes.table} aria-label="simple table">
+        content = <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>;
+    } else if (loggers && loggers.length > 0) {
+        content = (
+            <Box>
+                <TableContainer component={Paper} sx={{ mb: 2 }}>
+                    <Table sx={{ minWidth: 650 }} aria-label="simple table">
                         <TableHead>
                             <TableRow>
                                 <TableCell>Name</TableCell>
@@ -78,19 +83,20 @@ export default function LoggerConfig(props) {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                <Button variant="contained" color="primary" onClick={e => handleLogger()}>Update Logger Level</Button>
-            </>
+                <Button variant="contained" color="primary" onClick={handleLogger}>Update Logger Level</Button>
+            </Box>
         )
-
     } else {
-        wait = (
-            <pre>{error}</pre>
+        content = (
+            <Box sx={{ p: 3 }}>
+                <pre>{JSON.stringify(error, null, 2)}</pre>
+            </Box>
         )
     }
 
     return (
-        <div>
-            {wait}
-        </div>
+        <Box className="App">
+            {content}
+        </Box>
     );
 }

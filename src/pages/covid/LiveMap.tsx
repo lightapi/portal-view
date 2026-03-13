@@ -1,15 +1,16 @@
 import Button from '@mui/material/Button';
+import { Box } from '@mui/material';
 import React, { useRef, useState } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
+import { useLocation, useNavigate } from 'react-router-dom';
 import useSupercluster from 'use-supercluster';
-import useStyles from './styles';
 
 // Define your own FlyToInterpolator component
-const FlyToInterpolator = (props) => {
+const FlyToInterpolator = (props: any) => {
   const { duration = 2000 } = props;
 
   return {
-    step: (frame) => {
+    step: (frame: any) => {
       const t = frame.t / duration;
       return {
         longitude: props.longitude * (1 - t) + frame.longitude * t,
@@ -20,29 +21,22 @@ const FlyToInterpolator = (props) => {
   };
 };
 
-export default function LiveMap(props) {
-  const classes = useStyles();
-  //console.log("props = ", props);
-  //console.log("data = ", props.location.state.data);
-  const data = props.location.state.data;
-  //console.log("latitude", data.map.latitude);
-  //console.log("longitude", data.map.longitude);
-  //console.log("zoom", data.map.zoom);
-
+export default function LiveMap() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const data = location.state?.data;
+  
   const [viewport, setViewport] = useState({
-    latitude: data.map.latitude,
-    longitude: data.map.longitude,
+    latitude: data?.map?.latitude || 0,
+    longitude: data?.map?.longitude || 0,
     width: '100vw',
     height: '100vh',
-    zoom: data.map.zoom,
+    zoom: data?.map?.zoom || 1,
   });
-  const [selectedEntity, setSelectedEntity] = useState(null);
+  const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
-  //console.log("viewport", viewport);
-
-  const mapRef = useRef();
-
-  const points = data.points;
+  const mapRef = useRef<any>(null);
+  const points = data?.points || [];
 
   const bounds = mapRef.current
     ? mapRef.current.getMap().getBounds().toArray().flat()
@@ -61,39 +55,33 @@ export default function LiveMap(props) {
 
   const SIZE = 20;
 
-  const pm = (id) => {
-    //console.log("private message is called", id);
-    props.history.push({
-      pathname: '/app/form/privateMessage',
+  const pm = (id: string) => {
+    navigate('/app/form/privateMessage', {
       state: { data: { userId: id } },
     });
   };
 
-  const ps = (id) => {
-    //console.log("peer status is called", id);
-    props.history.push({
-      pathname: '/app/covid/peerStatus',
+  const ps = (id: string) => {
+    navigate('/app/covid/peerStatus', {
       state: { data: { userId: id } },
     });
   };
 
-  const site = (id) => {
-    //console.log("peer website is called", id);
-    props.history.push({
-      pathname: '/app/website',
+  const site = (id: string) => {
+    navigate('/app/website', {
       state: { data: { userId: id } },
     });
   };
 
   return (
-    <div>
+    <Box>
       <ReactMapGL
         {...viewport}
         maxZoom={25}
-        mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
+        mapboxAccessToken={(import.meta as any).env.VITE_APP_MAPBOX_TOKEN}
         mapStyle="mapbox://styles/mapbox/streets-v11"
-        onViewportChange={(newViewport) => {
-          setViewport({ ...newViewport });
+        onMove={(evt: any) => {
+          setViewport(evt.viewState);
         }}
         ref={mapRef}
       >
@@ -109,15 +97,10 @@ export default function LiveMap(props) {
                 latitude={latitude}
                 longitude={longitude}
               >
-                <div
-                  className={classes.clusterMarker}
-                  style={{
-                    width: `${10 + (pointCount / points.length) * 20}px`,
-                    height: `${10 + (pointCount / points.length) * 20}px`,
-                  }}
+                <Box
                   onClick={() => {
                     const expansionZoom = Math.min(
-                      supercluster.getClusterExpansionZoom(cluster.id),
+                      supercluster?.getClusterExpansionZoom(cluster.id as number) ?? 20,
                       20
                     );
 
@@ -126,15 +109,31 @@ export default function LiveMap(props) {
                       latitude,
                       longitude,
                       zoom: expansionZoom,
+                      // @ts-ignore
                       transitionInterpolator: new FlyToInterpolator({
                         duration: 2000,
+                        longitude,
+                        latitude,
+                        zoom: viewport.zoom
                       }),
                       transitionDuration: 'auto',
                     });
                   }}
+                  sx={{
+                    color: '#fff',
+                    background: '#1978c8',
+                    borderRadius: '50%',
+                    padding: '10px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    width: `${10 + (pointCount! / points.length) * 20}px`,
+                    height: `${10 + (pointCount! / points.length) * 20}px`,
+                  }}
                 >
                   {pointCount}
-                </div>
+                </Box>
               </Marker>
             );
           }
@@ -174,13 +173,13 @@ export default function LiveMap(props) {
               setSelectedEntity(null);
             }}
           >
-            <div>
-              <h2>
+            <Box>
+              <Box component="h2">
                 {selectedEntity.properties.id} -{' '}
                 {selectedEntity.properties.category} -{' '}
                 {selectedEntity.properties.subcategory}
-              </h2>
-              <div className={classes.button}>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
                   color="primary"
@@ -206,12 +205,12 @@ export default function LiveMap(props) {
                     Peer Site
                   </Button>
                 ) : null}
-              </div>
-              <p>{selectedEntity.properties.introduction}</p>
-            </div>
+              </Box>
+              <Box component="p" sx={{ mt: 1 }}>{selectedEntity.properties.introduction}</Box>
+            </Box>
           </Popup>
         ) : null}
       </ReactMapGL>
-    </div>
+    </Box>
   );
 }

@@ -1,13 +1,16 @@
-import CircularProgress from '@mui/material/CircularProgress';
+import { CircularProgress, Box, Typography } from '@mui/material';
 import React from 'react';
 import { useApiGet } from '../../hooks/useApiGet';
-//import useStyles from "./styles";
 import StatusContainer from './StatusContainer';
 
 // This is for other users to view the current readonly status by userId regardless if he/she logs in
 
-export default function PeerStatus(props) {
-  //const classes = useStyles();
+interface PeerStatusProps {
+  userId: string;
+  [key: string]: any;
+}
+
+export default function PeerStatus(props: PeerStatusProps) {
   const cmd = {
     host: 'lightapi.net',
     service: 'covid',
@@ -20,24 +23,28 @@ export default function PeerStatus(props) {
   const headers = {};
 
   const { isLoading, data, error } = useApiGet({ url, headers });
-  let subjects = data || {};
+  const subjects = data || {};
 
-  let wait;
   if (isLoading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
-  } else if (error) {
-    wait = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    wait = <StatusContainer {...props} subjects={subjects} isReadonly={true} />;
   }
 
-  return <div className="App">{wait}</div>;
+  if (error) {
+    return (
+      <Box sx={{ p: 2, color: 'error.main' }}>
+        <Typography variant="h6">Error loading peer status:</Typography>
+        <pre>{JSON.stringify(error, null, 2)}</pre>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <StatusContainer {...props} subjects={subjects} isReadonly={true} />
+    </Box>
+  );
 }

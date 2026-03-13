@@ -5,12 +5,15 @@ import Fade from '@mui/material/Fade';
 import Modal from '@mui/material/Modal';
 import React from 'react';
 import { Typography } from '../../Wrappers/Wrappers';
-import useStyles from './styles';
 
-export default function ConfigEditModal(props) {
-  var classes = useStyles();
+interface ConfigEditModalProps {
+  open: boolean;
+  onClose: (open: boolean) => void;
+}
+
+export default function ConfigEditModal(props: ConfigEditModalProps) {
   const style = {
-    position: 'absolute',
+    position: 'absolute' as 'absolute',
     top: '40%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
@@ -22,8 +25,6 @@ export default function ConfigEditModal(props) {
     p: 4,
   };
 
-  // const [open, setOpen] = React.useState(false);
-  // const handleOpen = () => setOpen(true);
   const handleClose = () => props.onClose(false);
 
   return (
@@ -34,9 +35,11 @@ export default function ConfigEditModal(props) {
         open={props.open}
         onClose={handleClose}
         closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
+        slots={{ backdrop: Backdrop }}
+        slotProps={{
+          backdrop: {
+            timeout: 500,
+          } as any,
         }}
       >
         <Fade in={props.open}>
@@ -49,14 +52,20 @@ export default function ConfigEditModal(props) {
             </Typography>
 
             <Box
-              className={classes.modalActionContainer}
-              style={{ display: 'flex' }}
+              sx={{
+                width: '90%',
+                margin: '20px',
+                bottom: 20,
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
             >
               <span>Error Message</span>
               <Button
                 variant="contained"
                 size="medium"
-                // className={classes.actionButton}
                 onClick={handleClose}
               >
                 Close

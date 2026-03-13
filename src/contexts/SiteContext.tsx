@@ -1,16 +1,39 @@
-import React from "react";
+import React, { ReactNode, useReducer, useContext, createContext } from "react";
 
-var SiteStateContext = React.createContext();
-var SiteDispatchContext = React.createContext();
+interface SiteState {
+  site: any;
+  owner: any;
+  cart: any[];
+  delivery: any;
+  payment: any;
+  specDetail: any;
+  configDetail: any;
+  filter: string | null;
+  menu: string;
+}
 
-function siteReducer(state, action) {
-  console.log("state = ", state);
-  console.log("action = ", action);
+type SiteAction =
+  | { type: "UPDATE_SITE"; site: any; owner: any }
+  | { type: "UPDATE_INSTRUCTION"; instruction: any }
+  | { type: "UPDATE_MENU"; menu: string }
+  | { type: "UPDATE_FILTER"; filter: string }
+  | { type: "UPDATE_CART"; cart: any[] }
+  | { type: "UPDATE_DELIVERY"; delivery: any }
+  | { type: "UPDATE_PAYMENT"; payment: any }
+  | { type: "UPDATE_SPECDETAIL"; specDetail: any }
+  | { type: "UPDATE_CONFIGDETAIL"; configDetail: any };
+
+const SiteStateContext = createContext<SiteState | undefined>(undefined);
+const SiteDispatchContext = createContext<React.Dispatch<SiteAction> | undefined>(undefined);
+
+function siteReducer(state: SiteState, action: SiteAction): SiteState {
+  // console.log("state = ", state);
+  // console.log("action = ", action);
   switch (action.type) {
     case "UPDATE_SITE":
       return { ...state, site: action.site, owner: action.owner };
     case "UPDATE_INSTRUCTION":
-      return { ...state, delivery: {instruction: action.instruction}}
+      return { ...state, delivery: { instruction: action.instruction } }
     case "UPDATE_MENU":
       return { ...state, menu: action.menu };
     case "UPDATE_FILTER":
@@ -26,14 +49,13 @@ function siteReducer(state, action) {
     case "UPDATE_CONFIGDETAIL":
       return { ...state, configDetail: action.configDetail };
     default: {
-      throw new Error(`Unhandled action type: ${action.type}`);
+      return state;
     }
   }
 }
 
-function SiteProvider({ children }) {
-  // console.log("SiteProvider is called...");
-  var [state, dispatch] = React.useReducer(siteReducer, {
+function SiteProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(siteReducer, {
     site: null,
     owner: null,
     cart: [],
@@ -54,26 +76,26 @@ function SiteProvider({ children }) {
   );
 }
 
-function useSiteState() {
-  var context = React.useContext(SiteStateContext);
+function useSiteState(): SiteState {
+  const context = useContext(SiteStateContext);
   if (context === undefined) {
     throw new Error("useSiteState must be used within a SiteProvider");
   }
   return context;
 }
 
-function useSiteDispatch() {
-  var context = React.useContext(SiteDispatchContext);
+function useSiteDispatch(): React.Dispatch<SiteAction> {
+  const context = useContext(SiteDispatchContext);
   if (context === undefined) {
     throw new Error("useSiteDispatch must be used within a SiteProvider");
   }
   return context;
 }
 
-export { SiteProvider, useSiteState, useSiteDispatch, updateSite };
-
-function updateSite(dispatch, site, owner) {
+function updateSite(dispatch: React.Dispatch<SiteAction>, site: any, owner: any) {
     dispatch({ type: "UPDATE_SITE", site, owner });
 }
+
+export { SiteProvider, useSiteState, useSiteDispatch, updateSite };
 
 

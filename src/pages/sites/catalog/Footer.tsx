@@ -1,47 +1,57 @@
-import { makeStyles } from '@mui/styles';
+import { Box, Typography, Link } from '@mui/material';
 import React from 'react';
 
-const useStyles = makeStyles({
-  footer: {
-    color: '#999',
-    fontSize: '14px',
-    textAlign: 'center',
-    padding: '32px',
-    background: '#ddd',
-    '& strong': {
-      color: '#666',
-    },
-  },
-  footerLinks: {
-    marginBottom: '24px',
-    '& a': {
-      margin: '0 8px',
-      color: '#666',
-    },
-  },
-});
+interface FooterProps {
+  storeName?: string;
+  site?: {
+    home?: {
+      name?: string;
+    };
+  };
+}
 
-const Footer = (props) => {
-  var classes = useStyles();
+const Footer = ({ site }: FooterProps) => {
   return (
-    <footer className={classes.footer}>
-      <p className={classes.footerLinks}>
+    <Box
+      component="footer"
+      sx={{
+        color: '#999',
+        fontSize: '14px',
+        textAlign: 'center',
+        padding: '32px',
+        background: '#ddd',
+        '& strong': {
+          color: '#666',
+        },
+      }}
+    >
+      <Typography
+        sx={{
+          marginBottom: '24px',
+          '& a': {
+            margin: '0 8px',
+            color: '#666',
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            }
+          },
+        }}
+      >
         Want your website like this up in hours?{' '}
-        <a href="http://doc.maproot.net/website/" target="_blank">
+        <Link href="http://doc.maproot.net/website/" target="_blank">
           Create it on your own
-        </a>
+        </Link>
         <span> / </span>
-        <a href="mailto:stevehu@gmail.com" target="_blank">
+        <Link href="mailto:stevehu@gmail.com" target="_blank">
           We can help
-        </a>
-      </p>
-      <p>
+        </Link>
+      </Typography>
+      <Typography variant="body2">
         &copy; 2020 <strong>maproot.net</strong> -{' '}
-        {props.site && props.site.home
-          ? props.site.home.name
-          : 'we are all connected!'}
-      </p>
-    </footer>
+        {site?.home?.name ? site.home.name : 'we are all connected!'}
+      </Typography>
+    </Box>
   );
 };
 

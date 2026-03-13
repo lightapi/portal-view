@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ReactNode } from "react";
 import useDebounce from "../../hooks/useDebounce";
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
@@ -17,24 +17,28 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Box,
+  Typography,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+interface NotificationData {
+  userId: string;
+  nonce: number;
+  eventClass: string;
+  processFlag: boolean;
+  processTs: string | null;
+  eventJson: string;
+  error: string;
+  hostId: string;
+}
 
-function Row(props) {
-  const { row } = props;
-  const classes = useRowStyles();
+interface RowProps {
+  row: NotificationData;
+}
 
+function Row({ row }: RowProps) {
   return (
-    <TableRow className={classes.root}>
+    <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
       <TableCell align="left">{row.userId}</TableCell>
       <TableCell align="left">{row.nonce}</TableCell>
       <TableCell align="left">{row.eventClass}</TableCell>
@@ -48,21 +52,11 @@ function Row(props) {
   );
 }
 
-Row.propTypes = {
-  row: PropTypes.shape({
-    userId: PropTypes.string,
-    nonce: PropTypes.number,
-    eventClass: PropTypes.string,
-    processFlag: PropTypes.bool,
-    processTs: PropTypes.string,
-    eventJson: PropTypes.string,
-    error: PropTypes.string,
-    hostId: PropTypes.string.isRequired,
-  }).isRequired,
-};
+interface NotificationListProps {
+  notifications: NotificationData[];
+}
 
-function NotificationList(props) {
-  const { notifications } = props;
+function NotificationList({ notifications }: NotificationListProps) {
   return (
     <TableBody>
       {notifications && notifications.length > 0 ? (
@@ -79,10 +73,6 @@ function NotificationList(props) {
     </TableBody>
   );
 }
-
-NotificationList.propTypes = {
-  notifications: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
 
 export default function Notification() {
   const { host } = useUserState();
@@ -102,33 +92,33 @@ export default function Notification() {
   const [error, setError] = useState("");
   const debouncedError = useDebounce(error, 1000);
   const [loading, setLoading] = useState(false);
-  const [fetchError, setFetchError] = useState();
+  const [fetchError, setFetchError] = useState<any>();
   const [total, setTotal] = useState(0);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
 
-  const handleUserIdChange = (event) => {
+  const handleUserIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserId(event.target.value);
   };
-  const handleNonceChange = (event) => {
+  const handleNonceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNonce(event.target.value);
   };
-  const handleEventClassChange = (event) => {
+  const handleEventClassChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEventClass(event.target.value);
   };
-  const handleProcessFlagChange = (event) => {
+  const handleProcessFlagChange = (event: any) => {
     setProcessFlag(event.target.value);
   };
-  const handleProcessTsChange = (event) => {
+  const handleProcessTsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProcessTs(event.target.value);
   };
-  const handleEventJsonChange = (event) => {
+  const handleEventJsonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEventJson(event.target.value);
   };
-  const handleErrorChange = (event) => {
+  const handleErrorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setError(event.target.value);
   };
 
-  const fetchData = useCallback(async (url) => {
+  const fetchData = useCallback(async (url: string) => {
     try {
       setLoading(true);
       const data = await fetchClient(url);
@@ -181,31 +171,33 @@ export default function Notification() {
     fetchData,
   ]);
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  let content;
+  let content: ReactNode;
   if (loading) {
     content = (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else if (fetchError) {
     content = (
-      <div>
-        <pre>{JSON.stringify(fetchError, null, 2)}</pre>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">
+          <pre>{JSON.stringify(fetchError, null, 2)}</pre>
+        </Typography>
+      </Box>
     );
   } else {
     content = (
-      <div>
+      <Box>
         <TableContainer component={Paper}>
           <Table aria-label="notification table">
             <TableHead>
@@ -296,9 +288,10 @@ export default function Notification() {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-      </div>
+      </Box>
     );
   }
 
-  return <div className="App">{content}</div>;
+  return <Box className="App">{content}</Box>;
 }
+

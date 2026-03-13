@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Person as AccountIcon } from "@mui/icons-material";
-import { IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import { IconButton, Menu, MenuItem, Typography, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import classNames from "classnames";
 import {
@@ -17,8 +17,8 @@ import {
   useUserState,
 } from "../../contexts/UserContext";
 
-export default function ProfileMenu({ classes }) {
-  const [profileMenu, setProfileMenu] = useState(null);
+export default function ProfileMenu() {
+  const [profileMenu, setProfileMenu] = useState<null | HTMLElement>(null);
   const userDispatch = useUserDispatch();
   const { isAuthenticated, userId, roles } = useUserState();
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export default function ProfileMenu({ classes }) {
     setProfileMenu(null);
   };
 
-  const handleMenuItemClick = (action) => {
+  const handleMenuItemClick = (action: any) => {
     action(userDispatch, navigate, userId);
     handleMenuClose();
   };
@@ -50,148 +50,175 @@ export default function ProfileMenu({ classes }) {
       <IconButton
         aria-haspopup="true"
         color="inherit"
-        className={classes.headerMenuButton}
         aria-controls="profile-menu"
         onClick={(e) => setProfileMenu(e.currentTarget)}
         size="large"
+        sx={{ ml: 2, p: 0.5 }}
       >
-        <AccountIcon classes={{ root: classes.headerIcon }} />
+        <AccountIcon sx={{ fontSize: 28 }} />
       </IconButton>
       <Menu
         id="profile-menu"
         open={Boolean(profileMenu)}
         anchorEl={profileMenu}
         onClose={handleMenuClose}
-        className={classes.headerMenu}
-        classes={{ paper: classes.profileMenu }}
+        sx={{ mt: 7 }}
+        PaperProps={{ sx: { minWidth: 265 } }}
         disableAutoFocusItem
       >
         {isAuthenticated ? (
           <div>
-            <div className={classes.profileMenuUser}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography variant="h6" fontWeight="medium">
                 {userId}
               </Typography>
-            </div>
+            </Box>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
               onClick={() => handleMenuItemClick(getProfile)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Profile
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Profile
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
               onClick={() => handleMenuItemClick(getPayment)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Payment
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Payment
             </MenuItem>
-            {roles.includes("admin") && (
+            {roles?.includes("admin") && (
               <MenuItem
-                className={classNames(
-                  classes.profileMenuItem,
-                  classes.headerMenuItem,
-                )}
+                sx={{
+                  color: 'text.hint',
+                  '&:hover, &:focus': {
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                  },
+                }}
                 onClick={() => handleMenuItemClick(updateRoles)}
               >
-                <AccountIcon className={classes.profileMenuIcon} /> Update Roles
+                <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Update Roles
               </MenuItem>
             )}
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
               onClick={() => handleMenuItemClick(getOrders)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Orders
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Orders
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
               onClick={() => handleMenuItemClick(userHost)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Switch Host
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Switch Host
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
               onClick={() => handleMenuItemClick(createOrg)}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Claim Org
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Claim Org
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Tasks
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Tasks
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Messages
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Messages
             </MenuItem>
             <MenuItem
-              className={classNames(
-                classes.profileMenuItem,
-                classes.headerMenuItem,
-              )}
+              sx={{
+                color: 'text.hint',
+                '&:hover, &:focus': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                },
+              }}
             >
-              <AccountIcon className={classes.profileMenuIcon} /> Notifications
+              <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Notifications
             </MenuItem>
-            <div className={classes.profileMenuUser}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography
-                className={classes.profileMenuLink}
+                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
                 color="primary"
                 onClick={() => handleMenuItemClick(changePassword)}
               >
                 Change Password
               </Typography>
-            </div>
-            <div className={classes.profileMenuUser}>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography
-                className={classes.profileMenuLink}
+                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
                 color="primary"
                 onClick={() => handleMenuItemClick(signOut)}
               >
                 Sign Out
               </Typography>
-            </div>
+            </Box>
           </div>
         ) : (
           <div>
-            <div className={classes.profileMenuUser}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography
-                className={classes.profileMenuLink}
+                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
                 color="primary"
                 onClick={signIn}
               >
                 Sign In
               </Typography>
-            </div>
-            <div className={classes.profileMenuUser}>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography
-                className={classes.profileMenuLink}
+                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
                 color="primary"
                 onClick={() => handleMenuItemClick(signUp)}
               >
                 Sign Up
               </Typography>
-            </div>
+            </Box>
           </div>
         )}
       </Menu>

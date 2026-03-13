@@ -1,35 +1,25 @@
-import { makeStyles, useTheme } from '@mui/styles';
-import classnames from 'classnames';
-import React from 'react';
+import { Box, useTheme } from "@mui/material";
+import React from "react";
 
-// styles
-var useStyles = makeStyles((theme) => ({
-  dotBase: {
-    width: 5,
-    height: 5,
-    backgroundColor: theme.palette.text.hint,
-    borderRadius: '50%',
-    transition: theme.transitions.create('background-color'),
-  },
-  dotLarge: {
-    width: 8,
-    height: 8,
-  },
-}));
+interface DotProps {
+  size?: "small" | "large" | "medium";
+  color?: string;
+}
 
-export default function Dot({ size, color }) {
-  var classes = useStyles();
-  var theme = useTheme();
+export default function Dot({ size, color }: DotProps) {
+  const theme = useTheme();
 
   return (
-    <div
-      className={classnames(classes.dotBase, {
-        [classes.dotLarge]: size === 'large',
-        [classes.dotSmall]: size === 'small',
-      })}
-      style={{
-        backgroundColor:
-          color && theme.palette[color] && theme.palette[color].main,
+    <Box
+      sx={{
+        width: size === "large" ? 8 : 5,
+        height: size === "large" ? 8 : 5,
+        backgroundColor: (theme) =>
+          color && (theme.palette as any)[color]
+            ? (theme.palette as any)[color].main
+            : (theme.palette.text as any).hint,
+        borderRadius: "50%",
+        transition: theme.transitions.create("background-color"),
       }}
     />
   );

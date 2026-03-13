@@ -4,25 +4,25 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
+import { Box } from '@mui/material';
 import React from 'react';
 import ImagePopup from './ImagePopup';
 import VideoList from './VideoList';
 
-const useStyles = makeStyles({
-  table: {
-    minWidth: 700,
-  },
-});
+interface RealEstateProps {
+  site: {
+    ss: any[];
+  };
+  userId: string;
+}
 
-export default function RealEstate(props) {
-  const classes = useStyles();
+export default function RealEstate(props: RealEstateProps) {
   return (
-    <div>
+    <Box>
       {props.site.ss.map((subject, index) => (
         <React.Fragment key={index}>
           <TableContainer component={Paper}>
-            <Table className={classes.table} aria-label="spanning table">
+            <Table sx={{ minWidth: 700 }} aria-label="spanning table">
               <TableBody>
                 <TableRow>
                   <TableCell>From:</TableCell>
@@ -129,6 +129,6 @@ export default function RealEstate(props) {
           <br />
         </React.Fragment>
       ))}
-    </div>
+    </Box>
   );
 }

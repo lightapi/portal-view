@@ -9,52 +9,39 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
-import React from 'react';
-import { timeConversion } from '../../utils';
+import { timeConversion } from "../../utils";
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-const useRowStyles = makeStyles({
-  root: {
-    '& > *': {
-      borderBottom: 'unset',
-    },
-  },
-});
+function Row({ row }: { row: any }) {
+  const navigate = useNavigate();
 
-function Row(props) {
-  console.log(props);
-  const { row } = props;
-  const classes = useRowStyles();
-
-  const replyMessage = (userId, subject) => {
-    props.history.push({
-      pathname: '/app/form/privateMessage',
+  const replyMessage = (userId: string, subject: string) => {
+    navigate("/app/form/privateMessage", {
       state: { data: { userId, subject } },
     });
   };
 
-  const deleteMessage = () => {
-    if (window.confirm('Are you sure you want to delete the message?')) {
-      console.log('delete the entry here');
-    }
-  };
-
   return (
-    <React.Fragment>
-      <TableRow className={classes.root}>
+    <>
+      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
         <TableCell component="th" scope="row">
           {timeConversion(new Date().getTime() - row.timestamp)}
         </TableCell>
         <TableCell align="left">
-          <ReplyIcon onClick={() => replyMessage(row.fromId, row.subject)} />
+          <ReplyIcon
+            onClick={() => replyMessage(row.fromId, row.subject)}
+            sx={{ cursor: "pointer", marginRight: 1 }}
+          />
           {row.fromId}
         </TableCell>
         <TableCell align="left">{row.subject}</TableCell>
         <TableCell align="right">
           <DeleteIcon
             onClick={() =>
-              console.log('delete is clicked', row.timestamp, row.fromId)
+              console.log("delete is clicked", row.timestamp, row.fromId)
             }
+            sx={{ cursor: "pointer" }}
           />
         </TableCell>
       </TableRow>
@@ -63,14 +50,14 @@ function Row(props) {
           {row.content}
         </TableCell>
       </TableRow>
-    </React.Fragment>
+    </>
   );
 }
 
-export default function Messages(props) {
-  console.log('props = ', props);
-  console.log('data = ', props.location.state.data);
-  const messages = props.location.state.data;
+export default function Messages() {
+  const location = useLocation();
+  const messages = (location.state as any)?.data || [];
+
   return (
     <div>
       <h2>Private Messages</h2>
@@ -85,8 +72,8 @@ export default function Messages(props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {messages.map((msg, index) => (
-              <Row history={props.history} key={index} row={msg} />
+            {messages.map((msg: any, index: number) => (
+              <Row key={index} row={msg} />
             ))}
           </TableBody>
         </Table>
