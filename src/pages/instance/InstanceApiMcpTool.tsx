@@ -49,6 +49,7 @@ export default function InstanceApiMcpTool() {
     const fetchData = useCallback(async () => {
         if (!host || !instanceApiId || !apiVersion || !apiId || !apiVersionId) return;
         setIsLoading(true);
+        setIsError(false);
 
         const cmd = {
             host: 'lightapi.net', service: 'instance', action: 'getInstanceApiMcpTool', version: '0.1.0',
@@ -84,7 +85,6 @@ export default function InstanceApiMcpTool() {
             console.error(error);
             setErrorMsg('Failed to load MCP tools');
         } finally {
-            setIsError(false);
             setIsLoading(false);
         }
     }, [host, instanceApiId, apiVersion, apiId, apiVersionId]);
