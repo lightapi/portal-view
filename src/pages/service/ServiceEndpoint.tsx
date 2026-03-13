@@ -146,7 +146,7 @@ export default function ServiceEndpoint() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [navigate],
+    [],
   );
 
   // Table instance configuration
