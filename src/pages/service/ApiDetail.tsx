@@ -189,7 +189,7 @@ export default function ApiDetail() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [navigate, handleUpdate, handleDelete, isUpdateLoading],
+    [],
   );
 
   // Table instance configuration
