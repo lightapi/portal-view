@@ -47,7 +47,7 @@ export default function InstanceApiMcpTool() {
     const [errorMsg, setErrorMsg] = useState('');
 
     const fetchData = useCallback(async () => {
-        if (!host || !instanceApiId || !apiVersion || !apiId || !apiVersionId) return;
+        if (!host || !instanceApiId || !apiVersionId) return;
         setIsLoading(true);
 
         const cmd = {
@@ -87,7 +87,7 @@ export default function InstanceApiMcpTool() {
             setIsError(false);
             setIsLoading(false);
         }
-    }, [host, instanceApiId, apiVersion, apiId, apiVersionId]);
+    }, [host, instanceApiId, apiVersionId]);
 
     useEffect(() => {
         fetchData();
