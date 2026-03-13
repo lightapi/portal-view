@@ -3,7 +3,6 @@ import { Person as AccountIcon } from "@mui/icons-material";
 import { IconButton, Menu, MenuItem, Typography, Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import classNames from "classnames";
 import {
   changePassword,
   getOrders,
@@ -53,7 +52,7 @@ export default function ProfileMenu() {
         aria-haspopup="true"
         color="inherit"
         aria-controls="profile-menu"
-        onClick={(e) => setProfileMenu(e.currentTarget)}
+        onClick={(e: React.MouseEvent<HTMLElement>) => setProfileMenu(e.currentTarget)}
         size="large"
         sx={{ ml: 2, p: 0.5 }}
       >

@@ -4,7 +4,6 @@ import {
   Search as SearchIcon,
 } from "@mui/icons-material";
 import { AppBar, IconButton, InputBase, Toolbar } from "@mui/material";
-import classNames from "classnames";
 import { useState, useEffect } from "react";
 // router
 import { Link, useNavigate, useLocation } from "react-router-dom";
