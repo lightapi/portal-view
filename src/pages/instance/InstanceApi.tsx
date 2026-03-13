@@ -209,7 +209,7 @@ export default function InstanceApi() {
             <DeleteForeverIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Instnace Api Config">
+        <Tooltip title="Instance Api Config">
           <IconButton color="primary" onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
             <AddToDriveIcon />
           </IconButton>
