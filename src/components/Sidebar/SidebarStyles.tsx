@@ -24,8 +24,8 @@ const closedMixin = (theme: Theme): CSSObject => ({
   },
 });
 
-export const StyledDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
+export const StyledDrawer = styled(MuiDrawer, { shouldForwardProp: (prop: string) => prop !== 'open' })(
+  ({ theme, open }: { theme: Theme; open?: boolean }) => ({
     width: drawerWidth,
     flexShrink: 0,
     whiteSpace: 'nowrap',
@@ -41,14 +41,14 @@ export const StyledDrawer = styled(MuiDrawer, { shouldForwardProp: (prop) => pro
   }),
 );
 
-export const DrawerToolbar = styled('div')(({ theme }) => ({
+export const DrawerToolbar = styled('div')(({ theme }: { theme: Theme }) => ({
   ...theme.mixins.toolbar,
   [theme.breakpoints.down('md')]: {
     display: 'none',
   },
 }));
 
-export const MobileBackButtonWrapper = styled('div')(({ theme }) => ({
+export const MobileBackButtonWrapper = styled('div')(({ theme }: { theme: Theme }) => ({
   marginTop: theme.spacing(0.5),
   marginLeft: theme.spacing(3),
   [theme.breakpoints.only('sm')]: {
@@ -64,11 +64,11 @@ interface HeaderIconProps {
 }
 
 export const SidebarIcon = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'collapse',
-})<HeaderIconProps>(({ collapse }) => ({
+  shouldForwardProp: (prop: string) => prop !== 'collapse',
+})<HeaderIconProps>(({ collapse }: { collapse?: boolean }) => ({
   color: collapse ? 'white' : 'rgba(255, 255, 255, 0.35)',
 }));
 
-export const SidebarListWrapper = styled(Box)(({ theme }) => ({
+export const SidebarListWrapper = styled(Box)(({ theme }: { theme: Theme }) => ({
   marginTop: theme.spacing(6),
 }));

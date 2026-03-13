@@ -109,7 +109,7 @@ export default function Header(props: any) {
           )}
         </HeaderMenuButton>
         <StyledLink to="/app/dashboard">
-          <Logotype variant="h6" weight="medium" size={undefined} colorBrightness={undefined} color={undefined}>
+          <Logotype variant="h6" weight="medium">
             {apiPortalText}
           </Logotype>
         </StyledLink>

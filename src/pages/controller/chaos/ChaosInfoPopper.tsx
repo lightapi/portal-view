@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import HelpIcon from '@mui/icons-material/Help';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 interface ChaosInfoPopperProps {
   formType: string;
@@ -76,7 +77,7 @@ export default function ChaosInfoPopper({ formType, handlerName }: ChaosInfoPopp
         anchorEl={popperAnchor}
         transition
       >
-        {({ TransitionProps }) => (
+        {({ TransitionProps }: { TransitionProps: any }) => (
           <Fade {...TransitionProps} timeout={350}>
             <Box sx={{ border: 1, p: 2, bgcolor: 'background.paper', boxShadow: 1, borderRadius: 1 }}>
               {description}
@@ -88,4 +89,4 @@ export default function ChaosInfoPopper({ formType, handlerName }: ChaosInfoPopp
   );
 }
 
-import { Typography } from '@mui/material';
+

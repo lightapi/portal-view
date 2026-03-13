@@ -49,7 +49,7 @@ function siteReducer(state: SiteState, action: SiteAction): SiteState {
     case "UPDATE_CONFIGDETAIL":
       return { ...state, configDetail: action.configDetail };
     default: {
-      return state;
+      throw new Error(`Unhandled action type: ${(action as any).type}`);
     }
   }
 }
