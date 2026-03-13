@@ -12,13 +12,13 @@ import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
 
 type McpToolType = {
-    endpointName: string;
+    name: string;
     endpointId: string;
     endpoint: string;
-    httpMethod?: string;
-    endpointPath?: string;
-    endpointDesc: string;
-    toolSchema?: string;
+    method?: string;
+    path?: string;
+    description: string;
+    inputSchema?: string;
     toolMetadata?: string;
     selected: boolean;
 };
@@ -63,9 +63,20 @@ export default function InstanceApiMcpTool() {
 
         try {
             const json = await fetchClient(url);
-            const fetchedData: McpToolType[] = json?.endpoints || [];
-            console.log(fetchedData);
-            setData(fetchedData);
+            const fetchedData: any[] = json?.endpoints || [];
+            
+            // Standardize the data from backend
+            const standardizedData: McpToolType[] = fetchedData.map(t => ({
+                ...t,
+                name: t.name || t.endpointName || '',
+                description: t.description || t.endpointDesc || '',
+                path: t.path || t.endpointPath || '',
+                method: t.method || t.httpMethod || '',
+                inputSchema: t.inputSchema || t.toolSchema || '',
+            }));
+
+            console.log(standardizedData);
+            setData(standardizedData);
             setMetadata({
                 propertyId: json?.propertyId || null,
                 configId: json?.configId || null,
@@ -74,9 +85,9 @@ export default function InstanceApiMcpTool() {
             });
 
             const initialSelection: MRT_RowSelectionState = {};
-            fetchedData.forEach(row => {
+            standardizedData.forEach(row => {
                 if (row.selected) {
-                    initialSelection[row.endpointName] = true;
+                    initialSelection[row.name] = true;
                 }
             });
             setRowSelection(initialSelection);
@@ -98,14 +109,14 @@ export default function InstanceApiMcpTool() {
 
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
         const selectedTools = selectedToolsNames.map(name => {
-            const tool = data.find(t => t.endpointName === name);
+            const tool = data.find(t => t.name === name);
             let toolSchemaObj = null;
             let toolMetadataObj = null;
             try {
-                if (tool?.toolSchema) toolSchemaObj = JSON.parse(tool.toolSchema);
+                if (tool?.inputSchema) toolSchemaObj = JSON.parse(tool.inputSchema);
             } catch (e) {
                 console.error("Failed to parse toolSchema", e);
-                toolSchemaObj = tool?.toolSchema;
+                toolSchemaObj = tool?.inputSchema;
             }
             try {
                 if (tool?.toolMetadata) toolMetadataObj = JSON.parse(tool.toolMetadata);
@@ -114,12 +125,12 @@ export default function InstanceApiMcpTool() {
                 toolMetadataObj = tool?.toolMetadata;
             }
             return {
-                endpointName: name,
+                name: name,
                 endpoint: tool?.endpoint,
-                httpMethod: tool?.httpMethod,
-                endpointPath: tool?.endpointPath,
-                endpointDesc: tool?.endpointDesc,
-                toolSchema: toolSchemaObj,
+                method: tool?.method,
+                path: tool?.path,
+                description: tool?.description,
+                inputSchema: toolSchemaObj,
                 toolMetadata: toolMetadataObj,
                 serviceId,
                 apiType,
@@ -197,13 +208,13 @@ export default function InstanceApiMcpTool() {
 
     const columns = useMemo<MRT_ColumnDef<McpToolType>[]>(
         () => [
-            { accessorKey: 'endpointName', header: 'Endpoint Name' },
+            { accessorKey: 'name', header: 'Name' },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'endpoint', header: 'Endpoint' },
-            { accessorKey: 'httpMethod', header: 'HTTP Method' },
-            { accessorKey: 'endpointPath', header: 'Endpoint Path' },
-            { accessorKey: 'endpointDesc', header: 'Description' },
-            { accessorKey: 'toolSchema', header: 'Tool Schema' },
+            { accessorKey: 'method', header: 'Method' },
+            { accessorKey: 'path', header: 'Path' },
+            { accessorKey: 'description', header: 'Description' },
+            { accessorKey: 'inputSchema', header: 'Input Schema' },
             { accessorKey: 'toolMetadata', header: 'Tool Metadata' },
         ],
         [],
@@ -219,7 +230,7 @@ export default function InstanceApiMcpTool() {
             rowSelection
         },
         enableRowSelection: true,
-        getRowId: (row) => row.endpointName,
+        getRowId: (row) => row.name,
         onRowSelectionChange: setRowSelection,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enablePagination: false,
