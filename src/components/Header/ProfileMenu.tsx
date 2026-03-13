@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Person as AccountIcon } from "@mui/icons-material";
 import { IconButton, Menu, MenuItem, Typography, Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import classNames from "classnames";
 import {
@@ -18,6 +19,7 @@ import {
 } from "../../contexts/UserContext";
 
 export default function ProfileMenu() {
+  const theme = useTheme();
   const [profileMenu, setProfileMenu] = useState<null | HTMLElement>(null);
   const userDispatch = useUserDispatch();
   const { isAuthenticated, userId, roles } = useUserState();
@@ -55,7 +57,7 @@ export default function ProfileMenu() {
         size="large"
         sx={{ ml: 2, p: 0.5 }}
       >
-        <AccountIcon sx={{ fontSize: 28 }} />
+        <AccountIcon sx={{ fontSize: 28, color: (theme.palette as any).custom?.darkBlue }} />
       </IconButton>
       <Menu
         id="profile-menu"

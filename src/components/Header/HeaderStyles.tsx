@@ -1,5 +1,5 @@
 import { styled, alpha } from '@mui/material/styles';
-import { AppBar, Toolbar, IconButton, InputBase } from '@mui/material';
+import { AppBar, Toolbar, IconButton, InputBase, Box } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Typography } from '../Wrappers/Wrappers';
 
@@ -11,6 +11,7 @@ export const StyledAppBar = styled(AppBar)(({ theme }) => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   backgroundColor: (theme.palette as any).custom?.lightGrey || theme.palette.background.default,
+  color: (theme.palette as any).custom?.darkBlue || theme.palette.primary.main,
 }));
 
 export const StyledToolbar = styled(Toolbar)(({ theme }) => ({
@@ -100,9 +101,12 @@ export const HeaderMenuButton = styled(IconButton)(({ theme }) => ({
   marginRight: theme.spacing(2), // from headerMenuButtonCollapse
 }));
 
-export const HeaderIcon = styled('span', {
+export const HeaderIcon = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'collapsed',
 })<{ collapsed?: boolean }>(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   fontSize: 28,
-  color: (theme.palette as any).custom?.darkBlue || theme.palette.primary.main,
+  color: 'inherit',
 }));
