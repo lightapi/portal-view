@@ -29,7 +29,6 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import ApiIcon from "@mui/icons-material/Api";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Widget from "../../components/Widget/Widget";
-import useStyles from "./styles";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
 
@@ -72,7 +71,6 @@ type ServiceVersionType = {
 };
 
 export default function ApiDetail() {
-  const classes = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState<ServiceVersionType[]>([]);
@@ -82,14 +80,13 @@ export default function ApiDetail() {
 
   // State for service versions data
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefetching, setIsRefetching] = useState(false);
   const [isError, setIsError] = useState(false);
 
   // Data fetching for service versions
   useEffect(() => {
     const fetchVersions = async () => {
       if (!hostId || !apiId) return;
-      if (!data.length) setIsLoading(true); else setIsRefetching(true);
+      setIsLoading(true);
 
       const cmd = {
         host: "lightapi.net", service: "service", action: "getApiVersion", version: "0.1.0",
@@ -98,7 +95,6 @@ export default function ApiDetail() {
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
       try {
-        setIsLoading(true);
         const data = await fetchClient(url);
         console.log("data = ", data);
         setData(data || []);
@@ -272,7 +268,12 @@ export default function ApiDetail() {
 
   return (
     <Box>
-      <Widget title="Service Detail" upperTitle bodyClass={classes.fullHeightBody} className={classes.card}>
+      <Widget
+        title="Service Detail"
+        upperTitle
+        sx={{ minHeight: "100%", display: "flex", flexDirection: "column" }}
+        bodySx={{ display: "flex", flexGrow: 1, flexDirection: "column", justifyContent: "space-between" }}
+      >
         <TableContainer component={Paper}>
           <Table>
             <TableBody>
@@ -293,3 +294,4 @@ export default function ApiDetail() {
     </Box>
   );
 }
+

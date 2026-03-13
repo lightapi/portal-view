@@ -1,71 +1,84 @@
+import { CircularProgress, Box, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import fetchClient from "../../utils/fetchClient";
+// @ts-ignore
 import MarkdownEditor from "@uiw/react-markdown-editor";
 import { timeConversion } from "../../utils";
-import useStyles from "./styles";
 
-export default function BlogItem(props) {
-  const classes = useStyles();
-  console.log(props.match.params.host);
-  console.log(props.match.params.id);
-  const host = props.match.params.host;
-  const id = props.match.params.id;
-  const [blog, setBlog] = useState();
+interface BlogData {
+  title: string;
+  author: string;
+  publishDate: number;
+  body: string;
+}
+
+export default function BlogItem() {
+  const { host, id } = useParams<{ host: string; id: string }>();
+  const [blog, setBlog] = useState<BlogData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const cmd = {
-    host: "lightapi.net",
-    service: "blog",
-    action: "getBlogById",
-    version: "0.1.0",
-    data: { host, id },
-  };
-
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-
-  const queryBlogFn = async (url) => {
+  const queryBlogFn = async (url: string) => {
     try {
       setLoading(true);
       const data = await fetchClient(url);
       setBlog(data);
-      setLoading(false);
     } catch (e) {
       console.log(e);
+      setBlog(null);
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    queryBlogFn(url);
-  }, []);
+    if (host && id) {
+      const cmd = {
+        host: "lightapi.net",
+        service: "blog",
+        action: "getBlogById",
+        version: "0.1.0",
+        data: { host, id },
+      };
+      const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+      queryBlogFn(url);
+    }
+  }, [host, id]);
 
-  let wait;
   if (loading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
-    );
-  } else {
-    console.log("blog = ", blog);
-    wait = (
-      <div>
-        <h1 className={classes.title}>{blog.title}</h1>
-        Posted by <span className={classes.author}>{blog.author}</span>{" "}
-        {timeConversion(new Date().getTime() - blog.publishDate)} ago
-        <Content body={blog.body} />
-      </div>
+      </Box>
     );
   }
 
-  return <div>{wait}</div>;
+  if (!blog) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">Blog not found or failed to load.</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        {blog.title}
+      </Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ color: 'text.secondary' }}>
+        Posted by <Box component="span" sx={{ fontWeight: 'bold' }}>{blog.author}</Box>{" "}
+        {timeConversion(new Date().getTime() - blog.publishDate)} ago
+      </Typography>
+      <Content body={blog.body} />
+    </Box>
+  );
 }
 
-const Content = ({ body }) => {
-  console.log("body = ", body);
+const Content = ({ body }: { body: string }) => {
   return (
-    <div className={classes.content}>
-      <MarkdownEditor.Markdown source={body} height="200px" />
-    </div>
+    <Box sx={{ mt: 3, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+      <MarkdownEditor.Markdown source={body} />
+    </Box>
   );
 };

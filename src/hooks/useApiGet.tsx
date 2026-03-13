@@ -3,7 +3,13 @@ import { requestStarted, requestSuccess, requestFailure } from './action';
 import { reducer } from './reducer';
 import fetchClient from '../utils/fetchClient';
 
-export const useApiGet = ({ url, headers = {}, callback }) => {
+interface UseApiGetProps {
+  url: string;
+  headers?: Record<string, string>;
+  callback?: ((data: any) => void) | null;
+}
+
+export const useApiGet = ({ url, headers = {}, callback = null }: UseApiGetProps) => {
   const [state, dispatch] = useReducer(reducer, {
     isLoading: true,
     data: null,

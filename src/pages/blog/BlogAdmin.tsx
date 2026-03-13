@@ -1,4 +1,3 @@
-// import AddBoxIcon from '@mui/material/icons/AddBox';
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
@@ -11,28 +10,23 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import { makeStyles } from "@mui/styles";
-import React, { useEffect, useState } from "react";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import React, { useEffect, useState, ReactNode } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
-import useStyles from "./styles";
+import { useNavigate } from "react-router-dom";
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+interface RowProps {
+  id: string;
+  host: string;
+}
 
-function Row(props) {
-  const { history, email, roles, host, id } = props;
-  const classes = useRowStyles();
-
+function Row({ id, host }: RowProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const cmd = {
       host: "lightapi.net",
       service: "blog",
@@ -40,48 +34,50 @@ function Row(props) {
       version: "0.1.0",
       data: { host, id },
     };
-    const query = async (url, callback) => {
-      try {
-        setLoading(true);
-        const data = await fetchClient(url);
-        setLoading(false);
-        callback(data);
-      } catch (e) {
-        console.log(e);
-        setError(e.description || e.message || e);
-        setLoading(false);
-      }
-    };
-    query(url, callback);
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    try {
+      setLoading(true);
+      const data = await fetchClient(url);
+      setLoading(false);
+      navigate("/app/form/updateBlog", { state: { data } });
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+    }
   };
 
   const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete the client?")) {
-      history.push({
-        pathname: "/app/oauth/deleteClient",
+    if (window.confirm("Are you sure you want to delete this blog?")) {
+      navigate("/app/blog/deleteBlog", {
         state: { data: { host, id } },
       });
     }
   };
 
   return (
-    <TableRow className={classes.root}>
+    <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
       <TableCell align="left">{host}</TableCell>
       <TableCell align="left">{id}</TableCell>
       <TableCell align="right">
-        <SystemUpdateIcon onClick={handleUpdate} />
+        <IconButton onClick={handleUpdate} disabled={loading} size="small">
+          {loading ? <CircularProgress size={20} /> : <SystemUpdateIcon />}
+        </IconButton>
       </TableCell>
       <TableCell align="right">
-        <DeleteForeverIcon onClick={handleDelete} />
+        <IconButton onClick={handleDelete} size="small" color="error">
+          <DeleteForeverIcon />
+        </IconButton>
       </TableCell>
     </TableRow>
   );
 }
 
-function BlogAdminList(props) {
-  const { history, blogs } = props;
-  const { email, roles, host } = useUserState();
-  console.log(blogs);
+interface BlogAdminListProps {
+  blogs: string[];
+}
+
+function BlogAdminList({ blogs }: BlogAdminListProps) {
+  const { host } = useUserState();
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -96,10 +92,7 @@ function BlogAdminList(props) {
         <TableBody>
           {blogs.map((blog, index) => (
             <Row
-              history={history}
-              email={email}
-              roles={roles}
-              host={host}
+              host={host || ""}
               key={index}
               id={blog}
             />
@@ -110,73 +103,74 @@ function BlogAdminList(props) {
   );
 }
 
-export default function BlogAdmin(props) {
-  const classes = useStyles();
+export default function BlogAdmin() {
+  const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<any>();
   const [count, setCount] = useState(0);
-  const [blogs, setBlogs] = useState([]);
-
-  const cmd = {
-    host: "lightapi.net",
-    service: "blog",
-    action: "getBlog",
-    version: "0.1.0",
-    data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
-  };
-
-  const query = async (url) => {
-    try {
-      setLoading(true);
-      const data = await fetchClient(url);
-      setBlogs(data.blogs);
-      setCount(data.total);
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e.description || e.message || e);
-      setBlogs([]);
-      setLoading(false);
-    }
-  };
+  const [blogs, setBlogs] = useState<string[]>([]);
 
   useEffect(() => {
-    query(url);
-  }, [page, rowsPerPage]);
+    const cmd = {
+      host: "lightapi.net",
+      service: "blog",
+      action: "getBlog",
+      version: "0.1.0",
+      data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
+    };
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const handleChangePage = (event, newPage) => {
+    const query = async (url: string) => {
+      try {
+        setLoading(true);
+        const data = await fetchClient(url);
+        setBlogs(data.blogs || []);
+        setCount(data.total || 0);
+        setLoading(false);
+      } catch (e: any) {
+        console.error(e);
+        setError(e.description || e.message || e);
+        setBlogs([]);
+        setLoading(false);
+      }
+    };
+
+    query(url);
+  }, [page, rowsPerPage, host]);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
   const handleCreate = () => {
-    props.history.push("/app/form/createBlog");
+    navigate("/app/form/createBlog");
   };
 
-  let wait;
+  let content: ReactNode;
   if (loading) {
-    wait = (
-      <div>
+    content = (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else if (error) {
-    wait = (
-      <div>
+    content = (
+      <Box sx={{ p: 3 }}>
         <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
+      </Box>
     );
   } else {
-    wait = (
-      <div>
-        <BlogAdminList {...props} blogs={blogs} />
+    content = (
+      <Box>
+        <BlogAdminList blogs={blogs} />
         <TablePagination
           rowsPerPageOptions={[10, 25, 100]}
           component="div"
@@ -186,10 +180,14 @@ export default function BlogAdmin(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <IconButton onClick={handleCreate} color="primary" size="large">
+            <AddBoxIcon fontSize="large" />
+          </IconButton>
+        </Box>
+      </Box>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  return <Box className="App">{content}</Box>;
 }

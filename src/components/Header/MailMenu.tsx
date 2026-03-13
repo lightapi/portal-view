@@ -3,9 +3,8 @@ import {
   MailOutline as MailIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
-import { Fab, IconButton, Menu, MenuItem } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
-import classNames from "classnames";
+import { useNavigate } from "react-router-dom";
+import { Fab, IconButton, Menu, MenuItem, Box, useTheme, CircularProgress } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
@@ -14,15 +13,15 @@ import { timeConversion } from "../../utils";
 import UserAvatar from "../UserAvatar/UserAvatar";
 import { Badge, Typography } from "../Wrappers/Wrappers";
 
-export default function MailMenu(props) {
-  var [mailMenu, setMailMenu] = useState(null);
-  var [isMailsUnread, setIsMailsUnread] = useState(true);
-  var [messages, setMessages] = useState([]);
-  var [loading, setLoading] = useState(false);
-  var classes = props.classes;
-  var { email } = useUserState();
+export default function MailMenu(props: any) {
+  const [mailMenu, setMailMenu] = useState<null | HTMLElement>(null);
+  const [isMailsUnread, setIsMailsUnread] = useState(true);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const theme = useTheme();
+  const navigate = useNavigate();
+  const { email } = useUserState();
 
-  //console.log("csrf = ", csrf);
   const cmd = {
     host: "lightapi.net",
     service: "user",
@@ -33,7 +32,7 @@ export default function MailMenu(props) {
 
   const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
-  const queryMessageFn = async (url) => {
+  const queryMessageFn = async (url: string) => {
     try {
       setLoading(true);
       const data = await fetchClient(url);
@@ -55,33 +54,25 @@ export default function MailMenu(props) {
   }, 600000);
 
   const sendMessage = () => {
-    console.log("sendMessage is callled");
-    props.history.push("/app/form/privateMessage");
+    navigate("/app/form/privateMessage");
   };
 
   const manageMessages = () => {
-    console.log("manageMessages is callled");
-    props.history.push({
-      pathname: "/app/messages",
+    navigate("/app/messages", {
       state: { data: messages },
     });
   };
 
-  //const { isLoading, data, error } = useApiGet({url, headers});
-  //console.log("messages", messages);
-  //console.log("error", error);
-  //console.log("isLoading", isLoading);
-  //const messages = data || [];
   let wait;
   if (loading) {
     wait = (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else {
     wait = (
-      <React.Fragment>
+      <>
         <IconButton
           color="inherit"
           aria-haspopup="true"
@@ -90,14 +81,14 @@ export default function MailMenu(props) {
             setMailMenu(e.currentTarget);
             setIsMailsUnread(false);
           }}
-          className={classes.headerMenuButton}
+          sx={{ ml: 2, p: 0.5 }}
           size="large"
         >
           <Badge
             badgeContent={isMailsUnread ? messages.length : null}
             color="secondary"
           >
-            <MailIcon classes={{ root: classes.headerIcon }} />
+            <MailIcon sx={{ fontSize: 28, color: (theme.palette as any).custom?.darkBlue }} />
           </Badge>
         </IconButton>
         <Menu
@@ -105,68 +96,71 @@ export default function MailMenu(props) {
           open={Boolean(mailMenu)}
           anchorEl={mailMenu}
           onClose={() => setMailMenu(null)}
-          MenuListProps={{ className: classes.headerMenuList }}
-          className={classes.headerMenu}
-          classes={{ paper: classes.profileMenu }}
+          sx={{ mt: 7 }}
+          PaperProps={{ sx: { minWidth: 265 } }}
           disableAutoFocusItem
         >
-          <div className={classes.profileMenuUser}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
             <Typography variant="h4" weight="medium">
               New Messages
             </Typography>
             <Typography
-              className={classes.profileMenuLink}
               component="a"
               color="secondary"
+              sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
             >
               {messages.length} New Messages
             </Typography>
-          </div>
+          </Box>
           {messages.map((message, index) => (
-            <MenuItem key={index} className={classes.messageNotification}>
-              <div className={classes.messageNotificationSide}>
+            <MenuItem key={index} sx={{
+              height: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              '&:hover, &:focus': {
+                backgroundColor: (theme.palette as any).background.light,
+              },
+            }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mr: 2 }}>
                 <UserAvatar color="primary" name={message.fromId} />
                 <Typography size="sm" color="text" colorBrightness="secondary">
                   {timeConversion(new Date().getTime() - message.timestamp)}
                 </Typography>
-              </div>
-              <div
-                className={classNames(
-                  classes.messageNotificationSide,
-                  classes.messageNotificationBodySide,
-                )}
-              >
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography weight="medium" gutterBottom>
                   {message.fromId} - {message.subject}
                 </Typography>
                 <Typography color="text" colorBrightness="secondary">
                   {message.content}
                 </Typography>
-              </div>
+              </Box>
             </MenuItem>
           ))}
-          <Fab
-            variant="extended"
-            color="primary"
-            aria-label="Add"
-            onClick={sendMessage}
-            className={classes.sendMessageButton}
-          >
-            Send New Message
-            <SendIcon className={classes.sendButtonIcon} />
-          </Fab>
-          <Fab
-            variant="extended"
-            color="primary"
-            aria-label="Add"
-            onClick={manageMessages}
-            className={classes.sendMessageButton}
-          >
-            Manage Messages
-            <ManageIcon className={classes.sendButtonIcon} />
-          </Fab>
+          <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
+            <Fab
+              variant="extended"
+              color="primary"
+              aria-label="Add"
+              onClick={sendMessage}
+              sx={{ mb: 2, textTransform: 'none' }}
+            >
+              Send New Message
+              <SendIcon sx={{ ml: 2 }} />
+            </Fab>
+            <Fab
+              variant="extended"
+              color="primary"
+              aria-label="Add"
+              onClick={manageMessages}
+              sx={{ mb: 2, textTransform: 'none' }}
+            >
+              Manage Messages
+              <ManageIcon sx={{ ml: 2 }} />
+            </Fab>
+          </Box>
         </Menu>
-      </React.Fragment>
+      </>
     );
   }
   return <div>{wait}</div>;

@@ -1,80 +1,81 @@
-// this is a component to fetch a list of blog and display them in pagination
 import TablePagination from "@mui/material/TablePagination";
-import React, { useEffect, useState } from "react";
-// import { makeStyles } from '@mui/styles';
-// import Table from '@mui/material/Table';
-// import TableBody from '@mui/material/TableBody';
-// import TableCell from '@mui/material/TableCell';
-// import TableContainer from '@mui/material/TableContainer';
-// import TableHead from '@mui/material/TableHead';
-// import TableRow from '@mui/material/TableRow';
-// import Paper from '@mui/material/Paper';
-// import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-// import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import React, { useEffect, useState, ReactNode } from "react";
+import Box from "@mui/material/Box";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
 import BlogListItem from "./BlogListItem";
-import useStyles from "./styles";
 
-export default function BlogList(props) {
-  console.log("BlogList props", props);
-  const classes = useStyles();
-  const { email, roles, host } = useUserState();
+interface BlogData {
+    id: string;
+    host: string;
+    title: string;
+    author: string;
+    summary: string;
+    publishDate: number;
+    featuredImageUrl?: string;
+    tags: string[];
+}
+
+export default function BlogList() {
+  const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<any>();
   const [count, setCount] = useState(0);
-  const [blogs, setBlogs] = useState([]);
-
-  const cmd = {
-    host: "lightapi.net",
-    service: "blog",
-    action: "getBlogList",
-    version: "0.1.0",
-    data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
-  };
-
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const query = async (url) => {
-    try {
-      setLoading(true);
-      const data = await fetchClient(url);
-      setBlogs(data.blogs);
-      setCount(data.total);
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e.description || e.message || e);
-      setBlogs([]);
-      setLoading(false);
-    }
-  };
+  const [blogs, setBlogs] = useState<BlogData[]>([]);
 
   useEffect(() => {
-    query(url);
-  }, [page, rowsPerPage]);
+    const cmd = {
+      host: "lightapi.net",
+      service: "blog",
+      action: "getBlogList",
+      version: "0.1.0",
+      data: { host: host || "", offset: page * rowsPerPage, limit: rowsPerPage },
+    };
 
-  const handleChangePage = (event, newPage) => {
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    const query = async (url: string) => {
+      try {
+        setLoading(true);
+        const data = await fetchClient(url);
+        setBlogs(data.blogs || []);
+        setCount(data.total || 0);
+        setLoading(false);
+      } catch (e: any) {
+        console.error(e);
+        setError(e.description || e.message || e);
+        setBlogs([]);
+        setLoading(false);
+      }
+    };
+
+    query(url);
+  }, [page, rowsPerPage, host]);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
-  console.log(blogs);
-  let Blogs = undefined;
-  if (Array.isArray(blogs)) {
-    Blogs = blogs.map((data) => (
-      <BlogListItem {...props} data={data} key={data.id} />
+  let content: ReactNode;
+  if (loading) {
+      content = <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>Loading blogs...</Box>;
+  } else if (error) {
+      content = <Box sx={{ p: 3, color: 'error.main' }}>Error: {JSON.stringify(error)}</Box>;
+  } else if (Array.isArray(blogs)) {
+    content = blogs.map((data) => (
+      <BlogListItem data={data} key={data.id} />
     ));
   }
 
   return (
-    <div>
-      {Blogs}
+    <Box className="App">
+      {content}
       <TablePagination
         rowsPerPageOptions={[10, 25, 100]}
         component="div"
@@ -84,6 +85,6 @@ export default function BlogList(props) {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
-    </div>
+    </Box>
   );
 }

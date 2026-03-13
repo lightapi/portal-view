@@ -10,77 +10,71 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
-import { makeStyles } from "@mui/styles";
-import React, { useEffect, useState } from "react";
+import Box from "@mui/material/Box";
+import React, { useEffect, useState, ReactNode } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
-import useStyles from "./styles";
+import { useNavigate } from "react-router-dom";
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+interface RowProps {
+  hostId: string;
+  errorCode: string;
+}
 
-function Row(props) {
-  const { history, email, roles, host, errorCode } = props;
-  const classes = useRowStyles();
-
+function Row({ hostId, errorCode }: RowProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const cmd = {
       host: "lightapi.net",
       service: "error",
       action: "getErrorByCode",
       version: "0.1.0",
-      data: { host, errorCode },
+      data: { host: hostId, errorCode },
     };
-    const query = async (url, callback) => {
-      try {
-        setLoading(true);
-        const data = await fetchClient(url);
-        setLoading(false);
-        callback(data);
-      } catch (e) {
-        console.log(e);
-        setError(e.description || e.message || e);
-        setLoading(false);
-      }
-    };
-    query(url, callback);
+    const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+    
+    try {
+      setLoading(true);
+      const data = await fetchClient(url);
+      setLoading(false);
+      navigate("/app/form/updateError", { state: { data } });
+    } catch (e: any) {
+      console.log(e);
+      alert(e.description || e.message || e);
+      setLoading(false);
+    }
   };
 
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to delete the error?")) {
-      history.push({
-        pathname: "/app/error/deleteError",
-        state: { data: { host, errorCode } },
+      navigate("/app/error/deleteError", {
+        state: { data: { host: hostId, errorCode } },
       });
     }
   };
 
   return (
-    <TableRow className={classes.root}>
-      <TableCell align="left">{host}</TableCell>
+    <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableCell align="left">{hostId}</TableCell>
       <TableCell align="left">{errorCode}</TableCell>
       <TableCell align="right">
-        <SystemUpdateIcon onClick={handleUpdate} />
+        {loading ? <CircularProgress size={20} /> : <SystemUpdateIcon sx={{ cursor: 'pointer' }} onClick={handleUpdate} />}
       </TableCell>
       <TableCell align="right">
-        <DeleteForeverIcon onClick={handleDelete} />
+        <DeleteForeverIcon sx={{ cursor: 'pointer', color: 'error.main' }} onClick={handleDelete} />
       </TableCell>
     </TableRow>
   );
 }
 
-function ErrorAdminList(props) {
-  const { history, errors } = props;
-  const { email, roles, host } = useUserState();
-  console.log(errors);
+interface ErrorAdminListProps {
+  errors: string[];
+  hostId: string;
+}
+
+function ErrorAdminList({ errors, hostId }: ErrorAdminListProps) {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -95,10 +89,7 @@ function ErrorAdminList(props) {
         <TableBody>
           {errors.map((item, index) => (
             <Row
-              history={history}
-              email={email}
-              roles={roles}
-              host={host}
+              hostId={hostId}
               key={index}
               errorCode={item}
             />
@@ -109,74 +100,74 @@ function ErrorAdminList(props) {
   );
 }
 
-export default function ErrorAdmin(props) {
-  const classes = useStyles();
+export default function ErrorAdmin() {
+  const navigate = useNavigate();
   const { host } = useUserState();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<any>();
   const [count, setCount] = useState(0);
-  const [errors, setErrors] = useState([]);
-
-  const cmd = {
-    host: "lightapi.net",
-    service: "error",
-    action: "getError",
-    version: "0.1.0",
-    data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
-  };
-
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const query = async (url) => {
-    try {
-      setLoading(true);
-      const data = await fetchClient(url);
-      setErrors(data.errors);
-      setCount(data.total);
-      setLoading(false);
-    } catch (e) {
-      console.log(e);
-      setError(e.description || e.message || e);
-      setErrors([]);
-      setLoading(false);
-    }
-  };
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    query(url);
-  }, [page, rowsPerPage]);
+    const fetchErrors = async () => {
+      const cmd = {
+        host: "lightapi.net",
+        service: "error",
+        action: "getError",
+        version: "0.1.0",
+        data: { host, offset: page * rowsPerPage, limit: rowsPerPage },
+      };
+    
+      const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
+      try {
+        setLoading(true);
+        const data = await fetchClient(url);
+        setErrors(data.errors || []);
+        setCount(data.total || 0);
+        setLoading(false);
+      } catch (e: any) {
+        console.log(e);
+        setError(e.description || e.message || e);
+        setErrors([]);
+        setLoading(false);
+      }
+    };
 
-  const handleChangePage = (event, newPage) => {
+    fetchErrors();
+  }, [page, rowsPerPage, host]);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
 
   const handleCreate = () => {
-    props.history.push("/app/form/createError");
+    navigate("/app/form/createError");
   };
 
-  let wait;
+  let wait: ReactNode;
   if (loading) {
     wait = (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else if (error) {
     wait = (
-      <div>
+      <Box sx={{ p: 3 }}>
         <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
+      </Box>
     );
   } else {
     wait = (
-      <div>
-        <ErrorAdminList {...props} errors={errors} />
+      <Box>
+        <ErrorAdminList errors={errors} hostId={host || ''} />
         <TablePagination
           rowsPerPageOptions={[10, 25, 100]}
           component="div"
@@ -186,10 +177,12 @@ export default function ErrorAdmin(props) {
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
-        <AddBoxIcon onClick={() => handleCreate()} />
-      </div>
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+          <AddBoxIcon sx={{ cursor: 'pointer', fontSize: 40, color: 'primary.main' }} onClick={() => handleCreate()} />
+        </Box>
+      </Box>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  return <Box className="App">{wait}</Box>;
 }

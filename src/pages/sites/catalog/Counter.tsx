@@ -1,79 +1,92 @@
-import { AddBox, IndeterminateCheckBox } from '@mui/icons-material';
-import { makeStyles } from '@mui/styles';
+import { IconButton, Box, TextField } from '@mui/material';
+import { Add, Remove } from '@mui/icons-material';
 import React, { useEffect, useState } from 'react';
 
-const useStyles = makeStyles({
-  stepperInput: {
-    display: 'flex',
-    color: '#666',
-    maxWidth: '120px',
-    margin: '0 auto',
-  },
-  stepperButton: {
-    height: '24px',
-    width: '24px',
-    border: '1px solid #ccc',
-    textAlign: 'center',
-    boxSizing: 'border-box',
-    borderRadius: '50%',
-    textDecoration: 'none',
-    color: 'inherit',
-    fontSize: '24px',
-    lineHeight: '22px',
-    '&:hover': {
-      color: '#077915',
-      borderColor: '#077915',
-    },
-    '&:active': {
-      color: '#fff',
-      borderColor: '#077915',
-      background: '#0bc122',
-    },
-  },
-  quantity: {
-    height: '24px',
-    width: '48px',
-    textAlign: 'center',
-    margin: '0 12px',
-    borderRadius: '2px',
-    border: '1px solid #ccc',
-    '&:focus': {
-      outline: 'none',
-      borderColor: '#077915',
-    },
-  },
-});
+interface CounterProps {
+  onQuantity: (quantity: number) => void;
+  maxOrderQty: number;
+}
 
-export default function Counter(props) {
-  const { onQuantity, maxOrderQty } = props;
+export default function Counter({ onQuantity, maxOrderQty }: CounterProps) {
   const [value, setValue] = useState(1);
 
-  // update the parent if value is changed.
   useEffect(() => {
     onQuantity(value);
   }, [value, onQuantity]);
 
-  const onChange = (e) => {
-    setValue(e.target.value);
+  const increment = () => {
+    if (value < maxOrderQty) {
+      setValue(prev => prev + 1);
+    }
   };
 
-  var classes = useStyles();
+  const decrement = () => {
+    if (value > 1) {
+      setValue(prev => prev - 1);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) val = 1;
+    if (val < 1) val = 1;
+    if (val > maxOrderQty) val = maxOrderQty;
+    setValue(val);
+  };
+
   return (
-    <div className={classes.stepperInput}>
-      <IndeterminateCheckBox
-        className={classes.stepperButton}
-        onClick={() => setValue(value > 1 ? value - 1 : value)}
-      />
-      <input
-        type="number"
-        className={classes.quantity}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
+        color: '#666',
+        maxWidth: '150px',
+        margin: '0 auto',
+      }}
+    >
+      <IconButton 
+        onClick={decrement}
+        size="small"
+        sx={{
+          border: '1px solid #ccc',
+          '&:hover': {
+            borderColor: '#077915',
+            color: '#077915',
+          }
+        }}
+      >
+        <Remove fontSize="small" />
+      </IconButton>
+      <TextField
+        size="small"
         value={value}
-        onChange={onChange}
+        onChange={handleInputChange}
+        inputProps={{
+          style: { textAlign: 'center', padding: '4px 0' },
+          type: 'number'
+        }}
+        sx={{
+          width: '50px',
+          '& .MuiOutlinedInput-root': {
+            height: '30px',
+          }
+        }}
       />
-      <AddBox
-        className={classes.stepperButton}
-        onClick={() => setValue(value >= maxOrderQty ? value : value + 1)}
-      />
-    </div>
+      <IconButton 
+        onClick={increment}
+        size="small"
+        sx={{
+          border: '1px solid #ccc',
+          '&:hover': {
+            borderColor: '#077915',
+            color: '#077915',
+          }
+        }}
+      >
+        <Add fontSize="small" />
+      </IconButton>
+    </Box>
   );
 }

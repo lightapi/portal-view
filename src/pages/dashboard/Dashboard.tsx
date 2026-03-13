@@ -5,15 +5,12 @@ import Link from '@mui/material/Link';
 import React, { useEffect, useRef } from 'react';
 import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
-// components
 import Widget from '../../components/Widget/Widget';
 import { Typography } from '../../components/Wrappers/Wrappers';
-import { useUserDispatch, useUserState, signOut } from '../../contexts/UserContext';
+import { useUserDispatch, signOut } from '../../contexts/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import useStyles from './styles';
 
-export default function Dashboard(props) {
-  var classes = useStyles();
+export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const userDispatch = useUserDispatch();
@@ -23,31 +20,30 @@ export default function Dashboard(props) {
     const searchParams = new URLSearchParams(location.search);
     const state = searchParams.get('state');
 
-    // Check if we have a state and haven't attempted verification yet in this mount
     if (state && !verificationAttempted.current) {
       verificationAttempted.current = true;
       const storedState = localStorage.getItem('portal_auth_state');
       if (storedState === state) {
         console.log('OAuth state verified successfully.');
         localStorage.removeItem('portal_auth_state');
-        // Remove state from URL to prevent re-verification
         const newSearchParams = new URLSearchParams(location.search);
         newSearchParams.delete('state');
         navigate({ search: newSearchParams.toString() }, { replace: true });
       } else {
         console.error('OAuth state mismatch. Potential CSRF attack.');
         alert('OAuth state mismatch. Potential CSRF attack. Logging out...');
-        signOut(userDispatch, navigate);
+        signOut(userDispatch as any, navigate);
       }
     }
   }, [location, navigate, userDispatch]);
+
   return (
     <>
-      <Box className={classes.mainHeader}>
-        <Typography className={classes.mainTitle}>Light Portal</Typography>
+      <Box sx={{ display: 'flex', mt: '70px', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ color: 'primary.main', fontSize: '4rem' }}>Light Portal</Typography>
       </Box>
       <PageTitle title="Bring the API producers and consumers together." />
-      <Box className={classes.buttonHeader}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', pb: '60px' }}>
         <Button variant="contained" color="secondary" size="large">
           Latest News
         </Button>
@@ -57,29 +53,30 @@ export default function Dashboard(props) {
           <Widget
             title="Share Knowledge"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodyClass="fullHeightBody"
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
-            <div className={classes.serverOverviewElement}>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 For new developers, you can find a lot of examples here to learn
                 how to use the light-platform.
               </Typography>
-            </div>
-            <div className={classes.serverOverviewElement}>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 For experienced contributors, you can share your knowledge and
                 your work to others.
               </Typography>
-            </div>
+            </Box>
           </Widget>
         </Grid>
 
@@ -87,93 +84,93 @@ export default function Dashboard(props) {
           <Widget
             title="Marketplace"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
-            <div className={classes.serverOverviewElement}>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 Build APIs with light-platform and publish your APIs in the
                 marketplace to allow others to use them.
               </Typography>
-            </div>
-            <div className={classes.serverOverviewElement}>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 We host APIs and single page applications for contributors with
                 no charge or a small fee to cover the cost.
               </Typography>
-            </div>
+            </Box>
           </Widget>
         </Grid>
         <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Security"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
-            <div className={classes.serverOverviewElement}>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 Light-oauth2 is behind the portal, and it is responsible for
                 security. All applications can use light-portal for protection.
               </Typography>
-            </div>
-            <div className={classes.serverOverviewElement}>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 As users are shared between sites, single sign-on is supported
                 natively. Your users won't need to register on your site again.
               </Typography>
-            </div>
+            </Box>
           </Widget>
         </Grid>
         <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
           <Widget
             title="Service"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
-            <div className={classes.serverOverviewElement}>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 We provide other infrastructure services for your
                 microservices—for example, metrics, distributed tracing,
                 logging, etc.
               </Typography>
-            </div>
-            <div className={classes.serverOverviewElement}>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
               <Typography
                 color="text"
                 colorBrightness="secondary"
-                className={classes.serverOverviewElementText}
+                sx={{ minWidth: 145, pr: 2 }}
               >
                 Your application can leverage other people's services directly
                 without reinventing the wheel.
               </Typography>
-            </div>
+            </Box>
           </Widget>
         </Grid>
         <Grid size={12}>
-          <Widget bodyClass={classes.mainChartBody}>
-            <div className={classes.performanceLegendWrapper}>
+          <Widget bodySx={{ overflowX: 'auto' }}>
+            <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
               <div>
                 As you might have realized, we have marked light-eventuate-4j,
                 light-tram-4j, and light-saga-4j deprecated because they are
@@ -207,7 +204,7 @@ export default function Dashboard(props) {
                 light-portal modules, please let us know so that we can discuss
                 how to migrate to the new version.
               </div>
-            </div>
+            </Box>
           </Widget>
         </Grid>
 
@@ -215,18 +212,18 @@ export default function Dashboard(props) {
           <Widget
             title="Youtube Channel"
             upperTitle
-            bodyClass={classes.fullHeightBody}
-            className={classes.card}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
           >
             <Grid container spacing={2}>
-              <div className={classes.performanceLegendWrapper}>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link
                         href="https://www.youtube.com/channel/UCHCRMWJVXw8iB7zKxF55Byw"
@@ -236,9 +233,9 @@ export default function Dashboard(props) {
                         Demo Video
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
+              </Box>
             </Grid>
           </Widget>
         </Grid>
@@ -247,18 +244,18 @@ export default function Dashboard(props) {
           <Widget
             title="Open Source"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
             <Grid container spacing={2}>
-              <div className={classes.performanceLegendWrapper}>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link
                         href="https://github.com/networknt/portal-view"
@@ -268,17 +265,17 @@ export default function Dashboard(props) {
                         Portal-view
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
-              <div className={classes.performanceLegendWrapper}>
+              </Box>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link
                         href="https://github.com/networknt"
@@ -288,9 +285,9 @@ export default function Dashboard(props) {
                         Light Platform
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
+              </Box>
             </Grid>
           </Widget>
         </Grid>
@@ -299,18 +296,18 @@ export default function Dashboard(props) {
           <Widget
             title="Document"
             upperTitle
-            className={classes.card}
-            bodyClass={classes.fullHeightBody}
+            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
           >
             <Grid container spacing={2}>
-              <div className={classes.performanceLegendWrapper}>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link
                         href="https://doc.networknt.com/"
@@ -320,40 +317,40 @@ export default function Dashboard(props) {
                         Documentation
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
+              </Box>
             </Grid>
           </Widget>
         </Grid>
         <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
-          <Widget title="Contact" upperTitle className={classes.card}>
+          <Widget title="Contact" upperTitle sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
             <Grid container spacing={2}>
-              <div className={classes.performanceLegendWrapper}>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link href="mailto:stevehu@gmail.com" target="_top">
                         Send Mail
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
+              </Box>
 
-              <div className={classes.performanceLegendWrapper}>
+              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
                 <Grid size={12}>
-                  <div className={classes.legendElement}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
                     <Dot color="primary" />
                     <Typography
                       color="text"
                       colorBrightness="secondary"
-                      className={classes.legendElementText}
+                      sx={{ ml: 1 }}
                     >
                       <Link
                         href="https://gitter.im/networknt/light-portal"
@@ -363,9 +360,9 @@ export default function Dashboard(props) {
                         Gitter Chat
                       </Link>
                     </Typography>
-                  </div>
+                  </Box>
                 </Grid>
-              </div>
+              </Box>
             </Grid>
           </Widget>
         </Grid>

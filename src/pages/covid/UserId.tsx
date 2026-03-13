@@ -1,48 +1,48 @@
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import { makeStyles } from '@mui/styles';
+import { Box } from '@mui/material';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    '& > *': {
-      margin: theme.spacing(1),
-      width: '25ch',
-    },
-  },
-}));
-
-export default function UserId(props) {
-  const classes = useStyles();
+export default function UserId() {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState('');
 
-  const onChange = (event) => {
+  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserId(event.target.value);
   };
+  
   const website = () => {
-    props.history.push({
-      pathname: '/app/website',
+    navigate('/app/website', {
       state: { data: { userId } },
     });
   };
 
   const status = () => {
-    //console.log("status is called");
-    props.history.push({
-      pathname: '/app/covid/peerStatus',
+    navigate('/app/covid/peerStatus', {
       state: { data: { userId } },
     });
   };
 
   return (
-    <form className={classes.root} noValidate autoComplete="off">
-      <TextField id="userId" label="User Id" onChange={onChange} />
+    <Box
+      component="form"
+      sx={{
+        '& > *': {
+          m: 1,
+          width: '25ch',
+        },
+      }}
+      noValidate
+      autoComplete="off"
+    >
+      <TextField id="userId" label="User Id" onChange={onChange} value={userId} />
       <Button variant="contained" color="primary" onClick={website}>
         Website
       </Button>
       <Button variant="contained" color="primary" onClick={status}>
         Status
       </Button>
-    </form>
+    </Box>
   );
 }

@@ -6,28 +6,31 @@ import Table from "@mui/material/Table";
 import TableCell from "@mui/material/TableCell";
 import TableRow from "@mui/material/TableRow";
 import TableBody from "@mui/material/TableBody";
-import { useEffect, useState, useCallback } from "react";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import { useEffect, useState, useCallback, ReactNode } from "react";
 import useDebounce from "../../hooks/useDebounce.js";
-import { makeStyles } from "@mui/styles";
-import PropTypes from "prop-types";
 import { useUserState } from "../../contexts/UserContext";
 import { extractDomainFromEmail } from "../../utils";
 import fetchClient from "../../utils/fetchClient";
 
-const useRowStyles = makeStyles({
-  root: {
-    "& > *": {
-      borderBottom: "unset",
-    },
-  },
-});
+interface HostData {
+  hostId: string;
+  domain: string;
+  subDomain: string;
+  hostDesc?: string;
+  hostOwner?: string;
+  updateUser?: string;
+  updateTs?: string;
+}
 
-function Row(props) {
-  const { row } = props;
-  const classes = useRowStyles();
+interface RowProps {
+  row: HostData;
+}
 
+function Row({ row }: RowProps) {
   return (
-    <TableRow className={classes.root} key={`${row.hostId}`}>
+    <TableRow sx={{ "& > *": { borderBottom: "unset" } }} key={`${row.hostId}`}>
       <TableCell align="left">{row.hostId}</TableCell>
       <TableCell align="left">{row.domain}</TableCell>
       <TableCell align="left">{row.subDomain}</TableCell>
@@ -41,28 +44,18 @@ function Row(props) {
   );
 }
 
-// Add propTypes validation for Row
-Row.propTypes = {
-  row: PropTypes.shape({
-    hostId: PropTypes.string.isRequired,
-    domain: PropTypes.string.isRequired,
-    subDomain: PropTypes.string.isRequired,
-    hostDesc: PropTypes.string,
-    hostOwner: PropTypes.string,
-    updateUser: PropTypes.string,
-    updateTs: PropTypes.string,
-  }).isRequired,
-};
+interface HostListProps {
+  hosts: HostData[];
+}
 
-function HostList(props) {
-  const { hosts } = props;
+function HostList({ hosts }: HostListProps) {
   return (
     <TableBody>
       {hosts && hosts.length > 0 ? (
         hosts.map((host, index) => <Row key={index} row={host} />)
       ) : (
         <TableRow>
-          <TableCell colSpan={2} align="center">
+          <TableCell colSpan={7} align="center">
             No hosts found.
           </TableCell>
         </TableRow>
@@ -71,12 +64,7 @@ function HostList(props) {
   );
 }
 
-HostList.propTypes = {
-  hosts: PropTypes.arrayOf(PropTypes.object).isRequired,
-};
-
 export default function Host() {
-  const classes = useRowStyles();
   const { email } = useUserState();
   const [domain, setDomain] = useState(extractDomainFromEmail(email) || "");
   const [subDomain, setSubDomain] = useState("");
@@ -84,22 +72,22 @@ export default function Host() {
   const [hostDesc, setHostDesc] = useState("");
   const debouncedHostDesc = useDebounce(hostDesc, 1000);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
-  const [hosts, setHosts] = useState([]);
+  const [error, setError] = useState<any>();
+  const [hosts, setHosts] = useState<HostData[]>([]);
 
-  const handleDomainChange = (event) => {
+  const handleDomainChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDomain(event.target.value);
   };
 
-  const handleSubDomainChange = (event) => {
+  const handleSubDomainChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSubDomain(event.target.value);
   };
 
-  const handleHostDescChange = (event) => {
+  const handleHostDescChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setHostDesc(event.target.value);
   };
 
-  const fetchData = useCallback(async (url, headers) => {
+  const fetchData = useCallback(async (url: string, headers?: Record<string, string>) => {
     try {
       setLoading(true);
       const data = await fetchClient(url, { headers });
@@ -134,49 +122,52 @@ export default function Host() {
     fetchData(url);
   }, [domain, debouncedSubDomain, debouncedHostDesc, fetchData]);
 
-  let content;
+  let content: ReactNode;
   if (loading) {
     content = (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else if (error) {
     content = (
-      <div>
+      <Box sx={{ p: 3 }}>
         <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
+      </Box>
     );
   } else {
     content = (
-      <div>
+      <Box>
         <TableContainer component={Paper}>
           <Table aria-label="Host table">
             <TableHead>
-              <TableRow className={classes.root}>
+              <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
                 <TableCell align="left">Host Id</TableCell>
                 <TableCell align="left">
-                  <input
-                    type="text"
+                  <TextField
+                    variant="standard"
                     placeholder="Domain"
                     value={domain}
                     onChange={handleDomainChange}
+                    size="small"
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <input
-                    type="text"
+                  <TextField
+                    variant="standard"
                     placeholder="Sub Domain"
                     value={subDomain}
                     onChange={handleSubDomainChange}
+                    size="small"
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <input
-                    type="text"
+                  <TextField
+                    variant="standard"
                     placeholder="Host Desc"
                     value={hostDesc}
                     onChange={handleHostDescChange}
+                    size="small"
                   />
                 </TableCell>
                 <TableCell align="left"></TableCell>
@@ -187,8 +178,8 @@ export default function Host() {
             <HostList hosts={hosts} />
           </Table>
         </TableContainer>
-      </div>
+      </Box>
     );
   }
-  return <div className="Host">{content}</div>;
+  return <Box className="Host">{content}</Box>;
 }

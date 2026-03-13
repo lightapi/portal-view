@@ -1,34 +1,55 @@
-import React from 'react';
-import { withTheme } from '@mui/styles'
-
+import React, { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { useTheme } from '@mui/material/styles';
+import { useLocation } from 'react-router-dom';
 import {
   Grid, Card, CardHeader, CardContent, Typography, FormControl, FormControlLabel, FormLabel, RadioGroup, Radio,
-  TextField, InputLabel, Select, MenuItem, IconButton, Tooltip
+  TextField, InputLabel, Select, MenuItem, IconButton, Tooltip, Box, SelectChangeEvent
 } from '@mui/material';
-import { DateTimePicker } from '@mui/lab';
-import AdapterMoment from '@mui/lab/AdapterMoment';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { AgGridReact } from 'ag-grid-react';
+import { ColDef } from 'ag-grid-community';
 import fetchClient from '../../utils/fetchClient';
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-alpine.css'
+import dayjs, { Dayjs } from 'dayjs';
 
-// Todo: Put in a library for reuse
-// Removed getCookieValue
+interface NodeData {
+    protocol: string;
+    address: string;
+    port: number;
+    apiName?: string;
+}
 
-class LogViewer extends React.Component {
-  constructor(props) {
-    super(props);
+interface Logger {
+    name: string;
+    level: string;
+}
 
-    this.logUrl = '/services/logger/content';
+interface LogEntry {
+    timestamp: string;
+    logName: string;
+    level: string;
+    logMessage: string;
+    thread: string;
+    correlationId: string;
+    serviceId: string;
+    class: string;
+    lineNumber: string;
+    method: string;
+}
 
-    this.node = props?.location?.state?.data?.node || {};
-    // console.log('LogViewer ctor: props=', props)
+const LogViewer: React.FC = () => {
+    const theme = useTheme() as any;
+    const location = useLocation();
+    const data = (location.state as any)?.data;
+    const node: NodeData = data?.node || {};
 
-    this.logLevels = ['All', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
-    this.timePresets = [
+    const logLevels = ['All', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+    const timePresets = [
       { label: '1m', seconds: 60 },
       { label: '5m', seconds: 300 },
       { label: '10m', seconds: 600 },
@@ -38,260 +59,192 @@ class LogViewer extends React.Component {
       { label: '1w', seconds: 604800 },
     ];
 
-    this.state = {
-      logNames: [],
-      logName: 'All',
-      logLevel: 'All',
-      from: Date.now(),
-      to: Date.now(),
-      preset: null,
-      logData: [],
-      autoRefresh: true, // For future switch option
-    };
+    const [logNames, setLogNames] = useState<Logger[]>([]);
+    const [logName, setLogName] = useState('All');
+    const [logLevel, setLogLevel] = useState('All');
+    const [from, setFrom] = useState<Dayjs | null>(dayjs());
+    const [to, setTo] = useState<Dayjs | null>(dayjs());
+    const [preset, setPreset] = useState<string | null>(null);
+    const [logData, setLogData] = useState<LogEntry[]>([]);
 
-    this.defaultColDef = {
+    const defaultColDef = useMemo<ColDef>(() => ({
       flex: 1,
-      //      minWidth: 80,
       editable: false,
       sortable: true,
       resizable: true,
+    }), []);
+
+    const columnDefs = useMemo<ColDef<LogEntry>[]>(() => [
+      { field: 'timestamp', headerName: 'Time', cellStyle: { textAlign: 'left' }, minWidth: 200 },
+      { field: 'logName', headerName: 'Log Name', cellStyle: { textAlign: 'left' } },
+      { field: 'level', headerName: 'Log Level', cellStyle: { textAlign: 'left' } },
+      { field: 'logMessage', headerName: 'Log Message', cellStyle: { textAlign: 'left' }, minWidth: 400 },
+      { field: 'thread', headerName: 'Thread', cellStyle: { textAlign: 'left' } },
+      { field: 'correlationId', headerName: 'Correlation ID', cellStyle: { textAlign: 'left' } },
+      { field: 'serviceId', headerName: 'Service ID', cellStyle: { textAlign: 'left' } },
+      { field: 'class', headerName: 'Class', cellStyle: { textAlign: 'left' } },
+      { field: 'lineNumber', headerName: 'Line #', cellStyle: { textAlign: 'left' } },
+      { field: 'method', headerName: 'Method', cellStyle: { textAlign: 'left' } },
+    ], []);
+
+    useEffect(() => {
+        const fetchLogNames = async () => {
+            if (!node.protocol) return;
+            try {
+                const { protocol, address, port } = node;
+                const result = await fetchClient(`/services/logger?protocol=${protocol}&address=${address}&port=${port}`);
+                setLogNames(result || []);
+            } catch (error) {
+                setLogNames([]);
+            }
+        };
+        fetchLogNames();
+    }, [node]);
+
+    const onChangeLogName = (event: SelectChangeEvent) => {
+        setLogName(event.target.value);
     };
 
-    this.columnDefs = [
-      {
-        field: 'timestamp',
-        headerName: 'Time',
-        cellStyle: { textAlign: 'left' },
-        minWidth: 200,
-      },
-      {
-        field: 'logName',
-        headerName: 'Log Name',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'level',
-        headerName: 'Log Level',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'logMessage',
-        headerName: 'Log Message',
-        cellStyle: { textAlign: 'left' },
-        minWidth: 400,
-      },
-      {
-        field: 'thread',
-        headerName: 'Thread',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'correlationId',
-        headerName: 'Correlation ID',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'serviceId',
-        headerName: 'Service ID',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'class',
-        headerName: 'Class',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'lineNumber',
-        headerName: 'Line #',
-        cellStyle: { textAlign: 'left' },
-      },
-      {
-        field: 'method',
-        headerName: 'Method',
-        cellStyle: { textAlign: 'left' },
-      },
-    ];
-  };
+    const onChangeLogLevel = (event: SelectChangeEvent) => {
+        setLogLevel(event.target.value);
+    };
 
-  componentDidMount = async () => {
-    try {
-      const { protocol, address, port } = this.node;
-      const logNames = await fetchClient(`/services/logger?protocol=${protocol}&address=${address}&port=${port}`);
-      this.setState({ logNames });
-    } catch (error) {
-      this.setState({ logNames: [] });
-    }
-  };
+    const onChangeFrom = (val: Dayjs | null) => {
+        setFrom(val);
+        setPreset(null);
+    };
 
-  onChangeLogName = event => {
-    this.setState({ logName: event.target.value });
-  };
+    const onChangeTo = (val: Dayjs | null) => {
+        setTo(val);
+        setPreset(null);
+    };
 
-  onChangeLogLevel = event => {
-    this.setState({ logLevel: event.target.value });
-  };
+    const onChangePreset = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setPreset(event.target.value);
+    };
 
-  onChangeFrom = moment => {
-    this.setState({ from: moment.valueOf(), preset: null });
-  };
+    const onClickRefresh = useCallback(async () => {
+        const { protocol, address, port } = node;
+        const startTime = preset ? Date.now() - 1000 * parseInt(preset) : (from ? from.valueOf() : Date.now());
+        const endTime = preset ? Date.now() : (to ? to.valueOf() : Date.now());
 
-  onChangeTo = moment => {
-    this.setState({ to: moment.valueOf(), preset: null });
-  };
+        try {
+            const data = await fetchClient('/services/logger/content', {
+                method: 'POST',
+                body: JSON.stringify({
+                    protocol,
+                    address,
+                    port,
+                    startTime: startTime.toString(),
+                    endTime: endTime.toString(),
+                    loggerName: logName === 'All' ? undefined : logName,
+                    loggerLevel: logLevel === 'All' ? 'TRACE' : logLevel,
+                })
+            });
 
-  onChangePreset = event => {
-    const seconds = event.target.value;
-    this.setState({ preset: seconds });
-  };
+            const processedData: LogEntry[] = Object.entries(data).reduce((a: LogEntry[], [k, v]: [string, any]) => 
+                a.concat((v.logs || []).map((l: any) => ({ ...l, logName: k }))), []);
+            setLogData(processedData);
+        } catch (error) {
+            setLogData([]);
+        }
+    }, [node, from, to, preset, logName, logLevel]);
 
-  onClickRefresh = async () => {
-    const { protocol, address, port } = this.node;
-    const startTime = this.state.preset ? Date.now() - 1000 * this.state.preset : this.state.from;
-    const endTime = this.state.preset ? Date.now() : this.state.to;
-
-    // console.log('cookie, CSRF=', document.cookie, getCookieValue('csrf'));
-    try {
-      const data = await fetchClient(this.logUrl, {
-        method: 'POST',
-        body: JSON.stringify({
-          protocol,
-          address,
-          port,
-          startTime: startTime.toString(),
-          endTime: endTime.toString(),
-          loggerName: this.state.logName === 'All' ? undefined : this.state.logName,
-          loggerLevel: this.state.logLevel === 'All' ? 'TRACE' : this.state.logLevel,
-        })
-      });
-
-      const logData = Object.entries(data).reduce((a, [k, v]) => a.concat((v.logs || []).map(l => ({ ...l, logName: k }))), []);
-      this.setState({ logData });
-      // console.log('logData=', logData)
-
-    } catch (error) {
-      // console.log('Refresh: error=', error)
-      this.setState({ logData: [] });
-      // Todo: Invoke a snackbar
-    }
-  };
-
-  render = (props) => {
-    console.log('LogViewer render: props=', this.props)
     return (
-      <LocalizationProvider dateAdapter={AdapterMoment}>
-        <Grid container spacing={2}>
-          <Grid item xs={4} />
-          <Grid item xs={4}>
-            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
-              <CardHeader title={<Typography variant='h6' style={{ textAlign: 'center' }}>{this.node?.apiName}</Typography>} />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Grid container spacing={2} sx={{ p: 2 }}>
+          <Grid size={4} />
+          <Grid size={4}>
+            <Card elevation={2} sx={{ backgroundColor: theme?.palette?.tertiary?.light, width: '100%' }}>
+              <CardHeader title={<Typography variant='h6' sx={{ textAlign: 'center' }}>{node?.apiName || 'Unknown API'}</Typography>} />
             </Card>
           </Grid>
-          <Grid item xs={4} />
-          <Grid item xs={12}>
-            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
+          <Grid size={4} />
+          <Grid size={12}>
+            <Card elevation={2} sx={{ backgroundColor: theme?.palette?.tertiary?.light, width: '100%' }}>
               <CardHeader title={<Typography variant='h6'>Filters</Typography>} />
               <CardContent>
-                <Grid container spacing={3}>
-                  <Grid size={2}>
-                    <FormControl fullWidth>
+                <Grid container spacing={1} alignItems="center">
+                  <Grid size={{ xs: 12, md: 2 }}>
+                    <FormControl fullWidth size="small">
                       <InputLabel id='log-name-label'>Log Name</InputLabel>
                       <Select
                         labelId='log-name-label-id'
                         id='log-name-id'
-                        value={this.state.logName}
-                        onChange={this.onChangeLogName}
+                        value={logName}
+                        onChange={onChangeLogName}
                         label='Log Name'
                       >
                         <MenuItem key={0} value={'All'}>All</MenuItem>
-                        {this.state.logNames.map((l, i) => (
+                        {logNames.map((l, i) => (
                           <MenuItem key={i + 1} value={l.name}>{l.name}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid size={1}>
-                    <FormControl fullWidth>
+                  <Grid size={{ xs: 12, md: 1 }}>
+                    <FormControl fullWidth size="small">
                       <InputLabel id='log-level-label'>Log Level</InputLabel>
                       <Select
                         labelId='log-level-label-id'
                         id='log-level-id'
-                        value={this.state.logLevel}
-                        onChange={this.onChangeLogLevel}
+                        value={logLevel}
+                        onChange={onChangeLogLevel}
                         label='Log Level'
                       >
-                        {this.logLevels.map((logLevel, i) => (
-                          <MenuItem key={i} value={logLevel}>{logLevel}</MenuItem>
+                        {logLevels.map((level, i) => (
+                          <MenuItem key={i} value={level}>{level}</MenuItem>
                         ))}
                       </Select>
                     </FormControl>
                   </Grid>
 
-                  <Grid size={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <DateTimePicker
                       label='From'
-                      value={this.state.from}
-                      onChange={this.onChangeFrom}
-                      renderInput={(params) => <TextField {...params} />}
-                      showTodayButton={true}
+                      value={from}
+                      onChange={onChangeFrom}
+                      slotProps={{ textField: { size: 'small', fullWidth: true } }}
                     />
                   </Grid>
-                  <Grid size={2}>
+                  <Grid size={{ xs: 12, md: 2 }}>
                     <DateTimePicker
                       label='To'
-                      value={this.state.to}
-                      onChange={this.onChangeTo}
-                      renderInput={(params) => <TextField {...params} />}
+                      value={to}
+                      onChange={onChangeTo}
+                      slotProps={{ textField: { size: 'small', fullWidth: true } }}
                     />
                   </Grid>
 
-                  <Grid size={4}>
-                    <Card elevation={1} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%', borderRadius: 10 }}>
-                      <FormControl component="fieldset">
-                        <Grid container spacing={1} border={0} style={{ width: '500px' }}>
-                          <Grid size={1}>
-                            <FormLabel component='legend' style={{ paddingLeft: 3, paddingTop: 14 }}><Typography variant='body2' style={{ fontWeight: 600 }}>Last</Typography></FormLabel>
-                          </Grid>
-                          <Grid size={11}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Card elevation={1} sx={{ backgroundColor: theme?.palette?.tertiary?.light, width: '100%', borderRadius: 2, p: 1 }}>
+                      <FormControl component="fieldset" fullWidth>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FormLabel component='legend' sx={{ mb: 0 }}><Typography variant='body2' sx={{ fontWeight: 600 }}>Last</Typography></FormLabel>
                             <RadioGroup
-                              row
-                              aria-label="data-source-type"
-                              name="controlled-radio-buttons-group"
-                              value={this.state.preset}
-                              onChange={this.onChangePreset}
-                              sx={{
-                                paddingTop: 1,
-                                paddingBottom: 1,
-                              }}
+                                row
+                                value={preset || ''}
+                                onChange={onChangePreset}
                             >
-                              {this.timePresets.map((p, i) => (
-                                <FormControlLabel
-                                  key={i}
-                                  value={p.seconds}
-                                  control={<Radio
-                                    sx={{
-                                      '& .MuiSvgIcon-root': {
-                                        fontSize: 14,
-                                      },
-                                      padding: .5,
-                                    }}
-                                  />}
-                                  label={<Typography variant='body2'>{p.label}</Typography>}
-                                  labelPlacement='top'
-                                />
-                              ))}
+                                {timePresets.map((p, i) => (
+                                    <FormControlLabel
+                                        key={i}
+                                        value={p.seconds.toString()}
+                                        control={<Radio sx={{ '& .MuiSvgIcon-root': { fontSize: 14 }, p: 0.5 }} />}
+                                        label={<Typography variant='body2'>{p.label}</Typography>}
+                                        labelPlacement='top'
+                                    />
+                                ))}
                             </RadioGroup>
-                          </Grid>
-                        </Grid>
+                        </Box>
                       </FormControl>
                     </Card>
                   </Grid>
 
-                  <Grid size={1}>
+                  <Grid size={{ xs: 12, md: 1 }}>
                     <Tooltip title="Refresh">
-                      <IconButton
-                        onClick={this.onClickRefresh}
-                      >
-                        <RefreshIcon sx={{ color: 'green', fontSize: 40 }} />
+                      <IconButton onClick={onClickRefresh}>
+                        <RefreshIcon sx={{ color: 'green', fontSize: 32 }} />
                       </IconButton>
                     </Tooltip>
                   </Grid>
@@ -301,33 +254,30 @@ class LogViewer extends React.Component {
             </Card>
           </Grid>
           <Grid size={12}>
-            <Card elevation={2} style={{ backgroundColor: this.props.theme?.palette?.tertiary?.light, width: '100%' }}>
+            <Card elevation={2} sx={{ backgroundColor: theme?.palette?.tertiary?.light, width: '100%' }}>
               <CardHeader title={<Typography variant='h6'>Logs</Typography>} />
               <CardContent>
-                <div
-                  id="myGrid"
-                  style={{
+                <Box
+                  className="ag-theme-alpine"
+                  sx={{
                     height: '500px',
                     width: '100%',
                   }}
-                  className="ag-theme-alpine"
                 >
                   <AgGridReact
-                    columnDefs={this.columnDefs}
-                    defaultColDef={this.defaultColDef}
-                    onGridReady={this.onGridReady}
-                    rowData={this.state.logData}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    rowData={logData}
                     tooltipShowDelay={0}
                     enableCellTextSelection={true}
                   />
-                </div>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
         </Grid>
       </LocalizationProvider>
     );
-  }
-}
+};
 
-export default withTheme(LogViewer);
+export default LogViewer;

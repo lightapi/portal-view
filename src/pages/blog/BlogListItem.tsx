@@ -1,30 +1,42 @@
-// this is a component to render an item in the BlogList component.
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { timeConversion, validateImageUrl } from '../../utils';
-import useStyles from './styles';
+import { useTheme } from '@mui/material/styles';
 
-export default function BlogListItem(props) {
-  const classes = useStyles();
-  console.log(props);
-  const { data } = props;
+interface BlogListItemProps {
+    data: {
+        id: string;
+        host: string;
+        title: string;
+        author: string;
+        summary: string;
+        publishDate: number;
+        featuredImageUrl?: string;
+        tags: string[];
+    };
+}
+
+export default function BlogListItem({ data }: BlogListItemProps) {
+  const theme = useTheme();
   const [imageUrlValid, setImageUrlValid] = useState(false);
 
   useEffect(() => {
-    // Create an scoped async function in the hook
     async function checkImageUrl() {
-      await validateImageUrl(data.featuredImageUrl);
-      setImageUrlValid(true);
+      if (data.featuredImageUrl) {
+        try {
+            await validateImageUrl(data.featuredImageUrl);
+            setImageUrlValid(true);
+        } catch (e) {
+            setImageUrlValid(false);
+        }
+      }
     }
-    // Execute the created function directly
     checkImageUrl();
-  }, []);
+  }, [data.featuredImageUrl]);
 
   const toReadPage = {
     pathname: `/app/blog/${data.host}/${data.id}`,
@@ -34,63 +46,60 @@ export default function BlogListItem(props) {
   };
 
   return (
-    <div className={classes.itemWrapper}>
-      {imageUrlValid ? (
-        <div className={classes.imageWrapper}>
-          <div
-            className={classes.image}
-            style={{ backgroundImage: `url(${data.featuredImageUrl})` }}
+    <Box sx={{ display: 'flex', mb: 3, p: 2, borderBottom: '1px solid #eee' }}>
+      {imageUrlValid && (
+        <Box sx={{ mr: 4, flexShrink: 0 }}>
+          <Box
+            sx={{
+              height: 200,
+              width: 200,
+              backgroundImage: `url(${data.featuredImageUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              borderRadius: 2,
+            }}
           />
-        </div>
-      ) : null}
+        </Box>
+      )}
 
-      <TableContainer component={Paper}>
-        <Table size="small" aria-label="table">
-          <TableRow className={classes.title}>
-            <h2>
-              <Link to={toReadPage}>{data.title}</Link>
-            </h2>
-          </TableRow>
-          <TableRow className={classes.infoWrapper}>
-            <TableCell align="left">
-              Posted by <span className={classes.author}>{data.author}</span>
-            </TableCell>
-            <TableCell align="right" className={classes.timeConversion}>
-              {timeConversion(new Date().getTime() - data.publishDate)}
-            </TableCell>
-          </TableRow>
-          <TableRow className={classes.root}>
+      <Box sx={{ flexGrow: 1 }}>
+        <Typography variant="h5" component="h2" sx={{ mb: 1 }}>
+          <Link to={toReadPage} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+            {data.title}
+          </Link>
+        </Typography>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, color: 'text.secondary' }}>
+          <Typography variant="body2">
+            Posted by <Box component="span" sx={{ fontWeight: 600 }}>{data.author}</Box>
+          </Typography>
+          <Typography variant="body2">
+            {timeConversion(new Date().getTime() - data.publishDate)}
+          </Typography>
+        </Box>
+
+        <Typography variant="body1" sx={{ mb: 2 }}>
             {data.summary.length > 300 ? (
-              <span>
-                {data.summary.slice(0, 300) + ' ... '}
-                <span className={classes.readMoreLink}>
-                  <Link to={toReadPage}>Read More</Link>
-                </span>
-              </span>
+                <>
+                    {data.summary.slice(0, 300) + ' ... '}
+                    <Link to={toReadPage} style={{ color: theme.palette.secondary.main }}>Read More</Link>
+                </>
             ) : (
-              <span>
-                {data.summary + ' '} &nbsp;
-                <span className={classes.readMoreLink}>
-                  <Link to={toReadPage}>Read More</Link>
-                </span>
-              </span>
+                <>
+                    {data.summary + ' '}
+                    <Link to={toReadPage} style={{ color: theme.palette.secondary.main }}>Read More</Link>
+                </>
             )}
-          </TableRow>
-          <TableRow className={classes.root}>
-            <TableCell align="left">
-              <TagGroup tags={data.tags} />
-            </TableCell>
-          </TableRow>
-        </Table>
-      </TableContainer>
-    </div>
+        </Typography>
+
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {data.tags.map((tag) => (
+            <Button key={tag} size="small" variant="outlined" sx={{ borderRadius: 4 }}>
+              {tag}
+            </Button>
+          ))}
+        </Box>
+      </Box>
+    </Box>
   );
 }
-
-const TagGroup = ({ tags }) => (
-  <div>
-    {tags.map((tag) => {
-      return <Button key={tag}>{tag}</Button>;
-    })}
-  </div>
-);

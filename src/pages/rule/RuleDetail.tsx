@@ -13,7 +13,6 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Widget from "../../components/Widget/Widget";
-import useStyles from "./styles";
 
 // --- Type Definitions ---
 type ConditionType = {
@@ -51,7 +50,6 @@ type RuleType = {
 };
 
 export default function RuleDetail() {
-    const classes = useStyles();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -117,7 +115,12 @@ export default function RuleDetail() {
                 </Button>
             </Box>
 
-            <Widget title="Rule Detail" upperTitle className={classes.card}>
+            <Widget
+              title="Rule Detail"
+              upperTitle
+              sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+              bodySx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}
+            >
                 {/* Description Section */}
                 {ruleData.ruleDesc && renderSection("Description", (
                     <Typography variant="body1">{ruleData.ruleDesc}</Typography>

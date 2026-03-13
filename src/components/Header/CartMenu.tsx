@@ -1,59 +1,58 @@
 import { DeleteForever, ShoppingCart } from '@mui/icons-material';
-import { IconButton, Menu, MenuItem } from '@mui/material';
-import Button from '@mui/material/Button';
-import CircularProgress from '@mui/material/CircularProgress';
-import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Paper from '@mui/material/Paper';
-import Select from '@mui/material/Select';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  FormControl,
+  IconButton,
+  InputLabel,
+  Menu,
+  MenuItem,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  useTheme,
+} from '@mui/material';
 import DropIn from 'braintree-web-drop-in-react';
 import React, { useEffect, useState } from 'react';
 import { SchemaForm, utils } from 'react-schema-form';
+import { useNavigate } from "react-router-dom";
 import { useSiteDispatch, useSiteState } from '../../contexts/SiteContext';
 import { useUserState } from '../../contexts/UserContext';
 import forms from '../../data/Forms';
 import { useApiGet } from '../../hooks/useApiGet';
 import { useApiPost } from '../../hooks/useApiPost';
-import { Badge } from '../Wrappers/Wrappers';
+import { Badge, Typography } from '../Wrappers/Wrappers';
 
-function Braintree(props) {
-  const [instance, setInstance] = useState();
-  const [nonce, setNonce] = useState();
-  const [clientToken, setClientToken] = useState(null);
-  const { owner, payment } = useSiteState();
+function Braintree({ step, completePayment, proceedPayment, summarizeOrder }: any) {
+  const [instance, setInstance] = useState<any>();
+  const [nonce, setNonce] = useState<any>();
+  const [clientToken, setClientToken] = useState<string | null>(null);
+  const { owner, payment }: any = useSiteState();
 
-  const { step, classes, completePayment, proceedPayment, summarizeOrder } =
-    props;
-
-  // get clientToken with useApiGet hook.
   const cmd = {
     host: 'lightapi.net',
     service: 'user',
     action: 'getClientToken',
     version: '0.1.0',
-    data: { userId: owner, merchantId: payment.merchantId },
+    data: { userId: owner, merchantId: payment?.merchantId },
   };
   const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
-  const callback = (data) => {
-    console.log('data = ', data);
+  const callback = (data: any) => {
     setClientToken(data.clientToken);
   };
-  let { isLoading, data, error } = useApiGet({ url, headers, callback });
+  useApiGet({ url, headers, callback });
 
   const onBuy = async () => {
-    console.log('Buy is clicked');
     const { nonce } = await instance.requestPaymentMethod();
-    console.log('nonce = ', nonce);
     setNonce(nonce);
-    // send to server with a command API call.
     completePayment();
   };
 
@@ -63,56 +62,54 @@ function Braintree(props) {
 
   if (!clientToken) {
     return (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else {
     return (
-      <div>
+      <Box sx={{ p: 2 }}>
         <DropIn
           options={{ authorization: clientToken }}
           onInstance={(inst) => setInstance(inst)}
         />
         <Button
           variant="contained"
-          className={classes.button}
+          sx={{ mb: 1, width: '100%' }}
           color="primary"
-          onClick={(e) => proceedPayment()}
+          onClick={() => proceedPayment()}
         >
           PAYMENT OPTIONS
         </Button>
-        {nonce ? null : (
+        {!nonce && (
           <Button
             variant="contained"
-            className={classes.button}
+            sx={{ mb: 1, width: '100%' }}
             color="primary"
-            onClick={(e) => onBuy()}
+            onClick={() => onBuy()}
           >
             BUY
           </Button>
         )}
-        {nonce ? (
+        {nonce && (
           <Button
             variant="contained"
-            className={classes.button}
+            sx={{ mb: 1, width: '100%' }}
             color="primary"
-            onClick={(e) => summarizeOrder()}
+            onClick={() => summarizeOrder()}
           >
             SUMMARY
           </Button>
-        ) : null}
-      </div>
+        )}
+      </Box>
     );
   }
 }
 
-function Summary(props) {
-  const { step, classes, proceedPayment, cleanCart } = props;
-  const { owner, cart, delivery, payment } = useSiteState();
-  const { email, userId } = useUserState();
+function Summary({ step, cleanCart }: any) {
+  const { owner, cart, delivery, payment }: any = useSiteState();
+  const { email, userId }: any = useUserState();
 
-  // save the order through API
   const body = {
     host: 'lightapi.net',
     service: 'user',
@@ -130,60 +127,55 @@ function Summary(props) {
       },
     },
   };
-  console.log('body = ', body);
   const url = '/portal/command';
   const headers = {};
-  const { isLoading, data, error } = useApiPost({ url, headers, body });
-  console.log(isLoading, data, error);
+  const { isLoading, data, error }: any = useApiPost({ url, headers, body });
 
   if (step !== 4) {
     return null;
   }
 
-  let wait;
   if (isLoading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
         <CircularProgress />
-      </div>
-    );
-  } else {
-    wait = (
-      <React.Fragment>
-        <div className={classes.emptyCart}>
-          <h4>Order Summary</h4>
-          <p>Order Id: {data.orderId}</p>
-          <p>Pass Code: {data.passCode}</p>
-        </div>
-        <Button
-          variant="contained"
-          className={classes.button}
-          color="primary"
-          onClick={(e) => cleanCart()}
-        >
-          Close
-        </Button>
-      </React.Fragment>
+      </Box>
     );
   }
 
-  return <div>{wait}</div>;
+  return (
+    <Box sx={{ p: 2, textAlign: 'center' }}>
+      <Typography variant="h5" gutterBottom>Order Summary</Typography>
+      {data && (
+        <>
+          <Typography>Order Id: {data.orderId}</Typography>
+          <Typography>Pass Code: {data.passCode}</Typography>
+        </>
+      )}
+      {error && <Typography color="error">{error}</Typography>}
+      <Button
+        variant="contained"
+        sx={{ mt: 2, width: '100%' }}
+        color="primary"
+        onClick={() => cleanCart()}
+      >
+        Close
+      </Button>
+    </Box>
+  );
 }
 
-function Payment(props) {
-  const {
-    step,
-    classes,
-    summarizeOrder,
-    startBraintree,
-    completePayment,
-    selectDelivery,
-  } = props;
-  const { owner } = useSiteState();
-  const [payment, setPayment] = useState({ method: '' });
-  let siteDispatch = useSiteDispatch();
+function Payment({
+  step,
+  summarizeOrder,
+  startBraintree,
+  completePayment,
+  selectDelivery,
+}: any) {
+  const { owner }: any = useSiteState();
+  const [payment, setPayment] = useState<any>({ method: '' });
+  const siteDispatch: any = useSiteDispatch();
 
-  // retrieve payment options
   const cmd = {
     host: 'lightapi.net',
     service: 'user',
@@ -194,9 +186,7 @@ function Payment(props) {
 
   const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
-  const { isLoading, data, error } = useApiGet({ url, headers });
-
-  //console.log("data = ", data);
+  const { isLoading, data, error }: any = useApiGet({ url, headers, callback: () => {} });
 
   if (step !== 3) {
     return null;
@@ -217,9 +207,8 @@ function Payment(props) {
     }
   };
 
-  const onChange = (event, child) => {
-    console.log('onChange is called', event.target.value, child.key);
-    let method = event.target.value;
+  const onChange = (event: any, child: any) => {
+    const method = event.target.value;
     switch (method) {
       case 'OnPickup':
         setPayment({ method: 'OnPickup' });
@@ -229,7 +218,6 @@ function Payment(props) {
         });
         break;
       case 'Braintree':
-        // find the merchantId
         setPayment({
           method: 'Braintree',
           merchantId: data[child.key].merchantId,
@@ -245,92 +233,80 @@ function Payment(props) {
     }
   };
 
-  let title = <h2>Payment Option</h2>;
   if (isLoading) {
-    return <CircularProgress className={classes.progress} />;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}><CircularProgress /></Box>;
   } else if (data) {
-    let menuItems = [];
-    data.map((payment, index) => {
-      menuItems.push(
-        <MenuItem key={index} value={payment.method}>
-          {payment.method + (payment.sandbox ? '-Sandbox' : '')}
-        </MenuItem>
-      );
-      return menuItems;
-    });
     return (
-      <div>
-        {title}
-        <FormControl className={classes.formControl}>
-          <div>
-            <InputLabel id="demo-simple-select-label">Method</InputLabel>
-            <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              value={payment.method}
-              onChange={onChange}
-            >
-              {menuItems}
-            </Select>
-          </div>
-          <p />
-          <div>
-            <Button
-              variant="contained"
-              className={classes.button}
-              color="primary"
-              onClick={(e) => selectDelivery()}
-            >
-              Delivery
-            </Button>
-            <Button
-              variant="contained"
-              className={classes.button}
-              color="primary"
-              onClick={(e) => onPayment()}
-            >
-              Payment
-            </Button>
-          </div>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h5" gutterBottom>Payment Option</Typography>
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="payment-method-label">Method</InputLabel>
+          <Select
+            labelId="payment-method-label"
+            id="payment-method-select"
+            value={payment.method}
+            onChange={onChange}
+            label="Method"
+          >
+            {data.map((p: any, index: number) => (
+              <MenuItem key={index} value={p.method}>
+                {p.method + (p.sandbox ? '-Sandbox' : '')}
+              </MenuItem>
+            ))}
+          </Select>
         </FormControl>
-      </div>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => selectDelivery()}
+          >
+            Delivery
+          </Button>
+          <Button
+            variant="contained"
+            fullWidth
+            color="primary"
+            onClick={() => onPayment()}
+          >
+            Payment
+          </Button>
+        </Box>
+      </Box>
     );
   } else {
-    // error
-    return <div>{error}</div>;
+    return <Box sx={{ p: 2 }}><Typography color="error">{error}</Typography></Box>;
   }
 }
 
-function Delivery(props) {
-  const { step, classes, reviewCart, proceedPayment, schema } = props;
-  const [model, setModel] = useState({ ...useSiteState().delivery });
+function Delivery({ step, reviewCart, proceedPayment }: any) {
+  const [model, setModel] = useState({ ...(useSiteState() as any).delivery });
   const [showErrors, setShowErrors] = useState(false);
-  const [delivery, setDelivery] = useState();
-  let siteDispatch = useSiteDispatch();
+  const [delivery, setDelivery] = useState<any>();
+  const siteDispatch: any = useSiteDispatch();
 
   useEffect(() => {
-    console.log('calling useEffect', delivery);
-    siteDispatch({ type: 'UPDATE_DELIVERY', delivery: delivery });
-  }, [delivery]);
+    if (delivery) {
+      siteDispatch({ type: 'UPDATE_DELIVERY', delivery: delivery });
+    }
+  }, [delivery, siteDispatch]);
 
   if (step !== 2) {
     return null;
   }
 
-  let formData = forms['pickupForm'];
-  var buttons = [];
+  const formData = forms['pickupForm'];
 
-  const onModelChange = (key, val, type) => {
+  const onModelChange = (key: any, val: any, type: any) => {
     utils.selectOrSet(key, model, val, type);
-    setModel({ ...model }); // here we must create a new object to force re-render.
+    setModel({ ...model });
   };
 
-  const onButtonClick = (item) => {
-    console.log('item = ', item);
+  const onButtonClick = (item: any) => {
     if (item.action === 'cart') {
       reviewCart();
     } else {
-      let validationResult = utils.validateBySchema(formData.schema, model);
+      const validationResult = (utils as any).validateBySchema(formData.schema, model);
       if (!validationResult.valid) {
         setShowErrors(true);
       } else {
@@ -340,25 +316,9 @@ function Delivery(props) {
     }
   };
 
-  formData.actions.map((item, index) => {
-    buttons.push(
-      <Button
-        variant="contained"
-        className={classes.button}
-        color="primary"
-        key={index}
-        onClick={(e) => onButtonClick(item)}
-      >
-        {item.title}
-      </Button>
-    );
-    return buttons;
-  });
-  let title = <h2>{formData.schema.title}</h2>;
-
   return (
-    <div>
-      {title}
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h5" gutterBottom>{formData.schema.title}</Typography>
       <SchemaForm
         schema={formData.schema}
         form={formData.form}
@@ -366,30 +326,37 @@ function Delivery(props) {
         showErrors={showErrors}
         onModelChange={onModelChange}
       />
-      {buttons}
-    </div>
+      <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {formData.actions.map((item: any, index: number) => (
+          <Button
+            variant="contained"
+            color="primary"
+            key={index}
+            onClick={() => onButtonClick(item)}
+            sx={{ flexGrow: 1 }}
+          >
+            {item.title}
+          </Button>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
-const CartTotal = (props) => {
-  const {
-    step,
-    classes,
-    cart,
-    deleteFromCart,
-    selectDelivery,
-    closeCart,
-    taxRate,
-  } = props;
+const CartTotal = ({
+  step,
+  cart,
+  deleteFromCart,
+  selectDelivery,
+  closeCart,
+  taxRate,
+}: any) => {
+  const ccyFormat = (num: number) => `${num.toFixed(2)}`;
 
-  const ccyFormat = (num) => {
-    return `${num.toFixed(2)}`;
-  };
-
-  const subtotal = (items) => {
+  const subtotal = (items: any[]) => {
     let total = 0;
     for (var i = 0; i < items.length; i++) {
-      total += items[i].price * parseInt(cart[i].quantity);
+      total += items[i].price * parseInt(items[i].quantity);
     }
     return total;
   };
@@ -398,16 +365,15 @@ const CartTotal = (props) => {
   const invoiceTaxes = (taxRate * invoiceSubtotal) / 100;
   const invoiceTotal = invoiceSubtotal + invoiceTaxes;
 
-  let view = null;
   if (step !== 1) {
     return null;
   }
 
   if (cart && cart.length > 0) {
-    view = (
-      <div>
-        <TableContainer component={Paper}>
-          <Table className={classes.table} aria-label="spanning table">
+    return (
+      <Box sx={{ p: 2 }}>
+        <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <Table sx={{ minWidth: 300 }} aria-label="spanning table">
             <TableHead>
               <TableRow>
                 <TableCell></TableCell>
@@ -417,27 +383,29 @@ const CartTotal = (props) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {cart &&
-                cart.map((row) => (
-                  <TableRow key={row.sku}>
-                    <TableCell>
-                      <img className={classes.cartImage} src={row.image} />
-                    </TableCell>
-                    <TableCell>
-                      {row.name}
-                      <Divider />
-                      {row.price}
-                    </TableCell>
-                    <TableCell>
-                      {row.quantity}
-                      <Divider />
-                      {row.quantity * row.price}
-                    </TableCell>
-                    <TableCell>
-                      <DeleteForever onClick={() => deleteFromCart(row.sku)} />
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {cart.map((row: any) => (
+                <TableRow key={row.sku}>
+                  <TableCell>
+                    <Box component="img" src={row.image} sx={{ width: 48, height: 48 }} />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.name}</Typography>
+                    <Divider />
+                    <Typography variant="body2">{row.price}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2">{row.quantity}</Typography>
+                    <Divider />
+                    <Typography variant="body2">{row.quantity * row.price}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <DeleteForever
+                      onClick={() => deleteFromCart(row.sku)}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
               <TableRow>
                 <TableCell rowSpan={3} />
                 <TableCell>Subtotal</TableCell>
@@ -457,160 +425,124 @@ const CartTotal = (props) => {
             </TableBody>
           </Table>
         </TableContainer>
-        <Button
-          variant="contained"
-          className={classes.button}
-          color="primary"
-          onClick={(e) => closeCart()}
-        >
-          Continue Shopping
-        </Button>
-        <Button
-          variant="contained"
-          className={classes.button}
-          color="primary"
-          onClick={(e) => selectDelivery()}
-        >
-          CHECKOUT
-        </Button>
-      </div>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => closeCart()}
+          >
+            Continue Shopping
+          </Button>
+          <Button
+            variant="contained"
+            fullWidth
+            color="primary"
+            onClick={() => selectDelivery()}
+          >
+            CHECKOUT
+          </Button>
+        </Box>
+      </Box>
     );
   } else {
-    view = <div className={classes.emptyCart}>Empty Cart!</div>;
+    return <Box sx={{ p: 2, textAlign: 'center' }}>Empty Cart!</Box>;
   }
-
-  return <React.Fragment>{view}</React.Fragment>;
 };
 
-export default function CartMenu(props) {
-  var classes = props.classes;
-  const [cartMenu, setCartMenu] = useState(false);
+export default function CartMenu() {
+  const [cartMenu, setCartMenu] = useState<null | HTMLElement>(null);
   const [step, setStep] = useState(1);
   const [completedPayment, setCompletedPayment] = useState(false);
 
-  var siteDispatch = useSiteDispatch();
-  const { cart, menu, site } = useSiteState();
+  const siteDispatch: any = useSiteDispatch();
+  const { cart, menu, site }: any = useSiteState();
 
-  const deleteFromCart = (sku) => {
-    console.log('deleteFromCart is called', sku);
-    let newCart = cart.filter((item) => item.sku !== sku);
+  const deleteFromCart = (sku: string) => {
+    const newCart = cart.filter((item: any) => item.sku !== sku);
     siteDispatch({ type: 'UPDATE_CART', cart: newCart });
   };
 
-  const taxRate = site && site.catalog ? site.catalog.taxRate : 0;
+  const taxRate = site?.catalog?.taxRate || 0;
 
-  const selectDelivery = () => {
-    setStep(2);
-  };
-
-  const reviewCart = () => {
-    setStep(1);
-  };
-
-  const proceedPayment = () => {
-    setStep(3);
-  };
-
-  const summarizeOrder = () => {
-    setStep(4);
-  };
-
-  const startBraintree = () => {
-    setStep(5);
-  };
-
-  const closeCart = () => {
-    setCartMenu(null);
-  };
-
+  const selectDelivery = () => setStep(2);
+  const reviewCart = () => setStep(1);
+  const proceedPayment = () => setStep(3);
+  const summarizeOrder = () => setStep(4);
+  const startBraintree = () => setStep(5);
+  const closeCart = () => setCartMenu(null);
   const cleanCart = () => {
     siteDispatch({ type: 'UPDATE_CART', cart: [] });
     setCartMenu(null);
   };
+  const completePayment = () => setCompletedPayment(true);
 
-  const completePayment = () => {
-    setCompletedPayment(true);
-  };
+  if (menu !== 'catalog') return null;
 
   return (
-    <React.Fragment>
-      {'catalog' === menu ? (
-        <React.Fragment>
-          <IconButton
-            aria-haspopup="true"
-            color="inherit"
-            className={classes.headerMenuButton}
-            aria-controls="home-menu"
-            onClick={(e) => {
-              setCartMenu(e.currentTarget);
-              setStep(1);
-            }}
-            size="large">
-            <Badge
-              badgeContent={cart && cart.length > 0 ? cart.length : null}
-              color="secondary"
-            >
-              <ShoppingCart classes={{ root: classes.headerIcon }} />
-            </Badge>
-          </IconButton>
-          <Menu
-            id="mail-menu"
-            open={Boolean(cartMenu)}
-            anchorEl={cartMenu}
-            onClose={() => setCartMenu(null)}
-            MenuListProps={{ className: classes.headerMenuList }}
-            className={classes.headerMenu}
-            classes={{ paper: classes.profileMenu }}
-            disableAutoFocusItem
-          >
-            <div>
-              <CartTotal
-                step={step}
-                taxRate={taxRate}
-                cart={cart}
-                deleteFromCart={deleteFromCart}
-                selectDelivery={selectDelivery}
-                closeCart={closeCart}
-                classes={classes}
-              />
-              <Delivery
-                {...props}
-                step={step}
-                classes={classes}
-                reviewCart={reviewCart}
-                proceedPayment={proceedPayment}
-              />
-              <Payment
-                {...props}
-                step={step}
-                classes={classes}
-                selectDelivery={selectDelivery}
-                summarizeOrder={summarizeOrder}
-                startBraintree={startBraintree}
-                completePayment={completePayment}
-              />
-              {step === 5 ? (
-                <Braintree
-                  {...props}
-                  step={step}
-                  classes={classes}
-                  proceedPayment={proceedPayment}
-                  completePayment={completePayment}
-                  summarizeOrder={summarizeOrder}
-                />
-              ) : null}
-              {completedPayment ? (
-                <Summary
-                  {...props}
-                  step={step}
-                  classes={classes}
-                  cleanCart={cleanCart}
-                />
-              ) : null}
-            </div>
-          </Menu>
-        </React.Fragment>
-      ) : null}
-    </React.Fragment>
+    <>
+      <IconButton
+        aria-haspopup="true"
+        color="inherit"
+        onClick={(e) => {
+          setCartMenu(e.currentTarget);
+          setStep(1);
+        }}
+        size="large"
+        sx={{ ml: 2, p: 0.5 }}
+      >
+        <Badge
+          badgeContent={cart?.length > 0 ? cart.length : null}
+          color="secondary"
+        >
+          <ShoppingCart sx={{ fontSize: 28 }} />
+        </Badge>
+      </IconButton>
+      <Menu
+        id="cart-menu"
+        open={Boolean(cartMenu)}
+        anchorEl={cartMenu}
+        onClose={() => setCartMenu(null)}
+        sx={{ mt: 7 }}
+        PaperProps={{ sx: { minWidth: 320, maxWidth: 400 } }}
+        disableAutoFocusItem
+      >
+        <Box sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
+          <CartTotal
+            step={step}
+            taxRate={taxRate}
+            cart={cart}
+            deleteFromCart={deleteFromCart}
+            selectDelivery={selectDelivery}
+            closeCart={closeCart}
+          />
+          <Delivery
+            step={step}
+            reviewCart={reviewCart}
+            proceedPayment={proceedPayment}
+          />
+          <Payment
+            step={step}
+            selectDelivery={selectDelivery}
+            summarizeOrder={summarizeOrder}
+            startBraintree={startBraintree}
+            completePayment={completePayment}
+          />
+          {step === 5 && (
+            <Braintree
+              step={step}
+              proceedPayment={proceedPayment}
+              completePayment={completePayment}
+              summarizeOrder={summarizeOrder}
+            />
+          )}
+          {completedPayment && (
+            <Summary
+              step={step}
+              cleanCart={cleanCart}
+            />
+          )}
+        </Box>
+      </Menu>
+    </>
   );
 }
