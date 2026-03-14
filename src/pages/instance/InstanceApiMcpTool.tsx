@@ -230,7 +230,7 @@ export default function InstanceApiMcpTool() {
             rowSelection
         },
         enableRowSelection: true,
-        getRowId: (row) => row.name,
+        getRowId: (row) => row.endpointId,
         onRowSelectionChange: setRowSelection,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enablePagination: false,
