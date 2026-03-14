@@ -66,24 +66,16 @@ export default function InstanceApiMcpTool() {
             const fetchedData: any[] = json?.endpoints || [];
             
             // Standardize the data from backend
-            const standardizedData: McpToolType[] = fetchedData.map((t, index) => {
-                const name =
-                    t.name ||
-                    t.endpointName ||
-                    t.endpointId ||
-                    `tool-${index}`;
+            const standardizedData: McpToolType[] = fetchedData.map(t => ({
+                ...t,
+                name: t.name || t.endpointName || '',
+                description: t.description || t.endpointDesc || '',
+                path: t.path || t.endpointPath || '',
+                method: t.method || t.httpMethod || '',
+                inputSchema: t.inputSchema || t.toolSchema || '',
+            }));
 
-                return {
-                    ...t,
-                    name,
-                    description: t.description || t.endpointDesc || '',
-                    path: t.path || t.endpointPath || '',
-                    method: t.method || t.httpMethod || '',
-                    inputSchema: t.inputSchema || t.toolSchema || '',
-                    selected: Boolean(t.selected),
-                } as McpToolType;
-            });
-
+            console.log(standardizedData);
             setData(standardizedData);
             setMetadata({
                 propertyId: json?.propertyId || null,
@@ -118,14 +110,13 @@ export default function InstanceApiMcpTool() {
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
         const selectedTools = selectedToolsNames.map(name => {
             const tool = data.find(t => t.name === name);
-            let toolSchemaObj = tool?.inputSchema ?? null;
-            let toolMetadataObj = tool?.toolMetadata ?? null;
-            if (tool && typeof tool.inputSchema === 'string' && tool.inputSchema) {
-                try {
-                    toolSchemaObj = JSON.parse(tool.inputSchema);
-                } catch (e) {
-                    console.error("Failed to parse inputSchema", e);
-                }
+            let toolSchemaObj = null;
+            let toolMetadataObj = null;
+            try {
+                if (tool?.inputSchema) toolSchemaObj = JSON.parse(tool.inputSchema);
+            } catch (e) {
+                console.error("Failed to parse toolSchema", e);
+                toolSchemaObj = tool?.inputSchema;
             }
             if (tool && typeof tool.toolMetadata === 'string' && tool.toolMetadata) {
                 try {
@@ -240,7 +231,7 @@ export default function InstanceApiMcpTool() {
             rowSelection
         },
         enableRowSelection: true,
-        getRowId: (row) => row.endpointId,
+        getRowId: (row) => row.name,
         onRowSelectionChange: setRowSelection,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enablePagination: false,
