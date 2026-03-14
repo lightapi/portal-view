@@ -109,19 +109,21 @@ export default function InstanceApiMcpTool() {
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
         const selectedTools = selectedToolsNames.map(name => {
             const tool = data.find(t => t.name === name);
-            let toolSchemaObj = null;
-            let toolMetadataObj = null;
-            try {
-                if (tool?.inputSchema) toolSchemaObj = JSON.parse(tool.inputSchema);
-            } catch (e) {
-                console.error("Failed to parse toolSchema", e);
-                toolSchemaObj = tool?.inputSchema;
+            let toolSchemaObj = tool?.inputSchema ?? null;
+            let toolMetadataObj = tool?.toolMetadata ?? null;
+            if (tool && typeof tool.inputSchema === 'string' && tool.inputSchema) {
+                try {
+                    toolSchemaObj = JSON.parse(tool.inputSchema);
+                } catch (e) {
+                    console.error("Failed to parse inputSchema", e);
+                }
             }
-            try {
-                if (tool?.toolMetadata) toolMetadataObj = JSON.parse(tool.toolMetadata);
-            } catch (e) {
-                console.error("Failed to parse toolMetadata", e);
-                toolMetadataObj = tool?.toolMetadata;
+            if (tool && typeof tool.toolMetadata === 'string' && tool.toolMetadata) {
+                try {
+                    toolMetadataObj = JSON.parse(tool.toolMetadata);
+                } catch (e) {
+                    console.error("Failed to parse toolMetadata", e);
+                }
             }
             return {
                 name: name,
