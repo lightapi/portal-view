@@ -66,14 +66,23 @@ export default function InstanceApiMcpTool() {
             const fetchedData: any[] = json?.endpoints || [];
             
             // Standardize the data from backend
-            const standardizedData: McpToolType[] = fetchedData.map(t => ({
-                ...t,
-                name: t.name || t.endpointName || '',
-                description: t.description || t.endpointDesc || '',
-                path: t.path || t.endpointPath || '',
-                method: t.method || t.httpMethod || '',
-                inputSchema: t.inputSchema || t.toolSchema || '',
-            }));
+            const standardizedData: McpToolType[] = fetchedData.map((t, index) => {
+                const name =
+                    t.name ||
+                    t.endpointName ||
+                    t.endpointId ||
+                    `tool-${index}`;
+
+                return {
+                    ...t,
+                    name,
+                    description: t.description || t.endpointDesc || '',
+                    path: t.path || t.endpointPath || '',
+                    method: t.method || t.httpMethod || '',
+                    inputSchema: t.inputSchema || t.toolSchema || '',
+                    selected: Boolean(t.selected),
+                } as McpToolType;
+            });
 
             setData(standardizedData);
             setMetadata({
