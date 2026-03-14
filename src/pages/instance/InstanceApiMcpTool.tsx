@@ -118,11 +118,12 @@ export default function InstanceApiMcpTool() {
                 console.error("Failed to parse toolSchema", e);
                 toolSchemaObj = tool?.inputSchema;
             }
-            try {
-                if (tool?.toolMetadata) toolMetadataObj = JSON.parse(tool.toolMetadata);
-            } catch (e) {
-                console.error("Failed to parse toolMetadata", e);
-                toolMetadataObj = tool?.toolMetadata;
+            if (tool && typeof tool.toolMetadata === 'string' && tool.toolMetadata) {
+                try {
+                    toolMetadataObj = JSON.parse(tool.toolMetadata);
+                } catch (e) {
+                    console.error("Failed to parse toolMetadata", e);
+                }
             }
             return {
                 name: name,
