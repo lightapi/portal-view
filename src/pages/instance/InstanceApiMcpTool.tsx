@@ -125,7 +125,7 @@ export default function InstanceApiMcpTool() {
                     console.error("Failed to parse toolMetadata", e);
                 }
             }
-            return {
+            const obj: any = {
                 name: name,
                 endpoint: tool?.endpoint,
                 method: tool?.method,
@@ -139,6 +139,7 @@ export default function InstanceApiMcpTool() {
                 envTag,
                 targetHost
             };
+            return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
         });
         const propertyValue = JSON.stringify(selectedTools);
 
