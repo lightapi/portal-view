@@ -75,7 +75,6 @@ export default function InstanceApiMcpTool() {
                 inputSchema: t.inputSchema || t.toolSchema || '',
             }));
 
-            console.log(standardizedData);
             setData(standardizedData);
             setMetadata({
                 propertyId: json?.propertyId || null,
