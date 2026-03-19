@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.5.0",
+    "@azure/msal-react": "^5.0.7",
     "@babel/runtime": "^7.28.4",
     "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/language": "^6.12.1",

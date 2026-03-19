@@ -11,6 +11,8 @@ import fetchClient, { BASE_URL } from "../../utils/fetchClient";
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
+  const isLocalEnv = import.meta.env.DEV;
+
   return items.map((item) => {
     if (item?.type !== "dynaselect") {
       return item;
@@ -19,6 +21,11 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
     if (actionUrl === undefined || actionUrl === null || actionUrl === "") {
       return item;
     }
+
+    if (isLocalEnv) {
+      return item;
+    }
+
     return {
       ...item,
       action: {

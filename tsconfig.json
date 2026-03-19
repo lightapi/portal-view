@@ -22,6 +22,7 @@
     "allowImportingTsExtensions": true
   },
   "include": [
-    "src"
+    "src",
+    "config.ts"
   ]
 }

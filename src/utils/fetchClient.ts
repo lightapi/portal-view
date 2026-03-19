@@ -1,6 +1,7 @@
 import Cookies from 'universal-cookie';
+import { config } from "../../config";
 
-export const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "";
+export const BASE_URL = config.apiBaseUrl || "";
 
 /**
  * Custom fetch wrapper with automatic base URL prefixing and CSRF handling
@@ -9,7 +10,12 @@ export const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || "";
  * @returns {Promise} - Response JSON
  */
 async function fetchClient(endpoint: string, options: any = {}) {
-    const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+    const useDevProxy = import.meta.env.DEV && endpoint.startsWith('/');
+    const url = endpoint.startsWith('http')
+        ? endpoint
+        : useDevProxy
+            ? endpoint
+            : `${BASE_URL}${endpoint}`;
     const cookies = new Cookies();
     const csrfToken = cookies.get('csrf');
 
