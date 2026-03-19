@@ -213,39 +213,14 @@ export default function AuthProvider() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Provider">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.providerId}
-            >
-              {isUpdateLoading === row.original.providerId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Provider"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'oauthConfig', header: 'OAuth Config', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Manage Keys"><IconButton onClick={() => navigate('/app/oauth/providerKey', { state: { data: { ...row.original } } })}><KeyIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Apis"><IconButton onClick={() => navigate('/app/oauth/providerApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Clients"><IconButton onClick={() => navigate('/app/oauth/providerClient', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
-          </Box>
-        ),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -264,7 +239,43 @@ export default function AuthProvider() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.providerId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Provider">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.providerId}
+          >
+            {isUpdateLoading === row.original.providerId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Keys">
+          <IconButton onClick={() => navigate('/app/oauth/providerKey', { state: { data: { ...row.original } } })}>
+            <KeyIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Apis">
+          <IconButton onClick={() => navigate('/app/oauth/providerApi', { state: { data: { ...row.original } } })}>
+            <ApiIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Clients">
+          <IconButton onClick={() => navigate('/app/oauth/providerClient', { state: { data: { ...row.original } } })}>
+            <AppsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Provider">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProvider')}>
         Create New Provider

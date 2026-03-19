@@ -1,51 +1,57 @@
 import Button from '@mui/material/Button';
+import { Box } from '@mui/material';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
-import useStyles from './styles';
 
-export default function CityProfile(props) {
-  const classes = useStyles();
-
-  //console.log("props = ", props);
-  //console.log("data = ", props.location.state.data);
-  const data = props.location.state.data;
+export default function CityProfile() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const data = location.state?.data;
 
   const updateCityMap = () => {
-    //console.log("updateCityMap is called");
-    props.history.push({
-      pathname: '/app/form/updateCityMap',
+    navigate('/app/form/updateCityMap', {
       state: { data },
     });
   };
 
   const deleteCityMap = () => {
     if (window.confirm('Are you sure you want to delete the city?')) {
-      //console.log("confirmed");
-      props.history.push({
-        pathname: '/app/covid/deleteCity',
+      navigate('/app/covid/deleteCity', {
         state: { data },
       });
     }
   };
 
   return (
-    <div>
+    <Box>
       <Widget
         title="City Map"
         upperTitle
-        bodyClass={classes.fullHeightBody}
-        className={classes.card}
+        sx={{
+          minHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        bodyStyle={{
+          display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
       >
-        <div className={classes.button}>
+        <Box sx={{ '& > *': { m: 1 } }}>
           <Button variant="contained" color="primary" onClick={updateCityMap}>
             Update
           </Button>
           <Button variant="contained" color="primary" onClick={deleteCityMap}>
             Delete
           </Button>
-        </div>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
+        </Box>
+        <Box component="pre" sx={{ overflow: 'auto', mt: 2 }}>
+          {JSON.stringify(data, null, 2)}
+        </Box>
       </Widget>
-    </div>
+    </Box>
   );
 }

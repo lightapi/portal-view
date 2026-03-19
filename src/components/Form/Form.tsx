@@ -1,42 +1,33 @@
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import { makeStyles } from "@mui/styles";
 import { useEffect, useState } from "react";
 import { SchemaForm, utils } from "react-schema-form";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
-import fetchClient from "../../utils/fetchClient";
+import Box from "@mui/material/Box";
+import fetchClient, { BASE_URL } from "../../utils/fetchClient";
 
-const useStyles = makeStyles((theme: any) => ({
-  root: {
-    display: "flex",
-    flexWrap: "wrap",
-  },
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-  progress: {
-    margin: theme.spacing(2),
-  },
-  button: {
-    margin: theme.spacing(1),
-  },
-  errorContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    marginTop: theme.spacing(4),
-  },
-  errorMessage: {
-    marginBottom: theme.spacing(2),
-  },
-}));
+const withBaseUrlForDynaSelect = (items: any[] | null) => {
+  if (!items) return items;
+  return items.map((item) => {
+    if (item?.type !== "dynaselect") {
+      return item;
+    }
+    const actionUrl = item?.action?.url;
+    if (actionUrl === undefined || actionUrl === null || actionUrl === "") {
+      return item;
+    }
+    return {
+      ...item,
+      action: {
+        ...item.action,
+        url: `${BASE_URL}${actionUrl}`,
+      },
+    };
+  });
+};
 
 function Form() {
   const params = useParams();
@@ -44,33 +35,27 @@ function Form() {
   const location = useLocation();
   const navigate = useNavigate();
   const [fetching, setFetching] = useState(false);
-  const [validationResult, setValidationResult] = useState(null);
+  const [validationResult, setValidationResult] = useState<any>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [skipAuth, setSkipAuth] = useState(false);
-  const [schema, setSchema] = useState(null);
-  const [form, setForm] = useState(null);
-  const [actions, setActions] = useState(null);
-  const [model, setModel] = useState({});
-  const classes = useStyles();
-  const { isAuthenticated, host } = useUserState();
+  const [schema, setSchema] = useState<any>(null);
+  const [form, setForm] = useState<any[] | null>(null);
+  const [actions, setActions] = useState<any[] | null>(null);
+  const [model, setModel] = useState<any>({});
+  const { isAuthenticated, host }: any = useUserState();
 
   useEffect(() => {
-    console.log(formId);
     let formData = formId ? forms[formId] : {};
     if (!formData) formData = {};
     setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
-    setForm(formData.form);
+    setForm(withBaseUrlForDynaSelect(formData.form));
     setActions(formData.actions);
-    console.log("host = ", host);
 
-    // must ensure that the model is an empty object to the cascade dropdown
     const initialModel = location.state
       ? location.state.data || {}
       : formData.model || {};
-    console.log("model = ", initialModel);
 
-    // Use existing hostId or fall back to current host
     const modelWithHostId = {
       ...initialModel,
       hostId: initialModel.hostId ?? host
@@ -80,21 +65,16 @@ function Form() {
 
   const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
-    setModel({ ...model }); // here we must create a new object to force re-render.
+    setModel({ ...model });
   };
 
   function onButtonClick(action: any) {
-    console.log("onButtonClick is called", action);
-    let validationResult = utils.validateBySchema(schema, model);
-    console.log(validationResult);
-    if (!validationResult.valid) {
+    let result = utils.validateBySchema(schema, model);
+    if (!result.valid) {
       setShowErrors(true);
-      setValidationResult(validationResult);
+      setValidationResult(result);
     } else {
-      console.log("model = ", model);
-      // submit the form to the portal service.
       action.data = model;
-      // use the path defined in the action, default to /portal/command.
       const url = action.path ? action.path : "/portal/command";
       const headers = {
         "Content-Type": "application/json",
@@ -115,72 +95,37 @@ function Form() {
       navigate(action.success, { state: { data } });
     } catch (e) {
       setFetching(false);
-      console.log(e);
-      // convert it to json as the failure component can only deal with JSON.
       navigate(action.failure, { state: { data: e } });
     }
   };
 
   if (!isAuthenticated && !skipAuth) {
     return (
-      <div className={classes.errorContainer}>
-        <Typography variant="h6" color="error" className={classes.errorMessage}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
+        <Typography variant="h6" color="error" sx={{ mb: 2 }}>
           Authentication Required
         </Typography>
-        <Typography variant="body1" className={classes.errorMessage}>
+        <Typography variant="body1" sx={{ mb: 2 }}>
           You need to be logged in to access this form.
         </Typography>
         <Button variant="contained" onClick={() => navigate(-1)}>
           Go Back
         </Button>
-      </div>
+      </Box>
     );
   }
 
   if (schema) {
-    const buttons: any[] = [];
-    if (actions) {
-      (actions as any[]).map((item: any, index: number) => {
-        buttons.push(
-          <Button
-            variant="contained"
-            className={classes.button}
-            color="primary"
-            key={index}
-            onClick={() => onButtonClick(item)}
-          >
-            {item.title}
-          </Button>,
-        );
-        return buttons;
-      });
-    }
-
-    let wait;
-    if (fetching) {
-      wait = (
-        <div>
-          <CircularProgress className={classes.progress} />
-        </div>
-      );
-    } else {
-      wait = <div></div>;
-    }
-    let title = <h2>{schema.title}</h2>;
-    let error;
-    if (showErrors) {
-      error = (
-        <div>
-          <pre>{JSON.stringify(validationResult, undefined, 2)}</pre>
-        </div>
-      );
-    } else {
-      error = <div></div>;
-    }
     return (
-      <div>
-        {wait}
-        {title}
+      <Box sx={{ p: 1 }}>
+        {fetching && (
+          <Box sx={{ m: 2 }}>
+            <CircularProgress />
+          </Box>
+        )}
+        <Typography variant="h4" component="h2" gutterBottom>
+          {schema.title}
+        </Typography>
         <SchemaForm
           schema={schema}
           form={form}
@@ -188,12 +133,27 @@ function Form() {
           showErrors={showErrors}
           onModelChange={onModelChange}
         />
-        {error}
-        {buttons}
-      </div>
+        {showErrors && (
+          <Box sx={{ mt: 2, mb: 2, bgcolor: '#f8f8f8', p: 1, borderRadius: 1 }}>
+            <pre>{JSON.stringify(validationResult, undefined, 2)}</pre>
+          </Box>
+        )}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+          {actions && actions.map((item: any, index: number) => (
+            <Button
+              variant="contained"
+              color="primary"
+              key={index}
+              onClick={() => onButtonClick(item)}
+            >
+              {item.title}
+            </Button>
+          ))}
+        </Box>
+      </Box>
     );
   } else {
-    return <CircularProgress className={classes.progress} />;
+    return <Box sx={{ m: 2 }}><CircularProgress /></Box>;
   }
 }
 

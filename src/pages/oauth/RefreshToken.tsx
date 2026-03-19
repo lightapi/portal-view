@@ -140,7 +140,7 @@ export default function RefreshTokenAdmin() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0', // Assuming this action exists
+      host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0',
       data: { refreshToken: row.original.refreshToken, aggregateVersion: row.original.aggregateVersion },
     };
 
@@ -183,10 +183,6 @@ export default function RefreshTokenAdmin() {
         accessorKey: 'updateTs', header: 'Last Updated',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'delete', header: 'Revoke', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Revoke Token"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
     [handleDelete],
   );
@@ -207,7 +203,14 @@ export default function RefreshTokenAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.refreshToken,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading refresh tokens' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Revoke Token">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">
         Refresh Tokens

@@ -190,41 +190,14 @@ export default function AttributeAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Attribute">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.attributeId}
-            >
-              {isUpdateLoading === row.original.attributeId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Attribute"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'accessControl', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Attribute Permissions"><IconButton onClick={() => navigate('/app/access/attributePermission', { state: { data: { attributeId: row.original.attributeId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-            <Tooltip title="Attribute Row Filters"><IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: { data: { attributeId: row.original.attributeId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-            <Tooltip title="Attribute Column Filters"><IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: { data: { attributeId: row.original.attributeId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/attributeUser', { state: { data: { attributeId: row.original.attributeId } } })}><AttributionIcon /></IconButton></Tooltip>
-          </Box>
-        ),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -243,7 +216,48 @@ export default function AttributeAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.attributeId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Attribute">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.attributeId}
+          >
+            {isUpdateLoading === row.original.attributeId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Attribute Permissions">
+          <IconButton onClick={() => navigate('/app/access/attributePermission', { state: { data: { attributeId: row.original.attributeId } } })}>
+            <DoNotTouchIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Attribute Row Filters">
+          <IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: { data: { attributeId: row.original.attributeId } } })}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Attribute Column Filters">
+          <IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: { data: { attributeId: row.original.attributeId } } })}>
+            <KeyboardDoubleArrowRightIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Users">
+          <IconButton onClick={() => navigate('/app/access/attributeUser', { state: { data: { attributeId: row.original.attributeId } } })}>
+            <AttributionIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Attribute">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAttribute')}>
         Create New Attribute

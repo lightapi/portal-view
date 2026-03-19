@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import SyncIcon from '@mui/icons-material/Sync';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -63,7 +64,10 @@ export default function ConfigInstanceApi() {
   const location = useLocation();
   const { host } = useUserState() as UserState;
   const initialConfigId = location.state?.data?.configId;
+  const initialInstanceId = location.state?.data?.instanceId;
   const initialInstanceApiId = location.state?.data?.instanceApiId;
+  const initialApiId = location.state?.data?.apiId;
+  const initialApiVersion = location.state?.data?.apiVersion;
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceApiType[]>([]);
@@ -72,6 +76,7 @@ export default function ConfigInstanceApi() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+  const [isSyncLoading, setIsSyncLoading] = useState(false);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
     const initialFilters: MRT_ColumnFiltersState = [
@@ -194,14 +199,53 @@ export default function ConfigInstanceApi() {
     }
   }, [host, navigate, location.pathname]);
 
+
+  const handleSync = useCallback(async () => {
+    if (!host) {
+      alert("Host is required.");
+      return;
+    }
+    if (!initialInstanceId || !initialInstanceApiId || !initialApiId || !initialApiVersion) {
+      alert("Missing required context data (Instance ID, Instance API ID, API ID, or API Version) to sync.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to sync config from the API definition? This will fetch access-control and rules configuration and publish them to this instance API.`)) return;
+
+    setIsSyncLoading(true);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'config', action: 'syncConfigInstanceApi', version: '0.1.0',
+      data: {
+        hostId: host,
+        instanceId: initialInstanceId,
+        instanceApiId: initialInstanceApiId,
+        apiId: initialApiId,
+        apiVersion: initialApiVersion
+      },
+    };
+
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert(`Failed to sync config from api: ${result.error}`);
+      } else {
+        alert("Config synchronized successfully!");
+        fetchData();
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to sync config due to a network error.');
+    } finally {
+      setIsSyncLoading(false);
+    }
+  }, [host, initialInstanceId, initialInstanceApiId, initialApiId, initialApiVersion, fetchData]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceApiType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceApiId', header: 'Instance Api Id' },
-      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
-      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
       {
         accessorKey: 'propertyValue',
@@ -210,6 +254,10 @@ export default function ConfigInstanceApi() {
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
       { accessorKey: 'apiId', header: 'Api Id' },
+      { accessorKey: 'apiVersion', header: 'Api Version' },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -224,29 +272,8 @@ export default function ConfigInstanceApi() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Property">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.propertyId}
-            >
-              {isUpdateLoading === row.original.propertyId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
@@ -265,16 +292,45 @@ export default function ConfigInstanceApi() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.instanceApiId}-${row.configId}-${row.propertyName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Property">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.propertyId}
+          >
+            {isUpdateLoading === row.original.propertyId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Property">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
+          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
           disabled={!initialConfigId && !initialInstanceApiId}
         >
-          Add Property to Instance Api
+          Add Config to Instance Api
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
+          onClick={handleSync}
+          disabled={!initialInstanceApiId || isSyncLoading}
+        >
+          {isSyncLoading ? 'Syncing...' : 'Sync Config from Api'}
         </Button>
         {initialConfigId && (
           <Typography variant="subtitle1">

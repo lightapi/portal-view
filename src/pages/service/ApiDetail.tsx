@@ -26,10 +26,9 @@ import InputIcon from "@mui/icons-material/Input";
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from "@mui/icons-material/Settings";
 import BugReportIcon from "@mui/icons-material/BugReport";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ApiIcon from "@mui/icons-material/Api";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import Widget from "../../components/Widget/Widget";
-import useStyles from "./styles";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
 
@@ -65,11 +64,13 @@ type ServiceVersionType = {
   apiVersionDesc?: string;
   specLink?: string;
   transportConfig?: string;
+  protocol?: string;
+  envTag?: string;
+  targetHost?: string;
   aggregateVerison?: number;
 };
 
 export default function ApiDetail() {
-  const classes = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState<ServiceVersionType[]>([]);
@@ -79,14 +80,13 @@ export default function ApiDetail() {
 
   // State for service versions data
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefetching, setIsRefetching] = useState(false);
   const [isError, setIsError] = useState(false);
 
   // Data fetching for service versions
   useEffect(() => {
     const fetchVersions = async () => {
       if (!hostId || !apiId) return;
-      if (!data.length) setIsLoading(true); else setIsRefetching(true);
+      setIsLoading(true);
 
       const cmd = {
         host: "lightapi.net", service: "service", action: "getApiVersion", version: "0.1.0",
@@ -95,7 +95,6 @@ export default function ApiDetail() {
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
       try {
-        setIsLoading(true);
         const data = await fetchClient(url);
         console.log("data = ", data);
         setData(data || []);
@@ -171,6 +170,10 @@ export default function ApiDetail() {
       { accessorKey: 'apiVersionDesc', header: 'Description' },
       { accessorKey: 'specLink', header: 'Spec Link' },
       { accessorKey: 'transportConfig', header: 'Transport Config' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
+      { accessorKey: 'protocol', header: 'Protocol' },
+      { accessorKey: 'envTag', header: 'Env Tag' },
+      { accessorKey: 'targetHost', header: 'Target Host' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
@@ -181,101 +184,8 @@ export default function ApiDetail() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Api Version">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.apiVersionId}
-            >
-              {isUpdateLoading === row.original.apiVersionId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'specEdit', header: 'Spec Edit', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Edit Specification">
-            <IconButton onClick={() => {
-              const path = row.original.apiType === 'openapi' ? '/app/openapiEditor' : row.original.apiType === 'hybrid' ? '/app/hybridEditor' : '/app/graphqlEditor';
-              navigate(path, { state: { data: { serviceVersion: row.original } } });
-            }}>
-              <ImageAspectRatioIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Api Version"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'instanceApi', header: 'Instance API', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Instance API">
-            <IconButton onClick={() => navigate('/app/instance/InstanceApi', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
-              <ContentCopyIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'endpoint', header: 'Endpoint', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Endpoint">
-            <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
-              <FormatListBulletedIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      // START: Added Missing Actions
-      {
-        id: 'codegen', header: 'Codegen', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Codegen">
-            <IconButton onClick={() => navigate('/app/serviceCodegen', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-              <InputIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'deploy', header: 'Deploy', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Deploy">
-            <IconButton onClick={() => navigate('/app/serviceDeploy', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'test', header: 'Test', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Test">
-            <IconButton onClick={() => navigate('/app/serviceTest', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-              <BugReportIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      // END: Added Missing Actions
     ],
-    [navigate],
+    [],
   );
 
   // Table instance configuration
@@ -289,6 +199,62 @@ export default function ApiDetail() {
     },
     getRowId: (row) => row.apiVersionId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading api versions' } : undefined,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Api Version">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.apiVersionId}
+          >
+            {isUpdateLoading === row.original.apiVersionId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Edit Specification">
+          <IconButton onClick={() => {
+            const path = row.original.apiType === 'openapi' ? '/app/openapiEditor' : row.original.apiType === 'hybrid' ? '/app/hybridEditor' : '/app/graphqlEditor';
+            navigate(path, { state: { data: { serviceVersion: row.original } } });
+          }}>
+            <ImageAspectRatioIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Api Version">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance API">
+          <IconButton onClick={() => navigate('/app/instance/InstanceApi', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+            <ApiIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Endpoint">
+          <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+            <FormatListBulletedIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Codegen">
+          <IconButton onClick={() => navigate('/app/serviceCodegen', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+            <InputIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Deploy">
+          <IconButton onClick={() => navigate('/app/serviceDeploy', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+            <SettingsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Test">
+          <IconButton onClick={() => navigate('/app/serviceTest', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+            <BugReportIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -302,7 +268,12 @@ export default function ApiDetail() {
 
   return (
     <Box>
-      <Widget title="Service Detail" upperTitle bodyClass={classes.fullHeightBody} className={classes.card}>
+      <Widget
+        title="Service Detail"
+        upperTitle
+        sx={{ minHeight: "100%", display: "flex", flexDirection: "column" }}
+        bodySx={{ display: "flex", flexGrow: 1, flexDirection: "column", justifyContent: "space-between" }}
+      >
         <TableContainer component={Paper}>
           <Table>
             <TableBody>
@@ -323,3 +294,4 @@ export default function ApiDetail() {
     </Box>
   );
 }
+

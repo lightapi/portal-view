@@ -1,95 +1,67 @@
 import React, { useState } from 'react';
-import { useStyles } from '../Constants';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Grid';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
-import Switch from '@mui/material/Switch';
-import Typography from '@mui/material/Typography';
+import { Box, TextField, Button, CssBaseline, Paper, Grid, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material';
 import fetchClient from '../../../utils/fetchClient';
+import ChaosInfoPopper from './ChaosInfoPopper';
 
-export default function MemoryForm(props) {
-  const classes = useStyles();
-  const formType = props.formType;
-  const address = props.address;
-  const port = props.port;
-  const protocol = props.protocol;
+interface LatencyFormProps {
+  formType: string;
+  address: string;
+  port: string | number;
+  protocol: string;
+  baseUrl: string;
+  config: {
+    enabled: boolean;
+    bypass: boolean;
+    level: number;
+    latencyRangeStart: number;
+    latencyRangeEnd: number;
+    [key: string]: any;
+  };
+}
+
+export default function LatencyForm(props: LatencyFormProps) {
+  const { formType, address, port, protocol, config, baseUrl } = props;
   const assaultType = 'com.networknt.chaos.LatencyAssaultHandler';
 
-  const [endpoint, setEndpoint] = useState();
-  const [requests, setRequests] = useState();
+  const [endpoint, setEndpoint] = useState('');
+  const [requests, setRequests] = useState('');
 
-  const [enabled, setEnabled] = useState(props.config['enabled']);
-  const [bypass, setBypass] = useState(props.config['bypass']);
-  const [level, setLevel] = useState(props.config['level']);
-  const [latencyRangeStart, setLatencyRangeStart] = useState(
-    props.config['latencyRangeStart']
-  );
-  const [latencyRangeEnd, setLatencyRangeEnd] = useState(
-    props.config['latencyRangeEnd']
-  );
+  const [enabled, setEnabled] = useState(config.enabled);
+  const [bypass, setBypass] = useState(config.bypass);
+  const [level, setLevel] = useState(config.level);
+  const [latencyRangeStart, setLatencyRangeStart] = useState(config.latencyRangeStart);
+  const [latencyRangeEnd, setLatencyRangeEnd] = useState(config.latencyRangeEnd);
 
-  const handleEndpointChange = (e) => {
-    setEndpoint(e.target.value);
-  };
-
-  const handleChangeRequests = (e) => {
-    setRequests(e.target.value);
-  };
-
-  const handleEnabledChange = (e) => {
-    setEnabled(e.target.value);
-  };
-
-  const handleBypassChange = (e) => {
-    setBypass(e.target.value);
-  };
-
-  const handleLevelChange = (e) => {
-    setLevel(e.target.value);
-  };
-
-  const handleLatencyRangeEndChange = (e) => {
-    setLatencyRangeEnd(e.target.value);
-  };
-
-  const handleLatencyRangeStartChange = (e) => {
-    setLatencyRangeStart(e.target.value);
-  };
-
-  const handleLatencySubmit = (event) => {
+  const handleLatencySubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const headers = {
       Authorization: 'Basic ' + localStorage.getItem('user'),
     };
-    let url;
-    let body;
+    let url = '';
+    let body = '';
     if (formType === 'initAssault') {
-      url = props.baseUrl + '/services/chaosmonkey/assault';
+      url = baseUrl + '/services/chaosmonkey/assault';
       body = JSON.stringify({
-        protocol: protocol,
-        address: address,
-        assaultType: assaultType,
-        port: port,
-        endpoint: endpoint,
-        requests: requests,
+        protocol,
+        address,
+        assaultType,
+        port,
+        endpoint,
+        requests,
       });
     } else if (formType === 'configAssault') {
-      url = props.baseUrl + '/services/chaosmonkey';
+      url = baseUrl + '/services/chaosmonkey';
       body = JSON.stringify({
-        protocol: protocol,
-        port: port,
-        address: address,
-        assaultType: assaultType,
+        protocol,
+        port,
+        address,
+        assaultType,
         assaultConfig: {
-          enabled: enabled,
-          bypass: bypass,
-          level: level,
-          latencyRangeStart: latencyRangeStart,
-          latencyRangeEnd: latencyRangeEnd,
+          enabled,
+          bypass,
+          level,
+          latencyRangeStart,
+          latencyRangeEnd,
         },
       });
     }
@@ -107,248 +79,208 @@ export default function MemoryForm(props) {
     }
   };
 
-  let formTitle = '';
-  let form = <div></div>;
+  if (!assaultType || !formType) return null;
 
-  if (formType === 'initAssault') {
-    formTitle = 'Trigger';
-    form = (
-      <React.Fragment>
-        <Grid size={6}>
-          <TextField
-            type="text"
-            fullWidth
-            onChange={handleEndpointChange}
-            variant="outlined"
-            label="endpoint"
-            margin="none"
-          />
-        </Grid>
-        <Grid size={6}>
-          <TextField
-            type="number"
-            fullWidth
-            onChange={handleChangeRequests}
-            variant="outlined"
-            label="requests"
-            margin="none"
-          />
-        </Grid>
-        <Grid size={12}>
-          <TextField
-            type="text"
-            variant="filled"
-            fullWidth
-            label="assaultType"
-            disabled
-            value={assaultType}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="protcol"
-            fullWidth
-            value={protocol}
-            disabled
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="address"
-            fullWidth
-            disabled
-            value={address}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="port"
-            fullWidth
-            disabled
-            value={port}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-      </React.Fragment>
-    );
-  } else if (formType === 'configAssault') {
-    formTitle = 'Configuration';
-    form = (
-      <React.Fragment>
-        <Grid size={12}>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Switch
-                  onChange={handleEnabledChange}
-                  defaultChecked={props.config['enabled']}
-                  color="primary"
+  const formTitle = formType === 'initAssault' ? 'Trigger' : 'Configuration';
+
+  return (
+    <Box>
+      <CssBaseline />
+      <Box
+        component="form"
+        noValidate
+        onSubmit={handleLatencySubmit}
+        sx={{ width: '100%', mt: 1 }}
+      >
+        <Paper sx={{ p: 2 }}>
+          <Grid container spacing={2} alignItems="center" justifyContent="center">
+            <Grid size={12}>
+              <Typography variant="h4" component="h1" align="left" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                Latency Assault {formTitle} Form
+                <ChaosInfoPopper
+                  formType={formType}
+                  handlerName="Latency Assault Handler"
                 />
-              }
-              label="Enabled"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  onChange={handleBypassChange}
-                  defaultChecked={props.config['bypass']}
-                  color="primary"
-                />
-              }
-              label="Bypass"
-            />
-          </FormGroup>
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="number"
-            variant="outlined"
-            fullWidth
-            required
-            onChange={handleLevelChange}
-            defaultValue={props.config['level']}
-            label="Level"
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="number"
-            variant="outlined"
-            fullWidth
-            defaultValue={props.config['latencyRangeStart']}
-            onChange={handleLatencyRangeStartChange}
-            required
-            label="latencyRangeStart"
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="number"
-            variant="outlined"
-            fullWidth
-            onChange={handleLatencyRangeEndChange}
-            defaultValue={props.config['latencyRangeEnd']}
-            required
-            label="latencyRangeEnd"
-            margin="none"
-          />
-        </Grid>
-        <Grid size={12}>
-          <TextField
-            type="text"
-            variant="filled"
-            fullWidth
-            label="assaultType"
-            defaultValue={assaultType}
-            disabled
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="protcol"
-            fullWidth
-            disabled
-            value={protocol}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="address"
-            fullWidth
-            disabled
-            value={address}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-        <Grid size={4}>
-          <TextField
-            type="text"
-            variant="filled"
-            label="port"
-            disabled
-            fullWidth
-            value={port}
-            inputProps={{ readOnly: true }}
-            margin="none"
-          />
-        </Grid>
-      </React.Fragment>
-    );
-  }
-  let nullForm = Boolean(assaultType === '' || formType === '');
-  if (!nullForm) {
-    return (
-      <div>
-        <CssBaseline />
-        <form
-          className={classes.form}
-          noValidate
-          onSubmit={handleLatencySubmit}
-        >
-          <Paper style={{ padding: 16 }}>
-            <Grid
-              container
-              alignItems="center"
-              justifyContent="center"
-              spacing={2}
-              direction="row"
-            >
-              <Grid size={12} style={{ padding: 0, margin: 0 }}>
-                <Typography
-                  variant="h4"
-                  component="h1"
-                  align="left"
-                  gutterBottom
-                >
-                  Latency Assault {formTitle} Form
-                  <ChaosInfoPopper
-                    formType={formType}
-                    handlerName="Latency Assault Handler"
-                  />
-                </Typography>
-              </Grid>
-              {form}
-              <Grid size={3}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  className={classes.submit}
-                >
-                  Go
-                </Button>
-              </Grid>
+              </Typography>
             </Grid>
-          </Paper>
-        </form>
-      </div>
-    );
-  } else {
-    return <div></div>;
-  }
+
+            {formType === 'initAssault' ? (
+              <>
+                <Grid size={6}>
+                  <TextField
+                    fullWidth
+                    onChange={(e) => setEndpoint(e.target.value)}
+                    variant="outlined"
+                    label="endpoint"
+                  />
+                </Grid>
+                <Grid size={6}>
+                  <TextField
+                    type="number"
+                    onChange={(e) => setRequests(e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    label="requests"
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    variant="filled"
+                    fullWidth
+                    label="assaultType"
+                    disabled
+                    value={assaultType}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="protocol"
+                    fullWidth
+                    value={protocol}
+                    disabled
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="address"
+                    fullWidth
+                    disabled
+                    value={address}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="port"
+                    fullWidth
+                    disabled
+                    value={port}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+              </>
+            ) : (
+              // Configuration Form
+              <>
+                <Grid size={12}>
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          onChange={(e) => setEnabled(e.target.checked)}
+                          defaultChecked={config.enabled}
+                          color="primary"
+                        />
+                      }
+                      label="Enabled"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          onChange={(e) => setBypass(e.target.checked)}
+                          defaultChecked={config.bypass}
+                          color="primary"
+                        />
+                      }
+                      label="Bypass"
+                    />
+                  </FormGroup>
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    type="number"
+                    variant="outlined"
+                    fullWidth
+                    required
+                    onChange={(e) => setLevel(Number(e.target.value))}
+                    defaultValue={config.level}
+                    label="Level"
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    type="number"
+                    variant="outlined"
+                    fullWidth
+                    defaultValue={config.latencyRangeStart}
+                    onChange={(e) => setLatencyRangeStart(Number(e.target.value))}
+                    required
+                    label="latencyRangeStart"
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    type="number"
+                    variant="outlined"
+                    fullWidth
+                    onChange={(e) => setLatencyRangeEnd(Number(e.target.value))}
+                    defaultValue={config.latencyRangeEnd}
+                    required
+                    label="latencyRangeEnd"
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    variant="filled"
+                    fullWidth
+                    label="assaultType"
+                    defaultValue={assaultType}
+                    disabled
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="protocol"
+                    fullWidth
+                    disabled
+                    value={protocol}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="address"
+                    fullWidth
+                    disabled
+                    value={address}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+                <Grid size={4}>
+                  <TextField
+                    variant="filled"
+                    label="port"
+                    disabled
+                    fullWidth
+                    value={port}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+              </>
+            )}
+
+            <Grid size={3}>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{ mt: 3, mb: 2 }}
+              >
+                Go
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Box>
+    </Box>
+  );
 }

@@ -203,48 +203,8 @@ export default function Service() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'details', header: 'Details', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Details">
-            <IconButton onClick={() => navigate('/app/apiDetail', { state: { service: row.original } })}>
-              <DetailsIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Api">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.apiId}>
-              {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Api">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'clients', header: 'Clients', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="OAuth Clients">
-            <IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-              <AirlineSeatReclineNormalIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -263,7 +223,31 @@ export default function Service() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.apiId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Details">
+          <IconButton onClick={() => navigate('/app/apiDetail', { state: { service: row.original } })}>
+            <DetailsIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Update Api">
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.apiId}>
+            {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="OAuth Clients">
+          <IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+            <AirlineSeatReclineNormalIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Api">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createApi')}>
         Create New Api

@@ -26,6 +26,9 @@ type ProviderClientType = {
   hostId: string;
   clientId: string;
   providerId: string;
+  clientName?: string;
+  appId?: string;
+  apiId?: string;
   active: boolean;
   updateUser?: string;
   updateTs?: string;
@@ -145,9 +148,12 @@ export default function ProviderClient() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProviderClientType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host ID' },
-      { accessorKey: 'clientId', header: 'Client ID' },
-      { accessorKey: 'providerId', header: 'Provider ID' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'clientId', header: 'Client Id' },
+      { accessorKey: 'providerId', header: 'Provider Id' },
+      { accessorKey: 'clientName', header: 'Client Name' },
+      { accessorKey: 'appId', header: 'App Id' },
+      { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Ts', Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '' },
       {
@@ -156,10 +162,6 @@ export default function ProviderClient() {
         filterVariant: 'select',
         filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
-      },
-      {
-        id: 'delete', header: 'Remove', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Remove Client from Provider"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
     [handleDelete],
@@ -181,7 +183,14 @@ export default function ProviderClient() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.hostId}-${row.clientId}-${row.providerId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Remove Client from Provider">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -42,7 +42,7 @@ type InstanceApiPathPrefixType = {
 export default function InstanceApiPathPrefix() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userState: { host?: string } | null = useUserState();
+  const userState = useUserState();
   const host = userState?.host || '';
 
   // Contextual data from previous page, used for creating a new prefix
@@ -56,11 +56,15 @@ export default function InstanceApiPathPrefix() {
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [
       { id: 'active', value: 'true' }
-    ]
-  );
+    ];
+    if (contextData?.instanceApiId) {
+      initialFilters.push({ id: 'instanceApiId', value: contextData.instanceApiId });
+    }
+    return initialFilters;
+  });
 
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -144,9 +148,9 @@ export default function InstanceApiPathPrefix() {
     sorting,
   ]);
 
-  const handleCreate = (instanceApiId?: string) => {
+  const handleCreate = (instanceApiId?: string, instanceName?: string, productId?: string, apiId?: string, apiVersion?: string) => {
     if (instanceApiId) {
-      navigate('/app/form/createInstanceApiPathPrefix', { state: { data: { instanceApiId } } });
+      navigate('/app/form/createInstanceApiPathPrefix', { state: { data: { instanceApiId, instanceName, productId, apiId, apiVersion } } });
     } else {
       console.error("Cannot create: instanceApiId is missing from context.");
     }
@@ -242,14 +246,21 @@ export default function InstanceApiPathPrefix() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button
-        variant="contained"
-        startIcon={<AddBoxIcon />}
-        onClick={() => handleCreate(contextData?.instanceApiId)}
-        disabled={!contextData?.instanceApiId}
-      >
-        Create New Prefix
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => handleCreate(contextData?.instanceApiId, contextData?.instanceName, contextData?.productId, contextData?.apiId, contextData?.apiVersion)}
+          disabled={!contextData?.instanceApiId}
+        >
+          Create New Prefix
+        </Button>
+        {contextData?.instanceApiId && (
+          <Typography variant="subtitle1">
+            For Instance Api: <strong>{contextData.instanceApiId}</strong>
+          </Typography>
+        )}
+      </Box>
     ),
   });
 

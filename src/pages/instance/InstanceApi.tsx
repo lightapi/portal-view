@@ -14,6 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import RouteIcon from "@mui/icons-material/Route";
+import CodeOffIcon from '@mui/icons-material/CodeOff';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -31,6 +32,11 @@ type InstanceApiType = {
   instanceName?: string;
   productId?: string;
   productVersion?: string;
+  serviceId?: string;
+  apiType?: string;
+  protocol?: string;
+  envTag?: string;
+  targetHost?: string;
   apiVersionId: string;
   apiId?: string;
   apiVersion?: string;
@@ -59,7 +65,7 @@ export default function InstanceApi() {
     ];
     if (initialData.instanceApiId) initialFilters.push({ id: 'instanceApiId', value: initialData.instanceApiId });
     if (initialData.instanceId) initialFilters.push({ id: 'instanceId', value: initialData.instanceId });
-    if (initialData.apiId) initialFilters.push({ id: 'apiId', value: initialData.apiId });
+    if (initialData.apiVersionId) initialFilters.push({ id: 'apiVersionId', value: initialData.apiVersionId });
     return initialFilters;
   });
   const [globalFilter, setGlobalFilter] = useState('');
@@ -149,19 +155,16 @@ export default function InstanceApi() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceApiType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceApiId', header: 'Instance API Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'productId', header: 'Product Id' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'productId', header: 'Product Id' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      { accessorKey: 'apiType', header: 'API Type' },
+      { accessorKey: 'protocol', header: 'Protocol' },
+      { accessorKey: 'envTag', header: 'Env Tag' },
+      { accessorKey: 'targetHost', header: 'Target Host' },
       {
         accessorKey: 'active',
         header: 'Active',
@@ -169,27 +172,16 @@ export default function InstanceApi() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
       {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Instance API">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'relations', header: 'Config/Path', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Config"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
-            <Tooltip title="Path Prefix"><IconButton onClick={() => navigate('/app/instance/instanceApiPathPrefix', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}><RouteIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
-    [handleDelete, navigate],
+    [navigate],
   );
 
   // Table instance configuration
@@ -208,20 +200,50 @@ export default function InstanceApi() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.instanceApiId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Delete Instance API">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance Api Config">
+          <IconButton color="primary" onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+            <AddToDriveIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Api Path Prefix">
+          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiPathPrefix', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+            <RouteIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance Api MCP Tool">
+          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiMcpTool', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
+            <CodeOffIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
           onClick={() => navigate('/app/form/createInstanceApi', { state: { data: initialData } })}
-          disabled={!initialData.instanceId}
+          disabled={!initialData.instanceId && !initialData.apiVersionId}
         >
           Create New Instance Api
         </Button>
         {initialData.instanceId && (
           <Typography variant="subtitle1">
             For Instance: <strong>{initialData.instanceId}</strong>
+          </Typography>
+        )}
+        {initialData.apiVersionId && (
+          <Typography variant="subtitle1">
+            For API Version: <strong>{initialData.apiVersionId}</strong>
           </Typography>
         )}
       </Box>

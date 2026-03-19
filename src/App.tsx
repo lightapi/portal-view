@@ -31,6 +31,7 @@ import ClientApp from "./pages/client/ClientApp";
 import AuthClient from "./pages/oauth/AuthClient";
 import RefreshToken from "./pages/oauth/RefreshToken";
 import AuthCode from "./pages/oauth/AuthCode";
+import ClientToken from "./pages/oauth/ClientToken";
 import RefTableAdmin from "./pages/ref/RefTableAdmin";
 import RefValue from "./pages/ref/RefValue";
 import RefLocale from "./pages/ref/RefLocale";
@@ -69,6 +70,16 @@ import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
 import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
+import ConfigSnapshotProperty from "./pages/snapshot/ConfigSnapshotProperty";
+import ConfigSnapshotFile from "./pages/snapshot/ConfigSnapshotFile";
+import ConfigSnapshotDeploymentInstanceProperty from "./pages/snapshot/ConfigSnapshotDeploymentInstanceProperty";
+import ConfigSnapshotInstanceApiProperty from "./pages/snapshot/ConfigSnapshotInstanceApiProperty";
+import ConfigSnapshotInstanceAppProperty from "./pages/snapshot/ConfigSnapshotInstanceAppProperty";
+import ConfigSnapshotInstanceAppApiProperty from "./pages/snapshot/ConfigSnapshotInstanceAppApiProperty";
+import ConfigSnapshotInstanceProperty from "./pages/snapshot/ConfigSnapshotInstanceProperty";
+import ConfigSnapshotEnvironmentProperty from "./pages/snapshot/ConfigSnapshotEnvironmentProperty";
+import ConfigSnapshotProductProperty from "./pages/snapshot/ConfigSnapshotProductProperty";
+import ConfigSnapshotProductVersionProperty from "./pages/snapshot/ConfigSnapshotProductVersionProperty";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
@@ -119,6 +130,8 @@ import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
+import InstanceApiMcpTool from "./pages/instance/InstanceApiMcpTool";
+import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/genai/WfDefinition";
 import Worklist from "./pages/genai/Worklist";
 import ProcessInfo from "./pages/genai/ProcessInfo";
@@ -136,6 +149,10 @@ import SessionMemory from "./pages/genai/SessionMemory";
 import UserMemory from "./pages/genai/UserMemory";
 import AgentMemory from "./pages/genai/AgentMemory";
 import OrgMemory from "./pages/genai/OrgMemory";
+import PromotionExport from "./pages/promotion/PromotionExport";
+import PromotionImport from "./pages/promotion/PromotionImport";
+import PromotionHistory from "./pages/promotion/PromotionHistory";
+import PromotionDiffView from "./pages/promotion/PromotionDiffView";
 import { useEffect } from "react";
 
 const RedirectWithQuery = ({ to }: { to: string }) => {
@@ -251,6 +268,7 @@ const App = () => {
           <Route path="oauth/authClient" element={<AuthClient />} />
           <Route path="oauth/refreshToken" element={<RefreshToken />} />
           <Route path="oauth/authCode" element={<AuthCode />} />
+          <Route path="oauth/clientToken" element={<ClientToken />} />
           <Route path="category/admin" element={<Category />} />
           <Route path="tag/admin" element={<TagAdmin />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />
@@ -262,6 +280,7 @@ const App = () => {
           <Route path="schema/admin" element={<SchemaAdmin />} />
           <Route path="schedule/admin" element={<ScheduleAdmin />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
+          <Route path="ruleDetail" element={<RuleDetail />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />
           <Route path="covid/deleteCity" element={<DeleteCity />} />
@@ -309,6 +328,46 @@ const App = () => {
             path="config/configSnapshot"
             element={<ConfigSnapshot />}
           />
+          <Route
+            path="config/configSnapshotProperty"
+            element={<ConfigSnapshotProperty />}
+          />
+          <Route
+            path="config/configSnapshotFile"
+            element={<ConfigSnapshotFile />}
+          />
+          <Route
+            path="config/configSnapshotDeploymentInstanceProperty"
+            element={<ConfigSnapshotDeploymentInstanceProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceApiProperty"
+            element={<ConfigSnapshotInstanceApiProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceAppProperty"
+            element={<ConfigSnapshotInstanceAppProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceAppApiProperty"
+            element={<ConfigSnapshotInstanceAppApiProperty />}
+          />
+          <Route
+            path="config/configSnapshotInstanceProperty"
+            element={<ConfigSnapshotInstanceProperty />}
+          />
+          <Route
+            path="config/configSnapshotEnvironmentProperty"
+            element={<ConfigSnapshotEnvironmentProperty />}
+          />
+          <Route
+            path="config/configSnapshotProductProperty"
+            element={<ConfigSnapshotProductProperty />}
+          />
+          <Route
+            path="config/configSnapshotProductVersionProperty"
+            element={<ConfigSnapshotProductVersionProperty />}
+          />
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
           <Route path="controller/info" element={<ServerInfo />} />
@@ -330,6 +389,10 @@ const App = () => {
           <Route
             path="instance/InstanceApiPathPrefix"
             element={<InstanceApiPathPrefix />}
+          />
+          <Route
+            path="instance/InstanceApiMcpTool"
+            element={<InstanceApiMcpTool />}
           />
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
           <Route path="instance/InstanceAppApi" element={<InstanceAppApi />} />
@@ -358,6 +421,10 @@ const App = () => {
           <Route path="genai/UserMemory" element={<UserMemory />} />
           <Route path="genai/AgentMemory" element={<AgentMemory />} />
           <Route path="genai/OrgMemory" element={<OrgMemory />} />
+          <Route path="promotion/export" element={<PromotionExport />} />
+          <Route path="promotion/import" element={<PromotionImport />} />
+          <Route path="promotion/history" element={<PromotionHistory />} />
+          <Route path="promotion/diff" element={<PromotionDiffView />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />

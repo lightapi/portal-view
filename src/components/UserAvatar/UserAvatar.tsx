@@ -1,25 +1,30 @@
-import { useTheme } from '@mui/styles';
-import React from 'react';
-// components
-import { Typography } from '../Wrappers/Wrappers';
-// styles
-import useStyles from './styles';
+import { Box, Typography } from "@mui/material";
+import React from "react";
 
-export default function UserAvatar({ color = 'primary', ...props }) {
-  var classes = useStyles();
-  var theme = useTheme();
+interface UserAvatarProps {
+  color?: string;
+  name: string;
+}
 
-  var letters = props.name
-    .split(' ')
+export default function UserAvatar({ color = "primary", name }: UserAvatarProps) {
+  const letters = name
+    .split(" ")
     .map((word) => word[0])
-    .join('');
+    .join("");
 
   return (
-    <div
-      className={classes.avatar}
-      style={{ backgroundColor: theme.palette[color].main }}
+    <Box
+      sx={{
+        width: 30,
+        height: 30,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "50%",
+        backgroundColor: (theme) => (theme.palette as any)[color].main,
+      }}
     >
-      <Typography className={classes.text}>{letters}</Typography>
-    </div>
+      <Typography sx={{ color: "white" }}>{letters}</Typography>
+    </Box>
   );
 }

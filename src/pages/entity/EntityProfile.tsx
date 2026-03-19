@@ -1,15 +1,17 @@
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 import Widget from '../../components/Widget/Widget';
 import { useUserState } from '../../contexts/UserContext';
 import { useApiGet } from '../../hooks/useApiGet';
-import useStyles from './styles';
+import { useNavigate } from 'react-router-dom';
 
-export default function EntityProfile(props) {
-  const classes = useStyles();
+export default function EntityProfile() {
+  const navigate = useNavigate();
   const { email } = useUserState();
-  //console.log("isAuthenticated = " + isAuthenticated + " userId = " + userId);
+  
   const cmd = {
     host: 'lightapi.net',
     service: 'covid',
@@ -25,75 +27,83 @@ export default function EntityProfile(props) {
 
   const deleteEntity = () => {
     if (window.confirm('Are you sure you want to delete the entity?')) {
-      //console.log("confirmed");
-      props.history.push({
-        pathname: '/app/covid/deleteEntity',
+      navigate('/app/covid/deleteEntity', {
         state: { data },
       });
     }
   };
 
   const updateEntity = () => {
-    //console.log("updateEntity is called");
     if (
       window.confirm(
         'Updating category and subcategory will remove the Website and Status.'
       )
     ) {
-      props.history.push({
-        pathname: '/app/form/updateCovidEntity',
+      navigate('/app/form/updateCovidEntity', {
         state: { data },
       });
     }
   };
 
   const createEntity = () => {
-    //console.log("createEntity is called");
-    props.history.push('/app/form/createCovidEntity');
+    navigate('/app/form/createCovidEntity');
+  };
+
+  const buttonSx = {
+    '& > button': {
+      m: 1,
+    },
   };
 
   let buttons;
   if (data) {
     buttons = (
-      <div className={classes.button}>
+      <Box sx={buttonSx}>
         <Button variant="contained" color="primary" onClick={updateEntity}>
           Update
         </Button>
         <Button variant="contained" color="primary" onClick={deleteEntity}>
           Delete
         </Button>
-      </div>
+      </Box>
     );
   } else {
     buttons = (
-      <div className={classes.button}>
+      <Box sx={buttonSx}>
         <Button variant="contained" color="primary" onClick={createEntity}>
           Create
         </Button>
-      </div>
+      </Box>
     );
   }
 
   let wait;
   if (isLoading) {
     wait = (
-      <div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else {
     wait = (
       <Widget
         title="Entity Profile"
         upperTitle
-        bodyClass={classes.fullHeightBody}
-        className={classes.card}
+        sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
+        bodySx={{
+          display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
       >
         {buttons}
-        <pre>{data ? JSON.stringify(data, null, 2) : error}</pre>
+        <Box component="pre" sx={{ overflowX: 'auto', p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+          {data ? JSON.stringify(data, null, 2) : error}
+        </Box>
       </Widget>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  return <Box className="App">{wait}</Box>;
 }

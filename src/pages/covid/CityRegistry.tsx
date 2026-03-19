@@ -1,35 +1,44 @@
 import Button from '@mui/material/Button';
+import { Box } from '@mui/material';
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
-import useStyles from './styles';
 
-export default function CityRegistry(props) {
-  const classes = useStyles();
-
-  console.log('props = ', props);
-  console.log('error = ', props.location.state.error);
-  const error = props.location.state.error;
+export default function CityRegistry() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const error = location.state?.error;
 
   const createCityMap = () => {
-    console.log('createCity is called');
-    props.history.push('/app/form/createCityMap');
+    navigate('/app/form/createCityMap');
   };
 
   return (
-    <div>
+    <Box>
       <Widget
         title="City Map"
         upperTitle
-        bodyClass={classes.fullHeightBody}
-        className={classes.card}
+        sx={{
+          minHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        bodyStyle={{
+          display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
       >
-        <div className={classes.button}>
+        <Box sx={{ '& > *': { m: 1 } }}>
           <Button variant="contained" color="primary" onClick={createCityMap}>
             Create
           </Button>
-        </div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
+        </Box>
+        <Box component="pre" sx={{ overflow: 'auto', mt: 2 }}>
+          {JSON.stringify(error, null, 2)}
+        </Box>
       </Widget>
-    </div>
+    </Box>
   );
 }

@@ -11,13 +11,12 @@ import classNames from 'classnames';
 import React, { useState } from 'react';
 import { useSiteDispatch, useSiteState } from '../../contexts/SiteContext';
 
-export default function HomeMenu(props) {
-  var classes = props.classes;
-  const [homeMenu, setHomeMenu] = useState(null);
-  var siteDispatch = useSiteDispatch();
-  const { site } = useSiteState();
-  //console.log("site = ", site);
-  const changeMenu = (menu) => {
+export default function HomeMenu(props: any) {
+  const [homeMenu, setHomeMenu] = useState<null | HTMLElement>(null);
+  var siteDispatch: any = useSiteDispatch();
+  const { site }: any = useSiteState();
+
+  const changeMenu = (menu: string) => {
     siteDispatch({ type: 'UPDATE_MENU', menu });
   };
 
@@ -28,104 +27,122 @@ export default function HomeMenu(props) {
           <IconButton
             aria-haspopup="true"
             color="inherit"
-            className={classes.headerMenuButton}
+            sx={{ ml: 2, p: 0.5 }}
             aria-controls="home-menu"
             onClick={(e) => setHomeMenu(e.currentTarget)}
             size="large">
-            <HomeIcon classes={{ root: classes.headerIcon }} />
+            <HomeIcon sx={{ fontSize: 28 }} />
           </IconButton>
           <Menu
-            id="profile-menu"
+            id="home-menu"
             open={Boolean(homeMenu)}
             anchorEl={homeMenu}
             onClose={() => setHomeMenu(null)}
-            className={classes.headerMenu}
-            classes={{ paper: classes.profileMenu }}
+            sx={{ mt: 7 }}
+            PaperProps={{ sx: { minWidth: 265 } }}
             disableAutoFocusItem
           >
             <div>
               {site.home && site.home.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('home');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <HomeIcon className={classes.profileMenuIcon} /> Home
+                  <HomeIcon sx={{ mr: 2, color: 'text.hint' }} /> Home
                 </MenuItem>
               ) : null}
               {site.about && site.about.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('about');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <Info className={classes.profileMenuIcon} /> About
+                  <Info sx={{ mr: 2, color: 'text.hint' }} /> About
                 </MenuItem>
               ) : null}
               {site.catalog && site.catalog.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('catalog');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <ShoppingBasket className={classes.profileMenuIcon} /> Catalog
+                  <ShoppingBasket sx={{ mr: 2, color: 'text.hint' }} /> Catalog
                 </MenuItem>
               ) : null}
               {site.reservation && site.reservation.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('reservation');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <EventSeat className={classes.profileMenuIcon} /> Reservation
+                  <EventSeat sx={{ mr: 2, color: 'text.hint' }} /> Reservation
                 </MenuItem>
               ) : null}
               {site.blog && site.blog.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('blog');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <Book className={classes.profileMenuIcon} /> Blog
+                  <Book sx={{ mr: 2, color: 'text.hint' }} /> Blog
                 </MenuItem>
               ) : null}
               {site.contact && site.contact.render ? (
                 <MenuItem
-                  className={classNames(
-                    classes.profileMenuItem,
-                    classes.headerMenuItem
-                  )}
+                  sx={{
+                    color: 'text.hint',
+                    '&:hover, &:focus': {
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                    },
+                  }}
                   onClick={() => {
                     changeMenu('contact');
-                    setHomeMenu(false);
+                    setHomeMenu(null);
                   }}
                 >
-                  <ContactMail className={classes.profileMenuIcon} /> Contact
+                  <ContactMail sx={{ mr: 2, color: 'text.hint' }} /> Contact
                 </MenuItem>
               ) : null}
             </div>

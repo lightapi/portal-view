@@ -1,75 +1,78 @@
 import Fab from '@mui/material/Fab';
-import { makeStyles } from '@mui/styles';
+import { Box } from '@mui/material';
 import React from 'react';
 import { useSiteDispatch } from '../../contexts/SiteContext';
 
-/*
-For independent compnent, use the makeStyles and have a chance to override the style using data from the
-API. 
-*/
+interface HomeProps {
+  background: string;
+  name: string;
+  title: string;
+  buttons: { menu: string; label: string }[];
+  nameSize?: string;
+  titleSize?: string;
+}
 
-const useStyles = makeStyles({
-  home: {
-    height: '100vh',
-    backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'top center',
-  },
-  homeContent: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    padding: '40px',
-  },
-  homeName: (props) => ({
-    position: 'absolute',
-    top: '30%',
-    textAlign: 'center',
-    fontSize: props.nameSize,
-    fontWeight: 'bold',
-    fontStyle: 'italic',
-    color: 'white',
-    textShadow: '3px 3px 6px #000000',
-  }),
-  homeTitle: (props) => ({
-    position: 'absolute',
-    top: '50%',
-    textAlign: 'center',
-    fontSize: props.titleSize,
-    fontWeight: 'bold',
-    color: 'white',
-    font: 'normal normal normal 56px/1.4em lulo-clean-w01-one-bold,sans-serif',
-    letterSpacing: '6px',
-  }),
-});
+export default function Home(props: HomeProps) {
+  const siteDispatch = useSiteDispatch();
 
-export default function Home(props) {
-  const styleProps = {
-    nameSize: props.nameSize || '110px',
-    titleSize: props.titleSize || '70px',
-  };
-  var classes = useStyles(styleProps);
-  var siteDispatch = useSiteDispatch();
-
-  const onButtonClick = (menu) => {
+  const onButtonClick = (menu: string) => {
     siteDispatch({ type: 'UPDATE_MENU', menu });
   };
 
+  const nameSize = props.nameSize || '110px';
+  const titleSize = props.titleSize || '70px';
+
   return (
-    <div
-      className={classes.home}
-      style={{
-        backgroundImage: `url(${props.background})`,
+    <Box
+      sx={{
+        height: '100vh',
         backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'top center',
+        backgroundImage: `url(${props.background})`,
         overflow: 'hidden',
       }}
     >
-      <div className={classes.homeContent}>
-        <div className={classes.homeName}>{props.name}</div>
-        <div className={classes.homeTitle}>{props.title}</div>
-        <div>
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          alignItems: 'center',
+          padding: '40px',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '30%',
+            textAlign: 'center',
+            fontSize: nameSize,
+            fontWeight: 'bold',
+            fontStyle: 'italic',
+            color: 'white',
+            textShadow: '3px 3px 6px #000000',
+          }}
+        >
+          {props.name}
+        </Box>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            textAlign: 'center',
+            fontSize: titleSize,
+            fontWeight: 'bold',
+            color: 'white',
+            font: 'normal normal normal 56px/1.4em lulo-clean-w01-one-bold,sans-serif',
+            letterSpacing: '6px',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+          }}
+        >
+          {props.title}
+        </Box>
+        <Box sx={{ mt: 'auto', mb: 10, display: 'flex', gap: 2 }}>
           {props.buttons.map((button) => (
             <Fab
               variant="extended"
@@ -80,8 +83,8 @@ export default function Home(props) {
               {button.label}
             </Fab>
           ))}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }

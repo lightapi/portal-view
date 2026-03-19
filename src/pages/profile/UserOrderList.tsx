@@ -2,50 +2,39 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ReplyIcon from '@mui/icons-material/Reply';
-import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
-import React from 'react';
+import {
+  Box,
+  Collapse,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { timeConversion } from '../../utils';
 
-const useRowStyles = makeStyles({
-  root: {
-    '& > *': {
-      borderBottom: 'unset',
-    },
-  },
-});
+interface RowProps {
+  row: any;
+}
 
-function Row(props) {
-  console.log(props);
-  const { row } = props;
-  const [open, setOpen] = React.useState(false);
-  const classes = useRowStyles();
+function Row({ row }: RowProps) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  const replyMessage = (userId, subject) => {
-    props.history.push({
-      pathname: '/app/form/privateMessage',
+  const replyMessage = (userId: string, subject: string) => {
+    navigate('/app/form/privateMessage', {
       state: { data: { userId, subject } },
     });
   };
 
-  const deleteMessage = () => {
-    if (window.confirm('Are you sure you want to delete the message?')) {
-      console.log('delete the entry here');
-    }
-  };
-
   return (
     <React.Fragment>
-      <TableRow className={classes.root}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
           <IconButton
             aria-label="expand row"
@@ -61,15 +50,16 @@ function Row(props) {
         <TableCell align="left">
           <ReplyIcon
             onClick={() => replyMessage(row.merchantUserId, row.orderId)}
+            sx={{ cursor: 'pointer', mr: 1, verticalAlign: 'middle' }}
           />
           {row.merchantUserId}
         </TableCell>
         <TableCell align="left">{row.orderId}</TableCell>
         <TableCell align="left">{row.passCode}</TableCell>
         <TableCell align="left">
-          {row.delivery.pickupTime} {row.delivery.instruction}
+          {row.delivery?.pickupTime} {row.delivery?.instruction}
         </TableCell>
-        <TableCell align="left">{row.payment.method}</TableCell>
+        <TableCell align="left">{row.payment?.method}</TableCell>
         <TableCell align="right">
           <CancelIcon
             onClick={() =>
@@ -80,13 +70,14 @@ function Row(props) {
                 row.orderId
               )
             }
+            sx={{ cursor: 'pointer' }}
           />
         </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box margin={1}>
+            <Box sx={{ margin: 1 }}>
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
@@ -97,7 +88,7 @@ function Row(props) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.items.map((item) => (
+                  {row.items?.map((item: any) => (
                     <TableRow key={item.sku}>
                       <TableCell component="th" scope="row">
                         {item.sku}
@@ -117,9 +108,11 @@ function Row(props) {
   );
 }
 
-export default function UserOrderList(props) {
-  const { orders } = props;
-  console.log('orders = ', orders);
+interface UserOrderListProps {
+  orders: any[];
+}
+
+export default function UserOrderList({ orders }: UserOrderListProps) {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -136,8 +129,8 @@ export default function UserOrderList(props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {props.orders.map((order, index) => (
-            <Row history={props.history} key={index} row={order} />
+          {orders && orders.map((order: any, index: number) => (
+            <Row key={index} row={order} />
           ))}
         </TableBody>
       </Table>

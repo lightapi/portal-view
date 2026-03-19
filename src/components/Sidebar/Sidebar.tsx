@@ -28,6 +28,7 @@ import ProductionQuantityLimitsIcon from "@mui/icons-material/ProductionQuantity
 import SettingsInputComponentIcon from "@mui/icons-material/SettingsInputComponent";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
 import AccessibleIcon from "@mui/icons-material/Accessible";
 import EventIcon from "@mui/icons-material/Event";
@@ -42,9 +43,8 @@ import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
-import { Drawer, IconButton, List } from "@mui/material";
-import { useTheme } from "@mui/styles";
-import classNames from "classnames";
+import { IconButton, List } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 // context
 import {
@@ -56,7 +56,13 @@ import { useUserState } from "../../contexts/UserContext";
 // components
 import SidebarLink from "./components/SidebarLink/SidebarLink";
 // styles
-import useStyles from "./styles";
+import {
+  StyledDrawer,
+  DrawerToolbar,
+  MobileBackButtonWrapper,
+  SidebarIcon,
+  SidebarListWrapper,
+} from "./SidebarStyles";
 
 const structure = [
   { id: 0, label: "Dashboard", link: "/app/dashboard", icon: <HomeIcon /> },
@@ -144,18 +150,6 @@ const structure = [
   },
   { id: 70, label: "Support", link: "/app/support", icon: <HelpIcon /> },
   { id: 80, label: "FAQ", link: "/app/faq", icon: <FAQIcon /> },
-  // {
-  //   id: 85,
-  //   label: 'Tool',
-  //   link: '/app/tool',
-  //   icon: <HandymanIcon />,
-  //   children: [
-  //     { label: 'JSON Compare', link: '/app/tool/jsonCompare' },
-  //     { label: 'YAML Compare', link: '/app/tool/yamlCompare' },
-  //     { label: 'JSON Normalize', link: '/app/tool/jsonNormalize' },
-  //     { label: 'YAML Normalize', link: '/app/tool/yamlNormalize' },
-  //   ],
-  // },
   { id: 85, type: "divider", role: "admin" },
   {
     id: 90,
@@ -337,6 +331,18 @@ const structure = [
     icon: <ScheduleIcon />,
   },
   {
+    id: 128,
+    label: "Promotion",
+    role: "admin",
+    link: "/app/promotion/export",
+    icon: <CompareArrowsIcon />,
+    children: [
+      { label: "Export", link: "/app/promotion/export" },
+      { label: "Import", link: "/app/promotion/import" },
+      { label: "History", link: "/app/promotion/history" },
+    ],
+  },
+  {
     id: 130,
     label: "News Admin",
     role: "admin",
@@ -436,11 +442,10 @@ const structure = [
 ];
 
 function Sidebar() {
-  var classes = useStyles();
   var theme = useTheme();
 
   // global
-  var { isSidebarOpened } = useLayoutState();
+  var { isSidebarOpened } = useLayoutState() as any;
   var layoutDispatch = useLayoutDispatch();
   var { roles } = useUserState();
 
@@ -456,45 +461,34 @@ function Sidebar() {
   });
 
   return (
-    <Drawer
+    <StyledDrawer
       variant={isPermanent ? "permanent" : "temporary"}
-      className={classNames(classes.drawer, {
-        [classes.drawerOpen]: isSidebarOpened,
-        [classes.drawerClose]: !isSidebarOpened,
-      })}
-      classes={{
-        paper: classNames({
-          [classes.drawerOpen]: isSidebarOpened,
-          [classes.drawerClose]: !isSidebarOpened,
-        }),
-      }}
       open={isSidebarOpened}
     >
-      <div className={classes.toolbar} />
-      <div className={classes.mobileBackButton}>
+      <DrawerToolbar />
+      <MobileBackButtonWrapper>
         <IconButton onClick={() => toggleSidebar(layoutDispatch)} size="large">
-          <ArrowBackIcon
-            classes={{
-              root: classNames(classes.headerIcon, classes.headerIconCollapse),
-            }}
-          />
+          <SidebarIcon as={ArrowBackIcon} collapse={true} />
         </IconButton>
-      </div>
-      <List className={classes.sidebarList}>
-        {structure
-          .filter((link) => permission(link.role, roles))
-          .map((link) => (
-            <SidebarLink
-              key={link.id}
-              isSidebarOpened={isSidebarOpened}
-              {...link}
-            />
-          ))}
-      </List>
-    </Drawer>
+      </MobileBackButtonWrapper>
+      <SidebarListWrapper>
+        <List>
+          {structure
+            .filter((link) => permission(link.role, roles))
+            .map((link) => (
+              <SidebarLink
+                key={link.id}
+                isSidebarOpened={isSidebarOpened}
+                nested={false}
+                {...link}
+              />
+            ))}
+        </List>
+      </SidebarListWrapper>
+    </StyledDrawer>
   );
 
-  function permission(linkRole, userRoles) {
+  function permission(linkRole: string | undefined, userRoles: string | null) {
     if (userRoles == null) {
       if (linkRole == null) {
         return true;
@@ -516,7 +510,7 @@ function Sidebar() {
 
   function handleWindowWidthChange() {
     var windowWidth = window.innerWidth;
-    var breakpointWidth = theme.breakpoints.values.md;
+    var breakpointWidth = (theme as any).breakpoints?.values?.md || 960;
     var isSmallScreen = windowWidth < breakpointWidth;
 
     if (isSmallScreen && isPermanent) {

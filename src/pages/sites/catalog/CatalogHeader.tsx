@@ -1,26 +1,30 @@
-import { makeStyles } from '@mui/styles';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-const useStyles = makeStyles({
-  header: {
-    width: '100%',
-    height: '100px',
-    paddingLeft: '10px',
-    left: 0,
-    border: '1px solid #ccc',
-    backgroundColor: '#fa4303',
-    color: 'white',
-    lineHeight: '20px',
-  },
-});
+interface CatalogHeaderProps {
+  storeName: string;
+  storeTitle: string;
+}
 
-const CatalogHeader = (props) => {
-  var classes = useStyles();
+const CatalogHeader = ({ storeName, storeTitle }: CatalogHeaderProps) => {
   return (
-    <header className={classes.header}>
-      <h1>{props.storeName}</h1>
-      <h3>{props.storeTitle}</h3>
-    </header>
+    <Box
+      component="header"
+      sx={{
+        width: '100%',
+        minHeight: '100px',
+        padding: '20px',
+        border: '1px solid #ccc',
+        backgroundColor: '#fa4303',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
+      }}
+    >
+      <Typography variant="h4" component="h1" sx={{ m: 0 }}>{storeName}</Typography>
+      <Typography variant="h6" component="h3" sx={{ m: 0 }}>{storeTitle}</Typography>
+    </Box>
   );
 };
 

@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -185,32 +185,8 @@ export default function AgentSkill() {
                 filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => {
-                    const idKey = `${row.original.agentDefId}-${row.original.skillId}`;
-                    return (
-                        <Tooltip title="Update Agent Skill">
-                            <IconButton
-                                onClick={() => handleUpdate(row)}
-                                disabled={isUpdateLoading === idKey}
-                            >
-                                {isUpdateLoading === idKey ? (
-                                    <CircularProgress size={22} />
-                                ) : (
-                                    <SystemUpdateIcon />
-                                )}
-                            </IconButton>
-                        </Tooltip>
-                    );
-                }
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Agent Skill"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
         ],
-        [handleDelete, handleUpdate, isUpdateLoading],
+        [handleDelete, handleUpdate, navigate],
     );
 
     // Table instance configuration
@@ -229,7 +205,31 @@ export default function AgentSkill() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => `${row.agentDefId}-${row.skillId}`,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        renderRowActions: ({ row }) => {
+            const idKey = `${row.original.agentDefId}-${row.original.skillId}`;
+            return (
+                <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                    <Tooltip title="Update Agent Skill">
+                        <IconButton
+                            onClick={() => handleUpdate(row)}
+                            disabled={isUpdateLoading === idKey}
+                        >
+                            {isUpdateLoading === idKey ? (
+                                <CircularProgress size={22} />
+                            ) : (
+                                <SystemUpdateIcon />
+                            )}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Agent Skill">
+                        <IconButton color="error" onClick={() => handleDelete(row)}>
+                            <DeleteForeverIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
+            );
+        },
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAgentSkill')}>
                 Create New Agent Skill

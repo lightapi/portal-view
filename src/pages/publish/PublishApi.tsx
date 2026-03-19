@@ -1,4 +1,3 @@
-import Button from '@mui/material/Button';
 import React, {
   useCallback,
   useEffect,
@@ -6,14 +5,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import { Box, Typography } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import { SchemaForm, utils } from 'react-schema-form';
 import { useSiteDispatch, useSiteState } from '../../contexts/SiteContext';
 import forms from '../../data/Forms';
-import useStyles from './styles';
 
-var spec = null;
-const baseStyle = {
+// Global spec variable used in the original file
+var spec: any = null;
+
+const baseStyle: React.CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
@@ -41,31 +44,38 @@ const rejectStyle = {
   borderColor: '#ff1744',
 };
 
-function Summary(props) {
-  const { step, classes } = props;
+interface StepProps {
+  step: number;
+}
 
+function Summary({ step }: StepProps) {
   if (step !== 4) {
     return null;
   }
 
-  return <div>Summary</div>;
+  return <Box>Summary</Box>;
 }
 
-function FileUpload(props) {
-  const { step, classes } = props;
-  const [files, setFiles] = useState();
+interface FileUploadProps extends StepProps {
+  summary: () => void;
+}
 
-  const onDrop = useCallback((acceptedFiles) => {
-    let valid = false;
-    acceptedFiles.map((file) => {
+function FileUpload({ step }: FileUploadProps) {
+  const [files, setFiles] = useState<File[]>();
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    acceptedFiles.forEach((file) => {
       if (acceptedFiles.length === 1 && file.name === 'openapi.yaml') {
         const fr = new FileReader();
+        fr.onload = (e) => {
+          // Process file content if needed
+        };
         fr.readAsText(file);
       }
-      return false;
     });
     setFiles(acceptedFiles);
   }, []);
+
   const {
     getRootProps,
     getInputProps,
@@ -89,42 +99,44 @@ function FileUpload(props) {
   }
 
   return (
-    <div className="container">
-      <div {...getRootProps({ style })}>
+    <Box className="container">
+      <Box {...getRootProps({ style })}>
         <input {...getInputProps()} />
         {isDragActive ? (
-          <p>Drop the openapi.yaml here ...</p>
+          <Typography>Drop the openapi.yaml here ...</Typography>
         ) : (
-          <p>
+          <Typography>
             Drag 'n' drop the openapi.yaml here, or click to select the file
-          </p>
+          </Typography>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
-function ConfigDetail(props) {
-  const { step, classes, fileUpload } = props;
-  let params = new URLSearchParams(props.location.search);
-  let style = params.get('style');
+interface ConfigDetailProps extends StepProps {
+  fileUpload: () => void;
+}
+
+function ConfigDetail({ step, fileUpload }: ConfigDetailProps) {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
   const [model, setModel] = useState({ ...useSiteState().configDetail });
   const [updated, setUpdated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  const [configDetail, setConfigDetail] = useState();
+  const [configDetail, setConfigDetail] = useState<any>();
   let siteDispatch = useSiteDispatch();
-  const mounted = useRef();
+  const mounted = useRef(false);
+
   useEffect(() => {
     if (!mounted.current) {
-      // do componentDidMount logic
       mounted.current = true;
     } else {
-      // do componentDidUpdate logic
       if (spec && !updated) {
         console.log('ConfigDetail is updated', spec);
         const domain =
           spec && spec.host ? spec.host.split('.').reverse().join('.') : '';
-        let configDetail = {
+        let newConfigDetail = {
           name: spec && spec.name ? spec.name.toLowerCase() : null,
           version: spec && spec.version ? spec.version : null,
           style: spec && spec.style ? spec.style : null,
@@ -134,32 +146,31 @@ function ConfigDetail(props) {
           handlerPackage: domain + '.handler',
           modelPackage: domain + '.model',
         };
-        setModel(configDetail);
+        setModel(newConfigDetail);
         setUpdated(true);
       }
     }
-  });
+  }, [updated]);
 
   useEffect(() => {
-    siteDispatch({ type: 'UPDATE_CONFIGDETAIL', configDetail: configDetail });
-  }, [configDetail]);
+    if (configDetail) {
+      siteDispatch({ type: 'UPDATE_CONFIGDETAIL', configDetail: configDetail });
+    }
+  }, [configDetail, siteDispatch]);
 
   if (step !== 2) {
     return null;
   }
 
   let formData = forms['configDetailForm'];
-  var buttons = [];
 
-  const onModelChange = (key, val, type) => {
+  const onModelChange = (key: string, val: any, type: string) => {
     utils.selectOrSet(key, model, val, type);
-    setModel({ ...model }); // here we must create a new object to force re-render.
+    setModel({ ...model });
   };
 
-  const onButtonClick = (item) => {
-    console.log(item);
+  const onButtonClick = (item: any) => {
     let validationResult = utils.validateBySchema(formData.schema, model);
-    console.log(validationResult);
     if (!validationResult.valid) {
       setShowErrors(true);
     } else {
@@ -170,26 +181,11 @@ function ConfigDetail(props) {
     }
   };
 
-  formData.actions.map((item, index) => {
-    buttons.push(
-      <Button
-        variant="contained"
-        className={classes.button}
-        color="primary"
-        key={index}
-        onClick={(e) => onButtonClick(item)}
-      >
-        {item.title}
-      </Button>
-    );
-    return buttons;
-  });
-
-  let title = <h2>{formData.schema.title}</h2>;
-
   return (
-    <div>
-      {title}
+    <Box>
+      <Typography variant="h5" component="h2" gutterBottom>
+        {formData.schema.title}
+      </Typography>
       <SchemaForm
         schema={formData.schema}
         form={formData.form}
@@ -197,42 +193,57 @@ function ConfigDetail(props) {
         showErrors={showErrors}
         onModelChange={onModelChange}
       />
-      {buttons}
-    </div>
+      <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+        {formData.actions.map((item: any, index: number) => (
+          <Button
+            variant="contained"
+            color="primary"
+            key={index}
+            onClick={() => onButtonClick(item)}
+          >
+            {item.title}
+          </Button>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
-function SpecDetail(props) {
-  const { step, classes, fileUpload, configDetail } = props;
-  let params = new URLSearchParams(props.location.search);
-  let style = params.get('style');
-  const [model, setModel] = useState({ ...useSiteState().specDetail, style });
+interface SpecDetailProps extends StepProps {
+  fileUpload: () => void;
+  configDetail: () => void;
+}
+
+function SpecDetail({ step, fileUpload, configDetail }: SpecDetailProps) {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  let initialStyle = searchParams.get('style');
+  const [model, setModel] = useState({ ...useSiteState().specDetail, style: initialStyle });
   const [showErrors, setShowErrors] = useState(false);
-  const [specDetail, setSpecDetail] = useState();
+  const [specDetail, setSpecDetail] = useState<any>();
 
   let siteDispatch = useSiteDispatch();
 
   useEffect(() => {
-    siteDispatch({ type: 'UPDATE_SPECDETAIL', specDetail });
-    spec = specDetail;
-  }, [specDetail]);
+    if (specDetail) {
+      siteDispatch({ type: 'UPDATE_SPECDETAIL', specDetail });
+      spec = specDetail;
+    }
+  }, [specDetail, siteDispatch]);
 
   if (step !== 1) {
     return null;
   }
 
   let formData = forms['specDetailForm'];
-  var buttons = [];
 
-  const onModelChange = (key, val, type) => {
+  const onModelChange = (key: string, val: any, type: string) => {
     utils.selectOrSet(key, model, val, type);
-    setModel({ ...model }); // here we must create a new object to force re-render.
+    setModel({ ...model });
   };
 
-  const onButtonClick = (item) => {
-    console.log(item);
+  const onButtonClick = (item: any) => {
     let validationResult = utils.validateBySchema(formData.schema, model);
-    console.log(validationResult);
     if (!validationResult.valid) {
       setShowErrors(true);
     } else {
@@ -245,46 +256,36 @@ function SpecDetail(props) {
     }
   };
 
-  formData.actions.map((item, index) => {
-    buttons.push(
-      <Button
-        variant="contained"
-        className={classes.button}
-        color="primary"
-        key={index}
-        onClick={(e) => onButtonClick(item)}
-      >
-        {item.title}
-      </Button>
-    );
-    return buttons;
-  });
-
-  let title = <h2>{formData.schema.title}</h2>;
-
   return (
-    <div>
-      {title}
+    <Box>
+      <Typography variant="h5" component="h2" gutterBottom>
+        {formData.schema.title}
+      </Typography>
       <SchemaForm
         schema={formData.schema}
         form={formData.form}
         model={model}
-        mapper={mapper}
         showErrors={showErrors}
         onModelChange={onModelChange}
       />
-      {buttons}
-    </div>
+      <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+        {formData.actions.map((item: any, index: number) => (
+          <Button
+            variant="contained"
+            color="primary"
+            key={index}
+            onClick={() => onButtonClick(item)}
+          >
+            {item.title}
+          </Button>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
-export default function PublishApi(props) {
-  var classes = useStyles();
+export default function PublishApi() {
   const [step, setStep] = useState(1);
-
-  const specDetail = () => {
-    setStep(1);
-  };
 
   const configDetail = () => {
     setStep(2);
@@ -299,22 +300,18 @@ export default function PublishApi(props) {
   };
 
   return (
-    <div>
+    <Box sx={{ p: 2 }}>
       <SpecDetail
-        {...props}
         step={step}
-        classes={classes}
         configDetail={configDetail}
         fileUpload={fileUpload}
       />
       <ConfigDetail
-        {...props}
         step={step}
-        classes={classes}
         fileUpload={fileUpload}
       />
-      <FileUpload {...props} step={step} classes={classes} summary={summary} />
-      <Summary {...props} step={step} classes={classes} />
-    </div>
+      <FileUpload step={step} summary={summary} />
+      <Summary step={step} />
+    </Box>
   );
 }
