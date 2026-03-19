@@ -5,31 +5,10 @@ import Input from '@mui/material/Input';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { makeStyles, useTheme } from '@mui/styles';
+import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import { useApiGet } from '../../hooks/useApiGet';
 import { useApiPost } from '../../hooks/useApiPost';
-
-const useStyles = makeStyles((theme) => ({
-  formControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-    maxWidth: 300,
-  },
-  chips: {
-    display: 'flex',
-    flexWrap: 'wrap',
-  },
-  chip: {
-    margin: 2,
-  },
-  noLabel: {
-    marginTop: theme.spacing(3),
-  },
-  buttons: {
-    alignItems: 'center',
-  },
-}));
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -44,49 +23,29 @@ const MenuProps = {
 
 const allRoles = ['user', 'lightapi.net', 'merchant', 'admin'];
 
-function getStyles(role, roles, theme) {
-  return {
-    fontWeight:
-      roles.indexOf(role) === -1
-        ? theme.typography.fontWeightRegular
-        : theme.typography.fontWeightMedium,
-  };
-}
-
-function EmailInput(props) {
-  const { step, classes, inputRoles } = props;
-  const [email, setEmail] = useState();
-  if (step !== 1) {
-    return null;
-  }
-
-  const onEmailChange = (event) => {
-    setEmail(event.target.value);
-  };
+function EmailInput({ step, inputRoles }: any) {
+  const [email, setEmail] = useState('');
+  if (step !== 1) return null;
 
   return (
-    <div>
-      <FormControl className={classes.formControl}>
-        <TextField id="standard-basic" label="Email" onChange={onEmailChange} />
-        <p />
-        <div className={classes.buttons}>
-          <Button
-            variant="contained"
-            className={classes.button}
-            color="primary"
-            onClick={(e) => inputRoles(email)}
-          >
-            Retrieve Roles
-          </Button>
-        </div>
+    <Box sx={{ p: 2 }}>
+      <FormControl fullWidth sx={{ maxWidth: 400 }}>
+        <TextField id="email-input" label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2 }}
+          onClick={() => inputRoles(email)}
+        >
+          Retrieve Roles
+        </Button>
       </FormControl>
-    </div>
+    </Box>
   );
 }
 
-function RolesInput(props) {
-  const { step, classes, email, updateRoles } = props;
-  const [roles, setRoles] = useState([]);
+function RolesInput({ step, email, updateRoles }: any) {
+  const [roles, setRoles] = useState<string[]>([]);
 
   const cmd = {
     host: 'lightapi.net',
@@ -97,44 +56,34 @@ function RolesInput(props) {
   };
   const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
-  const callback = (data) => {
-    //console.log("data = ", data);
+  const callback = (data: any) => {
     setRoles(data.roles.split(' '));
   };
 
-  const { isLoading, data, error } = useApiGet({ url, headers, callback });
+  const { isLoading, error }: any = useApiGet({ url, headers, callback });
 
-  if (step !== 2) {
-    return null;
-  }
+  if (step !== 2) return null;
 
-  const handleChange = (event) => {
+  const handleChange = (event: any) => {
     setRoles(event.target.value);
   };
 
-  const handleChangeMultiple = (event) => {
-    const { options } = event.target;
-    const value = [];
-    for (let i = 0, l = options.length; i < l; i += 1) {
-      if (options[i].selected) {
-        value.push(options[i].value);
-      }
-    }
-    setRoles(value);
-  };
+  if (isLoading) return <Box sx={{ p: 2 }}><CircularProgress /></Box>;
+  if (error) return <Box sx={{ p: 2 }}><pre>{JSON.stringify(error, null, 2)}</pre></Box>;
 
   return (
-    <div>
-      <FormControl className={classes.formControl}>
+    <Box sx={{ p: 2 }}>
+      <FormControl fullWidth sx={{ maxWidth: 400 }}>
         <TextField
           disabled
-          id="standard-basic"
+          id="email-display"
           label="Email"
           defaultValue={email}
+          sx={{ mb: 2 }}
         />
         <Select
-          labelId="demo-mutiple-name-label"
-          id="demo-mutiple-name"
+          labelId="roles-select-label"
+          id="roles-select"
           multiple
           value={roles}
           onChange={handleChange}
@@ -147,24 +96,20 @@ function RolesInput(props) {
             </MenuItem>
           ))}
         </Select>
-        <p />
-        <div className={classes.buttons}>
-          <Button
-            variant="contained"
-            className={classes.button}
-            color="primary"
-            onClick={(e) => updateRoles(roles)}
-          >
-            Update Roles
-          </Button>
-        </div>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2 }}
+          onClick={() => updateRoles(roles)}
+        >
+          Update Roles
+        </Button>
       </FormControl>
-    </div>
+    </Box>
   );
 }
 
-function RolesUpdate(props) {
-  const { step, classes, email, roles } = props;
+function RolesUpdate({ step, email, roles }: any) {
   const body = {
     host: 'lightapi.net',
     service: 'user',
@@ -174,72 +119,51 @@ function RolesUpdate(props) {
   };
   const url = '/portal/command';
   const headers = {};
-  const { isLoading, data, error } = useApiPost({ url, headers, body });
-  console.log(isLoading, data, error);
-  let wait;
-  if (isLoading) {
-    wait = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else {
-    wait = (
-      <div>
-        <pre>{data ? JSON.stringify(data, null, 2) : error}</pre>
-      </div>
-    );
-  }
+  const { isLoading, data, error }: any = useApiPost({ url, headers, body });
 
-  if (step !== 3) {
-    return null;
-  }
+  if (step !== 3) return null;
 
-  return <div>{wait}</div>;
+  if (isLoading) return <Box sx={{ p: 2 }}><CircularProgress /></Box>;
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <pre>{data ? JSON.stringify(data, null, 2) : (error ? JSON.stringify(error, null, 2) : 'Updating...')}</pre>
+    </Box>
+  );
 }
 
-export default function UpdateRoles(props) {
-  const classes = useStyles();
-  const theme = useTheme();
+export default function UpdateRoles() {
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState();
-  const [roles, setRoles] = useState([]);
+  const [email, setEmail] = useState('');
+  const [roles, setRoles] = useState<string[]>([]);
 
-  const inputEmail = () => {
-    setStep(1);
-  };
-
-  const inputRoles = (email) => {
-    //console.log("inputRoles email = ", email);
+  const inputRoles = (email: string) => {
     setEmail(email);
     setStep(2);
   };
 
-  const updateRoles = (roles) => {
+  const updateRoles = (roles: string[]) => {
     setRoles(roles);
     setStep(3);
   };
 
   return (
-    <div>
-      <EmailInput step={step} classes={classes} inputRoles={inputRoles} />
-      {email ? (
+    <Box>
+      <EmailInput step={step} inputRoles={inputRoles} />
+      {email && step >= 2 && (
         <RolesInput
           step={step}
-          classes={classes}
           email={email}
-          inputEmail={inputEmail}
           updateRoles={updateRoles}
         />
-      ) : null}
-      {step === 3 ? (
+      )}
+      {step === 3 && (
         <RolesUpdate
           step={step}
-          classes={classes}
           email={email}
           roles={roles}
         />
-      ) : null}
-    </div>
+      )}
+    </Box>
   );
 }

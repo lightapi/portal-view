@@ -1,18 +1,37 @@
-import { Button } from "@mui/material";
+import { Button, Box, Theme } from "@mui/material";
 import { Typography } from "../Wrappers/Wrappers";
-import useStyles from "./styles";
 
-export default function PageTitle(props) {
-  var classes = useStyles();
+interface PageTitleProps {
+  title: string;
+  button?: string;
+}
 
+export default function PageTitle(props: PageTitleProps) {
   return (
-    <div className={classes.pageTitleContainer}>
-      <Typography className={classes.typo} variant="h4" size="sm">
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        mb: 4,
+        mt: 5,
+      }}
+    >
+      <Typography
+        sx={(theme: Theme) => ({ color: theme.palette.text.secondary })}
+        variant="h4"
+        size="sm"
+      >
         {props.title}
       </Typography>
       {props.button && (
         <Button
-          classes={{ root: classes.button }}
+          sx={(theme) => ({
+            boxShadow: (theme as any).customShadows?.widget,
+            textTransform: 'none',
+            '&:active': {
+              boxShadow: (theme as any).customShadows?.widgetWide,
+            },
+          })}
           variant="contained"
           size="large"
           color="secondary"
@@ -20,6 +39,6 @@ export default function PageTitle(props) {
           {props.button}
         </Button>
       )}
-    </div>
+    </Box>
   );
 }

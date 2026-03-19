@@ -165,39 +165,6 @@ export default function RefTableAdmin() {
         accessorKey: 'updateTs', header: 'Update Time',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update">
-            <IconButton onClick={() => navigate('/app/form/updateRefTable', { state: { data: { ...row.original } } })}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'values', header: 'Values', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Manage Values">
-            <IconButton onClick={() => navigate('/app/ref/value', { state: { data: { tableId: row.original.tableId } } })}>
-              <DataObjectIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
     [handleDelete, navigate],
   );
@@ -218,7 +185,27 @@ export default function RefTableAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.tableId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update">
+          <IconButton onClick={() => navigate('/app/form/updateRefTable', { state: { data: { ...row.original } } })}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Values">
+          <IconButton onClick={() => navigate('/app/ref/value', { state: { data: { tableId: row.original.tableId } } })}>
+            <DataObjectIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRefTable')}>
         Create New Ref Table

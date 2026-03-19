@@ -191,41 +191,14 @@ export default function PositionAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Position">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.positionId}
-            >
-              {isUpdateLoading === row.original.positionId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Position"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'accessControl', header: 'Access Control', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Position Permissions"><IconButton onClick={() => navigate('/app/access/positionPermission', { state: { data: { positionId: row.original.positionId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-            <Tooltip title="Position Row Filters"><IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: { data: { positionId: row.original.positionId } } })}><KeyboardDoubleArrowDownIcon /></IconButton></Tooltip>
-            <Tooltip title="Position Column Filters"><IconButton onClick={() => navigate('/app/access/positionColFilter', { state: { data: { positionId: row.original.positionId } } })}><KeyboardDoubleArrowRightIcon /></IconButton></Tooltip>
-            <Tooltip title="Manage Users"><IconButton onClick={() => navigate('/app/access/positionUser', { state: { data: { positionId: row.original.positionId } } })}><RadarIcon /></IconButton></Tooltip>
-          </Box>
-        ),
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, navigate],
   );
 
   // Table instance configuration
@@ -244,7 +217,48 @@ export default function PositionAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.positionId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Position">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.positionId}
+          >
+            {isUpdateLoading === row.original.positionId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Position Permissions">
+          <IconButton onClick={() => navigate('/app/access/positionPermission', { state: { data: { positionId: row.original.positionId } } })}>
+            <DoNotTouchIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Position Row Filters">
+          <IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: { data: { positionId: row.original.positionId } } })}>
+            <KeyboardDoubleArrowDownIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Position Column Filters">
+          <IconButton onClick={() => navigate('/app/access/positionColFilter', { state: { data: { positionId: row.original.positionId } } })}>
+            <KeyboardDoubleArrowRightIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Users">
+          <IconButton onClick={() => navigate('/app/access/positionUser', { state: { data: { positionId: row.original.positionId } } })}>
+            <RadarIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Position">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPosition')}>
         Create New Position

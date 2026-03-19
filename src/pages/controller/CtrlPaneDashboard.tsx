@@ -17,41 +17,43 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import fetchClient from '../../utils/fetchClient';
-import { makeStyles } from '@mui/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ReactNode } from 'react';
 import { useAppState } from '../../contexts/AppContext';
-// import './Dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
-const useRowStyles = makeStyles({
-  root: {
-    '& > *': {
-      borderBottom: 'unset',
-    },
-  },
-});
+interface Node {
+  protocol: string;
+  address: string;
+  port: number;
+}
 
-function CtrlPaneDashboard(props) {
-  const { history } = props;
-  const [services, setServices] = useState(false);
+interface Services {
+  [key: string]: Node[];
+}
+
+function CtrlPaneDashboard() {
+  const [services, setServices] = useState<Services | null>(null);
   const serviceIds = services ? Object.keys(services) : [];
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { filter } = useAppState(false);
+  const { filter } = useAppState() as { filter: string };
   const filteredServiceIds = serviceIds.filter(
-    (serviceId) => serviceId.toLowerCase().includes(filter) || !filter
+    (serviceId) => serviceId.toLowerCase().includes(filter.toLowerCase()) || !filter
   );
-  const url = '/services';
 
   useEffect(() => {
+    const abortController = new AbortController();
     const fetchData = async () => {
       setLoading(true);
       try {
-        const json = await fetchClient(url);
+        const json = await fetchClient('/services', { signal: abortController.signal });
         setServices(json);
         setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        setError(error);
+      } catch (error: any) {
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+          setError(error);
+        }
       }
     };
 
@@ -62,21 +64,21 @@ function CtrlPaneDashboard(props) {
     };
   }, []);
 
-  let wait;
+  let content: ReactNode;
   if (loading) {
-    wait = (
-      <div>
+    content = (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
   } else if (error) {
-    wait = (
-      <div>
+    content = (
+      <Box sx={{ p: 3 }}>
         <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
+      </Box>
     );
   } else if (services) {
-    wait = (
+    content = (
       <TableContainer component={Paper}>
         <Table aria-label="collapsible table">
           <TableHead>
@@ -91,7 +93,6 @@ function CtrlPaneDashboard(props) {
             {filteredServiceIds.map((id, i) => (
               <Row
                 key={i}
-                history={props.history}
                 id={id}
                 nodes={services[id]}
               />
@@ -101,35 +102,37 @@ function CtrlPaneDashboard(props) {
       </TableContainer>
     );
   }
-  return <div className="App">{wait}</div>;
+  return <Box className="App">{content}</Box>;
 }
 
-function Row(props) {
-  const { id, nodes, history } = props;
+interface RowProps {
+  id: string;
+  nodes: Node[];
+}
+
+function Row({ id, nodes }: RowProps) {
+  const navigate = useNavigate();
   const [open, setOpen] = React.useState(false);
-  const classes = useRowStyles();
   const words = id.split('|');
   const serviceId = words[0];
   const tag = words[1];
 
-  const handleCheck = (node) => {
+  const handleCheck = (node: Node) => {
     const k = id + ':' + node.protocol + ':' + node.address + ':' + node.port;
-    console.log("pushing to the /app/controller/check with id = ", k);
-    history.push({ pathname: '/app/controller/check', state: { data: { id: k } } });
+    navigate('/app/controller/check', { state: { data: { id: k } } });
   };
 
-  const handleLogger = (node) => {
-    history.push({ pathname: '/app/controller/logger', state: { data: { node } } });
+  const handleLogger = (node: any) => {
+    navigate('/app/controller/logger', { state: { data: { node } } });
   };
 
-  const handleInfo = (node) => {
+  const handleInfo = (node: Node) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
         : 'null';
     const fullNode = node.address + ':' + node.port;
-    history.push({
-      pathname: '/app/controller/info',
+    navigate('/app/controller/info', {
       state: {
         data: {
           node: fullNode,
@@ -142,13 +145,12 @@ function Row(props) {
     });
   };
 
-  const handleChaosMonkey = (node) => {
+  const handleChaosMonkey = (node: Node) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
         : 'null';
-    history.push({
-      pathname: '/app/controller/chaos',
+    navigate('/app/controller/chaos', {
       state: {
         data: {
           protocol: node.protocol,
@@ -162,7 +164,7 @@ function Row(props) {
 
   return (
     <React.Fragment>
-      <TableRow className={classes.root}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
           <IconButton
             aria-label="expand row"

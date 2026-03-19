@@ -1,14 +1,12 @@
-import CircularProgress from '@mui/material/CircularProgress';
+import { CircularProgress, Box } from '@mui/material';
 import React from 'react';
 import { useUserState } from '../../contexts/UserContext';
 import { useApiGet } from '../../hooks/useApiGet';
-//import useStyles from "./styles";
 import StatusContainer from './StatusContainer';
 
 // This is the status entry point for users to update his/her status after logging in.
 
-export default function Status(props) {
-  //const classes = useStyles();
+export default function Status(props: any) {
   const { email } = useUserState();
   const cmd = {
     host: 'lightapi.net',
@@ -20,20 +18,19 @@ export default function Status(props) {
   const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
   const headers = {};
   const { isLoading, data } = useApiGet({ url, headers });
-  let subjects = data || {};
+  const subjects = data || {};
 
-  let wait;
   if (isLoading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
-      </div>
-    );
-  } else {
-    wait = (
-      <StatusContainer {...props} subjects={subjects} isReadonly={false} />
+      </Box>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  return (
+    <Box>
+      <StatusContainer {...props} subjects={subjects} isReadonly={false} />
+    </Box>
+  );
 }

@@ -2,46 +2,41 @@ import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import ReplyIcon from '@mui/icons-material/Reply';
-import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import { makeStyles } from '@mui/styles';
+import {
+  Box,
+  Collapse,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUserState } from '../../contexts/UserContext';
 import { timeConversion } from '../../utils';
 import fetchClient from '../../utils/fetchClient';
 
-const useRowStyles = makeStyles({
-  root: {
-    '& > *': {
-      borderBottom: 'unset',
-    },
-  },
-});
+interface RowProps {
+  row: any;
+}
 
-function Row(props) {
-  console.log(props);
+function Row({ row }: RowProps) {
   const [fetching, setFetching] = useState(false);
-  const { row } = props;
   const [open, setOpen] = React.useState(false);
-  const classes = useRowStyles();
-  var { email } = useUserState();
+  const navigate = useNavigate();
+  const { email }: any = useUserState();
 
-  const replyMessage = (userId, subject) => {
-    props.history.push({
-      pathname: '/app/form/privateMessage',
+  const replyMessage = (userId: string, subject: string) => {
+    navigate('/app/form/privateMessage', {
       state: { data: { userId, subject } },
     });
   };
 
-  const deliverOrder = (customerUserId, orderId) => {
+  const deliverOrder = (customerUserId: string, orderId: string) => {
     if (window.confirm('Are you sure you want to mark the order delivered?')) {
       const body = {
         host: 'lightapi.net',
@@ -50,7 +45,6 @@ function Row(props) {
         version: '0.1.0',
         data: { email, customerUserId, orderId },
       };
-      // use the path defined in the action, default to /portal/command.
       const url = '/portal/command';
       const headers = {
         'Content-Type': 'application/json',
@@ -59,28 +53,26 @@ function Row(props) {
     }
   };
 
-  const postApi = async (url, headers, action) => {
+  const postApi = async (url: string, headers: any, action: any) => {
     setFetching(true);
     try {
       const data = await fetchClient(url, {
         method: 'POST',
-        body: action,
+        body: JSON.stringify(action),
         headers,
       });
       setFetching(false);
-      props.history.push({ pathname: action.success, state: { data } });
-    } catch (e) {
+      navigate(action.success || '/app/profile', { state: { data } });
+    } catch (e: any) {
       console.log(e);
       setFetching(false);
-      // convert it to json as the failure component can only deal with JSON.
-      const error = { error: e };
-      props.history.push({ pathname: action.failure, state: { error } });
+      navigate(action.failure || '/app/profile', { state: { error: e } });
     }
   };
 
   return (
     <React.Fragment>
-      <TableRow className={classes.root}>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <TableCell>
           <IconButton
             aria-label="expand row"
@@ -96,25 +88,27 @@ function Row(props) {
         <TableCell align="left">
           <ReplyIcon
             onClick={() => replyMessage(row.merchantUserId, row.orderId)}
+            sx={{ cursor: 'pointer', mr: 1, verticalAlign: 'middle' }}
           />
           {row.merchantUserId}
         </TableCell>
         <TableCell align="left">{row.orderId}</TableCell>
         <TableCell align="left">{row.passCode}</TableCell>
         <TableCell align="left">
-          {row.delivery.pickupTime} {row.delivery.instruction}{' '}
+          {row.delivery?.pickupTime} {row.delivery?.instruction}
         </TableCell>
-        <TableCell align="left">{row.payment.method}</TableCell>
+        <TableCell align="left">{row.payment?.method}</TableCell>
         <TableCell align="right">
           <CheckIcon
             onClick={() => deliverOrder(row.customerUserId, row.orderId)}
+            sx={{ cursor: 'pointer' }}
           />
         </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box margin={1}>
+            <Box sx={{ margin: 1 }}>
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
@@ -125,7 +119,7 @@ function Row(props) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.items.map((item) => (
+                  {row.items?.map((item: any) => (
                     <TableRow key={item.sku}>
                       <TableCell component="th" scope="row">
                         {item.sku}
@@ -145,9 +139,11 @@ function Row(props) {
   );
 }
 
-export default function MerchantOrderList(props) {
-  const { orders } = props;
-  console.log('props = ', props);
+interface MerchantOrderListProps {
+  orders: any[];
+}
+
+export default function MerchantOrderList({ orders }: MerchantOrderListProps) {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -164,8 +160,8 @@ export default function MerchantOrderList(props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.map((order, index) => (
-            <Row history={props.history} key={index} row={order} />
+          {orders && orders.map((order, index) => (
+            <Row key={index} row={order} />
           ))}
         </TableBody>
       </Table>

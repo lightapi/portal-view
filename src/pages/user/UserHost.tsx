@@ -110,27 +110,6 @@ export default function UserHost() {
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Ts' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-      {
-        id: 'switch',
-        header: 'Switch',
-        enableSorting: false,
-        enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title={row.original.current ? "This is the current host" : "Switch to this host"}>
-            {/* Wrap IconButton in a span to ensure tooltip works when disabled */}
-            <span>
-              <IconButton
-                color="primary" // Changed from 'error' for better semantics
-                onClick={() => handleSwitch(row)}
-                disabled={row.original.current} // This is the key logic
-              >
-                <ToggleOnIcon />
-              </IconButton>
-            </span>
-          </Tooltip>
-        ),
-      },
     ],
     [handleSwitch],
   );
@@ -147,7 +126,22 @@ export default function UserHost() {
     },
     getRowId: (row) => `${row.hostId}-${row.userId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading hosts for user' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title={row.original.current ? "This is the current host" : "Switch to this host"}>
+          <span>
+            <IconButton
+              color="primary"
+              onClick={() => handleSwitch(row)}
+              disabled={row.original.current}
+            >
+              <ToggleOnIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {initialUserId && (

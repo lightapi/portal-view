@@ -1,12 +1,14 @@
-//import useStyles from "./styles";
-import CircularProgress from '@mui/material/CircularProgress';
+import { CircularProgress, Box, Typography } from '@mui/material';
 import React from 'react';
 import ComRender from '../../ComRender';
 import { useApiGet } from '../../hooks/useApiGet';
 
-export default function Website(props) {
-  //const classes = useStyles();
+interface WebsiteProps {
+  userId: string;
+  [key: string]: any;
+}
 
+export default function Website(props: WebsiteProps) {
   const cmd = {
     host: 'lightapi.net',
     service: 'covid',
@@ -19,28 +21,28 @@ export default function Website(props) {
   const headers = {};
 
   const { isLoading, data, error } = useApiGet({ url, headers });
-  let site = data || {};
+  const site = data || {};
 
-  let wait;
   if (isLoading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    wait = (
-      <div>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </div>
-    );
-  } else {
-    wait = (
-      <div>
-        <ComRender {...props} site={site} />
-      </div>
+      </Box>
     );
   }
 
-  return <div className="App">{wait}</div>;
+  if (error) {
+    return (
+      <Box sx={{ p: 2, color: 'error.main' }}>
+        <Typography variant="h6">Error loading website:</Typography>
+        <pre>{JSON.stringify(error, null, 2)}</pre>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <ComRender {...props} site={site} />
+    </Box>
+  );
 }

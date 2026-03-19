@@ -3072,6 +3072,23 @@
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
+        },
+        "protocol": {
+          "title": "Protocol",
+          "type": "string",
+          "enum": [
+            "https",
+            "http"
+          ],
+          "default": "https"
+        },
+        "envTag": {
+          "title": "Environment Tag",
+          "type": "string"
+        },
+        "targetHost": {
+          "title": "Target Host",
+          "type": "string"
         }
       }
     },
@@ -3107,7 +3124,10 @@
         "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
-      }
+      },
+      "protocol",
+      "envTag",
+      "targetHost"
     ]
   },
   "updateApiVersion": {
@@ -3172,6 +3192,23 @@
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
           "type": "string"
+        },
+        "protocol": {
+          "title": "Protocol",
+          "type": "string",
+          "enum": [
+            "https",
+            "http"
+          ],
+          "default": "https"
+        },
+        "envTag": {
+          "title": "Environment Tag",
+          "type": "string"
+        },
+        "targetHost": {
+          "title": "Target Host",
+          "type": "string"
         }
       }
     },
@@ -3207,7 +3244,10 @@
         "condition": "model.apiType === 'mcp'",
         "type": "textarea",
         "rows": 5
-      }
+      },
+      "protocol",
+      "envTag",
+      "targetHost"
     ]
   },
   "createApiEndpointRule": {
@@ -10505,9 +10545,16 @@
       },
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       },
       {
         "key": "valueType",
@@ -10687,9 +10734,16 @@
       },
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       },
       {
         "key": "valueType",
@@ -10792,6 +10846,10 @@
           "type": "string",
           "title": "Property Id"
         },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
@@ -10837,10 +10895,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -10876,9 +10960,24 @@
           "title": "Config Id",
           "readonly": true
         },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
+          "readonly": true
+        },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type",
           "readonly": true
         },
         "propertyValue": {
@@ -10897,12 +10996,22 @@
       "hostId",
       "environment",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -10934,6 +11043,10 @@
         "propertyId": {
           "type": "string",
           "title": "Property Id"
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
         },
         "propertyValue": {
           "type": "string",
@@ -10975,10 +11088,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -11009,9 +11148,24 @@
           "title": "Config Id",
           "readonly": true
         },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
+          "title": "Property Id",
+          "readonly": true
+        },
+        "propertyName": {
+          "type": "string",
           "title": "Property Name",
+          "readonly": true
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type",
           "readonly": true
         },
         "propertyValue": {
@@ -11028,12 +11182,22 @@
     "form": [
       "productId",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -11069,6 +11233,10 @@
         "propertyId": {
           "type": "string",
           "title": "Property Id"
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
         },
         "propertyValue": {
           "type": "string",
@@ -11115,10 +11283,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -11149,9 +11343,39 @@
           "title": "Product Version Id",
           "readonly": true
         },
+        "productId": {
+          "type": "string",
+          "title": "Product Id",
+          "readonly": true
+        },
+        "productVersion": {
+          "type": "string",
+          "title": "Product Version",
+          "readonly": true
+        },
+        "configId": {
+          "type": "string",
+          "title": "Config Id",
+          "readonly": true
+        },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
+          "readonly": true
+        },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type",
           "readonly": true
         },
         "propertyValue": {
@@ -11168,12 +11392,25 @@
     "form": [
       "hostId",
       "productVersionId",
+      "productId",
+      "productVersion",
+      "configId",
+      "configName",
       "propertyId",
+      "propertyName",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -11210,6 +11447,10 @@
         "propertyId": {
           "type": "string",
           "title": "Property Id"
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
         },
         "propertyValue": {
           "type": "string",
@@ -11256,10 +11497,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -11290,14 +11557,34 @@
           "title": "Instance Id",
           "readonly": true
         },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name",
+          "readonly": true
+        },
         "configId": {
           "type": "string",
           "title": "Config Id",
           "readonly": true
         },
+        "configName": {
+          "type": "string",
+          "title": "Config Name",
+          "readonly": true
+        },
         "propertyId": {
           "type": "string",
           "title": "Property Id",
+          "readonly": true
+        },
+        "propertyName": {
+          "type": "string",
+          "title": "Property Name",
+          "readonly": true
+        },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type",
           "readonly": true
         },
         "propertyValue": {
@@ -11315,13 +11602,24 @@
     "form": [
       "hostId",
       "instanceId",
+      "instanceName",
       "configId",
+      "configName",
       "propertyId",
+      "propertyName",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -12056,6 +12354,10 @@
           "type": "string",
           "title": "Property Id"
         },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
@@ -12115,10 +12417,36 @@
         }
       },
       {
+        "key": "propertyType",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "Cert",
+            "label": "Cert"
+          },
+          {
+            "id": "Config",
+            "label": "Config"
+          },
+          {
+            "id": "File",
+            "label": "File"
+          }
+        ]
+      },
+      {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -12159,6 +12487,10 @@
           "title": "Property Id",
           "readonly": true
         },
+        "propertyType": {
+          "type": "string",
+          "title": "Property Type"
+        },
         "propertyValue": {
           "type": "string",
           "title": "Property Value"
@@ -12177,11 +12509,19 @@
       "deploymentInstanceId",
       "configId",
       "propertyId",
+      "propertyType",
       {
         "key": "propertyValue",
+        "condition": "model.propertyType === 'Config'",
         "type": "textarea",
         "placeholder": "Property Value",
         "rows": 5
+      },
+      {
+        "key": "propertyValue",
+        "condition": "model.propertyType !== 'Config'",
+        "type": "file",
+        "placeholder": "Property Value"
       }
     ]
   },
@@ -13677,7 +14017,28 @@
         },
         "instanceApiId": {
           "type": "string",
-          "title": "Instance Api Id"
+          "title": "Instance Api Id",
+          "readonly": true
+        },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name",
+          "readonly": true
+        },
+        "productId": {
+          "type": "string",
+          "title": "Product Id",
+          "readonly": true
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id",
+          "readonly": true
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "Api Version",
+          "readonly": true
         },
         "pathPrefix": {
           "type": "string",
@@ -13692,17 +14053,11 @@
     },
     "form": [
       "hostId",
-      {
-        "key": "instanceApiId",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22instance%22%2C%22action%22%3A%22getInstanceApiLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
-          "params": [
-            "hostId"
-          ]
-        }
-      },
+      "instanceApiId",
+      "instanceName",
+      "productId",
+      "apiId",
+      "apiVersion",
       "pathPrefix"
     ]
   },
@@ -13733,6 +14088,26 @@
           "title": "Instance Api Id",
           "readonly": true
         },
+        "instanceName": {
+          "type": "string",
+          "title": "Instance Name",
+          "readonly": true
+        },
+        "productId": {
+          "type": "string",
+          "title": "Product Id",
+          "readonly": true
+        },
+        "apiId": {
+          "type": "string",
+          "title": "Api Id",
+          "readonly": true
+        },
+        "apiVersion": {
+          "type": "string",
+          "title": "Api Version",
+          "readonly": true
+        },
         "pathPrefix": {
           "type": "string",
           "title": "Path Prefix"
@@ -13747,6 +14122,10 @@
     "form": [
       "hostId",
       "instanceApiId",
+      "instanceName",
+      "productId",
+      "apiId",
+      "apiVersion",
       "pathPrefix"
     ]
   },
@@ -17518,7 +17897,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "expiresAt": {
           "title": "Expires At",
@@ -17604,7 +17983,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "expiresAt": {
           "title": "Expires At",
@@ -17700,7 +18079,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "metadata": {
           "title": "Metadata",
@@ -17784,7 +18163,7 @@
         "importanceScore": {
           "title": "Importance Score",
           "type": "number",
-          "default": 1.0
+          "default": 1
         },
         "metadata": {
           "title": "Metadata",
@@ -18135,6 +18514,179 @@
         "rows": 3
       },
       "active"
+    ]
+  },
+  "createClientToken": {
+    "formId": "createClientToken",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "oauth",
+        "action": "createClientToken",
+        "version": "0.1.0",
+        "title": "Create Token",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Create Client Token Request",
+      "required": [
+        "hostId",
+        "clientId",
+        "clientSecret",
+        "serviceId"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host ID",
+          "type": "string",
+          "readonly": true
+        },
+        "clientId": {
+          "title": "Client ID",
+          "type": "string",
+          "readonly": true
+        },
+        "clientSecret": {
+          "title": "Client Secret",
+          "type": "password"
+        },
+        "serviceId": {
+          "title": "Service ID",
+          "type": "string",
+          "default": "AAATB5k7QQa8wX6iQWkwtA"
+        },
+        "daysToExpiration": {
+          "title": "Days to Expiration",
+          "type": "integer"
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "clientId",
+      {
+        "key": "clientSecret",
+        "type": "password"
+      },
+      "serviceId",
+      "daysToExpiration"
+    ]
+  },
+  "createConfigSnapshot": {
+    "formId": "createConfigSnapshot",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "createConfigSnapshot",
+        "version": "0.1.0",
+        "title": "Create Config Snapshot",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Create Config Snapshot",
+      "required": [
+        "hostId",
+        "instanceId",
+        "snapshotType",
+        "description"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "instanceId": {
+          "title": "Instance Id",
+          "type": "string",
+          "readonly": true
+        },
+        "snapshotType": {
+          "title": "Snapshot Type",
+          "type": "string",
+          "default": "USER_SAVE",
+          "readonly": true
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "instanceId",
+      "snapshotType",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      "current"
+    ]
+  },
+  "updateConfigSnapshot": {
+    "formId": "updateConfigSnapshot",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "config",
+        "action": "updateConfigSnapshot",
+        "version": "0.1.0",
+        "title": "Update Config Snapshot",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "type": "object",
+      "title": "Update Config Snapshot",
+      "required": [
+        "hostId",
+        "snapshotId",
+        "description"
+      ],
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "snapshotId": {
+          "title": "Snapshot Id",
+          "type": "string",
+          "readonly": true
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "snapshotId",
+      {
+        "key": "description",
+        "type": "textarea"
+      },
+      "current"
     ]
   }
 }

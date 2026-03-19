@@ -160,28 +160,6 @@ export default function RefRelation() {
         filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Relation">
-            <IconButton onClick={() => navigate('/app/form/updateRefRelation', { state: { data: { ...row.original } } })}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Relation">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
     [handleDelete, navigate],
   );
@@ -202,7 +180,22 @@ export default function RefRelation() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.relationId}-${row.valueIdFrom}-${row.valueIdTo}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update Relation">
+          <IconButton onClick={() => navigate('/app/form/updateRefRelation', { state: { data: { ...row.original } } })}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Relation">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"

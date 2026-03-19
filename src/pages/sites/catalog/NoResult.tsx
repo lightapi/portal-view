@@ -1,23 +1,14 @@
 import SearchIcon from '@mui/icons-material/Search';
-import { makeStyles } from '@mui/styles';
+import { Box } from '@mui/material';
 import React from 'react';
 
-const useStyles = makeStyles({
-  noResult: {
-    textAlign: 'center',
-  },
-});
-
 const NoResult = () => {
-  var classes = useStyles();
   return (
-    <div>
-      <div className={classes.noResult}>
-        <SearchIcon />
-        <h2>Sorry, no products matched your search!</h2>
-        <p>Enter a different keyword and try.</p>
-      </div>
-    </div>
+    <Box sx={{ textAlign: 'center', p: 4, mt: 4 }}>
+      <SearchIcon sx={{ fontSize: 60, color: 'text.secondary' }} />
+      <Box component="h2">Sorry, no products matched your search!</Box>
+      <Box component="p">Enter a different keyword and try.</Box>
+    </Box>
   );
 };
 

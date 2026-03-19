@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -199,29 +199,8 @@ export default function TaskAsst() {
                 filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (
-                    <Tooltip title="Update Task Asst">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === row.original.taskAsstId}
-                        >
-                            {isUpdateLoading === row.original.taskAsstId ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                )
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Task Asst"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
         ],
-        [handleDelete, handleUpdate, isUpdateLoading],
+        [handleDelete, handleUpdate, navigate],
     );
 
     // Table instance configuration
@@ -240,7 +219,28 @@ export default function TaskAsst() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.taskAsstId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        renderRowActions: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                <Tooltip title="Update Task Asst">
+                    <IconButton
+                        onClick={() => handleUpdate(row)}
+                        disabled={isUpdateLoading === row.original.taskAsstId}
+                    >
+                        {isUpdateLoading === row.original.taskAsstId ? (
+                            <CircularProgress size={22} />
+                        ) : (
+                            <SystemUpdateIcon />
+                        )}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Task Asst">
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        ),
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTaskAsst')}>
                 Create New Task Asst

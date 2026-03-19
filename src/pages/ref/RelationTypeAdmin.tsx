@@ -154,39 +154,6 @@ export default function RelationTypeAdmin() {
         accessorKey: 'updateTs', header: 'Update Time',
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update">
-            <IconButton onClick={() => navigate('/app/form/updateRefRelationType', { state: { data: { ...row.original } } })}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'relation', header: 'Relation', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Manage Relations">
-            <IconButton onClick={() => navigate('/app/ref/relation', { state: { data: { relationId: row.original.relationId } } })}>
-              <LinkIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
     [handleDelete, navigate],
   );
@@ -207,7 +174,27 @@ export default function RelationTypeAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.relationId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update">
+          <IconButton onClick={() => navigate('/app/form/updateRefRelationType', { state: { data: { ...row.original } } })}>
+            <SystemUpdateIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Manage Relations">
+          <IconButton onClick={() => navigate('/app/ref/relation', { state: { data: { relationId: row.original.relationId } } })}>
+            <LinkIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRefRelationType')}>
         Create New Relation Type

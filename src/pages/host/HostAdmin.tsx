@@ -254,9 +254,9 @@ export default function HostAdmin() {
       : undefined,
 
     enableRowActions: true,
-    positionActionsColumn: 'last',
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
           <IconButton
             onClick={() => handleUpdate(row)}

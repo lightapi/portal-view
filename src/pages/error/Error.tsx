@@ -1,39 +1,86 @@
-import { Button, Grid, Paper, Typography } from '@mui/material';
-import classnames from 'classnames';
+import { Button, Grid, Paper, Typography, Box } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
 // logo
 import logo from './logo.svg';
-// styles
-import useStyles from './styles';
 
 export default function Error() {
-  var classes = useStyles();
-
   return (
-    <Grid container className={classes.container}>
-      <div className={classes.logotype}>
-        <img className={classes.logotypeIcon} src={logo} alt="logo" />
-        <Typography variant="h3" color="white" className={classes.logotypeText}>
-          Material Admin
+    <Box
+      sx={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'primary.main',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          mb: 4,
+        }}
+      >
+        <img
+          src={logo}
+          alt="logo"
+          style={{
+            width: 100,
+            marginRight: 24,
+          }}
+        />
+        <Typography
+          variant="h3"
+          sx={{
+            color: 'white',
+            fontWeight: 500,
+          }}
+        >
+          Light Portal
         </Typography>
-      </div>
-      <Paper classes={{ root: classes.paperRoot }}>
+      </Box>
+      <Paper
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          p: 6,
+          boxShadow: '0px 3px 11px 0px #E8EAFC, 0 3px 3px -2px #B2B2B2, 0 1px 8px 0 #9A9A9A',
+        }}
+      >
         <Typography
           variant="h1"
           color="primary"
-          className={classnames(classes.textRow, classes.errorCode)}
+          sx={{
+            fontWeight: 500,
+            fontSize: '12rem',
+          }}
         >
           404
         </Typography>
-        <Typography variant="h5" color="primary" className={classes.textRow}>
+        <Typography
+          variant="h5"
+          color="primary"
+          sx={{
+            mb: 2,
+            fontWeight: 400,
+          }}
+        >
           Oops. Looks like the page you're looking for no longer exists
         </Typography>
         <Typography
           variant="h6"
-          color="text"
-          colorBrightness="secondary"
-          className={classnames(classes.textRow, classes.safetyText)}
+          color="textSecondary"
+          sx={{
+            mb: 4,
+            textAlign: 'center',
+          }}
         >
           But we're here to bring you back to safety
         </Typography>
@@ -43,11 +90,14 @@ export default function Error() {
           component={Link}
           to="/"
           size="large"
-          className={classes.backButton}
+          sx={{
+            textTransform: 'none',
+            fontSize: 22,
+          }}
         >
           Back to Home
         </Button>
       </Paper>
-    </Grid>
+    </Box>
   );
 }

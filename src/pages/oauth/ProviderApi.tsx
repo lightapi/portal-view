@@ -157,10 +157,6 @@ export default function ProviderApi() {
         filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
-      {
-        id: 'delete', header: 'Remove', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Remove API from Provider"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
     [handleDelete],
   );
@@ -181,7 +177,14 @@ export default function ProviderApi() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.hostId}-${row.apiId}-${row.providerId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    renderRowActions: ({ row }) => (
+      <Tooltip title="Remove API from Provider">
+        <IconButton color="error" onClick={() => handleDelete(row)}>
+          <DeleteForeverIcon />
+        </IconButton>
+      </Tooltip>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

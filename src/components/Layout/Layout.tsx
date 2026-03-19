@@ -1,55 +1,25 @@
-import { makeStyles } from "@mui/styles";
 import { Outlet } from "react-router-dom";
-import classNames from "classnames";
 import { useLayoutState } from "../../contexts/LayoutContext";
 // components
 import Header from "../Header";
 import Sidebar from "../Sidebar";
 
 // styles
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: "flex",
-    maxWidth: "100vw",
-    overflowX: "hidden",
-  },
-  content: {
-    flexGrow: 1,
-    padding: theme.spacing(3),
-    width: `calc(100vw - 240px)`,
-    minHeight: "100vh",
-  },
-  contentShift: {
-    width: `calc(100vw - ${240 + theme.spacing(6)}px)`,
-    transition: theme.transitions.create(["width", "margin"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  fakeToolbar: {
-    ...theme.mixins.toolbar,
-  },
-}));
+import { LayoutRoot, MainContent, FakeToolbar } from "./LayoutStyles";
 
 function Layout() {
-  const classes = useStyles();
-
   // global
-  const layoutState = useLayoutState();
+  const { isSidebarOpened } = useLayoutState() as any;
 
   return (
-    <div className={classes.root}>
+    <LayoutRoot>
       <Header />
       <Sidebar />
-      <div
-        className={classNames(classes.content, {
-          [classes.contentShift]: layoutState.isSidebarOpened,
-        })}
-      >
-        <div className={classes.fakeToolbar} />
+      <MainContent open={isSidebarOpened}>
+        <FakeToolbar />
         <Outlet />
-      </div>
-    </div>
+      </MainContent>
+    </LayoutRoot>
   );
 }
 

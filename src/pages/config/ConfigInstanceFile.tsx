@@ -179,6 +179,30 @@ export default function ConfigInstanceFile() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceFileType>[]>(
     () => [
+      {
+        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => (
+          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Tooltip title="Update Property">
+              <IconButton
+                onClick={() => handleUpdate(row)}
+                disabled={isUpdateLoading === row.original.instanceId}
+              >
+                {isUpdateLoading === row.original.instanceId ? (
+                  <CircularProgress size={22} />
+                ) : (
+                  <SystemUpdateIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete File">
+              <IconButton color="error" onClick={() => handleDelete(row)}>
+                <DeleteForeverIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceId', header: 'Instance Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
@@ -203,29 +227,8 @@ export default function ConfigInstanceFile() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Property">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.instanceId}
-            >
-              {isUpdateLoading === row.original.instanceId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete File"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
-    [handleDelete, navigate],
+    [handleDelete, handleUpdate, isUpdateLoading, navigate],
   );
 
   // Table instance configuration
