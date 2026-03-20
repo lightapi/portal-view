@@ -187,8 +187,9 @@ const RedirectWithQuery = ({ to }: { to: string }) => {
   return null;
 };
 
+const basename = import.meta.env.VITE_BASE_PATH || "/";
+
 const App = () => {
-  const basename = import.meta.env.VITE_BASE_PATH || "/";
   return (
     <BrowserRouter
       basename={basename}
