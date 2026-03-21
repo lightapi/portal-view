@@ -4,6 +4,7 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
+  type MRT_ColumnFiltersState,
 } from 'material-react-table';
 import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -19,6 +20,7 @@ type RuleType = {
   endpoint: string;
   ruleType: string;
   ruleId: string;
+  active: boolean;
 };
 
 export default function ListRule() {
@@ -30,17 +32,27 @@ export default function ListRule() {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
+    [{ id: 'active', value: 'true' }]
+  );
+
   const fetchData = useCallback(async () => {
     if (!hostId || !endpointId) return;
     setIsError(false);
     setIsLoading(true);
+
+    const activeFilter = columnFilters.find((f) => f.id === 'active');
 
     const cmd = {
       host: "lightapi.net",
       service: "service",
       action: "getApiEndpointRule",
       version: "0.1.0",
-      data: { hostId, endpointId },
+      data: {
+        hostId,
+        endpointId,
+        active: activeFilter ? activeFilter.value === 'true' : true
+      },
     };
     const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
@@ -53,7 +65,7 @@ export default function ListRule() {
     } finally {
       setIsLoading(false);
     }
-  }, [hostId, endpointId]);
+  }, [hostId, endpointId, columnFilters]);
 
   useEffect(() => {
     fetchData();
@@ -101,6 +113,16 @@ export default function ListRule() {
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'ruleType', header: 'Rule Type' },
       { accessorKey: 'ruleId', header: 'Rule Id' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { text: 'True', value: 'true' },
+          { text: 'False', value: 'false' },
+        ],
+        Cell: ({ cell }) => (cell.getValue<boolean>() ? 'True' : 'False'),
+      },
     ],
     [],
   );
@@ -112,6 +134,7 @@ export default function ListRule() {
     enableRowActions: true,
     enableGlobalFilter: true,
     enableColumnFilters: true,
+    manualFiltering: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
@@ -133,8 +156,9 @@ export default function ListRule() {
       </Button>
     ),
     initialState: { density: 'compact', showColumnFilters: true },
+    onColumnFiltersChange: setColumnFilters,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading rules' } : undefined,
-    state: { isLoading, showAlertBanner: isError },
+    state: { isLoading, showAlertBanner: isError, columnFilters },
   });
 
   return <MaterialReactTable table={table} />;
