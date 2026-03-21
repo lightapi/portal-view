@@ -102,6 +102,42 @@ const ENTITY_TYPES = [
     { value: 'product_version', label: 'Product Version' },
 ];
 
+type EntityType = typeof ENTITY_TYPES[number]['value'];
+
+interface EntityMeta {
+    service: string;
+    action: string;
+    responseKey: string;
+}
+
+const ENTITY_META: Record<EntityType, EntityMeta> = {
+    instance:                       { service: 'instance',    action: 'getInstance',                 responseKey: 'instances' },
+    config:                         { service: 'config',      action: 'getConfig',                   responseKey: 'configs' },
+    ref_table:                      { service: 'ref',         action: 'getRefTable',                 responseKey: 'refTables' },
+    relation_type:                  { service: 'ref',         action: 'getRefRelationType',           responseKey: 'relationTypes' },
+    user:                           { service: 'user',        action: 'listUserByHostId',             responseKey: 'users' },
+    position:                       { service: 'position',    action: 'getPosition',                 responseKey: 'positions' },
+    role:                           { service: 'role',        action: 'getRole',                     responseKey: 'roles' },
+    group:                          { service: 'group',       action: 'getGroup',                    responseKey: 'groups' },
+    attribute:                      { service: 'attribute',   action: 'getAttribute',                responseKey: 'attributes' },
+    auth_provider:                  { service: 'oauth-query', action: 'queryAuthProvider',           responseKey: 'authProviders' },
+    auth_client:                    { service: 'oauth-query', action: 'queryAuthClient',             responseKey: 'authClients' },
+    schedule:                       { service: 'schedule',    action: 'getSchedule',                 responseKey: 'schedules' },
+    tag:                            { service: 'tag',         action: 'getTag',                      responseKey: 'tags' },
+    category:                       { service: 'category',    action: 'getCategory',                 responseKey: 'categories' },
+    rule:                           { service: 'rule',        action: 'getRule',                     responseKey: 'rules' },
+    api:                            { service: 'api',         action: 'getApi',                      responseKey: 'apis' },
+    app:                            { service: 'client',      action: 'getApp',                      responseKey: 'apps' },
+    environment_property:           { service: 'config',      action: 'getConfigEnvironment',        responseKey: 'configEnvironments' },
+    platform:                       { service: 'deployment',  action: 'getPlatform',                 responseKey: 'platforms' },
+    pipeline:                       { service: 'deployment',  action: 'getPipeline',                 responseKey: 'pipelines' },
+    deployment:                     { service: 'deployment',  action: 'getDeployment',               responseKey: 'deployments' },
+    deployment_instance:            { service: 'deployment',  action: 'getDeploymentInstance',       responseKey: 'deploymentInstances' },
+    deployment_instance_property:   { service: 'config',      action: 'getConfigDeploymentInstance', responseKey: 'deploymentInstances' },
+    product_property:               { service: 'config',      action: 'getConfigProduct',            responseKey: 'productProperties' },
+    product_version:                { service: 'product',     action: 'getProductVersion',           responseKey: 'products' },
+};
+
 const steps = ['Select Source & Type', 'Select Entities', 'Preview & Export'];
 
 export default function PromotionExport() {
@@ -177,35 +213,12 @@ export default function PromotionExport() {
             }
         });
 
-        const service =
-            entityType === 'ref_table' || entityType === 'relation_type' ? 'ref'
-                : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'rule') ? entityType
-                    : (entityType === 'auth_provider' || entityType === 'auth_client') ? 'oauth-query'
-                        : (entityType === 'schedule' || entityType === 'tag' || entityType === 'category') ? entityType
-                            : entityType === 'app' ? 'client'
-                                : entityType === 'environment_property' || entityType === 'deployment_instance_property' || entityType === 'product_property' ? 'config'
-                                    : entityType === 'platform' || entityType === 'pipeline' || entityType === 'deployment' || entityType === 'deployment_instance' ? 'deployment'
-                                        : entityType === 'product_version' ? 'product'
-                                            : entityType;
-
-        const responseKey =
-            entityType === 'relation_type' ? 'relationTypes'
-                : entityType === 'ref_table' ? 'refTables'
-                    : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category' || entityType === 'rule' || entityType === 'api' || entityType === 'app' || entityType === 'platform' || entityType === 'pipeline' || entityType === 'deployment') ? `${entityType}s`
-                        : entityType === 'deployment_instance' ? 'deploymentInstances'
-                            : entityType === 'deployment_instance_property' ? 'deploymentInstances'
-                                : entityType === 'product_property' ? 'productProperties'
-                                    : entityType === 'product_version' ? 'products'
-                                        : entityType === 'auth_provider' ? 'authProviders'
-                                            : entityType === 'auth_client' ? 'authClients'
-                                                : entityType === 'schedule' ? 'schedules'
-                                                    : entityType === 'environment_property' ? 'configEnvironments'
-                                                        : `${entityType}s`;
+        const { service, action, responseKey } = ENTITY_META[entityType as EntityType] ?? ENTITY_META.instance;
 
         const cmd = {
             host: 'lightapi.net',
             service,
-            action: entityType === 'instance' ? 'getInstance' : entityType === 'config' ? 'getConfig' : entityType === 'ref_table' ? 'getRefTable' : entityType === 'user' ? 'listUserByHostId' : entityType === 'position' ? 'getPosition' : entityType === 'role' ? 'getRole' : entityType === 'group' ? 'getGroup' : entityType === 'attribute' ? 'getAttribute' : entityType === 'auth_provider' ? 'queryAuthProvider' : entityType === 'auth_client' ? 'queryAuthClient' : entityType === 'schedule' ? 'getSchedule' : entityType === 'tag' ? 'getTag' : entityType === 'category' ? 'getCategory' : entityType === 'rule' ? 'getRule' : entityType === 'api' ? 'getApi' : entityType === 'app' ? 'getApp' : entityType === 'environment_property' ? 'getConfigEnvironment' : entityType === 'platform' ? 'getPlatform' : entityType === 'pipeline' ? 'getPipeline' : entityType === 'deployment' ? 'getDeployment' : entityType === 'deployment_instance' ? 'getDeploymentInstance' : entityType === 'deployment_instance_property' ? 'getConfigDeploymentInstance' : entityType === 'product_property' ? 'getConfigProduct' : entityType === 'product_version' ? 'getProductVersion' : 'getRefRelationType',
+            action,
             version: '0.1.0',
             data: {
                 hostId: sourceHostId,
