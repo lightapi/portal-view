@@ -264,16 +264,14 @@ export default function PromotionImport() {
                         <Typography variant="h6" gutterBottom>Step 2: Review Diff Plan</Typography>
 
                         {/* Summary Chips */}
-                        {diffPlan.summary && (
-                            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                                <Chip icon={<AddCircleIcon />} label={`${diffPlan.summary.create ?? 0} New`} color="success" />
-                                <Chip icon={<ChangeCircleIcon />} label={`${diffPlan.summary.update ?? 0} Changed`} color="warning" />
-                                <Chip icon={<SkipNextIcon />} label={`${diffPlan.summary.noop ?? 0} Same`} />
-                                {(diffPlan.summary.orphan ?? 0) > 0 && (
-                                    <Chip icon={<RemoveCircleIcon />} label={`${diffPlan.summary?.orphan ?? 0} Orphaned`} color="error" />
-                                )}
-                            </Box>
-                        )}
+                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                            <Chip icon={<AddCircleIcon />} label={`${diffPlan.summary.create} New`} color="success" />
+                            <Chip icon={<ChangeCircleIcon />} label={`${diffPlan.summary.update} Changed`} color="warning" />
+                            <Chip icon={<SkipNextIcon />} label={`${diffPlan.summary.noop} Same`} />
+                            {diffPlan.summary.orphan > 0 && (
+                                <Chip icon={<RemoveCircleIcon />} label={`${diffPlan.summary.orphan} Orphaned`} color="error" />
+                            )}
+                        </Box>
 
                         {/* Diff Table */}
                         <TableContainer>
