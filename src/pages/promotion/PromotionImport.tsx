@@ -34,6 +34,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
@@ -63,6 +64,7 @@ const actionConfig = {
     UPDATE: { icon: <ChangeCircleIcon />, color: 'warning' as const, label: 'Changed' },
     DELETE: { icon: <RemoveCircleIcon />, color: 'error' as const, label: 'Orphaned' },
     NOOP: { icon: <SkipNextIcon />, color: 'default' as const, label: 'Same' },
+    ERROR: { icon: <ReportProblemIcon />, color: 'error' as const, label: 'Error' },
 };
 
 export default function PromotionImport() {
@@ -109,13 +111,6 @@ export default function PromotionImport() {
         };
         loadHosts();
     }, []);
-
-    // Auto dry run if coming from export page
-    useEffect(() => {
-        if (fromExport && navSnapshot && navTargetHostId) {
-            handleDryRun();
-        }
-    }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
 
     // File upload handler
     const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +183,13 @@ export default function PromotionImport() {
             setIsExecuting(false);
         }
     }, [snapshot, targetHostId, diffPlan, orphanAction]);
+
+    // Auto dry run if coming from export page
+    useEffect(() => {
+        if (fromExport && navSnapshot && navTargetHostId) {
+            handleDryRun();
+        }
+    }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
 
     const toggleRow = (key: string) => {
         setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }));
@@ -262,14 +264,16 @@ export default function PromotionImport() {
                         <Typography variant="h6" gutterBottom>Step 2: Review Diff Plan</Typography>
 
                         {/* Summary Chips */}
-                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                            <Chip icon={<AddCircleIcon />} label={`${diffPlan.summary.create} New`} color="success" />
-                            <Chip icon={<ChangeCircleIcon />} label={`${diffPlan.summary.update} Changed`} color="warning" />
-                            <Chip icon={<SkipNextIcon />} label={`${diffPlan.summary.noop} Same`} />
-                            {diffPlan.summary.orphan > 0 && (
-                                <Chip icon={<RemoveCircleIcon />} label={`${diffPlan.summary.orphan} Orphaned`} color="error" />
-                            )}
-                        </Box>
+                        {diffPlan.summary && (
+                            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                                <Chip icon={<AddCircleIcon />} label={`${diffPlan.summary.create ?? 0} New`} color="success" />
+                                <Chip icon={<ChangeCircleIcon />} label={`${diffPlan.summary.update ?? 0} Changed`} color="warning" />
+                                <Chip icon={<SkipNextIcon />} label={`${diffPlan.summary.noop ?? 0} Same`} />
+                                {(diffPlan.summary.orphan ?? 0) > 0 && (
+                                    <Chip icon={<RemoveCircleIcon />} label={`${diffPlan.summary?.orphan ?? 0} Orphaned`} color="error" />
+                                )}
+                            </Box>
+                        )}
 
                         {/* Diff Table */}
                         <TableContainer>
@@ -283,8 +287,8 @@ export default function PromotionImport() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {diffPlan.items.map((item, idx) => {
-                                        const config = actionConfig[item.action];
+                                    {(diffPlan.items || []).map((item, idx) => {
+                                        const config = actionConfig[item.action] || actionConfig.ERROR;
                                         const rowKey = `${item.entityType}-${item.entityId}-${idx}`;
                                         const hasDiff = item.diff && Object.keys(item.diff).length > 0;
 
@@ -355,7 +359,7 @@ export default function PromotionImport() {
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>Step 3: Execute Promotion</Typography>
 
-                        {diffPlan.summary.orphan > 0 && (
+                        {(diffPlan.summary?.orphan ?? 0) > 0 && (
                             <Box sx={{ mb: 3 }}>
                                 <FormControl>
                                     <FormLabel>Orphaned Items Action</FormLabel>
