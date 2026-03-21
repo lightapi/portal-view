@@ -50,7 +50,7 @@
     "react-syntax-highlighter": "^16.1.0",
     "react-toastify": "^11.0.5",
     "supercluster": "^8.0.1",
-    "swagger-ui-react": "^5.32.0",
+    "swagger-ui-react": "^5.32.1",
     "tinycolor2": "^1.6.0",
     "twemoji": "^14.0.2",
     "universal-cookie": "^8.0.1",
