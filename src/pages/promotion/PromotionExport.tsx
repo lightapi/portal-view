@@ -750,9 +750,34 @@ export default function PromotionExport() {
         [],
     );
 
-    const columns = entityType === 'config' ? configColumns : entityType === 'ref_table' ? refTableColumns : entityType === 'relation_type' ? refRelationTypeColumns : entityType === 'user' ? userColumns : entityType === 'position' ? positionColumns : entityType === 'role' ? roleColumns : entityType === 'group' ? groupColumns : entityType === 'attribute' ? attributeColumns : entityType === 'auth_provider' ? authProviderColumns : entityType === 'auth_client' ? authClientColumns : entityType === 'schedule' ? scheduleColumns : entityType === 'tag' ? tagColumns : entityType === 'category' ? categoryColumns : entityType === 'rule' ? ruleColumns : entityType === 'api' ? apiColumns : entityType === 'app' ? appColumns : entityType === 'environment_property' ? environmentPropertyColumns : entityType === 'platform' ? platformColumns : entityType === 'pipeline' ? pipelineColumns : entityType === 'deployment' ? deploymentColumns : entityType === 'deployment_instance' ? deploymentInstanceColumns : entityType === 'deployment_instance_property' ? deploymentInstancePropertyColumns : entityType === 'product_property' ? productPropertyColumns : entityType === 'product_version' ? productVersionColumns : instanceColumns;
+    const columnsByEntityType: Record<string, MRT_ColumnDef<any>[]> = {
+        config: configColumns,
+        ref_table: refTableColumns,
+        relation_type: refRelationTypeColumns,
+        user: userColumns,
+        position: positionColumns,
+        role: roleColumns,
+        group: groupColumns,
+        attribute: attributeColumns,
+        auth_provider: authProviderColumns,
+        auth_client: authClientColumns,
+        schedule: scheduleColumns,
+        tag: tagColumns,
+        category: categoryColumns,
+        rule: ruleColumns,
+        api: apiColumns,
+        app: appColumns,
+        environment_property: environmentPropertyColumns,
+        platform: platformColumns,
+        pipeline: pipelineColumns,
+        deployment: deploymentColumns,
+        deployment_instance: deploymentInstanceColumns,
+        deployment_instance_property: deploymentInstancePropertyColumns,
+        product_property: productPropertyColumns,
+        product_version: productVersionColumns,
+    };
 
-
+    const columns = columnsByEntityType[entityType] ?? instanceColumns;
     const table = useMaterialReactTable({
         columns,
         data: entities,
