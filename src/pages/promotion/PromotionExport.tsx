@@ -92,6 +92,14 @@ const ENTITY_TYPES = [
     { value: 'rule', label: 'Rule' },
     { value: 'api', label: 'API' },
     { value: 'app', label: 'App' },
+    { value: 'environment_property', label: 'Env Property' },
+    { value: 'platform', label: 'Platform' },
+    { value: 'pipeline', label: 'Pipeline' },
+    { value: 'deployment', label: 'Deployment' },
+    { value: 'deployment_instance', label: 'Deployment Instance' },
+    { value: 'deployment_instance_property', label: 'Deployment Instance Property' },
+    { value: 'product_property', label: 'Product Property' },
+    { value: 'product_version', label: 'Product Version' },
 ];
 
 const steps = ['Select Source & Type', 'Select Entities', 'Preview & Export'];
@@ -169,10 +177,35 @@ export default function PromotionExport() {
             }
         });
 
+        const service =
+            entityType === 'ref_table' || entityType === 'relation_type' ? 'ref'
+                : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'rule') ? entityType
+                    : (entityType === 'auth_provider' || entityType === 'auth_client') ? 'oauth-query'
+                        : (entityType === 'schedule' || entityType === 'tag' || entityType === 'category') ? entityType
+                            : entityType === 'app' ? 'client'
+                                : entityType === 'environment_property' || entityType === 'deployment_instance_property' || entityType === 'product_property' ? 'config'
+                                    : entityType === 'platform' || entityType === 'pipeline' || entityType === 'deployment' || entityType === 'deployment_instance' ? 'deployment'
+                                        : entityType === 'product_version' ? 'product'
+                                            : entityType;
+
+        const responseKey =
+            entityType === 'relation_type' ? 'relationTypes'
+                : entityType === 'ref_table' ? 'refTables'
+                    : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category' || entityType === 'rule' || entityType === 'api' || entityType === 'app' || entityType === 'platform' || entityType === 'pipeline' || entityType === 'deployment') ? `${entityType}s`
+                        : entityType === 'deployment_instance' ? 'deploymentInstances'
+                            : entityType === 'deployment_instance_property' ? 'deploymentInstances'
+                                : entityType === 'product_property' ? 'productProperties'
+                                    : entityType === 'product_version' ? 'products'
+                                        : entityType === 'auth_provider' ? 'authProviders'
+                                            : entityType === 'auth_client' ? 'authClients'
+                                                : entityType === 'schedule' ? 'schedules'
+                                                    : entityType === 'environment_property' ? 'configEnvironments'
+                                                        : `${entityType}s`;
+
         const cmd = {
             host: 'lightapi.net',
-            service: entityType === 'ref_table' || entityType === 'relation_type' ? 'ref' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'rule') ? entityType : (entityType === 'auth_provider' || entityType === 'auth_client') ? 'oauth-query' : (entityType === 'schedule' || entityType === 'tag' || entityType === 'category') ? entityType : entityType === 'app' ? 'client' : entityType,
-            action: entityType === 'instance' ? 'getInstance' : entityType === 'config' ? 'getConfig' : entityType === 'ref_table' ? 'getRefTable' : entityType === 'user' ? 'listUserByHostId' : entityType === 'position' ? 'getPosition' : entityType === 'role' ? 'getRole' : entityType === 'group' ? 'getGroup' : entityType === 'attribute' ? 'getAttribute' : entityType === 'auth_provider' ? 'queryAuthProvider' : entityType === 'auth_client' ? 'queryAuthClient' : entityType === 'schedule' ? 'getSchedule' : entityType === 'tag' ? 'getTag' : entityType === 'category' ? 'getCategory' : entityType === 'rule' ? 'getRule' : entityType === 'api' ? 'getApi' : entityType === 'app' ? 'getApp' : 'getRefRelationType',
+            service,
+            action: entityType === 'instance' ? 'getInstance' : entityType === 'config' ? 'getConfig' : entityType === 'ref_table' ? 'getRefTable' : entityType === 'user' ? 'listUserByHostId' : entityType === 'position' ? 'getPosition' : entityType === 'role' ? 'getRole' : entityType === 'group' ? 'getGroup' : entityType === 'attribute' ? 'getAttribute' : entityType === 'auth_provider' ? 'queryAuthProvider' : entityType === 'auth_client' ? 'queryAuthClient' : entityType === 'schedule' ? 'getSchedule' : entityType === 'tag' ? 'getTag' : entityType === 'category' ? 'getCategory' : entityType === 'rule' ? 'getRule' : entityType === 'api' ? 'getApi' : entityType === 'app' ? 'getApp' : entityType === 'environment_property' ? 'getConfigEnvironment' : entityType === 'platform' ? 'getPlatform' : entityType === 'pipeline' ? 'getPipeline' : entityType === 'deployment' ? 'getDeployment' : entityType === 'deployment_instance' ? 'getDeploymentInstance' : entityType === 'deployment_instance_property' ? 'getConfigDeploymentInstance' : entityType === 'product_property' ? 'getConfigProduct' : entityType === 'product_version' ? 'getProductVersion' : 'getRefRelationType',
             version: '0.1.0',
             data: {
                 hostId: sourceHostId,
@@ -189,8 +222,7 @@ export default function PromotionExport() {
 
         try {
             const json = await fetchClient(url) as any;
-            const dataKey = entityType === 'relation_type' ? 'relationType' : entityType === 'ref_table' ? 'refTable' : (entityType === 'user' || entityType === 'role' || entityType === 'group' || entityType === 'attribute' || entityType === 'tag' || entityType === 'category' || entityType === 'rule' || entityType === 'api' || entityType === 'app') ? entityType : entityType === 'auth_provider' ? 'authProvider' : entityType === 'auth_client' ? 'authClient' : entityType === 'schedule' ? 'schedule' : entityType;
-            setEntities(json[`${dataKey}s`] || []);
+            setEntities(json[responseKey] || []);
             setRowCount(json.total || 0);
         } catch (error) {
             console.error('Failed to load entities:', error);
@@ -575,7 +607,150 @@ export default function PromotionExport() {
         [],
     );
 
-    const columns = entityType === 'config' ? configColumns : entityType === 'ref_table' ? refTableColumns : entityType === 'relation_type' ? refRelationTypeColumns : entityType === 'user' ? userColumns : entityType === 'position' ? positionColumns : entityType === 'role' ? roleColumns : entityType === 'group' ? groupColumns : entityType === 'attribute' ? attributeColumns : entityType === 'auth_provider' ? authProviderColumns : entityType === 'auth_client' ? authClientColumns : entityType === 'schedule' ? scheduleColumns : entityType === 'tag' ? tagColumns : entityType === 'category' ? categoryColumns : entityType === 'rule' ? ruleColumns : entityType === 'api' ? apiColumns : entityType === 'app' ? appColumns : instanceColumns;
+    const environmentPropertyColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'environment', header: 'Environment' },
+            { accessorKey: 'configName', header: 'Config Name' },
+            { accessorKey: 'propertyName', header: 'Property Name' },
+            { accessorKey: 'propertyValue', header: 'Property Value' },
+            { accessorKey: 'propertyType', header: 'Property Type' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+            },
+        ],
+        [],
+    );
+
+    const platformColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'platformName', header: 'Platform Name' },
+            { accessorKey: 'platformVersion', header: 'Version' },
+            { accessorKey: 'clientType', header: 'Client Type' },
+            { accessorKey: 'environment', header: 'Environment' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const pipelineColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'pipelineName', header: 'Pipeline Name' },
+            { accessorKey: 'pipelineVersion', header: 'Version' },
+            { accessorKey: 'endpoint', header: 'Endpoint' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const deploymentColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'deploymentId', header: 'Deployment ID' },
+            { accessorKey: 'deploymentType', header: 'Type' },
+            { accessorKey: 'scheduleTs', header: 'Schedule' },
+            { accessorKey: 'deploymentStatus', header: 'Status' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const deploymentInstanceColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'deploymentInstanceId', header: 'Deployment Instance ID' },
+            { accessorKey: 'instanceId', header: 'Instance ID' },
+            { accessorKey: 'pipelineId', header: 'Pipeline ID' },
+            { accessorKey: 'systemEnv', header: 'System Env' },
+            { accessorKey: 'runtimeEnv', header: 'Runtime Env' },
+            { accessorKey: 'deploymentInstanceStatus', header: 'Status' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const deploymentInstancePropertyColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'deploymentInstanceId', header: 'Deployment Instance ID' },
+            { accessorKey: 'propertyId', header: 'Property ID' },
+            { accessorKey: 'propertyValue', header: 'Value' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const productPropertyColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'productId', header: 'Product ID' },
+            { accessorKey: 'propertyId', header: 'Property ID' },
+            { accessorKey: 'propertyValue', header: 'Value' },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const productVersionColumns = useMemo<MRT_ColumnDef<any>[]>(
+        () => [
+            { accessorKey: 'productId', header: 'Product ID' },
+            { accessorKey: 'productVersion', header: 'Version' },
+            { accessorKey: 'releaseType', header: 'Release Type' },
+            { accessorKey: 'versionStatus', header: 'Status' },
+            {
+                accessorKey: 'current',
+                header: 'Current',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+            {
+                accessorKey: 'active',
+                header: 'Active',
+                filterVariant: 'select',
+                filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+                Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
+            },
+        ],
+        [],
+    );
+
+    const columns = entityType === 'config' ? configColumns : entityType === 'ref_table' ? refTableColumns : entityType === 'relation_type' ? refRelationTypeColumns : entityType === 'user' ? userColumns : entityType === 'position' ? positionColumns : entityType === 'role' ? roleColumns : entityType === 'group' ? groupColumns : entityType === 'attribute' ? attributeColumns : entityType === 'auth_provider' ? authProviderColumns : entityType === 'auth_client' ? authClientColumns : entityType === 'schedule' ? scheduleColumns : entityType === 'tag' ? tagColumns : entityType === 'category' ? categoryColumns : entityType === 'rule' ? ruleColumns : entityType === 'api' ? apiColumns : entityType === 'app' ? appColumns : entityType === 'environment_property' ? environmentPropertyColumns : entityType === 'platform' ? platformColumns : entityType === 'pipeline' ? pipelineColumns : entityType === 'deployment' ? deploymentColumns : entityType === 'deployment_instance' ? deploymentInstanceColumns : entityType === 'deployment_instance_property' ? deploymentInstancePropertyColumns : entityType === 'product_property' ? productPropertyColumns : entityType === 'product_version' ? productVersionColumns : instanceColumns;
 
 
     const table = useMaterialReactTable({
@@ -601,6 +776,10 @@ export default function PromotionExport() {
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) =>
+            (row.environment && row.propertyId ? `${row.environment}|${row.propertyId}` : null) ||
+            (row.deploymentInstanceId && row.propertyId ? `${row.deploymentInstanceId}|${row.propertyId}` : null) ||
+            (row.productId && row.propertyId ? `${row.productId}|${row.propertyId}` : null) ||
+            row.productVersionId ||
             row.instanceId ||
             row.configId ||
             row.tableId ||
@@ -617,7 +796,11 @@ export default function PromotionExport() {
             row.categoryId ||
             row.ruleId ||
             row.apiId ||
-            row.appId,
+            row.appId ||
+            row.platformId ||
+            row.pipelineId ||
+            row.deploymentId ||
+            row.deploymentInstanceId,
     });
 
     const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
