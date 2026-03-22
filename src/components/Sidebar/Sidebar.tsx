@@ -280,6 +280,7 @@ const structure = [
       { label: "User Memory", link: "/app/genai/UserMemory" },
       { label: "Agent Memory", link: "/app/genai/AgentMemory" },
       { label: "Org Memory", link: "/app/genai/OrgMemory" },
+      { label: "GenAI Chat", link: "/app/genai/chat" },
     ],
   },
   {
