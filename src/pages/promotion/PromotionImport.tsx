@@ -97,6 +97,7 @@ export default function PromotionImport() {
     // Dry run
     const [isDryRunning, setIsDryRunning] = useState(false);
     const [diffPlan, setDiffPlan] = useState<DiffPlan | null>(null);
+    const [dryRunError, setDryRunError] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
     // Execute
@@ -148,6 +149,7 @@ export default function PromotionImport() {
 
         setIsDryRunning(true);
         setDiffPlan(null);
+        setDryRunError(null);
         try {
             const cmd = {
                 host: 'lightapi.net', service: 'user', action: 'importDryRun', version: '0.1.0',
@@ -157,7 +159,12 @@ export default function PromotionImport() {
             if (result.error) {
                 alert('Dry run failed: ' + JSON.stringify(result.error));
             } else {
-                setDiffPlan(result as unknown as DiffPlan);
+                const plan = result as unknown as DiffPlan;
+                if (!Array.isArray(plan.items)) {
+                    setDryRunError('Dry run returned an incomplete response (missing items). Cannot proceed with promotion.');
+                } else {
+                    setDiffPlan(plan);
+                }
             }
         } catch (error) {
             console.error('Dry run failed:', error);
@@ -267,6 +274,12 @@ export default function PromotionImport() {
                             Run Dry Run (Preview)
                         </Button>
                     </Box>
+
+                    {dryRunError && (
+                        <Alert severity="error" onClose={() => setDryRunError(null)} sx={{ mt: 2 }}>
+                            {dryRunError}
+                        </Alert>
+                    )}
                 </Paper>
             )}
 
@@ -298,8 +311,8 @@ export default function PromotionImport() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {(diffPlan.items || []).map((item, idx) => {
-                                        const config = getActionConfig(item.action);
+                                    {diffPlan.items.map((item, idx) => {
+                                        const config = actionConfig[item.action] || actionConfig.ERROR;
                                         const rowKey = `${item.entityType}-${item.entityId}-${idx}`;
                                         const hasDiff = item.diff && Object.keys(item.diff).length > 0;
 
