@@ -34,6 +34,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
@@ -44,11 +45,20 @@ type HostType = {
     subDomain: string;
 };
 
+type KnownAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'NOOP' | 'ERROR';
+
+type ActionConfig = {
+    icon: React.ReactElement;
+    color: 'success' | 'warning' | 'error' | 'default';
+    label: string;
+};
+
 type DiffItem = {
     entityType: string;
     entityId: string;
     entityName?: string;
-    action: 'CREATE' | 'UPDATE' | 'DELETE' | 'NOOP';
+    /** Well-known values are defined by KnownAction; backend may return unexpected strings. */
+    action: KnownAction | string;
     diff?: Record<string, { from: string; to: string }>;
 };
 
@@ -58,12 +68,17 @@ type DiffPlan = {
     items: DiffItem[];
 };
 
-const actionConfig = {
-    CREATE: { icon: <AddCircleIcon />, color: 'success' as const, label: 'New' },
-    UPDATE: { icon: <ChangeCircleIcon />, color: 'warning' as const, label: 'Changed' },
-    DELETE: { icon: <RemoveCircleIcon />, color: 'error' as const, label: 'Orphaned' },
-    NOOP: { icon: <SkipNextIcon />, color: 'default' as const, label: 'Same' },
+const actionConfig: Record<KnownAction, ActionConfig> = {
+    CREATE: { icon: <AddCircleIcon />, color: 'success', label: 'New' },
+    UPDATE: { icon: <ChangeCircleIcon />, color: 'warning', label: 'Changed' },
+    DELETE: { icon: <RemoveCircleIcon />, color: 'error', label: 'Orphaned' },
+    NOOP: { icon: <SkipNextIcon />, color: 'default', label: 'Same' },
+    ERROR: { icon: <ReportProblemIcon />, color: 'error', label: 'Error' },
 };
+
+function getActionConfig(action: string): ActionConfig {
+    return (actionConfig as Record<string, ActionConfig>)[action] ?? actionConfig.ERROR;
+}
 
 export default function PromotionImport() {
     const navigate = useNavigate();
@@ -82,6 +97,7 @@ export default function PromotionImport() {
     // Dry run
     const [isDryRunning, setIsDryRunning] = useState(false);
     const [diffPlan, setDiffPlan] = useState<DiffPlan | null>(null);
+    const [dryRunError, setDryRunError] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
     // Execute
@@ -110,13 +126,6 @@ export default function PromotionImport() {
         loadHosts();
     }, []);
 
-    // Auto dry run if coming from export page
-    useEffect(() => {
-        if (fromExport && navSnapshot && navTargetHostId) {
-            handleDryRun();
-        }
-    }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
-
     // File upload handler
     const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -140,6 +149,7 @@ export default function PromotionImport() {
 
         setIsDryRunning(true);
         setDiffPlan(null);
+        setDryRunError(null);
         try {
             const cmd = {
                 host: 'lightapi.net', service: 'user', action: 'importDryRun', version: '0.1.0',
@@ -149,7 +159,12 @@ export default function PromotionImport() {
             if (result.error) {
                 alert('Dry run failed: ' + JSON.stringify(result.error));
             } else {
-                setDiffPlan(result as unknown as DiffPlan);
+                const plan = result as unknown as DiffPlan;
+                if (!Array.isArray(plan.items)) {
+                    setDryRunError('Dry run returned an incomplete response (missing items). Cannot proceed with promotion.');
+                } else {
+                    setDiffPlan(plan);
+                }
             }
         } catch (error) {
             console.error('Dry run failed:', error);
@@ -188,6 +203,13 @@ export default function PromotionImport() {
             setIsExecuting(false);
         }
     }, [snapshot, targetHostId, diffPlan, orphanAction]);
+
+    // Auto dry run if coming from export page
+    useEffect(() => {
+        if (fromExport && navSnapshot && navTargetHostId) {
+            handleDryRun();
+        }
+    }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
 
     const toggleRow = (key: string) => {
         setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }));
@@ -252,6 +274,12 @@ export default function PromotionImport() {
                             Run Dry Run (Preview)
                         </Button>
                     </Box>
+
+                    {dryRunError && (
+                        <Alert severity="error" onClose={() => setDryRunError(null)} sx={{ mt: 2 }}>
+                            {dryRunError}
+                        </Alert>
+                    )}
                 </Paper>
             )}
 
@@ -284,7 +312,7 @@ export default function PromotionImport() {
                                 </TableHead>
                                 <TableBody>
                                     {diffPlan.items.map((item, idx) => {
-                                        const config = actionConfig[item.action];
+                                        const config = actionConfig[item.action] || actionConfig.ERROR;
                                         const rowKey = `${item.entityType}-${item.entityId}-${idx}`;
                                         const hasDiff = item.diff && Object.keys(item.diff).length > 0;
 
@@ -355,7 +383,7 @@ export default function PromotionImport() {
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>Step 3: Execute Promotion</Typography>
 
-                        {diffPlan.summary.orphan > 0 && (
+                        {(diffPlan.summary?.orphan ?? 0) > 0 && (
                             <Box sx={{ mb: 3 }}>
                                 <FormControl>
                                     <FormLabel>Orphaned Items Action</FormLabel>
