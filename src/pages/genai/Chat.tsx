@@ -72,7 +72,7 @@ export default function Chat() {
             url += `&Authorization=Bearer ${accessToken}`;
         }
 
-        console.log("Connecting to:", url);
+        console.log("Connecting to WebSocket server");
         ws.current = new WebSocket(url);
 
         ws.current.onopen = () => {
