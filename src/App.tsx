@@ -153,6 +153,7 @@ import PromotionExport from "./pages/promotion/PromotionExport";
 import PromotionImport from "./pages/promotion/PromotionImport";
 import PromotionHistory from "./pages/promotion/PromotionHistory";
 import PromotionDiffView from "./pages/promotion/PromotionDiffView";
+import Chat from "./pages/genai/Chat";
 import { useEffect } from "react";
 
 const RedirectWithQuery = ({ to }: { to: string }) => {
@@ -420,6 +421,7 @@ const App = () => {
           <Route path="genai/UserMemory" element={<UserMemory />} />
           <Route path="genai/AgentMemory" element={<AgentMemory />} />
           <Route path="genai/OrgMemory" element={<OrgMemory />} />
+          <Route path="genai/chat" element={<Chat />} />
           <Route path="promotion/export" element={<PromotionExport />} />
           <Route path="promotion/import" element={<PromotionImport />} />
           <Route path="promotion/history" element={<PromotionHistory />} />
