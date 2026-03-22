@@ -14,6 +14,7 @@ import {
     Tooltip,
     Avatar,
     Chip,
+    CircularProgress,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
@@ -34,6 +35,7 @@ export default function Chat() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
+    const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
     const [model, setModel] = useState('qwen3:14b');
     const ws = useRef<WebSocket | null>(null);
@@ -47,6 +49,20 @@ export default function Chat() {
         }
     }, [email]);
 
+    useEffect(() => {
+        return () => {
+            // Clean up WebSocket connection on unmount
+            if (ws.current) {
+                ws.current.onopen = null;
+                ws.current.onmessage = null;
+                ws.current.onclose = null;
+                ws.current.onerror = null;
+                ws.current.close();
+                ws.current = null;
+            }
+        };
+    }, []);
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -56,6 +72,24 @@ export default function Chat() {
     }, [messages]);
 
     const handleConnect = () => {
+        // Prevent duplicate connections: bail out if already connecting or open
+        const readyState = ws.current?.readyState;
+        if (readyState === WebSocket.CONNECTING || readyState === WebSocket.OPEN) {
+            return;
+        }
+
+        // Close and clean up any leftover socket reference (e.g. in CLOSING or CLOSED state)
+        if (ws.current) {
+            ws.current.onopen = null;
+            ws.current.onmessage = null;
+            ws.current.onclose = null;
+            ws.current.onerror = null;
+            ws.current.close();
+            ws.current = null;
+        }
+
+        setConnecting(true);
+
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const hostname = window.location.hostname;
         const port = window.location.port ? `:${window.location.port}` : '';
@@ -76,6 +110,7 @@ export default function Chat() {
         ws.current = new WebSocket(url);
 
         ws.current.onopen = () => {
+            setConnecting(false);
             setConnected(true);
             addMessage('System', 'Connected to chat server.');
         };
@@ -85,11 +120,13 @@ export default function Chat() {
         };
 
         ws.current.onclose = () => {
+            setConnecting(false);
             setConnected(false);
             addMessage('System', 'Disconnected from chat server.');
         };
 
         ws.current.onerror = (error) => {
+            setConnecting(false);
             addMessage('System', 'Error: Connection failed.');
             console.error("WebSocket error:", error);
         };
@@ -139,7 +176,7 @@ export default function Chat() {
                         label="User ID"
                         value={userId}
                         onChange={(e) => setUserId(e.target.value)}
-                        disabled={connected}
+                        disabled={connected || connecting}
                         sx={{ width: 200 }}
                     />
                     <TextField
@@ -147,17 +184,18 @@ export default function Chat() {
                         label="Model"
                         value={model}
                         onChange={(e) => setModel(e.target.value)}
-                        disabled={connected}
+                        disabled={connected || connecting}
                         sx={{ width: 150 }}
                     />
                     {!connected ? (
                         <Button
                             variant="contained"
                             color="primary"
-                            startIcon={<ConnectWithoutContactIcon />}
+                            startIcon={connecting ? <CircularProgress size={16} color="inherit" /> : <ConnectWithoutContactIcon />}
                             onClick={handleConnect}
+                            disabled={connecting}
                         >
-                            Connect
+                            {connecting ? 'Connecting…' : 'Connect'}
                         </Button>
                     ) : (
                         <Button
