@@ -45,11 +45,20 @@ type HostType = {
     subDomain: string;
 };
 
+type KnownAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'NOOP' | 'ERROR';
+
+type ActionConfig = {
+    icon: React.ReactElement;
+    color: 'success' | 'warning' | 'error' | 'default';
+    label: string;
+};
+
 type DiffItem = {
     entityType: string;
     entityId: string;
     entityName?: string;
-    action: 'CREATE' | 'UPDATE' | 'DELETE' | 'NOOP';
+    /** Well-known values are defined by KnownAction; backend may return unexpected strings. */
+    action: KnownAction | string;
     diff?: Record<string, { from: string; to: string }>;
 };
 
@@ -59,13 +68,17 @@ type DiffPlan = {
     items: DiffItem[];
 };
 
-const actionConfig = {
-    CREATE: { icon: <AddCircleIcon />, color: 'success' as const, label: 'New' },
-    UPDATE: { icon: <ChangeCircleIcon />, color: 'warning' as const, label: 'Changed' },
-    DELETE: { icon: <RemoveCircleIcon />, color: 'error' as const, label: 'Orphaned' },
-    NOOP: { icon: <SkipNextIcon />, color: 'default' as const, label: 'Same' },
-    ERROR: { icon: <ReportProblemIcon />, color: 'error' as const, label: 'Error' },
+const actionConfig: Record<KnownAction, ActionConfig> = {
+    CREATE: { icon: <AddCircleIcon />, color: 'success', label: 'New' },
+    UPDATE: { icon: <ChangeCircleIcon />, color: 'warning', label: 'Changed' },
+    DELETE: { icon: <RemoveCircleIcon />, color: 'error', label: 'Orphaned' },
+    NOOP: { icon: <SkipNextIcon />, color: 'default', label: 'Same' },
+    ERROR: { icon: <ReportProblemIcon />, color: 'error', label: 'Error' },
 };
+
+function getActionConfig(action: string): ActionConfig {
+    return (actionConfig as Record<string, ActionConfig>)[action] ?? actionConfig.ERROR;
+}
 
 export default function PromotionImport() {
     const navigate = useNavigate();
