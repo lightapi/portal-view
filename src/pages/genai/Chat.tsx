@@ -239,6 +239,7 @@ export default function Chat() {
                                         color="primary" 
                                         onClick={handleSend} 
                                         disabled={!connected || !input.trim()}
+                                        aria-label="Send message"
                                     >
                                         <SendIcon />
                                     </IconButton>
