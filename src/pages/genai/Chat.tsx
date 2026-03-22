@@ -41,6 +41,15 @@ export default function Chat() {
 
     const cookies = new Cookies();
 
+    // Ensure WebSocket connection is cleaned up when the component unmounts
+    useEffect(() => {
+        return () => {
+            if (ws.current) {
+                ws.current.close();
+            }
+        };
+    }, []);
+
     useEffect(() => {
         if (email) {
             setUserId(email);
