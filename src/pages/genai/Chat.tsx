@@ -104,17 +104,18 @@ export default function Chat() {
         // Retrieve access token if available
         const accessToken = cookies.get('accessToken');
         
-        // Construct URL with query params
-        let url = `${protocol}//${hostname}${port}/chat?userId=${userId}&model=${model}`;
+        // Construct URL with query params using URL + searchParams to ensure proper encoding
+        const url = new URL(`${protocol}//${hostname}${port}/chat`);
+        url.searchParams.set('userId', userId);
+        url.searchParams.set('model', model);
         
-        // If we have an access token, some gateways expect it as a query param or sub-protocol
-        // We'll stick to the query param for now as it's common for WS
+        // If we have an access token and it must be passed, use a dedicated, encoded token param
         if (accessToken) {
-            url += `&Authorization=Bearer ${accessToken}`;
+            url.searchParams.set('token', accessToken);
         }
 
-        console.log("Connecting to WebSocket server");
-        ws.current = new WebSocket(url);
+        console.log("Connecting to:", url.toString());
+        ws.current = new WebSocket(url.toString());
 
         ws.current.onopen = () => {
             setConnecting(false);
