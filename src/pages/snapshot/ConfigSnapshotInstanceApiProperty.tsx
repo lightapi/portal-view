@@ -67,7 +67,7 @@ export default function ConfigSnapshotInstanceApiProperty() {
         } finally {
             setIsError(false); setIsLoading(false); setIsRefetching(false);
         }
-    }, [snapshotId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+    }, [snapshotId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
     // useEffect to trigger fetchData
     useEffect(() => {

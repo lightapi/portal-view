@@ -16,7 +16,6 @@ export default function HealthCheck(props) {
       setLoading(true);
       try {
         const json = await fetchClient(url);
-        console.log(json);
         setCheck(json);
         setLoading(false);
       } catch (error) {

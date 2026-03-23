@@ -4,8 +4,6 @@ var AppStateContext = React.createContext();
 var AppDispatchContext = React.createContext();
 
 function appReducer(state, action) {
-  console.log("state = ", state);
-  console.log("action = ", action);
   switch (action.type) {
     case "UPDATE_FILTER":
       return { ...state, filter: action.filter.toLowerCase() };

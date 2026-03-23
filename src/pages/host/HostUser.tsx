@@ -122,7 +122,7 @@ export default function HostUser() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [initialHostId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+  }, [initialHostId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {

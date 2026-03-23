@@ -21,8 +21,6 @@ var UserStateContext = React.createContext<UserState | undefined>(undefined);
 var UserDispatchContext = React.createContext<React.Dispatch<UserAction> | undefined>(undefined);
 
 function userReducer(state: UserState, action: UserAction): UserState {
-  console.log("state = ", state);
-  console.log("action = ", action);
   switch (action.type) {
     case "LOGIN_SUCCESS":
       return {

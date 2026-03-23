@@ -62,7 +62,6 @@ export default function HostAdmin() {
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
-    console.log("fetchData is called.", data);
     if (!data.length) {
       setIsLoading(true);
     } else {
@@ -100,9 +99,7 @@ export default function HostAdmin() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
-      console.log("call the fetch api");
       const json = await fetchClient(url) as HostApiResponse;
-      console.log(json);
       setData(json.hosts);
       setRowCount(json.total);
     } catch (error) {

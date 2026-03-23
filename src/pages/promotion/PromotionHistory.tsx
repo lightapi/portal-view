@@ -95,7 +95,7 @@ export default function PromotionHistory() {
             setIsLoading(false);
             setIsRefetching(false);
         }
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
     useEffect(() => {
         fetchData();

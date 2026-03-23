@@ -95,7 +95,6 @@ export default function OrgAdmin() {
 
     try {
       const json = await fetchClient(url);
-      console.log("json = ", json);
       setData(json.orgs || []);
       setRowCount(json.total || 0);
     } catch (error) {
@@ -103,7 +102,7 @@ export default function OrgAdmin() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {

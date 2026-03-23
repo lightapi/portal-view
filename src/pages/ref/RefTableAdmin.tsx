@@ -97,13 +97,11 @@ export default function RefTableAdmin() {
         },
       };
 
-      console.log("FETCHING DATA with cmd:", cmd); // This will now log the correct number of times
 
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
       try {
         const json = await fetchClient(url) as RefTableApiResponse;
-        console.log("json = ", json);
         setData(json.refTables || []);
         setRowCount(json.total || 0);
       } catch (error) {

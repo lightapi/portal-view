@@ -117,7 +117,7 @@ export default function ClientToken() {
             }
         };
         fetchData();
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, data.length]);
+    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
     // Delete (Revoke) handler with optimistic update
     const handleDelete = useCallback(async (row: MRT_Row<ClientTokenType>) => {
