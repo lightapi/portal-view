@@ -114,26 +114,54 @@ export default function Chat() {
             url.searchParams.set('token', accessToken);
         }
 
-        console.log("Connecting to:", url.toString());
-        ws.current = new WebSocket(url.toString());
+        const socket = new WebSocket(url.toString());
+        ws.current = socket;
 
-        ws.current.onopen = () => {
+        socket.onopen = () => {
             setConnecting(false);
             setConnected(true);
             addMessage('System', 'Connected to chat server.');
         };
 
-        ws.current.onmessage = (event) => {
-            addMessage('Assistant', event.data);
+        socket.onmessage = (event: MessageEvent) => {
+            const data = event.data;
+            try {
+                // Check if it's a JSON message (like session info)
+                const json = JSON.parse(data);
+                if (json.type === 'session') {
+                    // Store session id if needed, or just log to system chat
+                    sessionStorage.setItem('sessionId', json.sessionId);
+                    addMessage('System', 'Session initialized: ' + json.sessionId);
+                    return;
+                }
+            } catch (e) {
+                // Not JSON, treat as text chunk
+            }
+
+            // Correctly handle assistant message streaming:
+            // If the last message was from the assistant, append the chunk.
+            // Otherwise, create a new assistant message.
+            setMessages((prev) => {
+                if (prev.length > 0 && prev[prev.length - 1].role === 'Assistant') {
+                    const updatedMessages = [...prev];
+                    const lastMsg = updatedMessages[updatedMessages.length - 1];
+                    updatedMessages[updatedMessages.length - 1] = {
+                        ...lastMsg,
+                        text: lastMsg.text + data,
+                    };
+                    return updatedMessages;
+                }
+                return [...prev, { role: 'Assistant', text: data, timestamp: new Date() }];
+            });
         };
 
-        ws.current.onclose = () => {
+        socket.onclose = () => {
             setConnecting(false);
             setConnected(false);
             addMessage('System', 'Disconnected from chat server.');
         };
 
-        ws.current.onerror = (error) => {
+        socket.onerror = (error: Event) => {
             setConnecting(false);
             addMessage('System', 'Error: Connection failed.');
             console.error("WebSocket error:", error);
