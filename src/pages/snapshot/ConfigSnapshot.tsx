@@ -192,80 +192,6 @@ export default function ConfigSnapshot() {
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ConfigSnapshotType>[]>(
         () => [
-            {
-                id: 'actions',
-                header: 'Actions',
-                enableSorting: false,
-                enableColumnFilter: false,
-                size: 350,
-                Cell: ({ row }) => (
-                    <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-                        <Tooltip title="Update Snapshot">
-                            <IconButton
-                                onClick={() => handleUpdate(row)}
-                                disabled={isUpdateLoading === row.original.snapshotId}
-                            >
-                                <SystemUpdateIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Snapshot">
-                            <IconButton color="error" onClick={() => handleDelete(row)}>
-                                <DeleteForeverIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Snapshot Properties">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}>
-                                <FormatListBulletedIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Snapshot Files">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}>
-                                <DescriptionIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Deployment Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}>
-                                <InstallMobileIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="API Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}>
-                                <ApiIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="App Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}>
-                                <AppsIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="App API Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}>
-                                <FormatIndentIncreaseIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Inst Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}>
-                                <TuneIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Env Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}>
-                                <YardIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Prd Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}>
-                                <Inventory2Icon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="PV Props">
-                            <IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}>
-                                <AddToDriveIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-                ),
-            },
             { accessorKey: 'snapshotTs', header: 'Snapshot Ts' },
             { accessorKey: 'snapshotType', header: 'Snapshot Type' },
             { accessorKey: 'instanceName', header: 'Instance Name' },
@@ -308,7 +234,75 @@ export default function ConfigSnapshot() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => `${row.instanceId}-${row.snapshotId}`,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        positionActionsColumn: 'first',
+        renderRowActions: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+                <Tooltip title="Update Snapshot">
+                    <IconButton
+                        onClick={() => handleUpdate(row)}
+                        disabled={isUpdateLoading === row.original.snapshotId}
+                    >
+                        <SystemUpdateIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Snapshot">
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Snapshot Properties">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}>
+                        <FormatListBulletedIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Snapshot Files">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}>
+                        <DescriptionIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Deployment Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}>
+                        <InstallMobileIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="API Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}>
+                        <ApiIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="App Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}>
+                        <AppsIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="App API Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}>
+                        <FormatIndentIncreaseIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Inst Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}>
+                        <TuneIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Env Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}>
+                        <YardIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Prd Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}>
+                        <Inventory2Icon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="PV Props">
+                    <IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}>
+                        <AddToDriveIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        ),
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button

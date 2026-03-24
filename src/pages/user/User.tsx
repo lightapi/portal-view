@@ -248,7 +248,7 @@ export default function User() {
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem', flexWrap: 'nowrap' }}>
+      <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap' }}>
         <Tooltip title="Details"><IconButton onClick={() => navigate('/app/userDetail', { state: { user: row.original } })}><DetailsIcon /></IconButton></Tooltip>
         <Tooltip title="Update">
           <IconButton

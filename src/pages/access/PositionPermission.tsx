@@ -171,17 +171,6 @@ export default function PositionPermission() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Permission">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
     [handleDelete],
   );
@@ -202,7 +191,17 @@ export default function PositionPermission() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.positionId}-${row.apiId}-${row.endpointId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
+        <Tooltip title="Delete Permission">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

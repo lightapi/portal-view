@@ -154,6 +154,7 @@ export default function ServiceEndpoint() {
     columns,
     data,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => {
       const s = { data: { ...row.original } };
       return (

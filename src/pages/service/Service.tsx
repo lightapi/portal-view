@@ -224,8 +224,9 @@ export default function Service() {
     getRowId: (row) => row.apiId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
         <Tooltip title="Details">
           <IconButton onClick={() => navigate('/app/apiDetail', { state: { service: row.original } })}>
             <DetailsIcon />

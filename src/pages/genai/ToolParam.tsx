@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -201,27 +201,6 @@ export default function ToolParam() {
                 filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (
-                    <Tooltip title="Update Parameter">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === row.original.paramId}
-                        >
-                            {isUpdateLoading === row.original.paramId ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                )
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Parameter"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
         ],
         [handleDelete, handleUpdate, isUpdateLoading],
     );
@@ -242,7 +221,29 @@ export default function ToolParam() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.paramId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        positionActionsColumn: 'first',
+        renderRowActions: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Update Parameter">
+                    <IconButton
+                        onClick={() => handleUpdate(row)}
+                        disabled={isUpdateLoading === row.original.paramId}
+                    >
+                        {isUpdateLoading === row.original.paramId ? (
+                            <CircularProgress size={22} />
+                        ) : (
+                            <SystemUpdateIcon />
+                        )}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Parameter">
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        ),
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createToolParam')}>
                 Create New Parameter

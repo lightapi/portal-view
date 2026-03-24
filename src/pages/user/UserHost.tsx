@@ -127,8 +127,9 @@ export default function UserHost() {
     getRowId: (row) => `${row.hostId}-${row.userId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading hosts for user' } : undefined,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title={row.original.current ? "This is the current host" : "Switch to this host"}>
           <span>
             <IconButton

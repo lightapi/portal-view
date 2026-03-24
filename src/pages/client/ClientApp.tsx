@@ -195,38 +195,8 @@ export default function ClientApp() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update App">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.appId}
-            >
-              {isUpdateLoading === row.original.appId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete App"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-      {
-        id: 'relations', header: 'Relations', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="OAuth Clients"><IconButton onClick={() => navigate('/app/oauth/authClient', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}><AirlineSeatReclineNormalIcon /></IconButton></Tooltip>
-            <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/instance/InstanceApp', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}><ContentCopyIcon /></IconButton></Tooltip>
-          </Box>
-        ),
       },
     ],
     [handleDelete, handleUpdate, isUpdateLoading, navigate],
@@ -248,7 +218,39 @@ export default function ClientApp() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.appId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+        <Tooltip title="Update App">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.appId}
+          >
+            {isUpdateLoading === row.original.appId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete App">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="OAuth Clients">
+          <IconButton onClick={() => navigate('/app/oauth/authClient', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}>
+            <AirlineSeatReclineNormalIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Instance Apps">
+          <IconButton onClick={() => navigate('/app/instance/InstanceApp', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}>
+            <ContentCopyIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createApp')}>
         Create New App

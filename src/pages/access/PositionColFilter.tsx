@@ -200,35 +200,6 @@ export default function PositionColFilter() {
         filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Update Row Col Filter">
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={isUpdateLoading === row.original.positionId}
-            >
-              {isUpdateLoading === row.original.positionId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' }, muiTableHeadCellProps: { align: 'center' },
-        Cell: ({ row }) => (
-          <Tooltip title="Delete Filter">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        ),
-      },
     ],
     [handleDelete, navigate],
   );
@@ -249,7 +220,29 @@ export default function PositionColFilter() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.positionId}-${row.endpointId}`, // This might need to be more unique if a position can have multiple filters per endpoint
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
+        <Tooltip title="Update Row Col Filter">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.positionId}
+          >
+            {isUpdateLoading === row.original.positionId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Filter">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button

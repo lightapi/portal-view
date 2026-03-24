@@ -137,7 +137,7 @@ export default function ListRule() {
     manualFiltering: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Delete">
           <IconButton color="error" onClick={() => handleDelete(row.original)}>
             <DeleteIcon />

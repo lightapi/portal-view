@@ -208,10 +208,11 @@ export default function SkillDependency() {
         getRowId: (row) => `${row.skillId}-${row.dependsOnSkillId}`,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const idKey = `${row.original.skillId}-${row.original.dependsOnSkillId}`;
             return (
-                <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                <Box sx={{ display: 'flex', gap: '1rem' }}>
                     <Tooltip title="Update Dependency">
                         <IconButton
                             onClick={() => handleUpdate(row)}

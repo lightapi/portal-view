@@ -207,6 +207,7 @@ export default function RoleAdmin() {
     getRowId: (row) => row.roleId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Role">

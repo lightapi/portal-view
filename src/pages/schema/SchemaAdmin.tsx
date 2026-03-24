@@ -224,8 +224,9 @@ export default function SchemaAdmin() {
     getRowId: (row) => row.schemaId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Details">
           <IconButton
             onClick={() => navigate('/app/schemaDetail', { state: { schema: row.original } })}

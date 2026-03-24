@@ -205,8 +205,9 @@ export default function AgentSessionHistory() {
         getRowId: (row) => row.sessionHistoryId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Box sx={{ display: 'flex', gap: '1rem' }}>
                 <Tooltip title="Update Session History">
                     <IconButton
                         onClick={() => handleUpdate(row)}

@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -191,27 +191,6 @@ export default function Tool() {
                 filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
-            {
-                id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (
-                    <Tooltip title="Update Tool">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === row.original.toolId}
-                        >
-                            {isUpdateLoading === row.original.toolId ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                )
-            },
-            {
-                id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-                Cell: ({ row }) => (<Tooltip title="Delete Tool"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-            },
         ],
         [handleDelete, handleUpdate, isUpdateLoading],
     );
@@ -232,7 +211,29 @@ export default function Tool() {
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.toolId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-        enableRowActions: false,
+        enableRowActions: true,
+        positionActionsColumn: 'first',
+        renderRowActions: ({ row }) => (
+            <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Update Tool">
+                    <IconButton
+                        onClick={() => handleUpdate(row)}
+                        disabled={isUpdateLoading === row.original.toolId}
+                    >
+                        {isUpdateLoading === row.original.toolId ? (
+                            <CircularProgress size={22} />
+                        ) : (
+                            <SystemUpdateIcon />
+                        )}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Tool">
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        ),
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTool')}>
                 Create New Tool
