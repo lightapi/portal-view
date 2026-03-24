@@ -101,8 +101,9 @@ export default function Chat() {
         const hostname = window.location.hostname;
         const port = window.location.port ? `:${window.location.port}` : '';
         
-        // Retrieve access token if available
+        // Retrieve tokens if available
         const accessToken = cookies.get('accessToken');
+        const csrfToken = cookies.get('csrf');
         
         // Construct URL with query params using URL + searchParams to ensure proper encoding
         const url = new URL(`${protocol}//${hostname}${port}/chat`);
@@ -114,7 +115,9 @@ export default function Chat() {
             url.searchParams.set('token', accessToken);
         }
 
-        const socket = new WebSocket(url.toString());
+        // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
+        const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
+        const socket = new WebSocket(url.toString(), protocols);
         ws.current = socket;
 
         socket.onopen = () => {
