@@ -190,7 +190,7 @@ export default function SkillTool() {
                 accessorKey: 'active',
                 header: 'Active',
                 filterVariant: 'select',
-                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
@@ -214,10 +214,11 @@ export default function SkillTool() {
         getRowId: (row) => `${row.skillId}-${row.toolId}`,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const rowKey = `${row.original.skillId}-${row.original.toolId}`;
             return (
-                <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                <Box sx={{ display: 'flex', gap: '1rem' }}>
                     <Tooltip title="Update Skill-Tool Association">
                         <IconButton
                             onClick={() => handleUpdate(row)}

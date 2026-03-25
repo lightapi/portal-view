@@ -194,7 +194,7 @@ export default function ProcessInfo() {
                 accessorKey: 'active',
                 header: 'Active',
                 filterVariant: 'select',
-                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
@@ -218,8 +218,9 @@ export default function ProcessInfo() {
         getRowId: (row) => row.processId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+            <Box sx={{ display: 'flex', gap: '1rem' }}>
                 <Tooltip title="Update Process Info">
                     <IconButton
                         onClick={() => handleUpdate(row)}

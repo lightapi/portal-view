@@ -207,7 +207,7 @@ export default function PlatformAdmin() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
@@ -231,8 +231,9 @@ export default function PlatformAdmin() {
     getRowId: (row) => row.platformId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
+    positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
         <Tooltip title="Update Platform">
           <IconButton
             onClick={() => handleUpdate(row)}

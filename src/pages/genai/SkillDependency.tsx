@@ -170,7 +170,7 @@ export default function SkillDependency() {
                 accessorKey: 'required',
                 header: 'Required',
                 filterVariant: 'select',
-                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
             { accessorKey: 'updateUser', header: 'Update User' },
@@ -184,7 +184,7 @@ export default function SkillDependency() {
                 accessorKey: 'active',
                 header: 'Active',
                 filterVariant: 'select',
-                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
@@ -208,10 +208,11 @@ export default function SkillDependency() {
         getRowId: (row) => `${row.skillId}-${row.dependsOnSkillId}`,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const idKey = `${row.original.skillId}-${row.original.dependsOnSkillId}`;
             return (
-                <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+                <Box sx={{ display: 'flex', gap: '1rem' }}>
                     <Tooltip title="Update Dependency">
                         <IconButton
                             onClick={() => handleUpdate(row)}

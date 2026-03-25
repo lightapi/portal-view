@@ -118,8 +118,8 @@ export default function ListRule() {
         header: 'Active',
         filterVariant: 'select',
         filterSelectOptions: [
-          { text: 'True', value: 'true' },
-          { text: 'False', value: 'false' },
+          { label: 'True', value: 'true' },
+          { label: 'False', value: 'false' },
         ],
         Cell: ({ cell }) => (cell.getValue<boolean>() ? 'True' : 'False'),
       },
@@ -137,7 +137,7 @@ export default function ListRule() {
     manualFiltering: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Delete">
           <IconButton color="error" onClick={() => handleDelete(row.original)}>
             <DeleteIcon />
