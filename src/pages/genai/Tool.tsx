@@ -192,7 +192,7 @@ export default function Tool() {
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
-        [handleDelete, handleUpdate, isUpdateLoading],
+        [],
     );
 
     // Table instance configuration

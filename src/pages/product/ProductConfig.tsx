@@ -169,7 +169,7 @@ export default function ProductConfig() {
         Cell: ({ row }) => (<Tooltip title="Delete Product Version Config"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

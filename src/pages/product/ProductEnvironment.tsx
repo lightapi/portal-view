@@ -235,7 +235,7 @@ export default function ProductEnvironment() {
         Cell: ({ row }) => (<Tooltip title="Delete Product Version Environment"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading],
+    [],
   );
 
   // Table instance configuration

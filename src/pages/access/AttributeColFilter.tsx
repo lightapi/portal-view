@@ -202,7 +202,7 @@ export default function AttributeColFilter() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

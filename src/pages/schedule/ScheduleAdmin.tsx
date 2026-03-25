@@ -213,7 +213,7 @@ export default function ScheduleAdmin() {
         Cell: ({ row }) => (<Tooltip title="Delete Schedule"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [],
   );
 
   // Table instance configuration

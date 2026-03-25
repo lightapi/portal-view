@@ -182,7 +182,7 @@ export default function HostUser() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

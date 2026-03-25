@@ -200,7 +200,7 @@ export default function TaskAsst() {
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
-        [handleDelete, handleUpdate, navigate],
+        [],
     );
 
     // Table instance configuration

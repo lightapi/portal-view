@@ -248,7 +248,7 @@ export default function ConfigInstanceApp() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [],
   );
 
   // Table instance configuration

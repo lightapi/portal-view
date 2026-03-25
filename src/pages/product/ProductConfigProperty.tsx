@@ -173,7 +173,7 @@ export default function ProductVersionProperty() {
         Cell: ({ row }) => (<Tooltip title="Delete Product Version Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

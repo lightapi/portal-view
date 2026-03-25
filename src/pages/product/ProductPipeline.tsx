@@ -176,7 +176,7 @@ export default function ProductVersionPipeline() {
         Cell: ({ row }) => (<Tooltip title="Delete Pipeline"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

@@ -227,7 +227,7 @@ export default function TagAdmin() {
         Cell: ({ row }) => (<Tooltip title="Delete Tag"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading],
+    [],
   );
 
   // Table instance configuration

@@ -185,7 +185,7 @@ export default function AgentMemory() {
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
         ],
-        [handleDelete, handleUpdate],
+        [],
     );
 
     // Table instance configuration

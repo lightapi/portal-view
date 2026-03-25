@@ -187,7 +187,7 @@ export default function RoleAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, handleUpdate, navigate],
+    [],
   );
 
   // Table instance configuration

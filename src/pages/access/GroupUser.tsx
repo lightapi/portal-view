@@ -203,7 +203,7 @@ export default function GroupUser() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

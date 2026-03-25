@@ -182,7 +182,7 @@ export default function InstanceApp() {
         ),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

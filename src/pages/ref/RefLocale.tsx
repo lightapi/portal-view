@@ -151,7 +151,7 @@ export default function RefLocale() {
       { accessorKey: 'valueLabel', header: 'Label' },
       { accessorKey: 'valueDesc', header: 'Description' },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

@@ -203,7 +203,7 @@ export default function RoleRowFilter() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

@@ -205,7 +205,7 @@ export default function PositionUser() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

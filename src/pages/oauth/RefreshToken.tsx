@@ -184,7 +184,7 @@ export default function RefreshTokenAdmin() {
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration
