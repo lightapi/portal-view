@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
@@ -59,11 +59,15 @@ export default function RuntimeInstanceAdmin() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const hasRequestedData = useRef(false);
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
-    if (!data.length) setIsLoading(true);
+    const isInitialRequest = !hasRequestedData.current;
+    hasRequestedData.current = true;
+    setIsError(false);
+    if (isInitialRequest) setIsLoading(true);
     else setIsRefetching(true);
 
     let activeStatus = true;
@@ -96,14 +100,13 @@ export default function RuntimeInstanceAdmin() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
-      const json = await fetchClient(url);
+      const json = (await fetchClient(url)) as RuntimeInstanceApiResponse;
       setData(json.runtimeInstances || []);
       setRowCount(json.total || 0);
     } catch (error) {
       setIsError(true);
       console.error(error);
     } finally {
-      setIsError(false);
       setIsLoading(false);
       setIsRefetching(false);
     }
@@ -142,10 +145,11 @@ export default function RuntimeInstanceAdmin() {
       }
 
       const originalData = [...data];
+      const originalRowCount = rowCount;
       setData((prev) =>
         prev.filter((p) => p.runtimeInstanceId !== row.original.runtimeInstanceId)
       );
-      setRowCount((prev) => prev - 1);
+      setRowCount((prev) => Math.max(prev - 1, 0));
 
       const cmd = {
         host: 'lightapi.net',
@@ -164,15 +168,15 @@ export default function RuntimeInstanceAdmin() {
         if (result.error) {
           alert('Failed to delete runtime instance. Please try again.');
           setData(originalData);
-          setRowCount(originalData.length);
+          setRowCount(originalRowCount);
         }
       } catch (e) {
         alert('Failed to delete runtime instance due to a network error.');
         setData(originalData);
-        setRowCount(originalData.length);
+        setRowCount(originalRowCount);
       }
     },
-    [data]
+    [data, rowCount]
   );
 
   // Update handler — fetches fresh data then navigates to update form
