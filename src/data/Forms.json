@@ -18688,5 +18688,130 @@
       },
       "current"
     ]
+  },
+  "createRuntimeInstance": {
+    "formId": "createRuntimeInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "createRuntimeInstance",
+        "version": "0.1.0",
+        "title": "Create Runtime Instance",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Runtime Instance",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "runtimeInstanceId": {
+          "type": "string",
+          "title": "Runtime Instance Id",
+          "readonly": true
+        },
+        "serviceId": {
+          "type": "string",
+          "title": "Service Id"
+        },
+        "envTag": {
+          "type": "string",
+          "title": "Env Tag"
+        },
+        "ipAddress": {
+          "type": "string",
+          "title": "IP Address"
+        },
+        "portNumber": {
+          "type": "integer",
+          "title": "Port Number"
+        },
+        "instanceStatus": {
+          "type": "string",
+          "title": "Instance Status",
+          "enum": ["Deployed", "Starting", "Running", "Shutdown"]
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "serviceId",
+      "envTag",
+      "ipAddress",
+      "portNumber",
+      "instanceStatus"
+    ]
+  },
+  "updateRuntimeInstance": {
+    "formId": "updateRuntimeInstance",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "instance",
+        "action": "updateRuntimeInstance",
+        "version": "0.1.0",
+        "title": "Update Runtime Instance",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Runtime Instance",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "runtimeInstanceId": {
+          "type": "string",
+          "title": "Runtime Instance Id",
+          "readonly": true
+        },
+        "serviceId": {
+          "type": "string",
+          "title": "Service Id"
+        },
+        "envTag": {
+          "type": "string",
+          "title": "Env Tag"
+        },
+        "ipAddress": {
+          "type": "string",
+          "title": "IP Address"
+        },
+        "portNumber": {
+          "type": "integer",
+          "title": "Port Number"
+        },
+        "instanceStatus": {
+          "type": "string",
+          "title": "Instance Status",
+          "enum": ["Deployed", "Starting", "Running", "Shutdown"]
+        },
+        "aggregateVersion": {
+          "type": "integer",
+          "title": "Aggregate Version",
+          "readonly": true
+        }
+      }
+    },
+    "form": [
+      "hostId",
+      "runtimeInstanceId",
+      "serviceId",
+      "envTag",
+      "ipAddress",
+      "portNumber",
+      "instanceStatus",
+      "aggregateVersion"
+    ]
   }
 }
