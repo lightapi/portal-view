@@ -175,7 +175,7 @@ export default function AuditLog() {
             { accessorKey: 'userComment', header: 'User Comment' },
             { accessorKey: 'userComment', header: 'User Comment' },
         ],
-        [handleDelete, handleUpdate, navigate],
+        [],
     );
 
     // Table instance configuration

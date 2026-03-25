@@ -230,7 +230,7 @@ export default function RuleAdmin() {
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [],
   );
 
   // Table instance configuration

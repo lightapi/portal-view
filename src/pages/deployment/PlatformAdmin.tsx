@@ -211,7 +211,7 @@ export default function PlatformAdmin() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, handleUpdate, navigate],
+    [],
   );
 
   // Table instance configuration

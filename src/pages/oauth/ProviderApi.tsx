@@ -158,7 +158,7 @@ export default function ProviderApi() {
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
     ],
-    [handleDelete],
+    [],
   );
 
   // Table instance configuration

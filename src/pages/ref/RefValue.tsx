@@ -159,7 +159,7 @@ export default function RefValue() {
       { accessorKey: 'displayOrder', header: 'Order' },
       { accessorKey: 'active', header: 'Active', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

@@ -215,7 +215,7 @@ export default function ConfigSnapshot() {
             { accessorKey: 'instanceId', header: 'Instance Id' },
             { accessorKey: 'deploymentId', header: 'Deployment Id' },
         ],
-        [handleDelete, navigate],
+        [],
     );
 
     // Table instance configuration

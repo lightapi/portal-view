@@ -181,7 +181,7 @@ export default function InstanceApi() {
       },
       { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
-    [navigate],
+    [],
   );
 
   // Table instance configuration

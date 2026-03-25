@@ -165,7 +165,7 @@ export default function ClientToken() {
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
         ],
-        [handleDelete],
+        [],
     );
 
     // Table instance configuration

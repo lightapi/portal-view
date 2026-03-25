@@ -203,7 +203,7 @@ export default function GroupRowFilter() {
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

@@ -212,7 +212,7 @@ export default function ConfigAdmin() {
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
     ],
-    [handleDelete, handleUpdate, navigate],
+    [],
   );
 
   // Table instance configuration

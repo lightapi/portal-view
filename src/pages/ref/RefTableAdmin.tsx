@@ -164,7 +164,7 @@ export default function RefTableAdmin() {
         Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

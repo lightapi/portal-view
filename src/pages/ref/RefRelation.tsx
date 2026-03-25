@@ -161,7 +161,7 @@ export default function RefRelation() {
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

@@ -279,7 +279,7 @@ export default function ProductVersionAdmin() {
         ),
       },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading, navigate],
+    [],
   );
 
   // Table instance configuration

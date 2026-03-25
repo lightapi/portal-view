@@ -217,7 +217,7 @@ export default function Category() {
         Cell: ({ row }) => (<Tooltip title="Delete Category"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [handleDelete, navigate],
+    [],
   );
 
   // Table instance configuration

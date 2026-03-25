@@ -226,7 +226,7 @@ export default function User() {
       { accessorKey: 'verified', header: 'Verified', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
       { accessorKey: 'locked', header: 'Locked', size: 100, Cell: ({ cell }) => (cell.getValue() ? 'Y' : 'N'), muiTableBodyCellProps: { align: 'center' } },
     ],
-    [handleDelete, handleUpdate, handleStateChange, isUpdateLoading, navigate],
+    [],
   );
 
   // Table instance configuration
