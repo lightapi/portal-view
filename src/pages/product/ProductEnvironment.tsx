@@ -196,7 +196,7 @@ export default function ProductEnvironment() {
         accessorKey: 'current',
         header: 'Default Env',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'updateUser', header: 'Update User' },
@@ -210,7 +210,7 @@ export default function ProductEnvironment() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       {

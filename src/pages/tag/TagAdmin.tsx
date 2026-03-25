@@ -202,7 +202,7 @@ export default function TagAdmin() {
         accessorKey: 'active',
         header: 'Active',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'Yes', value: 'true' }, { text: 'No', value: 'false' }],
+        filterSelectOptions: [{ label: 'Yes', value: 'true' }, { label: 'No', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No'),
       },
       {

@@ -199,7 +199,7 @@ export default function ConfigSnapshot() {
                 accessorKey: 'current',
                 header: 'Current',
                 filterVariant: 'select',
-                filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
                 Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
             },
             { accessorKey: 'description', header: 'Description' },
@@ -236,8 +236,21 @@ export default function ConfigSnapshot() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
+        displayColumnDefOptions: {
+            'mrt-row-actions': {
+                header: 'Actions',
+                size: 220,
+            },
+        },
         renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                    minWidth: 220,
+                }}
+            >
                 <Tooltip title="Update Snapshot">
                     <IconButton
                         onClick={() => handleUpdate(row)}

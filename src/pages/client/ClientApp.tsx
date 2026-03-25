@@ -184,7 +184,7 @@ export default function ClientApp() {
         accessorKey: 'isKafkaApp',
         header: 'Kafka App',
         filterVariant: 'select',
-        filterSelectOptions: [{ text: 'True', value: 'true' }, { text: 'False', value: 'false' }],
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
       { accessorKey: 'operationOwner', header: 'Ops Owner' },

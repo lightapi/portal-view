@@ -118,8 +118,8 @@ export default function ListRule() {
         header: 'Active',
         filterVariant: 'select',
         filterSelectOptions: [
-          { text: 'True', value: 'true' },
-          { text: 'False', value: 'false' },
+          { label: 'True', value: 'true' },
+          { label: 'False', value: 'false' },
         ],
         Cell: ({ cell }) => (cell.getValue<boolean>() ? 'True' : 'False'),
       },
