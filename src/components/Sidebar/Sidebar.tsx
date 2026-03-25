@@ -243,6 +243,13 @@ const structure = [
     icon: <ContentCopyIcon />,
   },
   {
+    id: 113.5,
+    label: "Runtime Instance",
+    role: "admin",
+    link: "/app/instance/RuntimeInstanceAdmin",
+    icon: <ContentCopyIcon />,
+  },
+  {
     id: 114,
     label: "Deployment Admin",
     role: "admin",

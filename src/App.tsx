@@ -126,6 +126,7 @@ import InstanceApiPathPrefix from "./pages/instance/InstanceApiPathPrefix";
 import InstanceApp from "./pages/instance/InstanceApp";
 import InstanceAppApi from "./pages/instance/InstanceAppApi";
 import InstanceAdmin from "./pages/instance/InstanceAdmin";
+import RuntimeInstanceAdmin from "./pages/instance/RuntimeInstanceAdmin";
 import PlatformAdmin from "./pages/deployment/PlatformAdmin";
 import PipelineAdmin from "./pages/deployment/PipelineAdmin";
 import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
@@ -397,6 +398,7 @@ const App = () => {
           <Route path="instance/InstanceApp" element={<InstanceApp />} />
           <Route path="instance/InstanceAppApi" element={<InstanceAppApi />} />
           <Route path="instance/InstanceAdmin" element={<InstanceAdmin />} />
+          <Route path="instance/RuntimeInstanceAdmin" element={<RuntimeInstanceAdmin />} />
           <Route path="deployment/PipelineAdmin" element={<PipelineAdmin />} />
           <Route path="deployment/PlatformAdmin" element={<PlatformAdmin />} />
           <Route
