@@ -239,16 +239,15 @@ export default function ConfigSnapshot() {
         displayColumnDefOptions: {
             'mrt-row-actions': {
                 header: 'Actions',
-                size: 220,
+                size: 500,
             },
         },
         renderRowActions: ({ row }) => (
             <Box
                 sx={{
                     display: 'flex',
-                    flexWrap: 'wrap',
+                    flexWrap: 'nowrap',
                     gap: 0.5,
-                    minWidth: 220,
                 }}
             >
                 <Tooltip title="Update Snapshot">
