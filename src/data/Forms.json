@@ -2410,7 +2410,7 @@
     "form": [
       {
         "type": "help",
-        "description": "Please copy the clientId and clientSecret in the response. The secret is not persisted in clear text. ",
+        "description": "Please copy the clientId and clientSecret in the response. The secret is not persisted in clear text.",
         "align": "left"
       },
       "hostId",
