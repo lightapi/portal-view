@@ -262,7 +262,7 @@ export default function AuthClient() {
         )}
         {initialData.apiVersionId && (
           <Typography variant="subtitle1">
-            For API: <strong>{initialData.apiVersionId}</strong>
+            For API Version: <strong>{initialData.apiVersionId}</strong>
           </Typography>
         )}
       </Box>
