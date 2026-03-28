@@ -2342,6 +2342,18 @@
         "clientType",
         "clientProfile"
       ],
+      "oneOf": [
+        {
+          "required": [
+            "appId"
+          ]
+        },
+        {
+          "required": [
+            "apiVersionId"
+          ]
+        }
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2352,9 +2364,9 @@
           "type": "string",
           "title": "App Id"
         },
-        "apiId": {
+        "apiVersionId": {
           "type": "string",
-          "title": "Api Id"
+          "title": "Api Version Id"
         },
         "clientName": {
           "title": "Client Name",
@@ -2397,8 +2409,28 @@
     },
     "form": [
       "hostId",
-      "appId",
-      "apiId",
+      {
+        "key": "appId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22client%22%2C%22action%22%3A%22getAppIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "apiVersionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "clientName",
       {
         "key": "clientType",
@@ -2491,6 +2523,18 @@
         "clientType",
         "clientProfile"
       ],
+      "oneOf": [
+        {
+          "required": [
+            "appId"
+          ]
+        },
+        {
+          "required": [
+            "apiVersionId"
+          ]
+        }
+      ],
       "properties": {
         "hostId": {
           "title": "Host Id",
@@ -2505,6 +2549,11 @@
         "appId": {
           "type": "string",
           "title": "App Id",
+          "readonly": true
+        },
+        "apiVersionId": {
+          "type": "string",
+          "title": "Api Version Id",
           "readonly": true
         },
         "clientName": {
@@ -2548,7 +2597,28 @@
     "form": [
       "hostId",
       "clientId",
-      "appId",
+      {
+        "key": "appId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22client%22%2C%22action%22%3A%22getAppIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "apiVersionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "clientName",
       {
         "key": "clientType",
@@ -18735,7 +18805,12 @@
         "instanceStatus": {
           "type": "string",
           "title": "Instance Status",
-          "enum": ["Deployed", "Starting", "Running", "Shutdown"]
+          "enum": [
+            "Deployed",
+            "Starting",
+            "Running",
+            "Shutdown"
+          ]
         }
       }
     },
@@ -18794,7 +18869,12 @@
         "instanceStatus": {
           "type": "string",
           "title": "Instance Status",
-          "enum": ["Deployed", "Starting", "Running", "Shutdown"]
+          "enum": [
+            "Deployed",
+            "Starting",
+            "Running",
+            "Shutdown"
+          ]
         },
         "aggregateVersion": {
           "type": "integer",

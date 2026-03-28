@@ -29,7 +29,11 @@ type AuthClientType = {
   clientId: string;
   clientName: string;
   appId?: string;
+  appName?: string;
   apiId?: string;
+  apiVersion?: string;
+  apiVersionId?: string;
+  apiName?: string;
   clientType: 'public' | 'confidential' | 'trusted' | 'external';
   clientProfile: 'webserver' | 'mobile' | 'browser' | 'service' | 'batch';
   clientSecret: string;
@@ -184,13 +188,17 @@ export default function AuthClient() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthClientType>[]>(
     () => [
-      { accessorKey: 'clientId', header: 'Client ID' },
+      { accessorKey: 'clientId', header: 'Client Id' },
       { accessorKey: 'clientName', header: 'Client Name' },
-      { accessorKey: 'appId', header: 'App ID' },
-      { accessorKey: 'apiId', header: 'API ID' },
       { accessorKey: 'clientType', header: 'Type' },
       { accessorKey: 'clientProfile', header: 'Profile' },
       { accessorKey: 'tokenExType', header: 'Token Ex Type' },
+      { accessorKey: 'appId', header: 'App Id' },
+      { accessorKey: 'appName', header: 'App Name' },
+      { accessorKey: 'apiId', header: 'API Id' },
+      { accessorKey: 'apiName', header: 'API Name' },
+      { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       {
         accessorKey: 'active',
         header: 'Active',
@@ -252,9 +260,9 @@ export default function AuthClient() {
             For App: <strong>{initialData.appId}</strong>
           </Typography>
         )}
-        {initialData.apiId && (
+        {initialData.apiVersionId && (
           <Typography variant="subtitle1">
-            For API: <strong>{initialData.apiId}</strong>
+            For API Version: <strong>{initialData.apiVersionId}</strong>
           </Typography>
         )}
       </Box>
