@@ -114,7 +114,6 @@ export default function AuthClient() {
 
     try {
       const json = await fetchClient(url);
-      console.log("json", json);
       setData(json.clients || []);
       setRowCount(json.total || 0);
     } catch (error) {
