@@ -2408,6 +2408,11 @@
       }
     },
     "form": [
+      {
+        "type": "help",
+        "description": "Please copy the clientId and clientSecret in the response. The secret is not persisted in clear text. ",
+        "align": "left"
+      },
       "hostId",
       {
         "key": "appId",
@@ -18605,44 +18610,38 @@
       "required": [
         "hostId",
         "clientId",
-        "clientSecret",
-        "serviceId"
+        "clientSecret"
       ],
       "properties": {
         "hostId": {
-          "title": "Host ID",
+          "title": "Host Id",
           "type": "string",
           "readonly": true
         },
         "clientId": {
-          "title": "Client ID",
+          "title": "Client Id",
           "type": "string",
           "readonly": true
         },
         "clientSecret": {
           "title": "Client Secret",
-          "type": "password"
-        },
-        "serviceId": {
-          "title": "Service ID",
-          "type": "string",
-          "default": "AAATB5k7QQa8wX6iQWkwtA"
-        },
-        "daysToExpiration": {
-          "title": "Days to Expiration",
-          "type": "integer"
+          "type": "string"
         }
       }
     },
     "form": [
+      {
+        "type": "help",
+        "description": "Please copy the long-lived token in the response because the token is not persisted. You will need it to access the Controller and Config Server.",
+        "align": "left"
+      },
       "hostId",
       "clientId",
       {
         "key": "clientSecret",
+        "title": "Client Secret",
         "type": "password"
-      },
-      "serviceId",
-      "daysToExpiration"
+      }
     ]
   },
   "createConfigSnapshot": {
