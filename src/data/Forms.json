@@ -18793,6 +18793,16 @@
           "type": "string",
           "title": "Env Tag"
         },
+        "protocol": {
+          "type": "string",
+          "title": "Protocol",
+          "enum": [
+            "http",
+            "https",
+            "ws",
+            "wss"
+          ]
+        },
         "ipAddress": {
           "type": "string",
           "title": "IP Address"
@@ -18817,6 +18827,7 @@
       "hostId",
       "serviceId",
       "envTag",
+      "protocol",
       "ipAddress",
       "portNumber",
       "instanceStatus"
@@ -18857,6 +18868,16 @@
           "type": "string",
           "title": "Env Tag"
         },
+        "protocol": {
+          "type": "string",
+          "title": "Protocol",
+          "enum": [
+            "http",
+            "https",
+            "ws",
+            "wss"
+          ]
+        },
         "ipAddress": {
           "type": "string",
           "title": "IP Address"
@@ -18887,6 +18908,7 @@
       "runtimeInstanceId",
       "serviceId",
       "envTag",
+      "protocol",
       "ipAddress",
       "portNumber",
       "instanceStatus",

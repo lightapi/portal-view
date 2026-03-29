@@ -29,6 +29,7 @@ type RuntimeInstanceType = {
   runtimeInstanceId: string;
   serviceId: string;
   envTag?: string;
+  protocol: string;
   ipAddress: string;
   portNumber: number;
   instanceStatus: string;
@@ -215,8 +216,9 @@ export default function RuntimeInstanceAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RuntimeInstanceType>[]>(
     () => [
-      { accessorKey: 'serviceId', header: 'Service ID' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
       { accessorKey: 'envTag', header: 'Env Tag' },
+      { accessorKey: 'protocol', header: 'Protocol' },
       { accessorKey: 'ipAddress', header: 'IP Address' },
       { accessorKey: 'portNumber', header: 'Port' },
       { accessorKey: 'instanceStatus', header: 'Status' },
