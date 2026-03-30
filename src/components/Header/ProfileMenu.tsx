@@ -21,7 +21,7 @@ export default function ProfileMenu() {
   const theme = useTheme();
   const [profileMenu, setProfileMenu] = useState<null | HTMLElement>(null);
   const userDispatch = useUserDispatch();
-  const { isAuthenticated, userId, roles } = useUserState();
+  const { isAuthenticated, userId, email, roles } = useUserState();
   const navigate = useNavigate();
 
   const signIn = () => {
@@ -71,7 +71,7 @@ export default function ProfileMenu() {
           <div>
             <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography variant="h6" fontWeight="medium">
-                {userId}
+                {email || userId}
               </Typography>
             </Box>
             <MenuItem
