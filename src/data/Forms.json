@@ -18774,15 +18774,19 @@
     "schema": {
       "title": "Create Runtime Instance",
       "type": "object",
+      "required": [
+        "hostId",
+        "serviceId",
+        "envTag",
+        "protocol",
+        "ipAddress",
+        "portNumber",
+        "instanceStatus"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
           "title": "Host Id",
-          "readonly": true
-        },
-        "runtimeInstanceId": {
-          "type": "string",
-          "title": "Runtime Instance Id",
           "readonly": true
         },
         "serviceId": {
@@ -18849,6 +18853,16 @@
     "schema": {
       "title": "Update Runtime Instance",
       "type": "object",
+      "required": [
+        "hostId",
+        "runtimeInstanceId",
+        "serviceId",
+        "envTag",
+        "protocol",
+        "ipAddress",
+        "portNumber",
+        "instanceStatus"
+      ],
       "properties": {
         "hostId": {
           "type": "string",
@@ -18862,15 +18876,18 @@
         },
         "serviceId": {
           "type": "string",
-          "title": "Service Id"
+          "title": "Service Id",
+          "readonly": true
         },
         "envTag": {
           "type": "string",
-          "title": "Env Tag"
+          "title": "Env Tag",
+          "readonly": true
         },
         "protocol": {
           "type": "string",
           "title": "Protocol",
+          "readonly": true,
           "enum": [
             "http",
             "https",
@@ -18880,11 +18897,13 @@
         },
         "ipAddress": {
           "type": "string",
-          "title": "IP Address"
+          "title": "IP Address",
+          "readonly": true
         },
         "portNumber": {
           "type": "integer",
-          "title": "Port Number"
+          "title": "Port Number",
+          "readonly": true
         },
         "instanceStatus": {
           "type": "string",
@@ -18895,11 +18914,6 @@
             "Running",
             "Shutdown"
           ]
-        },
-        "aggregateVersion": {
-          "type": "integer",
-          "title": "Aggregate Version",
-          "readonly": true
         }
       }
     },
@@ -18911,8 +18925,7 @@
       "protocol",
       "ipAddress",
       "portNumber",
-      "instanceStatus",
-      "aggregateVersion"
+      "instanceStatus"
     ]
   }
 }
