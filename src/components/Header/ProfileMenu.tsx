@@ -71,7 +71,7 @@ export default function ProfileMenu() {
           <div>
             <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
               <Typography variant="h6" fontWeight="medium">
-                {email || userId}
+                {email}
               </Typography>
             </Box>
             <MenuItem
