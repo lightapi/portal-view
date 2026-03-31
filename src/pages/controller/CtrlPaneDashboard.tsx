@@ -6,12 +6,10 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
-  type MRT_Row,
 } from 'material-react-table';
 import {
   Box,
   IconButton,
-  Tooltip,
   Paper,
   Table,
   TableBody,
