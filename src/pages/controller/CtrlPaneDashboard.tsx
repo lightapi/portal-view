@@ -19,7 +19,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAppState } from '../../contexts/AppContext';
 import { useUserState } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
@@ -61,33 +61,48 @@ function CtrlPaneDashboard() {
   const [data, setData] = useState<ServiceGroup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
-  const hasRequestedData = useRef(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (signal: AbortSignal) => {
     if (!host) return;
     setIsLoading(true);
     setIsError(false);
-    hasRequestedData.current = true;
-
-    const cmd = {
-      host: 'lightapi.net',
-      service: 'instance',
-      action: 'getRuntimeInstance',
-      version: '0.1.0',
-      data: {
-        hostId: host,
-        offset: 0,
-        limit: 1000, // Fetch more since we group locally
-        active: true,
-      },
-    };
-
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
-      const json = (await fetchClient(url)) as RuntimeInstanceApiResponse;
-      const instances = json.runtimeInstances || [];
-      
+      const limit = 1000;
+      let offset = 0;
+      let total = Number.POSITIVE_INFINITY;
+      const instances: RuntimeInstanceType[] = [];
+
+      while (offset < total) {
+        const cmd = {
+          host: 'lightapi.net',
+          service: 'instance',
+          action: 'getRuntimeInstance',
+          version: '0.1.0',
+          data: {
+            hostId: host,
+            offset,
+            limit,
+            active: true,
+          },
+        };
+
+        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+        const json = (await fetchClient(url, { signal })) as RuntimeInstanceApiResponse;
+        const page = json.runtimeInstances || [];
+        instances.push(...page);
+        total = json.total || 0;
+        offset += page.length;
+
+        if (page.length < limit) {
+          break;
+        }
+      }
+
+      if (signal.aborted) {
+        return;
+      }
+
       // Group by ServiceId and EnvTag
       const groups: { [key: string]: ServiceGroup } = {};
       instances.forEach((instance) => {
@@ -106,15 +121,25 @@ function CtrlPaneDashboard() {
 
       setData(Object.values(groups));
     } catch (error) {
+      if (signal.aborted) {
+        return;
+      }
       console.error('Failed to fetch runtime instances:', error);
       setIsError(true);
     } finally {
-      setIsLoading(false);
+      if (!signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [host]);
 
   useEffect(() => {
-    fetchData();
+    const abortController = new AbortController();
+    fetchData(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
   }, [fetchData]);
 
   // Derived filtered data based on App header filter
@@ -195,12 +220,13 @@ function CtrlPaneDashboard() {
   const table = useMaterialReactTable({
     columns,
     data: filteredData,
+    getRowId: (row) => `${row.serviceId}|${row.envTag}`,
     enableExpandAll: false,
     enableExpanding: true,
     initialState: { density: 'compact' },
     state: { isLoading: isLoading, showAlertBanner: isError },
     muiToolbarAlertBannerProps: isError
-      ? { color: 'error', children: 'Error loading services' }
+      ? { color: 'error', children: 'Error loading runtime instances' }
       : undefined,
     renderDetailPanel: ({ row }) => (
       <Box sx={{ margin: 1 }}>
@@ -221,7 +247,7 @@ function CtrlPaneDashboard() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {row.original.nodes.map((node, j) => (
+              {row.original.nodes.map((node) => (
                 <TableRow key={node.runtimeInstanceId ?? `${node.serviceId}-${node.envTag ?? ''}-${node.protocol}-${node.ipAddress}-${node.portNumber}`}>
                   <TableCell>{node.protocol}</TableCell>
                   <TableCell>{node.ipAddress}</TableCell>
