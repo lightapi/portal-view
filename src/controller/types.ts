@@ -90,15 +90,20 @@ export interface JsonRpcNotification {
   params?: any;
 }
 
+/** 
+ * Real JSON-RPC 2.0 Response must have an id (even if null on error).
+ * We keep result/error optional as they are mutually exclusive.
+ */
 export interface JsonRpcResponse {
   jsonrpc: '2.0';
-  id?: string | number;
+  id: string | number | null;
   result?: any;
-  method?: string; // Unified response/notification handling
-  params?: any;
   error?: {
     code: number;
     message: string;
     data?: any;
   };
 }
+
+/** Union type for all incoming MCP messages */
+export type JsonRpcMessage = JsonRpcResponse | JsonRpcNotification;

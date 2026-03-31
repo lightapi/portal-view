@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse, McpTool } from './types';
+import { JsonRpcRequest, JsonRpcResponse, McpTool, JsonRpcMessage, JsonRpcNotification } from './types';
 
 export class McpClient {
   private socket: WebSocket | null = null;
@@ -45,20 +45,22 @@ export class McpClient {
 
         socket.onmessage = (event) => {
           try {
-            const response: JsonRpcResponse = JSON.parse(event.data);
-            if (response.id !== undefined && response.id !== null) {
-              const pending = this.pendingRequests.get(response.id);
+            const data: JsonRpcMessage = JSON.parse(event.data);
+            
+            if ('id' in data && data.id !== undefined && data.id !== null) {
+              // This is a JsonRpcResponse
+              const pending = this.pendingRequests.get(data.id);
               if (pending) {
-                this.pendingRequests.delete(response.id);
-                if (response.error) {
-                  pending.reject(response.error);
+                this.pendingRequests.delete(data.id);
+                if (data.error) {
+                  pending.reject(data.error);
                 } else {
-                  pending.resolve(response.result);
+                  pending.resolve(data.result);
                 }
               }
-            } else if (response.method) {
-              // This is a notification
-              this.onNotificationCallback?.(response.method, response.params);
+            } else if ('method' in data) {
+              // This is a JsonRpcNotification
+              this.onNotificationCallback?.(data.method, data.params);
             }
           } catch (err) {
             console.error('Failed to parse MCP message', err);

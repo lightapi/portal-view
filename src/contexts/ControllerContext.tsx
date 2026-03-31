@@ -115,18 +115,51 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         dispatch({ type: 'SET_ERROR', error: `Control Plane Error: ${err.message || err}` });
       });
 
-      mcpClient.onNotification((method, params) => {
+      mcpClient.onNotification((method, params: any) => {
         console.log('Received Control Plane Notification:', { method, params });
         switch (method) {
           case 'notifications/instance_connected':
-          case 'notifications/instance_updated':
-            // The params is the snapshot
-            dispatch({ type: 'UPDATE_INSTANCE', instance: params });
+          case 'notifications/instance_updated': {
+            // Normalize params: the server might send the RuntimeInstance directly or wrapped in { instance: ... }
+            const instancePayload =
+              params && typeof params === 'object' && 'instance' in params
+                ? (params as any).instance
+                : params;
+
+            if (
+              !instancePayload ||
+              typeof instancePayload !== 'object' ||
+              !('runtimeInstanceId' in (instancePayload as any)) ||
+              !(instancePayload as any).runtimeInstanceId
+            ) {
+              console.warn(
+                'Ignoring invalid instance notification payload',
+                { method, params }
+              );
+              break;
+            }
+
+            dispatch({ type: 'UPDATE_INSTANCE', instance: instancePayload });
             break;
-          case 'notifications/instance_disconnected':
-            // Params contains runtimeInstanceId
-            dispatch({ type: 'MARK_OFFLINE', runtimeInstanceId: params.runtimeInstanceId });
+          }
+          case 'notifications/instance_disconnected': {
+            // Params should contain runtimeInstanceId, potentially wrapped
+            const runtimeInstanceId =
+              params && typeof params === 'object'
+                ? (params as any).runtimeInstanceId || (params as any).runtime_instance_id
+                : undefined;
+
+            if (!runtimeInstanceId) {
+              console.warn(
+                'Ignoring invalid disconnect notification payload (missing runtimeInstanceId)',
+                { method, params }
+              );
+              break;
+            }
+
+            dispatch({ type: 'MARK_OFFLINE', runtimeInstanceId });
             break;
+          }
           default:
             break;
         }
