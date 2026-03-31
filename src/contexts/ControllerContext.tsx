@@ -103,8 +103,8 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const mcpUrl = getWsUrl('/ws/mcp');
-    const eventsUrl = getWsUrl('/ws/portal-events');
+    const mcpUrl = getWsUrl('/ctrl/mcp');
+    const eventsUrl = getWsUrl('/ctrl/event');
 
     const mcpClient = new McpClient(mcpUrl);
     const eventsClient = new PortalEventsClient(eventsUrl);
@@ -143,7 +143,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         const response = await fetchClient(url) as RuntimeInstanceApiResponse;
         const dbInstances = response.runtimeInstances || [];
-        
+
         console.log(`Hydro-Step 1: Loaded ${dbInstances.length} instances from DB baseline`);
         dispatch({ type: 'SET_INSTANCES', instances: dbInstances.map(mapDbToRuntimeInstance) });
 
