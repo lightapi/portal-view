@@ -253,22 +253,22 @@ function CtrlPaneDashboard() {
                   <TableCell>{node.ipAddress}</TableCell>
                   <TableCell align="right">{node.portNumber}</TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleCheck(node)}>
+                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)}>
                       <CloudDoneIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleInfo(node)}>
+                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)}>
                       <HelpIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleLogger(node)}>
+                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)}>
                       <PermDataSettingIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleChaosMonkey(node)}>
+                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)}>
                       <AssessmentIcon />
                     </IconButton>
                   </TableCell>
