@@ -1,8 +1,26 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef, useCallback } from 'react';
 import { McpClient } from '../controller/mcpClient';
 import { PortalEventsClient } from '../controller/portalEventsClient';
-import { RuntimeInstance, RuntimeInstanceId, PortalEvent } from '../controller/types';
+import { RuntimeInstance, RuntimeInstanceId, PortalEvent, RuntimeInstanceType, RuntimeInstanceApiResponse } from '../controller/types';
 import { useUserState } from './UserContext';
+import fetchClient from '../utils/fetchClient';
+
+const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstance => ({
+  runtimeInstanceId: db.runtimeInstanceId,
+  serviceId: db.serviceId,
+  envTag: db.envTag,
+  connected: false, // Baseline from DB is disconnected unless controller says otherwise
+  connectedAt: db.updateTs || '',
+  lastSeenAt: db.updateTs || '',
+  metadata: {
+    address: db.ipAddress,
+    port: db.portNumber,
+    protocol: db.protocol,
+    environment: db.envTag || '',
+    version: '0.1.0', // Default if missing
+    tags: {}
+  }
+});
 
 interface ControllerState {
   instances: Record<RuntimeInstanceId, RuntimeInstance>;
@@ -71,7 +89,7 @@ const ControllerContext = createContext<ControllerContextValue | undefined>(unde
 
 export function ControllerProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(controllerReducer, initialState);
-  const { isAuthenticated } = useUserState();
+  const { isAuthenticated, host } = useUserState() as { isAuthenticated: boolean, host: string };
   
   const mcpClientRef = useRef<McpClient | null>(null);
   const eventsClientRef = useRef<PortalEventsClient | null>(null);
@@ -96,7 +114,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
     const init = async () => {
       mcpClient.onOpen(() => {
-        // Status is now handled after list_services hydration
+        // Status is handled after hydration
       });
       mcpClient.onClose(() => dispatch({ type: 'SET_MCP_STATUS', connected: false }));
       mcpClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `MCP Error: ${err.message || err}` }));
@@ -106,16 +124,53 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       eventsClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `Events Error: ${err.message || err}` }));
 
       try {
-        await mcpClient.connect();
+        // 1. Concurrent Fetch: DB Baseline (REST) and MCP Handshake (WebSocket)
+        const dbPromise = (async () => {
+          const cmd = {
+            host: 'lightapi.net',
+            service: 'instance',
+            action: 'getRuntimeInstance',
+            version: '0.1.0',
+            data: {
+              hostId: host,
+              offset: 0,
+              limit: 1000,
+              sorting: JSON.stringify([]),
+              filters: JSON.stringify([{ id: 'active', value: true }]),
+              globalFilter: '',
+              active: true,
+            },
+          };
+          const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+          const response = await fetchClient(url) as RuntimeInstanceApiResponse;
+          return response.runtimeInstances || [];
+        })();
 
-        // Initial hydration
+        const mcpConnectPromise = mcpClient.connect();
+
+        // Wait for both baseline and connection
+        const [dbInstances] = await Promise.all([dbPromise, mcpConnectPromise]);
+
+        // 2. Fetch Live Status (MCP)
         const services = await mcpClient.callTool('list_services', {});
-        if (services.instances) {
-          dispatch({ type: 'SET_INSTANCES', instances: services.instances });
-          dispatch({ type: 'SET_MCP_STATUS', connected: true });
-        }
+        const liveInstances: RuntimeInstance[] = services.instances || [];
+
+        // 3. Merge Strategy: DB baseline + MCP live status
+        const merged: RuntimeInstance[] = dbInstances.map(mapDbToRuntimeInstance);
+        const mergedMap = new Map<RuntimeInstanceId, RuntimeInstance>(
+          merged.map(i => [i.runtimeInstanceId, i])
+        );
+
+        // Overlay live status
+        liveInstances.forEach(live => {
+          mergedMap.set(live.runtimeInstanceId, live);
+        });
+
+        dispatch({ type: 'SET_INSTANCES', instances: Array.from(mergedMap.values()) });
+        dispatch({ type: 'SET_MCP_STATUS', connected: true });
+
       } catch (err: any) {
-        dispatch({ type: 'SET_ERROR', error: `MCP Connection failed: ${err.message}` });
+        dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
       }
     };
 

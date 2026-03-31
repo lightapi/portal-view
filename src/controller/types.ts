@@ -20,6 +20,27 @@ export interface RuntimeInstance {
   connected: boolean;
 }
 
+/** DB-style shape from REST (getRuntimeInstance) */
+export interface RuntimeInstanceType {
+  hostId: string;
+  runtimeInstanceId: string;
+  serviceId: string;
+  envTag?: string;
+  protocol: string;
+  ipAddress: string;
+  portNumber: number;
+  instanceStatus: string;
+  aggregateVersion?: number;
+  active: boolean;
+  updateUser?: string;
+  updateTs?: string;
+}
+
+export interface RuntimeInstanceApiResponse {
+  runtimeInstances: RuntimeInstanceType[];
+  total: number;
+}
+
 export type PortalEvent =
   | { type: 'instance_connected'; instance: RuntimeInstance }
   | { 
