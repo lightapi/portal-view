@@ -211,22 +211,22 @@ function CtrlPaneDashboard() {
                     </Tooltip>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleCheck(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!node.connected}>
                       <CloudDoneIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleInfo(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)} disabled={!node.connected}>
                       <HelpIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleLogger(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)} disabled={!node.connected}>
                       <PermDataSettingIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton onClick={() => handleChaosMonkey(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!node.connected}>
                       <AssessmentIcon />
                     </IconButton>
                   </TableCell>
