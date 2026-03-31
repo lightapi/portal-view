@@ -163,7 +163,10 @@ function CtrlPaneDashboard() {
     enableExpandAll: false,
     enableExpanding: true,
     initialState: { density: 'compact' },
-    state: { isLoading: !isMcpConnected && !error, showAlertBanner: !!error },
+    state: { 
+      isLoading: Object.keys(instances).length === 0 && !isMcpConnected && !error, 
+      showAlertBanner: !!error 
+    },
     muiToolbarAlertBannerProps: error
       ? { color: 'error', children: error }
       : undefined,
