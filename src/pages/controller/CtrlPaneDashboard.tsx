@@ -1,151 +1,206 @@
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import HelpIcon from '@mui/icons-material/Help';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import fetchClient from '../../utils/fetchClient';
-import React, { useEffect, useState, ReactNode } from 'react';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+} from 'material-react-table';
+import {
+  Box,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAppState } from '../../contexts/AppContext';
+import { useUserState } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import fetchClient from '../../utils/fetchClient';
 
-interface Node {
+// Define the type for a single runtime instance record
+type RuntimeInstanceType = {
+  hostId: string;
+  runtimeInstanceId: string;
+  serviceId: string;
+  envTag?: string;
   protocol: string;
-  address: string;
-  port: number;
-}
+  ipAddress: string;
+  portNumber: number;
+  instanceStatus: string;
+  aggregateVersion?: number;
+  active: boolean;
+};
 
-interface Services {
-  [key: string]: Node[];
-}
+// Define the grouped shape for the main table
+type ServiceGroup = {
+  serviceId: string;
+  envTag: string;
+  nodeCount: number;
+  nodes: RuntimeInstanceType[];
+};
+
+// Define the shape of the API response
+type RuntimeInstanceApiResponse = {
+  runtimeInstances: Array<RuntimeInstanceType>;
+  total: number;
+};
 
 function CtrlPaneDashboard() {
-  const [services, setServices] = useState<Services | null>(null);
-  const serviceIds = services ? Object.keys(services) : [];
-  const [error, setError] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { host } = useUserState() as { host: string };
   const { filter } = useAppState() as { filter: string };
-  const filteredServiceIds = serviceIds.filter(
-    (serviceId) => serviceId.toLowerCase().includes(filter.toLowerCase()) || !filter
-  );
+
+  const [data, setData] = useState<ServiceGroup[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  const fetchData = useCallback(async (signal: AbortSignal) => {
+    if (!host) return;
+    setIsLoading(true);
+    setIsError(false);
+
+    try {
+      const limit = 1000;
+      let offset = 0;
+      let total = Number.POSITIVE_INFINITY;
+      const instances: RuntimeInstanceType[] = [];
+
+      while (offset < total) {
+        const cmd = {
+          host: 'lightapi.net',
+          service: 'instance',
+          action: 'getRuntimeInstance',
+          version: '0.1.0',
+          data: {
+            hostId: host,
+            offset,
+            limit,
+            active: true,
+          },
+        };
+
+        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+        const json = (await fetchClient(url, { signal })) as RuntimeInstanceApiResponse;
+        const page = json.runtimeInstances || [];
+        instances.push(...page);
+        total = json.total || 0;
+        offset += page.length;
+
+        if (page.length < limit) {
+          break;
+        }
+      }
+
+      if (signal.aborted) {
+        return;
+      }
+
+      // Group by ServiceId and EnvTag
+      const groups: { [key: string]: ServiceGroup } = {};
+      instances.forEach((instance) => {
+        const key = `${instance.serviceId}|${instance.envTag || ''}`;
+        if (!groups[key]) {
+          groups[key] = {
+            serviceId: instance.serviceId,
+            envTag: instance.envTag || '',
+            nodeCount: 0,
+            nodes: [],
+          };
+        }
+        groups[key].nodeCount += 1;
+        groups[key].nodes.push(instance);
+      });
+
+      setData(Object.values(groups));
+    } catch (error) {
+      if (signal.aborted) {
+        return;
+      }
+      console.error('Failed to fetch runtime instances:', error);
+      setIsError(true);
+    } finally {
+      if (!signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, [host]);
 
   useEffect(() => {
     const abortController = new AbortController();
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const json = await fetchClient('/services', { signal: abortController.signal });
-        setServices(json);
-        setLoading(false);
-      } catch (error: any) {
-        if (!abortController.signal.aborted) {
-          setLoading(false);
-          setError(error);
-        }
-      }
-    };
-
-    fetchData();
+    fetchData(abortController.signal);
 
     return () => {
       abortController.abort();
     };
-  }, []);
+  }, [fetchData]);
 
-  let content: ReactNode;
-  if (loading) {
-    content = (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-        <CircularProgress />
-      </Box>
+  // Derived filtered data based on App header filter
+  const filteredData = useMemo(() => {
+    if (!filter) return data;
+    return data.filter(group => 
+      group.serviceId.toLowerCase().includes(filter.toLowerCase()) ||
+      group.envTag.toLowerCase().includes(filter.toLowerCase())
     );
-  } else if (error) {
-    content = (
-      <Box sx={{ p: 3 }}>
-        <pre>{JSON.stringify(error, null, 2)}</pre>
-      </Box>
-    );
-  } else if (services) {
-    content = (
-      <TableContainer component={Paper}>
-        <Table aria-label="collapsible table">
-          <TableHead>
-            <TableRow>
-              <TableCell />
-              <TableCell>Service Id</TableCell>
-              <TableCell>Environment Tag</TableCell>
-              <TableCell align="right">Number of Nodes</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredServiceIds.map((id, i) => (
-              <Row
-                key={i}
-                id={id}
-                nodes={services[id]}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-  }
-  return <Box className="App">{content}</Box>;
-}
+  }, [data, filter]);
 
-interface RowProps {
-  id: string;
-  nodes: Node[];
-}
+  // Main table column definitions
+  const columns = useMemo<MRT_ColumnDef<ServiceGroup>[]>(
+    () => [
+      { accessorKey: 'serviceId', header: 'Service Id' },
+      { accessorKey: 'envTag', header: 'Environment Tag' },
+      { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' } },
+    ],
+    []
+  );
 
-function Row({ id, nodes }: RowProps) {
-  const navigate = useNavigate();
-  const [open, setOpen] = React.useState(false);
-  const words = id.split('|');
-  const serviceId = words[0];
-  const tag = words[1];
-
-  const handleCheck = (node: Node) => {
-    const k = id + ':' + node.protocol + ':' + node.address + ':' + node.port;
+  const handleCheck = (node: RuntimeInstanceType) => {
+    // k = id + ':' + node.protocol + ':' + node.address + ':' + node.port;
+    const k = `${node.serviceId}|${node.envTag || ''}:${node.protocol}:${node.ipAddress}:${node.portNumber}`;
     navigate('/app/controller/check', { state: { data: { id: k } } });
   };
 
-  const handleLogger = (node: any) => {
-    navigate('/app/controller/logger', { state: { data: { node } } });
+  const handleLogger = (node: RuntimeInstanceType) => {
+    navigate('/app/controller/logger', { 
+      state: { 
+        data: { 
+          node: {
+            protocol: node.protocol,
+            address: node.ipAddress,
+            port: node.portNumber,
+            apiName: node.serviceId
+          } 
+        } 
+      } 
+    });
   };
 
-  const handleInfo = (node: Node) => {
+  const handleInfo = (node: RuntimeInstanceType) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
         : 'null';
-    const fullNode = node.address + ':' + node.port;
     navigate('/app/controller/info', {
       state: {
         data: {
-          node: fullNode,
+          node: `${node.ipAddress}:${node.portNumber}`,
           protocol: node.protocol,
-          address: node.address,
-          port: node.port,
+          address: node.ipAddress,
+          port: node.portNumber,
           baseUrl: originUrl,
         },
       },
     });
   };
 
-  const handleChaosMonkey = (node: Node) => {
+  const handleChaosMonkey = (node: RuntimeInstanceType) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
@@ -154,88 +209,82 @@ function Row({ id, nodes }: RowProps) {
       state: {
         data: {
           protocol: node.protocol,
-          address: node.address,
-          port: node.port,
+          address: node.ipAddress,
+          port: node.portNumber,
           baseUrl: originUrl,
         },
       },
     });
   };
 
+  const table = useMaterialReactTable({
+    columns,
+    data: filteredData,
+    getRowId: (row) => `${row.serviceId}|${row.envTag}`,
+    enableExpandAll: false,
+    enableExpanding: true,
+    initialState: { density: 'compact' },
+    state: { isLoading: isLoading, showAlertBanner: isError },
+    muiToolbarAlertBannerProps: isError
+      ? { color: 'error', children: 'Error loading runtime instances' }
+      : undefined,
+    renderDetailPanel: ({ row }) => (
+      <Box sx={{ margin: 1 }}>
+        <Typography variant="h6" gutterBottom component="div">
+          Nodes
+        </Typography>
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Protocol</TableCell>
+                <TableCell>Address</TableCell>
+                <TableCell align="right">Port</TableCell>
+                <TableCell align="right">Status Check</TableCell>
+                <TableCell align="right">Server Info</TableCell>
+                <TableCell align="right">Logger Config</TableCell>
+                <TableCell align="right">Chaos Monkey</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {row.original.nodes.map((node) => (
+                <TableRow key={node.runtimeInstanceId ?? `${node.serviceId}-${node.envTag ?? ''}-${node.protocol}-${node.ipAddress}-${node.portNumber}`}>
+                  <TableCell>{node.protocol}</TableCell>
+                  <TableCell>{node.ipAddress}</TableCell>
+                  <TableCell align="right">{node.portNumber}</TableCell>
+                  <TableCell align="right">
+                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)}>
+                      <CloudDoneIcon />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)}>
+                      <HelpIcon />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)}>
+                      <PermDataSettingIcon />
+                    </IconButton>
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)}>
+                      <AssessmentIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    ),
+  });
+
   return (
-    <React.Fragment>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-        <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => setOpen(!open)}
-          >
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
-        </TableCell>
-        <TableCell component="th" scope="row">
-          {serviceId}
-        </TableCell>
-        <TableCell>{tag}</TableCell>
-        <TableCell align="right">{nodes.length}</TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box margin={1}>
-              <Typography variant="h6" gutterBottom component="div">
-                Nodes
-              </Typography>
-              <Table size="small" aria-label="purchases">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Protocol</TableCell>
-                    <TableCell>Address</TableCell>
-                    <TableCell align="right">Port</TableCell>
-                    <TableCell align="right">Status Check</TableCell>
-                    <TableCell align="right">Server Info</TableCell>
-                    <TableCell align="right">Logger Config</TableCell>
-                    <TableCell align="right">Chaos Monkey</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {nodes.map((node, j) => (
-                    <TableRow key={j}>
-                      <TableCell component="th" scope="row">
-                        {node.protocol}
-                      </TableCell>
-                      <TableCell>{node.address}</TableCell>
-                      <TableCell align="right">{node.port}</TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleCheck(node)}>
-                          <CloudDoneIcon />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleInfo(node)}>
-                          <HelpIcon />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleLogger({ ...node, apiName: serviceId })}>
-                          <PermDataSettingIcon />
-                        </IconButton>
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={() => handleChaosMonkey(node)}>
-                          <AssessmentIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
-    </React.Fragment>
+    <Box className="App" sx={{ p: 2 }}>
+      <MaterialReactTable table={table} />
+    </Box>
   );
 }
 
