@@ -106,7 +106,7 @@ function CtrlPaneDashboard() {
 
       setData(Object.values(groups));
     } catch (error) {
-      console.error('Failed to fetch services:', error);
+      console.error('Failed to fetch runtime instances:', error);
       setIsError(true);
     } finally {
       setIsLoading(false);
