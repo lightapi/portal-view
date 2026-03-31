@@ -18,16 +18,16 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Chip,
+  Tooltip,
 } from '@mui/material';
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useAppState } from '../../contexts/AppContext';
-import { useUserState } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
-import fetchClient from '../../utils/fetchClient';
+import { useController } from '../../contexts/ControllerContext';
 
-// Define the type for a single runtime instance record
-type RuntimeInstanceType = {
-  hostId: string;
+// Define the type for a single runtime instance record (local view)
+type RuntimeInstanceRow = {
   runtimeInstanceId: string;
   serviceId: string;
   envTag?: string;
@@ -35,8 +35,7 @@ type RuntimeInstanceType = {
   ipAddress: string;
   portNumber: number;
   instanceStatus: string;
-  aggregateVersion?: number;
-  active: boolean;
+  connected: boolean;
 };
 
 // Define the grouped shape for the main table
@@ -44,112 +43,50 @@ type ServiceGroup = {
   serviceId: string;
   envTag: string;
   nodeCount: number;
-  nodes: RuntimeInstanceType[];
-};
-
-// Define the shape of the API response
-type RuntimeInstanceApiResponse = {
-  runtimeInstances: Array<RuntimeInstanceType>;
-  total: number;
+  nodes: RuntimeInstanceRow[];
 };
 
 function CtrlPaneDashboard() {
   const navigate = useNavigate();
-  const { host } = useUserState() as { host: string };
   const { filter } = useAppState() as { filter: string };
+  const { instances, isMcpConnected, isEventsConnected, error } = useController();
 
-  const [data, setData] = useState<ServiceGroup[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-
-  const fetchData = useCallback(async (signal: AbortSignal) => {
-    if (!host) return;
-    setIsLoading(true);
-    setIsError(false);
-
-    try {
-      const limit = 1000;
-      let offset = 0;
-      let total = Number.POSITIVE_INFINITY;
-      const instances: RuntimeInstanceType[] = [];
-
-      while (offset < total) {
-        const cmd = {
-          host: 'lightapi.net',
-          service: 'instance',
-          action: 'getRuntimeInstance',
-          version: '0.1.0',
-          data: {
-            hostId: host,
-            offset,
-            limit,
-            active: true,
-          },
+  // Group instances by ServiceId and EnvTag
+  const groupedData = useMemo(() => {
+    const groups: { [key: string]: ServiceGroup } = {};
+    Object.values(instances).forEach((instance) => {
+      const key = `${instance.serviceId}|${instance.envTag || ''}`;
+      if (!groups[key]) {
+        groups[key] = {
+          serviceId: instance.serviceId,
+          envTag: instance.envTag || '',
+          nodeCount: 0,
+          nodes: [],
         };
-
-        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-        const json = (await fetchClient(url, { signal })) as RuntimeInstanceApiResponse;
-        const page = json.runtimeInstances || [];
-        instances.push(...page);
-        total = json.total || 0;
-        offset += page.length;
-
-        if (page.length < limit) {
-          break;
-        }
       }
-
-      if (signal.aborted) {
-        return;
-      }
-
-      // Group by ServiceId and EnvTag
-      const groups: { [key: string]: ServiceGroup } = {};
-      instances.forEach((instance) => {
-        const key = `${instance.serviceId}|${instance.envTag || ''}`;
-        if (!groups[key]) {
-          groups[key] = {
-            serviceId: instance.serviceId,
-            envTag: instance.envTag || '',
-            nodeCount: 0,
-            nodes: [],
-          };
-        }
-        groups[key].nodeCount += 1;
-        groups[key].nodes.push(instance);
+      groups[key].nodeCount += 1;
+      groups[key].nodes.push({
+        runtimeInstanceId: instance.runtimeInstanceId,
+        serviceId: instance.serviceId,
+        envTag: instance.envTag,
+        protocol: instance.metadata.protocol,
+        ipAddress: instance.metadata.address,
+        portNumber: instance.metadata.port,
+        instanceStatus: instance.connected ? 'Connected' : 'Disconnected',
+        connected: instance.connected,
       });
-
-      setData(Object.values(groups));
-    } catch (error) {
-      if (signal.aborted) {
-        return;
-      }
-      console.error('Failed to fetch runtime instances:', error);
-      setIsError(true);
-    } finally {
-      if (!signal.aborted) {
-        setIsLoading(false);
-      }
-    }
-  }, [host]);
-
-  useEffect(() => {
-    const abortController = new AbortController();
-    fetchData(abortController.signal);
-
-    return () => {
-      abortController.abort();
-    };
-  }, [fetchData]);
+    });
+    return Object.values(groups);
+  }, [instances]);
 
   // Derived filtered data based on App header filter
   const filteredData = useMemo(() => {
-    if (!filter) return data;
-    return data.filter(group => 
+    if (!filter) return groupedData;
+    return groupedData.filter(group => 
       group.serviceId.toLowerCase().includes(filter.toLowerCase()) ||
       group.envTag.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [data, filter]);
+  }, [groupedData, filter]);
 
   // Main table column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceGroup>[]>(
@@ -161,13 +98,12 @@ function CtrlPaneDashboard() {
     []
   );
 
-  const handleCheck = (node: RuntimeInstanceType) => {
-    // k = id + ':' + node.protocol + ':' + node.address + ':' + node.port;
+  const handleCheck = (node: RuntimeInstanceRow) => {
     const k = `${node.serviceId}|${node.envTag || ''}:${node.protocol}:${node.ipAddress}:${node.portNumber}`;
-    navigate('/app/controller/check', { state: { data: { id: k } } });
+    navigate('/app/controller/check', { state: { data: { id: k, runtimeInstanceId: node.runtimeInstanceId } } });
   };
-
-  const handleLogger = (node: RuntimeInstanceType) => {
+ 
+  const handleLogger = (node: RuntimeInstanceRow) => {
     navigate('/app/controller/logger', { 
       state: { 
         data: { 
@@ -175,14 +111,15 @@ function CtrlPaneDashboard() {
             protocol: node.protocol,
             address: node.ipAddress,
             port: node.portNumber,
-            apiName: node.serviceId
+            apiName: node.serviceId,
+            runtimeInstanceId: node.runtimeInstanceId
           } 
         } 
       } 
     });
   };
-
-  const handleInfo = (node: RuntimeInstanceType) => {
+ 
+  const handleInfo = (node: RuntimeInstanceRow) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
@@ -195,12 +132,13 @@ function CtrlPaneDashboard() {
           address: node.ipAddress,
           port: node.portNumber,
           baseUrl: originUrl,
+          runtimeInstanceId: node.runtimeInstanceId,
         },
       },
     });
   };
-
-  const handleChaosMonkey = (node: RuntimeInstanceType) => {
+ 
+  const handleChaosMonkey = (node: RuntimeInstanceRow) => {
     const originUrl =
       typeof window !== 'undefined'
         ? window.location.protocol + '//' + window.location.host
@@ -212,11 +150,12 @@ function CtrlPaneDashboard() {
           address: node.ipAddress,
           port: node.portNumber,
           baseUrl: originUrl,
+          runtimeInstanceId: node.runtimeInstanceId,
         },
       },
     });
   };
-
+ 
   const table = useMaterialReactTable({
     columns,
     data: filteredData,
@@ -224,15 +163,23 @@ function CtrlPaneDashboard() {
     enableExpandAll: false,
     enableExpanding: true,
     initialState: { density: 'compact' },
-    state: { isLoading: isLoading, showAlertBanner: isError },
-    muiToolbarAlertBannerProps: isError
-      ? { color: 'error', children: 'Error loading runtime instances' }
+    state: { isLoading: !isMcpConnected && !error, showAlertBanner: !!error },
+    muiToolbarAlertBannerProps: error
+      ? { color: 'error', children: error }
       : undefined,
     renderDetailPanel: ({ row }) => (
       <Box sx={{ margin: 1 }}>
-        <Typography variant="h6" gutterBottom component="div">
-          Nodes
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 2 }}>
+          <Typography variant="h6" component="div">
+            Nodes
+          </Typography>
+          <Chip 
+            label={isEventsConnected ? "Live Events Active" : "Events Disconnected"} 
+            size="small" 
+            color={isEventsConnected ? "success" : "warning"}
+            variant="outlined" 
+          />
+        </Box>
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
@@ -240,6 +187,7 @@ function CtrlPaneDashboard() {
                 <TableCell>Protocol</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Port</TableCell>
+                <TableCell align="center">Status</TableCell>
                 <TableCell align="right">Status Check</TableCell>
                 <TableCell align="right">Server Info</TableCell>
                 <TableCell align="right">Logger Config</TableCell>
@@ -248,27 +196,37 @@ function CtrlPaneDashboard() {
             </TableHead>
             <TableBody>
               {row.original.nodes.map((node) => (
-                <TableRow key={node.runtimeInstanceId ?? `${node.serviceId}-${node.envTag ?? ''}-${node.protocol}-${node.ipAddress}-${node.portNumber}`}>
+                <TableRow key={node.runtimeInstanceId}>
                   <TableCell>{node.protocol}</TableCell>
                   <TableCell>{node.ipAddress}</TableCell>
                   <TableCell align="right">{node.portNumber}</TableCell>
+                  <TableCell align="center">
+                    <Tooltip title={node.connected ? "Node is online" : "Node is offline"}>
+                      <Chip 
+                        label={node.instanceStatus} 
+                        size="small" 
+                        color={node.connected ? "success" : "default"} 
+                        variant={node.connected ? "filled" : "outlined"}
+                      />
+                    </Tooltip>
+                  </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)}>
+                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!node.connected}>
                       <CloudDoneIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)}>
+                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)} disabled={!node.connected}>
                       <HelpIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)}>
+                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)} disabled={!node.connected}>
                       <PermDataSettingIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)}>
+                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!node.connected}>
                       <AssessmentIcon />
                     </IconButton>
                   </TableCell>

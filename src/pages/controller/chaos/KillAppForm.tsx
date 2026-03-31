@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, CssBaseline, Paper, Grid, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material';
-import fetchClient from '../../../utils/fetchClient';
+import { Box, TextField, Button, CssBaseline, Paper, Grid, FormControlLabel, FormGroup, Switch, Typography, CircularProgress } from '@mui/material';
+import { useController } from '../../../contexts/ControllerContext';
 import ChaosInfoPopper from './ChaosInfoPopper';
 
 interface KillAppFormProps {
   formType: string;
-  address: string;
-  port: string | number;
-  protocol: string;
-  baseUrl: string;
+  runtimeInstanceId: string;
   config: {
     enabled: boolean;
     bypass: boolean;
@@ -18,58 +15,47 @@ interface KillAppFormProps {
 }
 
 export default function KillAppForm(props: KillAppFormProps) {
-  const { formType, address, port, protocol, config, baseUrl } = props;
+  const { formType, runtimeInstanceId, config } = props;
   const assaultType = 'com.networknt.chaos.KillappAssaultHandler';
+  const { callTool } = useController();
 
   const [endpoint, setEndpoint] = useState('');
   const [requests, setRequests] = useState('');
 
-  const [enabled, setEnabled] = useState(config.enabled);
-  const [bypass, setBypass] = useState(config.bypass);
-  const [level, setLevel] = useState(config.level);
+  const [enabled, setEnabled] = useState(config.enabled ?? false);
+  const [bypass, setBypass] = useState(config.bypass ?? false);
+  const [level, setLevel] = useState(config.level ?? 5);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<any>(null);
 
-  const handleKillAppSubmit = (event: React.FormEvent) => {
+  const handleKillAppSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const headers = {
-      Authorization: 'Basic ' + localStorage.getItem('user'),
-    };
-    let url = '';
-    let body = '';
-    if (formType === 'initAssault') {
-      url = baseUrl + '/services/chaosmonkey/assault';
-      body = JSON.stringify({
-        protocol,
-        address,
-        assaultType,
-        port,
-        endpoint,
-        requests,
-      });
-    } else if (formType === 'configAssault') {
-      url = baseUrl + '/services/chaosmonkey';
-      body = JSON.stringify({
-        protocol,
-        port,
-        address,
-        assaultType,
-        assaultConfig: {
-          enabled,
-          bypass,
-          level,
-        },
-      });
-    }
+    setSubmitting(true);
+    setError(null);
 
-    if (url) {
-      fetchClient(url, {
-        method: 'POST',
-        body,
-        headers,
-      }).then(() => {
-        window.location.reload();
-      }).catch((err) => {
-        console.error(err);
-      });
+    try {
+      if (formType === 'initAssault') {
+        await callTool('run_chaos_monkey_assault', {
+          runtimeInstanceId,
+          assaultType,
+          // Note: additional parameters like endpoint/requests might need controller-rs updates
+        });
+      } else if (formType === 'configAssault') {
+        await callTool('configure_chaos_monkey', {
+          runtimeInstanceId,
+          assaultType,
+          config: {
+            enabled,
+            bypass,
+            level,
+          },
+        });
+      }
+      // Successfully submitted
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -105,7 +91,7 @@ export default function KillAppForm(props: KillAppFormProps) {
                     fullWidth
                     onChange={(e) => setEndpoint(e.target.value)}
                     variant="outlined"
-                    label="endpoint"
+                    label="endpoint (Optional)"
                   />
                 </Grid>
                 <Grid size={6}>
@@ -114,7 +100,7 @@ export default function KillAppForm(props: KillAppFormProps) {
                     onChange={(e) => setRequests(e.target.value)}
                     fullWidth
                     variant="outlined"
-                    label="requests"
+                    label="requests (Optional)"
                   />
                 </Grid>
                 <Grid size={12}>
@@ -127,36 +113,6 @@ export default function KillAppForm(props: KillAppFormProps) {
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="protocol"
-                    fullWidth
-                    value={protocol}
-                    disabled
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="address"
-                    fullWidth
-                    disabled
-                    value={address}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="port"
-                    fullWidth
-                    disabled
-                    value={port}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
               </>
             ) : (
               // Configuration Form
@@ -166,8 +122,8 @@ export default function KillAppForm(props: KillAppFormProps) {
                     <FormControlLabel
                       control={
                         <Switch
+                          checked={enabled}
                           onChange={(e) => setEnabled(e.target.checked)}
-                          defaultChecked={config.enabled}
                           color="primary"
                         />
                       }
@@ -176,8 +132,8 @@ export default function KillAppForm(props: KillAppFormProps) {
                     <FormControlLabel
                       control={
                         <Switch
+                          checked={bypass}
                           onChange={(e) => setBypass(e.target.checked)}
-                          defaultChecked={config.bypass}
                           color="primary"
                         />
                       }
@@ -191,7 +147,7 @@ export default function KillAppForm(props: KillAppFormProps) {
                     variant="outlined"
                     onChange={(e) => setLevel(Number(e.target.value))}
                     fullWidth
-                    defaultValue={config.level}
+                    value={level}
                     required
                     label="Level"
                   />
@@ -206,37 +162,13 @@ export default function KillAppForm(props: KillAppFormProps) {
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="protocol"
-                    fullWidth
-                    disabled
-                    value={protocol}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="address"
-                    fullWidth
-                    disabled
-                    value={address}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="port"
-                    disabled
-                    fullWidth
-                    value={port}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
               </>
+            )}
+
+            {error && (
+              <Grid size={12}>
+                <Typography color="error">{error?.message || JSON.stringify(error)}</Typography>
+              </Grid>
             )}
 
             <Grid size={3}>
@@ -245,9 +177,10 @@ export default function KillAppForm(props: KillAppFormProps) {
                 fullWidth
                 variant="contained"
                 color="primary"
+                disabled={submitting}
                 sx={{ mt: 3, mb: 2 }}
               >
-                Go
+                {submitting ? <CircularProgress size={24} color="inherit" /> : 'Go'}
               </Button>
             </Grid>
           </Grid>

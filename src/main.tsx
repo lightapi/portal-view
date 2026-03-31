@@ -7,6 +7,7 @@ import { LayoutProvider } from './contexts/LayoutContext.tsx'
 import { UserProvider } from './contexts/UserContext.tsx'
 import { SiteProvider } from './contexts/SiteContext.tsx'
 import { AppProvider } from './contexts/AppContext.tsx'
+import { ControllerProvider } from './contexts/ControllerContext.tsx'
 import './index.css'
 import App from './App.tsx'
 
@@ -17,8 +18,10 @@ createRoot(document.getElementById('root')!).render(
         <UserProvider>
           <SiteProvider>
             <AppProvider>
-              <CssBaseline />
-              <App />
+              <ControllerProvider>
+                <CssBaseline />
+                <App />
+              </ControllerProvider>
             </AppProvider>
           </SiteProvider>
         </UserProvider>
