@@ -90,7 +90,7 @@ const ControllerContext = createContext<ControllerContextValue | undefined>(unde
 export function ControllerProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(controllerReducer, initialState);
   const { isAuthenticated, host } = useUserState() as { isAuthenticated: boolean, host: string };
-  
+
   const mcpClientRef = useRef<McpClient | null>(null);
   const eventsClientRef = useRef<PortalEventsClient | null>(null);
 
@@ -114,7 +114,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
     const init = async () => {
       mcpClient.onOpen(() => {
-        // Status is handled after hydration
+        // Status is handled after live-list hydration
       });
       mcpClient.onClose(() => dispatch({ type: 'SET_MCP_STATUS', connected: false }));
       mcpClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `MCP Error: ${err.message || err}` }));
@@ -124,53 +124,49 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       eventsClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `Events Error: ${err.message || err}` }));
 
       try {
-        // 1. Concurrent Fetch: DB Baseline (REST) and MCP Handshake (WebSocket)
-        const dbPromise = (async () => {
-          const cmd = {
-            host: 'lightapi.net',
-            service: 'instance',
-            action: 'getRuntimeInstance',
-            version: '0.1.0',
-            data: {
-              hostId: host,
-              offset: 0,
-              limit: 1000,
-              sorting: JSON.stringify([]),
-              filters: JSON.stringify([{ id: 'active', value: true }]),
-              globalFilter: '',
-              active: true,
-            },
-          };
-          const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-          const response = await fetchClient(url) as RuntimeInstanceApiResponse;
-          return response.runtimeInstances || [];
-        })();
+        // 1. Immediate Baseline from DB (REST)
+        const cmd = {
+          host: 'lightapi.net',
+          service: 'instance',
+          action: 'getRuntimeInstance',
+          version: '0.1.0',
+          data: {
+            hostId: host,
+            offset: 0,
+            limit: 1000,
+            sorting: JSON.stringify([]),
+            filters: JSON.stringify([{ id: 'active', value: true }]),
+            globalFilter: '',
+            active: true,
+          },
+        };
+        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+        const response = await fetchClient(url) as RuntimeInstanceApiResponse;
+        const dbInstances = response.runtimeInstances || [];
+        
+        console.log(`Hydro-Step 1: Loaded ${dbInstances.length} instances from DB baseline`);
+        dispatch({ type: 'SET_INSTANCES', instances: dbInstances.map(mapDbToRuntimeInstance) });
 
-        const mcpConnectPromise = mcpClient.connect();
+        // 2. Background MCP Connection
+        console.log('Hydro-Step 2: Starting MCP WebSocket connection...');
+        await mcpClient.connect();
 
-        // Wait for both baseline and connection
-        const [dbInstances] = await Promise.all([dbPromise, mcpConnectPromise]);
-
-        // 2. Fetch Live Status (MCP)
+        // 3. Live Overlay (MCP Tool Call)
         const services = await mcpClient.callTool('list_services', {});
         const liveInstances: RuntimeInstance[] = services.instances || [];
+        console.log(`Hydro-Step 3: Overlayed ${liveInstances.length} live status results from MCP`);
 
-        // 3. Merge Strategy: DB baseline + MCP live status
-        const merged: RuntimeInstance[] = dbInstances.map(mapDbToRuntimeInstance);
-        const mergedMap = new Map<RuntimeInstanceId, RuntimeInstance>(
-          merged.map(i => [i.runtimeInstanceId, i])
-        );
-
-        // Overlay live status
-        liveInstances.forEach(live => {
-          mergedMap.set(live.runtimeInstanceId, live);
-        });
-
-        dispatch({ type: 'SET_INSTANCES', instances: Array.from(mergedMap.values()) });
+        if (liveInstances.length > 0) {
+          // We update individual instances to preserve baseline records
+          liveInstances.forEach(live => {
+            dispatch({ type: 'UPDATE_INSTANCE', instance: live });
+          });
+        }
         dispatch({ type: 'SET_MCP_STATUS', connected: true });
 
       } catch (err: any) {
         dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
+        console.error('Hydration Error:', err);
       }
     };
 
@@ -200,7 +196,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       dispatch({ type: 'SET_MCP_STATUS', connected: false });
       dispatch({ type: 'SET_EVENTS_STATUS', connected: false });
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, host]);
 
   const callTool = useCallback(async (name: string, args: any) => {
     if (!mcpClientRef.current) throw new Error('MCP Client not initialized');
