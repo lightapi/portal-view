@@ -4,26 +4,37 @@ export class McpClient {
   private socket: WebSocket | null = null;
   private pendingRequests = new Map<string | number, { resolve: (val: any) => void, reject: (err: any) => void }>();
   private connectionPromise: Promise<void> | null = null;
+  private shouldReconnect = true;
+  private onOpenCallback?: () => void;
+  private onCloseCallback?: () => void;
+  private onErrorCallback?: (err: any) => void;
 
   constructor(private url: string) {}
 
+  public onOpen(cb: () => void) { this.onOpenCallback = cb; }
+  public onClose(cb: () => void) { this.onCloseCallback = cb; }
+  public onError(cb: (err: any) => void) { this.onErrorCallback = cb; }
+
   public async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
+    this.shouldReconnect = true;
 
-    this.connectionPromise = new Promise((resolve, reject) => {
+    this.connectionPromise = new Promise<void>((resolve, reject) => {
       try {
         const socket = new WebSocket(this.url);
         this.socket = socket;
 
         socket.onopen = async () => {
           try {
-            // MCP Initialize handshake
-            await this.request('initialize', {
+            // Internal handshake - bypass the public request() to avoid deadlock
+            await this.rawRequest('initialize', {
               protocolVersion: '2026-03-26',
               capabilities: {},
               clientInfo: { name: 'portal-view', version: '0.1.0' }
             });
-            await this.request('notifications/initialized', {});
+            await this.rawRequest('notifications/initialized', {});
+            
+            this.onOpenCallback?.();
             resolve();
           } catch (err) {
             reject(err);
@@ -48,15 +59,20 @@ export class McpClient {
         };
 
         socket.onerror = (err) => {
+          this.onErrorCallback?.(err);
           reject(err);
         };
 
         socket.onclose = () => {
           this.socket = null;
           this.connectionPromise = null;
-          // Clear all pending
           this.pendingRequests.forEach(p => p.reject(new Error('Connection closed')));
           this.pendingRequests.clear();
+          this.onCloseCallback?.();
+
+          if (this.shouldReconnect) {
+            setTimeout(() => this.connect(), 3000);
+          }
         };
       } catch (err) {
         reject(err);
@@ -77,6 +93,10 @@ export class McpClient {
 
   private async request(method: string, params: any): Promise<any> {
     await this.connect();
+    return this.rawRequest(method, params);
+  }
+
+  private async rawRequest(method: string, params: any): Promise<any> {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket is not open');
     }
@@ -96,6 +116,7 @@ export class McpClient {
   }
 
   public close() {
+    this.shouldReconnect = false;
     this.socket?.close();
   }
 }

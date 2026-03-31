@@ -37,7 +37,10 @@ export default function LoggerConfig() {
     const [updating, setUpdating] = useState(false);
 
     const fetchData = async () => {
-        if (!runtimeInstanceId) return;
+        if (!runtimeInstanceId) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const result = await callTool('get_loggers', { runtimeInstanceId });

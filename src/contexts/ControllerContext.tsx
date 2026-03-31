@@ -95,14 +95,24 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     eventsClientRef.current = eventsClient;
 
     const init = async () => {
+      mcpClient.onOpen(() => {
+        // Status is now handled after list_services hydration
+      });
+      mcpClient.onClose(() => dispatch({ type: 'SET_MCP_STATUS', connected: false }));
+      mcpClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `MCP Error: ${err.message || err}` }));
+
+      eventsClient.onOpen(() => dispatch({ type: 'SET_EVENTS_STATUS', connected: true }));
+      eventsClient.onClose(() => dispatch({ type: 'SET_EVENTS_STATUS', connected: false }));
+      eventsClient.onError((err) => dispatch({ type: 'SET_ERROR', error: `Events Error: ${err.message || err}` }));
+
       try {
         await mcpClient.connect();
-        dispatch({ type: 'SET_MCP_STATUS', connected: true });
 
         // Initial hydration
         const services = await mcpClient.callTool('list_services', {});
         if (services.instances) {
           dispatch({ type: 'SET_INSTANCES', instances: services.instances });
+          dispatch({ type: 'SET_MCP_STATUS', connected: true });
         }
       } catch (err: any) {
         dispatch({ type: 'SET_ERROR', error: `MCP Connection failed: ${err.message}` });
@@ -128,7 +138,6 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
     init();
     eventsClient.connect();
-    dispatch({ type: 'SET_EVENTS_STATUS', connected: true }); // Assuming connect() starts the process
 
     return () => {
       mcpClient.close();
