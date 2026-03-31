@@ -49,7 +49,7 @@ type ServiceGroup = {
 function CtrlPaneDashboard() {
   const navigate = useNavigate();
   const { filter } = useAppState() as { filter: string };
-  const { instances, isMcpConnected, isEventsConnected, error } = useController();
+  const { instances, isLiveConnected, error } = useController();
 
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
@@ -164,7 +164,7 @@ function CtrlPaneDashboard() {
     enableExpanding: true,
     initialState: { density: 'compact' },
     state: { 
-      isLoading: Object.keys(instances).length === 0 && !isMcpConnected && !error, 
+      isLoading: Object.keys(instances).length === 0 && !isLiveConnected && !error, 
       showAlertBanner: !!error 
     },
     muiToolbarAlertBannerProps: error
@@ -177,9 +177,9 @@ function CtrlPaneDashboard() {
             Nodes
           </Typography>
           <Chip 
-            label={isEventsConnected ? "Live Events Active" : "Events Disconnected"} 
+            label={isLiveConnected ? "Live Control Plane Connected" : "Control Plane Disconnected"} 
             size="small" 
-            color={isEventsConnected ? "success" : "warning"}
+            color={isLiveConnected ? "success" : "warning"}
             variant="outlined" 
           />
         </Box>

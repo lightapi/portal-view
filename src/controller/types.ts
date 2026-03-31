@@ -84,10 +84,18 @@ export interface JsonRpcRequest {
   params?: any;
 }
 
+export interface JsonRpcNotification {
+  jsonrpc: '2.0';
+  method: string;
+  params?: any;
+}
+
 export interface JsonRpcResponse {
   jsonrpc: '2.0';
-  id: string | number;
+  id?: string | number;
   result?: any;
+  method?: string; // Unified response/notification handling
+  params?: any;
   error?: {
     code: number;
     message: string;
