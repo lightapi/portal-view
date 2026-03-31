@@ -1,81 +1,62 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, CssBaseline, Paper, Grid, FormControlLabel, FormGroup, Switch, Typography } from '@mui/material';
-import fetchClient from '../../../utils/fetchClient';
+import { Box, TextField, Button, CssBaseline, Paper, Grid, FormControlLabel, FormGroup, Switch, Typography, CircularProgress } from '@mui/material';
+import { useController } from '../../../contexts/ControllerContext';
 import ChaosInfoPopper from './ChaosInfoPopper';
 
 interface LatencyFormProps {
   formType: string;
-  address: string;
-  port: string | number;
-  protocol: string;
-  baseUrl: string;
+  runtimeInstanceId: string;
   config: {
     enabled: boolean;
     bypass: boolean;
     level: number;
-    latencyRangeStart: number;
-    latencyRangeEnd: number;
+    delay?: number;
     [key: string]: any;
   };
 }
 
 export default function LatencyForm(props: LatencyFormProps) {
-  const { formType, address, port, protocol, config, baseUrl } = props;
+  const { formType, runtimeInstanceId, config } = props;
   const assaultType = 'com.networknt.chaos.LatencyAssaultHandler';
+  const { callTool } = useController();
 
   const [endpoint, setEndpoint] = useState('');
   const [requests, setRequests] = useState('');
 
-  const [enabled, setEnabled] = useState(config.enabled);
-  const [bypass, setBypass] = useState(config.bypass);
-  const [level, setLevel] = useState(config.level);
-  const [latencyRangeStart, setLatencyRangeStart] = useState(config.latencyRangeStart);
-  const [latencyRangeEnd, setLatencyRangeEnd] = useState(config.latencyRangeEnd);
+  const [enabled, setEnabled] = useState(config.enabled ?? false);
+  const [bypass, setBypass] = useState(config.bypass ?? false);
+  const [level, setLevel] = useState(config.level ?? 5);
+  const [delay, setDelay] = useState(config.delay ?? 1000);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<any>(null);
 
-  const handleLatencySubmit = (event: React.FormEvent) => {
+  const handleLatencySubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const headers = {
-      Authorization: 'Basic ' + localStorage.getItem('user'),
-    };
-    let url = '';
-    let body = '';
-    if (formType === 'initAssault') {
-      url = baseUrl + '/services/chaosmonkey/assault';
-      body = JSON.stringify({
-        protocol,
-        address,
-        assaultType,
-        port,
-        endpoint,
-        requests,
-      });
-    } else if (formType === 'configAssault') {
-      url = baseUrl + '/services/chaosmonkey';
-      body = JSON.stringify({
-        protocol,
-        port,
-        address,
-        assaultType,
-        assaultConfig: {
-          enabled,
-          bypass,
-          level,
-          latencyRangeStart,
-          latencyRangeEnd,
-        },
-      });
-    }
+    setSubmitting(true);
+    setError(null);
 
-    if (url) {
-      fetchClient(url, {
-        method: 'POST',
-        body,
-        headers,
-      }).then(() => {
-        window.location.reload();
-      }).catch((err) => {
-        console.error(err);
-      });
+    try {
+      if (formType === 'initAssault') {
+        await callTool('run_chaos_monkey_assault', {
+          runtimeInstanceId,
+          assaultType,
+        });
+      } else if (formType === 'configAssault') {
+        await callTool('configure_chaos_monkey', {
+          runtimeInstanceId,
+          assaultType,
+          config: {
+            enabled,
+            bypass,
+            level,
+            delay,
+          },
+        });
+      }
+    } catch (err: any) {
+      setError(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -111,7 +92,7 @@ export default function LatencyForm(props: LatencyFormProps) {
                     fullWidth
                     onChange={(e) => setEndpoint(e.target.value)}
                     variant="outlined"
-                    label="endpoint"
+                    label="endpoint (Optional)"
                   />
                 </Grid>
                 <Grid size={6}>
@@ -120,7 +101,7 @@ export default function LatencyForm(props: LatencyFormProps) {
                     onChange={(e) => setRequests(e.target.value)}
                     fullWidth
                     variant="outlined"
-                    label="requests"
+                    label="requests (Optional)"
                   />
                 </Grid>
                 <Grid size={12}>
@@ -133,47 +114,16 @@ export default function LatencyForm(props: LatencyFormProps) {
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="protocol"
-                    fullWidth
-                    value={protocol}
-                    disabled
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="address"
-                    fullWidth
-                    disabled
-                    value={address}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="port"
-                    fullWidth
-                    disabled
-                    value={port}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
               </>
             ) : (
-              // Configuration Form
               <>
-                <Grid size={12}>
+                <Grid size={8}>
                   <FormGroup row>
                     <FormControlLabel
                       control={
                         <Switch
+                          checked={enabled}
                           onChange={(e) => setEnabled(e.target.checked)}
-                          defaultChecked={config.enabled}
                           color="primary"
                         />
                       }
@@ -182,8 +132,8 @@ export default function LatencyForm(props: LatencyFormProps) {
                     <FormControlLabel
                       control={
                         <Switch
+                          checked={bypass}
                           onChange={(e) => setBypass(e.target.checked)}
-                          defaultChecked={config.bypass}
                           color="primary"
                         />
                       }
@@ -191,37 +141,26 @@ export default function LatencyForm(props: LatencyFormProps) {
                     />
                   </FormGroup>
                 </Grid>
-                <Grid size={4}>
+                <Grid size={2}>
                   <TextField
                     type="number"
                     variant="outlined"
-                    fullWidth
-                    required
                     onChange={(e) => setLevel(Number(e.target.value))}
-                    defaultValue={config.level}
+                    fullWidth
+                    value={level}
+                    required
                     label="Level"
                   />
                 </Grid>
-                <Grid size={4}>
+                <Grid size={2}>
                   <TextField
                     type="number"
                     variant="outlined"
+                    onChange={(e) => setDelay(Number(e.target.value))}
                     fullWidth
-                    defaultValue={config.latencyRangeStart}
-                    onChange={(e) => setLatencyRangeStart(Number(e.target.value))}
+                    value={delay}
                     required
-                    label="latencyRangeStart"
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    type="number"
-                    variant="outlined"
-                    fullWidth
-                    onChange={(e) => setLatencyRangeEnd(Number(e.target.value))}
-                    defaultValue={config.latencyRangeEnd}
-                    required
-                    label="latencyRangeEnd"
+                    label="Delay"
                   />
                 </Grid>
                 <Grid size={12}>
@@ -229,42 +168,18 @@ export default function LatencyForm(props: LatencyFormProps) {
                     variant="filled"
                     fullWidth
                     label="assaultType"
-                    defaultValue={assaultType}
+                    value={assaultType}
                     disabled
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="protocol"
-                    fullWidth
-                    disabled
-                    value={protocol}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="address"
-                    fullWidth
-                    disabled
-                    value={address}
-                    InputProps={{ readOnly: true }}
-                  />
-                </Grid>
-                <Grid size={4}>
-                  <TextField
-                    variant="filled"
-                    label="port"
-                    disabled
-                    fullWidth
-                    value={port}
                     InputProps={{ readOnly: true }}
                   />
                 </Grid>
               </>
+            )}
+
+            {error && (
+              <Grid size={12}>
+                <Typography color="error">{error?.message || JSON.stringify(error)}</Typography>
+              </Grid>
             )}
 
             <Grid size={3}>
@@ -273,9 +188,10 @@ export default function LatencyForm(props: LatencyFormProps) {
                 fullWidth
                 variant="contained"
                 color="primary"
+                disabled={submitting}
                 sx={{ mt: 3, mb: 2 }}
               >
-                Go
+                {submitting ? <CircularProgress size={24} color="inherit" /> : 'Go'}
               </Button>
             </Grid>
           </Grid>

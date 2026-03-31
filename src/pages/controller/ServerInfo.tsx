@@ -1,54 +1,55 @@
 import React, { useEffect, useState } from 'react';
-import fetchClient from '../../utils/fetchClient';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
+import { Box, Typography, Paper } from '@mui/material';
+import { useController } from '../../contexts/ControllerContext';
 
-export default function ServerInfo(props) {
-  const node = props.location.state.data.node;
-  const protocol = props.location.state.data.protocol;
-  const address = props.location.state.data.address;
-  const port = props.location.state.data.port;
-  const baseUrl = props.location.state.data.baseUrl;
+export default function ServerInfo() {
+  const { state } = useLocation();
+  const { runtimeInstanceId } = state?.data || {};
+  const { callTool } = useController();
 
-  const [info, setInfo] = useState();
-  const [error, setError] = useState();
+  const [info, setInfo] = useState<any>();
+  const [error, setError] = useState<any>();
   const [loading, setLoading] = useState(true);
 
-  /* build query params */
-  var url = new URL(baseUrl + '/services/info'),
-    params = { protocol: protocol, port: port, address: address };
-  Object.keys(params).forEach((key) =>
-    url.searchParams.append(key, params[key])
-  );
-
   useEffect(() => {
-    const abortController = new AbortController();
+    if (!runtimeInstanceId) {
+      setError('No runtime instance ID provided');
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const json = await fetchClient(url.toString());
-        setInfo(json);
-        setLoading(false);
-      } catch (error) {
-        setError(error);
+        const result = await callTool('get_service_info', { runtimeInstanceId });
+        setInfo(result);
+      } catch (err: any) {
+        setError(err);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+  }, [runtimeInstanceId, callTool]);
 
-    return () => {
-      abortController.abort();
-    };
-  }, []);
-  let wait;
   if (loading) {
-    wait = (
-      <div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <CircularProgress />
-      </div>
+      </Box>
     );
-  } else {
-    wait = <pre>{info ? JSON.stringify(info, null, 2) : error}</pre>;
   }
-  return <div>{wait}</div>;
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Typography variant="h5" gutterBottom>Server Info</Typography>
+      <Typography variant="subtitle1" color="textSecondary" gutterBottom>Instance ID: {runtimeInstanceId}</Typography>
+      <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f5f5f5', overflowX: 'auto' }}>
+        <pre>{info ? JSON.stringify(info, null, 2) : (error?.message || JSON.stringify(error))}</pre>
+      </Paper>
+    </Box>
+  );
 }
