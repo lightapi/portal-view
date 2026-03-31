@@ -222,7 +222,7 @@ function CtrlPaneDashboard() {
             </TableHead>
             <TableBody>
               {row.original.nodes.map((node, j) => (
-                <TableRow key={j}>
+                <TableRow key={node.runtimeInstanceId ?? `${node.serviceId}-${node.envTag ?? ''}-${node.protocol}-${node.ipAddress}-${node.portNumber}`}>
                   <TableCell>{node.protocol}</TableCell>
                   <TableCell>{node.ipAddress}</TableCell>
                   <TableCell align="right">{node.portNumber}</TableCell>
