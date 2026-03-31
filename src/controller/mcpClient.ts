@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse, McpTool, JsonRpcMessage, JsonRpcNotification } from './types';
+import { JsonRpcRequest, McpTool, JsonRpcMessage } from './types';
 
 export class McpClient {
   private socket: WebSocket | null = null;
@@ -47,7 +47,11 @@ export class McpClient {
           try {
             const data: JsonRpcMessage = JSON.parse(event.data);
             
-            if ('id' in data && data.id !== undefined && data.id !== null) {
+            if ('id' in data && data.id !== undefined) {
+              if (data.id === null) {
+                console.warn('Received JSON-RPC message with null id:', data);
+                return;
+              }
               // This is a JsonRpcResponse
               const pending = this.pendingRequests.get(data.id);
               if (pending) {

@@ -116,44 +116,48 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       mcpClient.onNotification((method, params: any) => {
-        console.log('Received Control Plane Notification:', { method, params });
+        if (import.meta.env.DEV) {
+          console.debug('MCP Notification:', { method, params });
+        }
+        
         switch (method) {
           case 'notifications/instance_connected':
           case 'notifications/instance_updated': {
-            // Normalize params: the server might send the RuntimeInstance directly or wrapped in { instance: ... }
-            const instancePayload =
+            const rawPayload =
               params && typeof params === 'object' && 'instance' in params
                 ? (params as any).instance
                 : params;
 
-            if (
-              !instancePayload ||
-              typeof instancePayload !== 'object' ||
-              !('runtimeInstanceId' in (instancePayload as any)) ||
-              !(instancePayload as any).runtimeInstanceId
-            ) {
-              console.warn(
-                'Ignoring invalid instance notification payload',
-                { method, params }
-              );
+            if (!rawPayload || typeof rawPayload !== 'object' || !rawPayload.runtimeInstanceId) {
+              console.warn('Ignoring invalid instance notification:', { method, params });
               break;
             }
 
-            dispatch({ type: 'UPDATE_INSTANCE', instance: instancePayload });
+            // Copilot: Normalize and validate with fallbacks to prevent crashes
+            const normalized: RuntimeInstance = {
+              ...rawPayload,
+              connected: true, // If we get a connected or updated notification, it's live
+              metadata: {
+                address: rawPayload.metadata?.address || 'unknown',
+                port: rawPayload.metadata?.port || 0,
+                protocol: rawPayload.metadata?.protocol || 'http',
+                environment: rawPayload.metadata?.environment || rawPayload.envTag || '',
+                version: rawPayload.metadata?.version || '0.1.0',
+                tags: rawPayload.metadata?.tags || {}
+              }
+            };
+
+            dispatch({ type: 'UPDATE_INSTANCE', instance: normalized });
             break;
           }
           case 'notifications/instance_disconnected': {
-            // Params should contain runtimeInstanceId, potentially wrapped
             const runtimeInstanceId =
               params && typeof params === 'object'
-                ? (params as any).runtimeInstanceId || (params as any).runtime_instance_id
+                ? params.runtimeInstanceId || (params as any).runtime_instance_id
                 : undefined;
 
             if (!runtimeInstanceId) {
-              console.warn(
-                'Ignoring invalid disconnect notification payload (missing runtimeInstanceId)',
-                { method, params }
-              );
+              console.warn('Ignoring invalid disconnect notification (missing ID):', { method, params });
               break;
             }
 
@@ -166,7 +170,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       try {
-        // 1. Immediate Baseline from DB (REST)
+        // 1. Baseline from DB (shows recent history)
         const cmd = {
           host: 'lightapi.net',
           service: 'instance',
@@ -189,13 +193,19 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         console.log(`Hydro-Step 1: Loaded ${dbInstances.length} instances from DB baseline`);
         dispatch({ type: 'SET_INSTANCES', instances: dbInstances.map(mapDbToRuntimeInstance) });
 
-        // 2. Control Plane Connection (includes live hydration check if needed)
+        // 2. Connect to MCP Control Plane
         console.log('Hydro-Step 2: Connecting to Unified Control Plane...');
         await mcpClient.connect();
 
-        // 3. Optional: Verify with server_info
-        const info = await mcpClient.callTool('server_info', {});
-        console.log('Hydro-Step 3: Control Plane Info:', info);
+        // 3. Live Hydration (Copilot: Fetch live snapshot to replace baseline/missing history)
+        console.log('Hydro-Step 3: Fetching live instances from Control Plane...');
+        const liveSnapshot = await mcpClient.callTool('list_instances', {});
+        if (liveSnapshot && Array.isArray(liveSnapshot.instances)) {
+          console.log(`Hydro-Step 3: Synced ${liveSnapshot.instances.length} live instances`);
+          liveSnapshot.instances.forEach((inst: RuntimeInstance) => {
+            dispatch({ type: 'UPDATE_INSTANCE', instance: inst });
+          });
+        }
 
       } catch (err: any) {
         dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
