@@ -109,7 +109,11 @@ export class McpClient {
           this.onCloseCallback?.();
 
           if (this.shouldReconnect) {
-            setTimeout(() => this.connect(), 3000);
+            setTimeout(() => {
+              this.connect().catch(err => {
+                this.onErrorCallback?.(err);
+              });
+            }, 3000);
           }
         };
       } catch (err) {
