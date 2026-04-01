@@ -98,11 +98,9 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     const csrfToken = cookies.get('csrf');
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const hostname = window.location.hostname;
-    const port = window.location.port ? `:${window.location.port}` : '';
-
-    const mcpUrl = `${protocol}//${hostname}${port}/ctrl/mcp`;
-
+    const mcpUrlObject = new URL('/ctrl/mcp', window.location.href);
+    mcpUrlObject.protocol = protocol;
+    const mcpUrl = mcpUrlObject.toString();
     // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
     const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
 
