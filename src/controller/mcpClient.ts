@@ -9,8 +9,16 @@ export class McpClient {
   private onCloseCallback?: () => void;
   private onErrorCallback?: (err: any) => void;
   private onNotificationCallback?: (method: string, params: any) => void;
+  private protocolProvider: () => string[];
 
-  constructor(private url: string, private protocols: string[] = []) { }
+  constructor(private url: string, protocolsOrProvider?: string[] | (() => string[])) {
+    if (typeof protocolsOrProvider === 'function') {
+      this.protocolProvider = protocolsOrProvider;
+    } else {
+      const p = protocolsOrProvider || [];
+      this.protocolProvider = () => p;
+    }
+  }
 
   public onOpen(cb: () => void) { this.onOpenCallback = cb; }
   public onClose(cb: () => void) { this.onCloseCallback = cb; }
@@ -19,17 +27,31 @@ export class McpClient {
 
   public async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
-    this.shouldReconnect = true;
 
-    this.connectionPromise = new Promise<void>((resolve, reject) => {
+    const allProtocols = this.protocolProvider();
+
+    const promise = new Promise<void>((resolve, reject) => {
+      // Track whether the promise has already settled to prevent double-settling
+      // and to let onclose know whether to reject (connection closed before open).
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (!settled) {
+          settled = true;
+          fn();
+        }
+      };
+      // Track whether onopen has fired so onclose can use an accurate error message.
+      let opened = false;
+
       try {
         // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
-        const socket = this.protocols.length > 0
-          ? new WebSocket(this.url, this.protocols)
+        const socket = allProtocols.length > 0
+          ? new WebSocket(this.url, allProtocols)
           : new WebSocket(this.url);
         this.socket = socket;
 
         socket.onopen = async () => {
+          opened = true;
           try {
             // Internal handshake - bypass the public request() to avoid deadlock
             await this.rawRequest('initialize', {
@@ -40,9 +62,9 @@ export class McpClient {
             await this.rawRequest('notifications/initialized', {});
 
             this.onOpenCallback?.();
-            resolve();
+            settle(() => resolve());
           } catch (err) {
-            reject(err);
+            settle(() => reject(err));
           }
         };
 
@@ -86,10 +108,18 @@ export class McpClient {
 
         socket.onerror = (err) => {
           this.onErrorCallback?.(err);
-          reject(err);
+          settle(() => reject(err));
         };
 
         socket.onclose = () => {
+          // If the connection closed before the handshake completed, reject the promise
+          // so that any awaiting connect() calls don't hang indefinitely.
+          // Use a more descriptive message based on whether onopen has already fired.
+          const closeMsg = opened
+            ? 'Connection closed during initialization'
+            : 'Connection closed before open';
+          settle(() => reject(new Error(closeMsg)));
+
           this.socket = null;
           this.connectionPromise = null;
           this.pendingRequests.forEach(p => p.reject(new Error('Connection closed')));
@@ -97,15 +127,51 @@ export class McpClient {
           this.onCloseCallback?.();
 
           if (this.shouldReconnect) {
-            setTimeout(() => this.connect(), 3000);
+            setTimeout(() => {
+              // Re-check reconnect flag in case it was disabled after the timeout was scheduled
+              if (!this.shouldReconnect) {
+                return;
+              }
+              this.connect().catch(err => {
+                // Only surface errors if reconnect is still enabled (avoid spurious errors on intentional close)
+                if (this.shouldReconnect) {
+                  this.onErrorCallback?.(err);
+                }
+              });
+            }, 3000);
           }
         };
       } catch (err) {
-        reject(err);
+        // WebSocket constructor threw synchronously (e.g. invalid subprotocol).
+        // No socket events will fire, so we must clear state here to allow retries.
+        this.socket = null;
+        settle(() => reject(err));
       }
     });
 
-    return this.connectionPromise;
+    this.connectionPromise = promise;
+
+    // If the promise was rejected (e.g. synchronous WebSocket construction failure
+    // or an initialization/handshake error), clear connectionPromise so callers can
+    // retry with a fresh connection and ensure any partially-open socket is closed.
+    promise.catch(() => {
+      // Only clear if this is still the active connection attempt.
+      if (this.connectionPromise === promise) {
+        this.connectionPromise = null;
+        // If a socket object exists for this failed attempt, close and discard it
+        // so that subsequent connect() calls start from a clean state.
+        if (this.socket) {
+          try {
+            this.socket.close();
+          } catch {
+            // Ignore errors while closing a failed socket.
+          }
+          this.socket = null;
+        }
+      }
+    });
+
+    return promise;
   }
 
   public async listTools(): Promise<McpTool[]> {
