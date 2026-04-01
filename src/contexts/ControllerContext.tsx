@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef, useCallback } from 'react';
 import { McpClient } from '../controller/mcpClient';
 import { RuntimeInstance, RuntimeInstanceId, RuntimeInstanceType, RuntimeInstanceApiResponse } from '../controller/types';
+import Cookies from 'universal-cookie';
 import { useUserState } from './UserContext';
 import fetchClient from '../utils/fetchClient';
 
@@ -87,17 +88,25 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
   const mcpClientRef = useRef<McpClient | null>(null);
 
-  const getWsUrl = (path: string) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    return `${protocol}//${host}${path}`;
-  };
-
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const mcpUrl = getWsUrl('/ctrl/mcp');
-    const mcpClient = new McpClient(mcpUrl);
+    // Follow the same BFF connection pattern as Chat.tsx:
+    // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
+    // The csrf token is passed via Sec-WebSocket-Protocol header for BFF validation.
+    const cookies = new Cookies();
+    const csrfToken = cookies.get('csrf');
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const hostname = window.location.hostname;
+    const port = window.location.port ? `:${window.location.port}` : '';
+
+    const mcpUrl = `${protocol}//${hostname}${port}/ctrl/mcp`;
+
+    // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
+    const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
+
+    const mcpClient = new McpClient(mcpUrl, protocols);
     mcpClientRef.current = mcpClient;
 
     const init = async () => {

@@ -101,19 +101,13 @@ export default function Chat() {
         const hostname = window.location.hostname;
         const port = window.location.port ? `:${window.location.port}` : '';
         
-        // Retrieve tokens if available
-        const accessToken = cookies.get('accessToken');
+        // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
         const csrfToken = cookies.get('csrf');
         
         // Construct URL with query params using URL + searchParams to ensure proper encoding
         const url = new URL(`${protocol}//${hostname}${port}/chat`);
         url.searchParams.set('userId', userId);
         url.searchParams.set('model', model);
-        
-        // If we have an access token and it must be passed, use a dedicated, encoded token param
-        if (accessToken) {
-            url.searchParams.set('token', accessToken);
-        }
 
         // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
         const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
