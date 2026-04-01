@@ -150,7 +150,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
               break;
             }
 
-            // Copilot: Normalize and validate with fallbacks to prevent crashes
+            // Normalize and validate with fallbacks to prevent crashes from partial or missing fields
             const baseInstance = {
               ...rawPayload,
               runtimeInstanceId
@@ -219,7 +219,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         console.log('Hydro-Step 2: Connecting to Unified Control Plane...');
         await mcpClient.connect();
 
-        // 3. Live Hydration (Copilot: Fetch live snapshot to replace baseline/missing history)
+        // 3. Live Hydration: Fetch live snapshot to overlay connectivity onto DB baseline
         console.log('Hydro-Step 3: Fetching live instances from Control Plane...');
         const liveSnapshot = await mcpClient.callTool('list_instances', {});
         if (liveSnapshot && Array.isArray(liveSnapshot.instances)) {
