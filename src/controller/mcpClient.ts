@@ -49,7 +49,17 @@ export class McpClient {
             
             if ('id' in data && data.id !== undefined) {
               if (data.id === null) {
+                const protocolError = new Error('Protocol error: Received JSON-RPC message with null id');
                 console.warn('Received JSON-RPC message with null id:', data);
+                // Reject all pending requests to avoid hanging promises and leaking memory
+                this.pendingRequests.forEach(p => p.reject(protocolError));
+                this.pendingRequests.clear();
+                // Notify error handler, if any
+                this.onErrorCallback?.(protocolError);
+                // Close the socket to fail the connection and allow reconnect logic to run
+                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                  this.socket.close();
+                }
                 return;
               }
               // This is a JsonRpcResponse
