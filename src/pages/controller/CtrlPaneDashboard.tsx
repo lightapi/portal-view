@@ -6,6 +6,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
+  type MRT_ExpandedState,
+  type MRT_ColumnFiltersState,
 } from 'material-react-table';
 import {
   Box,
@@ -36,6 +38,7 @@ type RuntimeInstanceRow = {
   portNumber: number;
   instanceStatus: string;
   connected: boolean;
+  active: boolean;
 };
 
 // Define the grouped shape for the main table
@@ -44,12 +47,19 @@ type ServiceGroup = {
   envTag: string;
   nodeCount: number;
   nodes: RuntimeInstanceRow[];
+  active: boolean;
 };
 
 function CtrlPaneDashboard() {
   const navigate = useNavigate();
   const { filter } = useAppState() as { filter: string };
   const { instances, isLiveConnected, error } = useController();
+
+  // Table state management
+  const [expanded, setExpanded] = React.useState<MRT_ExpandedState>({});
+  const [columnFilters, setColumnFilters] = React.useState<MRT_ColumnFiltersState>([
+    { id: 'active', value: 'true' }, // Match SchemaAdmin's default active-only view
+  ]);
 
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
@@ -62,9 +72,11 @@ function CtrlPaneDashboard() {
           envTag: instance.envTag || '',
           nodeCount: 0,
           nodes: [],
+          active: false,
         };
       }
       groups[key].nodeCount += 1;
+      groups[key].active = groups[key].active || instance.active;
       groups[key].nodes.push({
         runtimeInstanceId: instance.runtimeInstanceId,
         serviceId: instance.serviceId,
@@ -74,26 +86,40 @@ function CtrlPaneDashboard() {
         portNumber: instance.metadata.port,
         instanceStatus: instance.connected ? 'Connected' : 'Disconnected',
         connected: instance.connected,
+        active: instance.active,
       });
     });
     return Object.values(groups);
   }, [instances]);
 
-  // Derived filtered data based on App header filter
-  const filteredData = useMemo(() => {
-    if (!filter) return groupedData;
-    return groupedData.filter(group => 
-      group.serviceId.toLowerCase().includes(filter.toLowerCase()) ||
-      group.envTag.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [groupedData, filter]);
-
   // Main table column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceGroup>[]>(
     () => [
-      { accessorKey: 'serviceId', header: 'Service Id' },
-      { accessorKey: 'envTag', header: 'Environment Tag' },
-      { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' } },
+      { accessorKey: 'serviceId', header: 'Service Id', enableColumnFilter: true },
+      { accessorKey: 'envTag', header: 'Environment Tag', enableColumnFilter: true },
+      { 
+        accessorKey: 'active', 
+        header: 'Active', 
+        filterVariant: 'select',
+        filterSelectOptions: [
+          { label: 'True', value: 'true' },
+          { label: 'False', value: 'false' },
+        ],
+        // Custom filter function for boolean to string matching (client-side)
+        filterFn: (row, id, filterValue) => {
+          const rowValue = !!row.getValue<boolean>(id);
+          return String(rowValue) === filterValue;
+        },
+        Cell: ({ cell }) => (
+          <Chip 
+            label={cell.getValue<boolean>() ? "True" : "False"} 
+            size="small" 
+            color={cell.getValue<boolean>() ? "primary" : "default"} 
+            variant="outlined" 
+          />
+        )
+      },
+      { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' }, enableColumnFilter: false },
     ],
     []
   );
@@ -158,15 +184,23 @@ function CtrlPaneDashboard() {
  
   const table = useMaterialReactTable({
     columns,
-    data: filteredData,
+    data: groupedData,
     getRowId: (row) => `${row.serviceId}|${row.envTag}`,
     enableExpandAll: false,
     enableExpanding: true,
-    initialState: { density: 'compact' },
+    getRowCanExpand: () => true,
+    positionExpandColumn: 'first',
+    enableColumnFilters: true,
+    initialState: { showColumnFilters: true, density: 'compact' },
     state: { 
       isLoading: Object.keys(instances).length === 0 && !isLiveConnected && !error, 
-      showAlertBanner: !!error 
+      showAlertBanner: !!error,
+      globalFilter: filter,
+      expanded,
+      columnFilters
     },
+    onExpandedChange: setExpanded,
+    onColumnFiltersChange: setColumnFilters,
     muiToolbarAlertBannerProps: error
       ? { color: 'error', children: error }
       : undefined,
@@ -190,11 +224,12 @@ function CtrlPaneDashboard() {
                 <TableCell>Protocol</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Port</TableCell>
+                <TableCell align="center">Active</TableCell>
                 <TableCell align="center">Status</TableCell>
-                <TableCell align="right">Status Check</TableCell>
-                <TableCell align="right">Server Info</TableCell>
-                <TableCell align="right">Logger Config</TableCell>
-                <TableCell align="right">Chaos Monkey</TableCell>
+                <TableCell align="right">Check</TableCell>
+                <TableCell align="right">Info</TableCell>
+                <TableCell align="right">Logger</TableCell>
+                <TableCell align="right">Chaos</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -203,6 +238,13 @@ function CtrlPaneDashboard() {
                   <TableCell>{node.protocol}</TableCell>
                   <TableCell>{node.ipAddress}</TableCell>
                   <TableCell align="right">{node.portNumber}</TableCell>
+                  <TableCell align="center">
+                    <Chip 
+                      label={node.active ? "Active" : "Inactive"} 
+                      size="small" 
+                      variant="outlined" 
+                    />
+                  </TableCell>
                   <TableCell align="center">
                     <Tooltip title={node.connected ? "Node is online" : "Node is offline"}>
                       <Chip 

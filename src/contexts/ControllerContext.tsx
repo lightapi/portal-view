@@ -12,6 +12,7 @@ const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstance => ({
   connected: false, // Baseline from DB is disconnected unless controller says otherwise
   connectedAt: db.updateTs || '',
   lastSeenAt: db.updateTs || '',
+  active: db.active,
   metadata: {
     address: db.ipAddress,
     port: db.portNumber,
@@ -165,6 +166,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
             const normalized: RuntimeInstance = {
               ...baseInstance,
               connected: true, // If we get a connected or updated notification, it's live
+              active: true,    // Live connection implies active
               metadata: {
                 address: (rawPayload as any).metadata?.address || 'unknown',
                 port: (rawPayload as any).metadata?.port || 0,
@@ -179,9 +181,14 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
             break;
           }
           case 'notifications/instance_disconnected': {
+            const rawPayload =
+              params && typeof params === 'object' && 'instance' in params
+                ? (params as any).instance
+                : params;
+
             const runtimeInstanceId =
-              params && typeof params === 'object'
-                ? params.runtimeInstanceId || (params as any).runtime_instance_id
+              rawPayload && typeof rawPayload === 'object'
+                ? (rawPayload as any).runtimeInstanceId || (rawPayload as any).runtime_instance_id
                 : undefined;
 
             if (!runtimeInstanceId) {
@@ -224,16 +231,6 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         // 2. Connect to MCP Control Plane
         console.log('Hydro-Step 2: Connecting to Unified Control Plane...');
         await mcpClient.connect();
-
-        // 3. Live Hydration: Fetch live snapshot to overlay connectivity onto DB baseline
-        console.log('Hydro-Step 3: Fetching live instances from Control Plane...');
-        const liveSnapshot = await mcpClient.callTool('list_instances', {});
-        if (liveSnapshot && Array.isArray(liveSnapshot.instances)) {
-          console.log(`Hydro-Step 3: Synced ${liveSnapshot.instances.length} live instances`);
-          liveSnapshot.instances.forEach((inst: RuntimeInstance) => {
-            dispatch({ type: 'UPDATE_INSTANCE', instance: inst });
-          });
-        }
 
       } catch (err: any) {
         dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
