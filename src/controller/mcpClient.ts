@@ -110,8 +110,15 @@ export class McpClient {
 
           if (this.shouldReconnect) {
             setTimeout(() => {
+              // Re-check reconnect flag in case it was disabled after the timeout was scheduled
+              if (!this.shouldReconnect) {
+                return;
+              }
               this.connect().catch(err => {
-                this.onErrorCallback?.(err);
+                // Only surface errors if reconnect is still enabled (avoid spurious errors on intentional close)
+                if (this.shouldReconnect) {
+                  this.onErrorCallback?.(err);
+                }
               });
             }, 3000);
           }
