@@ -112,7 +112,19 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       mcpClient.onError((err) => {
-        dispatch({ type: 'SET_ERROR', error: `Control Plane Error: ${err.message || err}` });
+        let message: string;
+        if (err && typeof err === 'object' && 'message' in err && (err as any).message) {
+          message = String((err as any).message);
+        } else if (typeof err === 'string') {
+          message = err;
+        } else {
+          try {
+            message = JSON.stringify(err);
+          } catch {
+            message = String(err);
+          }
+        }
+        dispatch({ type: 'SET_ERROR', error: `Control Plane Error: ${message}` });
       });
 
       mcpClient.onNotification((method, params: any) => {
