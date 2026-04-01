@@ -34,6 +34,16 @@ export class McpClient {
     const allProtocols = this.protocolProvider();
 
     const promise = new Promise<void>((resolve, reject) => {
+      // Track whether the promise has already settled to prevent double-settling
+      // and to let onclose know whether to reject (connection closed before open).
+      let settled = false;
+      const settle = (fn: () => void) => {
+        if (!settled) {
+          settled = true;
+          fn();
+        }
+      };
+
       try {
         // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
         const socket = allProtocols.length > 0
@@ -52,9 +62,9 @@ export class McpClient {
             await this.rawRequest('notifications/initialized', {});
 
             this.onOpenCallback?.();
-            resolve();
+            settle(resolve);
           } catch (err) {
-            reject(err);
+            settle(() => reject(err));
           }
         };
 
@@ -98,10 +108,14 @@ export class McpClient {
 
         socket.onerror = (err) => {
           this.onErrorCallback?.(err);
-          reject(err);
+          settle(() => reject(err));
         };
 
         socket.onclose = () => {
+          // If the connection closed before the handshake completed, reject the promise
+          // so that any awaiting connect() calls don't hang indefinitely.
+          settle(() => reject(new Error('Connection closed before open')));
+
           this.socket = null;
           this.connectionPromise = null;
           this.pendingRequests.forEach(p => p.reject(new Error('Connection closed')));
@@ -127,7 +141,7 @@ export class McpClient {
         // WebSocket constructor threw synchronously (e.g. invalid subprotocol).
         // No socket events will fire, so we must clear state here to allow retries.
         this.socket = null;
-        reject(err);
+        settle(() => reject(err));
       }
     });
 
