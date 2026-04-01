@@ -128,22 +128,32 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
                 ? (params as any).instance
                 : params;
 
-            if (!rawPayload || typeof rawPayload !== 'object' || !rawPayload.runtimeInstanceId) {
+            const runtimeInstanceId =
+              rawPayload && typeof rawPayload === 'object'
+                ? (rawPayload as any).runtimeInstanceId || (rawPayload as any).runtime_instance_id
+                : undefined;
+
+            if (!rawPayload || typeof rawPayload !== 'object' || !runtimeInstanceId) {
               console.warn('Ignoring invalid instance notification:', { method, params });
               break;
             }
 
             // Copilot: Normalize and validate with fallbacks to prevent crashes
-            const normalized: RuntimeInstance = {
+            const baseInstance = {
               ...rawPayload,
+              runtimeInstanceId
+            } as RuntimeInstance;
+
+            const normalized: RuntimeInstance = {
+              ...baseInstance,
               connected: true, // If we get a connected or updated notification, it's live
               metadata: {
-                address: rawPayload.metadata?.address || 'unknown',
-                port: rawPayload.metadata?.port || 0,
-                protocol: rawPayload.metadata?.protocol || 'http',
-                environment: rawPayload.metadata?.environment || rawPayload.envTag || '',
-                version: rawPayload.metadata?.version || '0.1.0',
-                tags: rawPayload.metadata?.tags || {}
+                address: (rawPayload as any).metadata?.address || 'unknown',
+                port: (rawPayload as any).metadata?.port || 0,
+                protocol: (rawPayload as any).metadata?.protocol || 'http',
+                environment: (rawPayload as any).metadata?.environment || (rawPayload as any).envTag || '',
+                version: (rawPayload as any).metadata?.version || '0.1.0',
+                tags: (rawPayload as any).metadata?.tags || {}
               }
             };
 
