@@ -95,14 +95,13 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
     // The csrf token is passed via Sec-WebSocket-Protocol header for BFF validation.
     const cookies = new Cookies();
-    const csrfToken = cookies.get('csrf');
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const mcpUrlObject = new URL('/ctrl/mcp', window.location.href);
     mcpUrlObject.protocol = protocol;
     const mcpUrl = mcpUrlObject.toString();
     const mcpClient = new McpClient(mcpUrl, () => {
-      const token = new Cookies().get('csrf');
+      const token = cookies.get('csrf');
       return token ? [`csrf.${token}`] : [];
     });
     mcpClientRef.current = mcpClient;
