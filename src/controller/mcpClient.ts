@@ -133,13 +133,23 @@ export class McpClient {
 
     this.connectionPromise = promise;
 
-    // If the promise was rejected (e.g. synchronous WebSocket construction failure),
-    // clear connectionPromise so callers can retry with a fresh connection.
+    // If the promise was rejected (e.g. synchronous WebSocket construction failure
+    // or an initialization/handshake error), clear connectionPromise so callers can
+    // retry with a fresh connection and ensure any partially-open socket is closed.
     promise.catch(() => {
-      // Only clear if this is still the active connection attempt and no socket exists.
-      // For async failures after a WebSocket has been created, state is reset in onclose.
-      if (this.connectionPromise === promise && this.socket === null) {
+      // Only clear if this is still the active connection attempt.
+      if (this.connectionPromise === promise) {
         this.connectionPromise = null;
+        // If a socket object exists for this failed attempt, close and discard it
+        // so that subsequent connect() calls start from a clean state.
+        if (this.socket) {
+          try {
+            this.socket.close();
+          } catch {
+            // Ignore errors while closing a failed socket.
+          }
+          this.socket = null;
+        }
       }
     });
 
