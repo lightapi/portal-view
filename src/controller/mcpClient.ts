@@ -62,7 +62,7 @@ export class McpClient {
             await this.rawRequest('notifications/initialized', {});
 
             this.onOpenCallback?.();
-            settle(resolve);
+            settle(() => resolve());
           } catch (err) {
             settle(() => reject(err));
           }
