@@ -47,7 +47,7 @@ type ServiceGroup = {
   envTag: string;
   nodeCount: number;
   nodes: RuntimeInstanceRow[];
-  active: boolean;
+  status: 'All Live' | 'Partial Live' | 'None Live';
 };
 
 function CtrlPaneDashboard() {
@@ -57,9 +57,7 @@ function CtrlPaneDashboard() {
 
   // Table state management
   const [expanded, setExpanded] = React.useState<MRT_ExpandedState>({});
-  const [columnFilters, setColumnFilters] = React.useState<MRT_ColumnFiltersState>([
-    { id: 'active', value: 'true' }, // Match SchemaAdmin's default active-only view
-  ]);
+  const [columnFilters, setColumnFilters] = React.useState<MRT_ColumnFiltersState>([]);
 
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
@@ -72,11 +70,10 @@ function CtrlPaneDashboard() {
           envTag: instance.envTag || '',
           nodeCount: 0,
           nodes: [],
-          active: false,
+          status: 'None Live',
         };
       }
       groups[key].nodeCount += 1;
-      groups[key].active = groups[key].active || instance.active;
       groups[key].nodes.push({
         runtimeInstanceId: instance.runtimeInstanceId,
         serviceId: instance.serviceId,
@@ -89,7 +86,20 @@ function CtrlPaneDashboard() {
         active: instance.active,
       });
     });
-    return Object.values(groups);
+
+    const result = Object.values(groups).map(group => {
+      const healthyCount = group.nodes.filter(n => n.connected && n.active).length;
+      if (healthyCount === group.nodeCount && group.nodeCount > 0) {
+        group.status = 'All Live';
+      } else if (healthyCount === 0) {
+        group.status = 'None Live';
+      } else {
+        group.status = 'Partial Live';
+      }
+      return group;
+    });
+
+    return result;
   }, [instances]);
 
   // Main table column definitions
@@ -98,26 +108,22 @@ function CtrlPaneDashboard() {
       { accessorKey: 'serviceId', header: 'Service Id', enableColumnFilter: true },
       { accessorKey: 'envTag', header: 'Environment Tag', enableColumnFilter: true },
       { 
-        accessorKey: 'active', 
-        header: 'Active', 
+        accessorKey: 'status', 
+        header: 'Status', 
         filterVariant: 'select',
-        filterSelectOptions: [
-          { label: 'True', value: 'true' },
-          { label: 'False', value: 'false' },
-        ],
-        // Custom filter function for boolean to string matching (client-side)
-        filterFn: (row, id, filterValue) => {
-          const rowValue = !!row.getValue<boolean>(id);
-          return String(rowValue) === filterValue;
-        },
-        Cell: ({ cell }) => (
-          <Chip 
-            label={cell.getValue<boolean>() ? "True" : "False"} 
-            size="small" 
-            color={cell.getValue<boolean>() ? "primary" : "default"} 
-            variant="outlined" 
-          />
-        )
+        filterSelectOptions: ['All Live', 'Partial Live', 'None Live'],
+        Cell: ({ cell }) => {
+          const status = cell.getValue<string>();
+          const color = status === 'All Live' ? 'success' : status === 'Partial Live' ? 'warning' : 'error';
+          return (
+            <Chip 
+              label={status} 
+              size="small" 
+              color={color}
+              variant="outlined" 
+            />
+          );
+        }
       },
       { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' }, enableColumnFilter: false },
     ],
@@ -225,7 +231,6 @@ function CtrlPaneDashboard() {
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Port</TableCell>
                 <TableCell align="center">Active</TableCell>
-                <TableCell align="center">Status</TableCell>
                 <TableCell align="right">Check</TableCell>
                 <TableCell align="right">Info</TableCell>
                 <TableCell align="right">Logger</TableCell>
@@ -240,20 +245,11 @@ function CtrlPaneDashboard() {
                   <TableCell align="right">{node.portNumber}</TableCell>
                   <TableCell align="center">
                     <Chip 
-                      label={node.active ? "Active" : "Inactive"} 
+                      label={node.connected ? "Active" : "Inactive"} 
                       size="small" 
+                      color={node.connected ? "success" : "error"}
                       variant="outlined" 
                     />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Tooltip title={node.connected ? "Node is online" : "Node is offline"}>
-                      <Chip 
-                        label={node.instanceStatus} 
-                        size="small" 
-                        color={node.connected ? "success" : "default"} 
-                        variant={node.connected ? "filled" : "outlined"}
-                      />
-                    </Tooltip>
                   </TableCell>
                   <TableCell align="right">
                     <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!node.connected}>
