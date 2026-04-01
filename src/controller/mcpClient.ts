@@ -27,9 +27,6 @@ export class McpClient {
 
   public async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
-    if (!this.shouldReconnect) {
-      return Promise.reject(new Error('Reconnect disabled'));
-    }
 
     const allProtocols = this.protocolProvider();
 
