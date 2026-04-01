@@ -31,7 +31,7 @@ export class McpClient {
 
     const allProtocols = this.protocolProvider();
 
-    this.connectionPromise = new Promise<void>((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
       try {
         // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
         const socket = allProtocols.length > 0
@@ -111,11 +111,24 @@ export class McpClient {
           }
         };
       } catch (err) {
+        // WebSocket constructor threw synchronously (e.g. invalid subprotocol).
+        // No socket events will fire, so we must clear state here to allow retries.
+        this.socket = null;
         reject(err);
       }
     });
 
-    return this.connectionPromise;
+    this.connectionPromise = promise;
+
+    // If the promise was rejected (e.g. synchronous WebSocket construction failure),
+    // clear connectionPromise so callers can retry with a fresh connection.
+    promise.catch(() => {
+      if (this.connectionPromise === promise) {
+        this.connectionPromise = null;
+      }
+    });
+
+    return promise;
   }
 
   public async listTools(): Promise<McpTool[]> {
