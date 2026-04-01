@@ -43,6 +43,8 @@ export class McpClient {
           fn();
         }
       };
+      // Track whether onopen has fired so onclose can use an accurate error message.
+      let opened = false;
 
       try {
         // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
@@ -52,6 +54,7 @@ export class McpClient {
         this.socket = socket;
 
         socket.onopen = async () => {
+          opened = true;
           try {
             // Internal handshake - bypass the public request() to avoid deadlock
             await this.rawRequest('initialize', {
@@ -114,7 +117,11 @@ export class McpClient {
         socket.onclose = () => {
           // If the connection closed before the handshake completed, reject the promise
           // so that any awaiting connect() calls don't hang indefinitely.
-          settle(() => reject(new Error('Connection closed before open')));
+          // Use a more descriptive message based on whether onopen has already fired.
+          const closeMsg = opened
+            ? 'Connection closed during initialization'
+            : 'Connection closed before open';
+          settle(() => reject(new Error(closeMsg)));
 
           this.socket = null;
           this.connectionPromise = null;
