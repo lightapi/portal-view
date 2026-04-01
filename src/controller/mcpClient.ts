@@ -9,8 +9,16 @@ export class McpClient {
   private onCloseCallback?: () => void;
   private onErrorCallback?: (err: any) => void;
   private onNotificationCallback?: (method: string, params: any) => void;
+  private protocolProvider: () => string[];
 
-  constructor(private url: string, private protocols: string[] = []) { }
+  constructor(private url: string, protocolsOrProvider?: string[] | (() => string[])) {
+    if (typeof protocolsOrProvider === 'function') {
+      this.protocolProvider = protocolsOrProvider;
+    } else {
+      const p = protocolsOrProvider || [];
+      this.protocolProvider = () => p;
+    }
+  }
 
   public onOpen(cb: () => void) { this.onOpenCallback = cb; }
   public onClose(cb: () => void) { this.onCloseCallback = cb; }
@@ -21,11 +29,13 @@ export class McpClient {
     if (this.connectionPromise) return this.connectionPromise;
     this.shouldReconnect = true;
 
+    const allProtocols = this.protocolProvider();
+
     this.connectionPromise = new Promise<void>((resolve, reject) => {
       try {
         // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
-        const socket = this.protocols.length > 0
-          ? new WebSocket(this.url, this.protocols)
+        const socket = allProtocols.length > 0
+          ? new WebSocket(this.url, allProtocols)
           : new WebSocket(this.url);
         this.socket = socket;
 
