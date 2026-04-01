@@ -10,7 +10,7 @@ export class McpClient {
   private onErrorCallback?: (err: any) => void;
   private onNotificationCallback?: (method: string, params: any) => void;
 
-  constructor(private url: string) {}
+  constructor(private url: string, private protocols: string[] = []) { }
 
   public onOpen(cb: () => void) { this.onOpenCallback = cb; }
   public onClose(cb: () => void) { this.onCloseCallback = cb; }
@@ -23,19 +23,22 @@ export class McpClient {
 
     this.connectionPromise = new Promise<void>((resolve, reject) => {
       try {
-        const socket = new WebSocket(this.url);
+        // Pass sub-protocols (e.g. csrf token) via Sec-WebSocket-Protocol header
+        const socket = this.protocols.length > 0
+          ? new WebSocket(this.url, this.protocols)
+          : new WebSocket(this.url);
         this.socket = socket;
 
         socket.onopen = async () => {
           try {
             // Internal handshake - bypass the public request() to avoid deadlock
             await this.rawRequest('initialize', {
-              protocolVersion: '2026-03-26',
+              protocolVersion: '2025-11-25',
               capabilities: {},
               clientInfo: { name: 'portal-view', version: '0.1.0' }
             });
             await this.rawRequest('notifications/initialized', {});
-            
+
             this.onOpenCallback?.();
             resolve();
           } catch (err) {
@@ -46,7 +49,7 @@ export class McpClient {
         socket.onmessage = (event) => {
           try {
             const data: JsonRpcMessage = JSON.parse(event.data);
-            
+
             if ('id' in data && data.id !== undefined) {
               if (data.id === null) {
                 const protocolError = new Error('Protocol error: Received JSON-RPC message with null id');
@@ -112,7 +115,7 @@ export class McpClient {
 
   public async callTool(name: string, args: any): Promise<any> {
     const response = await this.request('tools/call', { name, arguments: args });
-    
+
     // MCP unwrap: if the response has a content array, try to find the JSON part
     if (response && Array.isArray(response.content)) {
       const jsonContent = response.content.find((c: any) => c.type === 'json');

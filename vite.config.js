@@ -92,6 +92,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        "/ctrl/mcp": {
+          target: env.VITE_PORTAL_URL,
+          ws: true,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     build: {
