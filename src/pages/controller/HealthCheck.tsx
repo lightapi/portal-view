@@ -9,7 +9,7 @@ export default function HealthCheck() {
   const { callTool } = useController();
 
   const [check, setCheck] = useState<any>();
-  const [error, setError] = useState<any>();
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function HealthCheck() {
         const result = await callTool('check', { runtimeInstanceId });
         setCheck(result);
       } catch (err: any) {
-        setError(err);
+        setError(err?.message ?? JSON.stringify(err));
       } finally {
         setLoading(false);
       }
