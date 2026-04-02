@@ -38,6 +38,7 @@ type LoggerEntry = {
 
 type HistoryRow = {
   logger: string;
+  timestampMs: number;
   timestamp: string;
   level: string;
   message: string;
@@ -101,6 +102,20 @@ function formatTimestamp(value: any) {
   return '';
 }
 
+function normalizeTimestampMs(value: any) {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+  if (typeof value === 'string' && value) {
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
 function flattenHistoryContent(content: Record<string, any> | undefined): HistoryRow[] {
   if (!content || typeof content !== 'object') {
     return [];
@@ -110,22 +125,22 @@ function flattenHistoryContent(content: Record<string, any> | undefined): Histor
   Object.entries(content).forEach(([loggerName, group]) => {
     const logs = Array.isArray(group?.logs) ? group.logs : [];
     logs.forEach((log: any) => {
+      const timestampMs = normalizeTimestampMs(log?.timestamp);
       rows.push({
+        ...log,
         logger: loggerName,
+        timestampMs,
         timestamp: formatTimestamp(log?.timestamp),
         level: log?.level ?? '',
         message: log?.message ?? log?.logMessage ?? '',
         thread: log?.thread ?? '',
         exception: log?.exception ?? '',
-        ...log,
       });
     });
   });
 
   rows.sort((left, right) => {
-    const leftTime = new Date(left.timestamp).getTime();
-    const rightTime = new Date(right.timestamp).getTime();
-    return rightTime - leftTime;
+    return right.timestampMs - left.timestampMs;
   });
 
   return rows;
