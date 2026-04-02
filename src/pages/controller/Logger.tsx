@@ -6,6 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
@@ -72,9 +73,12 @@ export default function Logger() {
     return (
       <Box sx={{ p: 3 }}>
         <Typography color="error">No runtime instance ID found. Please navigate from the Control Pane.</Typography>
-        <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
-          <pre>{JSON.stringify(location.state, null, 2)}</pre>
-        </Paper>
+        {import.meta.env.DEV && (
+          <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+            <pre>{JSON.stringify(location.state, null, 2)}</pre>
+          </Paper>
+        )}
+        <Button sx={{ mt: 2 }} variant="outlined" onClick={() => navigate(-1)}>Go Back</Button>
       </Box>
     );
   }
