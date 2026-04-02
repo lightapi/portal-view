@@ -59,7 +59,9 @@ export class McpClient {
               capabilities: {},
               clientInfo: { name: 'portal-view', version: '0.1.0' }
             });
-            await this.rawRequest('notifications/initialized', {});
+            // notifications/initialized is a notification, not a request.
+            // Using rawRequest would wait for a response that never comes, causing a hang.
+            this.sendNotification('notifications/initialized', {});
 
             this.onOpenCallback?.();
             settle(() => resolve());
@@ -72,21 +74,7 @@ export class McpClient {
           try {
             const data: JsonRpcMessage = JSON.parse(event.data);
 
-            if ('id' in data && data.id !== undefined) {
-              if (data.id === null) {
-                const protocolError = new Error('Protocol error: Received JSON-RPC message with null id');
-                console.warn('Received JSON-RPC message with null id:', data);
-                // Reject all pending requests to avoid hanging promises and leaking memory
-                this.pendingRequests.forEach(p => p.reject(protocolError));
-                this.pendingRequests.clear();
-                // Notify error handler, if any
-                this.onErrorCallback?.(protocolError);
-                // Close the socket to fail the connection and allow reconnect logic to run
-                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                  this.socket.close();
-                }
-                return;
-              }
+            if ('id' in data && data.id !== undefined && data.id !== null) {
               // This is a JsonRpcResponse
               const pending = this.pendingRequests.get(data.id);
               if (pending) {
@@ -218,6 +206,20 @@ export class McpClient {
       this.pendingRequests.set(id, { resolve, reject });
       this.socket?.send(JSON.stringify(request));
     });
+  }
+
+  public sendNotification(method: string, params: any) {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      console.warn('Cannot send notification: WebSocket is not open');
+      return;
+    }
+
+    const notification = {
+      jsonrpc: '2.0',
+      method,
+      params
+    };
+    this.socket.send(JSON.stringify(notification));
   }
 
   public close() {

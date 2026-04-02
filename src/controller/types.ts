@@ -18,6 +18,7 @@ export interface RuntimeInstance {
   connectedAt: string;
   lastSeenAt: string;
   connected: boolean;
+  active: boolean;
 }
 
 /** DB-style shape from REST (getRuntimeInstance) */

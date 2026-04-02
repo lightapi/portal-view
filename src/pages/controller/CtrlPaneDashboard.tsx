@@ -6,6 +6,8 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
+  type MRT_ExpandedState,
+  type MRT_ColumnFiltersState,
 } from 'material-react-table';
 import {
   Box,
@@ -19,7 +21,6 @@ import {
   TableRow,
   Typography,
   Chip,
-  Tooltip,
 } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useAppState } from '../../contexts/AppContext';
@@ -34,8 +35,7 @@ type RuntimeInstanceRow = {
   protocol: string;
   ipAddress: string;
   portNumber: number;
-  instanceStatus: string;
-  connected: boolean;
+  active: boolean;
 };
 
 // Define the grouped shape for the main table
@@ -44,6 +44,7 @@ type ServiceGroup = {
   envTag: string;
   nodeCount: number;
   nodes: RuntimeInstanceRow[];
+  status: 'All Live' | 'Partial Live' | 'None Live';
 };
 
 function CtrlPaneDashboard() {
@@ -51,8 +52,15 @@ function CtrlPaneDashboard() {
   const { filter } = useAppState() as { filter: string };
   const { instances, isLiveConnected, error } = useController();
 
+  // Table state management
+  const [expanded, setExpanded] = React.useState<MRT_ExpandedState>({});
+  const [columnFilters, setColumnFilters] = React.useState<MRT_ColumnFiltersState>([]);
+
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
+    if (import.meta.env.DEV) {
+      console.debug('CtrlPaneDashboard: processing instances', instances);
+    }
     const groups: { [key: string]: ServiceGroup } = {};
     Object.values(instances).forEach((instance) => {
       const key = `${instance.serviceId}|${instance.envTag || ''}`;
@@ -62,6 +70,7 @@ function CtrlPaneDashboard() {
           envTag: instance.envTag || '',
           nodeCount: 0,
           nodes: [],
+          status: 'None Live',
         };
       }
       groups[key].nodeCount += 1;
@@ -72,35 +81,55 @@ function CtrlPaneDashboard() {
         protocol: instance.metadata.protocol,
         ipAddress: instance.metadata.address,
         portNumber: instance.metadata.port,
-        instanceStatus: instance.connected ? 'Connected' : 'Disconnected',
-        connected: instance.connected,
+        active: instance.active,
       });
     });
-    return Object.values(groups);
-  }, [instances]);
 
-  // Derived filtered data based on App header filter
-  const filteredData = useMemo(() => {
-    if (!filter) return groupedData;
-    return groupedData.filter(group => 
-      group.serviceId.toLowerCase().includes(filter.toLowerCase()) ||
-      group.envTag.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [groupedData, filter]);
+    const result = Object.values(groups).map(group => {
+      const healthyCount = group.nodes.filter(n => n.active).length;
+      if (healthyCount === group.nodeCount && group.nodeCount > 0) {
+        group.status = 'All Live';
+      } else if (healthyCount === 0) {
+        group.status = 'None Live';
+      } else {
+        group.status = 'Partial Live';
+      }
+      return group;
+    });
+
+    return result;
+  }, [instances]);
 
   // Main table column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceGroup>[]>(
     () => [
-      { accessorKey: 'serviceId', header: 'Service Id' },
-      { accessorKey: 'envTag', header: 'Environment Tag' },
-      { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' } },
+      { accessorKey: 'serviceId', header: 'Service Id', enableColumnFilter: true },
+      { accessorKey: 'envTag', header: 'Environment Tag', enableColumnFilter: true },
+      { 
+        accessorKey: 'status', 
+        header: 'Status', 
+        filterVariant: 'select',
+        filterSelectOptions: ['All Live', 'Partial Live', 'None Live'],
+        Cell: ({ cell }) => {
+          const status = cell.getValue<string>();
+          const color = status === 'All Live' ? 'success' : status === 'Partial Live' ? 'warning' : 'error';
+          return (
+            <Chip 
+              label={status} 
+              size="small" 
+              color={color}
+              variant="outlined" 
+            />
+          );
+        }
+      },
+      { accessorKey: 'nodeCount', header: 'Number of Nodes', muiTableBodyCellProps: { align: 'right' }, muiTableHeadCellProps: { align: 'right' }, enableColumnFilter: false },
     ],
     []
   );
 
   const handleCheck = (node: RuntimeInstanceRow) => {
-    const k = `${node.serviceId}|${node.envTag || ''}:${node.protocol}:${node.ipAddress}:${node.portNumber}`;
-    navigate('/app/controller/check', { state: { data: { id: k, runtimeInstanceId: node.runtimeInstanceId } } });
+    navigate('/app/controller/check', { state: { data: { runtimeInstanceId: node.runtimeInstanceId } } });
   };
  
   const handleLogger = (node: RuntimeInstanceRow) => {
@@ -158,15 +187,23 @@ function CtrlPaneDashboard() {
  
   const table = useMaterialReactTable({
     columns,
-    data: filteredData,
+    data: groupedData,
     getRowId: (row) => `${row.serviceId}|${row.envTag}`,
     enableExpandAll: false,
     enableExpanding: true,
-    initialState: { density: 'compact' },
+    getRowCanExpand: () => true,
+    positionExpandColumn: 'first',
+    enableColumnFilters: true,
+    initialState: { showColumnFilters: true, density: 'compact' },
     state: { 
       isLoading: Object.keys(instances).length === 0 && !isLiveConnected && !error, 
-      showAlertBanner: !!error 
+      showAlertBanner: !!error,
+      globalFilter: filter,
+      expanded,
+      columnFilters
     },
+    onExpandedChange: setExpanded,
+    onColumnFiltersChange: setColumnFilters,
     muiToolbarAlertBannerProps: error
       ? { color: 'error', children: error }
       : undefined,
@@ -190,11 +227,11 @@ function CtrlPaneDashboard() {
                 <TableCell>Protocol</TableCell>
                 <TableCell>Address</TableCell>
                 <TableCell align="right">Port</TableCell>
-                <TableCell align="center">Status</TableCell>
-                <TableCell align="right">Status Check</TableCell>
-                <TableCell align="right">Server Info</TableCell>
-                <TableCell align="right">Logger Config</TableCell>
-                <TableCell align="right">Chaos Monkey</TableCell>
+                <TableCell align="center">Active</TableCell>
+                <TableCell align="right">Check</TableCell>
+                <TableCell align="right">Info</TableCell>
+                <TableCell align="right">Logger</TableCell>
+                <TableCell align="right">Chaos</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -204,32 +241,30 @@ function CtrlPaneDashboard() {
                   <TableCell>{node.ipAddress}</TableCell>
                   <TableCell align="right">{node.portNumber}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title={node.connected ? "Node is online" : "Node is offline"}>
-                      <Chip 
-                        label={node.instanceStatus} 
-                        size="small" 
-                        color={node.connected ? "success" : "default"} 
-                        variant={node.connected ? "filled" : "outlined"}
-                      />
-                    </Tooltip>
+                    <Chip 
+                      label={node.active ? "Active" : "Inactive"} 
+                      size="small" 
+                      color={node.active ? "success" : "error"}
+                      variant="outlined" 
+                    />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!node.active}>
                       <CloudDoneIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Server info" onClick={() => handleInfo(node)} disabled={!node.active}>
                       <HelpIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Logger config" onClick={() => handleLogger(node)} disabled={!node.active}>
                       <PermDataSettingIcon />
                     </IconButton>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!node.connected}>
+                    <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!node.active}>
                       <AssessmentIcon />
                     </IconButton>
                   </TableCell>

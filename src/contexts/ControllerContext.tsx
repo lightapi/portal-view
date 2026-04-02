@@ -9,9 +9,10 @@ const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstance => ({
   runtimeInstanceId: db.runtimeInstanceId,
   serviceId: db.serviceId,
   envTag: db.envTag,
-  connected: false, // Baseline from DB is disconnected unless controller says otherwise
+  connected: false, // DB baseline is not yet live; flipped to true on live notifications
   connectedAt: db.updateTs || '',
   lastSeenAt: db.updateTs || '',
+  active: db.active,
   metadata: {
     address: db.ipAddress,
     port: db.portNumber,
@@ -64,7 +65,7 @@ function controllerReducer(state: ControllerState, action: ControllerAction): Co
         ...state,
         instances: {
           ...state.instances,
-          [action.runtimeInstanceId]: { ...existing, connected: false },
+          [action.runtimeInstanceId]: { ...existing, connected: false, active: false },
         },
       };
     case 'SET_LIVE_STATUS':
@@ -106,18 +107,24 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     });
     mcpClientRef.current = mcpClient;
 
+    let ignore = false;
+
     const init = async () => {
       mcpClient.onOpen(() => {
+        if (ignore) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: true });
         console.log('Unified Control Plane connected (/ctrl/mcp)');
       });
 
       mcpClient.onClose(() => {
+        if (ignore) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: false });
         console.log('Unified Control Plane disconnected');
       });
 
+      // Register MCP client error handler
       mcpClient.onError((err) => {
+        if (ignore) return;
         let message: string;
         if (err && typeof err === 'object' && 'message' in err && (err as any).message) {
           message = String((err as any).message);
@@ -134,6 +141,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       mcpClient.onNotification((method, params: any) => {
+        if (ignore) return;
         if (import.meta.env.DEV) {
           console.debug('MCP Notification:', { method, params });
         }
@@ -165,6 +173,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
             const normalized: RuntimeInstance = {
               ...baseInstance,
               connected: true, // If we get a connected or updated notification, it's live
+              active: true,    // Live connection implies active
               metadata: {
                 address: (rawPayload as any).metadata?.address || 'unknown',
                 port: (rawPayload as any).metadata?.port || 0,
@@ -179,9 +188,14 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
             break;
           }
           case 'notifications/instance_disconnected': {
+            const rawPayload =
+              params && typeof params === 'object' && 'instance' in params
+                ? (params as any).instance
+                : params;
+
             const runtimeInstanceId =
-              params && typeof params === 'object'
-                ? params.runtimeInstanceId || (params as any).runtime_instance_id
+              rawPayload && typeof rawPayload === 'object'
+                ? (rawPayload as any).runtimeInstanceId || (rawPayload as any).runtime_instance_id
                 : undefined;
 
             if (!runtimeInstanceId) {
@@ -216,6 +230,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         const dbResponse = await fetchClient(url) as RuntimeInstanceApiResponse;
+        if (ignore) return;
         const dbInstances = dbResponse.runtimeInstances || [];
 
         console.log(`Hydro-Step 1: Loaded ${dbInstances.length} instances from DB baseline`);
@@ -225,17 +240,8 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         console.log('Hydro-Step 2: Connecting to Unified Control Plane...');
         await mcpClient.connect();
 
-        // 3. Live Hydration: Fetch live snapshot to overlay connectivity onto DB baseline
-        console.log('Hydro-Step 3: Fetching live instances from Control Plane...');
-        const liveSnapshot = await mcpClient.callTool('list_instances', {});
-        if (liveSnapshot && Array.isArray(liveSnapshot.instances)) {
-          console.log(`Hydro-Step 3: Synced ${liveSnapshot.instances.length} live instances`);
-          liveSnapshot.instances.forEach((inst: RuntimeInstance) => {
-            dispatch({ type: 'UPDATE_INSTANCE', instance: inst });
-          });
-        }
-
       } catch (err: any) {
+        if (ignore) return;
         dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
         console.error('Hydration Error:', err);
       }
@@ -244,6 +250,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     init();
 
     return () => {
+      ignore = true;
       mcpClient.close();
       dispatch({ type: 'SET_LIVE_STATUS', connected: false });
     };

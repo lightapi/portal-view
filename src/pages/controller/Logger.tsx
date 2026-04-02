@@ -5,39 +5,45 @@ import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
-import fetchClient from '../../utils/fetchClient';
-import { useApiPost } from '../../hooks/useApiPost';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useController } from '../../contexts/ControllerContext';
 
+export default function Logger() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { node } = (location.state as any)?.data || {};
+  const runtimeInstanceId = node?.runtimeInstanceId;
+  const { callTool } = useController();
 
-
-export default function Logger(props) {
-  console.log("props = ", props);
-  console.log("node = ", props.location.state.data.node);
-  const node = props.location.state.data.node;
   const [start, setStart] = useState(0);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
   const firstRender = useRef(true);
 
-  const logRetrieval = async (url) => {
+  const logRetrieval = async () => {
+    if (!runtimeInstanceId) return;
+    setLoading(true);
+    setError(null);
     try {
       let startMilli = Date.now() - 1000 * (60 * start);
-      const data = await fetchClient(url, {
-        method: 'POST',
-        body: JSON.stringify({
-          ...node,
-          startTime: startMilli.toString(),
-          loggerLevel: 'DEBUG'
-        })
+      const data = await callTool('get_log_content', {
+        runtimeInstanceId,
+        startTime: startMilli.toString(),
+        loggerLevel: 'DEBUG'
       });
-      setData(data);
-    } catch (e) {
-      console.log(e);
-      setError(e.description || e.message || e);
-      setData(null);
+      navigate('/app/controller/logContent', { state: { data } });
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message ?? JSON.stringify(e));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,89 +52,95 @@ export default function Logger(props) {
       firstRender.current = false;
       return;
     }
-    const url = '/services/logger/content';
-    console.log('logRetrieval is called.');
-    logRetrieval(url);
+    if (start > 0) {
+      logRetrieval();
+    }
   }, [start]);
 
-  useEffect(() => {
-    if (data) {
-      props.history.push({ pathname: '/app/controller/logContent', state: { data } });
-    }
-  }, [data]);
-
-  const handle5Minutes = () => {
-    console.log("handle5Minutes is called");
-    setStart(5);
-  }
-
-  const handle10Minutes = () => {
-    console.log("handle10Minutes is called");
-    setStart(10);
-  }
-
-  const handle30Minutes = () => {
-    console.log("handle30Minutes is called");
-    setStart(30);
-  }
-
-  const handle60Minutes = () => {
-    console.log("handle60Minutes is called");
-    setStart(60);
-  }
+  const handleLevel = (minutes: number) => {
+    setStart(minutes);
+  };
 
   const handleLoggerConfig = () => {
-    console.log("handleLoggerConfig is called");
-    props.history.push({ pathname: '/app/controller/loggerConfig', state: { data: props.location.state.data } });
-  }
+    navigate('/app/controller/loggerConfig', { state: location.state });
+  };
 
   const handleLogRetrieval = () => {
-    console.log("handleLogRetrieval is called");
-    props.history.push({ pathname: '/app/form/logRetrieval', state: { data: { ...node } } });
+    navigate('/app/form/logRetrieval', { state: { data: { ...node } } });
+  };
+
+  if (!runtimeInstanceId) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">No runtime instance ID found. Please navigate from the Control Pane.</Typography>
+        {import.meta.env.DEV && (
+          <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+            <pre>{JSON.stringify(location.state, null, 2)}</pre>
+          </Paper>
+        )}
+        <Button sx={{ mt: 2 }} variant="outlined" onClick={() => navigate(-1)}>Go Back</Button>
+      </Box>
+    );
   }
 
   return (
-    <Paper sx={{ width: 320, maxWidth: '100%' }}>
-      <MenuList>
-        <MenuItem onClick={handle5Minutes}>
-          <ListItemIcon>
-            <ShortcutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Last 5 Minutes</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handle10Minutes}>
-          <ListItemIcon>
-            <ShortcutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Last 10 Minutes</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handle30Minutes}>
-          <ListItemIcon>
-            <ShortcutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Last 30 Minutes</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handle60Minutes}>
-          <ListItemIcon>
-            <ShortcutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Last 60 Minutes</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogRetrieval}>
-          <ListItemIcon>
-            <GetAppIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Log Retrieval</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLoggerConfig}>
-          <ListItemIcon>
-            <PermDataSettingIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Logger Config</ListItemText>
-        </MenuItem>
-      </MenuList>
-    </Paper>
+    <Box sx={{ position: 'relative' }}>
+      <Paper sx={{ width: 320, maxWidth: '100%' }}>
+        <MenuList>
+          <MenuItem onClick={() => handleLevel(5)} disabled={loading}>
+            <ListItemIcon>
+              <ShortcutIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Last 5 Minutes</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleLevel(10)} disabled={loading}>
+            <ListItemIcon>
+              <ShortcutIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Last 10 Minutes</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleLevel(30)} disabled={loading}>
+            <ListItemIcon>
+              <ShortcutIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Last 30 Minutes</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleLevel(60)} disabled={loading}>
+            <ListItemIcon>
+              <ShortcutIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Last 60 Minutes</ListItemText>
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={handleLogRetrieval} disabled={loading}>
+            <ListItemIcon>
+              <GetAppIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Log Retrieval</ListItemText>
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={handleLoggerConfig} disabled={loading}>
+            <ListItemIcon>
+              <PermDataSettingIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Logger Config</ListItemText>
+          </MenuItem>
+        </MenuList>
+      </Paper>
+      {loading && (
+        <Box sx={{ 
+          position: 'absolute', 
+          top: 0, left: 0, right: 0, bottom: 0, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          bgcolor: 'rgba(255,255,255,0.7)',
+          zIndex: 1
+        }}>
+          <CircularProgress />
+        </Box>
+      )}
+      {error && (
+        <Typography color="error" sx={{ mt: 1, px: 2 }}>{error}</Typography>
+      )}
+    </Box>
   );
 }

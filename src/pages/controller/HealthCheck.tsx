@@ -1,38 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import fetchClient from '../../utils/fetchClient';
+import { useLocation } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useController } from '../../contexts/ControllerContext';
 
-export default function HealthCheck(props) {
-  console.log(props.location.state.data);
-  const id = props.location.state.data.id;
+export default function HealthCheck() {
+  const { state } = useLocation();
+  const { runtimeInstanceId } = state?.data || {};
+  const { callTool } = useController();
 
-  const [check, setCheck] = useState();
-  const [error, setError] = useState();
+  const [check, setCheck] = useState<any>();
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const url = '/services/check/' + id;
   useEffect(() => {
+    if (!runtimeInstanceId) {
+      setError('No runtime instance ID provided');
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const json = await fetchClient(url);
-        setCheck(json);
-        setLoading(false);
-      } catch (error) {
-        console.log(error);
-        setError(error);
+        const result = await callTool('check', { runtimeInstanceId });
+        setCheck(result);
+      } catch (err: any) {
+        setError(err?.message ?? JSON.stringify(err));
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+  }, [runtimeInstanceId, callTool]);
 
-    return () => {
-      abortController.abort();
-    };
-  }, []);
-
-  console.log(loading, check, error);
+  if (import.meta.env.DEV) {
+    console.log(loading, check, error);
+  }
 
   let wait;
   if (loading) {
