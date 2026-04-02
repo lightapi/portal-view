@@ -35,8 +35,6 @@ type RuntimeInstanceRow = {
   protocol: string;
   ipAddress: string;
   portNumber: number;
-  instanceStatus: string;
-  connected: boolean;
   active: boolean;
 };
 
