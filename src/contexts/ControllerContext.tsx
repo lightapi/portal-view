@@ -122,7 +122,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         console.log('Unified Control Plane disconnected');
       });
 
-      // ... existing handlers ...
+      // Register MCP client error handler
       mcpClient.onError((err) => {
         if (ignore) return;
         let message: string;
