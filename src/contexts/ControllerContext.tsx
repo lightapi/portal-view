@@ -68,6 +68,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       mcpClient.onOpen(() => {
         if (ignore) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: true });
+        dispatch({ type: 'SET_ERROR', error: null });
         console.log('Unified Control Plane connected (/ctrl/mcp)');
       });
 
@@ -110,6 +111,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       try {
+        dispatch({ type: 'SET_ERROR', error: null });
         await mcpClient.connect();
       } catch (err: any) {
         if (ignore) return;

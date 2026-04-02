@@ -94,21 +94,27 @@ const buildQueryCommand = (
   filters: MRT_ColumnFiltersState,
   globalFilter: string,
   sorting: MRT_SortingState,
-) => ({
-  host: 'lightapi.net',
-  service: 'instance',
-  action: 'getRuntimeInstance',
-  version: '0.1.0',
-  data: {
-    hostId,
-    offset: 0,
-    limit: DB_LIMIT,
-    sorting: JSON.stringify(sorting ?? []),
-    filters: JSON.stringify(filters ?? []),
-    globalFilter: globalFilter ?? '',
-    active: true,
-  },
-});
+) => {
+  const safeSorting = (sorting ?? []).filter((sort) =>
+    sort && (sort.id === 'serviceId' || sort.id === 'envTag'),
+  );
+
+  return {
+    host: 'lightapi.net',
+    service: 'instance',
+    action: 'getRuntimeInstance',
+    version: '0.1.0',
+    data: {
+      hostId,
+      offset: 0,
+      limit: DB_LIMIT,
+      sorting: JSON.stringify(safeSorting),
+      filters: JSON.stringify(filters ?? []),
+      globalFilter: globalFilter ?? '',
+      active: true,
+    },
+  };
+};
 
 function parseRuntimeInstancePayload(rawPayload: any): RuntimeInstanceView | null {
   const runtimeInstanceId =
@@ -320,6 +326,12 @@ function CtrlPaneDashboard() {
         dbMap[instance.runtimeInstanceId] = instance;
       });
       setInstances(dbMap);
+      setHasLoadedOnce(true);
+
+      if (!isLiveConnected) {
+        setHasCompletedSync(true);
+        return;
+      }
 
       const liveArgs: Record<string, string> = {};
       const serviceIdFilter = currentFilters.find((columnFilter) => columnFilter.id === 'serviceId');
@@ -331,27 +343,33 @@ function CtrlPaneDashboard() {
         liveArgs.envTag = envTagFilter.value.trim();
       }
 
-      const liveResponse = await callTool('list_instances', liveArgs);
-      if (requestVersionRef.current !== requestVersion) {
-        return;
+      try {
+        const liveResponse = await callTool('list_instances', liveArgs);
+        if (requestVersionRef.current !== requestVersion) {
+          return;
+        }
+
+        const reconciledInstances = reconcileInstances(
+          dbMap,
+          Array.isArray(liveResponse?.instances) ? liveResponse.instances : [],
+          currentFilters,
+          currentGlobalFilter,
+          matchesFilter,
+        );
+        const finalizedInstances = applyBufferedNotifications(
+          reconciledInstances,
+          currentFilters,
+          currentGlobalFilter,
+        );
+
+        setInstances(finalizedInstances);
+      } catch (liveSyncError) {
+        console.error('Failed to synchronize live runtime instances', liveSyncError);
+      } finally {
+        if (requestVersionRef.current === requestVersion) {
+          setHasCompletedSync(true);
+        }
       }
-
-      const reconciledInstances = reconcileInstances(
-        dbMap,
-        Array.isArray(liveResponse?.instances) ? liveResponse.instances : [],
-        currentFilters,
-        currentGlobalFilter,
-        matchesFilter,
-      );
-      const finalizedInstances = applyBufferedNotifications(
-        reconciledInstances,
-        currentFilters,
-        currentGlobalFilter,
-      );
-
-      setInstances(finalizedInstances);
-      setHasLoadedOnce(true);
-      setHasCompletedSync(true);
     } catch (syncError) {
       console.error('Failed to load or reconcile controller services', syncError);
       if (requestVersionRef.current === requestVersion) {
@@ -365,7 +383,7 @@ function CtrlPaneDashboard() {
         setIsRefetching(false);
       }
     }
-  }, [applyBufferedNotifications, callTool, columnFilters, globalFilter, hasLoadedOnce, host, matchesFilter, sorting]);
+  }, [applyBufferedNotifications, callTool, columnFilters, globalFilter, hasLoadedOnce, host, isLiveConnected, matchesFilter, sorting]);
 
   useEffect(() => {
     fetchBaselineAndSync();
@@ -589,7 +607,7 @@ function CtrlPaneDashboard() {
     manualFiltering: true,
     rowCount: groupedData.length,
     state: {
-      isLoading: isLoading || (!hasCompletedSync && !error),
+      isLoading: isLoading || (!hasCompletedSync && !error && isLiveConnected),
       showAlertBanner: !!error,
       showProgressBars: isRefetching,
       globalFilter,
@@ -720,9 +738,6 @@ function reconcileInstances(
       reconciledInstances[normalizedLiveInstance.runtimeInstanceId] = {
         ...existing,
         ...normalizedLiveInstance,
-        active: true,
-        connected: true,
-        liveStatus: 'active',
       };
       continue;
     }
