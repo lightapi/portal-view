@@ -81,8 +81,6 @@ function CtrlPaneDashboard() {
         protocol: instance.metadata.protocol,
         ipAddress: instance.metadata.address,
         portNumber: instance.metadata.port,
-        instanceStatus: instance.connected ? 'Connected' : 'Disconnected',
-        connected: instance.connected,
         active: instance.active,
       });
     });
