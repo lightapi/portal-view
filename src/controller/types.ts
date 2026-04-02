@@ -1,5 +1,6 @@
 export type RuntimeInstanceId = string;
 export type ServiceId = string;
+export type LiveStatus = 'unknown' | 'active' | 'inactive';
 
 export interface ServiceMetadata {
   environment: string;
@@ -19,6 +20,7 @@ export interface RuntimeInstance {
   lastSeenAt: string;
   connected: boolean;
   active: boolean;
+  liveStatus?: LiveStatus;
 }
 
 /** DB-style shape from REST (getRuntimeInstance) */
