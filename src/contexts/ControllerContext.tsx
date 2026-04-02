@@ -42,6 +42,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
   const { isAuthenticated, host } = useUserState() as { isAuthenticated: boolean, host: string };
 
   const mcpClientRef = useRef<McpClient | null>(null);
+  const activeClientIdRef = useRef(0);
   const notificationHandlersRef = useRef(new Set<ControllerNotificationHandler>());
 
   useEffect(() => {
@@ -61,26 +62,30 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       return token ? [`csrf.${token}`] : [];
     });
     mcpClientRef.current = mcpClient;
+    const clientId = activeClientIdRef.current + 1;
+    activeClientIdRef.current = clientId;
 
     let ignore = false;
+    const isCurrentClient = () =>
+      !ignore && mcpClientRef.current === mcpClient && activeClientIdRef.current === clientId;
 
     const init = async () => {
       mcpClient.onOpen(() => {
-        if (ignore) return;
+        if (!isCurrentClient()) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: true });
         dispatch({ type: 'SET_ERROR', error: null });
         console.log('Unified Control Plane connected (/ctrl/mcp)');
       });
 
       mcpClient.onClose(() => {
-        if (ignore) return;
+        if (!isCurrentClient()) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: false });
         console.log('Unified Control Plane disconnected');
       });
 
       // Register MCP client error handler
       mcpClient.onError((err) => {
-        if (ignore) return;
+        if (!isCurrentClient()) return;
         let message: string;
         if (err && typeof err === 'object' && 'message' in err && (err as any).message) {
           message = String((err as any).message);
@@ -97,7 +102,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       mcpClient.onNotification((method, params: any) => {
-        if (ignore) return;
+        if (!isCurrentClient()) return;
         if (import.meta.env.DEV) {
           console.debug('MCP Notification:', { method, params });
         }
@@ -114,7 +119,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         dispatch({ type: 'SET_ERROR', error: null });
         await mcpClient.connect();
       } catch (err: any) {
-        if (ignore) return;
+        if (!isCurrentClient()) return;
         dispatch({ type: 'SET_ERROR', error: `Control Plane initialization failed: ${err.message}` });
         console.error('Control Plane initialization failed:', err);
       }
@@ -124,6 +129,9 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
     return () => {
       ignore = true;
+      if (mcpClientRef.current === mcpClient) {
+        mcpClientRef.current = null;
+      }
       mcpClient.close();
       dispatch({ type: 'SET_LIVE_STATUS', connected: false });
     };
