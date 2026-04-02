@@ -253,28 +253,9 @@ function CtrlPaneDashboard() {
     return nextServerFilters;
   }, [serviceIdFilterValue, envTagFilterValue]);
 
-  const serviceIdSort = useMemo(
-    () => sorting.find((sort) => sort.id === 'serviceId'),
-    [sorting],
-  );
-
-  const envTagSort = useMemo(
-    () => sorting.find((sort) => sort.id === 'envTag'),
-    [sorting],
-  );
-
   const serverSorting = useMemo(() => {
-    const nextServerSorting: MRT_SortingState = [];
-
-    if (serviceIdSort) {
-      nextServerSorting.push(serviceIdSort);
-    }
-    if (envTagSort) {
-      nextServerSorting.push(envTagSort);
-    }
-
-    return nextServerSorting;
-  }, [serviceIdSort?.desc, envTagSort?.desc]);
+    return sorting.filter((sort) => sort.id === 'serviceId' || sort.id === 'envTag');
+  }, [sorting]);
 
   const matchesFilter = useCallback(
     (instance: RuntimeInstanceView, filters: MRT_ColumnFiltersState, query: string) => {
