@@ -41,7 +41,7 @@ export default function Logger() {
       navigate('/app/controller/logContent', { state: { data } });
     } catch (e: any) {
       console.error(e);
-      setError(e.message || e);
+      setError(e?.message ?? JSON.stringify(e));
     } finally {
       setLoading(false);
     }

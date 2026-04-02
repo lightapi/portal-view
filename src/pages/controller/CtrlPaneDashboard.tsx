@@ -21,7 +21,6 @@ import {
   TableRow,
   Typography,
   Chip,
-  Tooltip,
 } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useAppState } from '../../contexts/AppContext';
@@ -134,8 +133,7 @@ function CtrlPaneDashboard() {
   );
 
   const handleCheck = (node: RuntimeInstanceRow) => {
-    const k = `${node.serviceId}|${node.envTag || ''}:${node.protocol}:${node.ipAddress}:${node.portNumber}`;
-    navigate('/app/controller/check', { state: { data: { id: k, runtimeInstanceId: node.runtimeInstanceId } } });
+    navigate('/app/controller/check', { state: { data: { runtimeInstanceId: node.runtimeInstanceId } } });
   };
  
   const handleLogger = (node: RuntimeInstanceRow) => {

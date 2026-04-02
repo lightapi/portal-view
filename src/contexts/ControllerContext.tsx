@@ -9,7 +9,7 @@ const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstance => ({
   runtimeInstanceId: db.runtimeInstanceId,
   serviceId: db.serviceId,
   envTag: db.envTag,
-  connected: db.active, // Baseline from DB tracks active status
+  connected: false, // DB baseline is not yet live; flipped to true on live notifications
   connectedAt: db.updateTs || '',
   lastSeenAt: db.updateTs || '',
   active: db.active,
