@@ -61,7 +61,7 @@ export default function Logger() {
   };
 
   const handleLoggerConfig = () => {
-    navigate('/app/controller/loggerConfig', { state: { data: location.state } });
+    navigate('/app/controller/loggerConfig', { state: location.state });
   };
 
   const handleLogRetrieval = () => {
