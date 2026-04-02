@@ -84,8 +84,7 @@ import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
-import LogViewer from "./pages/controller/LogViewer";
-import LoggerConfig from "./pages/controller/LoggerConfig";
+import Logger from "./pages/controller/Logger";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import OrgAdmin from "./pages/org/OrgAdmin";
@@ -372,9 +371,9 @@ const App = () => {
           <Route path="controller/services" element={<CtrlPaneDashboard />} />
           <Route path="controller/check" element={<HealthCheck />} />
           <Route path="controller/info" element={<ServerInfo />} />
-          <Route path="controller/logger" element={<LogViewer />} />
-          <Route path="controller/logViewer" element={<LogViewer />} />
-          <Route path="controller/loggerConfig" element={<LoggerConfig />} />
+          <Route path="controller/logger" element={<Logger />} />
+          <Route path="controller/logViewer" element={<Logger />} />
+          <Route path="controller/loggerConfig" element={<Logger />} />
           <Route path="controller/logContent" element={<LogContent />} />
           <Route path="controller/chaos" element={<ChaosMonkey />} />
           <Route path="org/OrgAdmin" element={<OrgAdmin />} />
