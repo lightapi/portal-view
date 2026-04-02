@@ -61,6 +61,7 @@ function CtrlPaneDashboard() {
 
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
+    console.debug('CtrlPaneDashboard: processing instances', instances);
     const groups: { [key: string]: ServiceGroup } = {};
     Object.values(instances).forEach((instance) => {
       const key = `${instance.serviceId}|${instance.envTag || ''}`;
@@ -88,7 +89,7 @@ function CtrlPaneDashboard() {
     });
 
     const result = Object.values(groups).map(group => {
-      const healthyCount = group.nodes.filter(n => n.connected && n.active).length;
+      const healthyCount = group.nodes.filter(n => n.active).length;
       if (healthyCount === group.nodeCount && group.nodeCount > 0) {
         group.status = 'All Live';
       } else if (healthyCount === 0) {
@@ -245,9 +246,9 @@ function CtrlPaneDashboard() {
                   <TableCell align="right">{node.portNumber}</TableCell>
                   <TableCell align="center">
                     <Chip 
-                      label={node.connected ? "Active" : "Inactive"} 
+                      label={node.active ? "Active" : "Inactive"} 
                       size="small" 
-                      color={node.connected ? "success" : "error"}
+                      color={node.active ? "success" : "error"}
                       variant="outlined" 
                     />
                   </TableCell>

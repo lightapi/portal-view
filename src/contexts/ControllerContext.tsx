@@ -65,7 +65,7 @@ function controllerReducer(state: ControllerState, action: ControllerAction): Co
         ...state,
         instances: {
           ...state.instances,
-          [action.runtimeInstanceId]: { ...existing, connected: false },
+          [action.runtimeInstanceId]: { ...existing, connected: false, active: false },
         },
       };
     case 'SET_LIVE_STATUS':
