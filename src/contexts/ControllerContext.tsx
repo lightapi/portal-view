@@ -9,7 +9,7 @@ const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstance => ({
   runtimeInstanceId: db.runtimeInstanceId,
   serviceId: db.serviceId,
   envTag: db.envTag,
-  connected: false, // Baseline from DB is disconnected unless controller says otherwise
+  connected: db.active, // Baseline from DB tracks active status
   connectedAt: db.updateTs || '',
   lastSeenAt: db.updateTs || '',
   active: db.active,
@@ -107,18 +107,24 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     });
     mcpClientRef.current = mcpClient;
 
+    let ignore = false;
+
     const init = async () => {
       mcpClient.onOpen(() => {
+        if (ignore) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: true });
         console.log('Unified Control Plane connected (/ctrl/mcp)');
       });
 
       mcpClient.onClose(() => {
+        if (ignore) return;
         dispatch({ type: 'SET_LIVE_STATUS', connected: false });
         console.log('Unified Control Plane disconnected');
       });
 
+      // ... existing handlers ...
       mcpClient.onError((err) => {
+        if (ignore) return;
         let message: string;
         if (err && typeof err === 'object' && 'message' in err && (err as any).message) {
           message = String((err as any).message);
@@ -135,6 +141,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       });
 
       mcpClient.onNotification((method, params: any) => {
+        if (ignore) return;
         if (import.meta.env.DEV) {
           console.debug('MCP Notification:', { method, params });
         }
@@ -223,6 +230,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         const dbResponse = await fetchClient(url) as RuntimeInstanceApiResponse;
+        if (ignore) return;
         const dbInstances = dbResponse.runtimeInstances || [];
 
         console.log(`Hydro-Step 1: Loaded ${dbInstances.length} instances from DB baseline`);
@@ -233,6 +241,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
         await mcpClient.connect();
 
       } catch (err: any) {
+        if (ignore) return;
         dispatch({ type: 'SET_ERROR', error: `Hydration failed: ${err.message}` });
         console.error('Hydration Error:', err);
       }
@@ -241,6 +250,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     init();
 
     return () => {
+      ignore = true;
       mcpClient.close();
       dispatch({ type: 'SET_LIVE_STATUS', connected: false });
     };
