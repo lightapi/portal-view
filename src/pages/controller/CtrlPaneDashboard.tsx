@@ -203,6 +203,7 @@ function CtrlPaneDashboard() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [hasCompletedSync, setHasCompletedSync] = useState(false);
+  const [liveSyncError, setLiveSyncError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<MRT_ExpandedState>({});
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState(filter);
@@ -227,6 +228,17 @@ function CtrlPaneDashboard() {
   useEffect(() => {
     setGlobalFilter(filter);
   }, [filter]);
+
+  const serverFilters = useMemo(
+    () =>
+      columnFilters.filter((columnFilter) => ['serviceId', 'envTag'].includes(columnFilter.id)),
+    [columnFilters],
+  );
+
+  const serverSorting = useMemo(
+    () => sorting.filter((sort) => sort.id === 'serviceId' || sort.id === 'envTag'),
+    [sorting],
+  );
 
   const matchesFilter = useCallback(
     (instance: RuntimeInstanceView, filters: MRT_ColumnFiltersState, query: string) => {
@@ -297,15 +309,14 @@ function CtrlPaneDashboard() {
     }
 
     const requestVersion = ++requestVersionRef.current;
-    const currentFilters = columnFilters.filter((columnFilter) =>
-      ['serviceId', 'envTag'].includes(columnFilter.id),
-    );
+    const currentFilters = serverFilters;
     const currentGlobalFilter = globalFilter;
     const isInitialRequest = !hasLoadedOnce;
 
     isSyncingRef.current = true;
     bufferedNotificationsRef.current = [];
     setHasCompletedSync(false);
+    setLiveSyncError(null);
     if (isInitialRequest) {
       setIsLoading(true);
     } else {
@@ -313,7 +324,7 @@ function CtrlPaneDashboard() {
     }
 
     try {
-      const cmd = buildQueryCommand(host, currentFilters, currentGlobalFilter, sorting);
+      const cmd = buildQueryCommand(host, currentFilters, currentGlobalFilter, serverSorting);
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
       const dbResponse = (await fetchClient(url)) as RuntimeInstanceApiResponse;
       if (requestVersionRef.current !== requestVersion) {
@@ -329,6 +340,7 @@ function CtrlPaneDashboard() {
       setHasLoadedOnce(true);
 
       if (!isLiveConnected) {
+        isSyncingRef.current = false;
         setHasCompletedSync(true);
         return;
       }
@@ -363,11 +375,19 @@ function CtrlPaneDashboard() {
         );
 
         setInstances(finalizedInstances);
+        isSyncingRef.current = false;
+        setHasCompletedSync(true);
       } catch (liveSyncError) {
         console.error('Failed to synchronize live runtime instances', liveSyncError);
-      } finally {
         if (requestVersionRef.current === requestVersion) {
-          setHasCompletedSync(true);
+          const fallbackInstances = applyBufferedNotifications(
+            dbMap,
+            currentFilters,
+            currentGlobalFilter,
+          );
+          setInstances(fallbackInstances);
+          isSyncingRef.current = false;
+          setLiveSyncError('Live status synchronization failed');
         }
       }
     } catch (syncError) {
@@ -383,7 +403,7 @@ function CtrlPaneDashboard() {
         setIsRefetching(false);
       }
     }
-  }, [applyBufferedNotifications, callTool, columnFilters, globalFilter, hasLoadedOnce, host, isLiveConnected, matchesFilter, sorting]);
+  }, [applyBufferedNotifications, callTool, globalFilter, hasLoadedOnce, host, isLiveConnected, matchesFilter, serverFilters, serverSorting]);
 
   useEffect(() => {
     fetchBaselineAndSync();
@@ -607,8 +627,8 @@ function CtrlPaneDashboard() {
     manualFiltering: true,
     rowCount: groupedData.length,
     state: {
-      isLoading: isLoading || (!hasCompletedSync && !error && isLiveConnected),
-      showAlertBanner: !!error,
+      isLoading: isLoading || (!hasCompletedSync && !error && !liveSyncError && isLiveConnected),
+      showAlertBanner: !!(error || liveSyncError),
       showProgressBars: isRefetching,
       globalFilter,
       expanded,
@@ -621,8 +641,8 @@ function CtrlPaneDashboard() {
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    muiToolbarAlertBannerProps: error
-      ? { color: 'error', children: error }
+    muiToolbarAlertBannerProps: error || liveSyncError
+      ? { color: 'error', children: error || liveSyncError }
       : undefined,
     renderDetailPanel: ({ row }) => (
       <Box sx={{ margin: 1 }}>
@@ -633,13 +653,23 @@ function CtrlPaneDashboard() {
           <Chip
             label={
               isLiveConnected
-                ? hasCompletedSync
+                ? liveSyncError
+                  ? 'Live Sync Failed'
+                  : hasCompletedSync
                   ? 'Live Control Plane Connected'
                   : 'Live Status Syncing'
                 : 'Control Plane Disconnected'
             }
             size="small"
-            color={isLiveConnected ? (hasCompletedSync ? 'success' : 'default') : 'warning'}
+            color={
+              isLiveConnected
+                ? liveSyncError
+                  ? 'warning'
+                  : hasCompletedSync
+                    ? 'success'
+                    : 'default'
+                : 'warning'
+            }
             variant="outlined"
           />
         </Box>
