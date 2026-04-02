@@ -24,7 +24,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../contexts/AppContext';
 import { useController } from '../../contexts/ControllerContext';
@@ -212,6 +212,7 @@ function CtrlPaneDashboard() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const deferredGlobalFilter = useDeferredValue(globalFilter);
 
   const bufferedNotificationsRef = useRef<BufferedNotification[]>([]);
   const isSyncingRef = useRef(false);
@@ -229,16 +230,51 @@ function CtrlPaneDashboard() {
     setGlobalFilter(filter);
   }, [filter]);
 
-  const serverFilters = useMemo(
-    () =>
-      columnFilters.filter((columnFilter) => ['serviceId', 'envTag'].includes(columnFilter.id)),
+  const serviceIdFilterValue = useMemo(
+    () => columnFilters.find((columnFilter) => columnFilter.id === 'serviceId')?.value,
     [columnFilters],
   );
 
-  const serverSorting = useMemo(
-    () => sorting.filter((sort) => sort.id === 'serviceId' || sort.id === 'envTag'),
+  const envTagFilterValue = useMemo(
+    () => columnFilters.find((columnFilter) => columnFilter.id === 'envTag')?.value,
+    [columnFilters],
+  );
+
+  const serverFilters = useMemo(() => {
+    const nextServerFilters: MRT_ColumnFiltersState = [];
+
+    if (serviceIdFilterValue !== undefined) {
+      nextServerFilters.push({ id: 'serviceId', value: serviceIdFilterValue });
+    }
+    if (envTagFilterValue !== undefined) {
+      nextServerFilters.push({ id: 'envTag', value: envTagFilterValue });
+    }
+
+    return nextServerFilters;
+  }, [serviceIdFilterValue, envTagFilterValue]);
+
+  const serviceIdSort = useMemo(
+    () => sorting.find((sort) => sort.id === 'serviceId'),
     [sorting],
   );
+
+  const envTagSort = useMemo(
+    () => sorting.find((sort) => sort.id === 'envTag'),
+    [sorting],
+  );
+
+  const serverSorting = useMemo(() => {
+    const nextServerSorting: MRT_SortingState = [];
+
+    if (serviceIdSort) {
+      nextServerSorting.push(serviceIdSort);
+    }
+    if (envTagSort) {
+      nextServerSorting.push(envTagSort);
+    }
+
+    return nextServerSorting;
+  }, [serviceIdSort?.desc, envTagSort?.desc]);
 
   const matchesFilter = useCallback(
     (instance: RuntimeInstanceView, filters: MRT_ColumnFiltersState, query: string) => {
@@ -310,7 +346,7 @@ function CtrlPaneDashboard() {
 
     const requestVersion = ++requestVersionRef.current;
     const currentFilters = serverFilters;
-    const currentGlobalFilter = globalFilter;
+    const currentGlobalFilter = deferredGlobalFilter;
     const isInitialRequest = !hasLoadedOnce;
 
     isSyncingRef.current = true;
@@ -406,7 +442,17 @@ function CtrlPaneDashboard() {
         setIsRefetching(false);
       }
     }
-  }, [applyBufferedNotifications, callTool, globalFilter, hasLoadedOnce, host, isLiveConnected, matchesFilter, serverFilters, serverSorting]);
+  }, [
+    applyBufferedNotifications,
+    callTool,
+    deferredGlobalFilter,
+    hasLoadedOnce,
+    host,
+    isLiveConnected,
+    matchesFilter,
+    serverFilters,
+    serverSorting,
+  ]);
 
   useEffect(() => {
     fetchBaselineAndSync();
