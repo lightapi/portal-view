@@ -387,6 +387,7 @@ function CtrlPaneDashboard() {
           );
           setInstances(fallbackInstances);
           isSyncingRef.current = false;
+          setHasCompletedSync(true);
           setLiveSyncError('Live status synchronization failed');
         }
       }
@@ -394,6 +395,8 @@ function CtrlPaneDashboard() {
       console.error('Failed to load or reconcile controller services', syncError);
       if (requestVersionRef.current === requestVersion) {
         setHasLoadedOnce(true);
+        setHasCompletedSync(true);
+        setLiveSyncError('Failed to load controller services');
       }
     } finally {
       if (requestVersionRef.current === requestVersion) {
@@ -408,13 +411,6 @@ function CtrlPaneDashboard() {
   useEffect(() => {
     fetchBaselineAndSync();
   }, [fetchBaselineAndSync]);
-
-  useEffect(() => {
-    if (!isLiveConnected || !hasLoadedOnce) {
-      return;
-    }
-    fetchBaselineAndSync();
-  }, [fetchBaselineAndSync, hasLoadedOnce, isLiveConnected]);
 
   useEffect(() => {
     return subscribeToNotifications((method, params) => {
@@ -817,7 +813,7 @@ function applyNotificationToInstances(
 
   const rawPayload =
     params && typeof params === 'object' && 'instance' in params ? params.instance : params;
-  const normalizedInstance = parseRuntimeInstancePayload(rawPayload);
+  const normalizedInstance = normalizeLiveSnapshotInstance(rawPayload);
   if (!normalizedInstance) {
     return currentInstances;
   }
@@ -829,9 +825,6 @@ function applyNotificationToInstances(
       [normalizedInstance.runtimeInstanceId]: {
         ...existing,
         ...normalizedInstance,
-        active: true,
-        connected: true,
-        liveStatus: 'active',
       },
     };
   }
