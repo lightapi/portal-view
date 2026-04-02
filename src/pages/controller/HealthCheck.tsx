@@ -34,7 +34,9 @@ export default function HealthCheck() {
     fetchData();
   }, [runtimeInstanceId, callTool]);
 
-  console.log(loading, check, error);
+  if (import.meta.env.DEV) {
+    console.log(loading, check, error);
+  }
 
   let wait;
   if (loading) {
