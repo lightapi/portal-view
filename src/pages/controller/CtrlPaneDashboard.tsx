@@ -61,7 +61,9 @@ function CtrlPaneDashboard() {
 
   // Group instances by ServiceId and EnvTag
   const groupedData = useMemo(() => {
-    console.debug('CtrlPaneDashboard: processing instances', instances);
+    if (import.meta.env.DEV) {
+      console.debug('CtrlPaneDashboard: processing instances', instances);
+    }
     const groups: { [key: string]: ServiceGroup } = {};
     Object.values(instances).forEach((instance) => {
       const key = `${instance.serviceId}|${instance.envTag || ''}`;
