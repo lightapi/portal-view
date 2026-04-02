@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Box, Typography, Paper } from '@mui/material';
 import { useController } from '../../contexts/ControllerContext';
 
 export default function HealthCheck() {
