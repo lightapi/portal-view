@@ -2,6 +2,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import HelpIcon from '@mui/icons-material/Help';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import StorageIcon from '@mui/icons-material/Storage';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -635,6 +637,34 @@ function CtrlPaneDashboard() {
     });
   };
 
+  const handleModule = (node: RuntimeInstanceRow) => {
+    navigate('/app/controller/module', {
+      state: {
+        data: {
+          node: {
+            protocol: node.protocol,
+            address: node.ipAddress,
+            port: node.portNumber,
+            apiName: node.serviceId,
+            runtimeInstanceId: node.runtimeInstanceId,
+          },
+        },
+      },
+    });
+  };
+
+  const handleCache = (node: RuntimeInstanceRow) => {
+    navigate('/app/controller/cache', {
+      state: {
+        data: {
+          node: {
+            runtimeInstanceId: node.runtimeInstanceId,
+          },
+        },
+      },
+    });
+  };
+
   const table = useMaterialReactTable({
     columns,
     data: pagedData,
@@ -708,6 +738,8 @@ function CtrlPaneDashboard() {
                 <TableCell align="right">Info</TableCell>
                 <TableCell align="right">Logger</TableCell>
                 <TableCell align="right">Chaos</TableCell>
+                <TableCell align="right">Module</TableCell>
+                <TableCell align="right">Cache</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -740,6 +772,16 @@ function CtrlPaneDashboard() {
                     <TableCell align="right">
                       <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!canInvoke}>
                         <AssessmentIcon />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton aria-label="Module manager" onClick={() => handleModule(node)} disabled={!canInvoke}>
+                        <ViewModuleIcon />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton aria-label="Cache explorer" onClick={() => handleCache(node)} disabled={!canInvoke}>
+                        <StorageIcon />
                       </IconButton>
                     </TableCell>
                   </TableRow>
