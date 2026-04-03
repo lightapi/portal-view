@@ -76,7 +76,7 @@ function renderBaseFields(
       <TextField
         label="Level"
         type="number"
-        value={readNumber(draft.level, 10)}
+        value={readNumber(draft.level, 5)}
         onChange={(event) =>
           setDraft((current) => ({ ...current, level: Number(event.target.value) }))
         }

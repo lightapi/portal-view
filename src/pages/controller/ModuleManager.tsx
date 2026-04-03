@@ -54,7 +54,16 @@ export default function ModuleManager() {
     setError(null);
     try {
       const result = await callTool('get_modules', { runtimeInstanceId });
-      setModules(Array.isArray(result?.modules) ? result.modules : []);
+      const nextModules = Array.isArray(result?.modules) ? result.modules : [];
+      setModules(nextModules);
+      setSelected((current) => {
+        const validModules = new Set(nextModules);
+        return Object.fromEntries(
+          Object.entries(current).filter(
+            ([moduleName, isSelected]) => isSelected && validModules.has(moduleName),
+          ),
+        );
+      });
     } catch (err: any) {
       setError(err?.message ?? JSON.stringify(err));
     } finally {
