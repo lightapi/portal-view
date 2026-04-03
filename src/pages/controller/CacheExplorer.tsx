@@ -80,6 +80,7 @@ export default function CacheExplorer() {
     } catch (err: any) {
       setError(err?.message ?? JSON.stringify(err));
       setEntries([]);
+      setSelectedCache(null);
     } finally {
       setLoadingEntries(false);
     }
