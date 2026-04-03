@@ -107,6 +107,13 @@ export default function CacheExplorer() {
 
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PAGE_SIZE));
 
+  useEffect(() => {
+    const maxPageIndex = Math.max(0, totalPages - 1);
+    if (pageIndex > maxPageIndex) {
+      setPageIndex(maxPageIndex);
+    }
+  }, [pageIndex, totalPages]);
+
   return (
     <Box sx={{ p: 2 }}>
       <Stack spacing={2}>

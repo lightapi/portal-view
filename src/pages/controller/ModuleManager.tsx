@@ -176,6 +176,7 @@ export default function ModuleManager() {
                                 [moduleName]: event.target.checked,
                               }))
                             }
+                            inputProps={{ 'aria-label': `Select module ${moduleName}` }}
                           />
                         </TableCell>
                         <TableCell>{moduleName}</TableCell>
