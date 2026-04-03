@@ -129,11 +129,13 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
 
     return () => {
       ignore = true;
-      if (mcpClientRef.current === mcpClient) {
+      const isCurrentClient =
+        mcpClientRef.current === mcpClient && activeClientIdRef.current === clientId;
+      if (isCurrentClient) {
         mcpClientRef.current = null;
+        dispatch({ type: 'SET_LIVE_STATUS', connected: false });
       }
       mcpClient.close();
-      dispatch({ type: 'SET_LIVE_STATUS', connected: false });
     };
   }, [isAuthenticated, host]);
 

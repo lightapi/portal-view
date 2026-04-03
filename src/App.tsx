@@ -87,6 +87,8 @@ import ServerInfo from "./pages/controller/ServerInfo";
 import Logger from "./pages/controller/Logger";
 import LogContent from "./pages/controller/LogContent";
 import ChaosMonkey from "./pages/controller/ChaosMonkey";
+import ModuleManager from "./pages/controller/ModuleManager";
+import CacheExplorer from "./pages/controller/CacheExplorer";
 import OrgAdmin from "./pages/org/OrgAdmin";
 import Host from "./pages/host/Host";
 import HostAdmin from "./pages/host/HostAdmin";
@@ -376,6 +378,8 @@ const App = () => {
           <Route path="controller/loggerConfig" element={<Logger />} />
           <Route path="controller/logContent" element={<LogContent />} />
           <Route path="controller/chaos" element={<ChaosMonkey />} />
+          <Route path="controller/module" element={<ModuleManager />} />
+          <Route path="controller/cache" element={<CacheExplorer />} />
           <Route path="org/OrgAdmin" element={<OrgAdmin />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
