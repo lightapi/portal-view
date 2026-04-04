@@ -42,7 +42,7 @@ type AuthClientType = {
   redirectUri?: string;
   authenticateClass?: string;
   tokenExType?: string;
-  derefClientId?: string;
+  deRefClientId?: string; // Correct property name from backend
   active: boolean;
   updateUser?: string;
   updateTs?: string;
@@ -199,6 +199,14 @@ export default function AuthClient() {
       { accessorKey: 'apiName', header: 'API Name' },
       { accessorKey: 'apiVersion', header: 'API Version' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'clientScope', header: 'Scope' },
+      { accessorKey: 'customClaim', header: 'Custom Claim' },
+      { accessorKey: 'redirectUri', header: 'Redirect URI' },
+      { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
+      { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Version' },
       {
         accessorKey: 'active',
         header: 'Active',
