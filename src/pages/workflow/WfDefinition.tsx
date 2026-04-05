@@ -9,31 +9,28 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
-type ProcessInfoApiResponse = {
-    processInfos: Array<ProcessInfoType>;
+type WfDefinitionApiResponse = {
+    wfDefinitions: Array<WfDefinitionType>;
     total: number;
 };
 
-type ProcessInfoType = {
+type WfDefinitionType = {
     hostId: string;
-    processId: string;
     wfDefId: string;
-    wfInstanceId: string;
-    appId: string;
-    processType: string;
-    statusCode: string;
-    exTriggerTs: string;
-    processSubtypeCode?: string;
-    owningGroupName?: string;
+    namespace: string;
+    name: string;
+    version: string;
+    definition: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -44,13 +41,13 @@ interface UserState {
     host?: string;
 }
 
-export default function ProcessInfo() {
+export default function WfDefinition() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<ProcessInfoType[]>([]);
+    const [data, setData] = useState<WfDefinitionType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
@@ -84,7 +81,7 @@ export default function ProcessInfo() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getProcessInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getWorkflowDefinition', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -95,9 +92,10 @@ export default function ProcessInfo() {
         };
 
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+
         try {
             const json = await fetchClient(url);
-            setData(json.processInfos || []);
+            setData(json.wfDefinitions || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -112,77 +110,98 @@ export default function ProcessInfo() {
     }, [fetchData]);
 
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<ProcessInfoType>) => {
-        if (!window.confirm(`Are you sure you want to delete process: ${row.original.processId}?`)) return;
+    const handleDelete = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
+        if (!window.confirm(`Are you sure you want to delete workflow definition: ${row.original.name} (ID: ${row.original.wfDefId})?`)) return;
 
         const originalData = [...data];
-        setData(prev => prev.filter(d => d.processId !== row.original.processId));
+        setData(prev => prev.filter(d => d.wfDefId !== row.original.wfDefId));
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteProcessInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'deleteWorkflowDefinition', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                alert('Failed to delete process info. Please try again.');
+                alert('Failed to delete workflow definition. Please try again.');
                 setData(originalData);
                 setRowCount(originalData.length);
             }
         } catch (e) {
-            alert('Failed to delete process info due to a network error.');
+            alert('Failed to delete workflow definition due to a network error.');
             setData(originalData);
             setRowCount(originalData.length);
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<ProcessInfoType>) => {
-        const processId = row.original.processId;
-        setIsUpdateLoading(processId);
+    const handleUpdate = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
+        const wfDefId = row.original.wfDefId;
+        setIsUpdateLoading(wfDefId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshProcessInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshWorkflowDefinition', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateProcessInfo', {
+            navigate('/app/form/updateWfDefinition', {
                 state: {
                     data: freshData,
                     source: location.pathname
                 }
             });
         } catch (error) {
-            console.error("Failed to fetch process info for update:", error);
-            alert("Could not load the latest process info data. Please try again.");
+            console.error("Failed to fetch workflow definition for update:", error);
+            alert("Could not load the latest workflow definition data. Please try again.");
         } finally {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
+    
+    const handleStart = useCallback((row: MRT_Row<WfDefinitionType>) => {
+        navigate('/app/form/startWorkflow', {
+            state: {
+                data: {
+                    hostId: row.original.hostId,
+                    wfDefId: row.original.wfDefId,
+                    input: "{}"
+                },
+                source: location.pathname
+            }
+        });
+    }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<ProcessInfoType>[]>(
+    const columns = useMemo<MRT_ColumnDef<WfDefinitionType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'processId', header: 'Process Id' },
             { accessorKey: 'wfDefId', header: 'Wf Def Id' },
-            { accessorKey: 'wfInstanceId', header: 'Wf Instance Id' },
-            { accessorKey: 'appId', header: 'App Id' },
-            { accessorKey: 'processType', header: 'Process Type' },
-            { accessorKey: 'statusCode', header: 'Status' },
+            { accessorKey: 'namespace', header: 'Namespace' },
+            { accessorKey: 'name', header: 'Name' },
+            { accessorKey: 'version', header: 'Version' },
             {
-                accessorKey: 'exTriggerTs',
-                header: 'Trigger Time',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+                accessorKey: 'definition', header: 'Definition',
+                Cell: ({ cell }) => (
+                    <Tooltip title={cell.getValue<string>()}>
+                        <span style={{
+                            display: 'inline-block',
+                            maxWidth: '200px',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                        }}>
+                            {cell.getValue<string>()}
+                        </span>
+                    </Tooltip>
+                )
             },
-            { accessorKey: 'processSubtypeCode', header: 'Subtype Code' },
-            { accessorKey: 'owningGroupName', header: 'Owning Group' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
                 accessorKey: 'updateTs',
@@ -215,25 +234,30 @@ export default function ProcessInfo() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.processId,
+        getRowId: (row) => row.wfDefId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Process Info">
+                <Tooltip title="Update Workflow Definition">
                     <IconButton
                         onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.processId}
+                        disabled={isUpdateLoading === row.original.wfDefId}
                     >
-                        {isUpdateLoading === row.original.processId ? (
+                        {isUpdateLoading === row.original.wfDefId ? (
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
                         )}
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Process Info">
+                <Tooltip title="Start Workflow">
+                    <IconButton color="primary" onClick={() => handleStart(row)}>
+                        <PlayArrowIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Workflow Definition">
                     <IconButton color="error" onClick={() => handleDelete(row)}>
                         <DeleteForeverIcon />
                     </IconButton>
@@ -241,8 +265,8 @@ export default function ProcessInfo() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProcessInfo')}>
-                Create New Process Info
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createWfDefinition', { state: { data: { hostId: host } } })}>
+                Create New WfDefinition
             </Button>
         ),
     });
