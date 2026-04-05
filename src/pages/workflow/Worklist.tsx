@@ -18,22 +18,17 @@ import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
-type TaskInfoApiResponse = {
-    taskInfos: Array<TaskInfoType>;
+type WorklistApiResponse = {
+    worklists: Array<WorklistType>;
     total: number;
 };
 
-type TaskInfoType = {
+type WorklistType = {
     hostId: string;
-    taskId: string;
-    agentDefId: string;
-    taskType: string;
-    processId: string;
-    wfInstanceId: string;
-    wfTaskId: string;
+    assigneeId: string;
+    categoryId: string;
     statusCode: string;
-    locked: string;
-    priority: number;
+    appId: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -44,13 +39,13 @@ interface UserState {
     host?: string;
 }
 
-export default function TaskInfo() {
+export default function Worklist() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<TaskInfoType[]>([]);
+    const [data, setData] = useState<WorklistType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
@@ -84,7 +79,7 @@ export default function TaskInfo() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getTaskInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getWorklist', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -98,7 +93,7 @@ export default function TaskInfo() {
 
         try {
             const json = await fetchClient(url);
-            setData(json.taskInfos || []);
+            setData(json.worklists || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -112,39 +107,46 @@ export default function TaskInfo() {
         fetchData();
     }, [fetchData]);
 
+    // Helper ID generator for loading states and rendering keys
+    const getRowId = (row: MRT_Row<WorklistType> | WorklistType) => {
+        const data = "original" in row ? row.original : row;
+        return `${data.assigneeId}|${data.categoryId}`;
+    };
+
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<TaskInfoType>) => {
-        if (!window.confirm(`Are you sure you want to delete task: ${row.original.taskId}?`)) return;
+    const handleDelete = useCallback(async (row: MRT_Row<WorklistType>) => {
+        const rowId = getRowId(row);
+        if (!window.confirm(`Are you sure you want to delete worklist for Assignee: ${row.original.assigneeId}, Category: ${row.original.categoryId}?`)) return;
 
         const originalData = [...data];
-        setData(prev => prev.filter(d => d.taskId !== row.original.taskId));
+        setData(prev => prev.filter(d => getRowId(d) !== rowId));
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteTaskInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'deleteWorklist', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                alert('Failed to delete task info. Please try again.');
+                alert('Failed to delete worklist. Please try again.');
                 setData(originalData);
                 setRowCount(originalData.length);
             }
         } catch (e) {
-            alert('Failed to delete task info due to a network error.');
+            alert('Failed to delete worklist due to a network error.');
             setData(originalData);
             setRowCount(originalData.length);
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<TaskInfoType>) => {
-        const taskId = row.original.taskId;
-        setIsUpdateLoading(taskId);
+    const handleUpdate = useCallback(async (row: MRT_Row<WorklistType>) => {
+        const rowId = getRowId(row);
+        setIsUpdateLoading(rowId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshTaskInfo', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshWorklist', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -154,33 +156,28 @@ export default function TaskInfo() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateTaskInfo', {
+            navigate('/app/form/updateWorklist', {
                 state: {
                     data: freshData,
                     source: location.pathname
                 }
             });
         } catch (error) {
-            console.error("Failed to fetch task info for update:", error);
-            alert("Could not load the latest task info data. Please try again.");
+            console.error("Failed to fetch worklist for update:", error);
+            alert("Could not load the latest worklist data. Please try again.");
         } finally {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<TaskInfoType>[]>(
+    const columns = useMemo<MRT_ColumnDef<WorklistType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'taskId', header: 'Task Id' },
-            { accessorKey: 'agentDefId', header: 'Agent Def Id' },
-            { accessorKey: 'taskType', header: 'Task Type' },
-            { accessorKey: 'processId', header: 'Process Id' },
-            { accessorKey: 'wfInstanceId', header: 'Wf Instance Id' },
-            { accessorKey: 'wfTaskId', header: 'Wf Task Id' },
+            { accessorKey: 'assigneeId', header: 'Assignee Id' },
+            { accessorKey: 'categoryId', header: 'Category Id' },
             { accessorKey: 'statusCode', header: 'Status' },
-            { accessorKey: 'locked', header: 'Locked' },
-            { accessorKey: 'priority', header: 'Priority' },
+            { accessorKey: 'appId', header: 'App Id' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
                 accessorKey: 'updateTs',
@@ -213,25 +210,25 @@ export default function TaskInfo() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.taskId,
+        getRowId: (row) => getRowId(row),
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Task Info">
+                <Tooltip title="Update Worklist">
                     <IconButton
                         onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.taskId}
+                        disabled={isUpdateLoading === getRowId(row)}
                     >
-                        {isUpdateLoading === row.original.taskId ? (
+                        {isUpdateLoading === getRowId(row) ? (
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
                         )}
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Task Info">
+                <Tooltip title="Delete Worklist">
                     <IconButton color="error" onClick={() => handleDelete(row)}>
                         <DeleteForeverIcon />
                     </IconButton>
@@ -239,8 +236,8 @@ export default function TaskInfo() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTaskInfo')}>
-                Create New Task Info
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createWorklist')}>
+                Create New Worklist
             </Button>
         ),
     });

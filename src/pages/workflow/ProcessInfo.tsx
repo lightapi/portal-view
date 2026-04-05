@@ -18,21 +18,22 @@ import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
-type TaskAsstApiResponse = {
-    taskAssts: Array<TaskAsstType>;
+type ProcessInfoApiResponse = {
+    processInfos: Array<ProcessInfoType>;
     total: number;
 };
 
-type TaskAsstType = {
+type ProcessInfoType = {
     hostId: string;
-    taskAsstId: string;
-    taskId: string;
-    assignedTs: string;
-    assigneeId: string;
-    reasonCode: string;
-    unassignedTs?: string;
-    unassignedReason?: string;
-    categoryCode?: string;
+    processId: string;
+    wfDefId: string;
+    wfInstanceId: string;
+    appId: string;
+    processType: string;
+    statusCode: string;
+    exTriggerTs: string;
+    processSubtypeCode?: string;
+    owningGroupName?: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -43,13 +44,13 @@ interface UserState {
     host?: string;
 }
 
-export default function TaskAsst() {
+export default function ProcessInfo() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<TaskAsstType[]>([]);
+    const [data, setData] = useState<ProcessInfoType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
@@ -83,7 +84,7 @@ export default function TaskAsst() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getTaskAsst', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getProcessInfo', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -96,7 +97,7 @@ export default function TaskAsst() {
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const json = await fetchClient(url);
-            setData(json.taskAssts || []);
+            setData(json.processInfos || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -111,38 +112,38 @@ export default function TaskAsst() {
     }, [fetchData]);
 
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<TaskAsstType>) => {
-        if (!window.confirm(`Are you sure you want to delete task assignment: ${row.original.taskAsstId}?`)) return;
+    const handleDelete = useCallback(async (row: MRT_Row<ProcessInfoType>) => {
+        if (!window.confirm(`Are you sure you want to delete process: ${row.original.processId}?`)) return;
 
         const originalData = [...data];
-        setData(prev => prev.filter(d => d.taskAsstId !== row.original.taskAsstId));
+        setData(prev => prev.filter(d => d.processId !== row.original.processId));
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteTaskAsst', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'deleteProcessInfo', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                alert('Failed to delete task assignment. Please try again.');
+                alert('Failed to delete process info. Please try again.');
                 setData(originalData);
                 setRowCount(originalData.length);
             }
         } catch (e) {
-            alert('Failed to delete task assignment due to a network error.');
+            alert('Failed to delete process info due to a network error.');
             setData(originalData);
             setRowCount(originalData.length);
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<TaskAsstType>) => {
-        const taskAsstId = row.original.taskAsstId;
-        setIsUpdateLoading(taskAsstId);
+    const handleUpdate = useCallback(async (row: MRT_Row<ProcessInfoType>) => {
+        const processId = row.original.processId;
+        setIsUpdateLoading(processId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshTaskAsst', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshProcessInfo', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -151,40 +152,37 @@ export default function TaskAsst() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateTaskAsst', {
+            navigate('/app/form/updateProcessInfo', {
                 state: {
                     data: freshData,
                     source: location.pathname
                 }
             });
         } catch (error) {
-            console.error("Failed to fetch task assignment for update:", error);
-            alert("Could not load the latest task assignment data. Please try again.");
+            console.error("Failed to fetch process info for update:", error);
+            alert("Could not load the latest process info data. Please try again.");
         } finally {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<TaskAsstType>[]>(
+    const columns = useMemo<MRT_ColumnDef<ProcessInfoType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'taskAsstId', header: 'Task Asst Id' },
-            { accessorKey: 'taskId', header: 'Task Id' },
+            { accessorKey: 'processId', header: 'Process Id' },
+            { accessorKey: 'wfDefId', header: 'Wf Def Id' },
+            { accessorKey: 'wfInstanceId', header: 'Wf Instance Id' },
+            { accessorKey: 'appId', header: 'App Id' },
+            { accessorKey: 'processType', header: 'Process Type' },
+            { accessorKey: 'statusCode', header: 'Status' },
             {
-                accessorKey: 'assignedTs',
-                header: 'Assigned Time',
+                accessorKey: 'exTriggerTs',
+                header: 'Trigger Time',
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
-            { accessorKey: 'assigneeId', header: 'Assignee' },
-            { accessorKey: 'reasonCode', header: 'Reason Code' },
-            { accessorKey: 'categoryCode', header: 'Category' },
-            {
-                accessorKey: 'unassignedTs',
-                header: 'Unassigned Time',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-            },
-            { accessorKey: 'unassignedReason', header: 'Unassigned Reason' },
+            { accessorKey: 'processSubtypeCode', header: 'Subtype Code' },
+            { accessorKey: 'owningGroupName', header: 'Owning Group' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
                 accessorKey: 'updateTs',
@@ -217,25 +215,25 @@ export default function TaskAsst() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.taskAsstId,
+        getRowId: (row) => row.processId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Task Asst">
+                <Tooltip title="Update Process Info">
                     <IconButton
                         onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.taskAsstId}
+                        disabled={isUpdateLoading === row.original.processId}
                     >
-                        {isUpdateLoading === row.original.taskAsstId ? (
+                        {isUpdateLoading === row.original.processId ? (
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
                         )}
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Task Asst">
+                <Tooltip title="Delete Process Info">
                     <IconButton color="error" onClick={() => handleDelete(row)}>
                         <DeleteForeverIcon />
                     </IconButton>
@@ -243,8 +241,8 @@ export default function TaskAsst() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTaskAsst')}>
-                Create New Task Asst
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProcessInfo')}>
+                Create New Process Info
             </Button>
         ),
     });
