@@ -265,7 +265,7 @@ const structure = [
   },
   {
     id: 116,
-    label: "GenAI Admin",
+    label: "Workflow Admin",
     role: "admin",
     link: "/app/workflow/WfDefinition",
     icon: <PrecisionManufacturingIcon />,
