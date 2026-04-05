@@ -415,7 +415,7 @@ const App = () => {
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
           <Route path="workflow/TaskInfo" element={<TaskInfo />} />
           <Route path="workflow/TaskAsst" element={<TaskAsst />} />
-          <Route path="genai/AuditLog" element={<AuditLog />} />
+          <Route path="workflow/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
           <Route path="genai/Tool" element={<Tool />} />
           <Route path="genai/ToolParam" element={<ToolParam />} />
