@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -18,45 +18,49 @@ import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
-type WorklistApiResponse = {
-    worklists: Array<WorklistType>;
+type AuditLogApiResponse = {
+    auditLogs: Array<AuditLogType>;
     total: number;
 };
 
-type WorklistType = {
+type AuditLogType = {
     hostId: string;
-    assigneeId: string;
-    categoryId: string;
-    statusCode: string;
-    appId: string;
-    aggregateVersion: number;
-    active: boolean;
-    updateUser?: string;
-    updateTs?: string;
+    auditLogId: string;
+    sourceTypeId?: string;
+    correlationId?: string;
+    userId?: string;
+    eventTs: string;
+    success?: string;
+    message0?: string;
+    message1?: string;
+    message2?: string;
+    message3?: string;
+    message?: string;
+    userComment?: string;
 };
 
 interface UserState {
     host?: string;
 }
 
-export default function Worklist() {
+export default function AuditLog() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<WorklistType[]>([]);
+    const [data, setData] = useState<AuditLogType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-    const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
-        { id: 'active', value: 'true' }
-    ]);
+    const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
-    const [sorting, setSorting] = useState<MRT_SortingState>([]);
+    const [sorting, setSorting] = useState<MRT_SortingState>([
+        { id: 'eventTs', desc: true }
+    ]);
     const [pagination, setPagination] = useState<MRT_PaginationState>({
         pageIndex: 0,
         pageSize: 10,
@@ -67,33 +71,20 @@ export default function Worklist() {
         if (!host) return;
         if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
-        let activeStatus = true; // Default to true if not present
-        const apiFilters: MRT_ColumnFiltersState = [];
-
-        columnFilters.forEach(filter => {
-            if (filter.id === 'active') {
-                activeStatus = filter.value === 'true' || filter.value === true;
-            } else {
-                apiFilters.push(filter);
-            }
-        });
-
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getWorklist', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getAuditLog', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
-                filters: JSON.stringify(apiFilters ?? []),
+                filters: JSON.stringify(columnFilters ?? []),
                 globalFilter: globalFilter ?? '',
-                active: activeStatus,
             },
         };
 
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
         try {
             const json = await fetchClient(url);
-            setData(json.worklists || []);
+            setData(json.auditLogs || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -107,91 +98,82 @@ export default function Worklist() {
         fetchData();
     }, [fetchData]);
 
-    // Helper ID generator for loading states and rendering keys
-    const getRowId = (row: MRT_Row<WorklistType> | WorklistType) => {
-        const data = "original" in row ? row.original : row;
-        return `${data.assigneeId}|${data.categoryId}`;
-    };
-
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<WorklistType>) => {
-        const rowId = getRowId(row);
-        if (!window.confirm(`Are you sure you want to delete worklist for Assignee: ${row.original.assigneeId}, Category: ${row.original.categoryId}?`)) return;
+    const handleDelete = useCallback(async (row: MRT_Row<AuditLogType>) => {
+        if (!window.confirm(`Are you sure you want to delete audit log: ${row.original.auditLogId}?`)) return;
 
         const originalData = [...data];
-        setData(prev => prev.filter(d => getRowId(d) !== rowId));
+        setData(prev => prev.filter(d => d.auditLogId !== row.original.auditLogId));
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteWorklist', version: '0.1.0',
-            data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+            host: 'lightapi.net', service: 'workflow', action: 'deleteAuditLog', version: '0.1.0',
+            data: { hostId: row.original.hostId, auditLogId: row.original.auditLogId },
         };
 
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                alert('Failed to delete worklist. Please try again.');
+                alert('Failed to delete audit log. Please try again.');
                 setData(originalData);
                 setRowCount(originalData.length);
             }
         } catch (e) {
-            alert('Failed to delete worklist due to a network error.');
+            alert('Failed to delete audit log due to a network error.');
             setData(originalData);
             setRowCount(originalData.length);
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<WorklistType>) => {
-        const rowId = getRowId(row);
-        setIsUpdateLoading(rowId);
+    const handleUpdate = useCallback(async (row: MRT_Row<AuditLogType>) => {
+        const auditLogId = row.original.auditLogId;
+        setIsUpdateLoading(auditLogId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshWorklist', version: '0.1.0',
-            data: row.original,
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshAuditLog', version: '0.1.0',
+            data: { hostId: row.original.hostId, auditLogId: row.original.auditLogId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateWorklist', {
+            navigate('/app/form/updateAuditLog', {
                 state: {
                     data: freshData,
                     source: location.pathname
                 }
             });
         } catch (error) {
-            console.error("Failed to fetch worklist for update:", error);
-            alert("Could not load the latest worklist data. Please try again.");
+            console.error("Failed to fetch audit log for update:", error);
+            alert("Could not load the latest audit log data. Please try again.");
         } finally {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<WorklistType>[]>(
+    const columns = useMemo<MRT_ColumnDef<AuditLogType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'assigneeId', header: 'Assignee Id' },
-            { accessorKey: 'categoryId', header: 'Category Id' },
-            { accessorKey: 'statusCode', header: 'Status' },
-            { accessorKey: 'appId', header: 'App Id' },
-            { accessorKey: 'updateUser', header: 'Update User' },
+            { accessorKey: 'auditLogId', header: 'Audit Log Id' },
+            { accessorKey: 'sourceTypeId', header: 'Source Type Id' },
+            { accessorKey: 'correlationId', header: 'Correlation Id' },
+            { accessorKey: 'userId', header: 'User Id' },
             {
-                accessorKey: 'updateTs',
-                header: 'Update Time',
+                accessorKey: 'eventTs',
+                header: 'Event Time',
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
-            { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-            {
-                accessorKey: 'active',
-                header: 'Active',
-                filterVariant: 'select',
-                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-                Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-            },
+            { accessorKey: 'success', header: 'Success' },
+            { accessorKey: 'message0', header: 'Message 0' },
+            { accessorKey: 'message1', header: 'Message 1' },
+            { accessorKey: 'message2', header: 'Message 2' },
+            { accessorKey: 'message3', header: 'Message 3' },
+            { accessorKey: 'message', header: 'Message' },
+            { accessorKey: 'userComment', header: 'User Comment' },
+            { accessorKey: 'userComment', header: 'User Comment' },
         ],
         [],
     );
@@ -210,25 +192,25 @@ export default function Worklist() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => getRowId(row),
+        getRowId: (row) => row.auditLogId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Worklist">
+                <Tooltip title="Update Audit Log">
                     <IconButton
                         onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === getRowId(row)}
+                        disabled={isUpdateLoading === row.original.auditLogId}
                     >
-                        {isUpdateLoading === getRowId(row) ? (
+                        {isUpdateLoading === row.original.auditLogId ? (
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
                         )}
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Worklist">
+                <Tooltip title="Delete Audit Log">
                     <IconButton color="error" onClick={() => handleDelete(row)}>
                         <DeleteForeverIcon />
                     </IconButton>
@@ -236,8 +218,8 @@ export default function Worklist() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createWorklist')}>
-                Create New Worklist
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAuditLog')}>
+                Create New Audit Log
             </Button>
         ),
     });

@@ -134,13 +134,13 @@ import DeploymentAdmin from "./pages/deployment/DeploymentAdmin";
 import DeploymentInstance from "./pages/deployment/DeploymentInstance";
 import InstanceApiMcpTool from "./pages/instance/InstanceApiMcpTool";
 import RuleDetail from "./pages/rule/RuleDetail";
-import WfDefinition from "./pages/genai/WfDefinition";
-import Worklist from "./pages/genai/Worklist";
-import ProcessInfo from "./pages/genai/ProcessInfo";
+import WfDefinition from "./pages/workflow/WfDefinition";
+import Worklist from "./pages/workflow/Worklist";
+import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
-import TaskInfo from "./pages/genai/TaskInfo";
-import TaskAsst from "./pages/genai/TaskAsst";
-import AuditLog from "./pages/genai/AuditLog";
+import TaskInfo from "./pages/workflow/TaskInfo";
+import TaskAsst from "./pages/workflow/TaskAsst";
+import AuditLog from "./pages/workflow/AuditLog";
 import Skill from "./pages/genai/Skill";
 import Tool from "./pages/genai/Tool";
 import ToolParam from "./pages/genai/ToolParam";
@@ -409,13 +409,13 @@ const App = () => {
             element={<DeploymentAdmin />}
           />
           <Route path="deployment/instance" element={<DeploymentInstance />} />
-          <Route path="genai/WfDefinition" element={<WfDefinition />} />
-          <Route path="genai/Worklist" element={<Worklist />} />
-          <Route path="genai/ProcessInfo" element={<ProcessInfo />} />
+          <Route path="workflow/WfDefinition" element={<WfDefinition />} />
+          <Route path="workflow/Worklist" element={<Worklist />} />
+          <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
-          <Route path="genai/TaskInfo" element={<TaskInfo />} />
-          <Route path="genai/TaskAsst" element={<TaskAsst />} />
-          <Route path="genai/AuditLog" element={<AuditLog />} />
+          <Route path="workflow/TaskInfo" element={<TaskInfo />} />
+          <Route path="workflow/TaskAsst" element={<TaskAsst />} />
+          <Route path="workflow/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
           <Route path="genai/Tool" element={<Tool />} />
           <Route path="genai/ToolParam" element={<ToolParam />} />

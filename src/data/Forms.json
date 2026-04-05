@@ -15418,6 +15418,55 @@
       "active"
     ]
   },
+  "startWorkflow": {
+    "formId": "startWorkflow",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "workflow",
+        "action": "startWorkflow",
+        "version": "0.1.0",
+        "title": "Start Workflow Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Start Workflow Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "wfDefId": {
+          "type": "string",
+          "title": "Workflow Definition Id",
+          "readonly": true
+        },
+        "input": {
+          "title": "Workflow Input (JSON)",
+          "type": "string",
+          "default": "{}"
+        }
+      },
+      "required": [
+        "hostId",
+        "wfDefId",
+        "input"
+      ]
+    },
+    "form": [
+      "hostId",
+      "wfDefId",
+      {
+        "key": "input",
+        "type": "textarea",
+        "rows": 10
+      }
+    ]
+  },
   "createWorklist": {
     "formId": "createWorklist",
     "actions": [

@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -18,18 +18,21 @@ import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
-type WfDefinitionApiResponse = {
-    wfDefinitions: Array<WfDefinitionType>;
+type TaskAsstApiResponse = {
+    taskAssts: Array<TaskAsstType>;
     total: number;
 };
 
-type WfDefinitionType = {
+type TaskAsstType = {
     hostId: string;
-    wfDefId: string;
-    namespace: string;
-    name: string;
-    version: string;
-    definition: string;
+    taskAsstId: string;
+    taskId: string;
+    assignedTs: string;
+    assigneeId: string;
+    reasonCode: string;
+    unassignedTs?: string;
+    unassignedReason?: string;
+    categoryCode?: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -40,13 +43,13 @@ interface UserState {
     host?: string;
 }
 
-export default function WfDefinition() {
+export default function TaskAsst() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
 
     // Data and fetching state
-    const [data, setData] = useState<WfDefinitionType[]>([]);
+    const [data, setData] = useState<TaskAsstType[]>([]);
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
@@ -80,7 +83,7 @@ export default function WfDefinition() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getWfDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getTaskAsst', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -91,10 +94,9 @@ export default function WfDefinition() {
         };
 
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
         try {
             const json = await fetchClient(url);
-            setData(json.wfDefinitions || []);
+            setData(json.taskAssts || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -109,85 +111,80 @@ export default function WfDefinition() {
     }, [fetchData]);
 
     // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
-        if (!window.confirm(`Are you sure you want to delete workflow definition: ${row.original.name} (ID: ${row.original.wfDefId})?`)) return;
+    const handleDelete = useCallback(async (row: MRT_Row<TaskAsstType>) => {
+        if (!window.confirm(`Are you sure you want to delete task assignment: ${row.original.taskAsstId}?`)) return;
 
         const originalData = [...data];
-        setData(prev => prev.filter(d => d.wfDefId !== row.original.wfDefId));
+        setData(prev => prev.filter(d => d.taskAsstId !== row.original.taskAsstId));
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'deleteWfDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'deleteTaskAsst', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                alert('Failed to delete workflow definition. Please try again.');
+                alert('Failed to delete task assignment. Please try again.');
                 setData(originalData);
                 setRowCount(originalData.length);
             }
         } catch (e) {
-            alert('Failed to delete workflow definition due to a network error.');
+            alert('Failed to delete task assignment due to a network error.');
             setData(originalData);
             setRowCount(originalData.length);
         }
     }, [data]);
 
-    const handleUpdate = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
-        const wfDefId = row.original.wfDefId;
-        setIsUpdateLoading(wfDefId);
+    const handleUpdate = useCallback(async (row: MRT_Row<TaskAsstType>) => {
+        const taskAsstId = row.original.taskAsstId;
+        setIsUpdateLoading(taskAsstId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'genai', action: 'getFreshWfDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshTaskAsst', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateWfDefinition', {
+            navigate('/app/form/updateTaskAsst', {
                 state: {
                     data: freshData,
                     source: location.pathname
                 }
             });
         } catch (error) {
-            console.error("Failed to fetch workflow definition for update:", error);
-            alert("Could not load the latest workflow definition data. Please try again.");
+            console.error("Failed to fetch task assignment for update:", error);
+            alert("Could not load the latest task assignment data. Please try again.");
         } finally {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
 
     // Column definitions
-    const columns = useMemo<MRT_ColumnDef<WfDefinitionType>[]>(
+    const columns = useMemo<MRT_ColumnDef<TaskAsstType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'wfDefId', header: 'Wf Def Id' },
-            { accessorKey: 'namespace', header: 'Namespace' },
-            { accessorKey: 'name', header: 'Name' },
-            { accessorKey: 'version', header: 'Version' },
+            { accessorKey: 'taskAsstId', header: 'Task Asst Id' },
+            { accessorKey: 'taskId', header: 'Task Id' },
             {
-                accessorKey: 'definition', header: 'Definition',
-                Cell: ({ cell }) => (
-                    <Tooltip title={cell.getValue<string>()}>
-                        <span style={{
-                            display: 'inline-block',
-                            maxWidth: '200px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}>
-                            {cell.getValue<string>()}
-                        </span>
-                    </Tooltip>
-                )
+                accessorKey: 'assignedTs',
+                header: 'Assigned Time',
+                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
+            { accessorKey: 'assigneeId', header: 'Assignee' },
+            { accessorKey: 'reasonCode', header: 'Reason Code' },
+            { accessorKey: 'categoryCode', header: 'Category' },
+            {
+                accessorKey: 'unassignedTs',
+                header: 'Unassigned Time',
+                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+            },
+            { accessorKey: 'unassignedReason', header: 'Unassigned Reason' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
                 accessorKey: 'updateTs',
@@ -220,25 +217,25 @@ export default function WfDefinition() {
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => row.wfDefId,
+        getRowId: (row) => row.taskAsstId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Workflow Definition">
+                <Tooltip title="Update Task Asst">
                     <IconButton
                         onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.wfDefId}
+                        disabled={isUpdateLoading === row.original.taskAsstId}
                     >
-                        {isUpdateLoading === row.original.wfDefId ? (
+                        {isUpdateLoading === row.original.taskAsstId ? (
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
                         )}
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Workflow Definition">
+                <Tooltip title="Delete Task Asst">
                     <IconButton color="error" onClick={() => handleDelete(row)}>
                         <DeleteForeverIcon />
                     </IconButton>
@@ -246,8 +243,8 @@ export default function WfDefinition() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createWfDefinition')}>
-                Create New WfDefinition
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTaskAsst')}>
+                Create New Task Asst
             </Button>
         ),
     });
