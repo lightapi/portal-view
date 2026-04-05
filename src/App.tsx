@@ -140,7 +140,7 @@ import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
 import TaskInfo from "./pages/workflow/TaskInfo";
 import TaskAsst from "./pages/workflow/TaskAsst";
-import AuditLog from "./pages/genai/AuditLog";
+import AuditLog from "./pages/workflow/AuditLog";
 import Skill from "./pages/genai/Skill";
 import Tool from "./pages/genai/Tool";
 import ToolParam from "./pages/genai/ToolParam";
