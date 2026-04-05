@@ -276,7 +276,7 @@ const structure = [
       { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
       { label: "Task Info", link: "/app/workflow/TaskInfo" },
       { label: "Task Asst", link: "/app/workflow/TaskAsst" },
-      { label: "Audit Log", link: "/app/genai/AuditLog" },
+      { label: "Audit Log", link: "/app/workflow/AuditLog" },
       { label: "Skill", link: "/app/genai/Skill" },
       { label: "Tool", link: "/app/genai/Tool" },
       { label: "Tool Param", link: "/app/genai/ToolParam" },
