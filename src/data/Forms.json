@@ -15293,7 +15293,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createWfDefinition",
         "version": "0.1.0",
         "title": "Create Workflow Definition Form",
@@ -15352,7 +15352,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateWfDefinition",
         "version": "0.1.0",
         "title": "Update Workflow Definition Form",
@@ -15423,7 +15423,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createWorklist",
         "version": "0.1.0",
         "title": "Create Worklist Form",
@@ -15481,7 +15481,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateWorklist",
         "version": "0.1.0",
         "title": "Update Worklist Form",
@@ -15544,7 +15544,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createProcessInfo",
         "version": "0.1.0",
         "title": "Create Process Info Form",
@@ -15631,7 +15631,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateProcessInfo",
         "version": "0.1.0",
         "title": "Update Process Info Form",
@@ -15871,7 +15871,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createTaskInfo",
         "version": "0.1.0",
         "title": "Create Task Info Form",
@@ -15956,7 +15956,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateTaskInfo",
         "version": "0.1.0",
         "title": "Update Task Info Form",
@@ -16053,7 +16053,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createTaskAsst",
         "version": "0.1.0",
         "title": "Create Task Asst Form",
@@ -16121,7 +16121,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateTaskAsst",
         "version": "0.1.0",
         "title": "Update Task Asst Form",
@@ -16202,7 +16202,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "createAuditLog",
         "version": "0.1.0",
         "title": "Create Audit Log Form",
@@ -16293,7 +16293,7 @@
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "genai",
+        "service": "workflow",
         "action": "updateAuditLog",
         "version": "0.1.0",
         "title": "Update Audit Log Form",
