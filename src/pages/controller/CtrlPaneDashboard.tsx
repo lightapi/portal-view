@@ -71,6 +71,36 @@ type BufferedNotification = {
 };
 
 const DB_LIMIT = 1000;
+function isCtrlPaneDebugEnabled() {
+  if (import.meta.env.DEV) {
+    return true;
+  }
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  try {
+    const url = new URL(window.location.href);
+    const queryValue = url.searchParams.get('ctrlPaneDebug');
+    if (queryValue === '1' || queryValue === 'true') {
+      return true;
+    }
+    const storageValue = window.localStorage.getItem('ctrlPaneDebug');
+    return storageValue === '1' || storageValue === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function debugCtrlPane(message: string, details?: unknown) {
+  if (!isCtrlPaneDebugEnabled()) {
+    return;
+  }
+  if (details === undefined) {
+    console.log(`[CtrlPaneDashboard] ${message}`);
+    return;
+  }
+  console.log(`[CtrlPaneDashboard] ${message}`, details);
+}
 
 const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstanceView => ({
   runtimeInstanceId: db.runtimeInstanceId,
@@ -355,6 +385,17 @@ function CtrlPaneDashboard() {
       dbInstances.forEach((instance) => {
         dbMap[instance.runtimeInstanceId] = instance;
       });
+      debugCtrlPane('Loaded baseline runtime instances', {
+        count: dbInstances.length,
+        runtimeInstanceIds: dbInstances.map((instance) => instance.runtimeInstanceId),
+        rows: dbInstances.map((instance) => ({
+          runtimeInstanceId: instance.runtimeInstanceId,
+          serviceId: instance.serviceId,
+          envTag: instance.envTag,
+          address: instance.metadata.address,
+          port: instance.metadata.port,
+        })),
+      });
       setInstances(dbMap);
       setHasLoadedOnce(true);
 
@@ -380,9 +421,19 @@ function CtrlPaneDashboard() {
           return;
         }
 
+        const liveInstances = Array.isArray(liveResponse?.instances) ? liveResponse.instances : [];
+        debugCtrlPane('Received live runtime instances from controller', {
+          args: liveArgs,
+          count: liveInstances.length,
+          runtimeInstanceIds: liveInstances.map((instance: any) =>
+            instance?.runtimeInstanceId || instance?.runtime_instance_id || null,
+          ),
+          rows: liveInstances,
+        });
+
         const reconciledInstances = reconcileInstances(
           dbMap,
-          Array.isArray(liveResponse?.instances) ? liveResponse.instances : [],
+          liveInstances,
           currentFilters,
           currentGlobalFilter,
           matchesFilter,
@@ -449,14 +500,17 @@ function CtrlPaneDashboard() {
 
       if (isSyncingRef.current) {
         bufferedNotificationsRef.current.push({ method, params });
+        debugCtrlPane('Buffered live notification during sync', { method, params });
         return;
       }
 
       const runtimeInstanceId = getNotificationRuntimeInstanceId(params);
       if (!runtimeInstanceId && method !== 'notifications/instance_disconnected') {
+        debugCtrlPane('Ignored live notification without runtimeInstanceId', { method, params });
         return;
       }
 
+      debugCtrlPane('Applying live notification', { method, runtimeInstanceId, params });
       setInstances((currentInstances) =>
         applyNotificationToInstances(
           currentInstances,
@@ -813,6 +867,8 @@ function reconcileInstances(
   ) => boolean,
 ) {
   const reconciledInstances: Record<RuntimeInstanceId, RuntimeInstanceView> = {};
+  const unmatchedLiveInstances: RuntimeInstanceView[] = [];
+  const inactiveBaselineInstances: RuntimeInstanceView[] = [];
 
   Object.values(baselineInstances).forEach((instance) => {
     reconciledInstances[instance.runtimeInstanceId] = {
@@ -836,10 +892,41 @@ function reconcileInstances(
       };
       continue;
     }
+    unmatchedLiveInstances.push(normalizedLiveInstance);
     if (matchesFilter(normalizedLiveInstance, columnFilters, globalFilter)) {
       reconciledInstances[normalizedLiveInstance.runtimeInstanceId] = normalizedLiveInstance;
     }
   }
+
+  Object.values(reconciledInstances).forEach((instance) => {
+    if (
+      baselineInstances[instance.runtimeInstanceId] &&
+      instance.liveStatus !== 'active'
+    ) {
+      inactiveBaselineInstances.push(instance);
+    }
+  });
+
+  debugCtrlPane('Reconciled baseline and live runtime instances', {
+    baselineCount: Object.keys(baselineInstances).length,
+    liveCount: liveInstances.length,
+    unmatchedLiveInstances: unmatchedLiveInstances.map((instance) => ({
+      runtimeInstanceId: instance.runtimeInstanceId,
+      serviceId: instance.serviceId,
+      envTag: instance.envTag,
+      address: instance.metadata.address,
+      port: instance.metadata.port,
+      liveStatus: instance.liveStatus,
+    })),
+    inactiveBaselineInstances: inactiveBaselineInstances.map((instance) => ({
+      runtimeInstanceId: instance.runtimeInstanceId,
+      serviceId: instance.serviceId,
+      envTag: instance.envTag,
+      address: instance.metadata.address,
+      port: instance.metadata.port,
+      liveStatus: instance.liveStatus,
+    })),
+  });
 
   return reconciledInstances;
 }
@@ -867,6 +954,11 @@ function applyNotificationToInstances(
   if (method === 'notifications/instance_disconnected') {
     const runtimeInstanceId = getNotificationRuntimeInstanceId(params);
     if (!runtimeInstanceId || !currentInstances[runtimeInstanceId]) {
+      debugCtrlPane('Ignored disconnect notification without matching current instance', {
+        method,
+        runtimeInstanceId,
+        params,
+      });
       return currentInstances;
     }
     return {
@@ -884,6 +976,7 @@ function applyNotificationToInstances(
     params && typeof params === 'object' && 'instance' in params ? params.instance : params;
   const normalizedInstance = normalizeLiveSnapshotInstance(rawPayload);
   if (!normalizedInstance) {
+    debugCtrlPane('Ignored live notification with unparseable payload', { method, params });
     return currentInstances;
   }
 
@@ -899,8 +992,22 @@ function applyNotificationToInstances(
   }
 
   if (!matchesFilter(normalizedInstance, columnFilters, globalFilter)) {
+    debugCtrlPane('Ignored live notification that did not match current filters', {
+      method,
+      runtimeInstanceId: normalizedInstance.runtimeInstanceId,
+      params,
+    });
     return currentInstances;
   }
+
+  debugCtrlPane('Inserted live-only runtime instance from notification', {
+    method,
+    runtimeInstanceId: normalizedInstance.runtimeInstanceId,
+    serviceId: normalizedInstance.serviceId,
+    envTag: normalizedInstance.envTag,
+    address: normalizedInstance.metadata.address,
+    port: normalizedInstance.metadata.port,
+  });
 
   return {
     ...currentInstances,
