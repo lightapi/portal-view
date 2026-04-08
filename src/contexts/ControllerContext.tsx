@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useReducer, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef, useCallback, useState } from 'react';
 import { McpClient } from '../controller/mcpClient';
 import Cookies from 'universal-cookie';
 import { useUserState } from './UserContext';
@@ -33,6 +33,8 @@ type ControllerNotificationHandler = (method: string, params: any) => void;
 interface ControllerContextValue extends ControllerState {
   callTool: (name: string, args: any) => Promise<any>;
   subscribeToNotifications: (handler: ControllerNotificationHandler) => () => void;
+  requestConnection: () => void;
+  releaseConnection: () => void;
 }
 
 const ControllerContext = createContext<ControllerContextValue | undefined>(undefined);
@@ -45,8 +47,25 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
   const activeClientIdRef = useRef(0);
   const notificationHandlersRef = useRef(new Set<ControllerNotificationHandler>());
 
+  const connectionCountRef = useRef(0);
+  const [shouldConnect, setShouldConnect] = useState(false);
+
+  const requestConnection = useCallback(() => {
+    connectionCountRef.current += 1;
+    if (connectionCountRef.current === 1) {
+      setShouldConnect(true);
+    }
+  }, []);
+
+  const releaseConnection = useCallback(() => {
+    connectionCountRef.current = Math.max(0, connectionCountRef.current - 1);
+    if (connectionCountRef.current === 0) {
+      setShouldConnect(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !shouldConnect) return;
 
     // Follow the same BFF connection pattern as Chat.tsx:
     // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
@@ -137,7 +156,7 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
       }
       mcpClient.close();
     };
-  }, [isAuthenticated, host]);
+  }, [isAuthenticated, host, shouldConnect]);
 
   const callTool = useCallback(async (name: string, args: any) => {
     if (!mcpClientRef.current) throw new Error('Control Plane not initialized');
@@ -155,6 +174,8 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
     ...state,
     callTool,
     subscribeToNotifications,
+    requestConnection,
+    releaseConnection,
   };
 
   return <ControllerContext.Provider value={value}>{children}</ControllerContext.Provider>;
@@ -166,4 +187,19 @@ export function useController() {
     throw new Error('useController must be used within a ControllerProvider');
   }
   return context;
+}
+
+export function useControllerConnection() {
+  const context = useContext(ControllerContext);
+  if (context === undefined) {
+    throw new Error('useControllerConnection must be used within a ControllerProvider');
+  }
+  const { requestConnection, releaseConnection } = context;
+
+  useEffect(() => {
+    requestConnection();
+    return () => {
+      releaseConnection();
+    };
+  }, [requestConnection, releaseConnection]);
 }

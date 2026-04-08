@@ -82,6 +82,7 @@ import ConfigSnapshotProductProperty from "./pages/snapshot/ConfigSnapshotProduc
 import ConfigSnapshotProductVersionProperty from "./pages/snapshot/ConfigSnapshotProductVersionProperty";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
+import ControllerLayout from "./pages/controller/ControllerLayout";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
 import Logger from "./pages/controller/Logger";
@@ -370,16 +371,18 @@ const App = () => {
             path="config/configSnapshotProductVersionProperty"
             element={<ConfigSnapshotProductVersionProperty />}
           />
-          <Route path="controller/services" element={<CtrlPaneDashboard />} />
-          <Route path="controller/check" element={<HealthCheck />} />
-          <Route path="controller/info" element={<ServerInfo />} />
-          <Route path="controller/logger" element={<Logger />} />
-          <Route path="controller/logViewer" element={<Logger />} />
-          <Route path="controller/loggerConfig" element={<Logger />} />
-          <Route path="controller/logContent" element={<LogContent />} />
-          <Route path="controller/chaos" element={<ChaosMonkey />} />
-          <Route path="controller/module" element={<ModuleManager />} />
-          <Route path="controller/cache" element={<CacheExplorer />} />
+          <Route element={<ControllerLayout />}>
+            <Route path="controller/services" element={<CtrlPaneDashboard />} />
+            <Route path="controller/check" element={<HealthCheck />} />
+            <Route path="controller/info" element={<ServerInfo />} />
+            <Route path="controller/logger" element={<Logger />} />
+            <Route path="controller/logViewer" element={<Logger />} />
+            <Route path="controller/loggerConfig" element={<Logger />} />
+            <Route path="controller/logContent" element={<LogContent />} />
+            <Route path="controller/chaos" element={<ChaosMonkey />} />
+            <Route path="controller/module" element={<ModuleManager />} />
+            <Route path="controller/cache" element={<CacheExplorer />} />
+          </Route>
           <Route path="org/OrgAdmin" element={<OrgAdmin />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
           <Route path="host/Host" element={<Host />} />
