@@ -95,7 +95,9 @@ export default function WfDefinition() {
 
         try {
             const json = await fetchClient(url);
-            console.log("json", json);
+            if (import.meta.env.DEV) {
+                console.log('json', json);
+            }
             setData(json.workflows || []);
             setRowCount(json.total || 0);
         } catch (error) {
