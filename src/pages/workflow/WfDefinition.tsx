@@ -20,7 +20,7 @@ import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
 type WfDefinitionApiResponse = {
-    wfDefinitions: Array<WfDefinitionType>;
+    workflows: Array<WfDefinitionType>;
     total: number;
 };
 
@@ -81,7 +81,7 @@ export default function WfDefinition() {
         });
 
         const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'getWorkflowDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getWfDefinition', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
@@ -95,7 +95,8 @@ export default function WfDefinition() {
 
         try {
             const json = await fetchClient(url);
-            setData(json.wfDefinitions || []);
+            console.log("json", json);
+            setData(json.workflows || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -118,7 +119,7 @@ export default function WfDefinition() {
         setRowCount(prev => prev - 1);
 
         const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'deleteWorkflowDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'deleteWfDefinition', version: '0.1.0',
             data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
         };
 
@@ -141,7 +142,7 @@ export default function WfDefinition() {
         setIsUpdateLoading(wfDefId);
 
         const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'getFreshWorkflowDefinition', version: '0.1.0',
+            host: 'lightapi.net', service: 'workflow', action: 'getFreshWfDefinition', version: '0.1.0',
             data: row.original,
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -164,7 +165,7 @@ export default function WfDefinition() {
             setIsUpdateLoading(null);
         }
     }, [navigate, location.pathname]);
-    
+
     const handleStart = useCallback((row: MRT_Row<WfDefinitionType>) => {
         navigate('/app/form/startWorkflow', {
             state: {
