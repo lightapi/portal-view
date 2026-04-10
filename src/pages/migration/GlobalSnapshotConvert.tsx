@@ -112,12 +112,23 @@ export default function GlobalSnapshotConvert() {
     const file = event.target.files?.[0];
     if (!file) return;
     pushDebugStep(`Loading snapshot file ${file.name} (${file.size} bytes).`);
-    const text = await file.text();
-    setError("");
-    setSnapshotText(text);
-    setResult("");
-    pushDebugStep(`Snapshot file loaded into editor (${text.length} characters).`);
-    event.target.value = "";
+    try {
+      const text = await file.text();
+      setError("");
+      setSnapshotText(text);
+      setResult("");
+      pushDebugStep(`Snapshot file loaded into editor (${text.length} characters).`);
+    } catch (readError) {
+      pushDebugStep(
+        `Failed to load snapshot file ${file.name}: ${
+          readError instanceof Error ? readError.message : String(readError)
+        }.`,
+      );
+      setError("Unable to read the selected snapshot file. Please try again or choose a different file.");
+      setResult("");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const handleTargetHostChange = (event: SelectChangeEvent<string>) => {
