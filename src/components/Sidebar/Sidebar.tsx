@@ -192,6 +192,8 @@ const structure = [
     children: [
       { label: "Export", link: "/app/form/exportPortalEvent" },
       { label: "Import", link: "/app/form/importPortalEvent" },
+      { label: "Global Export", link: "/app/migration/export" },
+      { label: "Convert Snapshot", link: "/app/migration/convert" },
     ],
   },
   {
