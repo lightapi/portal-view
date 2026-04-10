@@ -167,9 +167,23 @@ export default function GlobalSnapshotExport() {
     );
   };
 
+  const getSnapshotStorageKey = (hostId: string) =>
+    `${SNAPSHOT_STORAGE_KEY_PREFIX}${hostId}`;
+
+  const removeLegacySnapshotEntries = (hostId: string) => {
+    const legacySnapshotStorageKeyPrefix = `${SNAPSHOT_STORAGE_KEY_PREFIX}${hostId}:`;
+    for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(legacySnapshotStorageKeyPrefix)) {
+        sessionStorage.removeItem(key);
+      }
+    }
+  };
+
   const handleSendToConvert = () => {
     if (!result) return;
-    const snapshotStorageKey = `${SNAPSHOT_STORAGE_KEY_PREFIX}${sourceHostId}:${Date.now()}`;
+    const snapshotStorageKey = getSnapshotStorageKey(sourceHostId);
+    removeLegacySnapshotEntries(sourceHostId);
     sessionStorage.setItem(snapshotStorageKey, result);
     navigate("/app/migration/convert", {
       state: { snapshotStorageKey, sourceHostId },
