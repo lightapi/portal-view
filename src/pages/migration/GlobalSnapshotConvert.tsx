@@ -10,6 +10,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  SelectChangeEvent,
   Stack,
   TextField,
   Typography,
@@ -17,6 +18,7 @@ import {
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import fetchClient from "../../utils/fetchClient";
+import downloadJson from "../../utils/downloadJson";
 import { useUserState } from "../../contexts/UserContext";
 
 type HostType = {
@@ -27,21 +29,9 @@ type HostType = {
 };
 
 type LocationState = {
-  snapshot?: string;
   sourceHostId?: string;
+  snapshotStorageKey?: string;
 };
-
-function downloadJson(filename: string, data: string) {
-  const blob = new Blob([data], { type: "application/json" });
-  const downloadUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = downloadUrl;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(downloadUrl);
-}
 
 export default function GlobalSnapshotConvert() {
   const location = useLocation();
@@ -50,7 +40,7 @@ export default function GlobalSnapshotConvert() {
 
   const [hosts, setHosts] = useState<HostType[]>([]);
   const [targetHostId, setTargetHostId] = useState(userHost || "");
-  const [snapshotText, setSnapshotText] = useState(routeState.snapshot || "");
+  const [snapshotText, setSnapshotText] = useState("");
   const [result, setResult] = useState("");
   const [loadingHosts, setLoadingHosts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -59,9 +49,24 @@ export default function GlobalSnapshotConvert() {
 
   const pushDebugStep = (message: string) => {
     const stamped = `${new Date().toISOString()}  ${message}`;
-    console.debug("[GlobalSnapshotConvert]", stamped);
+    if (import.meta.env.DEV) {
+      console.debug("[GlobalSnapshotConvert]", stamped);
+    }
     setDebugSteps((current) => [...current, stamped]);
   };
+
+  useEffect(() => {
+    if (!routeState.snapshotStorageKey) return;
+
+    const storedSnapshot = sessionStorage.getItem(routeState.snapshotStorageKey);
+    if (!storedSnapshot) {
+      setError("Snapshot data from the export page is no longer available. Please export again.");
+      return;
+    }
+
+    setSnapshotText(storedSnapshot);
+    sessionStorage.removeItem(routeState.snapshotStorageKey);
+  }, [routeState.snapshotStorageKey]);
 
   useEffect(() => {
     const loadHosts = async () => {
@@ -108,10 +113,20 @@ export default function GlobalSnapshotConvert() {
     if (!file) return;
     pushDebugStep(`Loading snapshot file ${file.name} (${file.size} bytes).`);
     const text = await file.text();
+    setError("");
     setSnapshotText(text);
     setResult("");
     pushDebugStep(`Snapshot file loaded into editor (${text.length} characters).`);
     event.target.value = "";
+  };
+
+  const handleTargetHostChange = (event: SelectChangeEvent<string>) => {
+    setTargetHostId(event.target.value);
+  };
+
+  const handleSnapshotTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setError("");
+    setSnapshotText(event.target.value);
   };
 
   const handleConvert = async () => {
@@ -205,7 +220,7 @@ export default function GlobalSnapshotConvert() {
                 labelId="target-host-label"
                 value={targetHostId}
                 label="Target Host"
-                onChange={(event) => setTargetHostId(event.target.value)}
+                onChange={handleTargetHostChange}
               >
                 {hosts.map((host) => (
                   <MenuItem key={host.hostId} value={host.hostId}>
@@ -259,7 +274,7 @@ export default function GlobalSnapshotConvert() {
             <Typography variant="h6">Snapshot JSON Input</Typography>
             <TextField
               value={snapshotText}
-              onChange={(event) => setSnapshotText(event.target.value)}
+              onChange={handleSnapshotTextChange}
               multiline
               minRows={14}
               fullWidth

@@ -12,6 +12,7 @@ import {
   OutlinedInput,
   Paper,
   Select,
+  SelectChangeEvent,
   Stack,
   TextField,
   Typography,
@@ -19,6 +20,7 @@ import {
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import TransformIcon from "@mui/icons-material/Transform";
 import fetchClient from "../../utils/fetchClient";
+import downloadJson from "../../utils/downloadJson";
 import { useUserState } from "../../contexts/UserContext";
 
 type HostType = {
@@ -73,17 +75,7 @@ const ENTITY_OPTIONS = [
   "config_snapshot",
 ];
 
-function downloadJson(filename: string, data: string) {
-  const blob = new Blob([data], { type: "application/json" });
-  const downloadUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = downloadUrl;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(downloadUrl);
-}
+const SNAPSHOT_STORAGE_KEY_PREFIX = "globalSnapshotExport:";
 
 export default function GlobalSnapshotExport() {
   const navigate = useNavigate();
@@ -177,9 +169,20 @@ export default function GlobalSnapshotExport() {
 
   const handleSendToConvert = () => {
     if (!result) return;
+    const snapshotStorageKey = `${SNAPSHOT_STORAGE_KEY_PREFIX}${sourceHostId}:${Date.now()}`;
+    sessionStorage.setItem(snapshotStorageKey, result);
     navigate("/app/migration/convert", {
-      state: { snapshot: result, sourceHostId },
+      state: { snapshotStorageKey, sourceHostId },
     });
+  };
+
+  const handleSourceHostChange = (event: SelectChangeEvent<string>) => {
+    setSourceHostId(event.target.value);
+  };
+
+  const handleEntityTypesChange = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    setEntityTypes(typeof value === "string" ? value.split(",") : value);
   };
 
   return (
@@ -211,7 +214,7 @@ export default function GlobalSnapshotExport() {
                 labelId="source-host-label"
                 value={sourceHostId}
                 label="Source Host"
-                onChange={(event) => setSourceHostId(event.target.value)}
+                onChange={handleSourceHostChange}
               >
                 {hosts.map((host) => (
                   <MenuItem key={host.hostId} value={host.hostId}>
@@ -229,7 +232,7 @@ export default function GlobalSnapshotExport() {
                 labelId="entity-types-label"
                 multiple
                 value={entityTypes}
-                onChange={(event) => setEntityTypes(event.target.value as string[])}
+                onChange={handleEntityTypesChange}
                 input={<OutlinedInput label="Entity Types" />}
                 renderValue={(selected) => (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
