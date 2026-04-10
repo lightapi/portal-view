@@ -1,6 +1,8 @@
 import React from "react";
 import Cookies from "universal-cookie";
 import fetchClient from "../utils/fetchClient";
+import { config, isSsoEnabled } from "../../config";
+import type { IPublicClientApplication } from "@azure/msal-browser";
 
 interface UserState {
   isAuthenticated: boolean;
@@ -131,6 +133,7 @@ export {
   UserProvider,
   useUserState,
   useUserDispatch,
+  syncUserFromCookies,
   loginUser,
   signOut,
   signUp,
@@ -142,6 +145,26 @@ export {
   createOrg,
   userHost,
 };
+
+function syncUserFromCookies(dispatch: React.Dispatch<UserAction>) {
+  const cookies = new Cookies();
+  const userId = cookies.get("userId") ?? null;
+  const email = cookies.get("email") ?? userId;
+  const eid = cookies.get("eid") ?? null;
+  const host = cookies.get("host") ?? null;
+  const encodedRoles = cookies.get("roles");
+  const roles = encodedRoles ? atob(encodedRoles) : null;
+
+  dispatch({
+    type: "LOGIN_SUCCESS",
+    isAuthenticated: !!userId,
+    email,
+    userId,
+    eid,
+    host,
+    roles,
+  });
+}
 
 function loginUser(
   dispatch: React.Dispatch<UserAction>,
@@ -169,15 +192,39 @@ function loginUser(
   }
 }
 
-function signOut(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
+async function signOut(
+  dispatch: React.Dispatch<UserAction>,
+  navigate: (path: string, options?: any) => void,
+  userId?: string,
+  msalInstance?: IPublicClientApplication,
+) {
   dispatch({ type: "SIGN_OUT_SUCCESS" });
-  fetchClient("/logout")
+
+  if (isSsoEnabled && msalInstance) {
+    try {
+      await fetchClient("/auth/ms/logout");
+    } catch (error) {
+      console.error("backend logout error=", error);
+    }
+
+    const normalizedBasePath =
+      config.basePath && config.basePath !== "/"
+        ? config.basePath.replace(/\/$/, "")
+        : "";
+    
+    await msalInstance.logoutRedirect({
+      postLogoutRedirectUri: `${window.location.origin}${normalizedBasePath}/redirect`,
+    });
+    return;
+  } else {
+    fetchClient("/logout")
     .then((data) => {
       navigate("/app/dashboard");
     })
     .catch((error) => {
       console.log("error=", error);
     });
+  }
 }
 
 function changePassword(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
