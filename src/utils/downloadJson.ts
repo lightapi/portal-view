@@ -4,8 +4,14 @@ export default function downloadJson(filename: string, data: string) {
   const anchor = document.createElement("a");
   anchor.href = downloadUrl;
   anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(downloadUrl);
+
+  try {
+    document.body.appendChild(anchor);
+    anchor.click();
+  } finally {
+    if (anchor.parentNode === document.body) {
+      document.body.removeChild(anchor);
+    }
+    URL.revokeObjectURL(downloadUrl);
+  }
 }
