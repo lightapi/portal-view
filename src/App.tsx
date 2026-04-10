@@ -156,6 +156,8 @@ import PromotionExport from "./pages/promotion/PromotionExport";
 import PromotionImport from "./pages/promotion/PromotionImport";
 import PromotionHistory from "./pages/promotion/PromotionHistory";
 import PromotionDiffView from "./pages/promotion/PromotionDiffView";
+import GlobalSnapshotExport from "./pages/migration/GlobalSnapshotExport";
+import GlobalSnapshotConvert from "./pages/migration/GlobalSnapshotConvert";
 import Chat from "./pages/genai/Chat";
 import { useEffect } from "react";
 
@@ -434,6 +436,8 @@ const App = () => {
           <Route path="promotion/import" element={<PromotionImport />} />
           <Route path="promotion/history" element={<PromotionHistory />} />
           <Route path="promotion/diff" element={<PromotionDiffView />} />
+          <Route path="migration/export" element={<GlobalSnapshotExport />} />
+          <Route path="migration/convert" element={<GlobalSnapshotConvert />} />
         </Route>
         {/* Catch all route for 404 */}
         <Route path="*" element={<Error />} />
