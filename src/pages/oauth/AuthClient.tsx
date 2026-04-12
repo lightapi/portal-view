@@ -204,6 +204,7 @@ export default function AuthClient() {
       { accessorKey: 'redirectUri', header: 'Redirect URI' },
       { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
       { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
       { accessorKey: 'aggregateVersion', header: 'Version' },
