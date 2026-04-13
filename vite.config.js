@@ -25,6 +25,8 @@ export default defineConfig(({ mode }) => {
   const isHttpsEnabled = String(env.VITE_HTTPS_ENABLED || "false") === "true";
   const httpsKeyPath = env.VITE_HTTPS_KEY_PATH;
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
+  const parsedPort = Number(env.VITE_PORT);
+  const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
 
   const httpsConfig =
     isHttpsEnabled && httpsKeyPath && httpsCertPath
@@ -54,7 +56,7 @@ export default defineConfig(({ mode }) => {
       include: ["ag-grid-community", "ag-grid-react"],
     },
     server: {
-      port: env.VITE_PORT || 3000,
+      port,
       cors: true,
       https: httpsConfig,
       proxy: {

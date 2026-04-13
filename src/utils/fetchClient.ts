@@ -65,7 +65,7 @@ async function fetchClient(endpoint: string, options: any = {}) {
         }
     }
 
-    const config = {
+    const requestConfig = {
         ...options,
         headers: {
             ...defaultHeaders,
@@ -75,7 +75,7 @@ async function fetchClient(endpoint: string, options: any = {}) {
         credentials: 'include',
     };
 
-    const response = await fetch(url, config);
+    const response = await fetch(url, requestConfig);
 
     if (!response.ok) {
         let error;
