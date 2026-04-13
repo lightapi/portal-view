@@ -3,6 +3,7 @@ import { Person as AccountIcon } from "@mui/icons-material";
 import { IconButton, Menu, MenuItem, Typography, Box } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import type { IPublicClientApplication } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
 import {
   changePassword,
@@ -20,16 +21,24 @@ import {
 import { config, isSsoEnabled } from "../../../config";
 import { loginRequest } from "../../authConfig";
 
-export default function ProfileMenu() {
+function ProfileMenuContent({
+  msalInstance,
+}: {
+  msalInstance?: IPublicClientApplication;
+}) {
   const theme = useTheme();
   const [profileMenu, setProfileMenu] = useState<null | HTMLElement>(null);
   const userDispatch = useUserDispatch();
   const { isAuthenticated, userId, email, roles } = useUserState();
   const navigate = useNavigate();
-  const { instance } = useMsal();
 
   const signIn = async () => {
     if (isSsoEnabled) {
+      if (!msalInstance) {
+        console.error("MSAL instance unavailable while SSO is enabled");
+        return;
+      }
+
       const normalizedBasePath =
         config.basePath && config.basePath !== "/"
           ? config.basePath.replace(/\/$/, "")
@@ -39,7 +48,7 @@ export default function ProfileMenu() {
         `${window.location.origin}${normalizedBasePath}/redirect`;
 
       try {
-        await instance.loginRedirect({
+        await msalInstance.loginRedirect({
           ...loginRequest,
           redirectUri: msalRedirectUri,
         });
@@ -218,7 +227,7 @@ export default function ProfileMenu() {
               <Typography
                 sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
                 color="primary"
-                onClick={() => handleMenuItemClick(signOut, instance)}
+                onClick={() => handleMenuItemClick(signOut, msalInstance)}
               >
                 Sign Out
               </Typography>
@@ -249,4 +258,13 @@ export default function ProfileMenu() {
       </Menu>
     </>
   );
+}
+
+function ProfileMenuWithMsal() {
+  const { instance } = useMsal();
+  return <ProfileMenuContent msalInstance={instance} />;
+}
+
+export default function ProfileMenu() {
+  return isSsoEnabled ? <ProfileMenuWithMsal /> : <ProfileMenuContent />;
 }

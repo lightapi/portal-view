@@ -228,18 +228,13 @@ const RedirectAfterMsal = ({ to }: { to: string }) => {
   return null;
 };
 
-const App = () => {
+const MsalSessionBootstrap = () => {
   const isAuthenticated = useIsAuthenticated();
-  const basename = config?.basePath || "/";
   const { instance, accounts } = useMsal();
   const userDispatch = useUserDispatch();
   const exchangedAccountRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isSsoEnabled) {
-      return;
-    }
-
     if (!isAuthenticated || accounts.length === 0) {
       return;
     }
@@ -288,17 +283,30 @@ const App = () => {
     void runTokenExchange();
   }, [isAuthenticated, accounts, instance, userDispatch]);
 
+  return null;
+};
+
+const App = () => {
+  const basename = config?.basePath || "/";
+
   return (
     <BrowserRouter
       basename={basename}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
+      {isSsoEnabled ? <MsalSessionBootstrap /> : null}
       <Routes>
         {/* Redirect from root to dashboard preserving query parameters */}
         <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
         <Route
           path="/redirect"
-          element={<RedirectAfterMsal to="/app/dashboard" />}
+          element={
+            isSsoEnabled ? (
+              <RedirectAfterMsal to="/app/dashboard" />
+            ) : (
+              <RedirectWithQuery to="/app/dashboard" />
+            )
+          }
         />
 
         {/* Layout routes */}
