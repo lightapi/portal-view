@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^5.5.0",
+    "@azure/msal-react": "^5.0.7",
     "@babel/runtime": "^7.28.4",
     "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/language": "^6.12.1",
@@ -70,6 +72,5 @@
     "globals": "^16.5.0",
     "typescript": "^5.8.3",
     "vite": "^7.3.2"
-  },
-  "packageManager": "yarn@4.13.0"
+  }
 }

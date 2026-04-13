@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Navigate, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -159,7 +165,13 @@ import PromotionDiffView from "./pages/promotion/PromotionDiffView";
 import GlobalSnapshotExport from "./pages/migration/GlobalSnapshotExport";
 import GlobalSnapshotConvert from "./pages/migration/GlobalSnapshotConvert";
 import Chat from "./pages/genai/Chat";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { config, isSsoEnabled } from "../config";
+import { useMsal, useIsAuthenticated } from "@azure/msal-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { loginRequest } from "./authConfig";
+import { exchangeToken } from "./api/auth";
+import { syncUserFromCookies, useUserDispatch } from "./contexts/UserContext";
 
 const RedirectWithQuery = ({ to }: { to: string }) => {
   const { search } = useLocation();
@@ -193,17 +205,111 @@ const RedirectWithQuery = ({ to }: { to: string }) => {
   return null;
 };
 
-const basename = import.meta.env.VITE_BASE_PATH || "/";
+const RedirectAfterMsal = ({ to }: { to: string }) => {
+  const { search } = useLocation();
+  const navigate = useNavigate();
+  const { inProgress } = useMsal();
+
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    const hasMsalAuthResponse =
+      /(^#|&)(code|id_token|access_token|error|error_description)=/i.test(hash);
+
+    // On Azure redirect callback, wait until MSAL has consumed hash params.
+    if (hasMsalAuthResponse && inProgress !== InteractionStatus.None) {
+      return;
+    }
+
+    if (window.location.pathname === to) {
+      return;
+    }
+
+    navigate(to + search, { replace: true });
+  }, [to, search, navigate, inProgress]);
+
+  return null;
+};
+
+const MsalSessionBootstrap = () => {
+  const isAuthenticated = useIsAuthenticated();
+  const { instance, accounts } = useMsal();
+  const userDispatch = useUserDispatch();
+  const exchangedAccountRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || accounts.length === 0) {
+      return;
+    }
+
+    const primaryAccount = instance.getActiveAccount() ?? accounts[0];
+    if (!primaryAccount?.homeAccountId) {
+      return;
+    }
+
+    if (!instance.getActiveAccount()) {
+      instance.setActiveAccount(primaryAccount);
+    }
+
+    if (exchangedAccountRef.current === primaryAccount.homeAccountId) {
+      return;
+    }
+
+    exchangedAccountRef.current = primaryAccount.homeAccountId;
+
+    const runTokenExchange = async () => {
+      try {
+        const tokenResponse = await instance.acquireTokenSilent({
+          ...loginRequest,
+          account: primaryAccount,
+        });
+
+        if (tokenResponse?.idToken) {
+          await exchangeToken(tokenResponse.idToken);
+          syncUserFromCookies(userDispatch);
+
+          // Fallback for cases where backend cookies are httpOnly or delayed.
+          userDispatch({
+            type: "LOGIN_SUCCESS",
+            isAuthenticated: true,
+            email: tokenResponse.account?.username ?? null,
+            userId: tokenResponse.account?.username ?? null,
+          });
+        }
+      } catch (error) {
+        // Reset so we can retry later if silent token or exchange fails.
+        exchangedAccountRef.current = null;
+        console.error("Azure token exchange failed:", error);
+      }
+    };
+
+    void runTokenExchange();
+  }, [isAuthenticated, accounts, instance, userDispatch]);
+
+  return null;
+};
 
 const App = () => {
+  const basename = config?.basePath || "/";
+
   return (
     <BrowserRouter
       basename={basename}
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
+      {isSsoEnabled ? <MsalSessionBootstrap /> : null}
       <Routes>
         {/* Redirect from root to dashboard preserving query parameters */}
         <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
+        <Route
+          path="/redirect"
+          element={
+            isSsoEnabled ? (
+              <RedirectAfterMsal to="/app/dashboard" />
+            ) : (
+              <RedirectWithQuery to="/app/dashboard" />
+            )
+          }
+        />
 
         {/* Layout routes */}
         <Route path="/app/*" element={<Layout />}>
