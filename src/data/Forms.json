@@ -2338,6 +2338,7 @@
       "type": "object",
       "required": [
         "hostId",
+        "providerId",
         "clientName",
         "clientType",
         "clientProfile"
@@ -2359,6 +2360,10 @@
           "title": "Host Id",
           "type": "string",
           "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string"
         },
         "appId": {
           "type": "string",
@@ -2414,6 +2419,17 @@
         "align": "left"
       },
       "hostId",
+      {
+        "key": "providerId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       {
         "key": "appId",
         "type": "dynaselect",
@@ -2524,6 +2540,7 @@
       "required": [
         "hostId",
         "clientId",
+        "providerId",
         "clientName",
         "clientType",
         "clientProfile"
@@ -2550,6 +2567,10 @@
           "title": "Client Id",
           "type": "string",
           "readonly": true
+        },
+        "providerId": {
+          "title": "Provider Id",
+          "type": "string"
         },
         "appId": {
           "type": "string",
@@ -2602,6 +2623,17 @@
     "form": [
       "hostId",
       "clientId",
+      {
+        "key": "providerId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22oauth%22%2C%22action%22%3A%22getProviderIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       {
         "key": "appId",
         "type": "dynaselect",
