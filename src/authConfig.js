@@ -5,7 +5,34 @@
 
 import { LogLevel } from "@azure/msal-browser";
 
-import { config } from "../config";
+import { config, isSsoEnabled } from "../config";
+
+const clientId =
+    typeof config.clientId === "string" ? config.clientId.trim() : "";
+const tenantId =
+    typeof config.tenantId === "string" ? config.tenantId.trim() : "";
+const redirectUri =
+    typeof config.redirectUri === "string" ? config.redirectUri.trim() : "";
+
+if (isSsoEnabled && !clientId) {
+    throw new Error(
+        "Missing required MSAL configuration: VITE_CLIENT_ID must be a non-empty string when SSO is enabled.",
+    );
+}
+
+if (isSsoEnabled && !tenantId) {
+    throw new Error(
+        "Missing required MSAL configuration: VITE_TENANT_ID must be a non-empty string when SSO is enabled.",
+    );
+}
+
+const authConfig = {
+    clientId,
+    authority: `https://login.microsoftonline.com/${tenantId}`,
+    ...(redirectUri ? { redirectUri } : {}),
+    postLogoutRedirectUri: "/redirect",
+    clientCapabilities: ["CP1"],
+};
 
 /**
  * Configuration object to be passed to MSAL instance on creation.
@@ -13,13 +40,7 @@ import { config } from "../config";
  * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/configuration.md
  */
 export const msalConfig = {
-    auth: {
-        clientId: config.clientId, // This is the ONLY mandatory field that you need to supply.
-        authority: `https://login.microsoftonline.com/${config.tenantId}`, // Defaults to "https://login.microsoftonline.com/common"
-        redirectUri: config.redirectUri, // You must register this URI on Azure Portal/App Registration. Defaults to window.location.origin
-        postLogoutRedirectUri: "/redirect", // Indicates the page to navigate after logout.
-        clientCapabilities: ["CP1"] // this lets the resource owner know that this client is capable of handling claims challenge.
-    },
+    auth: authConfig,
     cache: {
         cacheLocation: "localStorage", // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO between tabs.
         storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
