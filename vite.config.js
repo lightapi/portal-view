@@ -127,7 +127,7 @@ export default defineConfig(({ mode }) => {
           configure: (proxy) => {
             proxy.on("proxyRes", (proxyRes) => {
               if (proxyRes.headers["set-cookie"]) {
-                // Sanitize cookie headers before logging
+                // Sanitize cookie headers before sending them to the browser
                 proxyRes.headers["set-cookie"] = sanitizeSetCookieHeader(
                   proxyRes.headers["set-cookie"],
                 );
