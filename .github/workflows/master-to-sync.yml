@@ -23,7 +23,11 @@ jobs:
 
       - name: Merge Master into Sync
         run: |
-          git fetch origin sync
-          git checkout -B sync origin/sync
-          git merge origin/master --no-edit
+          if git ls-remote --exit-code --heads origin sync >/dev/null 2>&1; then
+            git fetch origin sync
+            git checkout -B sync origin/sync
+            git merge origin/master --no-edit
+          else
+            git checkout -B sync origin/master
+          fi
           git push origin sync
