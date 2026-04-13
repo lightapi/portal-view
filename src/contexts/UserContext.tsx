@@ -200,21 +200,26 @@ async function signOut(
 ) {
   dispatch({ type: "SIGN_OUT_SUCCESS" });
 
-  if (isSsoEnabled && msalInstance) {
+  if (isSsoEnabled) {
     try {
       await fetchClient("/auth/ms/logout");
     } catch (error) {
       console.error("backend logout error=", error);
     }
 
-    const normalizedBasePath =
-      config.basePath && config.basePath !== "/"
-        ? config.basePath.replace(/\/$/, "")
-        : "";
-    
-    await msalInstance.logoutRedirect({
-      postLogoutRedirectUri: `${window.location.origin}${normalizedBasePath}/redirect`,
-    });
+    if (msalInstance) {
+      const normalizedBasePath =
+        config.basePath && config.basePath !== "/"
+          ? config.basePath.replace(/\/$/, "")
+          : "";
+
+      await msalInstance.logoutRedirect({
+        postLogoutRedirectUri: `${window.location.origin}${normalizedBasePath}/redirect`,
+      });
+      return;
+    }
+
+    navigate("/app/dashboard");
     return;
   } else {
     fetchClient("/logout")

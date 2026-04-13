@@ -23,6 +23,7 @@ jobs:
 
       - name: Merge Master into Sync
         run: |
-          git checkout sync
+          git fetch origin sync
+          git checkout -B sync origin/sync
           git merge origin/master --no-edit
           git push origin sync

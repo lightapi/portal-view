@@ -72,6 +72,5 @@
     "globals": "^16.5.0",
     "typescript": "^5.8.3",
     "vite": "^7.3.2"
-  },
-  "packageManager": "npm"
+  }
 }
