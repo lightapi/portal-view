@@ -43,6 +43,7 @@ import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import AirIcon from '@mui/icons-material/Air';
 import { IconButton, List } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
@@ -245,40 +246,34 @@ const structure = [
     icon: <ContentCopyIcon />,
   },
   {
-    id: 113.5,
+    id: 115,
     label: "Runtime Instance",
     role: "admin",
     link: "/app/instance/RuntimeInstanceAdmin",
     icon: <ContentCopyIcon />,
   },
   {
-    id: 114,
+    id: 116,
     label: "Deployment Admin",
     role: "admin",
     link: "/app/deployment/DeploymentAdmin",
     icon: <AirplanemodeActiveIcon />,
   },
   {
-    id: 115,
+    id: 117,
     label: "Config Admin",
     role: "admin",
     link: "/app/config/configAdmin",
     icon: <PermDataSettingIcon />,
   },
   {
-    id: 116,
-    label: "Workflow Admin",
+    id: 118,
+    label: "GenAI Admin",
     role: "admin",
-    link: "/app/workflow/WfDefinition",
+    link: "/app/genai/chat",
     icon: <PrecisionManufacturingIcon />,
     children: [
-      { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
-      { label: "Worklist", link: "/app/workflow/Worklist" },
-      { label: "Process Info", link: "/app/workflow/ProcessInfo" },
       { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
-      { label: "Task Info", link: "/app/workflow/TaskInfo" },
-      { label: "Task Asst", link: "/app/workflow/TaskAsst" },
-      { label: "Audit Log", link: "/app/workflow/AuditLog" },
       { label: "Skill", link: "/app/genai/Skill" },
       { label: "Tool", link: "/app/genai/Tool" },
       { label: "Tool Param", link: "/app/genai/ToolParam" },
@@ -293,7 +288,22 @@ const structure = [
     ],
   },
   {
-    id: 117,
+    id: 119,
+    label: "Workflow Admin",
+    role: "admin",
+    link: "/app/workflow/WfDefinition",
+    icon: <AirIcon />,
+    children: [
+      { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
+      { label: "Worklist", link: "/app/workflow/Worklist" },
+      { label: "Process Info", link: "/app/workflow/ProcessInfo" },
+      { label: "Task Info", link: "/app/workflow/TaskInfo" },
+      { label: "Task Asst", link: "/app/workflow/TaskAsst" },
+      { label: "Audit Log", link: "/app/workflow/AuditLog" },
+    ],
+  },
+  {
+    id: 120,
     label: "Access Admin",
     role: "admin",
     link: "/app/access/admin",
@@ -306,14 +316,14 @@ const structure = [
     ],
   },
   {
-    id: 118,
+    id: 121,
     label: "Api Admin",
     role: "admin",
     link: "/app/service/admin",
     icon: <ApiIcon />,
   },
   {
-    id: 120,
+    id: 122,
     label: "Rule Admin",
     role: "admin",
     link: "/app/rule/admin",
