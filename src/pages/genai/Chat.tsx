@@ -37,7 +37,9 @@ export default function Chat() {
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
     const [serviceId, setServiceId] = useState('com.networknt.agent.account-1.0.0');
-    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem('agentSessionId') || null);
+    // Key scoped to user+agent so sessions are never shared across identities or agents.
+    const sessionKey = `agentSessionId:${userId}:${serviceId}`;
+    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem(sessionKey) || null);
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +57,8 @@ export default function Chat() {
     useEffect(() => {
         if (email) {
             setUserId(email);
+            // New identity — reset session so we don't resume an anonymous session.
+            setSessionId(null);
         }
     }, [email]);
 
@@ -123,6 +127,10 @@ export default function Chat() {
         };
 
         socket.onmessage = (event: MessageEvent) => {
+            if (typeof event.data !== 'string') {
+                console.warn('Received non-text WebSocket frame, ignoring:', event.data);
+                return;
+            }
             const data = event.data;
             try {
                 const json = JSON.parse(data);
@@ -137,7 +145,7 @@ export default function Chat() {
                     }
 
                     setSessionId(receivedSessionId);
-                    sessionStorage.setItem('agentSessionId', receivedSessionId);
+                    sessionStorage.setItem(sessionKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
                 } else if (json.type === 'text') {
                     addMessage('Assistant', json.text);
@@ -220,7 +228,7 @@ export default function Chat() {
                         onChange={(e) => {
                             setServiceId(e.target.value);
                             setSessionId(null);
-                            sessionStorage.removeItem('agentSessionId');
+                            sessionStorage.removeItem(sessionKey);
                         }}
                         disabled={connected || connecting}
                         sx={{ width: 250 }}
