@@ -127,9 +127,18 @@ export default function Chat() {
             try {
                 const json = JSON.parse(data);
                 if (json.type === 'session') {
-                    setSessionId(json.session_id);
-                    sessionStorage.setItem('agentSessionId', json.session_id);
-                    addMessage('System', 'Session initialized: ' + json.session_id);
+                    const receivedSessionId =
+                        typeof json.session_id === 'string' ? json.session_id.trim() : '';
+
+                    if (!receivedSessionId) {
+                        console.warn('Received invalid session initialization message:', json);
+                        addMessage('System', 'Received invalid session initialization message.');
+                        return;
+                    }
+
+                    setSessionId(receivedSessionId);
+                    sessionStorage.setItem('agentSessionId', receivedSessionId);
+                    addMessage('System', 'Session initialized: ' + receivedSessionId);
                 } else if (json.type === 'text') {
                     addMessage('Assistant', json.text);
                 } else if (json.type === 'error') {
