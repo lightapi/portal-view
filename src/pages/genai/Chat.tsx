@@ -37,7 +37,7 @@ export default function Chat() {
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
     const [serviceId, setServiceId] = useState('com.networknt.agent.account-1.0.0');
-    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem('agentSessionId'));
+    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem('agentSessionId') || null);
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -173,10 +173,7 @@ export default function Chat() {
     const handleSend = () => {
         if (input.trim() && ws.current && connected) {
             addMessage('User', input);
-            const payload = {
-                text: input,
-                ...(sessionId != null ? { session_id: sessionId } : {})
-            };
+            const payload = { text: input };
             ws.current.send(JSON.stringify(payload));
             setInput('');
         }
@@ -220,7 +217,11 @@ export default function Chat() {
                         label="Agent"
                         select
                         value={serviceId}
-                        onChange={(e) => setServiceId(e.target.value)}
+                        onChange={(e) => {
+                            setServiceId(e.target.value);
+                            setSessionId(null);
+                            sessionStorage.removeItem('agentSessionId');
+                        }}
                         disabled={connected || connecting}
                         sx={{ width: 250 }}
                     >
