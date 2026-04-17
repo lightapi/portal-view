@@ -13,6 +13,7 @@ import {
     Avatar,
     Chip,
     CircularProgress,
+    MenuItem,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
@@ -28,6 +29,12 @@ interface Message {
     timestamp: Date;
 }
 
+const DEFAULT_SERVICE_ID = 'com.networknt.agent.account-1.0.0';
+
+/** Returns the sessionStorage key scoped to a specific user+agent pair. */
+const getSessionKey = (uid: string, sid: string) =>
+    `agentSessionId:${uid}:${sid}`;
+
 export default function Chat() {
     const { email, isAuthenticated } = useUserState();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -35,7 +42,10 @@ export default function Chat() {
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
-    const [model, setModel] = useState('qwen3:14b');
+    const [serviceId, setServiceId] = useState(DEFAULT_SERVICE_ID);
+    const [sessionId, setSessionId] = useState<string | null>(() =>
+        sessionStorage.getItem(getSessionKey(email || 'anonymous', DEFAULT_SERVICE_ID)) || null
+    );
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -52,9 +62,26 @@ export default function Chat() {
 
     useEffect(() => {
         if (email) {
+            const nextKey = getSessionKey(email, serviceId);
             setUserId(email);
+            // Load any prior session for this identity+agent.
+            // The anonymous session is never resumed because its key differs.
+            setSessionId(sessionStorage.getItem(nextKey) || null);
+        } else {
+            // Sign-out: revert to anonymous identity and load any stored anonymous session.
+            const anonymousKey = getSessionKey('anonymous', serviceId);
+            setUserId('anonymous');
+            setSessionId(sessionStorage.getItem(anonymousKey) || null);
         }
-    }, [email]);
+    }, [email]); // serviceId intentionally omitted — agent-switch has its own handler
+
+    // Sync sessionId from storage whenever userId or serviceId changes while not connected.
+    // Covers manual User ID field edits and any other programmatic identity/agent changes.
+    useEffect(() => {
+        if (!connected && !connecting) {
+            setSessionId(sessionStorage.getItem(getSessionKey(userId, serviceId)) || null);
+        }
+    }, [userId, serviceId]);
 
     useEffect(() => {
         return () => {
@@ -97,6 +124,10 @@ export default function Chat() {
 
         setConnecting(true);
 
+        // Capture the session key at connection time so the onmessage closure
+        // always writes to the correct storage slot regardless of later state changes.
+        const connectedKey = getSessionKey(userId, serviceId);
+
         // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
         const csrfToken = cookies.get('csrf');
 
@@ -104,7 +135,10 @@ export default function Chat() {
         const url = new URL('/chat', window.location.href);
         url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         url.searchParams.set('userId', userId);
-        url.searchParams.set('model', model);
+        url.searchParams.set('serviceId', serviceId);
+        if (sessionId) {
+            url.searchParams.set('sessionId', sessionId);
+        }
 
         // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
         const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
@@ -118,35 +152,46 @@ export default function Chat() {
         };
 
         socket.onmessage = (event: MessageEvent) => {
+            if (typeof event.data !== 'string') {
+                console.warn('Received non-text WebSocket frame, ignoring:', event.data);
+                return;
+            }
             const data = event.data;
             try {
-                // Check if it's a JSON message (like session info)
                 const json = JSON.parse(data);
                 if (json.type === 'session') {
-                    // Store session id if needed, or just log to system chat
-                    sessionStorage.setItem('sessionId', json.sessionId);
-                    addMessage('System', 'Session initialized: ' + json.sessionId);
-                    return;
+                    const receivedSessionId =
+                        typeof json.session_id === 'string' ? json.session_id.trim() : '';
+
+                    if (!receivedSessionId) {
+                        console.warn('Received invalid session initialization message:', json);
+                        addMessage('System', 'Received invalid session initialization message.');
+                        return;
+                    }
+
+                    setSessionId(receivedSessionId);
+                    sessionStorage.setItem(connectedKey, receivedSessionId);
+                    addMessage('System', 'Session initialized: ' + receivedSessionId);
+                } else if (json.type === 'text') {
+                    if (typeof json.text === 'string') {
+                        addMessage('Assistant', json.text);
+                    } else {
+                        console.warn('Received invalid text message payload:', json);
+                        addMessage('System', 'Received invalid text message from agent.');
+                    }
+                } else if (json.type === 'error') {
+                    if (typeof json.message === 'string') {
+                        addMessage('System', 'Error from agent: ' + json.message);
+                    } else {
+                        console.warn('Received invalid error message payload:', json);
+                        addMessage('System', 'Received invalid error message from agent.');
+                    }
                 }
             } catch (e) {
-                // Not JSON, treat as text chunk
+                console.error('Failed to parse message from agent:', e);
+                // Fallback for raw text if needed, though backend uses JSON
+                addMessage('Assistant', data);
             }
-
-            // Correctly handle assistant message streaming:
-            // If the last message was from the assistant, append the chunk.
-            // Otherwise, create a new assistant message.
-            setMessages((prev) => {
-                if (prev.length > 0 && prev[prev.length - 1].role === 'Assistant') {
-                    const updatedMessages = [...prev];
-                    const lastMsg = updatedMessages[updatedMessages.length - 1];
-                    updatedMessages[updatedMessages.length - 1] = {
-                        ...lastMsg,
-                        text: lastMsg.text + data,
-                    };
-                    return updatedMessages;
-                }
-                return [...prev, { role: 'Assistant', text: data, timestamp: new Date() }];
-            });
         };
 
         socket.onclose = () => {
@@ -158,7 +203,7 @@ export default function Chat() {
         socket.onerror = (error: Event) => {
             setConnecting(false);
             addMessage('System', 'Error: Connection failed.');
-            console.error("WebSocket error:", error);
+            console.error('WebSocket error:', error);
         };
     };
 
@@ -171,7 +216,8 @@ export default function Chat() {
     const handleSend = () => {
         if (input.trim() && ws.current && connected) {
             addMessage('User', input);
-            ws.current.send(input);
+            const payload = { text: input };
+            ws.current.send(JSON.stringify(payload));
             setInput('');
         }
     };
@@ -211,12 +257,24 @@ export default function Chat() {
                     />
                     <TextField
                         size="small"
-                        label="Model"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
+                        label="Agent"
+                        select
+                        value={serviceId}
+                        onChange={(e) => {
+                            const nextServiceId = e.target.value;
+                            const nextKey = getSessionKey(userId, nextServiceId);
+                            setServiceId(nextServiceId);
+                            // Resume any stored session for the newly-selected agent.
+                            // The old agent's session is kept in storage for later resume.
+                            setSessionId(sessionStorage.getItem(nextKey) || null);
+                        }}
                         disabled={connected || connecting}
-                        sx={{ width: 150 }}
-                    />
+                        sx={{ width: 250 }}
+                    >
+                        <MenuItem value="com.networknt.agent.account-1.0.0">Account</MenuItem>
+                        <MenuItem value="com.networknt.agent.advisor-1.0.0">Advisor</MenuItem>
+                        <MenuItem value="com.networknt.agent.tech-support-1.0.0">Tech Support</MenuItem>
+                    </TextField>
                     {!connected ? (
                         <Button
                             variant="contained"
