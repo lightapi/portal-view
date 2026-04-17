@@ -173,9 +173,19 @@ export default function Chat() {
                     sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
                 } else if (json.type === 'text') {
-                    addMessage('Assistant', json.text);
+                    if (typeof json.text === 'string') {
+                        addMessage('Assistant', json.text);
+                    } else {
+                        console.warn('Received invalid text message payload:', json);
+                        addMessage('System', 'Received invalid text message from agent.');
+                    }
                 } else if (json.type === 'error') {
-                    addMessage('System', 'Error from agent: ' + json.message);
+                    if (typeof json.message === 'string') {
+                        addMessage('System', 'Error from agent: ' + json.message);
+                    } else {
+                        console.warn('Received invalid error message payload:', json);
+                        addMessage('System', 'Received invalid error message from agent.');
+                    }
                 }
             } catch (e) {
                 console.error('Failed to parse message from agent:', e);
