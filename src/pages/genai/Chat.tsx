@@ -29,6 +29,10 @@ interface Message {
     timestamp: Date;
 }
 
+/** Returns the sessionStorage key scoped to a specific user+agent pair. */
+const getSessionKey = (uid: string, sid: string) =>
+    `agentSessionId:${uid}:${sid}`;
+
 export default function Chat() {
     const { email, isAuthenticated } = useUserState();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -37,9 +41,9 @@ export default function Chat() {
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
     const [serviceId, setServiceId] = useState('com.networknt.agent.account-1.0.0');
-    // Key scoped to user+agent so sessions are never shared across identities or agents.
-    const sessionKey = `agentSessionId:${userId}:${serviceId}`;
-    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem(sessionKey) || null);
+    const [sessionId, setSessionId] = useState<string | null>(() =>
+        sessionStorage.getItem(getSessionKey(email || 'anonymous', 'com.networknt.agent.account-1.0.0')) || null
+    );
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -56,9 +60,11 @@ export default function Chat() {
 
     useEffect(() => {
         if (email) {
+            const nextKey = getSessionKey(email, serviceId);
             setUserId(email);
-            // New identity — reset session so we don't resume an anonymous session.
-            setSessionId(null);
+            // Load any prior session for this identity+agent.
+            // The anonymous session is never resumed because its key differs.
+            setSessionId(sessionStorage.getItem(nextKey) || null);
         }
     }, [email]);
 
@@ -103,6 +109,10 @@ export default function Chat() {
 
         setConnecting(true);
 
+        // Capture the session key at connection time so the onmessage closure
+        // always writes to the correct storage slot regardless of later state changes.
+        const connectedKey = getSessionKey(userId, serviceId);
+
         // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
         const csrfToken = cookies.get('csrf');
 
@@ -145,7 +155,7 @@ export default function Chat() {
                     }
 
                     setSessionId(receivedSessionId);
-                    sessionStorage.setItem(sessionKey, receivedSessionId);
+                    sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
                 } else if (json.type === 'text') {
                     addMessage('Assistant', json.text);
@@ -226,9 +236,12 @@ export default function Chat() {
                         select
                         value={serviceId}
                         onChange={(e) => {
-                            setServiceId(e.target.value);
-                            setSessionId(null);
-                            sessionStorage.removeItem(sessionKey);
+                            const nextServiceId = e.target.value;
+                            const nextKey = getSessionKey(userId, nextServiceId);
+                            setServiceId(nextServiceId);
+                            // Resume any stored session for the newly-selected agent.
+                            // The old agent's session is kept in storage for later resume.
+                            setSessionId(sessionStorage.getItem(nextKey) || null);
                         }}
                         disabled={connected || connecting}
                         sx={{ width: 250 }}
