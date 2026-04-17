@@ -136,7 +136,7 @@ export default function Chat() {
                     addMessage('System', 'Error from agent: ' + json.message);
                 }
             } catch (e) {
-                console.error("Failed to parse message from agent:", e);
+                console.error('Failed to parse message from agent:', e);
                 // Fallback for raw text if needed, though backend uses JSON
                 addMessage('Assistant', data);
             }
@@ -151,7 +151,7 @@ export default function Chat() {
         socket.onerror = (error: Event) => {
             setConnecting(false);
             addMessage('System', 'Error: Connection failed.');
-            console.error("WebSocket error:", error);
+            console.error('WebSocket error:', error);
         };
     };
 
