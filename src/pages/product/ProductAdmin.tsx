@@ -253,31 +253,6 @@ export default function ProductVersionAdmin() {
         filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update App">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.productVersion}
-              >
-                {isUpdateLoading === row.original.productVersion ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-            <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-            <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: { productVersionId: row.original.productVersionId } } })}><LanguageIcon /></IconButton></Tooltip>
-            <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
-            <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
-            <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
-          </Box>
-        ),
-      },
     ],
     [],
   );
@@ -298,7 +273,30 @@ export default function ProductVersionAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.productVersionId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        <Tooltip title="Update App">
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.productVersion}
+          >
+            {isUpdateLoading === row.original.productVersion ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete App"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+        <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
+        <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: { productVersionId: row.original.productVersionId } } })}><LanguageIcon /></IconButton></Tooltip>
+        <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
+        <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
+        <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProductVersion')}>
         Create New Version
