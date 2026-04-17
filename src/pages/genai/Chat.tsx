@@ -165,8 +165,8 @@ export default function Chat() {
         if (input.trim() && ws.current && connected) {
             addMessage('User', input);
             const payload = {
-                session_id: sessionId,
-                text: input
+                text: input,
+                ...(sessionId != null ? { session_id: sessionId } : {})
             };
             ws.current.send(JSON.stringify(payload));
             setInput('');
