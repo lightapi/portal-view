@@ -13,6 +13,7 @@ import {
     Avatar,
     Chip,
     CircularProgress,
+    MenuItem,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
@@ -35,7 +36,8 @@ export default function Chat() {
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
-    const [model, setModel] = useState('qwen3:14b');
+    const [serviceId, setServiceId] = useState('com.networknt.agent.account-1.0.0');
+    const [sessionId, setSessionId] = useState<string | null>(sessionStorage.getItem('agentSessionId'));
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -104,7 +106,7 @@ export default function Chat() {
         const url = new URL('/chat', window.location.href);
         url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         url.searchParams.set('userId', userId);
-        url.searchParams.set('model', model);
+        url.searchParams.set('serviceId', serviceId);
 
         // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
         const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
@@ -120,33 +122,21 @@ export default function Chat() {
         socket.onmessage = (event: MessageEvent) => {
             const data = event.data;
             try {
-                // Check if it's a JSON message (like session info)
                 const json = JSON.parse(data);
                 if (json.type === 'session') {
-                    // Store session id if needed, or just log to system chat
-                    sessionStorage.setItem('sessionId', json.sessionId);
-                    addMessage('System', 'Session initialized: ' + json.sessionId);
-                    return;
+                    setSessionId(json.session_id);
+                    sessionStorage.setItem('agentSessionId', json.session_id);
+                    addMessage('System', 'Session initialized: ' + json.session_id);
+                } else if (json.type === 'text') {
+                    addMessage('Assistant', json.text);
+                } else if (json.type === 'error') {
+                    addMessage('System', 'Error from agent: ' + json.message);
                 }
             } catch (e) {
-                // Not JSON, treat as text chunk
+                console.error("Failed to parse message from agent:", e);
+                // Fallback for raw text if needed, though backend uses JSON
+                addMessage('Assistant', data);
             }
-
-            // Correctly handle assistant message streaming:
-            // If the last message was from the assistant, append the chunk.
-            // Otherwise, create a new assistant message.
-            setMessages((prev) => {
-                if (prev.length > 0 && prev[prev.length - 1].role === 'Assistant') {
-                    const updatedMessages = [...prev];
-                    const lastMsg = updatedMessages[updatedMessages.length - 1];
-                    updatedMessages[updatedMessages.length - 1] = {
-                        ...lastMsg,
-                        text: lastMsg.text + data,
-                    };
-                    return updatedMessages;
-                }
-                return [...prev, { role: 'Assistant', text: data, timestamp: new Date() }];
-            });
         };
 
         socket.onclose = () => {
@@ -171,7 +161,11 @@ export default function Chat() {
     const handleSend = () => {
         if (input.trim() && ws.current && connected) {
             addMessage('User', input);
-            ws.current.send(input);
+            const payload = {
+                session_id: sessionId,
+                text: input
+            };
+            ws.current.send(JSON.stringify(payload));
             setInput('');
         }
     };
@@ -211,12 +205,17 @@ export default function Chat() {
                     />
                     <TextField
                         size="small"
-                        label="Model"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
+                        label="Agent"
+                        select
+                        value={serviceId}
+                        onChange={(e) => setServiceId(e.target.value)}
                         disabled={connected || connecting}
-                        sx={{ width: 150 }}
-                    />
+                        sx={{ width: 250 }}
+                    >
+                        <MenuItem value="com.networknt.agent.account-1.0.0">Account</MenuItem>
+                        <MenuItem value="com.networknt.agent.advisor-1.0.0">Advisor</MenuItem>
+                        <MenuItem value="com.networknt.agent.tech-support-1.0.0">Tech Support</MenuItem>
+                    </TextField>
                     {!connected ? (
                         <Button
                             variant="contained"
