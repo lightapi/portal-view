@@ -29,6 +29,8 @@ interface Message {
     timestamp: Date;
 }
 
+const DEFAULT_SERVICE_ID = 'com.networknt.agent.account-1.0.0';
+
 /** Returns the sessionStorage key scoped to a specific user+agent pair. */
 const getSessionKey = (uid: string, sid: string) =>
     `agentSessionId:${uid}:${sid}`;
@@ -40,9 +42,9 @@ export default function Chat() {
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
-    const [serviceId, setServiceId] = useState('com.networknt.agent.account-1.0.0');
+    const [serviceId, setServiceId] = useState(DEFAULT_SERVICE_ID);
     const [sessionId, setSessionId] = useState<string | null>(() =>
-        sessionStorage.getItem(getSessionKey(email || 'anonymous', 'com.networknt.agent.account-1.0.0')) || null
+        sessionStorage.getItem(getSessionKey(email || 'anonymous', DEFAULT_SERVICE_ID)) || null
     );
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -65,8 +67,21 @@ export default function Chat() {
             // Load any prior session for this identity+agent.
             // The anonymous session is never resumed because its key differs.
             setSessionId(sessionStorage.getItem(nextKey) || null);
+        } else {
+            // Sign-out: revert to anonymous identity and load any stored anonymous session.
+            const anonymousKey = getSessionKey('anonymous', serviceId);
+            setUserId('anonymous');
+            setSessionId(sessionStorage.getItem(anonymousKey) || null);
         }
-    }, [email]);
+    }, [email]); // serviceId intentionally omitted — agent-switch has its own handler
+
+    // Sync sessionId from storage whenever userId or serviceId changes while not connected.
+    // Covers manual User ID field edits and any other programmatic identity/agent changes.
+    useEffect(() => {
+        if (!connected && !connecting) {
+            setSessionId(sessionStorage.getItem(getSessionKey(userId, serviceId)) || null);
+        }
+    }, [userId, serviceId]);
 
     useEffect(() => {
         return () => {
