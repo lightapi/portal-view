@@ -107,6 +107,9 @@ export default function Chat() {
         url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         url.searchParams.set('userId', userId);
         url.searchParams.set('serviceId', serviceId);
+        if (sessionId) {
+            url.searchParams.set('sessionId', sessionId);
+        }
 
         // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
         const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
