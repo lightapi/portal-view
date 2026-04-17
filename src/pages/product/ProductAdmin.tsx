@@ -168,8 +168,8 @@ export default function ProductVersionAdmin() {
 
   // Handler to fetch fresh data before navigating to update form
   const handleUpdate = useCallback(async (row: MRT_Row<ProductVersionType>) => {
-    const productVersion = row.original.productVersion;
-    setIsUpdateLoading(productVersion);
+    const productVersionId = row.original.productVersionId;
+    setIsUpdateLoading(productVersionId);
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getFreshProductVersion', version: '0.1.0',
@@ -277,19 +277,19 @@ export default function ProductVersionAdmin() {
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update App">
+        <Tooltip title="Update Product Version">
           <IconButton
             onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.productVersion}
+            disabled={isUpdateLoading === row.original.productVersionId}
           >
-            {isUpdateLoading === row.original.productVersion ? (
+            {isUpdateLoading === row.original.productVersionId ? (
               <CircularProgress size={22} />
             ) : (
               <SystemUpdateIcon />
             )}
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete App"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
+        <Tooltip title="Delete Product Version"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
         <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
         <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: { productVersionId: row.original.productVersionId } } })}><LanguageIcon /></IconButton></Tooltip>
         <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
