@@ -76,8 +76,24 @@ export default function InstanceApiMcpTool() {
 
             // Standardize the data from backend
             const standardizedData: McpToolType[] = fetchedData.map(t => {
-                const originalName = t.name || t.endpointName || '';
-                const enhancedName = toKebabCase(`${productId}-${apiName}-${originalName}`);
+                const baseName = t.endpointName || t.name || '';
+                const safeProductId = productId || '';
+                const safeApiIdentifier = apiName || apiId || '';
+                
+                let enhancedName = t.name || '';
+                const needsPrefix = (safeProductId && !enhancedName.includes(safeProductId)) || 
+                                   (safeApiIdentifier && !enhancedName.includes(safeApiIdentifier));
+                
+                if (!enhancedName || needsPrefix) {
+                    enhancedName = toKebabCase(`${safeProductId}-${safeApiIdentifier}-${baseName}`);
+                } else {
+                    // Even if already prefixed, ensure it's in kebab-case
+                    enhancedName = toKebabCase(enhancedName);
+                }
+                
+                // Final cleanup of hyphens
+                enhancedName = enhancedName.replace(/-+/g, '-').replace(/^-|-$/g, '');
+                
                 return {
                     ...t,
                     name: enhancedName,
@@ -100,7 +116,7 @@ export default function InstanceApiMcpTool() {
             const initialSelection: MRT_RowSelectionState = {};
             standardizedData.forEach(row => {
                 if (row.selected) {
-                    initialSelection[row.name] = true;
+                    initialSelection[row.endpointId] = true;
                 }
             });
             setRowSelection(initialSelection);
@@ -121,8 +137,8 @@ export default function InstanceApiMcpTool() {
         if (!host || !instanceApiId || !metadata.propertyId) return;
 
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
-        const selectedTools = selectedToolsNames.map(name => {
-            const tool = data.find(t => t.name === name);
+        const selectedTools = selectedToolsNames.map(endpointId => {
+            const tool = data.find(t => t.endpointId === endpointId);
             let toolSchemaObj = null;
             let toolMetadataObj = null;
             try {
@@ -139,7 +155,7 @@ export default function InstanceApiMcpTool() {
                 }
             }
             const obj: any = {
-                name: name,
+                name: tool?.name,
                 endpoint: tool?.endpoint,
                 method: tool?.method,
                 path: tool?.path,
@@ -155,6 +171,7 @@ export default function InstanceApiMcpTool() {
             return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
         });
         const propertyValue = JSON.stringify(selectedTools);
+        console.log('Saving MCP tools configuration', { selectedTools, propertyValue });
 
         let cmd: any;
         if (selectedTools.length > 0) {
@@ -223,8 +240,16 @@ export default function InstanceApiMcpTool() {
 
     const columns = useMemo<MRT_ColumnDef<McpToolType>[]>(
         () => [
-            { accessorKey: 'name', header: 'Name' },
-            { accessorKey: 'description', header: 'Description' },
+            { 
+                accessorKey: 'name', 
+                header: 'Name',
+                enableEditing: true,
+            },
+            { 
+                accessorKey: 'description', 
+                header: 'Description',
+                enableEditing: true,
+            },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'endpoint', header: 'Endpoint' },
             { accessorKey: 'method', header: 'Method' },
@@ -239,13 +264,27 @@ export default function InstanceApiMcpTool() {
         columns,
         data,
         initialState: { density: 'compact' },
+        enableEditing: true,
+        editDisplayMode: 'cell',
+        muiTableBodyCellProps: ({ cell, row }) => ({
+            onBlur: (event: any) => {
+                const newValue = event.target.value;
+                setData((prevData) =>
+                    prevData.map((item) =>
+                        item.endpointId === row.id
+                            ? { ...item, [cell.column.id]: newValue }
+                            : item
+                    )
+                );
+            },
+        }),
         state: {
             isLoading,
             showAlertBanner: isError,
             rowSelection
         },
         enableRowSelection: true,
-        getRowId: (row) => row.name,
+        getRowId: (row) => row.endpointId,
         onRowSelectionChange: setRowSelection,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enablePagination: false,
