@@ -444,14 +444,6 @@ function CtrlPaneDashboard() {
       }
 
       const liveArgs: Record<string, string> = {};
-      const serviceIdFilter = currentFilters.find((columnFilter) => columnFilter.id === 'serviceId');
-      const envTagFilter = currentFilters.find((columnFilter) => columnFilter.id === 'envTag');
-      if (typeof serviceIdFilter?.value === 'string' && serviceIdFilter.value.trim()) {
-        liveArgs.serviceId = serviceIdFilter.value.trim();
-      }
-      if (typeof envTagFilter?.value === 'string' && envTagFilter.value.trim()) {
-        liveArgs.envTag = envTagFilter.value.trim();
-      }
 
       try {
         const liveResponse = await callTool('list_instances', liveArgs);
