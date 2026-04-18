@@ -915,7 +915,7 @@ function reconcileInstances(
       ...instance,
       connected: false,
       active: false,
-      liveStatus: 'inactive' as LiveStatus,
+      liveStatus: 'inactive',
     };
   });
 
