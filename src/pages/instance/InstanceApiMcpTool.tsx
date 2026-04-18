@@ -74,31 +74,28 @@ export default function InstanceApiMcpTool() {
 
         try {
             const json = await fetchClient(url);
+            console.log('Full query response:', json);
             const fetchedData: any[] = json?.endpoints || [];
 
             // Standardize the data from backend
             const standardizedData: McpToolType[] = fetchedData.map(t => {
-                const baseName = t.endpointName || t.name || '';
-                const safeProductId = productId || '';
-                const safeApiIdentifier = apiName || apiId || '';
-                
-                let enhancedName = t.name || '';
-                const needsPrefix = (safeProductId && !enhancedName.includes(safeProductId)) || 
-                                   (safeApiIdentifier && !enhancedName.includes(safeApiIdentifier));
-                
-                if (!enhancedName || needsPrefix) {
-                    enhancedName = toKebabCase(`${safeProductId}-${safeApiIdentifier}-${baseName}`);
+                let finalName = t.name;
+                const endpointName = t.endpointName;
+
+                if (finalName === endpointName) {
+                    // apply enhancement pattern
+                    finalName = toKebabCase(`${productId}-${apiName}-${endpointName}`);
                 } else {
-                    // Even if already prefixed, ensure it's in kebab-case
-                    enhancedName = toKebabCase(enhancedName);
+                    // Already enhanced or manually edited, just ensure kebab-case
+                    finalName = toKebabCase(finalName);
                 }
-                
+
                 // Final cleanup of hyphens
-                enhancedName = enhancedName.replace(/-+/g, '-').replace(/^-|-$/g, '');
-                
+                finalName = finalName.replace(/-+/g, '-').replace(/^-|-$/g, '');
+
                 return {
                     ...t,
-                    name: enhancedName,
+                    name: finalName,
                     description: t.description || t.endpointDesc || '',
                     path: t.path || t.endpointPath || '',
                     method: t.method || t.httpMethod || '',
@@ -106,7 +103,7 @@ export default function InstanceApiMcpTool() {
                 };
             });
 
-            console.log(standardizedData);
+            console.log('Standardized data:', standardizedData);
             setData(standardizedData);
             setMetadata({
                 propertyId: json?.propertyId || null,
@@ -118,9 +115,10 @@ export default function InstanceApiMcpTool() {
             const initialSelection: MRT_RowSelectionState = {};
             standardizedData.forEach(row => {
                 if (row.selected) {
-                    initialSelection[row.endpointId] = true;
+                    initialSelection[row.endpoint] = true;
                 }
             });
+            console.log('Initial selection:', initialSelection);
             setRowSelection(initialSelection);
         } catch (error) {
             setIsError(true);
@@ -139,31 +137,19 @@ export default function InstanceApiMcpTool() {
         if (!host || !instanceApiId || !metadata.propertyId) return;
 
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
-        const selectedTools = selectedToolsNames.map(endpointId => {
-            const tool = data.find(t => t.endpointId === endpointId);
-            let toolSchemaObj = null;
-            let toolMetadataObj = null;
-            try {
-                if (tool?.inputSchema) toolSchemaObj = JSON.parse(tool.inputSchema);
-            } catch (e) {
-                console.error("Failed to parse toolSchema", e);
-                toolSchemaObj = tool?.inputSchema;
-            }
-            if (tool && typeof tool.toolMetadata === 'string' && tool.toolMetadata) {
-                try {
-                    toolMetadataObj = JSON.parse(tool.toolMetadata);
-                } catch (e) {
-                    console.error("Failed to parse toolMetadata", e);
-                }
-            }
+        const selectedTools = selectedToolsNames.map(endpoint => {
+            const tool = data.find(t => t.endpoint === endpoint);
             const obj: any = {
+                endpointId: tool?.endpointId,
                 name: tool?.name,
                 endpoint: tool?.endpoint,
                 method: tool?.method,
                 path: tool?.path,
                 description: tool?.description,
-                inputSchema: toolSchemaObj,
-                toolMetadata: toolMetadataObj,
+                inputSchema: tool?.inputSchema,
+                toolSchema: tool?.inputSchema,
+                toolMetadata: tool?.toolMetadata,
+                productId,
                 serviceId,
                 apiType,
                 protocol,
@@ -172,12 +158,16 @@ export default function InstanceApiMcpTool() {
             };
             return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
         });
+
+        console.log('Selected tools:', selectedTools);
+
         const propertyValue = JSON.stringify(selectedTools);
         console.log('Saving MCP tools configuration', { selectedTools, propertyValue });
 
         let cmd: any;
         if (selectedTools.length > 0) {
             if (metadata.exists) {
+                console.log('Updating MCP tools configuration', propertyValue);
                 // Update
                 cmd = {
                     host: 'lightapi.net', service: 'config', action: 'updateConfigInstanceApi', version: '0.1.0',
@@ -194,6 +184,7 @@ export default function InstanceApiMcpTool() {
                     setErrorMsg('Missing configId for mcp-router');
                     return;
                 }
+                console.log('Creating MCP tools configuration', propertyValue);
                 cmd = {
                     host: 'lightapi.net', service: 'config', action: 'createConfigInstanceApi', version: '0.1.0',
                     data: {
@@ -242,8 +233,8 @@ export default function InstanceApiMcpTool() {
 
     const columns = useMemo<MRT_ColumnDef<McpToolType>[]>(
         () => [
-            { 
-                accessorKey: 'name', 
+            {
+                accessorKey: 'name',
                 header: 'Name',
                 enableEditing: true,
                 Cell: ({ cell }) => (
@@ -255,8 +246,8 @@ export default function InstanceApiMcpTool() {
                     </Tooltip>
                 ),
             },
-            { 
-                accessorKey: 'description', 
+            {
+                accessorKey: 'description',
                 header: 'Description',
                 enableEditing: true,
                 Cell: ({ cell }) => (
@@ -289,7 +280,7 @@ export default function InstanceApiMcpTool() {
                 const newValue = event.target.value;
                 setData((prevData) =>
                     prevData.map((item) =>
-                        item.endpointId === row.id
+                        item.endpoint === row.id
                             ? { ...item, [cell.column.id]: newValue }
                             : item
                     )
@@ -308,7 +299,7 @@ export default function InstanceApiMcpTool() {
             rowSelection
         },
         enableRowSelection: true,
-        getRowId: (row) => row.endpointId,
+        getRowId: (row) => row.endpoint,
         onRowSelectionChange: setRowSelection,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enablePagination: false,
