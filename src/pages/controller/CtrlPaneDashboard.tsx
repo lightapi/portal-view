@@ -191,7 +191,7 @@ function normalizeLiveSnapshotInstance(rawPayload: any): RuntimeInstanceView | n
     ...parsed,
     connected: rawPayload.connected ?? true,
     active: rawPayload.active ?? true,
-    liveStatus: (rawPayload.active === false ? 'inactive' : 'active') as LiveStatus,
+    liveStatus: rawPayload.active === false ? 'inactive' : 'active',
   };
 }
 
