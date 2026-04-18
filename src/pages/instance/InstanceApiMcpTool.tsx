@@ -6,12 +6,11 @@ import {
     type MRT_ColumnDef,
     type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Box, Button, Typography, Alert, Snackbar } from '@mui/material';
+import { Box, Button, Typography, Alert, Snackbar, Tooltip } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 import { useUserState } from "../../contexts/UserContext";
-import fetchClient from "../../utils/fetchClient";
-import { Tooltip } from '@mui/material';
+import fetchClient from "../../utils/fetchClient';
 
 type McpToolType = {
     name: string;
