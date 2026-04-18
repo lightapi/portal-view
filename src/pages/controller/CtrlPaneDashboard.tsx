@@ -905,7 +905,7 @@ function reconcileInstances(
     filters: MRT_ColumnFiltersState,
     query: string,
   ) => boolean,
-) {
+): Record<RuntimeInstanceId, RuntimeInstanceView> {
   const reconciledInstances: Record<RuntimeInstanceId, RuntimeInstanceView> = {};
   const unmatchedLiveInstances: RuntimeInstanceView[] = [];
   const inactiveBaselineInstances: RuntimeInstanceView[] = [];
@@ -983,7 +983,7 @@ function applyNotificationToInstances(
     filters: MRT_ColumnFiltersState,
     query: string,
   ) => boolean,
-) {
+): Record<RuntimeInstanceId, RuntimeInstanceView> {
   if (
     method !== 'notifications/instance_connected' &&
     method !== 'notifications/instance_updated' &&
