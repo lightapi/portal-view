@@ -8,8 +8,10 @@ import {
 } from 'material-react-table';
 import { Box, Button, Typography, Alert, Snackbar } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
+import EditIcon from '@mui/icons-material/Edit';
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
+import { Tooltip } from '@mui/material';
 
 type McpToolType = {
     name: string;
@@ -244,11 +246,27 @@ export default function InstanceApiMcpTool() {
                 accessorKey: 'name', 
                 header: 'Name',
                 enableEditing: true,
+                Cell: ({ cell }) => (
+                    <Tooltip title="Click to edit">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {cell.getValue<string>()}
+                            <EditIcon sx={{ fontSize: '1rem', color: 'action.active', opacity: 0.5 }} />
+                        </Box>
+                    </Tooltip>
+                ),
             },
             { 
                 accessorKey: 'description', 
                 header: 'Description',
                 enableEditing: true,
+                Cell: ({ cell }) => (
+                    <Tooltip title="Click to edit">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {cell.getValue<string>()}
+                            <EditIcon sx={{ fontSize: '1rem', color: 'action.active', opacity: 0.5 }} />
+                        </Box>
+                    </Tooltip>
+                ),
             },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'endpoint', header: 'Endpoint' },
@@ -277,6 +295,12 @@ export default function InstanceApiMcpTool() {
                     )
                 );
             },
+            sx: {
+                cursor: cell.column.columnDef.enableEditing ? 'pointer' : 'default',
+                '&:hover': cell.column.columnDef.enableEditing ? {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                } : {},
+            }
         }),
         state: {
             isLoading,
