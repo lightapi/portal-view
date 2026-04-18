@@ -191,7 +191,7 @@ function normalizeLiveSnapshotInstance(rawPayload: any): RuntimeInstanceView | n
     ...parsed,
     connected: rawPayload.connected ?? true,
     active: rawPayload.active ?? true,
-    liveStatus: rawPayload.active === false ? 'inactive' : 'active',
+    liveStatus: (rawPayload.active === false ? 'inactive' : 'active') as LiveStatus,
   };
 }
 
@@ -905,7 +905,7 @@ function reconcileInstances(
     filters: MRT_ColumnFiltersState,
     query: string,
   ) => boolean,
-) {
+): Record<RuntimeInstanceId, RuntimeInstanceView> {
   const reconciledInstances: Record<RuntimeInstanceId, RuntimeInstanceView> = {};
   const unmatchedLiveInstances: RuntimeInstanceView[] = [];
   const inactiveBaselineInstances: RuntimeInstanceView[] = [];
@@ -915,7 +915,7 @@ function reconcileInstances(
       ...instance,
       connected: false,
       active: false,
-      liveStatus: 'inactive',
+      liveStatus: 'inactive' as LiveStatus,
     };
   });
 
@@ -983,7 +983,7 @@ function applyNotificationToInstances(
     filters: MRT_ColumnFiltersState,
     query: string,
   ) => boolean,
-) {
+): Record<RuntimeInstanceId, RuntimeInstanceView> {
   if (
     method !== 'notifications/instance_connected' &&
     method !== 'notifications/instance_updated' &&
@@ -1008,7 +1008,7 @@ function applyNotificationToInstances(
         ...currentInstances[runtimeInstanceId],
         connected: false,
         active: false,
-        liveStatus: 'inactive',
+        liveStatus: 'inactive' as LiveStatus,
       },
     };
   }
