@@ -14,6 +14,7 @@ export interface ServiceMetadata {
 export interface RuntimeInstance {
   runtimeInstanceId: RuntimeInstanceId;
   serviceId: ServiceId;
+  productId?: string;
   envTag?: string;
   metadata: ServiceMetadata;
   connectedAt: string;
@@ -28,6 +29,7 @@ export interface RuntimeInstanceType {
   hostId: string;
   runtimeInstanceId: string;
   serviceId: string;
+  productId?: string;
   envTag?: string;
   protocol: string;
   ipAddress: string;

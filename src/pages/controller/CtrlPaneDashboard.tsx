@@ -47,6 +47,7 @@ type RuntimeInstanceView = RuntimeInstance & {
 type RuntimeInstanceRow = {
   runtimeInstanceId: string;
   serviceId: string;
+  productId?: string;
   envTag?: string;
   protocol: string;
   ipAddress: string;
@@ -59,6 +60,7 @@ type GroupStatus = 'All Live' | 'Partial Live' | 'None Live' | 'Syncing';
 
 type ServiceGroup = {
   serviceId: string;
+  productId: string;
   envTag: string;
   nodeCount: number;
   nodes: RuntimeInstanceRow[];
@@ -105,6 +107,7 @@ function debugCtrlPane(message: string, details?: unknown) {
 const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstanceView => ({
   runtimeInstanceId: db.runtimeInstanceId,
   serviceId: db.serviceId,
+  productId: db.productId,
   envTag: db.envTag,
   connected: false,
   connectedAt: db.updateTs || '',
@@ -128,7 +131,7 @@ const buildQueryCommand = (
   sorting: MRT_SortingState,
 ) => {
   const safeSorting = (sorting ?? []).filter((sort) =>
-    sort && (sort.id === 'serviceId' || sort.id === 'envTag'),
+    sort && (sort.id === 'serviceId' || sort.id === 'envTag' || sort.id === 'productId'),
   );
 
   return {
@@ -160,6 +163,7 @@ function parseRuntimeInstancePayload(rawPayload: any): RuntimeInstanceView | nul
   return {
     runtimeInstanceId,
     serviceId: rawPayload.serviceId || '',
+    productId: rawPayload.productId || rawPayload.product_id,
     envTag: rawPayload.envTag || rawPayload.env_tag || '',
     connectedAt: rawPayload.connectedAt || rawPayload.connected_at || '',
     lastSeenAt: rawPayload.lastSeenAt || rawPayload.last_seen_at || '',
@@ -244,6 +248,7 @@ function CtrlPaneDashboard() {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [productIds, setProductIds] = useState<{ text: string; value: string }[]>([]);
   const deferredGlobalFilter = useDeferredValue(globalFilter);
 
   const bufferedNotificationsRef = useRef<BufferedNotification[]>([]);
@@ -262,8 +267,29 @@ function CtrlPaneDashboard() {
     setGlobalFilter(filter);
   }, [filter]);
 
+  useEffect(() => {
+    const fetchProductIds = async () => {
+      if (!host) return;
+      const url = '/r/data?name=platform_product';
+      try {
+        const response = await fetchClient(url);
+        if (Array.isArray(response)) {
+          setProductIds(response.map((p: any) => ({ text: p.label, value: p.id })));
+        }
+      } catch (err) {
+        console.error('Failed to fetch product IDs', err);
+      }
+    };
+    fetchProductIds();
+  }, [host]);
+
   const serviceIdFilterValue = useMemo(
     () => columnFilters.find((columnFilter) => columnFilter.id === 'serviceId')?.value,
+    [columnFilters],
+  );
+
+  const productIdFilterValue = useMemo(
+    () => columnFilters.find((columnFilter) => columnFilter.id === 'productId')?.value,
     [columnFilters],
   );
 
@@ -281,21 +307,25 @@ function CtrlPaneDashboard() {
     if (envTagFilterValue !== undefined) {
       nextServerFilters.push({ id: 'envTag', value: envTagFilterValue });
     }
+    if (productIdFilterValue !== undefined) {
+      nextServerFilters.push({ id: 'productId', value: productIdFilterValue });
+    }
 
     return nextServerFilters;
-  }, [serviceIdFilterValue, envTagFilterValue]);
+  }, [serviceIdFilterValue, envTagFilterValue, productIdFilterValue]);
 
   const serverSorting = useMemo(() => {
-    return sorting.filter((sort) => sort.id === 'serviceId' || sort.id === 'envTag');
+    return sorting.filter((sort) => sort.id === 'serviceId' || sort.id === 'envTag' || sort.id === 'productId');
   }, [sorting]);
 
   const matchesFilter = useCallback(
     (instance: RuntimeInstanceView, filters: MRT_ColumnFiltersState, query: string) => {
-      const normalizedQuery = query.trim().toLowerCase();
+      const normalizedQuery = (query || '').trim().toLowerCase();
       if (normalizedQuery) {
         const haystack = [
           instance.runtimeInstanceId,
           instance.serviceId,
+          instance.productId || '',
           instance.envTag || '',
           instance.metadata.protocol,
           instance.metadata.address,
@@ -314,6 +344,12 @@ function CtrlPaneDashboard() {
           continue;
         }
         if (columnFilter.id === 'serviceId' && !instance.serviceId.toLowerCase().includes(value)) {
+          return false;
+        }
+        if (
+          columnFilter.id === 'productId' &&
+          !(instance.productId || '').toLowerCase().includes(value)
+        ) {
           return false;
         }
         if (
@@ -392,6 +428,7 @@ function CtrlPaneDashboard() {
           runtimeInstanceId: instance.runtimeInstanceId,
           serviceId: instance.serviceId,
           envTag: instance.envTag,
+          productId: instance.productId,
           address: instance.metadata.address,
           port: instance.metadata.port,
         })),
@@ -406,14 +443,6 @@ function CtrlPaneDashboard() {
       }
 
       const liveArgs: Record<string, string> = {};
-      const serviceIdFilter = currentFilters.find((columnFilter) => columnFilter.id === 'serviceId');
-      const envTagFilter = currentFilters.find((columnFilter) => columnFilter.id === 'envTag');
-      if (typeof serviceIdFilter?.value === 'string' && serviceIdFilter.value.trim()) {
-        liveArgs.serviceId = serviceIdFilter.value.trim();
-      }
-      if (typeof envTagFilter?.value === 'string' && envTagFilter.value.trim()) {
-        liveArgs.envTag = envTagFilter.value.trim();
-      }
 
       try {
         const liveResponse = await callTool('list_instances', liveArgs);
@@ -528,10 +557,11 @@ function CtrlPaneDashboard() {
     const groups: Record<string, ServiceGroup> = {};
 
     Object.values(instances).forEach((instance) => {
-      const key = `${instance.serviceId}|${instance.envTag || ''}`;
+      const key = `${instance.serviceId}|${instance.productId || ''}|${instance.envTag || ''}`;
       if (!groups[key]) {
         groups[key] = {
           serviceId: instance.serviceId,
+          productId: instance.productId || '',
           envTag: instance.envTag || '',
           nodeCount: 0,
           nodes: [],
@@ -542,6 +572,7 @@ function CtrlPaneDashboard() {
       groups[key].nodes.push({
         runtimeInstanceId: instance.runtimeInstanceId,
         serviceId: instance.serviceId,
+        productId: instance.productId,
         envTag: instance.envTag,
         protocol: instance.metadata.protocol,
         ipAddress: instance.metadata.address,
@@ -577,6 +608,8 @@ function CtrlPaneDashboard() {
           let comparison = 0;
           if (sort.id === 'serviceId') {
             comparison = left.serviceId.localeCompare(right.serviceId);
+          } else if (sort.id === 'productId') {
+            comparison = left.productId.localeCompare(right.productId);
           } else if (sort.id === 'envTag') {
             comparison = left.envTag.localeCompare(right.envTag);
           } else if (sort.id === 'nodeCount') {
@@ -613,6 +646,13 @@ function CtrlPaneDashboard() {
       { accessorKey: 'serviceId', header: 'Service Id', enableColumnFilter: true },
       { accessorKey: 'envTag', header: 'Environment Tag', enableColumnFilter: true },
       {
+        accessorKey: 'productId',
+        header: 'Product Id',
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        filterSelectOptions: productIds,
+      },
+      {
         accessorKey: 'status',
         header: 'Status',
         filterVariant: 'select',
@@ -631,7 +671,7 @@ function CtrlPaneDashboard() {
         enableColumnFilter: false,
       },
     ],
-    [],
+    [productIds],
   );
 
   const handleCheck = (node: RuntimeInstanceRow) => {
@@ -722,7 +762,7 @@ function CtrlPaneDashboard() {
   const table = useMaterialReactTable({
     columns,
     data: pagedData,
-    getRowId: (row) => `${row.serviceId}|${row.envTag}`,
+    getRowId: (row) => `${row.serviceId}|${row.productId}|${row.envTag}`,
     enableExpandAll: false,
     enableExpanding: true,
     getRowCanExpand: () => true,
@@ -763,8 +803,8 @@ function CtrlPaneDashboard() {
                 ? liveSyncError
                   ? 'Live Sync Failed'
                   : hasCompletedSync
-                  ? 'Live Control Plane Connected'
-                  : 'Live Status Syncing'
+                    ? 'Live Control Plane Connected'
+                    : 'Live Status Syncing'
                 : 'Control Plane Disconnected'
             }
             size="small"
@@ -889,6 +929,7 @@ function reconcileInstances(
       reconciledInstances[normalizedLiveInstance.runtimeInstanceId] = {
         ...existing,
         ...normalizedLiveInstance,
+        productId: existing.productId || normalizedLiveInstance.productId,
       };
       continue;
     }
@@ -987,6 +1028,7 @@ function applyNotificationToInstances(
       [normalizedInstance.runtimeInstanceId]: {
         ...existing,
         ...normalizedInstance,
+        productId: existing.productId || normalizedInstance.productId,
       },
     };
   }
