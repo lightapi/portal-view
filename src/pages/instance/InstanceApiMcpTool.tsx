@@ -123,7 +123,7 @@ export default function InstanceApiMcpTool() {
         } finally {
             setIsLoading(false);
         }
-    }, [host, instanceApiId, apiVersionId]);
+    }, [host, instanceApiId, apiVersionId, productId, apiName]);
 
     useEffect(() => {
         fetchData();
