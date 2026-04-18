@@ -74,20 +74,19 @@ export default function InstanceApiMcpTool() {
 
         try {
             const json = await fetchClient(url);
-            console.log('Full query response:', json);
             const fetchedData: any[] = json?.endpoints || [];
 
             // Standardize the data from backend
             const standardizedData: McpToolType[] = fetchedData.map(t => {
-                let finalName = t.name;
-                const endpointName = t.endpointName;
+                const safeProductId = productId || '';
+                const safeApiName = apiName || '';
 
-                if (finalName === endpointName) {
-                    // apply enhancement pattern
-                    finalName = toKebabCase(`${productId}-${apiName}-${endpointName}`);
-                } else {
-                    // Already enhanced or manually edited, just ensure kebab-case
-                    finalName = toKebabCase(finalName);
+                let finalName = t.name;
+                const endpointName = t.endpointName || '';
+
+                if (!finalName || finalName === endpointName) {
+                    // Default case: name is missing or same as endpointName, apply enhancement pattern
+                    finalName = toKebabCase(`${safeProductId}-${safeApiName}-${endpointName}`);
                 }
 
                 // Final cleanup of hyphens
@@ -103,7 +102,6 @@ export default function InstanceApiMcpTool() {
                 };
             });
 
-            console.log('Standardized data:', standardizedData);
             setData(standardizedData);
             setMetadata({
                 propertyId: json?.propertyId || null,
@@ -118,7 +116,6 @@ export default function InstanceApiMcpTool() {
                     initialSelection[row.endpoint] = true;
                 }
             });
-            console.log('Initial selection:', initialSelection);
             setRowSelection(initialSelection);
         } catch (error) {
             setIsError(true);
@@ -139,16 +136,18 @@ export default function InstanceApiMcpTool() {
         const selectedToolsNames = Object.keys(rowSelection).filter(key => rowSelection[key]);
         const selectedTools = selectedToolsNames.map(endpoint => {
             const tool = data.find(t => t.endpoint === endpoint);
+            if (!tool) return null;
+
             const obj: any = {
-                endpointId: tool?.endpointId,
-                name: tool?.name,
-                endpoint: tool?.endpoint,
-                method: tool?.method,
-                path: tool?.path,
-                description: tool?.description,
-                inputSchema: tool?.inputSchema,
-                toolSchema: tool?.inputSchema,
-                toolMetadata: tool?.toolMetadata,
+                endpointId: tool.endpointId,
+                name: tool.name,
+                endpoint: tool.endpoint,
+                method: tool.method,
+                path: tool.path,
+                description: tool.description,
+                inputSchema: tool.inputSchema,
+                toolSchema: tool.inputSchema,
+                toolMetadata: tool.toolMetadata,
                 productId,
                 serviceId,
                 apiType,
@@ -157,17 +156,13 @@ export default function InstanceApiMcpTool() {
                 targetHost
             };
             return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
-        });
-
-        console.log('Selected tools:', selectedTools);
+        }).filter(Boolean);
 
         const propertyValue = JSON.stringify(selectedTools);
-        console.log('Saving MCP tools configuration', { selectedTools, propertyValue });
 
         let cmd: any;
         if (selectedTools.length > 0) {
             if (metadata.exists) {
-                console.log('Updating MCP tools configuration', propertyValue);
                 // Update
                 cmd = {
                     host: 'lightapi.net', service: 'config', action: 'updateConfigInstanceApi', version: '0.1.0',
@@ -184,7 +179,6 @@ export default function InstanceApiMcpTool() {
                     setErrorMsg('Missing configId for mcp-router');
                     return;
                 }
-                console.log('Creating MCP tools configuration', propertyValue);
                 cmd = {
                     host: 'lightapi.net', service: 'config', action: 'createConfigInstanceApi', version: '0.1.0',
                     data: {
@@ -277,6 +271,8 @@ export default function InstanceApiMcpTool() {
         editDisplayMode: 'cell',
         muiTableBodyCellProps: ({ cell, row }) => ({
             onBlur: (event: any) => {
+                if (!cell.column.columnDef.enableEditing) return;
+
                 const newValue = event.target.value;
                 setData((prevData) =>
                     prevData.map((item) =>
