@@ -40,6 +40,7 @@ type InstanceApiType = {
   apiVersionId: string;
   apiId?: string;
   apiVersion?: string;
+  apiName?: string;
   active: boolean;
   updateUser?: string;
   updateTs?: string;
@@ -161,6 +162,7 @@ export default function InstanceApi() {
       { accessorKey: 'serviceId', header: 'Service Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'apiName', header: 'API Name' },
       { accessorKey: 'apiType', header: 'API Type' },
       { accessorKey: 'protocol', header: 'Protocol' },
       { accessorKey: 'envTag', header: 'Env Tag' },
@@ -220,7 +222,7 @@ export default function InstanceApi() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance Api MCP Tool">
-          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiMcpTool', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
+          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiMcpTool', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
             <CodeOffIcon />
           </IconButton>
         </Tooltip>
