@@ -27,6 +27,15 @@ interface UserState {
     host?: string;
 }
 
+function toKebabCase(str: string): string {
+    if (!str) return '';
+    return str
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+        .replace(/[\s_]+/g, '-')
+        .toLowerCase();
+}
+
 export default function InstanceApiMcpTool() {
     const location = useLocation();
     const { host } = useUserState() as UserState;
@@ -68,7 +77,7 @@ export default function InstanceApiMcpTool() {
             // Standardize the data from backend
             const standardizedData: McpToolType[] = fetchedData.map(t => {
                 const originalName = t.name || t.endpointName || '';
-                const enhancedName = `${productId}-${apiName}-${originalName}`;
+                const enhancedName = toKebabCase(`${productId}-${apiName}-${originalName}`);
                 return {
                     ...t,
                     name: enhancedName,
@@ -215,11 +224,11 @@ export default function InstanceApiMcpTool() {
     const columns = useMemo<MRT_ColumnDef<McpToolType>[]>(
         () => [
             { accessorKey: 'name', header: 'Name' },
+            { accessorKey: 'description', header: 'Description' },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'endpoint', header: 'Endpoint' },
             { accessorKey: 'method', header: 'Method' },
             { accessorKey: 'path', header: 'Path' },
-            { accessorKey: 'description', header: 'Description' },
             { accessorKey: 'inputSchema', header: 'Input Schema' },
             { accessorKey: 'toolMetadata', header: 'Tool Metadata' },
         ],
