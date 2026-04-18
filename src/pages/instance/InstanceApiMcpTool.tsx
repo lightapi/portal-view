@@ -31,7 +31,7 @@ export default function InstanceApiMcpTool() {
     const location = useLocation();
     const { host } = useUserState() as UserState;
     const initialData = location.state?.data || {};
-    const { instanceApiId, apiVersion, apiId, instanceName, apiVersionId, serviceId, apiType, protocol, envTag, targetHost } = initialData;
+    const { instanceApiId, apiVersion, apiId, instanceName, apiVersionId, serviceId, apiName, apiType, protocol, envTag, targetHost, productId } = initialData;
 
     const [data, setData] = useState<McpToolType[]>([]);
     const [metadata, setMetadata] = useState<{
@@ -64,16 +64,20 @@ export default function InstanceApiMcpTool() {
         try {
             const json = await fetchClient(url);
             const fetchedData: any[] = json?.endpoints || [];
-            
+
             // Standardize the data from backend
-            const standardizedData: McpToolType[] = fetchedData.map(t => ({
-                ...t,
-                name: t.name || t.endpointName || '',
-                description: t.description || t.endpointDesc || '',
-                path: t.path || t.endpointPath || '',
-                method: t.method || t.httpMethod || '',
-                inputSchema: t.inputSchema || t.toolSchema || '',
-            }));
+            const standardizedData: McpToolType[] = fetchedData.map(t => {
+                const originalName = t.name || t.endpointName || '';
+                const enhancedName = `${productId}-${apiName}-${originalName}`;
+                return {
+                    ...t,
+                    name: enhancedName,
+                    description: t.description || t.endpointDesc || '',
+                    path: t.path || t.endpointPath || '',
+                    method: t.method || t.httpMethod || '',
+                    inputSchema: t.inputSchema || t.toolSchema || '',
+                };
+            });
 
             console.log(standardizedData);
             setData(standardizedData);
