@@ -1008,7 +1008,7 @@ function applyNotificationToInstances(
         ...currentInstances[runtimeInstanceId],
         connected: false,
         active: false,
-        liveStatus: 'inactive' as LiveStatus,
+        liveStatus: 'inactive',
       },
     };
   }
