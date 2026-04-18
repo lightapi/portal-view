@@ -10,7 +10,7 @@ import { Box, Button, Typography, Alert, Snackbar, Tooltip } from '@mui/material
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 import { useUserState } from "../../contexts/UserContext";
-import fetchClient from "../../utils/fetchClient';
+import fetchClient from "../../utils/fetchClient";
 
 type McpToolType = {
     name: string;
