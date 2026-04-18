@@ -273,7 +273,6 @@ function CtrlPaneDashboard() {
       const url = '/r/data?name=platform_product';
       try {
         const response = await fetchClient(url);
-        console.log('Product IDs response', response);
         if (Array.isArray(response)) {
           setProductIds(response.map((p: any) => ({ text: p.label, value: p.id })));
         }
