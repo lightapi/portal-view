@@ -25,6 +25,7 @@ type AuthCodeType = {
   hostId: string;
   authCode: string;
   providerId: string;
+  clientId: string;
   userId: string;
   entityId: string;
   userType: string;
@@ -159,6 +160,7 @@ export default function AuthCodeAdmin() {
     () => [
       { accessorKey: 'userId', header: 'User ID' },
       { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'clientId', header: 'Client ID' },
       {
         accessorKey: 'authCode',
         header: 'Auth Code',
