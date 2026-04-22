@@ -23,7 +23,7 @@ type ProviderKeyType = {
 export default function ProviderKey() {
   const location = useLocation();
   const providerId = location.state?.data?.providerId;
-
+  const hostId = location.state?.data?.hostId;
   // Data and fetching state
   const [data, setData] = useState<ProviderKeyType[]>([]);
   const [isError, setIsError] = useState(false);
@@ -31,8 +31,8 @@ export default function ProviderKey() {
 
   // Data fetching logic (fetches all keys for the provider)
   useEffect(() => {
-    if (!providerId) {
-      console.error("ProviderKey page loaded without a providerId.");
+    if (!providerId || !hostId) {
+      console.error("ProviderKey page loaded without providerId or hostId.");
       setIsError(true);
       setIsLoading(false);
       return;
@@ -43,7 +43,7 @@ export default function ProviderKey() {
       setIsError(false);
       const cmd = {
         host: 'lightapi.net', service: 'oauth', action: 'getProviderKey', version: '0.1.0',
-        data: { providerId }, // Only send providerId to get all keys
+        data: { hostId: hostId, providerId: providerId },
       };
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
@@ -58,7 +58,7 @@ export default function ProviderKey() {
       }
     };
     fetchKeys();
-  }, [providerId]);
+  }, [providerId, hostId]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProviderKeyType>[]>(

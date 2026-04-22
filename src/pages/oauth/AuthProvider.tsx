@@ -194,14 +194,15 @@ export default function AuthProvider() {
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '150px' } }
       },
-      { accessorKey: 'operationOwner', header: 'Ops Owner' },
-      { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
+      { accessorKey: 'operationOwner', header: 'Operation Owner' },
+      { accessorKey: 'deliveryOwner', header: 'Delivery Owner' },
       {
         accessorKey: 'jwk',
         header: 'JWK',
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '150px' } }
       },
+      { accessorKey: 'hostId', header: 'Host ID' },
       { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },
