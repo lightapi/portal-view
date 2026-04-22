@@ -9124,6 +9124,13 @@
       }
     },
     "form": [
+      {
+        "type": "help",
+        "description": "Categories are used to group related entities in a hierarchical structure.",
+        "variant": "h6",
+        "align": "left",
+        "color": "secondary"
+      },
       "hostId",
       {
         "key": "entityType",
@@ -9216,8 +9223,8 @@
     "form": [
       {
         "type": "help",
-        "description": "Update categories for an entity with hierarchical structure.",
-        "variant": "h4",
+        "description": "Categories are used to group related entities in a hierarchical structure.",
+        "variant": "h6",
         "align": "left",
         "color": "secondary"
       },
@@ -9300,8 +9307,8 @@
     "form": [
       {
         "type": "help",
-        "description": "Construct tags for an entity.",
-        "variant": "h4",
+        "description": "Tags are used to group related entities and make them easier to search and filter.",
+        "variant": "h6",
         "align": "left",
         "color": "secondary"
       },
@@ -9377,8 +9384,8 @@
     "form": [
       {
         "type": "help",
-        "description": "Update tags for an entity with hierarchical structure.",
-        "variant": "h4",
+        "description": "Tags are used to group related entities and make them easier to search and filter.",
+        "variant": "h6",
         "align": "left",
         "color": "secondary"
       },
