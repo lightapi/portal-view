@@ -73,6 +73,7 @@ type BufferedNotification = {
 };
 
 const DB_LIMIT = 1000;
+
 function isCtrlPaneDebugEnabled() {
   if (import.meta.env.DEV) {
     return true;
@@ -160,11 +161,19 @@ function parseRuntimeInstancePayload(rawPayload: any): RuntimeInstanceView | nul
     return null;
   }
 
+  const envTag =
+    rawPayload.envTag || rawPayload.env_tag || rawPayload.metadata?.environment || '';
+  const productId =
+    rawPayload.productId ||
+    rawPayload.product_id ||
+    rawPayload.metadata?.tags?.productId ||
+    rawPayload.metadata?.tags?.product_id;
+
   return {
     runtimeInstanceId,
     serviceId: rawPayload.serviceId || '',
-    productId: rawPayload.productId || rawPayload.product_id,
-    envTag: rawPayload.envTag || rawPayload.env_tag || '',
+    productId,
+    envTag,
     connectedAt: rawPayload.connectedAt || rawPayload.connected_at || '',
     lastSeenAt: rawPayload.lastSeenAt || rawPayload.last_seen_at || '',
     connected: true,
@@ -174,8 +183,7 @@ function parseRuntimeInstancePayload(rawPayload: any): RuntimeInstanceView | nul
       address: rawPayload.metadata?.address || 'unknown',
       port: rawPayload.metadata?.port || 0,
       protocol: rawPayload.metadata?.protocol || 'http',
-      environment:
-        rawPayload.metadata?.environment || rawPayload.envTag || rawPayload.env_tag || '',
+      environment: envTag,
       version: rawPayload.metadata?.version || '0.1.0',
       tags: rawPayload.metadata?.tags || {},
     },
