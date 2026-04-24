@@ -28,12 +28,12 @@ interface UserState {
     host?: string;
 }
 
-function toKebabCase(str: string): string {
+function toSnakeCase(str: string): string {
     if (!str) return '';
     return str
-        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-        .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-        .replace(/[\s_]+/g, '-')
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1_$2')
+        .replace(/[\s-]+/g, '_')
         .toLowerCase();
 }
 
@@ -77,7 +77,6 @@ export default function InstanceApiMcpTool() {
 
             // Standardize the data from backend
             const standardizedData: McpToolType[] = fetchedData.map(t => {
-                const safeProductId = productId || '';
                 const safeApiName = apiName || '';
 
                 let finalName = t.name;
@@ -85,11 +84,11 @@ export default function InstanceApiMcpTool() {
 
                 if (!finalName || finalName === endpointName) {
                     // Default case: name is missing or same as endpointName, apply enhancement pattern
-                    finalName = toKebabCase(`${safeProductId}-${safeApiName}-${endpointName}`);
+                    finalName = toSnakeCase(`${safeApiName}_${endpointName}`);
                 }
 
-                // Final cleanup of hyphens
-                finalName = finalName.replace(/-+/g, '-').replace(/^-|-$/g, '');
+                // Final cleanup of underscores
+                finalName = finalName.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 
                 return {
                     ...t,
