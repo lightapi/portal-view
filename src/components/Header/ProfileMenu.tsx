@@ -63,7 +63,7 @@ function ProfileMenuContent({
     const state = Math.random().toString(36).substring(7);
     localStorage.setItem("portal_auth_state", state);
 
-    const defaultUrl = `https://locsignin.lightapi.net?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=C&state=${state}`;
+    const defaultUrl = `https://signin.localhost?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=C&state=${state}`;
     const signInUrl = config.signInUrl
       ? `${config.signInUrl}&user_type=C&state=${state}`
       : defaultUrl;
