@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -11,10 +11,17 @@ import {
 } from 'material-react-table';
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
-import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import {
+  CopyableTruncatedText,
+  DateTimeCell,
+  RevokeDialog,
+  type RevokeDialogTarget,
+  TruncatedCell,
+} from './OAuthTableHelpers';
 
 // --- Type Definitions ---
 type RefreshTokenApiResponse = {
@@ -38,6 +45,7 @@ type RefreshTokenType = {
   scope?: string;
   csrf?: string;
   customClaim?: string;
+  sessionId?: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -47,22 +55,11 @@ interface UserState {
   host?: string;
 }
 
-// Helper Cell component for truncating long text with a tooltip
-// We make the component generic with `<T extends MRT_RowData>`
-// This means it can work with any specific row type, like RefreshTokenType.
-const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
-  const value = cell.getValue<string>() ?? '';
-  return (
-    <Tooltip title={value} placement="top-start">
-      <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-        {value}
-      </Box>
-    </Tooltip>
-  );
-};
-
 export default function RefreshTokenAdmin() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const initialData = location.state?.data || {};
 
   // Data and fetching state
   const [data, setData] = useState<RefreshTokenType[]>([]);
@@ -70,12 +67,14 @@ export default function RefreshTokenAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [revokeTarget, setRevokeTarget] = useState<(RevokeDialogTarget & { row: RefreshTokenType }) | null>(null);
 
   // Table state
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
-      { id: 'active', value: 'true' }
-    ]
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
+    Object.entries(initialData)
+      .map(([id, value]) => ({ id, value: value as string }))
+      .filter((filter) => filter.value)
+      .concat([{ id: 'active', value: 'true' }])
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -131,32 +130,49 @@ export default function RefreshTokenAdmin() {
     fetchData();
   }, [fetchData]);
 
-  // Delete (Revoke) handler with optimistic update
-  const handleDelete = useCallback(async (row: MRT_Row<RefreshTokenType>) => {
-    if (!window.confirm(`Are you sure you want to revoke this refresh token for user: ${row.original.email}?`)) return;
+  const openRevokeDialog = useCallback((row: MRT_Row<RefreshTokenType>) => {
+    setRevokeTarget({
+      row: row.original,
+      title: 'Revoke Session',
+      message: `Revoke the session associated with ${row.original.email || row.original.userId}?`,
+      confirmLabel: 'Revoke Session',
+      defaultReason: 'ADMIN_REVOKED',
+    });
+  }, []);
 
+  // Revoke handler with optimistic update
+  const handleRevoke = useCallback(async (reason: string) => {
+    if (!revokeTarget) return;
+    const row = revokeTarget.row;
     const originalData = [...data];
-    setData(prev => prev.filter(token => token.refreshToken !== row.original.refreshToken));
+    setData(prev => prev.filter(token => token.refreshToken !== row.refreshToken));
     setRowCount(prev => prev - 1);
+    setRevokeTarget(null);
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0',
-      data: { refreshToken: row.original.refreshToken, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.hostId || host, refreshToken: row.refreshToken, aggregateVersion: row.aggregateVersion, reason },
     };
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to revoke token. Please try again.');
+        alert('Failed to revoke session. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
       }
     } catch (e) {
-      alert('Failed to revoke token due to a network error.');
+      alert('Failed to revoke session due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [data, host, revokeTarget]);
+
+  const viewAudit = useCallback((row: RefreshTokenType) => {
+    navigate('/app/oauth/authSessionAudit', {
+      state: { data: { sessionId: row.sessionId, userId: row.userId, clientId: row.clientId } },
+    });
+  }, [navigate]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefreshTokenType>[]>(
@@ -167,7 +183,12 @@ export default function RefreshTokenAdmin() {
       {
         accessorKey: 'refreshToken',
         header: 'Refresh Token',
-        Cell: TruncatedCell,
+        Cell: ({ cell }) => <CopyableTruncatedText value={cell.getValue<string>()} maxWidth={220} label="Copy refresh token" />,
+      },
+      {
+        accessorKey: 'sessionId',
+        header: 'Session ID',
+        Cell: ({ cell }) => <CopyableTruncatedText value={cell.getValue<string>()} maxWidth={220} label="Copy session id" />,
       },
       {
         accessorKey: 'scope',
@@ -181,7 +202,7 @@ export default function RefreshTokenAdmin() {
       },
       {
         accessorKey: 'updateTs', header: 'Last Updated',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+        Cell: DateTimeCell,
       },
     ],
     [],
@@ -191,7 +212,7 @@ export default function RefreshTokenAdmin() {
   const table = useMaterialReactTable({
     columns,
     data,
-    initialState: { showColumnFilters: true, density: 'compact' },
+    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false } },
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
@@ -205,11 +226,20 @@ export default function RefreshTokenAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading refresh tokens' } : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
-      <Tooltip title="Revoke Token">
-        <IconButton color="error" onClick={() => handleDelete(row)}>
-          <DeleteForeverIcon />
-        </IconButton>
-      </Tooltip>
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Tooltip title="Session Audit">
+          <span>
+            <IconButton disabled={!row.original.sessionId} onClick={() => viewAudit(row.original)}>
+              <ManageSearchIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+        <Tooltip title="Revoke Session">
+          <IconButton color="error" onClick={() => openRevokeDialog(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
     ),
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">
@@ -218,5 +248,10 @@ export default function RefreshTokenAdmin() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <>
+      <MaterialReactTable table={table} />
+      <RevokeDialog target={revokeTarget} onCancel={() => setRevokeTarget(null)} onConfirm={handleRevoke} />
+    </>
+  );
 }
