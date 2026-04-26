@@ -10,6 +10,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
+import { useUserState } from '../../contexts/UserContext';
 
 // --- Type Definitions ---
 // The API returns an array directly
@@ -34,10 +35,10 @@ interface UserState {
 export default function UserHost() {
   const navigate = useNavigate();
   const location = useLocation();
-  const initialUserId = location.state?.data?.userId;
-  const userEmail = location.state?.data?.email; // Optional: for display purposes
+  const { userId: contextUserId, email: contextEmail } = useUserState();
+  const initialUserId = location.state?.data?.userId || contextUserId;
+  const userEmail = location.state?.data?.email || contextEmail; // Optional: for display purposes
 
-  console.log("userId", initialUserId);
 
   // Data and fetching state
   const [data, setData] = useState<UserHostType[]>([]);

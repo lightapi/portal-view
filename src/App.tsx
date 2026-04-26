@@ -52,7 +52,7 @@ import ErrorAdmin from "./pages/error/ErrorAdmin";
 import ErrorDelete from "./pages/error/ErrorDelete";
 import ErrorItem from "./pages/error/ErrorItem";
 import SchemaAdmin from "./pages/schema/SchemaAdmin";
-import ScheduleAdmin from "./pages/schedule/ScheduleAdmin";
+import Schedule from "./pages/schedule/Schedule";
 import RuleAdmin from "./pages/rule/RuleAdmin";
 import CityRegistry from "./pages/covid/CityRegistry";
 import CityProfile from "./pages/covid/CityProfile";
@@ -97,7 +97,6 @@ import ChaosMonkey from "./pages/controller/ChaosMonkey";
 import ModuleManager from "./pages/controller/ModuleManager";
 import CacheExplorer from "./pages/controller/CacheExplorer";
 import OrgAdmin from "./pages/org/OrgAdmin";
-import Host from "./pages/host/Host";
 import HostAdmin from "./pages/host/HostAdmin";
 import HostUser from "./pages/host/HostUser";
 import RoleAdmin from "./pages/access/RoleAdmin";
@@ -389,7 +388,8 @@ const App = () => {
           <Route path="error/deleteBlog" element={<ErrorDelete />} />
           <Route path="error/:host/:errorCode" element={<ErrorItem />} />
           <Route path="schema/admin" element={<SchemaAdmin />} />
-          <Route path="schedule/admin" element={<ScheduleAdmin />} />
+          <Route path="schedule/admin" element={<Schedule />} />
+          <Route path="scheduler" element={<Schedule />} />
           <Route path="rule/admin" element={<RuleAdmin />} />
           <Route path="ruleDetail" element={<RuleDetail />} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
@@ -493,7 +493,6 @@ const App = () => {
           </Route>
           <Route path="org/OrgAdmin" element={<OrgAdmin />} />
           <Route path="host/HostAdmin" element={<HostAdmin />} />
-          <Route path="host/Host" element={<Host />} />
           <Route path="host/hostUser" element={<HostUser />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="product/environment" element={<ProductEnvironment />} />

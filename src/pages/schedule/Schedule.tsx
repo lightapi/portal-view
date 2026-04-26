@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -42,6 +42,8 @@ type ScheduleType = {
 
 interface UserState {
   host?: string;
+  userId?: string;
+  email?: string;
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
@@ -55,10 +57,13 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
   );
 };
 
-export default function ScheduleAdmin() {
+export default function Schedule() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const { host, userId, email } = useUserState() as UserState;
+  
+  // Determine if we are in admin mode based on the URL path
+  const isAdminView = location.pathname.includes('/admin');
 
   // Data and fetching state
   const [data, setData] = useState<ScheduleType[]>([]);
@@ -82,6 +87,8 @@ export default function ScheduleAdmin() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (!isAdminView && !userId) return; // In user view, we must have a userId
+    
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -89,23 +96,33 @@ export default function ScheduleAdmin() {
 
     columnFilters.forEach(filter => {
       if (filter.id === 'active') {
-        // Extract active status (assuming filter.value is 'true'/'false' string from select)
         activeStatus = filter.value === 'true' || filter.value === true;
       } else {
-        // Keep other filters as is
         apiFilters.push(filter);
       }
     });
 
+    const cmdData: any = {
+      hostId: host, 
+      offset: pagination.pageIndex * pagination.pageSize, 
+      limit: pagination.pageSize,
+      sorting: JSON.stringify(sorting ?? []),
+      filters: JSON.stringify(apiFilters ?? []),
+      globalFilter: globalFilter ?? '',
+      active: activeStatus,
+    };
+
+    // For normal users, filter by their userId in the updateUser field
+    if (!isAdminView && userId) {
+      apiFilters.push({ id: 'updateUser', value: userId });
+    }
+
     const cmd = {
-      host: 'lightapi.net', service: 'schedule', action: 'getSchedule', version: '0.1.0',
-      data: {
-        hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
-        globalFilter: globalFilter ?? '',
-        active: activeStatus,
-      },
+      host: 'lightapi.net', 
+      service: 'schedule', 
+      action: 'getSchedule', 
+      version: '0.1.0',
+      data: cmdData,
     };
 
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
@@ -119,7 +136,7 @@ export default function ScheduleAdmin() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, isAdminView, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -151,7 +168,7 @@ export default function ScheduleAdmin() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data, host]);
+  }, [data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<ScheduleType>) => {
     const scheduleId = row.original.scheduleId;
@@ -176,44 +193,48 @@ export default function ScheduleAdmin() {
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ScheduleType>[]>(
-    () => [
-      { accessorKey: 'scheduleId', header: 'Schedule ID' },
-      { accessorKey: 'scheduleName', header: 'Schedule Name' },
-      { accessorKey: 'frequencyUnit', header: 'Frequency Unit' },
-      { accessorKey: 'frequencyTime', header: 'Frequency Time' },
-      { accessorKey: 'eventTopic', header: 'Event Topic' },
-      { accessorKey: 'eventType', header: 'Event Type' },
-      {
-        accessorKey: 'eventData',
-        header: 'Event Data',
-        Cell: TruncatedCell,
-      },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Schedule">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.scheduleId}>
-              {isUpdateLoading === row.original.scheduleId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Schedule"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
-    ],
-    [],
+    () => {
+      const allColumns: MRT_ColumnDef<ScheduleType>[] = [
+        { accessorKey: 'scheduleId', header: 'Schedule ID' },
+        { accessorKey: 'scheduleName', header: 'Schedule Name' },
+        { accessorKey: 'frequencyUnit', header: 'Frequency Unit' },
+        { accessorKey: 'frequencyTime', header: 'Frequency Time' },
+        { accessorKey: 'eventTopic', header: 'Event Topic' },
+        { accessorKey: 'eventType', header: 'Event Type' },
+        {
+          accessorKey: 'eventData',
+          header: 'Event Data',
+          Cell: TruncatedCell,
+        },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        { accessorKey: 'updateTs', header: 'Update Timestamp' },
+        { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        {
+          id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
+          Cell: ({ row }) => (
+            <Tooltip title="Update Schedule">
+              <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.scheduleId}>
+                {isUpdateLoading === row.original.scheduleId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+              </IconButton>
+            </Tooltip>
+          ),
+        },
+        {
+          id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
+          Cell: ({ row }) => (<Tooltip title="Delete Schedule"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+        },
+      ];
+      // Hide Update User column for normal users
+      return isAdminView ? allColumns : allColumns.filter(col => col.accessorKey !== 'updateUser');
+    },
+    [isAdminView, isUpdateLoading, handleUpdate, handleDelete],
   );
 
   // Table instance configuration
@@ -234,9 +255,21 @@ export default function ScheduleAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createSchedule')}>
-        Create New Schedule
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createSchedule')}>
+          Create New Schedule
+        </Button>
+        {!isAdminView && (
+          <Typography variant="subtitle1" sx={{ ml: 2 }}>
+            Schedules for: <strong>{email || userId}</strong>
+          </Typography>
+        )}
+        {isAdminView && (
+          <Typography variant="subtitle1" sx={{ ml: 2, color: 'primary.main', fontWeight: 600 }}>
+            Admin View: All Schedules
+          </Typography>
+        )}
+      </Box>
     ),
   });
 
