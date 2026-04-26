@@ -7,13 +7,353 @@ import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
 import Widget from '../../components/Widget/Widget';
 import { Typography } from '../../components/Wrappers/Wrappers';
-import { useUserDispatch, signOut } from '../../contexts/UserContext';
+import { useUserDispatch, useUserState, signOut } from '../../contexts/UserContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import GroupsIcon from '@mui/icons-material/Groups';
+import BuildIcon from '@mui/icons-material/Build';
+import SpeedIcon from '@mui/icons-material/Speed';
+import HistoryIcon from '@mui/icons-material/History';
+import ShieldIcon from '@mui/icons-material/Shield';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import SettingsIcon from '@mui/icons-material/Settings';
+import StorageIcon from '@mui/icons-material/Storage';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import LoginIcon from '@mui/icons-material/Login';
+import ExploreIcon from '@mui/icons-material/Explore';
+import InfoIcon from '@mui/icons-material/Info';
+import {
+  Card,
+  CardContent,
+  Stack,
+  Avatar,
+  LinearProgress,
+  Chip,
+  useTheme,
+  alpha
+} from '@mui/material';
+import { MaterialReactTable, useMaterialReactTable, type MRT_ColumnDef } from 'material-react-table';
+
+// Mock Data Types
+interface ActivityEvent {
+  id: string;
+  type: 'registration' | 'execution' | 'security' | 'system';
+  message: string;
+  timestamp: string;
+  status: 'success' | 'warning' | 'info' | 'error';
+}
+
+const MOCK_ACTIVITY: ActivityEvent[] = [
+  { id: '1', type: 'registration', message: "New MCP Server 'Inventory-Service' registered successfully.", timestamp: '2 mins ago', status: 'success' },
+  { id: '2', type: 'execution', message: "Agent 'Support-Bot' resolved query using 'Payment-Tool'.", timestamp: '15 mins ago', status: 'success' },
+  { id: '3', type: 'security', message: "Data-Privacy-v2 policy enforced on 4 agents.", timestamp: '1 hour ago', status: 'info' },
+  { id: '4', type: 'system', message: "Gateway node 'us-east-1' auto-scaled to 3 instances.", timestamp: '2 hours ago', status: 'info' },
+  { id: '5', type: 'security', message: "Unauthorized access attempt blocked from IP 192.168.1.45.", timestamp: '3 hours ago', status: 'warning' },
+];
+
+const MOCK_STATS = [
+  { title: 'Fabric Status', value: 'Healthy', icon: <SensorsIcon />, color: '#4caf50', subtext: '99.9% Uptime' },
+  { title: 'Active Agents', value: '12', icon: <GroupsIcon />, color: '#2196f3', subtext: '+2 in last 24h' },
+  { title: 'MCP Tools', value: '48', icon: <BuildIcon />, color: '#ff9800', subtext: 'across 6 servers' },
+  { title: 'Avg Latency', value: '42ms', icon: <SpeedIcon />, color: '#f44336', subtext: '-5ms improvement' },
+];
+
+const QUICK_ACTIONS = [
+  { label: 'Onboard MCP', icon: <AddCircleIcon />, color: 'primary' },
+  { label: 'Configure Agent', icon: <SettingsIcon />, color: 'secondary' },
+  { label: 'Manage Memory', icon: <StorageIcon />, color: 'info' },
+  { label: 'Security Logs', icon: <VerifiedUserIcon />, color: 'warning' },
+];
+
+const StatCard = ({ title, value, icon, color, subtext }: any) => {
+  const theme = useTheme();
+  return (
+    <Card sx={{ height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <CardContent>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar sx={{
+            bgcolor: alpha(color, 0.1),
+            color: color,
+            width: 56,
+            height: 56
+          }}>
+            {icon}
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
+              {title}
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 700, my: 0.5 }}>
+              {value}
+            </Typography>
+            <Typography variant="caption" sx={{ color: color, fontWeight: 600 }}>
+              {subtext}
+            </Typography>
+          </Box>
+        </Stack>
+      </CardContent>
+      <Box sx={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        bgcolor: color,
+        opacity: 0.6
+      }} />
+    </Card>
+  );
+};
+
+const ActivityStream = () => {
+  const columns = React.useMemo<MRT_ColumnDef<ActivityEvent>[]>(
+    () => [
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        size: 100,
+        Cell: ({ cell }) => (
+          <Chip
+            label={cell.getValue<string>().toUpperCase()}
+            size="small"
+            variant="outlined"
+            sx={{ fontSize: '0.65rem' }}
+          />
+        ),
+      },
+      {
+        accessorKey: 'message',
+        header: 'Event Description',
+      },
+      {
+        accessorKey: 'timestamp',
+        header: 'Time',
+        size: 120,
+      },
+    ],
+    [],
+  );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: MOCK_ACTIVITY,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
+    enableColumnActions: false,
+    enableColumnFilters: false,
+    enablePagination: false,
+    enableSorting: false,
+    muiTablePaperProps: {
+      elevation: 0,
+      sx: { borderRadius: 0 },
+    },
+    muiTableBodyCellProps: {
+      sx: { fontSize: '0.875rem' },
+    },
+  });
+
+  return <MaterialReactTable table={table} />;
+};
+
+const UserDashboard = ({ email }: { email: string | null }) => {
+  return (
+    <Box sx={{ mt: 4, px: 2 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="h3" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
+            Light-Fabric Control
+          </Typography>
+          <Typography variant="h6" color="textSecondary">
+            Welcome back, <Box component="span" sx={{ color: 'secondary.main', fontWeight: 700 }}>{email || 'User'}</Box>. Orchestrating the Agentic Future.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+          <Button variant="outlined" startIcon={<HistoryIcon />}>View Logs</Button>
+          <Button variant="contained" color="primary" startIcon={<AddCircleIcon />}>New Agent</Button>
+        </Stack>
+      </Stack>
+
+      <Grid container spacing={3}>
+        {/* Stats Row */}
+        {MOCK_STATS.map((stat, idx) => (
+          <Grid key={idx} size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard {...stat} />
+          </Grid>
+        ))}
+
+        {/* Main Content Area */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Widget
+            title="Live Fabric Activity"
+            noBodyPadding
+            header={
+              <Stack direction="row" spacing={1} alignItems="center">
+                <HistoryIcon color="action" />
+                <Typography variant="h6">Live Fabric Activity</Typography>
+              </Stack>
+            }
+          >
+            <ActivityStream />
+          </Widget>
+        </Grid>
+
+        {/* Sidebar Actions */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Stack spacing={3}>
+            <Widget title="Quick Operations">
+              <Grid container spacing={2}>
+                {QUICK_ACTIONS.map((action, idx) => (
+                  <Grid key={idx} size={6}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      color={action.color as any}
+                      sx={{
+                        height: 100,
+                        flexDirection: 'column',
+                        gap: 1,
+                        borderStyle: 'dashed',
+                        borderWidth: 2,
+                        '&:hover': { borderWidth: 2 }
+                      }}
+                    >
+                      {action.icon}
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                        {action.label}
+                      </Typography>
+                    </Button>
+                  </Grid>
+                ))}
+              </Grid>
+            </Widget>
+
+            <Widget title="Compliance Score">
+              <Box sx={{ py: 2 }}>
+                <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                  <Typography variant="body2" fontWeight={600}>Security Posture</Typography>
+                  <Typography variant="body2" color="success.main" fontWeight={700}>85%</Typography>
+                </Stack>
+                <LinearProgress variant="determinate" value={85} color="success" sx={{ height: 8, borderRadius: 4 }} />
+                <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
+                  4 policy updates pending for Agent-Delta.
+                </Typography>
+              </Box>
+            </Widget>
+
+            <Widget title="Ecosystem Overview">
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Box sx={{ p: 2, bgcolor: alpha('#2196f3', 0.05), borderRadius: 2, border: '1px solid', borderColor: alpha('#2196f3', 0.1) }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <AccountTreeIcon color="primary" />
+                    <Box>
+                      <Typography variant="subtitle2">Primary Gateway</Typography>
+                      <Typography variant="caption" color="textSecondary">loc.lightapi.net (Healthy)</Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: alpha('#9c27b0', 0.05), borderRadius: 2, border: '1px solid', borderColor: alpha('#9c27b0', 0.1) }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <VerifiedUserIcon color="secondary" />
+                    <Box>
+                      <Typography variant="subtitle2">Auth Provider</Typography>
+                      <Typography variant="caption" color="textSecondary">OAuth2 Kafka-based (Active)</Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              </Stack>
+            </Widget>
+          </Stack>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+const GuestDashboard = () => {
+  const navigate = useNavigate();
+  return (
+    <Box sx={{ mt: 8, px: 2, textAlign: 'center' }}>
+      <Box sx={{ mb: 10 }}>
+        <Typography variant="h1" sx={{
+          fontWeight: 900,
+          fontSize: { xs: '3rem', md: '5rem' },
+          background: 'linear-gradient(45deg, #2196f3 30%, #9c27b0 90%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          mb: 2
+        }}>
+          Light-Fabric
+        </Typography>
+        <Typography variant="h4" color="textSecondary" sx={{ mb: 6, fontWeight: 400 }}>
+          The Enterprise-Grade Agentic Orchestration Platform
+        </Typography>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<LoginIcon />}
+            onClick={() => navigate('/login')}
+            sx={{ px: 4, py: 1.5, fontSize: '1.1rem', borderRadius: '12px' }}
+          >
+            Get Started
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<ExploreIcon />}
+            sx={{ px: 4, py: 1.5, fontSize: '1.1rem', borderRadius: '12px' }}
+            href="https://www.networknt.com/light-fabric/"
+            target="_blank"
+          >
+            Documentation
+          </Button>
+        </Stack>
+      </Box>
+
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={4}>
+          <Widget title="AI Gateway" header={<Avatar sx={{ bgcolor: 'primary.main', mb: 1 }}><SensorsIcon /></Avatar>}>
+            <Typography color="textSecondary">
+              High-performance Rust-based gateway for secure and governed AI interactions.
+            </Typography>
+          </Widget>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Widget title="Agent Ecosystem" header={<Avatar sx={{ bgcolor: 'secondary.main', mb: 1 }}><GroupsIcon /></Avatar>}>
+            <Typography color="textSecondary">
+              Seamlessly onboard and orchestrate MCP servers and specialized agents.
+            </Typography>
+          </Widget>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Widget title="Hindsight Memory" header={<Avatar sx={{ bgcolor: 'info.main', mb: 1 }}><StorageIcon /></Avatar>}>
+            <Typography color="textSecondary">
+              Shared organizational and user memory banks for context-aware intelligence.
+            </Typography>
+          </Widget>
+        </Grid>
+      </Grid>
+
+      <Box sx={{ mt: 10, py: 6, borderTop: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h6" color="textSecondary" sx={{ mb: 4 }}>
+          Connect with the Community
+        </Typography>
+        <Stack direction="row" spacing={4} justifyContent="center">
+          <Link href="https://github.com/networknt" target="_blank" color="inherit">GitHub</Link>
+          <Link href="https://www.youtube.com/channel/UCHCRMWJVXw8iB7zKxF55Byw" target="_blank" color="inherit">YouTube</Link>
+          <Link href="https://gitter.im/networknt/light-portal" target="_blank" color="inherit">Gitter</Link>
+        </Stack>
+      </Box>
+    </Box>
+  );
+};
 
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const userDispatch = useUserDispatch();
+  const { isAuthenticated, email } = useUserState();
   const verificationAttempted = useRef(false);
 
   useEffect(() => {
@@ -37,336 +377,5 @@ export default function Dashboard() {
     }
   }, [location, navigate, userDispatch]);
 
-  return (
-    <>
-      <Box sx={{ display: 'flex', mt: '70px', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography sx={{ color: 'primary.main', fontSize: '4rem' }}>Light Portal</Typography>
-      </Box>
-      <PageTitle title="Bring the API producers and consumers together." />
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', pb: '60px' }}>
-        <Button variant="contained" color="secondary" size="large">
-          Latest News
-        </Button>
-      </Box>
-      <Grid container spacing={4}>
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Share Knowledge"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodyClass="fullHeightBody"
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                For new developers, you can find a lot of examples here to learn
-                how to use the light-platform.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                For experienced contributors, you can share your knowledge and
-                your work to others.
-              </Typography>
-            </Box>
-          </Widget>
-        </Grid>
-
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Marketplace"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                Build APIs with light-platform and publish your APIs in the
-                marketplace to allow others to use them.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                We host APIs and single page applications for contributors with
-                no charge or a small fee to cover the cost.
-              </Typography>
-            </Box>
-          </Widget>
-        </Grid>
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Security"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                Light-oauth2 is behind the portal, and it is responsible for
-                security. All applications can use light-portal for protection.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                As users are shared between sites, single sign-on is supported
-                natively. Your users won't need to register on your site again.
-              </Typography>
-            </Box>
-          </Widget>
-        </Grid>
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Service"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                We provide other infrastructure services for your
-                microservices—for example, metrics, distributed tracing,
-                logging, etc.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', maxWidth: '100%' }}>
-              <Typography
-                color="text"
-                colorBrightness="secondary"
-                sx={{ minWidth: 145, pr: 2 }}
-              >
-                Your application can leverage other people's services directly
-                without reinventing the wheel.
-              </Typography>
-            </Box>
-          </Widget>
-        </Grid>
-        <Grid size={12}>
-          <Widget bodySx={{ overflowX: 'auto' }}>
-            <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-              <div>
-                As you might have realized, we have marked light-eventuate-4j,
-                light-tram-4j, and light-saga-4j deprecated because they are
-                replaced by light-kafak. And we are in the process of re-writing
-                the light-portal services on it these days.
-                <p />
-                With Kafka 2.0 release, it supports transaction and exact once
-                delivery as well as Kafka streams. We have developed a
-                light-kafka module to leverage it for event sourcing and CQRS.
-                Since then, we have been re-writing the light-portal based on
-                it. The light-kafka is a commercial module that provides the
-                integration with Kafka and Avro event serialization, and it will
-                only be open-sourced for customers. It is a foundation for
-                almost all applications built these days internally, including
-                light-portal, taiji-blockchain, and maproot.net. Since the new
-                light-portal is based on it, we cannot open source it as the key
-                dependency is a commercial module. That is why we have made it a
-                private repository that will be open-sourced to customers only.
-                The portal-view is a react single page application, and it is
-                opened sourced with MIT license.
-                <p />
-                The long term goal is to provide services to small and
-                medium-sized customers as a cloud subscription service. At the
-                same time, it can be sold as an enterprise edition for
-                enterprise customers who want to deploy it within the
-                organization. All commercial modules will be open-sourced to
-                customers so that a team of users who have common interests can
-                work together to improve the products.
-                <p />I have double-checked the light-portal repository and
-                haven't found any outside contributions. If you are using old
-                light-portal modules, please let us know so that we can discuss
-                how to migrate to the new version.
-              </div>
-            </Box>
-          </Widget>
-        </Grid>
-
-        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
-          <Widget
-            title="Youtube Channel"
-            upperTitle
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-          >
-            <Grid container spacing={2}>
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link
-                        href="https://www.youtube.com/channel/UCHCRMWJVXw8iB7zKxF55Byw"
-                        rel="noreferrer noopener"
-                        target="_blank"
-                      >
-                        Demo Video
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-            </Grid>
-          </Widget>
-        </Grid>
-
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Open Source"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Grid container spacing={2}>
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link
-                        href="https://github.com/networknt/portal-view"
-                        rel="noreferrer noopener"
-                        target="_blank"
-                      >
-                        Portal-view
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link
-                        href="https://github.com/networknt"
-                        rel="noreferrer noopener"
-                        target="_blank"
-                      >
-                        Light Platform
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-            </Grid>
-          </Widget>
-        </Grid>
-
-        <Grid size={{ lg: 3, md: 8, sm: 6, xs: 12 }}>
-          <Widget
-            title="Document"
-            upperTitle
-            sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}
-            bodySx={{ display: 'flex', flexGrow: 1, flexDirection: 'column', justifyContent: 'space-between' }}
-          >
-            <Grid container spacing={2}>
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link
-                        href="https://doc.networknt.com/"
-                        rel="noreferrer noopener"
-                        target="_blank"
-                      >
-                        Documentation
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-            </Grid>
-          </Widget>
-        </Grid>
-        <Grid size={{ lg: 3, md: 4, sm: 6, xs: 12 }}>
-          <Widget title="Contact" upperTitle sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Grid container spacing={2}>
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link href="mailto:stevehu@gmail.com" target="_top">
-                        Send Mail
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-
-              <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center', mb: 1 }}>
-                <Grid size={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, mt: '8px' }}>
-                    <Dot color="primary" />
-                    <Typography
-                      color="text"
-                      colorBrightness="secondary"
-                      sx={{ ml: 1 }}
-                    >
-                      <Link
-                        href="https://gitter.im/networknt/light-portal"
-                        rel="noreferrer noopener"
-                        target="_blank"
-                      >
-                        Gitter Chat
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Box>
-            </Grid>
-          </Widget>
-        </Grid>
-      </Grid>
-    </>
-  );
+  return isAuthenticated ? <UserDashboard email={email} /> : <GuestDashboard />;
 }
