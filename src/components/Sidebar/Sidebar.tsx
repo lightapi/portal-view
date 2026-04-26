@@ -190,8 +190,10 @@ const structure = [
     children: [
       { label: "Auth Provider", link: "/app/oauth/authProvider" },
       { label: "Auth Client", link: "/app/oauth/authClient" },
-      { label: "Auth Code", link: "/app/oauth/authCode" },
-      { label: "Refresh Token", link: "/app/oauth/refreshToken" },
+      { label: "Sessions", link: "/app/oauth/authSession" },
+      { label: "Refresh Tokens", link: "/app/oauth/refreshToken" },
+      { label: "Authorization Codes", link: "/app/oauth/authCode" },
+      { label: "Session Audit", link: "/app/oauth/authSessionAudit" },
     ],
   },
   {
