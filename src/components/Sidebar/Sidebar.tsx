@@ -67,18 +67,13 @@ import {
 
 const structure = [
   { id: 0, label: "Dashboard", link: "/app/dashboard", icon: <HomeIcon /> },
-  { id: 3, label: "Scheduler", link: "/app/scheduler", icon: <AlarmIcon /> },
+  { id: 3, label: "Scheduler", link: "/app/scheduler", role: "user", icon: <AlarmIcon /> },
   {
     id: 5,
     label: "Controller",
+    role: "user",
     link: "/app/controller/services",
     icon: <SportsEsportsIcon />,
-  },
-  {
-    id: 7,
-    label: "Configuration",
-    link: "/app/form/servicesRef",
-    icon: <PermDataSettingIcon />,
   },
   {
     id: 10,
@@ -86,7 +81,7 @@ const structure = [
     role: "user",
     link: "/app/oauth",
     icon: <SecurityIcon />,
-    children: [{ label: "Refresh Token", link: "/app/refreshToken" }],
+    children: [{ label: "Refresh Token", link: "/app/oauth/refreshToken" }],
   },
   {
     id: 20,
@@ -121,9 +116,9 @@ const structure = [
   },
   {
     id: 24,
-    label: "Host",
+    label: "User Host",
     role: "user",
-    link: "/app/host/Host",
+    link: "/app/userHost",
     icon: <GiteIcon />,
   },
   {
@@ -133,24 +128,13 @@ const structure = [
     link: "/app/notification",
     icon: <NotificationsIcon />,
   },
+  /*
   { id: 40, label: "News", link: "/app/news", icon: <AnnouncementIcon /> },
   { id: 50, label: "Blog", link: "/app/blog/blogList", icon: <BookIcon /> },
   { id: 60, label: "Forum", link: "/app/forum", icon: <ForumIcon /> },
-  {
-    id: 65,
-    label: "Training",
-    role: "user",
-    link: "/app/training",
-    icon: <CastForEducationIcon />,
-    children: [
-      { label: "Course", link: "/app/edu/course" },
-      { label: "Quiz", link: "/app/edu/quiz" },
-      { label: "Progress", link: "/app/edu/progress" },
-      { label: "Certificate", link: "/app/edu/certificate" },
-    ],
-  },
   { id: 70, label: "Support", link: "/app/support", icon: <HelpIcon /> },
   { id: 80, label: "FAQ", link: "/app/faq", icon: <FAQIcon /> },
+  */
   { id: 85, type: "divider", role: "admin" },
   {
     id: 90,
@@ -419,18 +403,6 @@ const structure = [
       { label: "Delete", link: "/app/forum/delete" },
     ],
   },
-  {
-    id: 160,
-    label: "Training Admin",
-    link: "/app/edu/admin",
-    icon: <ModelTrainingIcon />,
-    children: [
-      { label: "List Quiz", link: "/app/form/listQuiz" },
-      { label: "Create Quiz", link: "/app/form/createQuiz" },
-      { label: "Update Quiz", link: "/app/edu/updateQuiz" },
-      { label: "Delete Quiz", link: "/app/edu/deleteQuiz" },
-    ],
-  },
   { id: 200, type: "divider" },
   {
     id: 250,
@@ -445,12 +417,6 @@ const structure = [
     role: "user",
     link: "/app/covid/status",
     icon: <AddAlert />,
-  },
-  {
-    id: 270,
-    label: "User Id",
-    link: "/app/covid/userId",
-    icon: <AccountBox />,
   },
   {
     id: 280,
