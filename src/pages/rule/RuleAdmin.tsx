@@ -29,12 +29,12 @@ type RuleType = {
   hostId?: string;
   ruleId: string;
   ruleName?: string;
-  ruleVersion?: string;
   ruleType?: string;
-  ruleGroup?: string;
   common?: string;
+  version?: string;
+  ruleDesc?: string;
   ruleBody?: string;
-  ruleOwner?: string;
+  author?: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -54,6 +54,77 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
       </Box>
     </Tooltip>
   );
+};
+
+const operatorAliases: Record<string, string> = {
+  '==': 'equals',
+  eq: 'equals',
+  '!=': 'notEquals',
+  ne: 'notEquals',
+  not_equals: 'notEquals',
+  '>': 'greaterThan',
+  '<': 'lessThan',
+  '>=': 'greaterThanOrEqual',
+  '<=': 'lessThanOrEqual',
+  match: 'matches',
+  exists: 'isNotNull',
+  notExists: 'isNull',
+};
+
+const normalizeExpected = (condition: any) => {
+  if (condition.expected !== undefined) {
+    return Array.isArray(condition.expected)
+      ? condition.expected.map((value: unknown) => String(value)).join(', ')
+      : condition.expected;
+  }
+  const firstValue = Array.isArray(condition.conditionValues) ? condition.conditionValues[0] : undefined;
+  if (firstValue?.conditionValue !== undefined) return firstValue.conditionValue;
+  if (condition.value !== undefined) return condition.value;
+  return undefined;
+};
+
+const normalizeActionValues = (actionValues: any) => {
+  if (Array.isArray(actionValues)) return actionValues;
+  if (!actionValues || typeof actionValues !== 'object') return [];
+  return Object.entries(actionValues).map(([actionValueId, value]) => ({
+    actionValueId,
+    value: value == null ? '' : String(value),
+  }));
+};
+
+const normalizeRuleForForm = (data: any) => {
+  const normalized = { ...data };
+  normalized.version = normalized.version ?? normalized.ruleVersion;
+  normalized.author = normalized.author ?? normalized.ruleOwner;
+  normalized.ruleName = normalized.ruleName ?? normalized.ruleId;
+  normalized.common = normalized.common ?? 'N';
+
+  if (Array.isArray(normalized.conditions)) {
+    normalized.conditions = normalized.conditions.map((condition: any) => ({
+      conditionId: condition.conditionId,
+      conditionDesc: condition.conditionDesc,
+      operand: condition.operand ?? condition.propertyPath ?? condition.field,
+      operator: operatorAliases[condition.operator ?? condition.operatorCode] ?? condition.operator ?? condition.operatorCode,
+      expected: normalizeExpected(condition),
+      joinCode: condition.joinCode,
+    }));
+  }
+
+  if (Array.isArray(normalized.actions)) {
+    normalized.actions = normalized.actions.map((action: any) => ({
+      actionId: action.actionId,
+      actionDesc: action.actionDesc,
+      actionRef: action.actionRef ?? action.actionClassName,
+      actionValues: normalizeActionValues(action.actionValues),
+    }));
+  }
+
+  delete normalized.ruleVersion;
+  delete normalized.ruleGroup;
+  delete normalized.ruleOwner;
+  delete normalized.conditionExpression;
+  delete normalized.ruleBody;
+  return normalized;
 };
 
 export default function RuleAdmin() {
@@ -180,6 +251,7 @@ export default function RuleAdmin() {
           console.error("Failed to parse ruleBody JSON:", e);
         }
       }
+      parsedData = normalizeRuleForForm(parsedData);
 
       // Navigate with the fresh data mapped correctly for updateRule form schema
       navigate('/app/form/updateRule', {
@@ -201,8 +273,9 @@ export default function RuleAdmin() {
     () => [
       { accessorKey: 'ruleId', header: 'Rule Id' },
       { accessorKey: 'ruleName', header: 'Rule Name' },
-      { accessorKey: 'ruleVersion', header: 'Version' },
       { accessorKey: 'ruleType', header: 'Type' },
+      { accessorKey: 'version', header: 'Version' },
+      { accessorKey: 'ruleDesc', header: 'Description', Cell: TruncatedCell },
       {
         accessorKey: 'ruleBody',
         header: 'Body',
@@ -213,8 +286,7 @@ export default function RuleAdmin() {
         accessorKey: 'common',
         header: 'Common',
         filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        filterSelectOptions: [{ label: 'Yes', value: 'Y' }, { label: 'No', value: 'N' }],
       },
       {
         accessorKey: 'active',
@@ -223,8 +295,7 @@ export default function RuleAdmin() {
         filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      { accessorKey: 'ruleOwner', header: 'Owner' },
-      { accessorKey: 'ruleGroup', header: 'Group' },
+      { accessorKey: 'author', header: 'Author' },
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       { accessorKey: 'updateTs', header: 'Update Timestamp' },

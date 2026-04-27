@@ -8280,28 +8280,24 @@
           "title": "Rule Name",
           "type": "string"
         },
-        "ruleVersion": {
-          "title": "Rule Version",
-          "type": "string"
-        },
         "ruleType": {
           "title": "Rule Type",
           "type": "string"
         },
-        "ruleGroup": {
-          "title": "Rule Group",
+        "common": {
+          "title": "Common",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
           "type": "string"
         },
         "ruleDesc": {
           "title": "Rule Desc",
           "type": "string"
         },
-        "ruleOwner": {
-          "title": "Rule Owner",
-          "type": "string"
-        },
-        "common": {
-          "title": "Common",
+        "author": {
+          "title": "Author",
           "type": "string"
         },
         "conditions": {
@@ -8315,59 +8311,30 @@
               "conditionDesc": {
                 "type": "string"
               },
-              "propertyPath": {
+              "operand": {
+                "title": "Operand",
                 "type": "string"
               },
-              "operatorCode": {
+              "operator": {
                 "type": "string",
-                "title": "Operator Code"
+                "title": "Operator"
               },
-              "index": {
-                "type": "integer",
-                "title": "Index from 1"
+              "expected": {
+                "title": "Expected",
+                "type": "string",
+                "description": "For list operators, enter comma-separated values. Examples: admin, user or 2, 4, 5. Do not include JSON quotes."
               },
-              "conditionValues": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "conditionValueId": {
-                      "type": "string"
-                    },
-                    "conditionValue": {
-                      "type": "string"
-                    },
-                    "expression": {
-                      "type": "boolean"
-                    },
-                    "valueTypeCode": {
-                      "type": "string",
-                      "title": "Value Type Code"
-                    },
-                    "dateFormat": {
-                      "type": "string"
-                    },
-                    "regexFlags": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "conditionValue"
-                  ]
-                }
+              "joinCode": {
+                "title": "Join Code",
+                "type": "string"
               }
             },
             "required": [
               "conditionId",
-              "propertyPath",
-              "operatorCode",
-              "index"
+              "operand",
+              "operator"
             ]
           }
-        },
-        "conditionExpression": {
-          "type": "string",
-          "title": "Condition Expression"
         },
         "actions": {
           "type": "array",
@@ -8380,26 +8347,23 @@
               "actionDesc": {
                 "type": "string"
               },
-              "actionClassName": {
+              "actionRef": {
+                "title": "Action Ref",
                 "type": "string"
               },
-              "conditionResult": {
-                "type": "boolean"
-              },
               "actionValues": {
+                "title": "Action Values",
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
                     "actionValueId": {
+                      "title": "Action Value Id",
                       "type": "string"
                     },
                     "value": {
+                      "title": "Value",
                       "type": "string"
-                    },
-                    "valueTypeCode": {
-                      "type": "string",
-                      "title": "Value Type Code"
                     }
                   },
                   "required": [
@@ -8411,18 +8375,15 @@
             },
             "required": [
               "actionId",
-              "actionClassName"
+              "actionRef"
             ]
           }
         }
       },
       "required": [
-        "hostId",
         "ruleId",
         "ruleName",
-        "ruleVersion",
         "ruleType",
-        "ruleOwner",
         "common",
         "conditions"
       ]
@@ -8431,26 +8392,12 @@
       "hostId",
       "ruleId",
       "ruleName",
-      "ruleVersion",
       {
         "key": "ruleType",
         "type": "dynaselect",
         "multiple": false,
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
-          "params": [
-            "hostId"
-          ]
-        }
-      },
-      "ruleGroup",
-      "ruleDesc",
-      {
-        "key": "ruleOwner",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -8471,64 +8418,116 @@
           }
         ]
       },
+      "version",
+      "ruleDesc",
+      {
+        "key": "author",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       {
         "key": "conditions",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",
-          "conditions[].propertyPath",
+          "conditions[].operand",
           {
-            "key": "conditions[].operatorCode",
+            "key": "conditions[].operator",
             "type": "dynaselect",
             "multiple": false,
+            "style": {
+              "width": "100%",
+              "minWidth": 240
+            },
+            "otherProps": {
+              "fullWidth": true
+            },
             "options": [
               {
                 "id": "equals",
                 "label": "equals"
               },
               {
-                "id": "on",
-                "label": "on"
+                "id": "notEquals",
+                "label": "notEquals"
               },
               {
-                "id": "before",
-                "label": "before"
-              },
-              {
-                "id": "after",
-                "label": "after"
-              },
-              {
-                "id": "lengthEquals",
-                "label": "lengthEquals"
+                "id": "greaterThan",
+                "label": "greaterThan"
               },
               {
                 "id": "greaterThanOrEqual",
                 "label": "greaterThanOrEqual"
               },
               {
+                "id": "lessThan",
+                "label": "lessThan"
+              },
+              {
                 "id": "lessThanOrEqual",
                 "label": "lessThanOrEqual"
-              },
-              {
-                "id": "isNotNull",
-                "label": "isNotNull"
-              },
-              {
-                "id": "isNull",
-                "label": "isNull"
               },
               {
                 "id": "contains",
                 "label": "contains"
               },
               {
-                "id": "match",
-                "label": "match"
+                "id": "notContains",
+                "label": "notContains"
               },
               {
-                "id": "notMatch",
-                "label": "notMatch"
+                "id": "containsIgnoreCase",
+                "label": "containsIgnoreCase"
+              },
+              {
+                "id": "inList",
+                "label": "inList"
+              },
+              {
+                "id": "notInList",
+                "label": "notInList"
+              },
+              {
+                "id": "containsAny",
+                "label": "containsAny"
+              },
+              {
+                "id": "containsAll",
+                "label": "containsAll"
+              },
+              {
+                "id": "containsNone",
+                "label": "containsNone"
+              },
+              {
+                "id": "matches",
+                "label": "matches"
+              },
+              {
+                "id": "notMatches",
+                "label": "notMatches"
+              },
+              {
+                "id": "startsWith",
+                "label": "startsWith"
+              },
+              {
+                "id": "endsWith",
+                "label": "endsWith"
+              },
+              {
+                "id": "isNull",
+                "label": "isNull"
+              },
+              {
+                "id": "isNotNull",
+                "label": "isNotNull"
               },
               {
                 "id": "isEmpty",
@@ -8547,6 +8546,10 @@
                 "label": "isNotBlank"
               },
               {
+                "id": "lengthEquals",
+                "label": "lengthEquals"
+              },
+              {
                 "id": "lengthGreaterThan",
                 "label": "lengthGreaterThan"
               },
@@ -8555,87 +8558,59 @@
                 "label": "lengthLessThan"
               },
               {
-                "id": "inList",
-                "label": "inList"
+                "id": "before",
+                "label": "date before"
               },
               {
-                "id": "greaterThan",
-                "label": "greaterThan"
+                "id": "after",
+                "label": "date after"
               },
               {
-                "id": "containsIgnoreCase",
-                "label": "containsIgnoreCase"
-              },
-              {
-                "id": "startsWith",
-                "label": "startsWith"
+                "id": "on",
+                "label": "date equals"
               }
             ]
           },
-          "conditions[].index",
           {
-            "key": "conditions[].conditionValues",
-            "items": [
-              "conditions[].conditionValues[].conditionValueId",
-              "conditions[].conditionValues[].conditionValue",
-              "conditions[].conditionValues[].expression",
+            "key": "conditions[].expected",
+            "placeholder": "admin, user or 2, 4, 5",
+            "description": "For list operators, use comma-separated values without JSON quotes."
+          },
+          {
+            "key": "conditions[].joinCode",
+            "type": "dynaselect",
+            "multiple": false,
+            "style": {
+              "width": "100%",
+              "minWidth": 160
+            },
+            "otherProps": {
+              "fullWidth": true
+            },
+            "options": [
               {
-                "key": "conditions[].conditionValues[].valueTypeCode",
-                "type": "dynaselect",
-                "multiple": false,
-                "options": [
-                  {
-                    "id": "STRING",
-                    "label": "String"
-                  },
-                  {
-                    "id": "INTEGER",
-                    "label": "Integer"
-                  },
-                  {
-                    "id": "BOOLEAN",
-                    "label": "Boolean"
-                  }
-                ]
+                "id": "and",
+                "label": "and"
               },
-              "conditions[].conditionValues[].dateFormat",
-              "conditions[].conditionValues[].regexFlags"
+              {
+                "id": "or",
+                "label": "or"
+              }
             ]
           }
         ]
       },
-      "conditionExpression",
       {
         "key": "actions",
         "items": [
           "actions[].actionId",
           "actions[].actionDesc",
-          "actions[].actionClassName",
-          "actions[].conditionResult",
+          "actions[].actionRef",
           {
             "key": "actions[].actionValues",
             "items": [
               "actions[].actionValues[].actionValueId",
-              "actions[].actionValues[].value",
-              {
-                "key": "actions[].actionValues[].valueTypeCode",
-                "type": "dynaselect",
-                "multiple": false,
-                "options": [
-                  {
-                    "id": "STRING",
-                    "label": "String"
-                  },
-                  {
-                    "id": "INTEGER",
-                    "label": "Integer"
-                  },
-                  {
-                    "id": "BOOLEAN",
-                    "label": "Boolean"
-                  }
-                ]
-              }
+              "actions[].actionValues[].value"
             ]
           }
         ]
@@ -8661,8 +8636,7 @@
       "properties": {
         "hostId": {
           "title": "Host Id",
-          "type": "string",
-          "readonly": true
+          "type": "string"
         },
         "ruleId": {
           "title": "Rule Id",
@@ -8673,29 +8647,25 @@
           "title": "Rule Name",
           "type": "string"
         },
-        "ruleVersion": {
-          "title": "Rule Version",
-          "type": "string"
-        },
         "ruleType": {
           "type": "string",
           "title": "Rule Type"
         },
-        "ruleGroup": {
+        "common": {
           "type": "string",
-          "title": "Rule Group"
+          "title": "Common"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
         },
         "ruleDesc": {
           "type": "string",
           "title": "Rule Desc"
         },
-        "ruleOwner": {
+        "author": {
           "type": "string",
-          "title": "Rule Owner"
-        },
-        "common": {
-          "type": "string",
-          "title": "Common"
+          "title": "Author"
         },
         "conditions": {
           "type": "array",
@@ -8708,59 +8678,30 @@
               "conditionDesc": {
                 "type": "string"
               },
-              "propertyPath": {
+              "operand": {
+                "title": "Operand",
                 "type": "string"
               },
-              "operatorCode": {
+              "operator": {
                 "type": "string",
-                "title": "Operator Code"
+                "title": "Operator"
               },
-              "index": {
-                "type": "integer",
-                "title": "Index from 1"
+              "expected": {
+                "title": "Expected",
+                "type": "string",
+                "description": "For list operators, enter comma-separated values. Examples: admin, user or 2, 4, 5. Do not include JSON quotes."
               },
-              "conditionValues": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "conditionValueId": {
-                      "type": "string"
-                    },
-                    "conditionValue": {
-                      "type": "string"
-                    },
-                    "expression": {
-                      "type": "boolean"
-                    },
-                    "valueTypeCode": {
-                      "type": "string",
-                      "title": "Value Type Code"
-                    },
-                    "dateFormat": {
-                      "type": "string"
-                    },
-                    "regexFlags": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "conditionValue"
-                  ]
-                }
+              "joinCode": {
+                "title": "Join Code",
+                "type": "string"
               }
             },
             "required": [
               "conditionId",
-              "propertyPath",
-              "operatorCode",
-              "index"
+              "operand",
+              "operator"
             ]
           }
-        },
-        "conditionExpression": {
-          "type": "string",
-          "title": "Condition Expression"
         },
         "actions": {
           "type": "array",
@@ -8773,49 +8714,42 @@
               "actionDesc": {
                 "type": "string"
               },
-              "actionClassName": {
+              "actionRef": {
+                "title": "Action Ref",
                 "type": "string"
               },
-              "conditionResult": {
-                "type": "boolean"
-              },
               "actionValues": {
+                "title": "Action Values",
                 "type": "array",
                 "items": {
                   "type": "object",
                   "properties": {
                     "actionValueId": {
+                      "title": "Action Value Id",
                       "type": "string"
                     },
                     "value": {
+                      "title": "Value",
                       "type": "string"
-                    },
-                    "valueTypeCode": {
-                      "type": "string",
-                      "title": "Value Type Code"
                     }
                   },
                   "required": [
-                    "actionValueId",
-                    "value"
+                    "actionValueId"
                   ]
                 }
               }
             },
             "required": [
               "actionId",
-              "actionClassName"
+              "actionRef"
             ]
           }
         }
       },
       "required": [
-        "hostId",
         "ruleId",
         "ruleName",
-        "ruleVersion",
         "ruleType",
-        "ruleOwner",
         "common",
         "conditions"
       ]
@@ -8824,25 +8758,11 @@
       "hostId",
       "ruleId",
       "ruleName",
-      "ruleVersion",
       {
         "key": "ruleType",
         "type": "dynaselect",
         "action": {
           "url": "/r/data?name=rule_type&host={0}",
-          "params": [
-            "hostId"
-          ]
-        }
-      },
-      "ruleGroup",
-      "ruleDesc",
-      {
-        "key": "ruleOwner",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -8863,64 +8783,116 @@
           }
         ]
       },
+      "version",
+      "ruleDesc",
+      {
+        "key": "author",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       {
         "key": "conditions",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",
-          "conditions[].propertyPath",
+          "conditions[].operand",
           {
-            "key": "conditions[].operatorCode",
+            "key": "conditions[].operator",
             "type": "dynaselect",
             "multiple": false,
+            "style": {
+              "width": "100%",
+              "minWidth": 240
+            },
+            "otherProps": {
+              "fullWidth": true
+            },
             "options": [
               {
                 "id": "equals",
                 "label": "equals"
               },
               {
-                "id": "on",
-                "label": "on"
+                "id": "notEquals",
+                "label": "notEquals"
               },
               {
-                "id": "before",
-                "label": "before"
-              },
-              {
-                "id": "after",
-                "label": "after"
-              },
-              {
-                "id": "lengthEquals",
-                "label": "lengthEquals"
+                "id": "greaterThan",
+                "label": "greaterThan"
               },
               {
                 "id": "greaterThanOrEqual",
                 "label": "greaterThanOrEqual"
               },
               {
+                "id": "lessThan",
+                "label": "lessThan"
+              },
+              {
                 "id": "lessThanOrEqual",
                 "label": "lessThanOrEqual"
-              },
-              {
-                "id": "isNotNull",
-                "label": "isNotNull"
-              },
-              {
-                "id": "isNull",
-                "label": "isNull"
               },
               {
                 "id": "contains",
                 "label": "contains"
               },
               {
-                "id": "match",
-                "label": "match"
+                "id": "notContains",
+                "label": "notContains"
               },
               {
-                "id": "notMatch",
-                "label": "notMatch"
+                "id": "containsIgnoreCase",
+                "label": "containsIgnoreCase"
+              },
+              {
+                "id": "inList",
+                "label": "inList"
+              },
+              {
+                "id": "notInList",
+                "label": "notInList"
+              },
+              {
+                "id": "containsAny",
+                "label": "containsAny"
+              },
+              {
+                "id": "containsAll",
+                "label": "containsAll"
+              },
+              {
+                "id": "containsNone",
+                "label": "containsNone"
+              },
+              {
+                "id": "matches",
+                "label": "matches"
+              },
+              {
+                "id": "notMatches",
+                "label": "notMatches"
+              },
+              {
+                "id": "startsWith",
+                "label": "startsWith"
+              },
+              {
+                "id": "endsWith",
+                "label": "endsWith"
+              },
+              {
+                "id": "isNull",
+                "label": "isNull"
+              },
+              {
+                "id": "isNotNull",
+                "label": "isNotNull"
               },
               {
                 "id": "isEmpty",
@@ -8939,6 +8911,10 @@
                 "label": "isNotBlank"
               },
               {
+                "id": "lengthEquals",
+                "label": "lengthEquals"
+              },
+              {
                 "id": "lengthGreaterThan",
                 "label": "lengthGreaterThan"
               },
@@ -8947,87 +8923,59 @@
                 "label": "lengthLessThan"
               },
               {
-                "id": "inList",
-                "label": "inList"
+                "id": "before",
+                "label": "date before"
               },
               {
-                "id": "greaterThan",
-                "label": "greaterThan"
+                "id": "after",
+                "label": "date after"
               },
               {
-                "id": "containsIgnoreCase",
-                "label": "containsIgnoreCase"
-              },
-              {
-                "id": "startsWith",
-                "label": "startsWith"
+                "id": "on",
+                "label": "date equals"
               }
             ]
           },
-          "conditions[].index",
           {
-            "key": "conditions[].conditionValues",
-            "items": [
-              "conditions[].conditionValues[].conditionValueId",
-              "conditions[].conditionValues[].conditionValue",
-              "conditions[].conditionValues[].expression",
+            "key": "conditions[].expected",
+            "placeholder": "admin, user or 2, 4, 5",
+            "description": "For list operators, use comma-separated values without JSON quotes."
+          },
+          {
+            "key": "conditions[].joinCode",
+            "type": "dynaselect",
+            "multiple": false,
+            "style": {
+              "width": "100%",
+              "minWidth": 160
+            },
+            "otherProps": {
+              "fullWidth": true
+            },
+            "options": [
               {
-                "key": "conditions[].conditionValues[].valueTypeCode",
-                "type": "dynaselect",
-                "multiple": false,
-                "options": [
-                  {
-                    "id": "STRING",
-                    "label": "String"
-                  },
-                  {
-                    "id": "INTEGER",
-                    "label": "Integer"
-                  },
-                  {
-                    "id": "BOOLEAN",
-                    "label": "Boolean"
-                  }
-                ]
+                "id": "and",
+                "label": "and"
               },
-              "conditions[].conditionValues[].dateFormat",
-              "conditions[].conditionValues[].regexFlags"
+              {
+                "id": "or",
+                "label": "or"
+              }
             ]
           }
         ]
       },
-      "conditionExpression",
       {
         "key": "actions",
         "items": [
           "actions[].actionId",
           "actions[].actionDesc",
-          "actions[].actionClassName",
-          "actions[].conditionResult",
+          "actions[].actionRef",
           {
             "key": "actions[].actionValues",
             "items": [
               "actions[].actionValues[].actionValueId",
-              "actions[].actionValues[].value",
-              {
-                "key": "actions[].actionValues[].valueTypeCode",
-                "type": "dynaselect",
-                "multiple": false,
-                "options": [
-                  {
-                    "id": "STRING",
-                    "label": "String"
-                  },
-                  {
-                    "id": "INTEGER",
-                    "label": "Integer"
-                  },
-                  {
-                    "id": "BOOLEAN",
-                    "label": "Boolean"
-                  }
-                ]
-              }
+              "actions[].actionValues[].value"
             ]
           }
         ]
@@ -9061,7 +9009,6 @@
         }
       },
       "required": [
-        "hostId",
         "ruleId"
       ]
     },

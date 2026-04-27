@@ -72,6 +72,9 @@ function Form() {
 
   const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
+    const keyParts = Array.isArray(key) ? key : String(key).split(".");
+    const isNestedArrayFieldChange = keyParts.some((part) => /^\d+$/.test(part));
+    if (isNestedArrayFieldChange) return;
     setModel({ ...model });
   };
 

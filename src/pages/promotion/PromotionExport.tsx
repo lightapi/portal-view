@@ -575,7 +575,10 @@ export default function PromotionExport() {
             { accessorKey: 'ruleId', header: 'Rule ID' },
             { accessorKey: 'ruleName', header: 'Rule Name' },
             { accessorKey: 'ruleType', header: 'Rule Type' },
-            { accessorKey: 'ruleGroup', header: 'Group' },
+            { accessorKey: 'common', header: 'Common' },
+            { accessorKey: 'version', header: 'Version' },
+            { accessorKey: 'author', header: 'Author' },
+            { accessorKey: 'ruleDesc', header: 'Description' },
             {
                 accessorKey: 'active',
                 header: 'Active',
