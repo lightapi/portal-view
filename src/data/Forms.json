@@ -9044,10 +9044,6 @@
           "type": "string",
           "readonly": true
         },
-        "testId": {
-          "title": "Test Id",
-          "type": "string"
-        },
         "testName": {
           "title": "Test Name",
           "type": "string"
@@ -9091,7 +9087,6 @@
       },
       "required": [
         "ruleId",
-        "testId",
         "testName",
         "inputContext"
       ]
@@ -9099,7 +9094,6 @@
     "form": [
       "hostId",
       "ruleId",
-      "testId",
       "testName",
       {
         "key": "testDesc",
