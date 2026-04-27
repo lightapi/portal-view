@@ -18,28 +18,28 @@ import Widget from "../../components/Widget/Widget";
 type ConditionType = {
     conditionId: string;
     conditionDesc?: string;
-    operatorCode?: string;
-    propertyPath?: string;
-    index?: number;
+    operator?: string;
+    operand?: string;
+    expected?: unknown;
+    joinCode?: string;
 };
 
 type ActionType = {
     actionId: string;
     actionDesc?: string;
-    conditionResult?: boolean;
-    actionClassName?: string;
+    actionRef?: string;
+    actionValues?: Record<string, unknown>;
 };
 
 type RuleType = {
     hostId?: string;
     ruleId: string;
     ruleName?: string;
-    ruleVersion?: string;
     ruleType?: string;
-    ruleGroup?: string;
     common?: string;
+    version?: string;
     ruleBody?: string;
-    ruleOwner?: string;
+    author?: string;
     ruleDesc?: string;
     conditions?: ConditionType[];
     actions?: ActionType[];
@@ -91,12 +91,11 @@ export default function RuleDetail() {
     const mainProperties = [
         { label: "Rule ID", value: ruleData.ruleId },
         { label: "Rule Name", value: ruleData.ruleName },
-        { label: "Rule Version", value: ruleData.ruleVersion },
         { label: "Rule Type", value: ruleData.ruleType },
-        { label: "Group", value: ruleData.ruleGroup },
-        { label: "Owner", value: ruleData.ruleOwner },
-        { label: "Host ID", value: ruleData.hostId },
         { label: "Common", value: ruleData.common },
+        { label: "Version", value: ruleData.version },
+        { label: "Author", value: ruleData.author },
+        { label: "Host ID", value: ruleData.hostId },
         { label: "Status", value: ruleData.active ? "Active" : "Inactive" },
         { label: "Last Updated By", value: ruleData.updateUser },
         { label: "Last Updated At", value: ruleData.updateTs },
@@ -151,13 +150,14 @@ export default function RuleDetail() {
                             <TableBody>
                                 {ruleData.conditions.map((condition, idx) => (
                                     <TableRow key={condition.conditionId || idx} hover sx={{ verticalAlign: 'top' }}>
-                                        <TableCell sx={{ width: '40px', fontWeight: 'bold' }}>{condition.index || idx + 1}</TableCell>
+                                        <TableCell sx={{ width: '40px', fontWeight: 'bold' }}>{idx + 1}</TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{condition.conditionId}</Typography>
                                             <Typography variant="body2" color="textSecondary">{condition.conditionDesc}</Typography>
                                             <Box mt={1} display="flex" gap={2}>
-                                                <Typography variant="caption"><strong>Operator:</strong> {condition.operatorCode}</Typography>
-                                                <Typography variant="caption"><strong>Path:</strong> {condition.propertyPath}</Typography>
+                                                <Typography variant="caption"><strong>Operator:</strong> {condition.operator}</Typography>
+                                                <Typography variant="caption"><strong>Operand:</strong> {condition.operand}</Typography>
+                                                <Typography variant="caption"><strong>Expected:</strong> {String(condition.expected ?? "N/A")}</Typography>
                                             </Box>
                                         </TableCell>
                                     </TableRow>
@@ -179,8 +179,8 @@ export default function RuleDetail() {
                                             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{action.actionId}</Typography>
                                             <Typography variant="body2" color="textSecondary">{action.actionDesc}</Typography>
                                             <Box mt={1} display="flex" gap={2} flexDirection="column">
-                                                <Typography variant="caption"><strong>Condition Result Required:</strong> {String(action.conditionResult)}</Typography>
-                                                <Typography variant="caption"><strong>Action Class:</strong> <code>{action.actionClassName}</code></Typography>
+                                                <Typography variant="caption"><strong>Action Ref:</strong> <code>{action.actionRef}</code></Typography>
+                                                <Typography variant="caption"><strong>Action Values:</strong> {JSON.stringify(action.actionValues ?? {})}</Typography>
                                             </Box>
                                         </TableCell>
                                     </TableRow>
