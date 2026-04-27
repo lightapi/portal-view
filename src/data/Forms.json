@@ -9017,6 +9017,259 @@
       "ruleId"
     ]
   },
+  "createRuleTestCase": {
+    "formId": "createRuleTestCase",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "rule",
+        "action": "createRuleTestCase",
+        "version": "0.1.0",
+        "title": "Create Rule Test Case",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Rule Test Case",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "ruleId": {
+          "title": "Rule Id",
+          "type": "string",
+          "readonly": true
+        },
+        "testId": {
+          "title": "Test Id",
+          "type": "string"
+        },
+        "testName": {
+          "title": "Test Name",
+          "type": "string"
+        },
+        "testDesc": {
+          "title": "Description",
+          "type": "string"
+        },
+        "executorType": {
+          "title": "Executor",
+          "type": "string",
+          "enum": [
+            "java",
+            "rust",
+            "both"
+          ]
+        },
+        "testMode": {
+          "title": "Test Mode",
+          "type": "string",
+          "enum": [
+            "conditions",
+            "full"
+          ]
+        },
+        "inputContext": {
+          "title": "Input Context JSON",
+          "type": "string",
+          "default": "{}"
+        },
+        "expectedResult": {
+          "title": "Expected Result",
+          "type": "boolean",
+          "default": true
+        },
+        "expectedOutputs": {
+          "title": "Expected Outputs JSON",
+          "type": "string",
+          "default": "{}"
+        }
+      },
+      "required": [
+        "ruleId",
+        "testId",
+        "testName",
+        "inputContext"
+      ]
+    },
+    "form": [
+      "hostId",
+      "ruleId",
+      "testId",
+      "testName",
+      {
+        "key": "testDesc",
+        "type": "textarea",
+        "rows": 3
+      },
+      "executorType",
+      "testMode",
+      {
+        "key": "inputContext",
+        "type": "textarea",
+        "rows": 10
+      },
+      "expectedResult",
+      {
+        "key": "expectedOutputs",
+        "type": "textarea",
+        "rows": 6
+      }
+    ]
+  },
+  "updateRuleTestCase": {
+    "formId": "updateRuleTestCase",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "rule",
+        "action": "updateRuleTestCase",
+        "version": "0.1.0",
+        "title": "Update Rule Test Case",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Rule Test Case",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "ruleId": {
+          "title": "Rule Id",
+          "type": "string",
+          "readonly": true
+        },
+        "testId": {
+          "title": "Test Id",
+          "type": "string",
+          "readonly": true
+        },
+        "testName": {
+          "title": "Test Name",
+          "type": "string"
+        },
+        "testDesc": {
+          "title": "Description",
+          "type": "string"
+        },
+        "executorType": {
+          "title": "Executor",
+          "type": "string",
+          "enum": [
+            "java",
+            "rust",
+            "both"
+          ]
+        },
+        "testMode": {
+          "title": "Test Mode",
+          "type": "string",
+          "enum": [
+            "conditions",
+            "full"
+          ]
+        },
+        "inputContext": {
+          "title": "Input Context JSON",
+          "type": "string"
+        },
+        "expectedResult": {
+          "title": "Expected Result",
+          "type": "boolean"
+        },
+        "expectedOutputs": {
+          "title": "Expected Outputs JSON",
+          "type": "string"
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true
+        }
+      },
+      "required": [
+        "ruleId",
+        "testId",
+        "testName",
+        "inputContext"
+      ]
+    },
+    "form": [
+      "hostId",
+      "ruleId",
+      "testId",
+      "testName",
+      {
+        "key": "testDesc",
+        "type": "textarea",
+        "rows": 3
+      },
+      "executorType",
+      "testMode",
+      {
+        "key": "inputContext",
+        "type": "textarea",
+        "rows": 10
+      },
+      "expectedResult",
+      {
+        "key": "expectedOutputs",
+        "type": "textarea",
+        "rows": 6
+      },
+      "aggregateVersion"
+    ]
+  },
+  "deleteRuleTestCase": {
+    "id": "deleteRuleTestCase",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "rule",
+        "action": "deleteRuleTestCase",
+        "version": "0.1.0",
+        "title": "Delete Rule Test Case",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Delete Rule Test Case",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string"
+        },
+        "ruleId": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "testId": {
+          "title": "Test Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ruleId",
+        "testId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "ruleId",
+      "testId"
+    ]
+  },
   "createCategory": {
     "formId": "createCategory",
     "actions": [
