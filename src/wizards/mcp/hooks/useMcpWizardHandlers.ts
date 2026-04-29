@@ -49,10 +49,17 @@ export function useMcpWizardHandlers(state: McpWizardState) {
 
   const handleExistingApiContinue = () => {
     if (!existingApiSelection) return;
-    const { apiId, apiName, apiDesc, apiVersionId, instanceApiId } = existingApiSelection;
+    const { apiId, apiName, apiDesc, apiVersionId } = existingApiSelection;
     setCommittedApiId(apiId);
     patch({ apiId, ...(apiName && { apiName }), ...(apiDesc && { apiDesc }) });
     setSubmitError(null);
+    if (creationType === 'onboard') {
+      if (apiVersionId) {
+        setCommittedApiVersionId(apiVersionId);
+        advance(2);
+      }
+      return;
+    }
     setCreationType('api-continue');  // use Origin-less flow for existing API continuation
     if (apiVersionId) {
       // Land on Deployment step (step 4) so user always picks centralized vs distributed.
@@ -206,7 +213,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
   };
 
   const handleSaveMcpTools = async (): Promise<boolean> => {
-    if (selectedMcpTools.length === 0) return true;
+    if (selectedMcpTools.length === 0 && !mcpMeta.exists) return true;
     if (!mcpMeta.propertyId) {
       setSubmitError('Missing configuration metadata. Please skip this step and configure MCP tools from the Instance admin.');
       return false;

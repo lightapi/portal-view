@@ -135,7 +135,7 @@ export default function GatewayCard({ gateway, navigate }: GatewayCardProps) {
             size="small"
             variant="outlined"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/app/mcp/wizard')}
+            onClick={() => navigate(`/app/mcp/wizard?flow=onboard&instanceId=${gateway.instanceId}`)}
             sx={{ mt: 0.5 }}
           >
             Onboard a server
