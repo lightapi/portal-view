@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
   useLocation,
   useNavigate,
 } from "react-router-dom";
@@ -90,6 +91,8 @@ import ConfigSnapshotProductProperty from "./pages/snapshot/ConfigSnapshotProduc
 import ConfigSnapshotProductVersionProperty from "./pages/snapshot/ConfigSnapshotProductVersionProperty";
 import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
+import McpServerForm from "./wizards/McpServerForm";
+import McpGateway from "./wizards/McpGateway";
 import ControllerLayout from "./pages/controller/ControllerLayout";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
@@ -484,6 +487,12 @@ const App = () => {
             element={<ConfigSnapshotProductVersionProperty />}
           />
           <Route element={<ControllerLayout />}>
+            <Route path="mcp/gateway" element={<McpGateway />} />
+            <Route path="mcp/wizard" element={<McpServerForm />} />
+            <Route path="mcp/servers" element={<Navigate to="/app/mcp/gateway" replace />} />
+            <Route path="mcp/create" element={<Navigate to="/app/mcp/wizard" replace />} />
+            <Route path="mcp/edit" element={<Navigate to="/app/mcp/wizard" replace />} />
+            <Route path="mcp/onboard" element={<Navigate to="/app/mcp/wizard?flow=onboard" replace />} />
             <Route path="controller/services" element={<CtrlPaneDashboard />} />
             <Route path="controller/check" element={<HealthCheck />} />
             <Route path="controller/info" element={<ServerInfo />} />

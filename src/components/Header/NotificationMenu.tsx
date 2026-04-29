@@ -17,7 +17,7 @@ import { useApiGet } from "../../hooks/useApiGet";
 import Notification from "../Notification/Notification";
 import { Badge } from "../Wrappers/Wrappers"; // Assuming Badge is still needed
 
-export default function NotificationMenu(props) {
+export default function NotificationMenu({ openAbove = false }: { openAbove?: boolean }) {
   var [notificationsMenu, setNotificationsMenu] = useState(null);
   var [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
   // var classes = props.classes; // No more classes prop needed with sx
@@ -88,10 +88,9 @@ export default function NotificationMenu(props) {
           open={Boolean(notificationsMenu)}
           anchorEl={notificationsMenu}
           onClose={() => setNotificationsMenu(null)}
-          sx={{
-            // Styling the Menu with sx prop
-            marginTop: "5px", // Example menu position adjustment - adjust as needed
-          }}
+          anchorOrigin={openAbove ? { vertical: 'top', horizontal: 'left' } : { vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={openAbove ? { vertical: 'bottom', horizontal: 'left' } : { vertical: 'top', horizontal: 'left' }}
+          sx={openAbove ? {} : { marginTop: '5px' }}
           disableAutoFocusItem
         >
           <Fab

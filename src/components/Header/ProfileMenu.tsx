@@ -87,7 +87,7 @@ function ProfileMenuContent({
         aria-controls="profile-menu"
         onClick={(e: React.MouseEvent<HTMLElement>) => setProfileMenu(e.currentTarget)}
         size="large"
-        sx={{ ml: 2, p: 0.5 }}
+        sx={{ ml: 0, p: 0.5 }}
       >
         <AccountIcon sx={{ fontSize: 28, color: (theme.palette as any).custom?.darkBlue }} />
       </IconButton>
@@ -96,7 +96,9 @@ function ProfileMenuContent({
         open={Boolean(profileMenu)}
         anchorEl={profileMenu}
         onClose={handleMenuClose}
-        sx={{ mt: 7 }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        sx={{}}
         PaperProps={{ sx: { minWidth: 265 } }}
         disableAutoFocusItem
       >

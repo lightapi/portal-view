@@ -1,4 +1,6 @@
 import { Inbox as InboxIcon } from '@mui/icons-material';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import {
   Collapse,
   Divider,
@@ -11,8 +13,6 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-// components
-import Dot from "../Dot";
 
 interface SidebarLinkProps {
   link?: string;
@@ -22,6 +22,7 @@ interface SidebarLinkProps {
   isSidebarOpened?: boolean;
   nested?: boolean;
   type?: string;
+  defaultOpen?: boolean;
 }
 
 export default function SidebarLink({
@@ -32,14 +33,17 @@ export default function SidebarLink({
   isSidebarOpened,
   nested,
   type,
+  defaultOpen = false,
 }: SidebarLinkProps) {
   const location = useLocation();
 
-  // local
-  var [isOpen, setIsOpen] = useState(false);
+  var [isOpen, setIsOpen] = useState(defaultOpen);
   var isLinkActive =
     link &&
-    (location.pathname === link || location.pathname.indexOf(link) !== -1);
+    (location.pathname === link ||
+      location.pathname.indexOf(link) !== -1 ||
+      // Treat the wizard as part of the gateway section
+      (link === '/app/mcp/gateway' && location.pathname.startsWith('/app/mcp/')));
 
   if (type === "title")
     return (
@@ -71,6 +75,60 @@ export default function SidebarLink({
       />
     );
 
+  if (type === "group")
+    return (
+      <>
+        {!isSidebarOpened ? (
+          <List disablePadding>
+            {(children ?? []).map((child) => (
+              <SidebarLink key={child.id ?? child.link ?? child.label} isSidebarOpened={false} nested={false} {...child} />
+            ))}
+          </List>
+        ) : (
+          <>
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => setIsOpen((o) => !o)}
+                disableRipple
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  '&:hover': { bgcolor: 'transparent' },
+                }}
+              >
+                {icon && (
+                  <ListItemIcon sx={{ minWidth: 32, color: 'text.disabled' }}>
+                    {icon as any}
+                  </ListItemIcon>
+                )}
+                <ListItemText
+                  primary={label}
+                  sx={{
+                    m: 0,
+                    '& .MuiTypography-root': {
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'text.disabled',
+                    },
+                  }}
+                />
+                {isOpen ? <ExpandLess sx={{ fontSize: 16, color: 'text.disabled' }} /> : <ExpandMore sx={{ fontSize: 16, color: 'text.disabled' }} />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={isOpen} timeout="auto" unmountOnExit>
+              <List disablePadding>
+                {(children ?? []).map((child) => (
+                  <SidebarLink key={child.id ?? child.link ?? child.label} isSidebarOpened={isSidebarOpened} nested={false} {...child} />
+                ))}
+              </List>
+            </Collapse>
+          </>
+        )}
+      </>
+    );
+
   if (!children)
     return (
       <ListItem disablePadding>
@@ -79,55 +137,66 @@ export default function SidebarLink({
           to={link}
           sx={{
             textDecoration: "none",
+            ...(!isSidebarOpened && !nested && { justifyContent: 'center', px: 0 }),
             "&:hover, &:focus": {
               backgroundColor: (theme) => (theme.palette.background as any).light,
             },
-            ...(isLinkActive &&
-              !nested && {
+            ...(isLinkActive && {
                 backgroundColor: (theme) =>
                   (theme.palette.background as any).light,
               }),
             ...(nested && {
-              paddingLeft: 0,
-              "&:hover, &:focus": {
-                backgroundColor: "#FFFFFF",
+              position: 'relative',
+              paddingLeft: '20px',
+              "&::before": {
+                content: '""',
+                position: 'absolute',
+                left: 0,
+                top: '50%',
+                width: '12px',
+                borderTop: '1px solid',
+                borderColor: 'divider',
               },
             }),
           }}
           disableRipple
         >
-          <ListItemIcon
-            sx={{
-              marginRight: (theme) => theme.spacing(1),
-              color: (theme) =>
-                isLinkActive
-                  ? theme.palette.primary.main
-                  : theme.palette.text.secondary + "99",
-              transition: (theme) => theme.transitions.create("color"),
-              width: 24,
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            {nested ? <Dot color={isLinkActive ? "primary" : undefined} /> : (icon as any)}
-          </ListItemIcon>
-          <ListItemText
-            sx={{
-              margin: 0,
-              "& .MuiTypography-root": {
-                padding: 0,
+          {!nested && (
+            <ListItemIcon
+              sx={{
+                marginRight: isSidebarOpened ? (theme) => theme.spacing(nested ? 0.5 : 1) : 0,
                 color: (theme) =>
                   isLinkActive
-                    ? theme.palette.text.primary
-                    : theme.palette.text.secondary + "CC",
-                transition: (theme) =>
-                  theme.transitions.create(["opacity", "color"]),
-                fontSize: 16,
-                ...(!isSidebarOpened && { opacity: 0 }),
-              },
-            }}
-            primary={label}
-          />
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary + "99",
+                transition: (theme) => theme.transitions.create("color"),
+                minWidth: nested ? 16 : 24,
+                width: nested ? 16 : 24,
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              {icon as any}
+            </ListItemIcon>
+          )}
+          {isSidebarOpened && (
+            <ListItemText
+              sx={{
+                margin: 0,
+                "& .MuiTypography-root": {
+                  padding: 0,
+                  color: (theme) =>
+                    isLinkActive
+                      ? theme.palette.text.primary
+                      : theme.palette.text.secondary + "CC",
+                  transition: (theme) =>
+                    theme.transitions.create(["opacity", "color"]),
+                  fontSize: nested ? 13 : 16,
+                },
+              }}
+              primary={label}
+            />
+          )}
         </ListItemButton>
       </ListItem>
     );
@@ -141,6 +210,7 @@ export default function SidebarLink({
           to={link}
           sx={{
             textDecoration: "none",
+            ...(!isSidebarOpened && { justifyContent: 'center', px: 0 }),
             "&:hover, &:focus": {
               backgroundColor: (theme) => (theme.palette.background as any).light,
             },
@@ -160,12 +230,13 @@ export default function SidebarLink({
         >
           <ListItemIcon
             sx={{
-              marginRight: (theme) => theme.spacing(1),
+              marginRight: isSidebarOpened ? (theme) => theme.spacing(1) : 0,
               color: (theme) =>
                 isLinkActive
                   ? theme.palette.primary.main
                   : theme.palette.text.secondary + "99",
               transition: (theme) => theme.transitions.create("color"),
+              minWidth: 24,
               width: 24,
               display: "flex",
               justifyContent: "center",
@@ -173,23 +244,24 @@ export default function SidebarLink({
           >
             {icon ? (icon as any) : <InboxIcon />}
           </ListItemIcon>
-          <ListItemText
-            sx={{
-              margin: 0,
-              "& .MuiTypography-root": {
-                padding: 0,
-                color: (theme) =>
-                  isLinkActive
-                    ? theme.palette.text.primary
-                    : theme.palette.text.secondary + "CC",
-                transition: (theme) =>
-                  theme.transitions.create(["opacity", "color"]),
-                fontSize: 16,
-                ...(!isSidebarOpened && { opacity: 0 }),
-              },
-            }}
-            primary={label}
-          />
+          {isSidebarOpened && (
+            <ListItemText
+              sx={{
+                margin: 0,
+                "& .MuiTypography-root": {
+                  padding: 0,
+                  color: (theme) =>
+                    isLinkActive
+                      ? theme.palette.text.primary
+                      : theme.palette.text.secondary + "CC",
+                  transition: (theme) =>
+                    theme.transitions.create(["opacity", "color"]),
+                  fontSize: 16,
+                },
+              }}
+              primary={label}
+            />
+          )}
         </ListItemButton>
       </ListItem>
       {children && (
@@ -198,7 +270,9 @@ export default function SidebarLink({
           timeout="auto"
           unmountOnExit
           sx={{
-            paddingLeft: (theme) => `calc(${theme.spacing(2)} + 30px)`,
+            ml: '28px',
+            borderLeft: '1px solid',
+            borderColor: 'divider',
           }}
         >
           <List component="div" disablePadding>

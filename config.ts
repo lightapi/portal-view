@@ -6,6 +6,8 @@ type AppConfig = {
     clientId: string;
     tenantId: string;
     redirectUri: string;
+    apiOnboardUrl: string;
+    productReleaseUrl: string;
 }
 
 export const config: AppConfig = {
@@ -16,6 +18,8 @@ export const config: AppConfig = {
     clientId: import.meta.env.VITE_CLIENT_ID ?? "",
     tenantId: import.meta.env.VITE_TENANT_ID ?? "",
     redirectUri: import.meta.env.VITE_REDIRECT_URI ?? "",
+    apiOnboardUrl: import.meta.env.VITE_API_ONBOARD_URL ?? 'https://lightapi.net',
+    productReleaseUrl: import.meta.env.VITE_PRODUCT_RELEASE_URL ?? 'https://lightapi.net/releases',
 }
 
 export const isSsoEnabled = config.ssoEnabled.toLowerCase() === "true";
