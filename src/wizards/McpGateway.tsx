@@ -214,7 +214,7 @@ export default function McpGateway() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/app/mcp/wizard')}
+          onClick={() => navigate('/app/mcp/wizard?flow=onboard')}
           sx={{ mt: 0.5, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
         >
           Onboard to Gateway

@@ -80,7 +80,7 @@ export default function SelectGatewayStep({ host, selectedInstanceId, onChange, 
       const bv = (b[sortBy] ?? '').toString().toLowerCase();
       return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
     });
-  }, [instances, filter, sortBy, sortAsc]);
+  }, [instances, filter, sortBy, sortAsc, gatewayType, allowedInstanceIds]);
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>;
