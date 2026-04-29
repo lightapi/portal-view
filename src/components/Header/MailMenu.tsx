@@ -13,7 +13,7 @@ import { timeConversion } from "../../utils";
 import UserAvatar from "../UserAvatar/UserAvatar";
 import { Badge, Typography } from "../Wrappers/Wrappers";
 
-export default function MailMenu(props: any) {
+export default function MailMenu({ openAbove = false }: { openAbove?: boolean }) {
   const [mailMenu, setMailMenu] = useState<null | HTMLElement>(null);
   const [isMailsUnread, setIsMailsUnread] = useState(true);
   const [messages, setMessages] = useState<any[]>([]);
@@ -96,7 +96,9 @@ export default function MailMenu(props: any) {
           open={Boolean(mailMenu)}
           anchorEl={mailMenu}
           onClose={() => setMailMenu(null)}
-          sx={{ mt: 7 }}
+          anchorOrigin={openAbove ? { vertical: 'top', horizontal: 'left' } : { vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={openAbove ? { vertical: 'bottom', horizontal: 'left' } : { vertical: 'top', horizontal: 'left' }}
+          sx={openAbove ? {} : { mt: 7 }}
           PaperProps={{ sx: { minWidth: 265 } }}
           disableAutoFocusItem
         >

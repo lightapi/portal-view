@@ -1,5 +1,5 @@
 import { MoreVert as MoreIcon } from '@mui/icons-material';
-import { IconButton, Menu, MenuItem, Paper, Typography, Box } from '@mui/material';
+import { IconButton, Menu, MenuItem, Paper, Typography, Box, Divider } from '@mui/material';
 import React, { useState } from 'react';
 
 interface WidgetProps {
@@ -9,6 +9,9 @@ interface WidgetProps {
   bodyClass?: string;
   disableWidgetMenu?: boolean;
   header?: React.ReactNode;
+  sx?: any;
+  bodySx?: any;
+  upperTitle?: boolean;
   [key: string]: any;
 }
 
@@ -19,6 +22,9 @@ export default function Widget({
   bodyClass,
   disableWidgetMenu,
   header,
+  sx,
+  bodySx,
+  upperTitle,
   ...props
 }: WidgetProps) {
   var [moreButtonRef, setMoreButtonRef] = useState<HTMLElement | null>(null);
@@ -27,42 +33,56 @@ export default function Widget({
   return (
     <Box sx={{ display: 'flex', minHeight: '100%' }}>
       <Paper
+        elevation={0}
         sx={(theme) => ({
           display: 'flex',
           flexDirection: 'column',
           flexGrow: 1,
           overflow: 'hidden',
-          boxShadow: (theme as any).customShadows?.widget,
+          borderRadius: 2,
+          border: `1px solid ${theme.palette.divider}`,
+          transition: 'box-shadow 0.2s ease, transform 0.2s ease',
+          '&:hover': {
+            boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
+            transform: 'translateY(-2px)',
+          },
+          ...(typeof sx === 'function' ? sx(theme) : sx),
         })}
       >
         <Box
-          sx={(theme) => ({
-            p: 3,
-            pb: 1,
+          sx={{
+            px: 2.5,
+            pt: 2,
+            pb: 1.5,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-          })}
+          }}
         >
           {header ? (
             header
           ) : (
             <React.Fragment>
-              <Typography variant="h5" color="textSecondary">
+              <Typography
+                variant="subtitle2"
+                sx={(theme) => ({
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: theme.palette.text.disabled,
+                })}
+              >
                 {title}
               </Typography>
               {!disableWidgetMenu && (
                 <IconButton
-                  color="primary"
+                  size="small"
                   sx={(theme) => ({
-                    m: -1,
-                    p: 0,
-                    width: 40,
-                    height: 40,
-                    color: theme.palette.text.secondary,
+                    color: theme.palette.text.disabled,
                     '&:hover': {
-                      backgroundColor: theme.palette.primary.main,
-                      color: 'rgba(255, 255, 255, 0.35)',
+                      color: theme.palette.primary.main,
+                      backgroundColor: 'transparent',
                     },
                   })}
                   aria-owns="widget-menu"
@@ -71,21 +91,21 @@ export default function Widget({
                     setMoreButtonRef(e.currentTarget);
                     setMoreMenuOpen(true);
                   }}
-                  size="large"
                 >
-                  <MoreIcon />
+                  <MoreIcon fontSize="small" />
                 </IconButton>
               )}
             </React.Fragment>
           )}
         </Box>
+        <Divider />
         <Box
           className={bodyClass}
           sx={(theme) => ({
-            pb: 3,
-            pr: 3,
-            pl: 3,
+            p: 2.5,
+            flexGrow: 1,
             ...(noBodyPadding && { p: 0 }),
+            ...(typeof bodySx === 'function' ? bodySx(theme) : bodySx),
           })}
         >
           {children}

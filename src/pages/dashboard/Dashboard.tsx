@@ -2,6 +2,8 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
 import React, { useEffect, useRef } from 'react';
 import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
@@ -158,21 +160,38 @@ const ActivityStream = () => {
 
 const UserDashboard = ({ email }: { email: string | null }) => {
   return (
-    <Box sx={{ mt: 4, px: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h3" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
-            Light-Fabric Control
-          </Typography>
-          <Typography variant="h6" color="textSecondary">
-            Welcome back, <Box component="span" sx={{ color: 'secondary.main', fontWeight: 700 }}>{email || 'User'}</Box>. Orchestrating the Agentic Future.
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={2}>
-          <Button variant="outlined" startIcon={<HistoryIcon />}>View Logs</Button>
-          <Button variant="contained" color="primary" startIcon={<AddCircleIcon />}>New Agent</Button>
-        </Stack>
-      </Stack>
+    <>
+      {/* ── Hero ── */}
+      <Box
+        sx={(theme) => ({
+          background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 60%, ${theme.palette.secondary.main} 100%)`,
+          borderRadius: 3,
+          mx: -2,
+          mt: -1,
+          mb: 5,
+          py: 8,
+          px: 4,
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+        })}
+      >
+        <Typography sx={{ color: '#fff', fontSize: { xs: '2.5rem', md: '3.8rem' }, fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.1 }}>
+          Light Portal
+        </Typography>
+        <Typography sx={{ color: 'rgba(255,255,255,0.82)', fontSize: '1.2rem', mt: 2, mb: 4, fontWeight: 400 }}>
+          Bring the API producers and consumers together.
+        </Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          sx={{ borderRadius: 6, px: 4, py: 1.2, fontSize: '1rem', fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,0.2)', background: '#fff', color: 'primary.main', '&:hover': { background: 'rgba(255,255,255,0.9)' } }}
+        >
+          Latest News
+        </Button>
+      </Box>
+
+      {/* ── Feature cards ── */}
 
       <Grid container spacing={3}>
         {/* Stats Row */}
@@ -266,7 +285,7 @@ const UserDashboard = ({ email }: { email: string | null }) => {
           </Stack>
         </Grid>
       </Grid>
-    </Box>
+    </>
   );
 };
 
