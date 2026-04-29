@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -7,10 +7,13 @@ import {
   Chip,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   OutlinedInput,
   Paper,
+  Radio,
+  RadioGroup,
   Select,
   SelectChangeEvent,
   Stack,
@@ -29,6 +32,8 @@ type HostType = {
   subDomain?: string;
   hostDesc?: string;
 };
+
+type ExportScope = "host" | "global";
 
 const ENTITY_OPTIONS = [
   "user",
@@ -83,6 +88,7 @@ export default function GlobalSnapshotExport() {
 
   const [hosts, setHosts] = useState<HostType[]>([]);
   const [sourceHostId, setSourceHostId] = useState(userHost || "");
+  const [exportScope, setExportScope] = useState<ExportScope>("host");
   const [entityTypes, setEntityTypes] = useState<string[]>([]);
   const [loadingHosts, setLoadingHosts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -142,6 +148,7 @@ export default function GlobalSnapshotExport() {
         version: "0.1.0",
         data: {
           sourceHostId,
+          exportScope,
           entityTypes: entityTypes.length > 0 ? entityTypes : undefined,
         },
       };
@@ -162,7 +169,7 @@ export default function GlobalSnapshotExport() {
   const handleDownload = () => {
     if (!result) return;
     downloadJson(
-      `global-snapshot-${sourceHostId}-${new Date().toISOString().slice(0, 10)}.json`,
+      `${exportScope}-snapshot-${sourceHostId}-${new Date().toISOString().slice(0, 10)}.json`,
       result,
     );
   };
@@ -194,6 +201,10 @@ export default function GlobalSnapshotExport() {
     setSourceHostId(event.target.value);
   };
 
+  const handleExportScopeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setExportScope(event.target.value as ExportScope);
+  };
+
   const handleEntityTypesChange = (event: SelectChangeEvent<string[]>) => {
     const value = event.target.value;
     setEntityTypes(typeof value === "string" ? value.split(",") : value);
@@ -207,7 +218,7 @@ export default function GlobalSnapshotExport() {
             Global Snapshot Export
           </Typography>
           <Typography color="text.secondary">
-            Export the current materialized state for a host as a portable snapshot JSON file.
+            Export host-owned rows or shared global baseline data as a portable snapshot JSON file.
           </Typography>
         </Box>
 
@@ -238,6 +249,33 @@ export default function GlobalSnapshotExport() {
                   </MenuItem>
                 ))}
               </Select>
+            </FormControl>
+
+            <FormControl>
+              <Typography variant="subtitle2" component="div" sx={{ mb: 1 }}>
+                Export Scope
+              </Typography>
+              <RadioGroup
+                row
+                value={exportScope}
+                onChange={handleExportScopeChange}
+              >
+                <FormControlLabel
+                  value="host"
+                  control={<Radio />}
+                  label="Host entities"
+                />
+                <FormControlLabel
+                  value="global"
+                  control={<Radio />}
+                  label="Global entities"
+                />
+              </RadioGroup>
+              <Typography variant="body2" color="text.secondary">
+                {exportScope === "host"
+                  ? "Export rows owned by the selected source host."
+                  : "Export shared rows and tables that are not host-owned."}
+              </Typography>
             </FormControl>
 
             <FormControl fullWidth>
@@ -292,7 +330,8 @@ export default function GlobalSnapshotExport() {
 
             {result && (
               <Alert severity="success">
-                Snapshot export completed for <strong>{selectedHostLabel}</strong>.
+                {exportScope === "host" ? "Host" : "Global"} snapshot export completed for{" "}
+                <strong>{selectedHostLabel}</strong>.
               </Alert>
             )}
           </Stack>
