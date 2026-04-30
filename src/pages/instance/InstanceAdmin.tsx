@@ -21,6 +21,7 @@ import CameraIcon from '@mui/icons-material/Camera';
 import ApiIcon from "@mui/icons-material/Api";
 import AppsIcon from "@mui/icons-material/Apps";
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -327,6 +328,15 @@ export default function InstanceAdmin() {
             }
           >
             <ApiIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Create OAuth Client">
+          <IconButton
+            onClick={() =>
+              navigate('/app/form/createClient', { state: { data: { hostId: row.original.hostId, instanceId: row.original.instanceId } } })
+            }
+          >
+            <VpnKeyIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance Apps">

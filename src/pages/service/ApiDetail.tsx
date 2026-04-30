@@ -28,6 +28,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import ApiIcon from "@mui/icons-material/Api";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
@@ -233,6 +234,11 @@ export default function ApiDetail() {
             <ApiIcon />
           </IconButton>
         </Tooltip>
+        <Tooltip title="Create OAuth Client">
+          <IconButton onClick={() => navigate('/app/form/createClient', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+            <VpnKeyIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Endpoint">
           <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
             <FormatListBulletedIcon />
@@ -294,4 +300,3 @@ export default function ApiDetail() {
     </Box>
   );
 }
-

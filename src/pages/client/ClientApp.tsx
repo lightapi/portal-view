@@ -15,6 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatReclineNormal';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -242,6 +243,11 @@ export default function ClientApp() {
         <Tooltip title="OAuth Clients">
           <IconButton onClick={() => navigate('/app/oauth/authClient', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}>
             <AirlineSeatReclineNormalIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Create OAuth Client">
+          <IconButton onClick={() => navigate('/app/form/createClient', { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } })}>
+            <VpnKeyIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance Apps">

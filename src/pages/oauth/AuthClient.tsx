@@ -27,6 +27,9 @@ type AuthClientApiResponse = {
 type AuthClientType = {
   hostId: string;
   clientId: string;
+  ownerId?: string;
+  ownerType?: 'app' | 'api_version' | 'instance' | 'service_account';
+  ownerName?: string;
   clientName: string;
   appId?: string;
   appName?: string;
@@ -34,6 +37,8 @@ type AuthClientType = {
   apiVersion?: string;
   apiVersionId?: string;
   apiName?: string;
+  instanceId?: string;
+  instanceName?: string;
   clientType: 'public' | 'confidential' | 'trusted' | 'external';
   clientProfile: 'webserver' | 'mobile' | 'browser' | 'service' | 'batch';
   clientSecret: string;
@@ -190,6 +195,8 @@ export default function AuthClient() {
     () => [
       { accessorKey: 'clientId', header: 'Client Id' },
       { accessorKey: 'clientName', header: 'Client Name' },
+      { accessorKey: 'ownerType', header: 'Owner Type' },
+      { accessorKey: 'ownerName', header: 'Owner Name' },
       { accessorKey: 'clientType', header: 'Type' },
       { accessorKey: 'clientProfile', header: 'Profile' },
       { accessorKey: 'tokenExType', header: 'Token Ex Type' },
@@ -199,6 +206,8 @@ export default function AuthClient() {
       { accessorKey: 'apiName', header: 'API Name' },
       { accessorKey: 'apiVersion', header: 'API Version' },
       { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
       { accessorKey: 'clientScope', header: 'Scope' },
       { accessorKey: 'customClaim', header: 'Custom Claim' },
       { accessorKey: 'redirectUri', header: 'Redirect URI' },
@@ -272,6 +281,11 @@ export default function AuthClient() {
         {initialData.apiVersionId && (
           <Typography variant="subtitle1">
             For API Version: <strong>{initialData.apiVersionId}</strong>
+          </Typography>
+        )}
+        {initialData.instanceId && (
+          <Typography variant="subtitle1">
+            For Instance: <strong>{initialData.instanceId}</strong>
           </Typography>
         )}
       </Box>
