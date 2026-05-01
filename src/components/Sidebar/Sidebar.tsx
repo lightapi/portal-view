@@ -93,7 +93,6 @@ const structure = [
     children: [
       { id: 5, label: "Controller", link: "/app/controller/services", icon: <SportsEsportsIcon /> },
       { id: 3, label: "Scheduler", link: "/app/scheduler", icon: <AlarmIcon /> },
-      { id: 7, label: "Configuration", link: "/app/form/servicesRef", icon: <PermDataSettingIcon /> },
     ],
   },
 
@@ -113,6 +112,7 @@ const structure = [
           { label: "YAML Rule", link: "/app/rule/ruleList" },
         ],
       },
+      /*
       {
         id: 23, label: "Publish", role: "user", link: "/app/publish", icon: <PublishIcon />,
         children: [
@@ -125,6 +125,7 @@ const structure = [
           { label: "YAML Rule", link: "/app/form/createRule" },
         ],
       },
+      */
       {
         id: 10, label: "OAuth 2.0", role: "user", link: "/app/oauth", icon: <SecurityIcon />,
         children: [{ label: "Refresh Token", link: "/app/refreshToken" }],
@@ -136,12 +137,13 @@ const structure = [
   {
     id: 3000, type: "group", label: "Organisation",
     children: [
-      { id: 24, label: "Host", role: "user", link: "/app/host/Host", icon: <GiteIcon /> },
-      { id: 30, label: "Notification", role: "user", link: "/app/notification", icon: <NotificationsIcon /> },
+      { id: 24, label: "User Host", role: "user", link: "/app/userHost", icon: <GiteIcon /> },
+      /* { id: 30, label: "Notification", role: "user", link: "/app/notification", icon: <NotificationsIcon /> }, */
     ],
   },
 
   // ── Community ─────────────────────────────────────────
+  /*
   {
     id: 4000, type: "group", label: "Community",
     children: [
@@ -156,8 +158,10 @@ const structure = [
       },
     ],
   },
+  */
 
   // ── Business ──────────────────────────────────────────
+  /*
   {
     id: 5000, type: "group", label: "Business",
     children: [
@@ -167,7 +171,7 @@ const structure = [
       { id: 280, label: "Merchant Orders", role: "merchant", link: "/app/merchantOrders", icon: <OrderIcon /> },
     ],
   },
-
+  */
   // ── Administration ────────────────────────────────────
   { id: 85, type: "divider", role: "admin" },
   {
@@ -188,15 +192,9 @@ const structure = [
       { id: 114, label: "Deployment Admin", role: "admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
       { id: 115, label: "Config Admin", role: "admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
       {
-        id: 116, label: "Workflow Admin", role: "admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
+        id: 115.5, label: "GenAI Admin", role: "admin", link: "/app/genai/chat", icon: <PrecisionManufacturingIcon />,
         children: [
-          { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
-          { label: "Worklist", link: "/app/workflow/Worklist" },
-          { label: "Process Info", link: "/app/workflow/ProcessInfo" },
           { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
-          { label: "Task Info", link: "/app/workflow/TaskInfo" },
-          { label: "Task Asst", link: "/app/workflow/TaskAsst" },
-          { label: "Audit Log", link: "/app/workflow/AuditLog" },
           { label: "Skill", link: "/app/genai/Skill" },
           { label: "Tool", link: "/app/genai/Tool" },
           { label: "Tool Param", link: "/app/genai/ToolParam" },
@@ -210,6 +208,17 @@ const structure = [
           { label: "GenAI Chat", link: "/app/genai/chat" },
         ],
       },
+      {
+        id: 116, label: "Workflow Admin", role: "admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
+        children: [
+          { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
+          { label: "Worklist", link: "/app/workflow/Worklist" },
+          { label: "Process Info", link: "/app/workflow/ProcessInfo" },
+          { label: "Task Info", link: "/app/workflow/TaskInfo" },
+          { label: "Task Asst", link: "/app/workflow/TaskAsst" },
+          { label: "Audit Log", link: "/app/workflow/AuditLog" },
+        ],
+      },
       { id: 117, label: "Access Admin", role: "admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Role", link: "/app/access/roleAdmin" }, { label: "Position", link: "/app/access/positionAdmin" }, { label: "Group", link: "/app/access/groupAdmin" }, { label: "Attribute", link: "/app/access/attributeAdmin" }] },
       { id: 118, label: "Api Admin", role: "admin", link: "/app/service/admin", icon: <ApiIcon /> },
       { id: 120, label: "Rule Admin", role: "admin", link: "/app/rule/admin", icon: <RuleIcon /> },
@@ -217,12 +226,12 @@ const structure = [
       { id: 125, label: "Category Admin", role: "admin", link: "/app/category/admin", icon: <CategoryIcon /> },
       { id: 127, label: "Schedule Admin", role: "admin", link: "/app/schedule/admin", icon: <ScheduleIcon /> },
       { id: 128, label: "Promotion", role: "admin", link: "/app/promotion/export", icon: <CompareArrowsIcon />, children: [{ label: "Export", link: "/app/promotion/export" }, { label: "Import", link: "/app/promotion/import" }, { label: "History", link: "/app/promotion/history" }] },
-      { id: 130, label: "News Admin", role: "admin", link: "/app/news/admin", icon: <NewspaperIcon />, children: [{ label: "Create", link: "/app/news/create" }, { label: "Update", link: "/app/news/update" }, { label: "Delete", link: "/app/news/delete" }] },
-      { id: 140, label: "Blog Admin", role: "admin", link: "/app/blog/admin", icon: <BookIcon />, children: [{ label: "List", link: "/app/blog/adminList" }, { label: "Create", link: "/app/form/createBlog" }, { label: "Update", link: "/app/blog/update" }, { label: "Delete", link: "/app/blog/delete" }] },
+      /* { id: 130, label: "News Admin", role: "admin", link: "/app/news/admin", icon: <NewspaperIcon />, children: [{ label: "Create", link: "/app/news/create" }, { label: "Update", link: "/app/news/update" }, { label: "Delete", link: "/app/news/delete" }] }, */
+      /* { id: 140, label: "Blog Admin", role: "admin", link: "/app/blog/admin", icon: <BookIcon />, children: [{ label: "List", link: "/app/blog/adminList" }, { label: "Create", link: "/app/form/createBlog" }, { label: "Update", link: "/app/blog/update" }, { label: "Delete", link: "/app/blog/delete" }] }, */
       { id: 141, label: "Error Admin", role: "admin", link: "/app/error/admin", icon: <ErrorOutlineIcon />, children: [{ label: "List", link: "/app/error/adminList" }, { label: "Create", link: "/app/form/createError" }, { label: "Update", link: "/app/error/update" }, { label: "Delete", link: "/app/error/delete" }] },
       { id: 142, label: "Schema Admin", role: "admin", link: "/app/schema/admin", icon: <SchemaIcon /> },
-      { id: 150, label: "Forum Admin", role: "admin", link: "/app/forum/admin", icon: <ForumIcon />, children: [{ label: "Create", link: "/app/forum/create" }, { label: "Update", link: "/app/forum/update" }, { label: "Delete", link: "/app/forum/delete" }] },
-      { id: 160, label: "Training Admin", link: "/app/edu/admin", icon: <ModelTrainingIcon />, children: [{ label: "List Quiz", link: "/app/form/listQuiz" }, { label: "Create Quiz", link: "/app/form/createQuiz" }, { label: "Update Quiz", link: "/app/edu/updateQuiz" }, { label: "Delete Quiz", link: "/app/edu/deleteQuiz" }] },
+      /* { id: 150, label: "Forum Admin", role: "admin", link: "/app/forum/admin", icon: <ForumIcon />, children: [{ label: "Create", link: "/app/forum/create" }, { label: "Update", link: "/app/forum/update" }, { label: "Delete", link: "/app/forum/delete" }] }, */
+      /* { id: 160, label: "Training Admin", link: "/app/edu/admin", icon: <ModelTrainingIcon />, children: [{ label: "List Quiz", link: "/app/form/listQuiz" }, { label: "Create Quiz", link: "/app/form/createQuiz" }, { label: "Update Quiz", link: "/app/edu/updateQuiz" }, { label: "Delete Quiz", link: "/app/edu/deleteQuiz" }] }, */
     ],
   },
 ];
@@ -289,33 +298,33 @@ function Sidebar() {
       open={isSidebarOpened}
     >
       <SidebarTopSection>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: isSidebarOpened ? "space-between" : "center", px: 1.5, minHeight: 60 }}>
-            {isSidebarOpened && (
-              <Link to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                <Box sx={{
-                  width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
-                  background: "rgba(255,255,255,0.18)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.25)",
-                }}>
-                  <Box sx={{ width: 12, height: 12, borderRadius: "3px", bgcolor: "rgba(255,255,255,0.9)" }} />
-                </Box>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", letterSpacing: "0.02em", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {apiPortalText}
-                  </Typography>
-                </Box>
-              </Link>
-            )}
-            <IconButton
-              onClick={() => toggleSidebar(layoutDispatch)}
-              size="small"
-              sx={{ color: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "rgba(255,255,255,0.12)", color: "#fff" }, flexShrink: 0 }}
-            >
-              {isSidebarOpened ? <MenuOpenIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
-            </IconButton>
-          </Box>
-        </SidebarTopSection>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: isSidebarOpened ? "space-between" : "center", px: 1.5, minHeight: 60 }}>
+          {isSidebarOpened && (
+            <Link to="/app/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+              <Box sx={{
+                width: 30, height: 30, borderRadius: "8px", flexShrink: 0,
+                background: "rgba(255,255,255,0.18)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.25)",
+              }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: "3px", bgcolor: "rgba(255,255,255,0.9)" }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "0.88rem", letterSpacing: "0.02em", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {apiPortalText}
+                </Typography>
+              </Box>
+            </Link>
+          )}
+          <IconButton
+            onClick={() => toggleSidebar(layoutDispatch)}
+            size="small"
+            sx={{ color: "rgba(255,255,255,0.85)", "&:hover": { bgcolor: "rgba(255,255,255,0.12)", color: "#fff" }, flexShrink: 0 }}
+          >
+            {isSidebarOpened ? <MenuOpenIcon fontSize="small" /> : <MenuIcon fontSize="small" />}
+          </IconButton>
+        </Box>
+      </SidebarTopSection>
       <SidebarListWrapper>
         <List>
           {structure
