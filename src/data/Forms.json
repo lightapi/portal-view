@@ -6921,9 +6921,18 @@
       "title": "Ref Relation Type",
       "type": "object",
       "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
         "relationName": {
           "type": "string",
           "title": "Relation Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
         },
         "relationDesc": {
           "type": "string",
@@ -6931,12 +6940,15 @@
         }
       },
       "required": [
+        "hostId",
         "relationName",
         "relationDesc"
       ]
     },
     "form": [
+      "hostId",
       "relationName",
+      "globalFlag",
       {
         "key": "relationDesc",
         "type": "textarea",
@@ -6966,9 +6978,18 @@
           "title": "Relation Id",
           "readonly": true
         },
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
         "relationName": {
           "type": "string",
           "title": "Relation Name"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Flag"
         },
         "relationDesc": {
           "type": "string",
@@ -6976,18 +6997,17 @@
         }
       },
       "required": [
-        "relatioId",
+        "relationId",
+        "hostId",
         "relationName",
-        {
-          "key": "relationDesc",
-          "type": "textarea",
-          "rows": 5
-        }
+        "relationDesc"
       ]
     },
     "form": [
       "relationId",
+      "hostId",
       "relationName",
+      "globalFlag",
       "relationDesc"
     ]
   },
