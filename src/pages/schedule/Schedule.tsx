@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -46,6 +46,14 @@ interface UserState {
   host?: string;
   userId?: string;
   email?: string;
+  roles?: string | null;
+}
+
+const allScheduleScopeRoles = ['super-admin', 'platform-admin', 'schedule-all-admin'];
+
+function hasAnyRole(roles: string | null | undefined, requiredRoles: string[]) {
+  const roleSet = new Set((roles ?? '').split(/\s+/).filter(Boolean));
+  return requiredRoles.some((role) => roleSet.has(role));
 }
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
@@ -63,11 +71,17 @@ export default function Schedule() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { host, userId, email } = useUserState() as UserState;
+  const { host, userId, email, roles } = useUserState() as UserState;
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   
   // Determine if we are in admin mode based on the URL path
   const isAdminView = location.pathname.includes('/admin');
+  const canViewAllSchedules = useMemo(
+    () => isAdminView && hasAnyRole(roles, allScheduleScopeRoles),
+    [isAdminView, roles],
+  );
+  const ownedOnly = !canViewAllSchedules;
+  const hasOwnerContext = !ownedOnly || !!userId;
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '', metadataType: 'schedule' }),
     [host, searchContext, userId],
@@ -75,6 +89,10 @@ export default function Schedule() {
   const contextForRow = useCallback(
     (row: ScheduleType) => mergeTaskContext(taskContext, contextFromObject(row)),
     [taskContext],
+  );
+  const canModifySchedule = useCallback(
+    (schedule: ScheduleType) => canViewAllSchedules || (!!userId && schedule.updateUser === userId),
+    [canViewAllSchedules, userId],
   );
 
   // Data and fetching state
@@ -99,7 +117,7 @@ export default function Schedule() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
-    if (!isAdminView && !userId) return; // In user view, we must have a userId
+    if (ownedOnly && !userId) return; // Owner-scoped view must have a user id.
     
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
@@ -109,12 +127,18 @@ export default function Schedule() {
     columnFilters.forEach(filter => {
       if (filter.id === 'active') {
         activeStatus = filter.value === 'true' || filter.value === true;
+      } else if (ownedOnly && filter.id === 'updateUser') {
+        // Owner scope is enforced from the current user context below.
       } else {
         apiFilters.push(filter);
       }
     });
 
-    const cmdData: any = {
+    if (ownedOnly && userId) {
+      apiFilters.push({ id: 'updateUser', value: userId });
+    }
+
+    const cmdData = {
       hostId: host, 
       offset: pagination.pageIndex * pagination.pageSize, 
       limit: pagination.pageSize,
@@ -123,11 +147,6 @@ export default function Schedule() {
       globalFilter: globalFilter ?? '',
       active: activeStatus,
     };
-
-    // For normal users, filter by their userId in the updateUser field
-    if (!isAdminView && userId) {
-      apiFilters.push({ id: 'updateUser', value: userId });
-    }
 
     const cmd = {
       host: 'lightapi.net', 
@@ -148,7 +167,7 @@ export default function Schedule() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, userId, isAdminView, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -157,6 +176,10 @@ export default function Schedule() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<ScheduleType>) => {
+    if (!canModifySchedule(row.original)) {
+      alert('You can only delete schedules you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete schedule: ${row.original.scheduleName}?`)) return;
 
     const originalData = [...data];
@@ -180,9 +203,14 @@ export default function Schedule() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [canModifySchedule, data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<ScheduleType>) => {
+    if (!canModifySchedule(row.original)) {
+      alert('You can only update schedules you own.');
+      return;
+    }
+
     const scheduleId = row.original.scheduleId;
     setIsUpdateLoading(scheduleId);
 
@@ -204,7 +232,7 @@ export default function Schedule() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [contextForRow, navigate, location.pathname, searchParams]);
+  }, [canModifySchedule, contextForRow, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ScheduleType>[]>(
@@ -233,23 +261,39 @@ export default function Schedule() {
         },
         {
           id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => (
-            <Tooltip title="Update Schedule">
-              <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.scheduleId}>
-                {isUpdateLoading === row.original.scheduleId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-              </IconButton>
-            </Tooltip>
-          ),
+          Cell: ({ row }) => {
+            const disabled = !canModifySchedule(row.original);
+            return (
+              <Tooltip title={disabled ? 'You can only update schedules you own.' : 'Update Schedule'}>
+                <span>
+                  <IconButton onClick={() => handleUpdate(row)} disabled={disabled || isUpdateLoading === row.original.scheduleId}>
+                    {isUpdateLoading === row.original.scheduleId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            );
+          },
         },
         {
           id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => (<Tooltip title="Delete Schedule"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+          Cell: ({ row }) => {
+            const disabled = !canModifySchedule(row.original);
+            return (
+              <Tooltip title={disabled ? 'You can only delete schedules you own.' : 'Delete Schedule'}>
+                <span>
+                  <IconButton color="error" onClick={() => handleDelete(row)} disabled={disabled}>
+                    <DeleteForeverIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            );
+          },
         },
       ];
-      // Hide Update User column for normal users
-      return isAdminView ? allColumns : allColumns.filter(col => col.accessorKey !== 'updateUser');
+      // Hide Update User column for owner-scoped users.
+      return ownedOnly ? allColumns.filter(col => col.accessorKey !== 'updateUser') : allColumns;
     },
-    [isAdminView, isUpdateLoading, handleUpdate, handleDelete],
+    [ownedOnly, isUpdateLoading, canModifySchedule, handleUpdate, handleDelete],
   );
 
   // Table instance configuration
@@ -274,12 +318,12 @@ export default function Schedule() {
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createSchedule', searchParams, taskContext))}>
           Create New Schedule
         </Button>
-        {!isAdminView && (
+        {ownedOnly && (
           <Typography variant="subtitle1" sx={{ ml: 2 }}>
-            Schedules for: <strong>{email || userId}</strong>
+            My Schedules: <strong>{email || userId}</strong>
           </Typography>
         )}
-        {isAdminView && (
+        {!ownedOnly && (
           <Typography variant="subtitle1" sx={{ ml: 2, color: 'primary.main', fontWeight: 600 }}>
             Admin View: All Schedules
           </Typography>
@@ -298,6 +342,11 @@ export default function Schedule() {
           maxActions={1}
         />
       </Box>
+      {!hasOwnerContext && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          User context is required before owner-scoped schedules can be loaded.
+        </Alert>
+      )}
       <MaterialReactTable table={table} />
     </Box>
   );
