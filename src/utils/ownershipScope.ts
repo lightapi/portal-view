@@ -80,3 +80,12 @@ export function applyOwnershipFilter<TFilter extends OwnershipFilter>(
 
   return scopedFilters;
 }
+
+export function applyOwnershipColumns<TColumn extends { accessorKey?: string }>(
+  columns: readonly TColumn[],
+  ownership: Pick<OwnershipScope, 'ownedOnly' | 'ownerField'>,
+) {
+  return ownership.ownedOnly
+    ? columns.filter((column) => column.accessorKey !== ownership.ownerField)
+    : [...columns];
+}

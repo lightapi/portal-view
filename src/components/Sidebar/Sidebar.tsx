@@ -182,13 +182,13 @@ const structure = [
       { id: 92, label: "Ref Admin", link: "/app/ref/TableAdmin", icon: <TableIcon />, children: [{ label: "Ref Table", link: "/app/ref/TableAdmin" }, { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" }] },
       { id: 93, label: "User Admin", link: "/app/user", icon: <PeopleAltIcon /> },
       { id: 94, label: "Event Admin", link: "/app/event/admin", icon: <EventIcon />, children: [{ label: "Export", link: "/app/form/exportPortalEvent" }, { label: "Import", link: "/app/form/importPortalEvent" }, { label: "Global Export", link: "/app/migration/export" }, { label: "Convert Snapshot", link: "/app/migration/convert" }] },
-      { id: 95, label: "OAuth Admin", link: "/app/oauth/authProvider", icon: <SecurityIcon />, children: [{ label: "Auth Provider", link: "/app/oauth/authProvider" }, { label: "Auth Client", link: "/app/oauth/authClient" }, { label: "Sessions", link: "/app/oauth/authSession" }, { label: "Authorization Codes", link: "/app/oauth/authCode" }, { label: "Refresh Tokens", link: "/app/oauth/refreshToken" }, { label: "Session Audit", link: "/app/oauth/authSessionAudit" }] },
-      { id: 100, label: "App Admin", link: "/app/clientApp", icon: <AppsIcon /> },
+      { id: 95, label: "OAuth Admin", role: "user oauth-client-admin", link: "/app/oauth/authClient", icon: <SecurityIcon />, children: [{ label: "Auth Provider", link: "/app/oauth/authProvider" }, { label: "Auth Client", role: "user oauth-client-admin", link: "/app/oauth/authClient" }, { label: "Sessions", link: "/app/oauth/authSession" }, { label: "Authorization Codes", link: "/app/oauth/authCode" }, { label: "Refresh Tokens", link: "/app/oauth/refreshToken" }, { label: "Session Audit", link: "/app/oauth/authSessionAudit" }] },
+      { id: 100, label: "App Admin", role: "user app-admin", link: "/app/clientApp", icon: <AppsIcon /> },
       { id: 101, label: "Product Admin", link: "/app/product/ProductAdmin", icon: <ProductionQuantityLimitsIcon /> },
       { id: 111, label: "Pipeline Admin", link: "/app/deployment/PipelineAdmin", icon: <SettingsInputComponentIcon /> },
       { id: 112, label: "Platform Admin", link: "/app/deployment/PlatformAdmin", icon: <IntegrationInstructionsIcon /> },
-      { id: 113, label: "Instance Admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
-      { id: 113.5, label: "Runtime Instance", link: "/app/instance/RuntimeInstanceAdmin", icon: <ContentCopyIcon /> },
+      { id: 113, label: "Instance Admin", role: "user instance-admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
+      { id: 113.5, label: "Runtime Instance", role: "user instance-admin", link: "/app/instance/RuntimeInstanceAdmin", icon: <ContentCopyIcon /> },
       { id: 114, label: "Deployment Admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
       { id: 115, label: "Config Admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
       {
@@ -209,9 +209,9 @@ const structure = [
         ],
       },
       {
-        id: 116, label: "Workflow Admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
+        id: 116, label: "Workflow Admin", role: "user workflow-admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
         children: [
-          { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
+          { label: "Wf Definition", role: "user workflow-admin", link: "/app/workflow/WfDefinition" },
           { label: "Worklist", link: "/app/workflow/Worklist" },
           { label: "Process Info", link: "/app/workflow/ProcessInfo" },
           { label: "Task Info", link: "/app/workflow/TaskInfo" },
@@ -220,7 +220,7 @@ const structure = [
         ],
       },
       { id: 117, label: "Access Admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Role", link: "/app/access/roleAdmin" }, { label: "Position", link: "/app/access/positionAdmin" }, { label: "Group", link: "/app/access/groupAdmin" }, { label: "Attribute", link: "/app/access/attributeAdmin" }] },
-      { id: 118, label: "Api Admin", link: "/app/service/admin", icon: <ApiIcon /> },
+      { id: 118, label: "Api Admin", role: "user api-admin", link: "/app/service/admin", icon: <ApiIcon /> },
       { id: 120, label: "Rule Admin", link: "/app/rule/admin", icon: <RuleIcon /> },
       { id: 123, label: "Tag Admin", link: "/app/tag/admin", icon: <LocalOfferIcon /> },
       { id: 125, label: "Category Admin", link: "/app/category/admin", icon: <CategoryIcon /> },
@@ -378,16 +378,17 @@ function filterSidebarItems(items: any[], userRoles: string | null, insideAdminS
   return items.reduce<any[]>((visibleItems, item) => {
     const inAdminSection = insideAdminSection || item.id === 9000;
     const children = item.children ? filterSidebarItems(item.children, userRoles, inAdminSection) : undefined;
+    const visibleChildren = children?.length ? children : undefined;
 
     if (item.type === "group") {
-      if (children?.length) {
-        visibleItems.push({ ...item, children });
+      if (visibleChildren) {
+        visibleItems.push({ ...item, children: visibleChildren });
       }
       return visibleItems;
     }
 
     if (canShowSidebarItem(item, userRoles, inAdminSection, isAdmin)) {
-      visibleItems.push(children ? { ...item, children } : item);
+      visibleItems.push(visibleChildren ? { ...item, children: visibleChildren } : { ...item, children: undefined });
     }
 
     return visibleItems;

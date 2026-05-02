@@ -9,12 +9,13 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, IconButton, Tooltip, Typography, Button } from '@mui/material';
+import { Alert, Box, IconButton, Tooltip, Typography, Button } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import { useUserState } from '../../contexts/UserContext.tsx';
 import { apiPost } from '../../api/apiPost.ts';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -37,7 +38,12 @@ type ClientTokenType = {
 
 interface UserState {
     host?: string;
+    userId?: string;
+    email?: string;
+    roles?: string | null;
 }
+
+const allClientTokenScopeRoles = [...defaultAllScopeRoles, 'oauth-client-admin'];
 
 // Helper Cell component for truncating long text with a tooltip
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
@@ -54,9 +60,20 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function ClientToken() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host } = useUserState() as UserState;
+    const { host, userId, email, roles } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+    const clientTokenOwnership = useMemo(
+        () => ownershipScope({
+            roles,
+            userId,
+            ownerField: 'updateUser',
+            allScopeRoles: allClientTokenScopeRoles,
+        }),
+        [roles, userId],
+    );
+    const ownedOnly = clientTokenOwnership.ownedOnly;
+    const hasOwnerContext = clientTokenOwnership.hasOwnerContext;
     const initialData = useMemo(
         () => ({ ...searchContext, ...(location.state?.data || {}) }),
         [location.state, searchContext],
@@ -64,10 +81,11 @@ export default function ClientToken() {
     const taskContext = useMemo(
         () => mergeTaskContext(searchContext, {
             hostId: host ?? '',
+            userId: userId ?? '',
             clientId: initialData.clientId ?? '',
             tokenId: initialData.tokenId ?? '',
         }),
-        [host, initialData.clientId, initialData.tokenId, searchContext],
+        [host, userId, initialData.clientId, initialData.tokenId, searchContext],
     );
 
     // Data and fetching state
@@ -95,6 +113,7 @@ export default function ClientToken() {
     useEffect(() => {
         const fetchData = async () => {
             if (!host) return;
+            if (ownedOnly && !userId) return;
             if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
             let activeStatus = true; // Default to true if not present
@@ -108,12 +127,14 @@ export default function ClientToken() {
                 }
             });
 
+            const scopedFilters = applyOwnershipFilter(apiFilters, clientTokenOwnership);
+
             const cmd = {
                 host: 'lightapi.net', service: 'oauth', action: 'getClientToken', version: '0.1.0',
                 data: {
                     hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                     sorting: JSON.stringify(sorting ?? []),
-                    filters: JSON.stringify(apiFilters ?? []),
+                    filters: JSON.stringify(scopedFilters ?? []),
                     globalFilter: globalFilter ?? '',
                     active: activeStatus,
                 },
@@ -132,10 +153,14 @@ export default function ClientToken() {
             }
         };
         fetchData();
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, clientTokenOwnership]);
 
     // Delete (Revoke) handler with optimistic update
     const handleDelete = useCallback(async (row: MRT_Row<ClientTokenType>) => {
+        if (!clientTokenOwnership.canModifyRecord(row.original)) {
+            alert('You can only revoke client tokens you own.');
+            return;
+        }
         if (!window.confirm(`Are you sure you want to revoke this client token for clientId: ${row.original.clientId}?`)) return;
 
         const originalData = [...data];
@@ -159,28 +184,30 @@ export default function ClientToken() {
             setData(originalData);
             setRowCount(originalData.length);
         }
-    }, [data, host]);
+    }, [clientTokenOwnership, data, host]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ClientTokenType>[]>(
-        () => [
-            { accessorKey: 'clientId', header: 'Client ID', Cell: TruncatedCell, muiTableBodyCellProps: { sx: { maxWidth: '150px' } } },
-            { accessorKey: 'tokenId', header: 'Token ID (JTI)', Cell: TruncatedCell, muiTableBodyCellProps: { sx: { maxWidth: '150px' } } },
-            {
-                accessorKey: 'expirationTs', header: 'Expiration',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-            },
-            {
-                accessorKey: 'lastUsedTs', header: 'Last Used',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-            },
-            { accessorKey: 'updateUser', header: 'Update User' },
-            {
-                accessorKey: 'updateTs', header: 'Last Updated',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-            },
-        ],
-        [],
+        () => applyOwnershipColumns([
+                { accessorKey: 'clientId', header: 'Client ID', Cell: TruncatedCell, muiTableBodyCellProps: { sx: { maxWidth: '150px' } } },
+                { accessorKey: 'tokenId', header: 'Token ID (JTI)', Cell: TruncatedCell, muiTableBodyCellProps: { sx: { maxWidth: '150px' } } },
+                {
+                    accessorKey: 'expirationTs', header: 'Expiration',
+                    Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+                },
+                {
+                    accessorKey: 'lastUsedTs', header: 'Last Used',
+                    Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+                },
+                { accessorKey: 'updateUser', header: 'Update User' },
+                {
+                    accessorKey: 'updateTs', header: 'Last Updated',
+                    Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+                },
+            ],
+            clientTokenOwnership,
+        ),
+        [clientTokenOwnership],
     );
 
     // Table instance configuration
@@ -201,10 +228,12 @@ export default function ClientToken() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         renderRowActions: ({ row }) => (
-            <Tooltip title="Revoke Token">
-                <IconButton color="error" onClick={() => handleDelete(row)}>
-                    <DeleteForeverIcon />
-                </IconButton>
+            <Tooltip title={clientTokenOwnership.canModifyRecord(row.original) ? 'Revoke Token' : 'You can only revoke client tokens you own.'}>
+                <span>
+                    <IconButton color="error" onClick={() => handleDelete(row)} disabled={!clientTokenOwnership.canModifyRecord(row.original)}>
+                        <DeleteForeverIcon />
+                    </IconButton>
+                </span>
             </Tooltip>
         ),
         renderTopToolbarCustomActions: () => (
@@ -216,6 +245,11 @@ export default function ClientToken() {
                 >
                     Create Token
                 </Button>
+                {ownedOnly ? (
+                    <Typography variant="subtitle1">My Client Tokens: <strong>{email || userId}</strong></Typography>
+                ) : (
+                    <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Client Tokens</Typography>
+                )}
             </Box>
         ),
     });
@@ -229,6 +263,11 @@ export default function ClientToken() {
                 maxActions={3}
             />
             <Box mt={2}>
+                {!hasOwnerContext && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        User context is required before owner-scoped client tokens can be loaded.
+                    </Alert>
+                )}
                 <MaterialReactTable table={table} />
             </Box>
         </Box>

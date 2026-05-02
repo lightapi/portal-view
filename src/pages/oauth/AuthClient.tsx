@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -17,6 +17,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -58,14 +59,30 @@ type AuthClientType = {
 
 interface UserState {
   host?: string;
+  userId?: string;
+  email?: string;
+  roles?: string | null;
 }
+
+const allOauthClientScopeRoles = [...defaultAllScopeRoles, 'oauth-client-admin'];
 
 export default function AuthClient() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const { host, userId, email, roles } = useUserState() as UserState;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const oauthClientOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allOauthClientScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = oauthClientOwnership.ownedOnly;
+  const hasOwnerContext = oauthClientOwnership.hasOwnerContext;
   const initialData = useMemo(
     () => ({ ...searchContext, ...(location.state?.data || {}) }),
     [location.state, searchContext],
@@ -73,13 +90,14 @@ export default function AuthClient() {
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host ?? '',
+      userId: userId ?? '',
       clientId: initialData.clientId ?? '',
       appId: initialData.appId ?? '',
       apiId: initialData.apiId ?? '',
       apiVersionId: initialData.apiVersionId ?? '',
       instanceId: initialData.instanceId ?? '',
     }),
-    [host, initialData.apiId, initialData.apiVersionId, initialData.appId, initialData.clientId, initialData.instanceId, searchContext],
+    [host, userId, initialData.apiId, initialData.apiVersionId, initialData.appId, initialData.clientId, initialData.instanceId, searchContext],
   );
 
   // Data and fetching state
@@ -107,6 +125,7 @@ export default function AuthClient() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -122,12 +141,14 @@ export default function AuthClient() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, oauthClientOwnership);
+
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getClient', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -144,7 +165,7 @@ export default function AuthClient() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, oauthClientOwnership]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -153,6 +174,10 @@ export default function AuthClient() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<AuthClientType>) => {
+    if (!oauthClientOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete OAuth clients you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete client: ${row.original.clientName}?`)) return;
 
     const originalData = [...data];
@@ -176,9 +201,13 @@ export default function AuthClient() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [oauthClientOwnership, data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<AuthClientType>) => {
+    if (!oauthClientOwnership.canModifyRecord(row.original)) {
+      alert('You can only update OAuth clients you own.');
+      return;
+    }
     const clientId = row.original.clientId;
     setIsUpdateLoading(clientId);
 
@@ -213,45 +242,47 @@ export default function AuthClient() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname, searchParams, taskContext]);
+  }, [oauthClientOwnership, navigate, location.pathname, searchParams, taskContext]);
 
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthClientType>[]>(
-    () => [
-      { accessorKey: 'clientId', header: 'Client Id' },
-      { accessorKey: 'clientName', header: 'Client Name' },
-      { accessorKey: 'ownerType', header: 'Owner Type' },
-      { accessorKey: 'ownerName', header: 'Owner Name' },
-      { accessorKey: 'clientType', header: 'Type' },
-      { accessorKey: 'clientProfile', header: 'Profile' },
-      { accessorKey: 'tokenExType', header: 'Token Ex Type' },
-      { accessorKey: 'appId', header: 'App Id' },
-      { accessorKey: 'appName', header: 'App Name' },
-      { accessorKey: 'apiId', header: 'API Id' },
-      { accessorKey: 'apiName', header: 'API Name' },
-      { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'apiVersionId', header: 'API Version Id' },
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'instanceId', header: 'Instance Id' },
-      { accessorKey: 'clientScope', header: 'Scope' },
-      { accessorKey: 'customClaim', header: 'Custom Claim' },
-      { accessorKey: 'redirectUri', header: 'Redirect URI' },
-      { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
-      { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Version' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'clientId', header: 'Client Id' },
+        { accessorKey: 'clientName', header: 'Client Name' },
+        { accessorKey: 'ownerType', header: 'Owner Type' },
+        { accessorKey: 'ownerName', header: 'Owner Name' },
+        { accessorKey: 'clientType', header: 'Type' },
+        { accessorKey: 'clientProfile', header: 'Profile' },
+        { accessorKey: 'tokenExType', header: 'Token Ex Type' },
+        { accessorKey: 'appId', header: 'App Id' },
+        { accessorKey: 'appName', header: 'App Name' },
+        { accessorKey: 'apiId', header: 'API Id' },
+        { accessorKey: 'apiName', header: 'API Name' },
+        { accessorKey: 'apiVersion', header: 'API Version' },
+        { accessorKey: 'apiVersionId', header: 'API Version Id' },
+        { accessorKey: 'instanceName', header: 'Instance Name' },
+        { accessorKey: 'instanceId', header: 'Instance Id' },
+        { accessorKey: 'clientScope', header: 'Scope' },
+        { accessorKey: 'customClaim', header: 'Custom Claim' },
+        { accessorKey: 'redirectUri', header: 'Redirect URI' },
+        { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
+        { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
+        { accessorKey: 'hostId', header: 'Host Id' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        { accessorKey: 'updateTs', header: 'Update Timestamp' },
+        { accessorKey: 'aggregateVersion', header: 'Version' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+      ],
+      oauthClientOwnership,
+    ),
+    [oauthClientOwnership],
   );
 
   // Table instance configuration
@@ -286,15 +317,19 @@ export default function AuthClient() {
             <VpnKeyIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Update Client">
-          <IconButton onClick={() => handleUpdate(row)}>
-            <SystemUpdateIcon />
-          </IconButton>
+        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Update Client' : 'You can only update OAuth clients you own.'}>
+          <span>
+            <IconButton onClick={() => handleUpdate(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.clientId}>
+              {isUpdateLoading === row.original.clientId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+            </IconButton>
+          </span>
         </Tooltip>
-        <Tooltip title="Delete Client">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Delete Client' : 'You can only delete OAuth clients you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     ),
@@ -322,6 +357,11 @@ export default function AuthClient() {
             For Instance: <strong>{initialData.instanceId}</strong>
           </Typography>
         )}
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My OAuth Clients: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All OAuth Clients</Typography>
+        )}
       </Box>
     ),
   });
@@ -335,6 +375,11 @@ export default function AuthClient() {
         maxActions={3}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped OAuth clients can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

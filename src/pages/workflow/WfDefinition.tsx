@@ -9,7 +9,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -17,6 +17,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
 // --- Type Definitions ---
@@ -40,13 +41,29 @@ type WfDefinitionType = {
 
 interface UserState {
     host?: string;
+    userId?: string;
+    email?: string;
+    roles?: string | null;
 }
+
+const allWorkflowScopeRoles = [...defaultAllScopeRoles, 'workflow-admin'];
 
 export default function WfDefinition() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host } = useUserState() as UserState;
+    const { host, userId, email, roles } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const workflowOwnership = useMemo(
+        () => ownershipScope({
+            roles,
+            userId,
+            ownerField: 'updateUser',
+            allScopeRoles: allWorkflowScopeRoles,
+        }),
+        [roles, userId],
+    );
+    const ownedOnly = workflowOwnership.ownedOnly;
+    const hasOwnerContext = workflowOwnership.hasOwnerContext;
     const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
     const contextForRow = useCallback(
         (row: WfDefinitionType) => buildWorkflowTaskContext(host, searchParams, row),
@@ -74,6 +91,7 @@ export default function WfDefinition() {
     // Data fetching logic
     const fetchData = useCallback(async () => {
         if (!host) return;
+        if (ownedOnly && !userId) return;
         if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
         let activeStatus = true; // Default to true if not present
@@ -87,12 +105,14 @@ export default function WfDefinition() {
             }
         });
 
+        const scopedFilters = applyOwnershipFilter(apiFilters, workflowOwnership);
+
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'getWfDefinition', version: '0.1.0',
             data: {
                 hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
-                filters: JSON.stringify(apiFilters ?? []),
+                filters: JSON.stringify(scopedFilters ?? []),
                 globalFilter: globalFilter ?? '',
                 active: activeStatus,
             },
@@ -112,7 +132,7 @@ export default function WfDefinition() {
         } finally {
             setIsError(false); setIsLoading(false); setIsRefetching(false);
         }
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, workflowOwnership]);
 
     // useEffect to trigger fetchData
     useEffect(() => {
@@ -121,6 +141,10 @@ export default function WfDefinition() {
 
     // Delete handler with optimistic update
     const handleDelete = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
+        if (!workflowOwnership.canModifyRecord(row.original)) {
+            alert('You can only delete workflow definitions you own.');
+            return;
+        }
         if (!window.confirm(`Are you sure you want to delete workflow definition: ${row.original.name} (ID: ${row.original.wfDefId})?`)) return;
 
         const originalData = [...data];
@@ -144,9 +168,13 @@ export default function WfDefinition() {
             setData(originalData);
             setRowCount(originalData.length);
         }
-    }, [data]);
+    }, [workflowOwnership, data]);
 
     const handleUpdate = useCallback(async (row: MRT_Row<WfDefinitionType>) => {
+        if (!workflowOwnership.canModifyRecord(row.original)) {
+            alert('You can only update workflow definitions you own.');
+            return;
+        }
         const wfDefId = row.original.wfDefId;
         setIsUpdateLoading(wfDefId);
 
@@ -173,7 +201,7 @@ export default function WfDefinition() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname, searchParams, contextForRow]);
+    }, [workflowOwnership, navigate, location.pathname, searchParams, contextForRow]);
 
     const handleStart = useCallback((row: MRT_Row<WfDefinitionType>) => {
         navigate(buildWorkflowTaskRoute('/app/form/startWorkflow', searchParams, contextForRow(row.original)), {
@@ -190,44 +218,46 @@ export default function WfDefinition() {
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<WfDefinitionType>[]>(
-        () => [
-            { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'wfDefId', header: 'Wf Def Id' },
-            { accessorKey: 'namespace', header: 'Namespace' },
-            { accessorKey: 'name', header: 'Name' },
-            { accessorKey: 'version', header: 'Version' },
-            {
-                accessorKey: 'definition', header: 'Definition',
-                Cell: ({ cell }) => (
-                    <Tooltip title={cell.getValue<string>()}>
-                        <span style={{
-                            display: 'inline-block',
-                            maxWidth: '200px',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                        }}>
-                            {cell.getValue<string>()}
-                        </span>
-                    </Tooltip>
-                )
-            },
-            { accessorKey: 'updateUser', header: 'Update User' },
-            {
-                accessorKey: 'updateTs',
-                header: 'Update Time',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-            },
-            { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-            {
-                accessorKey: 'active',
-                header: 'Active',
-                filterVariant: 'select',
-                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-                Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-            },
-        ],
-        [],
+        () => applyOwnershipColumns([
+                { accessorKey: 'hostId', header: 'Host Id' },
+                { accessorKey: 'wfDefId', header: 'Wf Def Id' },
+                { accessorKey: 'namespace', header: 'Namespace' },
+                { accessorKey: 'name', header: 'Name' },
+                { accessorKey: 'version', header: 'Version' },
+                {
+                    accessorKey: 'definition', header: 'Definition',
+                    Cell: ({ cell }) => (
+                        <Tooltip title={cell.getValue<string>()}>
+                            <span style={{
+                                display: 'inline-block',
+                                maxWidth: '200px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }}>
+                                {cell.getValue<string>()}
+                            </span>
+                        </Tooltip>
+                    )
+                },
+                { accessorKey: 'updateUser', header: 'Update User' },
+                {
+                    accessorKey: 'updateTs',
+                    header: 'Update Time',
+                    Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+                },
+                { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+                {
+                    accessorKey: 'active',
+                    header: 'Active',
+                    filterVariant: 'select',
+                    filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+                    Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+                },
+            ],
+            workflowOwnership,
+        ),
+        [workflowOwnership],
     );
 
     // Table instance configuration
@@ -250,39 +280,55 @@ export default function WfDefinition() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Workflow Definition">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.wfDefId}
-                    >
-                        {isUpdateLoading === row.original.wfDefId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
+                <Tooltip title={workflowOwnership.canModifyRecord(row.original) ? 'Update Workflow Definition' : 'You can only update workflow definitions you own.'}>
+                    <span>
+                        <IconButton
+                            onClick={() => handleUpdate(row)}
+                            disabled={!workflowOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.wfDefId}
+                        >
+                            {isUpdateLoading === row.original.wfDefId ? (
+                                <CircularProgress size={22} />
+                            ) : (
+                                <SystemUpdateIcon />
+                            )}
+                        </IconButton>
+                    </span>
                 </Tooltip>
                 <Tooltip title="Start Workflow">
                     <IconButton color="primary" onClick={() => handleStart(row)}>
                         <PlayArrowIcon />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete Workflow Definition">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
+                <Tooltip title={workflowOwnership.canModifyRecord(row.original) ? 'Delete Workflow Definition' : 'You can only delete workflow definitions you own.'}>
+                    <span>
+                        <IconButton color="error" onClick={() => handleDelete(row)} disabled={!workflowOwnership.canModifyRecord(row.original)}>
+                            <DeleteForeverIcon />
+                        </IconButton>
+                    </span>
                 </Tooltip>
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWfDefinition', searchParams, taskContext), { state: { data: { hostId: host } } })}>
-                Create New WfDefinition
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWfDefinition', searchParams, taskContext), { state: { data: { hostId: host } } })}>
+                    Create New WfDefinition
+                </Button>
+                {ownedOnly ? (
+                    <Typography variant="subtitle1">My Workflow Definitions: <strong>{email || userId}</strong></Typography>
+                ) : (
+                    <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Workflow Definitions</Typography>
+                )}
+            </Box>
         ),
     });
 
     return (
         <WorkflowTaskLayout context={taskContext}>
+            {!hasOwnerContext && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    User context is required before owner-scoped workflow definitions can be loaded.
+                </Alert>
+            )}
             <MaterialReactTable table={table} />
         </WorkflowTaskLayout>
     );

@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -25,6 +25,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -73,16 +74,28 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
   );
 };
 
+const allInstanceScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
 
 export default function InstanceAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as { host: string };
+  const { host, userId, email, roles } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const instanceOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allInstanceScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = instanceOwnership.ownedOnly;
+  const hasOwnerContext = instanceOwnership.hasOwnerContext;
   const taskContext = useMemo(
-    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
-    [host, searchContext],
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '' }),
+    [host, searchContext, userId],
   );
 
   // Data and fetching state
@@ -108,6 +121,7 @@ export default function InstanceAdmin() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -126,12 +140,14 @@ export default function InstanceAdmin() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, instanceOwnership);
+
     const cmd = {
       host: 'lightapi.net', service: 'instance', action: 'getInstance', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -148,7 +164,7 @@ export default function InstanceAdmin() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, instanceOwnership]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -157,6 +173,10 @@ export default function InstanceAdmin() {
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<InstanceType>) => {
+    if (!instanceOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete instances you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete instance: ${row.original.instanceName || row.original.instanceId}?`)) return;
 
     const originalData = [...data];
@@ -180,9 +200,13 @@ export default function InstanceAdmin() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [instanceOwnership, data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<InstanceType>) => {
+    if (!instanceOwnership.canModifyRecord(row.original)) {
+      alert('You can only update instances you own.');
+      return;
+    }
     const instanceId = row.original.instanceId;
     setIsUpdateLoading(instanceId);
 
@@ -216,61 +240,63 @@ export default function InstanceAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname, searchParams, taskContext]);
+  }, [instanceOwnership, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceType>[]>(
-    () => [
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'productId', header: 'Product ID' },
-      { accessorKey: 'productVersion', header: 'Product Version' },
-      { accessorKey: 'serviceId', header: 'Service ID' },
-      { accessorKey: 'environment', header: 'Environment' },
-      {
-        accessorKey: 'current',
-        header: 'Current',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        accessorKey: 'readonly',
-        header: 'Readonly',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      {
-        accessorKey: 'serviceDesc',
-        header: 'Service Desc',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      {
-        accessorKey: 'instanceDesc',
-        header: 'Instance Desc',
-        Cell: TruncatedCell,
-        muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
-      },
-      { accessorKey: 'hostId', header: 'Host Id', enableColumnFilter: false },
-      { accessorKey: 'instanceId', header: 'Instance Id' },
-      { accessorKey: 'productVersionId', header: 'Product Version ID' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'instanceName', header: 'Instance Name' },
+        { accessorKey: 'productId', header: 'Product ID' },
+        { accessorKey: 'productVersion', header: 'Product Version' },
+        { accessorKey: 'serviceId', header: 'Service ID' },
+        { accessorKey: 'environment', header: 'Environment' },
+        {
+          accessorKey: 'current',
+          header: 'Current',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        {
+          accessorKey: 'readonly',
+          header: 'Readonly',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        {
+          accessorKey: 'serviceDesc',
+          header: 'Service Desc',
+          Cell: TruncatedCell,
+          muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+        },
+        {
+          accessorKey: 'instanceDesc',
+          header: 'Instance Desc',
+          Cell: TruncatedCell,
+          muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
+        },
+        { accessorKey: 'hostId', header: 'Host Id', enableColumnFilter: false },
+        { accessorKey: 'instanceId', header: 'Instance Id' },
+        { accessorKey: 'productVersionId', header: 'Product Version ID' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        {
+          accessorKey: 'updateTs',
+          header: 'Update Time',
+          Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+        },
+        { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      ],
+      instanceOwnership,
+    ),
+    [instanceOwnership],
   );
 
   const contextForRow = useCallback((row: InstanceType) => ({
@@ -302,17 +328,19 @@ export default function InstanceAdmin() {
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Instance">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.instanceId}
-          >
-            {isUpdateLoading === row.original.instanceId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
+        <Tooltip title={instanceOwnership.canModifyRecord(row.original) ? 'Update Instance' : 'You can only update instances you own.'}>
+          <span>
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={!instanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.instanceId}
+            >
+              {isUpdateLoading === row.original.instanceId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Snapshot">
           <IconButton
@@ -392,17 +420,26 @@ export default function InstanceAdmin() {
             <InstallDesktopIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete Platform">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={instanceOwnership.canModifyRecord(row.original) ? 'Delete Instance' : 'You can only delete instances you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!instanceOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstance', searchParams, taskContext))}>
-        Create New Instance
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstance', searchParams, taskContext))}>
+          Create New Instance
+        </Button>
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My Instances: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Instances</Typography>
+        )}
+      </Box>
     ),
   });
 
@@ -415,6 +452,11 @@ export default function InstanceAdmin() {
         maxActions={3}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped instances can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

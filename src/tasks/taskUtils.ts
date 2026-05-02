@@ -1,4 +1,5 @@
 import type { PageDefinition, TaskContextKey, TaskDefinition, TaskResolvedContext, TaskStep } from "./types";
+import { hasAnyRole } from "../utils/ownershipScope";
 
 const taskStoragePrefix = "portal-view.taskContext.";
 const taskSkipStoragePrefix = "portal-view.taskSkippedSteps.";
@@ -113,8 +114,8 @@ export const taskContextKeys: TaskContextKey[] = [
 
 export function canAccess(roles: string | null | undefined, requiredRoles?: string[]) {
   if (!requiredRoles || requiredRoles.length === 0) return true;
-  if (!roles) return false;
-  return requiredRoles.some((role) => roles.includes(role));
+  if (hasAnyRole(roles, ["admin"])) return true;
+  return hasAnyRole(roles, requiredRoles);
 }
 
 export function searchTasks(tasks: TaskDefinition[], query: string) {

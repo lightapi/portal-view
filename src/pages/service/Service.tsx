@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -18,6 +18,7 @@ import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatRecline
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -43,13 +44,20 @@ type ServiceType = {
   gitRepo?: string;
   apiTags?: string;
   apiStatus?: string;
+  updateUser?: string;
+  updateTs?: string;
   aggregateVersion?: number;
   active: boolean;
 };
 
 interface UserState {
   host?: string;
+  userId?: string;
+  email?: string;
+  roles?: string | null;
 }
+
+const allApiScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
   const value = cell.getValue<string>() ?? '';
@@ -65,12 +73,23 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function Service() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const { host, userId, email, roles } = useUserState() as UserState;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const apiOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allApiScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = apiOwnership.ownedOnly;
+  const hasOwnerContext = apiOwnership.hasOwnerContext;
   const taskContext = useMemo(
-    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
-    [host, searchContext],
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '' }),
+    [host, searchContext, userId],
   );
 
   // Data and fetching state
@@ -95,6 +114,7 @@ export default function Service() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -110,12 +130,14 @@ export default function Service() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, apiOwnership);
+
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'getApi', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -132,7 +154,7 @@ export default function Service() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, apiOwnership]);
 
   // useEffect to trigger fetchData when table state changes
   useEffect(() => {
@@ -141,6 +163,10 @@ export default function Service() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<ServiceType>) => {
+    if (!apiOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete APIs you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete api: ${row.original.apiName}?`)) return;
 
     const originalData = [...data];
@@ -164,9 +190,13 @@ export default function Service() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [apiOwnership, data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<ServiceType>) => {
+    if (!apiOwnership.canModifyRecord(row.original)) {
+      alert('You can only update APIs you own.');
+      return;
+    }
     const apiId = row.original.apiId;
     setIsUpdateLoading(apiId);
 
@@ -189,34 +219,36 @@ export default function Service() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname, searchParams, taskContext]);
+  }, [apiOwnership, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceType>[]>(
-    () => [
-      { accessorKey: 'apiId', header: 'API ID' },
-      { accessorKey: 'apiName', header: 'API Name' },
-      {
-        accessorKey: 'apiDesc',
-        header: 'Description',
-        Cell: TruncatedCell,
-      },
-      { accessorKey: 'operationOwner', header: 'Ops Owner' },
-      { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
-      { accessorKey: 'apiStatus', header: 'Status' },
-      { accessorKey: 'gitRepo', header: 'Git Repo' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'apiId', header: 'API ID' },
+        { accessorKey: 'apiName', header: 'API Name' },
+        {
+          accessorKey: 'apiDesc',
+          header: 'Description',
+          Cell: TruncatedCell,
+        },
+        { accessorKey: 'operationOwner', header: 'Ops Owner' },
+        { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
+        { accessorKey: 'apiStatus', header: 'Status' },
+        { accessorKey: 'gitRepo', header: 'Git Repo' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        { accessorKey: 'updateTs', header: 'Update Timestamp' },
+        { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+      ],
+      apiOwnership,
+    ),
+    [apiOwnership],
   );
 
   const contextForRow = useCallback((row: ServiceType) => ({
@@ -250,27 +282,38 @@ export default function Service() {
             <DetailsIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Update Api">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.apiId}>
-            {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-          </IconButton>
+        <Tooltip title={apiOwnership.canModifyRecord(row.original) ? 'Update Api' : 'You can only update APIs you own.'}>
+          <span>
+            <IconButton onClick={() => handleUpdate(row)} disabled={!apiOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.apiId}>
+              {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="OAuth Clients">
           <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
             <AirlineSeatReclineNormalIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete Api">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={apiOwnership.canModifyRecord(row.original) ? 'Delete Api' : 'You can only delete APIs you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!apiOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createApi', searchParams, taskContext))}>
-        Create New Api
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createApi', searchParams, taskContext))}>
+          Create New Api
+        </Button>
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My APIs: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All APIs</Typography>
+        )}
+      </Box>
     ),
   });
 
@@ -283,6 +326,11 @@ export default function Service() {
         maxActions={3}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped APIs can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

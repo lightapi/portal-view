@@ -287,7 +287,7 @@ export const taskRegistry: TaskDefinition[] = [
     description:
       "Create or review client applications, OAuth clients, instance app links, and client tokens.",
     category: "Portal Administration",
-    roles: ["admin"],
+    roles: ["user", "app-admin", "oauth-client-admin", "instance-admin"],
     keywords: ["client", "app", "oauth", "token", "instance"],
     steps: [
       {
@@ -556,7 +556,7 @@ export const taskRegistry: TaskDefinition[] = [
     description:
       "Create or review instances, runtime endpoints, API links, app links, and path prefixes.",
     category: "Platform Operations",
-    roles: ["admin"],
+    roles: ["user", "instance-admin"],
     keywords: ["instance", "runtime", "api link", "app link", "path prefix", "gateway"],
     steps: [
       {

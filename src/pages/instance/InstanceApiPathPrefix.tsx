@@ -9,13 +9,14 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -41,13 +42,29 @@ type InstanceApiPathPrefixType = {
   updateTs?: string;
 };
 
+const allInstanceApiPathPrefixScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
+
 export default function InstanceApiPathPrefix() {
   const navigate = useNavigate();
   const location = useLocation();
   const userState = useUserState();
   const host = userState?.host || '';
+  const userId = userState?.userId;
+  const email = userState?.email;
+  const roles = userState?.roles;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const pathPrefixOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allInstanceApiPathPrefixScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = pathPrefixOwnership.ownedOnly;
+  const hasOwnerContext = pathPrefixOwnership.hasOwnerContext;
 
   // Contextual data from previous page, used for creating a new prefix
   const contextData = useMemo(
@@ -57,6 +74,7 @@ export default function InstanceApiPathPrefix() {
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host,
+      userId: userId ?? '',
       instanceApiId: contextData.instanceApiId ?? '',
       instanceId: contextData.instanceId ?? '',
       productId: contextData.productId ?? '',
@@ -72,6 +90,7 @@ export default function InstanceApiPathPrefix() {
       contextData.pathPrefix,
       contextData.productId,
       host,
+      userId,
       searchContext,
     ],
   );
@@ -104,6 +123,7 @@ export default function InstanceApiPathPrefix() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     if (!data.length) {
       setIsLoading(true);
     } else {
@@ -123,6 +143,8 @@ export default function InstanceApiPathPrefix() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, pathPrefixOwnership);
+
     const cmd = {
       host: 'lightapi.net',
       service: 'instance',
@@ -133,7 +155,7 @@ export default function InstanceApiPathPrefix() {
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -161,6 +183,9 @@ export default function InstanceApiPathPrefix() {
     pagination.pageSize,
     sorting,
     data.length,
+    ownedOnly,
+    userId,
+    pathPrefixOwnership,
   ]);
 
   // useEffect to trigger fetchData when table state changes
@@ -174,6 +199,9 @@ export default function InstanceApiPathPrefix() {
     pagination.pageIndex,
     pagination.pageSize,
     sorting,
+    ownedOnly,
+    userId,
+    pathPrefixOwnership,
   ]);
 
   const handleCreate = (instanceApiId?: string, instanceName?: string, productId?: string, apiId?: string, apiVersion?: string) => {
@@ -190,6 +218,10 @@ export default function InstanceApiPathPrefix() {
   };
 
   const handleUpdate = (rowData: InstanceApiPathPrefixType) => {
+    if (!pathPrefixOwnership.canModifyRecord(rowData)) {
+      alert('You can only update path prefixes you own.');
+      return;
+    }
     navigate(buildTaskAwareRoute('/app/form/updateInstanceApiPathPrefix', searchParams, {
       ...taskContext,
       hostId: rowData.hostId,
@@ -203,6 +235,10 @@ export default function InstanceApiPathPrefix() {
   };
 
   const handleDelete = useCallback(async (row: MRT_Row<InstanceApiPathPrefixType>) => {
+    if (!pathPrefixOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete path prefixes you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete the path prefix: ${row.original.pathPrefix}?`)) {
       return;
     }
@@ -220,25 +256,27 @@ export default function InstanceApiPathPrefix() {
     } else if (result.error) {
       console.error('API Error on delete:', result.error);
     }
-  }, [fetchData]);
+  }, [fetchData, pathPrefixOwnership]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceApiPathPrefixType>[]>(
-    () => [
-      { accessorKey: 'instanceApiId', header: 'Instance API ID' },
-      { accessorKey: 'pathPrefix', header: 'Path Prefix' },
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'apiId', header: 'API ID' },
-      { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'productId', header: 'Product ID' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'instanceApiId', header: 'Instance API ID' },
+        { accessorKey: 'pathPrefix', header: 'Path Prefix' },
+        { accessorKey: 'instanceName', header: 'Instance Name' },
+        { accessorKey: 'apiId', header: 'API ID' },
+        { accessorKey: 'apiVersion', header: 'API Version' },
+        { accessorKey: 'productId', header: 'Product ID' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        {
+          accessorKey: 'updateTs',
+          header: 'Update Time',
+          Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+        },
+      ],
+      pathPrefixOwnership,
+    ),
+    [pathPrefixOwnership],
   );
 
   // Table instance configuration
@@ -275,15 +313,19 @@ export default function InstanceApiPathPrefix() {
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title="Update">
-          <IconButton onClick={() => handleUpdate(row.original)}>
-            <SystemUpdateIcon />
-          </IconButton>
+        <Tooltip title={pathPrefixOwnership.canModifyRecord(row.original) ? 'Update' : 'You can only update path prefixes you own.'}>
+          <span>
+            <IconButton onClick={() => handleUpdate(row.original)} disabled={!pathPrefixOwnership.canModifyRecord(row.original)}>
+              <SystemUpdateIcon />
+            </IconButton>
+          </span>
         </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={pathPrefixOwnership.canModifyRecord(row.original) ? 'Delete' : 'You can only delete path prefixes you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!pathPrefixOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     ),
@@ -302,6 +344,11 @@ export default function InstanceApiPathPrefix() {
             For Instance Api: <strong>{contextData.instanceApiId}</strong>
           </Typography>
         )}
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My Path Prefixes: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Path Prefixes</Typography>
+        )}
       </Box>
     ),
   });
@@ -315,6 +362,11 @@ export default function InstanceApiPathPrefix() {
         maxActions={3}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped path prefixes can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

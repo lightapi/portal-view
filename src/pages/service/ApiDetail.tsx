@@ -18,6 +18,8 @@ import {
   Button,
   CircularProgress,
   Box,
+  Alert,
+  Typography,
 } from "@mui/material";
 import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
@@ -32,6 +34,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import { useUserState } from '../../contexts/UserContext';
@@ -55,6 +58,8 @@ type ServiceType = {
   aggregateVersion?: number;
   apiTags?: string;
   apiStatus?: string;
+  updateUser?: string;
+  updateTs?: string;
   active: boolean;
 };
 
@@ -71,16 +76,32 @@ type ServiceVersionType = {
   protocol?: string;
   envTag?: string;
   targetHost?: string;
-  aggregateVerison?: number;
+  updateUser?: string;
+  updateTs?: string;
+  aggregateVersion?: number;
+  active?: boolean;
 };
+
+const allApiVersionScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
 
 export default function ApiDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState<ServiceVersionType[]>([]);
-  const { host } = useUserState() as { host?: string };
+  const { host, userId, email, roles } = useUserState() as { host?: string; userId?: string; email?: string; roles?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const apiVersionOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allApiVersionScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = apiVersionOwnership.ownedOnly;
+  const hasOwnerContext = apiVersionOwnership.hasOwnerContext;
   const state = location.state as { service?: ServiceType; data?: ServiceType } | null;
   const service = useMemo(
     () => state?.service ?? state?.data ?? {
@@ -105,11 +126,13 @@ export default function ApiDetail() {
   useEffect(() => {
     const fetchVersions = async () => {
       if (!hostId || !apiId) return;
+      if (ownedOnly && !userId) return;
       setIsLoading(true);
 
+      const filters = applyOwnershipFilter([], apiVersionOwnership);
       const cmd = {
         host: "lightapi.net", service: "service", action: "getApiVersion", version: "0.1.0",
-        data: { hostId, apiId, offset: 0, limit: Number.MAX_SAFE_INTEGER },
+        data: { hostId, apiId, offset: 0, limit: Number.MAX_SAFE_INTEGER, filters: JSON.stringify(filters) },
       };
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
 
@@ -125,9 +148,13 @@ export default function ApiDetail() {
       }
     };
     fetchVersions();
-  }, [hostId, apiId]);
+  }, [hostId, apiId, ownedOnly, userId, apiVersionOwnership]);
 
   const handleDelete = useCallback(async (row: MRT_Row<ServiceVersionType>) => {
+    if (!apiVersionOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete API versions you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete app: ${row.original.apiVersionId}?`)) return;
 
     const originalData = [...data];
@@ -148,9 +175,13 @@ export default function ApiDetail() {
       alert('Failed to delete app due to a network error.');
       setData(originalData);
     }
-  }, [data]);
+  }, [apiVersionOwnership, data]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<ServiceVersionType>) => {
+    if (!apiVersionOwnership.canModifyRecord(row.original)) {
+      alert('You can only update API versions you own.');
+      return;
+    }
     const apiVersionId = row.original.apiVersionId;
     setIsUpdateLoading(apiVersionId);
 
@@ -181,7 +212,7 @@ export default function ApiDetail() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname, searchParams, taskContext]);
+  }, [apiVersionOwnership, navigate, location.pathname, searchParams, taskContext]);
 
   const contextForRow = useCallback((row: ServiceVersionType) => ({
     ...taskContext,
@@ -193,30 +224,32 @@ export default function ApiDetail() {
 
   // Column definitions for the MaterialReactTable
   const columns = useMemo<MRT_ColumnDef<ServiceVersionType>[]>(
-    () => [
-      { accessorKey: 'apiVersionId', header: 'Version Id' },
-      { accessorKey: 'apiId', header: 'Api Id' },
-      { accessorKey: 'apiVersion', header: 'Api Version' },
-      { accessorKey: 'apiType', header: 'Api Type' },
-      { accessorKey: 'apiVersionDesc', header: 'Description' },
-      { accessorKey: 'specLink', header: 'Spec Link' },
-      { accessorKey: 'transportConfig', header: 'Transport Config' },
-      { accessorKey: 'serviceId', header: 'Service Id' },
-      { accessorKey: 'protocol', header: 'Protocol' },
-      { accessorKey: 'envTag', header: 'Env Tag' },
-      { accessorKey: 'targetHost', header: 'Target Host' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      { accessorKey: 'updateTs', header: 'Update Timestamp' },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'apiVersionId', header: 'Version Id' },
+        { accessorKey: 'apiId', header: 'Api Id' },
+        { accessorKey: 'apiVersion', header: 'Api Version' },
+        { accessorKey: 'apiType', header: 'Api Type' },
+        { accessorKey: 'apiVersionDesc', header: 'Description' },
+        { accessorKey: 'specLink', header: 'Spec Link' },
+        { accessorKey: 'transportConfig', header: 'Transport Config' },
+        { accessorKey: 'serviceId', header: 'Service Id' },
+        { accessorKey: 'protocol', header: 'Protocol' },
+        { accessorKey: 'envTag', header: 'Env Tag' },
+        { accessorKey: 'targetHost', header: 'Target Host' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        { accessorKey: 'updateTs', header: 'Update Timestamp' },
+        { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+      ],
+      apiVersionOwnership,
+    ),
+    [apiVersionOwnership],
   );
 
   // Table instance configuration
@@ -234,17 +267,19 @@ export default function ApiDetail() {
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Api Version">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.apiVersionId}
-          >
-            {isUpdateLoading === row.original.apiVersionId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
+        <Tooltip title={apiVersionOwnership.canModifyRecord(row.original) ? 'Update Api Version' : 'You can only update API versions you own.'}>
+          <span>
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={!apiVersionOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.apiVersionId}
+            >
+              {isUpdateLoading === row.original.apiVersionId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Edit Specification">
           <IconButton onClick={() => {
@@ -254,10 +289,12 @@ export default function ApiDetail() {
             <ImageAspectRatioIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Delete Api Version">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={apiVersionOwnership.canModifyRecord(row.original) ? 'Delete Api Version' : 'You can only delete API versions you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!apiVersionOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Instance API">
           <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, apiId: row.original.apiId, serviceId: row.original.serviceId } } })}>
@@ -292,13 +329,20 @@ export default function ApiDetail() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button
-        variant="contained"
-        startIcon={<AddBoxIcon />}
-        onClick={() => navigate(buildTaskAwareRoute('/app/form/createApiVersion', searchParams, taskContext), { state: { data: { apiId } } })}
-      >
-        Create New Version
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createApiVersion', searchParams, taskContext), { state: { data: { apiId } } })}
+        >
+          Create New Version
+        </Button>
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My API Versions: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All API Versions</Typography>
+        )}
+      </Box>
     ),
   });
 
@@ -333,6 +377,11 @@ export default function ApiDetail() {
       </Box>
 
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped API versions can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

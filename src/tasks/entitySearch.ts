@@ -1,4 +1,5 @@
 import fetchClient from "../utils/fetchClient";
+import { hasAnyRole } from "../utils/ownershipScope";
 import type { TaskResolvedContext } from "./types";
 
 export type EntitySearchResult = {
@@ -46,7 +47,7 @@ const entitySources: EntitySearchSource[] = [
     action: "getInstance",
     resultKey: "instances",
     route: "/app/instance/InstanceAdmin",
-    roles: ["admin"],
+    roles: ["user", "instance-admin"],
     context: (record, hostId) => ({
       hostId: stringValue(record.hostId) || hostId,
       instanceId: stringValue(record.instanceId),
@@ -94,7 +95,7 @@ const entitySources: EntitySearchSource[] = [
     action: "getApp",
     resultKey: "apps",
     route: "/app/clientApp",
-    roles: ["admin"],
+    roles: ["user", "app-admin"],
     context: (record, hostId) => ({
       hostId: stringValue(record.hostId) || hostId,
       appId: stringValue(record.appId),
@@ -109,7 +110,7 @@ const entitySources: EntitySearchSource[] = [
     action: "getClient",
     resultKey: "clients",
     route: "/app/oauth/authClient",
-    roles: ["admin"],
+    roles: ["user", "oauth-client-admin"],
     context: (record, hostId) => ({
       hostId: stringValue(record.hostId) || hostId,
       clientId: stringValue(record.clientId),
@@ -129,8 +130,8 @@ function stringValue(value: unknown) {
 
 function canSearchSource(roles: string | null | undefined, requiredRoles?: string[]) {
   if (!requiredRoles || requiredRoles.length === 0) return true;
-  if (!roles) return false;
-  return requiredRoles.some((role) => roles.includes(role));
+  if (hasAnyRole(roles, ["admin"])) return true;
+  return hasAnyRole(roles, requiredRoles);
 }
 
 function compactContext(context: TaskResolvedContext) {

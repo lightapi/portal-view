@@ -9,13 +9,14 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -41,15 +42,28 @@ type RuntimeInstanceType = {
   updateTs?: string;
 };
 
+const allRuntimeInstanceScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
+
 export default function RuntimeInstanceAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as { host: string };
+  const { host, userId, email, roles } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const runtimeInstanceOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allRuntimeInstanceScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = runtimeInstanceOwnership.ownedOnly;
+  const hasOwnerContext = runtimeInstanceOwnership.hasOwnerContext;
   const taskContext = useMemo(
-    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
-    [host, searchContext],
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '' }),
+    [host, searchContext, userId],
   );
 
   // Data and fetching state
@@ -74,6 +88,7 @@ export default function RuntimeInstanceAdmin() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     const isInitialRequest = !hasRequestedData.current;
     hasRequestedData.current = true;
     setIsError(false);
@@ -91,6 +106,8 @@ export default function RuntimeInstanceAdmin() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, runtimeInstanceOwnership);
+
     const cmd = {
       host: 'lightapi.net',
       service: 'instance',
@@ -101,7 +118,7 @@ export default function RuntimeInstanceAdmin() {
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -120,7 +137,7 @@ export default function RuntimeInstanceAdmin() {
       setIsLoading(false);
       setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, runtimeInstanceOwnership]);
 
   useEffect(() => {
     fetchData();
@@ -129,6 +146,10 @@ export default function RuntimeInstanceAdmin() {
   // Delete handler — uses Get Fresh then sends delete command
   const handleDelete = useCallback(
     async (row: MRT_Row<RuntimeInstanceType>) => {
+      if (!runtimeInstanceOwnership.canModifyRecord(row.original)) {
+        alert('You can only delete runtime instances you own.');
+        return;
+      }
       if (
         !window.confirm(
           `Are you sure you want to delete runtime instance: ${row.original.runtimeInstanceId}?`
@@ -186,12 +207,16 @@ export default function RuntimeInstanceAdmin() {
         setRowCount(originalRowCount);
       }
     },
-    [data, rowCount]
+    [runtimeInstanceOwnership, data, rowCount]
   );
 
   // Update handler — fetches fresh data then navigates to update form
   const handleUpdate = useCallback(
     async (row: MRT_Row<RuntimeInstanceType>) => {
+      if (!runtimeInstanceOwnership.canModifyRecord(row.original)) {
+        alert('You can only update runtime instances you own.');
+        return;
+      }
       const runtimeInstanceId = row.original.runtimeInstanceId;
       setIsUpdateLoading(runtimeInstanceId);
 
@@ -224,40 +249,42 @@ export default function RuntimeInstanceAdmin() {
         setIsUpdateLoading(null);
       }
     },
-    [location.pathname, navigate, searchParams, taskContext]
+    [runtimeInstanceOwnership, location.pathname, navigate, searchParams, taskContext]
   );
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RuntimeInstanceType>[]>(
-    () => [
-      { accessorKey: 'serviceId', header: 'Service Id' },
-      { accessorKey: 'envTag', header: 'Env Tag' },
-      { accessorKey: 'protocol', header: 'Protocol' },
-      { accessorKey: 'ipAddress', header: 'IP Address' },
-      { accessorKey: 'portNumber', header: 'Port' },
-      { accessorKey: 'instanceStatus', header: 'Status' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [
-          { label: 'True', value: 'true' },
-          { label: 'False', value: 'false' },
-        ],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      { accessorKey: 'runtimeInstanceId', header: 'Runtime Instance Id' },
-      { accessorKey: 'hostId', header: 'Host Id', enableColumnFilter: false },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) =>
-          cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-    ],
-    []
+    () => applyOwnershipColumns([
+        { accessorKey: 'serviceId', header: 'Service Id' },
+        { accessorKey: 'envTag', header: 'Env Tag' },
+        { accessorKey: 'protocol', header: 'Protocol' },
+        { accessorKey: 'ipAddress', header: 'IP Address' },
+        { accessorKey: 'portNumber', header: 'Port' },
+        { accessorKey: 'instanceStatus', header: 'Status' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [
+            { label: 'True', value: 'true' },
+            { label: 'False', value: 'false' },
+          ],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        { accessorKey: 'runtimeInstanceId', header: 'Runtime Instance Id' },
+        { accessorKey: 'hostId', header: 'Host Id', enableColumnFilter: false },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        {
+          accessorKey: 'updateTs',
+          header: 'Update Time',
+          Cell: ({ cell }) =>
+            cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+        },
+        { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      ],
+      runtimeInstanceOwnership,
+    ),
+    [runtimeInstanceOwnership]
   );
 
   // Table instance configuration
@@ -289,33 +316,44 @@ export default function RuntimeInstanceAdmin() {
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Runtime Instance">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.runtimeInstanceId}
-          >
-            {isUpdateLoading === row.original.runtimeInstanceId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
+        <Tooltip title={runtimeInstanceOwnership.canModifyRecord(row.original) ? 'Update Runtime Instance' : 'You can only update runtime instances you own.'}>
+          <span>
+            <IconButton
+              onClick={() => handleUpdate(row)}
+              disabled={!runtimeInstanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.runtimeInstanceId}
+            >
+              {isUpdateLoading === row.original.runtimeInstanceId ? (
+                <CircularProgress size={22} />
+              ) : (
+                <SystemUpdateIcon />
+              )}
+            </IconButton>
+          </span>
         </Tooltip>
-        <Tooltip title="Delete Runtime Instance">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={runtimeInstanceOwnership.canModifyRecord(row.original) ? 'Delete Runtime Instance' : 'You can only delete runtime instances you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!runtimeInstanceOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button
-        variant="contained"
-        startIcon={<AddBoxIcon />}
-        onClick={() => navigate(buildTaskAwareRoute('/app/form/createRuntimeInstance', searchParams, taskContext))}
-      >
-        Create Runtime Instance
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddBoxIcon />}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createRuntimeInstance', searchParams, taskContext))}
+        >
+          Create Runtime Instance
+        </Button>
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My Runtime Instances: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Runtime Instances</Typography>
+        )}
+      </Box>
     ),
   });
 
@@ -328,6 +366,11 @@ export default function RuntimeInstanceAdmin() {
         maxActions={3}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped runtime instances can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

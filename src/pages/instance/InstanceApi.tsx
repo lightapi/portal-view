@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
@@ -18,6 +18,7 @@ import CodeOffIcon from '@mui/icons-material/CodeOff';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -49,12 +50,25 @@ type InstanceApiType = {
   aggregateVersion?: number;
 };
 
+const allInstanceApiScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
+
 export default function InstanceApi() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as { host: string };
+  const { host, userId, email, roles } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const instanceApiOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allInstanceApiScopeRoles,
+    }),
+    [roles, userId],
+  );
+  const ownedOnly = instanceApiOwnership.ownedOnly;
+  const hasOwnerContext = instanceApiOwnership.hasOwnerContext;
   const initialData = useMemo(
     () => ({ ...searchContext, ...(location.state?.data || {}) }),
     [location.state, searchContext],
@@ -62,12 +76,13 @@ export default function InstanceApi() {
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: initialData.hostId ?? host,
+      userId: userId ?? '',
       instanceApiId: initialData.instanceApiId ?? '',
       instanceId: initialData.instanceId ?? '',
       apiVersionId: initialData.apiVersionId ?? '',
       apiId: initialData.apiId ?? '',
     }),
-    [host, initialData.apiId, initialData.apiVersionId, initialData.hostId, initialData.instanceApiId, initialData.instanceId, searchContext],
+    [host, userId, initialData.apiId, initialData.apiVersionId, initialData.hostId, initialData.instanceApiId, initialData.instanceId, searchContext],
   );
 
   // Data and fetching state
@@ -96,6 +111,7 @@ export default function InstanceApi() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (ownedOnly && !userId) return;
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -111,6 +127,8 @@ export default function InstanceApi() {
       }
     });
 
+    const scopedFilters = applyOwnershipFilter(apiFilters, instanceApiOwnership);
+
     const cmd = {
       host: 'lightapi.net',
       service: 'instance',
@@ -119,7 +137,7 @@ export default function InstanceApi() {
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(apiFilters ?? []),
+        filters: JSON.stringify(scopedFilters ?? []),
         globalFilter: globalFilter ?? '',
         active: activeStatus,
       },
@@ -136,7 +154,7 @@ export default function InstanceApi() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, instanceApiOwnership]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -145,6 +163,10 @@ export default function InstanceApi() {
 
   // Delete handler with optimistic update
   const handleDelete = useCallback(async (row: MRT_Row<InstanceApiType>) => {
+    if (!instanceApiOwnership.canModifyRecord(row.original)) {
+      alert('You can only delete instance API links you own.');
+      return;
+    }
     if (!window.confirm(`Are you sure you want to delete instance API ${row.original.instanceApiId}?`)) return;
 
     const originalData = [...data];
@@ -168,7 +190,7 @@ export default function InstanceApi() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data]);
+  }, [instanceApiOwnership, data]);
 
   const contextForRow = useCallback((row: InstanceApiType) => ({
     ...taskContext,
@@ -183,35 +205,37 @@ export default function InstanceApi() {
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceApiType>[]>(
-    () => [
-      { accessorKey: 'instanceApiId', header: 'Instance API Id' },
-      { accessorKey: 'instanceName', header: 'Instance Name' },
-      { accessorKey: 'productId', header: 'Product Id' },
-      { accessorKey: 'serviceId', header: 'Service Id' },
-      { accessorKey: 'apiId', header: 'API Id' },
-      { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'apiName', header: 'API Name' },
-      { accessorKey: 'apiType', header: 'API Type' },
-      { accessorKey: 'protocol', header: 'Protocol' },
-      { accessorKey: 'envTag', header: 'Env Tag' },
-      { accessorKey: 'targetHost', header: 'Target Host' },
-      {
-        accessorKey: 'active',
-        header: 'Active',
-        filterVariant: 'select',
-        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-      },
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
-    ],
-    [],
+    () => applyOwnershipColumns([
+        { accessorKey: 'instanceApiId', header: 'Instance API Id' },
+        { accessorKey: 'instanceName', header: 'Instance Name' },
+        { accessorKey: 'productId', header: 'Product Id' },
+        { accessorKey: 'serviceId', header: 'Service Id' },
+        { accessorKey: 'apiId', header: 'API Id' },
+        { accessorKey: 'apiVersion', header: 'API Version' },
+        { accessorKey: 'apiName', header: 'API Name' },
+        { accessorKey: 'apiType', header: 'API Type' },
+        { accessorKey: 'protocol', header: 'Protocol' },
+        { accessorKey: 'envTag', header: 'Env Tag' },
+        { accessorKey: 'targetHost', header: 'Target Host' },
+        {
+          accessorKey: 'active',
+          header: 'Active',
+          filterVariant: 'select',
+          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+        },
+        { accessorKey: 'hostId', header: 'Host Id' },
+        { accessorKey: 'updateUser', header: 'Update User' },
+        {
+          accessorKey: 'updateTs',
+          header: 'Update Time',
+          Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+        },
+        { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+      ],
+      instanceApiOwnership,
+    ),
+    [instanceApiOwnership],
   );
 
   // Table instance configuration
@@ -234,10 +258,12 @@ export default function InstanceApi() {
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Delete Instance API">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
+        <Tooltip title={instanceApiOwnership.canModifyRecord(row.original) ? 'Delete Instance API' : 'You can only delete instance API links you own.'}>
+          <span>
+            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!instanceApiOwnership.canModifyRecord(row.original)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </span>
         </Tooltip>
         <Tooltip title="Instance Api Config">
           <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
@@ -276,6 +302,11 @@ export default function InstanceApi() {
             For API Version: <strong>{initialData.apiVersionId}</strong>
           </Typography>
         )}
+        {ownedOnly ? (
+          <Typography variant="subtitle1">My Instance APIs: <strong>{email || userId}</strong></Typography>
+        ) : (
+          <Typography variant="subtitle1" sx={{ color: 'primary.main', fontWeight: 600 }}>Admin View: All Instance APIs</Typography>
+        )}
       </Box>
     ),
   });
@@ -288,6 +319,11 @@ export default function InstanceApi() {
         taskIds={["manage-instance", "mcp-onboard-api", "register-standalone-mcp-server", "configure-access-control"]}
       />
       <Box mt={2}>
+        {!hasOwnerContext && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            User context is required before owner-scoped instance API links can be loaded.
+          </Alert>
+        )}
         <MaterialReactTable table={table} />
       </Box>
     </Box>
