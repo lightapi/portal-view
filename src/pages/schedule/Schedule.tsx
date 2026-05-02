@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -49,12 +50,7 @@ interface UserState {
   roles?: string | null;
 }
 
-const allScheduleScopeRoles = ['super-admin', 'platform-admin', 'schedule-all-admin'];
-
-function hasAnyRole(roles: string | null | undefined, requiredRoles: string[]) {
-  const roleSet = new Set((roles ?? '').split(/\s+/).filter(Boolean));
-  return requiredRoles.some((role) => roleSet.has(role));
-}
+const allScheduleScopeRoles = [...defaultAllScopeRoles, 'schedule-admin'];
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
   const value = cell.getValue<string>() ?? '';
@@ -76,12 +72,18 @@ export default function Schedule() {
   
   // Determine if we are in admin mode based on the URL path
   const isAdminView = location.pathname.includes('/admin');
-  const canViewAllSchedules = useMemo(
-    () => isAdminView && hasAnyRole(roles, allScheduleScopeRoles),
-    [isAdminView, roles],
+  const scheduleOwnership = useMemo(
+    () => ownershipScope({
+      roles,
+      userId,
+      ownerField: 'updateUser',
+      allScopeRoles: allScheduleScopeRoles,
+      allScopeAllowed: isAdminView,
+    }),
+    [isAdminView, roles, userId],
   );
-  const ownedOnly = !canViewAllSchedules;
-  const hasOwnerContext = !ownedOnly || !!userId;
+  const ownedOnly = scheduleOwnership.ownedOnly;
+  const hasOwnerContext = scheduleOwnership.hasOwnerContext;
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '', metadataType: 'schedule' }),
     [host, searchContext, userId],
@@ -91,8 +93,8 @@ export default function Schedule() {
     [taskContext],
   );
   const canModifySchedule = useCallback(
-    (schedule: ScheduleType) => canViewAllSchedules || (!!userId && schedule.updateUser === userId),
-    [canViewAllSchedules, userId],
+    (schedule: ScheduleType) => scheduleOwnership.canModifyRecord(schedule),
+    [scheduleOwnership],
   );
 
   // Data and fetching state
@@ -127,23 +129,19 @@ export default function Schedule() {
     columnFilters.forEach(filter => {
       if (filter.id === 'active') {
         activeStatus = filter.value === 'true' || filter.value === true;
-      } else if (ownedOnly && filter.id === 'updateUser') {
-        // Owner scope is enforced from the current user context below.
       } else {
         apiFilters.push(filter);
       }
     });
 
-    if (ownedOnly && userId) {
-      apiFilters.push({ id: 'updateUser', value: userId });
-    }
+    const scopedFilters = applyOwnershipFilter(apiFilters, scheduleOwnership);
 
     const cmdData = {
       hostId: host, 
       offset: pagination.pageIndex * pagination.pageSize, 
       limit: pagination.pageSize,
       sorting: JSON.stringify(sorting ?? []),
-      filters: JSON.stringify(apiFilters ?? []),
+      filters: JSON.stringify(scopedFilters ?? []),
       globalFilter: globalFilter ?? '',
       active: activeStatus,
     };
@@ -167,7 +165,7 @@ export default function Schedule() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, scheduleOwnership]);
 
   // useEffect to trigger fetchData
   useEffect(() => {

@@ -174,26 +174,25 @@ const structure = [
   },
   */
   // ── Administration ────────────────────────────────────
-  { id: 85, type: "divider", role: "admin" },
   {
-    id: 9000, type: "group", label: "Administration", role: "admin",
+    id: 9000, type: "group", label: "Administration",
     children: [
-      { id: 90, label: "Org Admin", role: "admin", link: "/app/org/OrgAdmin", icon: <CorporateFareIcon /> },
-      { id: 91, label: "Host Admin", role: "admin", link: "/app/host/HostAdmin", icon: <GiteIcon /> },
-      { id: 92, label: "Ref Admin", role: "admin", link: "/app/ref/TableAdmin", icon: <TableIcon />, children: [{ label: "Ref Table", link: "/app/ref/TableAdmin" }, { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" }] },
-      { id: 93, label: "User Admin", role: "admin", link: "/app/user", icon: <PeopleAltIcon /> },
-      { id: 94, label: "Event Admin", role: "admin", link: "/app/event/admin", icon: <EventIcon />, children: [{ label: "Export", link: "/app/form/exportPortalEvent" }, { label: "Import", link: "/app/form/importPortalEvent" }, { label: "Global Export", link: "/app/migration/export" }, { label: "Convert Snapshot", link: "/app/migration/convert" }] },
-      { id: 95, label: "OAuth Admin", role: "admin", link: "/app/oauth/authProvider", icon: <SecurityIcon />, children: [{ label: "Auth Provider", link: "/app/oauth/authProvider" }, { label: "Auth Client", link: "/app/oauth/authClient" }, { label: "Sessions", link: "/app/oauth/authSession" }, { label: "Authorization Codes", link: "/app/oauth/authCode" }, { label: "Refresh Tokens", link: "/app/oauth/refreshToken" }, { label: "Session Audit", link: "/app/oauth/authSessionAudit" }] },
-      { id: 100, label: "App Admin", role: "admin", link: "/app/clientApp", icon: <AppsIcon /> },
-      { id: 101, label: "Product Admin", role: "admin", link: "/app/product/ProductAdmin", icon: <ProductionQuantityLimitsIcon /> },
-      { id: 111, label: "Pipeline Admin", role: "admin", link: "/app/deployment/PipelineAdmin", icon: <SettingsInputComponentIcon /> },
-      { id: 112, label: "Platform Admin", role: "admin", link: "/app/deployment/PlatformAdmin", icon: <IntegrationInstructionsIcon /> },
-      { id: 113, label: "Instance Admin", role: "admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
-      { id: 113.5, label: "Runtime Instance", role: "admin", link: "/app/instance/RuntimeInstanceAdmin", icon: <ContentCopyIcon /> },
-      { id: 114, label: "Deployment Admin", role: "admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
-      { id: 115, label: "Config Admin", role: "admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
+      { id: 90, label: "Org Admin", link: "/app/org/OrgAdmin", icon: <CorporateFareIcon /> },
+      { id: 91, label: "Host Admin", link: "/app/host/HostAdmin", icon: <GiteIcon /> },
+      { id: 92, label: "Ref Admin", link: "/app/ref/TableAdmin", icon: <TableIcon />, children: [{ label: "Ref Table", link: "/app/ref/TableAdmin" }, { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" }] },
+      { id: 93, label: "User Admin", link: "/app/user", icon: <PeopleAltIcon /> },
+      { id: 94, label: "Event Admin", link: "/app/event/admin", icon: <EventIcon />, children: [{ label: "Export", link: "/app/form/exportPortalEvent" }, { label: "Import", link: "/app/form/importPortalEvent" }, { label: "Global Export", link: "/app/migration/export" }, { label: "Convert Snapshot", link: "/app/migration/convert" }] },
+      { id: 95, label: "OAuth Admin", link: "/app/oauth/authProvider", icon: <SecurityIcon />, children: [{ label: "Auth Provider", link: "/app/oauth/authProvider" }, { label: "Auth Client", link: "/app/oauth/authClient" }, { label: "Sessions", link: "/app/oauth/authSession" }, { label: "Authorization Codes", link: "/app/oauth/authCode" }, { label: "Refresh Tokens", link: "/app/oauth/refreshToken" }, { label: "Session Audit", link: "/app/oauth/authSessionAudit" }] },
+      { id: 100, label: "App Admin", link: "/app/clientApp", icon: <AppsIcon /> },
+      { id: 101, label: "Product Admin", link: "/app/product/ProductAdmin", icon: <ProductionQuantityLimitsIcon /> },
+      { id: 111, label: "Pipeline Admin", link: "/app/deployment/PipelineAdmin", icon: <SettingsInputComponentIcon /> },
+      { id: 112, label: "Platform Admin", link: "/app/deployment/PlatformAdmin", icon: <IntegrationInstructionsIcon /> },
+      { id: 113, label: "Instance Admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
+      { id: 113.5, label: "Runtime Instance", link: "/app/instance/RuntimeInstanceAdmin", icon: <ContentCopyIcon /> },
+      { id: 114, label: "Deployment Admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
+      { id: 115, label: "Config Admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
       {
-        id: 115.5, label: "GenAI Admin", role: "admin", link: "/app/genai/chat", icon: <PrecisionManufacturingIcon />,
+        id: 115.5, label: "GenAI Admin", link: "/app/genai/chat", icon: <PrecisionManufacturingIcon />,
         children: [
           { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
           { label: "Skill", link: "/app/genai/Skill" },
@@ -210,7 +209,7 @@ const structure = [
         ],
       },
       {
-        id: 116, label: "Workflow Admin", role: "admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
+        id: 116, label: "Workflow Admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
         children: [
           { label: "Wf Definition", link: "/app/workflow/WfDefinition" },
           { label: "Worklist", link: "/app/workflow/Worklist" },
@@ -220,18 +219,18 @@ const structure = [
           { label: "Audit Log", link: "/app/workflow/AuditLog" },
         ],
       },
-      { id: 117, label: "Access Admin", role: "admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Role", link: "/app/access/roleAdmin" }, { label: "Position", link: "/app/access/positionAdmin" }, { label: "Group", link: "/app/access/groupAdmin" }, { label: "Attribute", link: "/app/access/attributeAdmin" }] },
-      { id: 118, label: "Api Admin", role: "admin", link: "/app/service/admin", icon: <ApiIcon /> },
-      { id: 120, label: "Rule Admin", role: "admin", link: "/app/rule/admin", icon: <RuleIcon /> },
-      { id: 123, label: "Tag Admin", role: "admin", link: "/app/tag/admin", icon: <LocalOfferIcon /> },
-      { id: 125, label: "Category Admin", role: "admin", link: "/app/category/admin", icon: <CategoryIcon /> },
-      { id: 127, label: "Schedule Admin", role: "admin", link: "/app/schedule/admin", icon: <ScheduleIcon /> },
-      { id: 128, label: "Promotion", role: "admin", link: "/app/promotion/export", icon: <CompareArrowsIcon />, children: [{ label: "Export", link: "/app/promotion/export" }, { label: "Import", link: "/app/promotion/import" }, { label: "History", link: "/app/promotion/history" }] },
-      /* { id: 130, label: "News Admin", role: "admin", link: "/app/news/admin", icon: <NewspaperIcon />, children: [{ label: "Create", link: "/app/news/create" }, { label: "Update", link: "/app/news/update" }, { label: "Delete", link: "/app/news/delete" }] }, */
-      /* { id: 140, label: "Blog Admin", role: "admin", link: "/app/blog/admin", icon: <BookIcon />, children: [{ label: "List", link: "/app/blog/adminList" }, { label: "Create", link: "/app/form/createBlog" }, { label: "Update", link: "/app/blog/update" }, { label: "Delete", link: "/app/blog/delete" }] }, */
-      { id: 141, label: "Error Admin", role: "admin", link: "/app/error/admin", icon: <ErrorOutlineIcon />, children: [{ label: "List", link: "/app/error/adminList" }, { label: "Create", link: "/app/form/createError" }, { label: "Update", link: "/app/error/update" }, { label: "Delete", link: "/app/error/delete" }] },
-      { id: 142, label: "Schema Admin", role: "admin", link: "/app/schema/admin", icon: <SchemaIcon /> },
-      /* { id: 150, label: "Forum Admin", role: "admin", link: "/app/forum/admin", icon: <ForumIcon />, children: [{ label: "Create", link: "/app/forum/create" }, { label: "Update", link: "/app/forum/update" }, { label: "Delete", link: "/app/forum/delete" }] }, */
+      { id: 117, label: "Access Admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Role", link: "/app/access/roleAdmin" }, { label: "Position", link: "/app/access/positionAdmin" }, { label: "Group", link: "/app/access/groupAdmin" }, { label: "Attribute", link: "/app/access/attributeAdmin" }] },
+      { id: 118, label: "Api Admin", link: "/app/service/admin", icon: <ApiIcon /> },
+      { id: 120, label: "Rule Admin", link: "/app/rule/admin", icon: <RuleIcon /> },
+      { id: 123, label: "Tag Admin", link: "/app/tag/admin", icon: <LocalOfferIcon /> },
+      { id: 125, label: "Category Admin", link: "/app/category/admin", icon: <CategoryIcon /> },
+      { id: 127, label: "Schedule Admin", role: "user schedule-admin", link: "/app/schedule/admin", icon: <ScheduleIcon /> },
+      { id: 128, label: "Promotion", link: "/app/promotion/export", icon: <CompareArrowsIcon />, children: [{ label: "Export", link: "/app/promotion/export" }, { label: "Import", link: "/app/promotion/import" }, { label: "History", link: "/app/promotion/history" }] },
+      /* { id: 130, label: "News Admin", link: "/app/news/admin", icon: <NewspaperIcon />, children: [{ label: "Create", link: "/app/news/create" }, { label: "Update", link: "/app/news/update" }, { label: "Delete", link: "/app/news/delete" }] }, */
+      /* { id: 140, label: "Blog Admin", link: "/app/blog/admin", icon: <BookIcon />, children: [{ label: "List", link: "/app/blog/adminList" }, { label: "Create", link: "/app/form/createBlog" }, { label: "Update", link: "/app/blog/update" }, { label: "Delete", link: "/app/blog/delete" }] }, */
+      { id: 141, label: "Error Admin", link: "/app/error/admin", icon: <ErrorOutlineIcon />, children: [{ label: "List", link: "/app/error/adminList" }, { label: "Create", link: "/app/form/createError" }, { label: "Update", link: "/app/error/update" }, { label: "Delete", link: "/app/error/delete" }] },
+      { id: 142, label: "Schema Admin", link: "/app/schema/admin", icon: <SchemaIcon /> },
+      /* { id: 150, label: "Forum Admin", link: "/app/forum/admin", icon: <ForumIcon />, children: [{ label: "Create", link: "/app/forum/create" }, { label: "Update", link: "/app/forum/update" }, { label: "Delete", link: "/app/forum/delete" }] }, */
       /* { id: 160, label: "Training Admin", link: "/app/edu/admin", icon: <ModelTrainingIcon />, children: [{ label: "List Quiz", link: "/app/form/listQuiz" }, { label: "Create Quiz", link: "/app/form/createQuiz" }, { label: "Update Quiz", link: "/app/edu/updateQuiz" }, { label: "Delete Quiz", link: "/app/edu/deleteQuiz" }] }, */
     ],
   },
@@ -279,6 +278,7 @@ function Sidebar() {
       ? `${subDomain}.${domain} portal`
       : `${domain} portal`
     : "API Portal";
+  const visibleStructure = filterSidebarItems(structure, roles);
 
   useEffect(function () {
     window.addEventListener("resize", handleWindowWidthChange);
@@ -323,8 +323,7 @@ function Sidebar() {
       </SidebarTopSection>
       <SidebarListWrapper>
         <List>
-          {structure
-            .filter((link) => permission(link.role, roles))
+          {visibleStructure
             .map((link) => (
               <SidebarLink
                 key={link.id}
@@ -360,26 +359,6 @@ function Sidebar() {
     </StyledDrawer>
   );
 
-  function permission(linkRole: string | undefined, userRoles: string | null) {
-    if (userRoles == null) {
-      if (linkRole == null) {
-        return true;
-      } else {
-        return false;
-      }
-    } else {
-      if (linkRole == null) {
-        return true;
-      } else {
-        if (userRoles.includes(linkRole)) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    }
-  }
-
   function handleWindowWidthChange() {
     var windowWidth = window.innerWidth;
     var breakpointWidth = (theme as any).breakpoints?.values?.md || 960;
@@ -391,6 +370,45 @@ function Sidebar() {
       setPermanent(true);
     }
   }
+}
+
+function filterSidebarItems(items: any[], userRoles: string | null, insideAdminSection = false): any[] {
+  const isAdmin = hasSidebarRole(userRoles, "admin");
+
+  return items.reduce<any[]>((visibleItems, item) => {
+    const inAdminSection = insideAdminSection || item.id === 9000;
+    const children = item.children ? filterSidebarItems(item.children, userRoles, inAdminSection) : undefined;
+
+    if (item.type === "group") {
+      if (children?.length) {
+        visibleItems.push({ ...item, children });
+      }
+      return visibleItems;
+    }
+
+    if (canShowSidebarItem(item, userRoles, inAdminSection, isAdmin)) {
+      visibleItems.push(children ? { ...item, children } : item);
+    }
+
+    return visibleItems;
+  }, []);
+}
+
+function canShowSidebarItem(item: any, userRoles: string | null, insideAdminSection: boolean, isAdmin: boolean) {
+  if (isAdmin) return true;
+  if (insideAdminSection && item.role == null) return false;
+  if (item.role == null) return true;
+  return hasSidebarRole(userRoles, item.role);
+}
+
+function hasSidebarRole(userRoles: string | null, requiredRoles: string) {
+  if (!userRoles) return false;
+
+  const userRoleSet = new Set(userRoles.split(/[\s,]+/).filter(Boolean));
+  return requiredRoles
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .some((role) => userRoleSet.has(role));
 }
 
 export default Sidebar;

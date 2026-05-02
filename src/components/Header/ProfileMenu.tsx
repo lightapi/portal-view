@@ -18,6 +18,7 @@ import {
   useUserDispatch,
   useUserState,
 } from "../../contexts/UserContext";
+import { hasAnyRole } from "../../utils/ownershipScope";
 import { config, isSsoEnabled } from "../../../config";
 import { loginRequest } from "../../authConfig";
 
@@ -133,7 +134,7 @@ function ProfileMenuContent({
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Payment
             </MenuItem>
-            {roles?.includes("admin") && (
+            {hasAnyRole(roles, ["admin"]) && (
               <MenuItem
                 sx={{
                   color: 'text.hint',
