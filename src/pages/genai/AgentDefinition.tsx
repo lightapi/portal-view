@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
 
 // --- Type Definitions ---
 type AgentDefinitionApiResponse = {
@@ -46,6 +47,12 @@ export default function AgentDefinition() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContext = useMemo(() => buildGenAiTaskContext(host, searchParams), [host, searchParams]);
+    const contextForRow = useCallback(
+        (row: AgentDefinitionType) => buildGenAiTaskContext(host, searchParams, row),
+        [host, searchParams],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<AgentDefinitionType[]>([]);
@@ -150,7 +157,7 @@ export default function AgentDefinition() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateAgentDefinition', {
+            navigate(buildGenAiTaskRoute('/app/form/updateAgentDefinition', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -162,7 +169,7 @@ export default function AgentDefinition() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<AgentDefinitionType>[]>(
@@ -228,11 +235,15 @@ export default function AgentDefinition() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAgentDefinition')}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createAgentDefinition', searchParams, taskContext))}>
                 Create New Agent Definition
             </Button>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <GenAiTaskLayout context={taskContext}>
+            <MaterialReactTable table={table} />
+        </GenAiTaskLayout>
+    );
 }

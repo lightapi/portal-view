@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -25,6 +25,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigApiResponse = {
@@ -64,7 +66,9 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function ConfigAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState() as UserState;
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<ConfigType[]>([]);
@@ -172,7 +176,7 @@ export default function ConfigAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfig', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfig', searchParams, { hostId: host ?? '', configId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -184,7 +188,7 @@ export default function ConfigAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigType>[]>(
@@ -246,14 +250,14 @@ export default function ConfigAdmin() {
             )}
           </IconButton>
         </Tooltip>
-        <Tooltip title="Properties"><IconButton onClick={() => navigate('/app/config/configProperty', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
-        <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/config/configEnvironment', { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
-        <Tooltip title="Products"><IconButton onClick={() => navigate('/app/config/configProduct', { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
-        <Tooltip title="Product Versions"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-        <Tooltip title="Instances"><IconButton onClick={() => navigate('/app/config/configInstance', { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance APIs"><IconButton onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance Apps"><IconButton onClick={() => navigate('/app/config/configInstanceApp', { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance App Api"><IconButton onClick={() => navigate('/app/config/configInstanceAppApi', { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
+        <Tooltip title="Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProperty', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
+        <Tooltip title="Environments"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configEnvironment', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
+        <Tooltip title="Products"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProduct', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
+        <Tooltip title="Product Versions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
+        <Tooltip title="Instances"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance APIs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance Apps"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
+        <Tooltip title="Instance App Api"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceAppApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
         <Tooltip title="Delete Config">
           <IconButton color="error" onClick={() => handleDelete(row)}>
             <DeleteForeverIcon />
@@ -262,11 +266,27 @@ export default function ConfigAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createConfig')}>
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/createConfig', searchParams, taskContext))}
+      >
         Create New Config
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

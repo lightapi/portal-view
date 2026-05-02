@@ -18,6 +18,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RuleApiResponse = {
@@ -131,6 +133,17 @@ export default function RuleAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
+  const contextForRow = useCallback((row: RuleType) => ({
+    ...taskContext,
+    hostId: row.hostId ?? host ?? '',
+    ruleId: row.ruleId,
+  }), [host, taskContext]);
 
   // Data and fetching state
   const [data, setData] = useState<RuleType[]>([]);
@@ -254,7 +267,7 @@ export default function RuleAdmin() {
       parsedData = normalizeRuleForForm(parsedData);
 
       // Navigate with the fresh data mapped correctly for updateRule form schema
-      navigate('/app/form/updateRule', {
+      navigate(buildTaskAwareRoute('/app/form/updateRule', searchParams, contextForRow(row.original)), {
         state: {
           data: parsedData,
           source: location.pathname
@@ -266,7 +279,7 @@ export default function RuleAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams, contextForRow]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RuleType>[]>(
@@ -326,7 +339,7 @@ export default function RuleAdmin() {
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Details">
           <IconButton
-            onClick={() => navigate('/app/ruleDetail', { state: { rule: row.original } })}
+            onClick={() => navigate(buildTaskAwareRoute('/app/ruleDetail', searchParams, contextForRow(row.original)), { state: { rule: row.original } })}
           >
             <DetailsIcon />
           </IconButton>
@@ -351,11 +364,23 @@ export default function RuleAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRule')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRule', searchParams, taskContext))}>
         Create New Rule
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Schema and Rule Tasks"
+        context={taskContext}
+        taskIds={['manage-schema-rules']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

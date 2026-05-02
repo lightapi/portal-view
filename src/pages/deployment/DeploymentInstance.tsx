@@ -17,6 +17,8 @@ import AddToDriveIcon from '@mui/icons-material/AddToDrive';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type DeploymentInstanceApiResponse = {
@@ -53,8 +55,20 @@ export default function DeploymentInstance() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialInstanceId = location.state?.data?.instanceId;
-  const initialServiceId = location.state?.data?.serviceId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialInstanceId = location.state?.data?.instanceId ?? searchContext.instanceId;
+  const initialServiceId = location.state?.data?.serviceId ?? searchContext.serviceId;
+  const initialPipelineId = location.state?.data?.pipelineId ?? searchContext.pipelineId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      instanceId: initialInstanceId ?? '',
+      serviceId: initialServiceId ?? '',
+      pipelineId: initialPipelineId ?? '',
+    }),
+    [host, initialInstanceId, initialPipelineId, initialServiceId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<DeploymentInstanceType[]>([]);
@@ -65,16 +79,14 @@ export default function DeploymentInstance() {
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state, pre-filtered by configId if provided
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialInstanceId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'instanceId', value: initialInstanceId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialInstanceId) initialFilters.push({ id: 'instanceId', value: initialInstanceId });
+    if (initialServiceId) initialFilters.push({ id: 'serviceId', value: initialServiceId });
+    if (searchContext.deploymentInstanceId) initialFilters.push({ id: 'deploymentInstanceId', value: searchContext.deploymentInstanceId });
+    if (initialPipelineId) initialFilters.push({ id: 'pipelineId', value: initialPipelineId });
+    return initialFilters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -171,7 +183,15 @@ export default function DeploymentInstance() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateDeploymentInstance', {
+      navigate(buildTaskAwareRoute('/app/form/updateDeploymentInstance', searchParams, {
+        ...taskContext,
+        deploymentInstanceId,
+        instanceId: row.original.instanceId,
+        serviceId: row.original.serviceId ?? '',
+        pipelineId: row.original.pipelineId ?? '',
+        systemEnv: row.original.systemEnv,
+        runtimeEnv: row.original.runtimeEnv,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -183,7 +203,7 @@ export default function DeploymentInstance() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<DeploymentInstanceType>[]>(
@@ -251,7 +271,12 @@ export default function DeploymentInstance() {
         <Tooltip title="Manage Config">
           <IconButton
             onClick={() =>
-              navigate('/app/config/configDeploymentInstance', {
+              navigate(buildTaskAwareRoute('/app/config/configDeploymentInstance', searchParams, {
+                ...taskContext,
+                instanceId: row.original.instanceId,
+                deploymentInstanceId: row.original.deploymentInstanceId,
+                serviceId: row.original.serviceId ?? '',
+              }), {
                 state: {
                   data: {
                     instanceId: row.original.instanceId,
@@ -276,7 +301,10 @@ export default function DeploymentInstance() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createDeploymentInstance', { state: { data: { instanceId: initialInstanceId, serviceId: initialServiceId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createDeploymentInstance', searchParams, taskContext),
+            { state: { data: { instanceId: initialInstanceId, serviceId: initialServiceId, pipelineId: initialPipelineId } } },
+          )}
         >
           Create New Deployment Instance
         </Button>
@@ -289,5 +317,17 @@ export default function DeploymentInstance() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Deployment Tasks"
+          context={taskContext}
+          taskIds={['manage-deployment', 'manage-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -37,6 +37,15 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { taskRegistry } from '../../tasks/taskRegistry';
+import type { TaskResolvedContext } from '../../tasks/types';
+import {
+    buildTaskStepRoute,
+    mergeTaskContext,
+    saveStoredTaskContext,
+    taskContextFromSearch,
+} from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type HostType = {
@@ -88,9 +97,12 @@ export default function PromotionImport() {
     const navSnapshot = location.state?.snapshot;
     const navTargetHostId = location.state?.targetHostId;
     const fromExport = location.state?.fromExport;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContextState = useMemo(() => taskContextFromSearch(searchParams), [searchParams]);
+    const initialTargetHostId = navTargetHostId || taskContextState?.context.targetHostId || '';
 
     const [snapshot, setSnapshot] = useState<object | null>(navSnapshot || null);
-    const [targetHostId, setTargetHostId] = useState(navTargetHostId || '');
+    const [targetHostId, setTargetHostId] = useState(initialTargetHostId);
     const [hosts, setHosts] = useState<HostType[]>([]);
     const [isLoadingHosts, setIsLoadingHosts] = useState(false);
 
@@ -104,6 +116,34 @@ export default function PromotionImport() {
     const [orphanAction, setOrphanAction] = useState('keep');
     const [isExecuting, setIsExecuting] = useState(false);
     const [executeResult, setExecuteResult] = useState<{ success: boolean; message: string } | null>(null);
+    const autoDryRunStarted = useRef(false);
+
+    const taskActionContext = useMemo(
+        () => mergeTaskContext(
+            taskContextState?.context ?? {},
+            {
+                targetHostId,
+                promotionExportReady: !!snapshot || !!taskContextState?.context.promotionExportReady,
+                promotionDryRunReady: !!diffPlan || !!taskContextState?.context.promotionDryRunReady,
+                promotionExecuted: !!executeResult?.success || !!taskContextState?.context.promotionExecuted,
+            },
+        ),
+        [diffPlan, executeResult?.success, snapshot, targetHostId, taskContextState?.context],
+    );
+
+    const buildPromotionTaskContext = useCallback(
+        (updates: TaskResolvedContext = {}) => mergeTaskContext(
+            taskContextState?.context ?? {},
+            {
+                targetHostId,
+                promotionExportReady: !!snapshot || !!taskContextState?.context.promotionExportReady,
+                promotionDryRunReady: !!diffPlan || !!taskContextState?.context.promotionDryRunReady,
+                promotionExecuted: !!executeResult?.success || !!taskContextState?.context.promotionExecuted,
+            },
+            updates,
+        ),
+        [diffPlan, executeResult?.success, snapshot, targetHostId, taskContextState?.context],
+    );
 
     // Load hosts
     useEffect(() => {
@@ -136,12 +176,18 @@ export default function PromotionImport() {
             try {
                 const json = JSON.parse(e.target?.result as string);
                 setSnapshot(json);
+                if (taskContextState) {
+                    saveStoredTaskContext(
+                        taskContextState.taskId,
+                        buildPromotionTaskContext({ promotionExportReady: true }),
+                    );
+                }
             } catch (error) {
                 alert('Invalid JSON file. Please upload a valid promotion export file.');
             }
         };
         reader.readAsText(file);
-    }, []);
+    }, [buildPromotionTaskContext, taskContextState]);
 
     // Dry run handler
     const handleDryRun = useCallback(async () => {
@@ -164,6 +210,16 @@ export default function PromotionImport() {
                     setDryRunError('Dry run returned an incomplete response (missing items). Cannot proceed with promotion.');
                 } else {
                     setDiffPlan(plan);
+                    if (taskContextState) {
+                        saveStoredTaskContext(
+                            taskContextState.taskId,
+                            buildPromotionTaskContext({
+                                targetHostId,
+                                promotionExportReady: true,
+                                promotionDryRunReady: true,
+                            }),
+                        );
+                    }
                 }
             }
         } catch (error) {
@@ -172,7 +228,7 @@ export default function PromotionImport() {
         } finally {
             setIsDryRunning(false);
         }
-    }, [snapshot, targetHostId]);
+    }, [buildPromotionTaskContext, snapshot, targetHostId, taskContextState]);
 
     // Execute promotion handler
     const handleExecute = useCallback(async () => {
@@ -195,6 +251,17 @@ export default function PromotionImport() {
                 setExecuteResult({ success: false, message: JSON.stringify(result.error) });
             } else {
                 setExecuteResult({ success: true, message: 'Promotion executed successfully!' });
+                if (taskContextState) {
+                    saveStoredTaskContext(
+                        taskContextState.taskId,
+                        buildPromotionTaskContext({
+                            targetHostId,
+                            promotionExportReady: true,
+                            promotionDryRunReady: true,
+                            promotionExecuted: true,
+                        }),
+                    );
+                }
             }
         } catch (error) {
             console.error('Execute failed:', error);
@@ -202,11 +269,12 @@ export default function PromotionImport() {
         } finally {
             setIsExecuting(false);
         }
-    }, [snapshot, targetHostId, diffPlan, orphanAction]);
+    }, [buildPromotionTaskContext, snapshot, targetHostId, diffPlan, orphanAction, taskContextState]);
 
     // Auto dry run if coming from export page
     useEffect(() => {
-        if (fromExport && navSnapshot && navTargetHostId) {
+        if (fromExport && navSnapshot && navTargetHostId && !autoDryRunStarted.current) {
+            autoDryRunStarted.current = true;
             handleDryRun();
         }
     }, [fromExport, navSnapshot, navTargetHostId, handleDryRun]);
@@ -215,11 +283,29 @@ export default function PromotionImport() {
         setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
+    const historyStep = taskContextState
+        ? taskRegistry
+            .find((task) => task.id === taskContextState.taskId)
+            ?.steps.find((step) => step.id === 'history')
+        : undefined;
+    const historyRoute = taskContextState && historyStep
+        ? buildTaskStepRoute(taskContextState.taskId, historyStep, searchParams, taskActionContext)
+        : '/app/promotion/history';
+
     return (
         <Box sx={{ p: 2 }}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
                 Import & Promote Entities
             </Typography>
+
+            <Box sx={{ mb: 3 }}>
+                <TaskActionPanel
+                    title="Promotion Workflow"
+                    context={taskActionContext}
+                    taskIds={['promote-configuration']}
+                    maxActions={1}
+                />
+            </Box>
 
             {/* Import Source Section */}
             {!diffPlan && !executeResult && (
@@ -424,7 +510,7 @@ export default function PromotionImport() {
                         {executeResult.message}
                     </Alert>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="contained" onClick={() => navigate('/app/promotion/history')}>
+                        <Button variant="contained" onClick={() => navigate(historyRoute)}>
                             View History
                         </Button>
                         <Button variant="outlined" onClick={() => {

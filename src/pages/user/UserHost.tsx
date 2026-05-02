@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -11,6 +11,7 @@ import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
 
 // --- Type Definitions ---
 // The API returns an array directly
@@ -33,11 +34,14 @@ interface UserState {
 }
 
 export default function UserHost() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { userId: contextUserId, email: contextEmail } = useUserState();
+  const { userId: contextUserId, email: contextEmail, host } = useUserState();
   const initialUserId = location.state?.data?.userId || contextUserId;
   const userEmail = location.state?.data?.email || contextEmail; // Optional: for display purposes
+  const taskContext = useMemo(
+    () => ({ hostId: host ?? '', userId: initialUserId ?? '' }),
+    [host, initialUserId],
+  );
 
 
   // Data and fetching state
@@ -155,5 +159,17 @@ export default function UserHost() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Host Membership Tasks"
+          context={taskContext}
+          taskIds={['manage-user-host-access']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

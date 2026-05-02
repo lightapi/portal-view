@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PositionRowFilterApiResponse = {
@@ -48,7 +50,16 @@ export default function PositionRowFilter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialPositionId = location.state?.data?.positionId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialPositionId = location.state?.data?.positionId ?? searchContext.positionId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      positionId: initialPositionId ?? '',
+    }),
+    [host, initialPositionId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<PositionRowFilterType[]>([]);
@@ -161,7 +172,12 @@ export default function PositionRowFilter() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updatePositionRowFilter', {
+      navigate(buildTaskAwareRoute('/app/form/updatePositionRowFilter', searchParams, {
+        ...taskContext,
+        positionId,
+        apiVersionId: row.original.apiVersionId,
+        endpointId: row.original.endpointId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -173,7 +189,7 @@ export default function PositionRowFilter() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionRowFilterType>[]>(
@@ -250,7 +266,10 @@ export default function PositionRowFilter() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createPositionRowFilter', { state: { data: { positionId: initialPositionId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createPositionRowFilter', searchParams, taskContext),
+            { state: { data: { positionId: initialPositionId } } },
+          )}
         >
           Create New Filter
         </Button>
@@ -263,5 +282,17 @@ export default function PositionRowFilter() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Filter Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

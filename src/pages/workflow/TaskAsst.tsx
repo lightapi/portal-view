@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
 // --- Type Definitions ---
 type TaskAsstApiResponse = {
@@ -47,6 +48,12 @@ export default function TaskAsst() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
+    const contextForRow = useCallback(
+        (row: TaskAsstType) => buildWorkflowTaskContext(host, searchParams, row),
+        [host, searchParams],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<TaskAsstType[]>([]);
@@ -151,7 +158,7 @@ export default function TaskAsst() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateTaskAsst', {
+            navigate(buildWorkflowTaskRoute('/app/form/updateTaskAsst', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -163,7 +170,7 @@ export default function TaskAsst() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<TaskAsstType>[]>(
@@ -243,11 +250,15 @@ export default function TaskAsst() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTaskAsst')}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createTaskAsst', searchParams, taskContext))}>
                 Create New Task Asst
             </Button>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <WorkflowTaskLayout context={taskContext}>
+            <MaterialReactTable table={table} />
+        </WorkflowTaskLayout>
+    );
 }

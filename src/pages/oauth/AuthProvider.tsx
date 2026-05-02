@@ -20,6 +20,8 @@ import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type AuthProviderApiResponse = {
@@ -60,6 +62,17 @@ export default function AuthProvider() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
+  const contextForRow = useCallback((row: AuthProviderType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    providerId: row.providerId,
+  }), [taskContext]);
 
   // Data and fetching state
   const [data, setData] = useState<AuthProviderType[]>([]);
@@ -169,7 +182,7 @@ export default function AuthProvider() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateProvider', {
+      navigate(buildTaskAwareRoute('/app/form/updateProvider', searchParams, contextForRow(row.original)), {
         state: {
           data: freshData,
           source: location.pathname
@@ -181,7 +194,7 @@ export default function AuthProvider() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams, contextForRow]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthProviderType>[]>(
@@ -249,17 +262,17 @@ export default function AuthProvider() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Keys">
-          <IconButton onClick={() => navigate('/app/oauth/providerKey', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerKey', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <KeyIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Apis">
-          <IconButton onClick={() => navigate('/app/oauth/providerApi', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <ApiIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Clients">
-          <IconButton onClick={() => navigate('/app/oauth/providerClient', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerClient', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <AppsIcon />
           </IconButton>
         </Tooltip>
@@ -271,11 +284,23 @@ export default function AuthProvider() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProvider')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createProvider', searchParams, taskContext))}>
         Create New Provider
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="OAuth Provider Tasks"
+        context={taskContext}
+        taskIds={['manage-oauth-provider']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

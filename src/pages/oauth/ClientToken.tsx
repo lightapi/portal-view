@@ -16,6 +16,8 @@ import { useUserState } from '../../contexts/UserContext.tsx';
 import { apiPost } from '../../api/apiPost.ts';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ClientTokenApiResponse = {
@@ -53,7 +55,20 @@ export default function ClientToken() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
-    const initialData = location.state?.data || {};
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+    const initialData = useMemo(
+        () => ({ ...searchContext, ...(location.state?.data || {}) }),
+        [location.state, searchContext],
+    );
+    const taskContext = useMemo(
+        () => mergeTaskContext(searchContext, {
+            hostId: host ?? '',
+            clientId: initialData.clientId ?? '',
+            tokenId: initialData.tokenId ?? '',
+        }),
+        [host, initialData.clientId, initialData.tokenId, searchContext],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<ClientTokenType[]>([]);
@@ -197,7 +212,7 @@ export default function ClientToken() {
                 <Button
                     variant="contained"
                     startIcon={<AddBoxIcon />}
-                    onClick={() => navigate('/app/form/createClientToken', { state: { data: initialData } })}
+                    onClick={() => navigate(buildTaskAwareRoute('/app/form/createClientToken', searchParams, taskContext), { state: { data: initialData } })}
                 >
                     Create Token
                 </Button>
@@ -205,5 +220,17 @@ export default function ClientToken() {
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <Box>
+            <TaskActionPanel
+                title="OAuth Client Tasks"
+                context={taskContext}
+                taskIds={['manage-oauth-provider']}
+                maxActions={3}
+            />
+            <Box mt={2}>
+                <MaterialReactTable table={table} />
+            </Box>
+        </Box>
+    );
 }

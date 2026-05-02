@@ -8,9 +8,11 @@ import React, { useEffect, useRef } from 'react';
 import PageTitle from '../../components/PageTitle/PageTitle';
 import Dot from '../../components/Sidebar/components/Dot';
 import Widget from '../../components/Widget/Widget';
+import TaskLaunchWidget from '../../tasks/TaskLaunchWidget';
+import { buildContextRoute, contextFromSearchParams } from '../../tasks/taskUtils';
 import { Typography } from '../../components/Wrappers/Wrappers';
 import { useUserDispatch, useUserState, signOut } from '../../contexts/UserContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import GroupsIcon from '@mui/icons-material/Groups';
 import BuildIcon from '@mui/icons-material/Build';
@@ -62,10 +64,10 @@ const MOCK_STATS = [
 ];
 
 const QUICK_ACTIONS = [
-  { label: 'Onboard MCP', icon: <AddCircleIcon />, color: 'primary' },
-  { label: 'Configure Agent', icon: <SettingsIcon />, color: 'secondary' },
-  { label: 'Manage Memory', icon: <StorageIcon />, color: 'info' },
-  { label: 'Security Logs', icon: <VerifiedUserIcon />, color: 'warning' },
+  { label: 'Onboard MCP', icon: <AddCircleIcon />, color: 'primary', route: '/app/tasks/mcp-onboard-api' },
+  { label: 'Configure Agent', icon: <SettingsIcon />, color: 'secondary', route: '/app/tasks/manage-genai-assets' },
+  { label: 'Manage Memory', icon: <StorageIcon />, color: 'info', route: '/app/genai/AgentMemory' },
+  { label: 'Security Logs', icon: <VerifiedUserIcon />, color: 'warning', route: '/app/oauth/authSessionAudit' },
 ];
 
 const StatCard = ({ title, value, icon, color, subtext }: any) => {
@@ -159,6 +161,17 @@ const ActivityStream = () => {
 };
 
 const UserDashboard = ({ email }: { email: string | null }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const dashboardContext = React.useMemo(
+    () => contextFromSearchParams(searchParams),
+    [searchParams],
+  );
+
+  const openDashboardRoute = (route: string) => {
+    navigate(buildContextRoute(route, dashboardContext));
+  };
+
   return (
     <>
       {/* ── Hero ── */}
@@ -220,6 +233,10 @@ const UserDashboard = ({ email }: { email: string | null }) => {
         {/* Sidebar Actions */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Stack spacing={3}>
+            <Widget title="Task Navigator" disableWidgetMenu>
+              <TaskLaunchWidget />
+            </Widget>
+
             <Widget title="Quick Operations">
               <Grid container spacing={2}>
                 {QUICK_ACTIONS.map((action, idx) => (
@@ -228,6 +245,7 @@ const UserDashboard = ({ email }: { email: string | null }) => {
                       fullWidth
                       variant="outlined"
                       color={action.color as any}
+                      onClick={() => openDashboardRoute(action.route)}
                       sx={{
                         height: 100,
                         flexDirection: 'column',
@@ -331,21 +349,21 @@ const GuestDashboard = () => {
       </Box>
 
       <Grid container spacing={4}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Widget title="AI Gateway" header={<Avatar sx={{ bgcolor: 'primary.main', mb: 1 }}><SensorsIcon /></Avatar>}>
             <Typography color="textSecondary">
               High-performance Rust-based gateway for secure and governed AI interactions.
             </Typography>
           </Widget>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Widget title="Agent Ecosystem" header={<Avatar sx={{ bgcolor: 'secondary.main', mb: 1 }}><GroupsIcon /></Avatar>}>
             <Typography color="textSecondary">
               Seamlessly onboard and orchestrate MCP servers and specialized agents.
             </Typography>
           </Widget>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Widget title="Hindsight Memory" header={<Avatar sx={{ bgcolor: 'info.main', mb: 1 }}><StorageIcon /></Avatar>}>
             <Typography color="textSecondary">
               Shared organizational and user memory banks for context-aware intelligence.

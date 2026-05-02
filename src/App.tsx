@@ -9,6 +9,8 @@ import {
 import Layout from "./components/Layout/Layout";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
+import TaskCenter from "./pages/tasks/TaskCenter";
+import TaskDetail from "./pages/tasks/TaskDetail";
 import BlogList from "./pages/blog/BlogList";
 import Form from "./components/Form/Form";
 import Notification from "./pages/notification/Notification";
@@ -93,6 +95,7 @@ import ConfigDeploymentInstance from "./pages/config/ConfigDeploymentInstance";
 import CtrlPaneDashboard from "./pages/controller/CtrlPaneDashboard";
 import McpServerForm from "./wizards/McpServerForm";
 import McpGateway from "./wizards/McpGateway";
+import McpTaskWizard from "./pages/mcp/McpTaskWizard";
 import ControllerLayout from "./pages/controller/ControllerLayout";
 import HealthCheck from "./pages/controller/HealthCheck";
 import ServerInfo from "./pages/controller/ServerInfo";
@@ -318,6 +321,8 @@ const App = () => {
         {/* Layout routes */}
         <Route path="/app/*" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="tasks" element={<TaskCenter />} />
+          <Route path="tasks/:taskId" element={<TaskDetail />} />
           <Route path="blog/blogList" element={<BlogList />} />
           <Route path="form/:formId" element={<Form />} />
           <Route path="notification" element={<Notification />} />
@@ -488,11 +493,12 @@ const App = () => {
           />
           <Route element={<ControllerLayout />}>
             <Route path="mcp/gateway" element={<McpGateway />} />
+            <Route path="mcp/setup" element={<McpTaskWizard />} />
             <Route path="mcp/wizard" element={<McpServerForm />} />
             <Route path="mcp/servers" element={<Navigate to="/app/mcp/gateway" replace />} />
-            <Route path="mcp/create" element={<Navigate to="/app/mcp/wizard" replace />} />
+            <Route path="mcp/create" element={<Navigate to="/app/mcp/setup" replace />} />
             <Route path="mcp/edit" element={<Navigate to="/app/mcp/wizard" replace />} />
-            <Route path="mcp/onboard" element={<Navigate to="/app/mcp/wizard?flow=onboard" replace />} />
+            <Route path="mcp/onboard" element={<Navigate to="/app/mcp/setup?workflow=api" replace />} />
             <Route path="controller/services" element={<CtrlPaneDashboard />} />
             <Route path="controller/check" element={<HealthCheck />} />
             <Route path="controller/info" element={<ServerInfo />} />

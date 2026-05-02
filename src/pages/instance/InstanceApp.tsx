@@ -16,6 +16,8 @@ import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type InstanceAppApiResponse = {
@@ -43,7 +45,31 @@ export default function InstanceApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as { host: string };
-  const initialData = location.state?.data || {};
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      instanceId: initialData.instanceId ?? '',
+      instanceAppId: initialData.instanceAppId ?? '',
+      productId: initialData.productId ?? '',
+      productVersionId: initialData.productVersionId ?? '',
+      appId: initialData.appId ?? '',
+    }),
+    [
+      host,
+      initialData.appId,
+      initialData.instanceAppId,
+      initialData.instanceId,
+      initialData.productId,
+      initialData.productVersionId,
+      searchContext,
+    ],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<InstanceAppType[]>([]);
@@ -143,6 +169,16 @@ export default function InstanceApp() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: InstanceAppType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    instanceId: row.instanceId,
+    instanceAppId: row.instanceAppId,
+    productId: row.productId ?? '',
+    productVersionId: row.productVersionId,
+    appId: row.appId,
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceAppType>[]>(
     () => [
@@ -177,7 +213,7 @@ export default function InstanceApp() {
         id: 'relations', header: 'Config', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Config Properties"><IconButton onClick={() => navigate('/app/config/configInstanceApp', { state: { data: { instanceAppId: row.original.instanceAppId, instanceId: row.original.instanceId, appId: row.original.appId, appVersion: row.original.appVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
+            <Tooltip title="Config Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, contextForRow(row.original)), { state: { data: { instanceAppId: row.original.instanceAppId, instanceId: row.original.instanceId, appId: row.original.appId, appVersion: row.original.appVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
           </Box>
         ),
       },
@@ -207,7 +243,7 @@ export default function InstanceApp() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createInstanceApp', { state: { data: initialData } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstanceApp', searchParams, taskContext), { state: { data: initialData } })}
           disabled={!initialData.instanceId}
         >
           Create New Instance App
@@ -221,5 +257,17 @@ export default function InstanceApp() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={['manage-instance', 'manage-configuration']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

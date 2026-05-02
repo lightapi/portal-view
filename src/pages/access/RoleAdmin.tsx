@@ -20,6 +20,8 @@ import CameraRollIcon from '@mui/icons-material/CameraRoll';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RoleApiResponse = {
@@ -43,7 +45,17 @@ interface UserState {
 
 export default function RoleAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(
+    () => contextFromSearchParams(searchParams),
+    [searchParams],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RoleType[]>([]);
@@ -53,11 +65,11 @@ export default function RoleAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
-      { id: 'active', value: 'true' }
-    ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (searchContext.roleId) filters.push({ id: 'roleId', value: searchContext.roleId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -152,7 +164,7 @@ export default function RoleAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateRole', {
+      navigate(buildTaskAwareRoute('/app/form/updateRole', searchParams, { ...taskContext, roleId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -164,7 +176,7 @@ export default function RoleAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleType>[]>(
@@ -223,22 +235,22 @@ export default function RoleAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Role Permissions">
-          <IconButton onClick={() => navigate('/app/access/rolePermission', { state: { data: { roleId: row.original.roleId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
             <DoNotTouchIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Role Row Filters">
-          <IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: { data: { roleId: row.original.roleId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
             <KeyboardDoubleArrowDownIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Role Column Filters">
-          <IconButton onClick={() => navigate('/app/access/roleColFilter', { state: { data: { roleId: row.original.roleId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
             <KeyboardDoubleArrowRightIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate('/app/access/roleUser', { state: { data: { roleId: row.original.roleId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
             <CameraRollIcon />
           </IconButton>
         </Tooltip>
@@ -250,11 +262,23 @@ export default function RoleAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRole')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRole', searchParams, taskContext))}>
         Create New Role
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Control Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

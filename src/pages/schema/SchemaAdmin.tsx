@@ -18,6 +18,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type SchemaApiResponse = {
@@ -63,6 +65,18 @@ export default function SchemaAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
+  const contextForRow = useCallback((row: SchemaType) => ({
+    ...taskContext,
+    hostId: row.hostId ?? host ?? '',
+    schemaId: row.schemaId,
+    schemaVersion: row.schemaVersion,
+  }), [host, taskContext]);
 
   // Data and fetching state
   const [data, setData] = useState<SchemaType[]>([]);
@@ -168,14 +182,14 @@ export default function SchemaAdmin() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate('/app/form/updateJsonSchema', { state: { data: freshData } });
+      navigate(buildTaskAwareRoute('/app/form/updateJsonSchema', searchParams, contextForRow(row.original)), { state: { data: freshData, source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch schema for update:", error);
       alert("Could not load the latest schema data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams, contextForRow]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<SchemaType>[]>(
@@ -229,7 +243,7 @@ export default function SchemaAdmin() {
       <Box sx={{ display: 'flex', gap: '1rem' }}>
         <Tooltip title="Details">
           <IconButton
-            onClick={() => navigate('/app/schemaDetail', { state: { schema: row.original } })}
+            onClick={() => navigate(buildTaskAwareRoute('/app/schemaDetail', searchParams, contextForRow(row.original)), { state: { schema: row.original } })}
           >
             <DetailsIcon />
           </IconButton>
@@ -254,11 +268,23 @@ export default function SchemaAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createJsonSchema')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createJsonSchema', searchParams, taskContext))}>
         Create New Schema
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Schema and Rule Tasks"
+        context={taskContext}
+        taskIds={['manage-schema-rules']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

@@ -8,6 +8,14 @@ import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import fetchClient, { BASE_URL } from "../../utils/fetchClient";
+import {
+  buildTaskReturnRoute,
+  contextFromObject,
+  contextFromSearchParams,
+  mergeTaskContext,
+  saveStoredTaskContext,
+  taskContextFromSearch,
+} from "../../tasks/taskUtils";
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
@@ -59,16 +67,26 @@ function Form() {
     setForm(withBaseUrlForDynaSelect(formData.form));
     setActions(formData.actions);
 
-    const initialModel = location.state
-      ? location.state.data || {}
-      : formData.model || {};
+    const searchParams = new URLSearchParams(location.search);
+    const schemaProperties = formData.schema?.properties ?? {};
+    const searchModel = Array.from(searchParams.entries()).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (schemaProperties[key]) acc[key] = value;
+      return acc;
+    }, {});
+    const searchContext = contextFromSearchParams(searchParams);
+    const initialModel = {
+      ...(formData.model || {}),
+      ...(location.state?.data || {}),
+      ...searchModel,
+      ...searchContext,
+    };
 
     const modelWithHostId = {
       ...initialModel,
       hostId: initialModel.hostId ?? host
     };
     setModel(modelWithHostId);
-  }, [host, formId, location.state]);
+  }, [host, formId, location.state, location.search]);
 
   const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
@@ -102,7 +120,22 @@ function Form() {
         headers: headers
       });
       setFetching(false);
-      navigate(action.success, { state: { data } });
+      const searchParams = new URLSearchParams(location.search);
+      const taskContext = taskContextFromSearch(searchParams);
+      if (taskContext) {
+        const nextContext = mergeTaskContext(
+          taskContext.context,
+          contextFromObject(model),
+          contextFromObject(data),
+        );
+        saveStoredTaskContext(taskContext.taskId, nextContext);
+        navigate(
+          buildTaskReturnRoute(taskContext.taskId, taskContext.returnTo, searchParams, nextContext),
+          { state: { data } },
+        );
+      } else {
+        navigate(action.success, { state: { data } });
+      }
     } catch (e) {
       setFetching(false);
       navigate(action.failure, { state: { data: e } });

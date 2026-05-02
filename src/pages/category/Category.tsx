@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -18,6 +18,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type CategoryApiResponse = {
@@ -57,7 +59,17 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function Category() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState() as UserState;
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', metadataType: 'category' }),
+    [host, searchContext],
+  );
+  const contextForRow = useCallback(
+    (row: CategoryType) => mergeTaskContext(taskContext, contextFromObject(row)),
+    [taskContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<CategoryType[]>([]);
@@ -164,14 +176,17 @@ export default function Category() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate('/app/form/updateCategory', { state: { data: freshData, source: location.pathname } });
+      navigate(
+        buildTaskAwareRoute('/app/form/updateCategory', searchParams, contextForRow(row.original)),
+        { state: { data: freshData, source: location.pathname } },
+      );
     } catch (error) {
       console.error("Failed to fetch category for update:", error);
       alert("Could not load the latest category data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [contextForRow, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<CategoryType>[]>(
@@ -217,7 +232,7 @@ export default function Category() {
         Cell: ({ row }) => (<Tooltip title="Delete Category"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
       },
     ],
-    [],
+    [handleDelete, handleUpdate, isUpdateLoading],
   );
 
   // Table instance configuration
@@ -238,11 +253,23 @@ export default function Category() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createCategory')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createCategory', searchParams, taskContext))}>
         Create New Category
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Portal Metadata Tasks"
+          context={taskContext}
+          taskIds={['manage-portal-metadata']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

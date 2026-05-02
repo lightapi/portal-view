@@ -11,10 +11,12 @@ import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Box from "@mui/material/Box";
-import React, { useEffect, useState, ReactNode } from "react";
+import React, { useEffect, useMemo, useState, ReactNode } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 interface RowProps {
   hostId: string;
@@ -23,6 +25,14 @@ interface RowProps {
 
 function Row({ hostId, errorCode }: RowProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { hostId, errorCode, metadataType: "error" },
+    ),
+    [errorCode, hostId, searchParams],
+  );
   const [loading, setLoading] = useState(false);
 
   const handleUpdate = async () => {
@@ -39,7 +49,7 @@ function Row({ hostId, errorCode }: RowProps) {
       setLoading(true);
       const data = await fetchClient(url);
       setLoading(false);
-      navigate("/app/form/updateError", { state: { data } });
+      navigate(buildTaskAwareRoute("/app/form/updateError", searchParams, taskContext), { state: { data } });
     } catch (e: any) {
       console.log(e);
       alert(e.description || e.message || e);
@@ -102,7 +112,15 @@ function ErrorAdminList({ errors, hostId }: ErrorAdminListProps) {
 
 export default function ErrorAdmin() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { hostId: host ?? "", metadataType: "error" },
+    ),
+    [host, searchParams],
+  );
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
@@ -148,7 +166,7 @@ export default function ErrorAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createError");
+    navigate(buildTaskAwareRoute("/app/form/createError", searchParams, taskContext));
   };
 
   let wait: ReactNode;
@@ -184,5 +202,17 @@ export default function ErrorAdmin() {
     );
   }
 
-  return <Box className="App">{wait}</Box>;
+  return (
+    <Box className="App">
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Portal Metadata Tasks"
+          context={taskContext}
+          taskIds={["manage-portal-metadata"]}
+          maxActions={1}
+        />
+      </Box>
+      {wait}
+    </Box>
+  );
 }

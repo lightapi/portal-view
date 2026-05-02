@@ -6,7 +6,6 @@ import {
   Menu as MenuIcon,
   MenuOpen as MenuOpenIcon,
   NotificationsNone as NotificationsIcon,
-  Search as SearchIcon,
   Toc as OrderIcon,
 } from "@mui/icons-material";
 import AccountBox from "@mui/icons-material/AccountBox";
@@ -40,13 +39,14 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined';
 import SchemaIcon from "@mui/icons-material/Schema";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import RouterOutlinedIcon from '@mui/icons-material/RouterOutlined';
-import { Box, IconButton, InputBase, List, Typography } from "@mui/material";
+import { Box, IconButton, List, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -56,7 +56,6 @@ import {
   useLayoutDispatch,
   useLayoutState,
 } from "../../contexts/LayoutContext";
-import { useSiteDispatch } from "../../contexts/SiteContext";
 import { useUserState } from "../../contexts/UserContext";
 // api
 import { apiPost } from "../../api/apiPost";
@@ -66,6 +65,7 @@ import HomeMenu from "../Header/HomeMenu";
 import MailMenu from "../Header/MailMenu";
 import NotificationMenu from "../Header/NotificationMenu";
 import ProfileMenu from "../Header/ProfileMenu";
+import TaskCommandPalette from "../../tasks/TaskCommandPalette";
 // components
 import SidebarLink from "./components/SidebarLink/SidebarLink";
 // styles
@@ -78,6 +78,7 @@ import {
 
 const structure = [
   { id: 0, label: "Home", link: "/app/dashboard", icon: <HomeIcon /> },
+  { id: 1, label: "Tasks", link: "/app/tasks", icon: <FactCheckOutlinedIcon /> },
 
   // ── Guided Setup ──────────────────────────────────────
   {
@@ -243,17 +244,12 @@ function Sidebar() {
   var { isSidebarOpened } = useLayoutState() as any;
   var layoutDispatch = useLayoutDispatch();
   var { roles, isAuthenticated, host } = useUserState();
-  var siteDispatch: any = useSiteDispatch();
   const location = useLocation();
 
   // local
   var [isPermanent, setPermanent] = useState(true);
   var [domain, setDomain] = useState<string | null>(null);
   var [subDomain, setSubDomain] = useState<string | null>(null);
-
-  const changeFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
-    siteDispatch({ type: "UPDATE_FILTER", filter: e.target.value });
-  };
 
   useEffect(() => {
     if (isAuthenticated && host) {
@@ -341,15 +337,11 @@ function Sidebar() {
       </SidebarListWrapper>
       <SidebarFooter>
         {isSidebarOpened && (
-          <Box sx={{ display: "flex", alignItems: "center", px: 1, pb: 0.5, borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
-            <SearchIcon sx={{ fontSize: 20, mr: 1, flexShrink: 0, color: "text.secondary" }} />
-            <InputBase
-              placeholder="Search…"
-              onChange={changeFilter}
-              sx={{ flex: 1, fontSize: 14 }}
-            />
+          <Box sx={{ pb: 0.5 }}>
+            <TaskCommandPalette />
           </Box>
         )}
+        {!isSidebarOpened && <TaskCommandPalette collapsed />}
         <Box
           sx={{
             display: "flex",

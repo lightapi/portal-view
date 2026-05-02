@@ -22,6 +22,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ProductVersionApiResponse = {
@@ -67,7 +69,20 @@ export default function ProductVersionAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialData = location.state?.data || {};
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      productId: initialData.productId ?? '',
+      productVersionId: initialData.productVersionId ?? '',
+    }),
+    [host, initialData.productId, initialData.productVersionId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionType[]>([]);
@@ -182,7 +197,11 @@ export default function ProductVersionAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateProductVersion', {
+      navigate(buildTaskAwareRoute('/app/form/updateProductVersion', searchParams, {
+        ...taskContext,
+        productId: row.original.productId,
+        productVersionId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -194,7 +213,7 @@ export default function ProductVersionAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionType>[]>(
@@ -290,19 +309,31 @@ export default function ProductVersionAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete Product Version"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-        <Tooltip title="Version Configs"><IconButton onClick={() => navigate('/app/config/configProductVersion', { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-        <Tooltip title="Environments"><IconButton onClick={() => navigate('/app/product/environment', { state: { data: { productVersionId: row.original.productVersionId } } })}><LanguageIcon /></IconButton></Tooltip>
-        <Tooltip title="Pipelines"><IconButton onClick={() => navigate('/app/product/pipeline', { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
-        <Tooltip title="Product Configs"><IconButton onClick={() => navigate('/app/product/config', { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
-        <Tooltip title="Product Properties"><IconButton onClick={() => navigate('/app/product/property', { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
+        <Tooltip title="Version Configs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
+        <Tooltip title="Environments"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/environment', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { productVersionId: row.original.productVersionId, productId: row.original.productId } } })}><LanguageIcon /></IconButton></Tooltip>
+        <Tooltip title="Pipelines"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/pipeline', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
+        <Tooltip title="Product Configs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/config', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
+        <Tooltip title="Product Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/property', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createProductVersion')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createProductVersion', searchParams, taskContext))}>
         Create New Version
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Product Release Tasks"
+          context={taskContext}
+          taskIds={['manage-product-release', 'manage-configuration', 'manage-deployment']}
+          maxActions={3}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RoleColFilterApiResponse = {
@@ -46,7 +48,16 @@ export default function RoleColFilter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialRoleId = location.state?.data?.roleId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialRoleId = location.state?.data?.roleId ?? searchContext.roleId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      roleId: initialRoleId ?? '',
+    }),
+    [host, initialRoleId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RoleColFilterType[]>([]);
@@ -161,7 +172,12 @@ export default function RoleColFilter() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateRoleColFilter', {
+      navigate(buildTaskAwareRoute('/app/form/updateRoleColFilter', searchParams, {
+        ...taskContext,
+        roleId,
+        apiVersionId: row.original.apiVersionId,
+        endpointId: row.original.endpointId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -173,7 +189,7 @@ export default function RoleColFilter() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleColFilterType>[]>(
@@ -248,7 +264,10 @@ export default function RoleColFilter() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRoleColFilter', { state: { data: { roleId: initialRoleId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createRoleColFilter', searchParams, taskContext),
+            { state: { data: { roleId: initialRoleId } } },
+          )}
         >
           Create New Filter
         </Button>
@@ -261,5 +280,17 @@ export default function RoleColFilter() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Filter Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -26,6 +26,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // Define the shape of the API response
 type InstanceApiResponse = {
@@ -74,7 +76,14 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 
 export default function InstanceAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as { host: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<InstanceType[]>([]);
@@ -188,7 +197,14 @@ export default function InstanceAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateInstance', {
+      navigate(buildTaskAwareRoute('/app/form/updateInstance', searchParams, {
+        ...taskContext,
+        hostId: row.original.hostId,
+        instanceId,
+        productId: row.original.productId ?? '',
+        productVersionId: row.original.productVersionId ?? '',
+        serviceId: row.original.serviceId ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -200,7 +216,7 @@ export default function InstanceAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceType>[]>(
@@ -257,6 +273,16 @@ export default function InstanceAdmin() {
     [],
   );
 
+  const contextForRow = useCallback((row: InstanceType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    instanceId: row.instanceId,
+    productId: row.productId ?? '',
+    productVersionId: row.productVersionId ?? '',
+    serviceId: row.serviceId ?? '',
+    environment: row.environment ?? '',
+  }), [taskContext]);
+
   // Table instance configuration
   const table = useMaterialReactTable({
     columns,
@@ -291,7 +317,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Snapshot">
           <IconButton
             onClick={() =>
-              navigate('/app/config/configSnapshot', {
+              navigate(buildTaskAwareRoute('/app/config/configSnapshot', searchParams, contextForRow(row.original)), {
                 state: { data: { instanceId: row.original.instanceId } },
               })
             }
@@ -302,7 +328,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Config">
           <IconButton
             onClick={() =>
-              navigate('/app/config/configInstance', {
+              navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, contextForRow(row.original)), {
                 state: { data: { instanceId: row.original.instanceId } },
               })
             }
@@ -313,7 +339,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Config File">
           <IconButton
             onClick={() =>
-              navigate('/app/config/configInstanceFile', {
+              navigate(buildTaskAwareRoute('/app/config/configInstanceFile', searchParams, contextForRow(row.original)), {
                 state: { data: { instanceId: row.original.instanceId } },
               })
             }
@@ -324,7 +350,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Instance APIs">
           <IconButton
             onClick={() =>
-              navigate('/app/instance/InstanceApi', { state: { data: { ...row.original } } })
+              navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
             }
           >
             <ApiIcon />
@@ -333,7 +359,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Create OAuth Client">
           <IconButton
             onClick={() =>
-              navigate('/app/form/createClient', { state: { data: { hostId: row.original.hostId, instanceId: row.original.instanceId } } })
+              navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, instanceId: row.original.instanceId } } })
             }
           >
             <VpnKeyIcon />
@@ -342,7 +368,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Instance Apps">
           <IconButton
             onClick={() =>
-              navigate('/app/instance/InstanceApp', { state: { data: { ...row.original } } })
+              navigate(buildTaskAwareRoute('/app/instance/InstanceApp', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
             }
           >
             <AppsIcon />
@@ -351,7 +377,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Instance App API">
           <IconButton
             onClick={() =>
-              navigate('/app/instance/InstanceAppApi', { state: { data: { ...row.original } } })
+              navigate(buildTaskAwareRoute('/app/instance/InstanceAppApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
             }
           >
             <FormatIndentIncreaseIcon />
@@ -360,7 +386,7 @@ export default function InstanceAdmin() {
         <Tooltip title="Deployment">
           <IconButton
             onClick={() =>
-              navigate('/app/deployment/instance', { state: { data: { ...row.original } } })
+              navigate(buildTaskAwareRoute('/app/deployment/instance', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
             }
           >
             <InstallDesktopIcon />
@@ -374,11 +400,23 @@ export default function InstanceAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createInstance')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstance', searchParams, taskContext))}>
         Create New Instance
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={['manage-instance', 'manage-deployment', 'manage-configuration']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

@@ -2,15 +2,23 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
 import { useUserState } from '../../contexts/UserContext';
 import { useApiGet } from '../../hooks/useApiGet';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { email } = useUserState();
+  const [searchParams] = useSearchParams();
+  const { email, userId } = useUserState();
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { userId: userId ?? '', accountSection: 'profile' }),
+    [searchContext, userId],
+  );
 
   const cmd = {
     host: 'lightapi.net',
@@ -32,7 +40,7 @@ export default function Profile() {
   };
 
   const editProfile = () => {
-    navigate('/app/form/updateProfile', {
+    navigate(buildTaskAwareRoute('/app/form/updateProfile', searchParams, taskContext), {
       state: { data },
     });
   };
@@ -53,6 +61,14 @@ export default function Profile() {
         bodySx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
         sx={{ minHeight: '100%' }}
       >
+        <Box sx={{ mb: 2 }}>
+          <TaskActionPanel
+            title="Account Tasks"
+            context={taskContext}
+            taskIds={['manage-my-account']}
+            maxActions={1}
+          />
+        </Box>
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
           <Button variant="contained" color="primary" onClick={editProfile}>
             Edit

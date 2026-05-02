@@ -19,6 +19,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ServiceApiResponse = {
@@ -64,6 +66,12 @@ export default function Service() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ServiceType[]>([]);
@@ -170,14 +178,18 @@ export default function Service() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate('/app/form/updateApi', { state: { data: freshData, source: location.pathname } });
+      navigate(buildTaskAwareRoute('/app/form/updateApi', searchParams, {
+        ...taskContext,
+        hostId: row.original.hostId,
+        apiId,
+      }), { state: { data: freshData, source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch api for update:", error);
       alert("Could not load the latest api data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ServiceType>[]>(
@@ -207,6 +219,12 @@ export default function Service() {
     [],
   );
 
+  const contextForRow = useCallback((row: ServiceType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    apiId: row.apiId,
+  }), [taskContext]);
+
   // Table instance configuration
   const table = useMaterialReactTable({
     columns,
@@ -228,7 +246,7 @@ export default function Service() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.5rem' }}>
         <Tooltip title="Details">
-          <IconButton onClick={() => navigate('/app/apiDetail', { state: { service: row.original } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/apiDetail', searchParams, contextForRow(row.original)), { state: { service: row.original } })}>
             <DetailsIcon />
           </IconButton>
         </Tooltip>
@@ -238,7 +256,7 @@ export default function Service() {
           </IconButton>
         </Tooltip>
         <Tooltip title="OAuth Clients">
-          <IconButton onClick={() => navigate('/app/client', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
             <AirlineSeatReclineNormalIcon />
           </IconButton>
         </Tooltip>
@@ -250,11 +268,23 @@ export default function Service() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createApi')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createApi', searchParams, taskContext))}>
         Create New Api
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="API Tasks"
+        context={taskContext}
+        taskIds={['publish-api', 'mcp-onboard-api', 'register-standalone-mcp-server']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

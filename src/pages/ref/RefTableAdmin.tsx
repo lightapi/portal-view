@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -17,6 +17,8 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RefTableApiResponse = {
@@ -41,7 +43,14 @@ interface UserState {
 
 export default function RefTableAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RefTableType[]>([]);
@@ -167,6 +176,12 @@ export default function RefTableAdmin() {
     [],
   );
 
+  const contextForRow = useCallback((row: RefTableType) => ({
+    ...taskContext,
+    hostId: row.hostId ?? host ?? '',
+    tableId: row.tableId,
+  }), [host, taskContext]);
+
   // Table instance configuration
   const table = useMaterialReactTable({
     columns,
@@ -188,7 +203,7 @@ export default function RefTableAdmin() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
-          <IconButton onClick={() => navigate('/app/form/updateRefTable', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefTable', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
@@ -198,18 +213,30 @@ export default function RefTableAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Values">
-          <IconButton onClick={() => navigate('/app/ref/value', { state: { data: { tableId: row.original.tableId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/value', searchParams, contextForRow(row.original)), { state: { data: { tableId: row.original.tableId } } })}>
             <DataObjectIcon />
           </IconButton>
         </Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRefTable')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefTable', searchParams, taskContext))}>
         Create New Ref Table
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Reference Data Tasks"
+        context={taskContext}
+        taskIds={['manage-reference-data', 'portal-snapshot-migration']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

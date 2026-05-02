@@ -17,6 +17,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigInstanceAppApiApiResponse = {
@@ -65,9 +67,20 @@ export default function ConfigInstanceAppApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialConfigId = location.state?.data?.configId;
-  const initialInstanceAppId = location.state?.data?.instanceAppId;
-  const initialInstanceApiId = location.state?.data?.instanceApiId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialConfigId = location.state?.data?.configId ?? searchContext.configId;
+  const initialInstanceAppId = location.state?.data?.instanceAppId ?? searchContext.instanceAppId;
+  const initialInstanceApiId = location.state?.data?.instanceApiId ?? searchContext.instanceApiId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      configId: initialConfigId ?? '',
+      instanceAppId: initialInstanceAppId ?? '',
+      instanceApiId: initialInstanceApiId ?? '',
+    }),
+    [host, initialConfigId, initialInstanceApiId, initialInstanceAppId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceAppApiType[]>([]);
@@ -185,7 +198,17 @@ export default function ConfigInstanceAppApi() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigInstanceAppApi', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigInstanceAppApi', searchParams, {
+        ...taskContext,
+        instanceAppId: row.original.instanceAppId,
+        instanceApiId: row.original.instanceApiId,
+        instanceId: row.original.instanceId,
+        apiVersionId: row.original.apiVersionId,
+        apiId: row.original.apiId,
+        appId: row.original.appId,
+        configId: row.original.configId,
+        propertyId: row.original.propertyId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -197,7 +220,7 @@ export default function ConfigInstanceAppApi() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceAppApiType>[]>(
@@ -279,7 +302,10 @@ export default function ConfigInstanceAppApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceAppApi', { state: { data: { instanceApiId: initialInstanceApiId, instanceAppId: initialInstanceAppId, configId: initialConfigId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigInstanceAppApi', searchParams, taskContext),
+            { state: { data: { instanceApiId: initialInstanceApiId, instanceAppId: initialInstanceAppId, configId: initialConfigId } } },
+          )}
           disabled={!initialConfigId && !initialInstanceApiId && !initialInstanceAppId}
         >
           Add Property to Instance App Api
@@ -303,5 +329,17 @@ export default function ConfigInstanceAppApi() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // Define the shape of the API response
 type InstanceApiPathPrefixApiResponse = {
@@ -44,9 +46,35 @@ export default function InstanceApiPathPrefix() {
   const location = useLocation();
   const userState = useUserState();
   const host = userState?.host || '';
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
 
   // Contextual data from previous page, used for creating a new prefix
-  const contextData = location.state?.data;
+  const contextData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host,
+      instanceApiId: contextData.instanceApiId ?? '',
+      instanceId: contextData.instanceId ?? '',
+      productId: contextData.productId ?? '',
+      apiVersionId: contextData.apiVersionId ?? '',
+      apiId: contextData.apiId ?? '',
+      pathPrefix: contextData.pathPrefix ?? '',
+    }),
+    [
+      contextData.apiId,
+      contextData.apiVersionId,
+      contextData.instanceApiId,
+      contextData.instanceId,
+      contextData.pathPrefix,
+      contextData.productId,
+      host,
+      searchContext,
+    ],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<InstanceApiPathPrefixType[]>([]);
@@ -150,14 +178,28 @@ export default function InstanceApiPathPrefix() {
 
   const handleCreate = (instanceApiId?: string, instanceName?: string, productId?: string, apiId?: string, apiVersion?: string) => {
     if (instanceApiId) {
-      navigate('/app/form/createInstanceApiPathPrefix', { state: { data: { instanceApiId, instanceName, productId, apiId, apiVersion } } });
+      const nextContext = mergeTaskContext(taskContext, {
+        instanceApiId,
+        productId: productId ?? '',
+        apiId: apiId ?? '',
+      });
+      navigate(buildTaskAwareRoute('/app/form/createInstanceApiPathPrefix', searchParams, nextContext), { state: { data: { instanceApiId, instanceName, productId, apiId, apiVersion } } });
     } else {
       console.error("Cannot create: instanceApiId is missing from context.");
     }
   };
 
   const handleUpdate = (rowData: InstanceApiPathPrefixType) => {
-    navigate('/app/form/updateInstanceApiPathPrefix', { state: { data: rowData } });
+    navigate(buildTaskAwareRoute('/app/form/updateInstanceApiPathPrefix', searchParams, {
+      ...taskContext,
+      hostId: rowData.hostId,
+      instanceApiId: rowData.instanceApiId,
+      instanceId: rowData.instanceId,
+      productId: rowData.productId,
+      apiVersionId: rowData.apiVersionId,
+      apiId: rowData.apiId,
+      pathPrefix: rowData.pathPrefix,
+    }), { state: { data: rowData } });
   };
 
   const handleDelete = useCallback(async (row: MRT_Row<InstanceApiPathPrefixType>) => {
@@ -264,5 +306,17 @@ export default function InstanceApiPathPrefix() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={['manage-instance', 'mcp-onboard-api']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

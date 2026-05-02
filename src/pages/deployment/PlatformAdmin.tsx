@@ -17,6 +17,8 @@ import GridGoldenratioIcon from '@mui/icons-material/GridGoldenratio';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PlatformApiResponse = {
@@ -54,6 +56,12 @@ export default function PlatformAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<PlatformType[]>([]);
@@ -63,11 +71,12 @@ export default function PlatformAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
-      { id: 'active', value: 'true' }
-    ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (searchContext.platformId) initialFilters.push({ id: 'platformId', value: searchContext.platformId });
+    if (searchContext.environment) initialFilters.push({ id: 'environment', value: searchContext.environment });
+    return initialFilters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -164,7 +173,11 @@ export default function PlatformAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updatePlatform', {
+      navigate(buildTaskAwareRoute('/app/form/updatePlatform', searchParams, {
+        ...taskContext,
+        platformId,
+        environment: row.original.environment ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -176,7 +189,7 @@ export default function PlatformAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PlatformType>[]>(
@@ -247,7 +260,7 @@ export default function PlatformAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Pipelines">
-          <IconButton onClick={() => navigate('/app/deployment/PipelineAdmin', { state: { data: { platformId: row.original.platformId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/deployment/PipelineAdmin', searchParams, { ...taskContext, platformId: row.original.platformId }), { state: { data: { platformId: row.original.platformId } } })}>
             <GridGoldenratioIcon />
           </IconButton>
         </Tooltip>
@@ -259,11 +272,23 @@ export default function PlatformAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPlatform')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createPlatform', searchParams, taskContext))}>
         Create New Platform
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Deployment Tasks"
+          context={taskContext}
+          taskIds={['manage-deployment']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

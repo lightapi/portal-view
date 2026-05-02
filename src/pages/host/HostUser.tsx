@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -12,9 +12,10 @@ import {
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import { useUserState } from "../../contexts/UserContext.tsx";
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from "../../utils/fetchClient";
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type UserHostApiResponse = {
@@ -37,17 +38,16 @@ type UserHostType = {
   aggregateVersion?: number;
 };
 
-interface UserState {
-  host?: string;
-}
-
 export default function HostUser() {
   const navigate = useNavigate();
   const location = useLocation();
-  // We still get the user's context host, but it's not the primary ID for the query anymore.
-  const { host: userContextHost } = useUserState() as UserState;
-  const initialHostId = location.state?.data?.hostId;
-  console.log("initialHostId = ", initialHostId);
+  const [searchParams] = useSearchParams();
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialHostId = location.state?.data?.hostId || searchContext.hostId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: initialHostId ?? '' }),
+    [initialHostId, searchContext],
+  );
   // Data and fetching state
   const [data, setData] = useState<UserHostType[]>([]);
   const [isError, setIsError] = useState(false);
@@ -217,7 +217,10 @@ export default function HostUser() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createUserHost', { state: { data: { hostId: initialHostId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createUserHost', searchParams, taskContext),
+            { state: { data: { hostId: initialHostId } } },
+          )}
           disabled={!initialHostId}
         >
           Add User to Host
@@ -231,5 +234,17 @@ export default function HostUser() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Host Membership Tasks"
+          context={taskContext}
+          taskIds={['manage-user-host-access']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

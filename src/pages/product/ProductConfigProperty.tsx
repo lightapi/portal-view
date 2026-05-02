@@ -15,6 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 type ProductVersionPropertyApiResponse = {
   productProperties: Array<ProductVersionPropertyType>;
@@ -40,8 +42,20 @@ export default function ProductVersionProperty() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as { host: string };
-  const initialProductVersionId = location.state?.data?.productVersionId;
-  const initialPropertyId = location.state?.data?.propertyId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialProductVersionId = location.state?.data?.productVersionId ?? searchContext.productVersionId;
+  const initialPropertyId = location.state?.data?.propertyId ?? searchContext.propertyId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      productId: location.state?.data?.productId ?? searchContext.productId ?? '',
+      productVersionId: initialProductVersionId ?? '',
+      propertyId: initialPropertyId ?? '',
+      configId: location.state?.data?.configId ?? searchContext.configId ?? '',
+    }),
+    [host, initialProductVersionId, initialPropertyId, location.state, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionPropertyType[]>([]);
@@ -198,7 +212,10 @@ export default function ProductVersionProperty() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProductVersionConfigProperty', { state: { data: { productVersionId: initialProductVersionId, propertyId: initialPropertyId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createProductVersionConfigProperty', searchParams, taskContext),
+            { state: { data: { productVersionId: initialProductVersionId, propertyId: initialPropertyId } } },
+          )}
           disabled={!initialProductVersionId && !initialPropertyId}
         >
           Add Property to Product Version
@@ -217,5 +234,17 @@ export default function ProductVersionProperty() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Product Release Tasks"
+          context={taskContext}
+          taskIds={['manage-product-release', 'manage-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

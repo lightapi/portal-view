@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
 // --- Type Definitions ---
 type AuditLogApiResponse = {
@@ -47,6 +48,12 @@ export default function AuditLog() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
+    const contextForRow = useCallback(
+        (row: AuditLogType) => buildWorkflowTaskContext(host, searchParams, row),
+        [host, searchParams],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<AuditLogType[]>([]);
@@ -139,7 +146,7 @@ export default function AuditLog() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateAuditLog', {
+            navigate(buildWorkflowTaskRoute('/app/form/updateAuditLog', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -151,7 +158,7 @@ export default function AuditLog() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<AuditLogType>[]>(
@@ -218,11 +225,15 @@ export default function AuditLog() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAuditLog')}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createAuditLog', searchParams, taskContext))}>
                 Create New Audit Log
             </Button>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <WorkflowTaskLayout context={taskContext}>
+            <MaterialReactTable table={table} />
+        </WorkflowTaskLayout>
+    );
 }

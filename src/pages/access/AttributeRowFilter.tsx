@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type AttributeRowFilterApiResponse = {
@@ -49,7 +51,16 @@ export default function AttributeRowFilter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialAttributeId = location.state?.data?.attributeId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialAttributeId = location.state?.data?.attributeId ?? searchContext.attributeId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      attributeId: initialAttributeId ?? '',
+    }),
+    [host, initialAttributeId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<AttributeRowFilterType[]>([]);
@@ -162,7 +173,12 @@ export default function AttributeRowFilter() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateAttributeRowFilter', {
+      navigate(buildTaskAwareRoute('/app/form/updateAttributeRowFilter', searchParams, {
+        ...taskContext,
+        attributeId,
+        apiVersionId: row.original.apiVersionId,
+        endpointId: row.original.endpointId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -174,7 +190,7 @@ export default function AttributeRowFilter() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributeRowFilterType>[]>(
@@ -252,7 +268,10 @@ export default function AttributeRowFilter() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createAttributeRowFilter', { state: { data: { attributeId: initialAttributeId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createAttributeRowFilter', searchParams, taskContext),
+            { state: { data: { attributeId: initialAttributeId } } },
+          )}
         >
           Create New Filter
         </Button>
@@ -265,5 +284,17 @@ export default function AttributeRowFilter() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Filter Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type GroupUserApiResponse = {
@@ -48,8 +50,18 @@ export default function GroupUser() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialGroupId = location.state?.data?.groupId;
-  const initialUserId = location.state?.data?.userId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialGroupId = location.state?.data?.groupId ?? searchContext.groupId;
+  const initialUserId = location.state?.data?.userId ?? searchContext.userId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      groupId: initialGroupId ?? '',
+      userId: initialUserId ?? '',
+    }),
+    [host, initialGroupId, initialUserId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<GroupUserType[]>([]);
@@ -161,7 +173,11 @@ export default function GroupUser() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateGroupUser', {
+      navigate(buildTaskAwareRoute('/app/form/updateGroupUser', searchParams, {
+        ...taskContext,
+        groupId,
+        userId: row.original.userId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -173,7 +189,7 @@ export default function GroupUser() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<GroupUserType>[]>(
@@ -250,7 +266,10 @@ export default function GroupUser() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createGroupUser', { state: { data: { groupId: initialGroupId, userId: initialUserId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createGroupUser', searchParams, taskContext),
+            { state: { data: { groupId: initialGroupId, userId: initialUserId } } },
+          )}
         >
           Add User to Group
         </Button>
@@ -268,5 +287,17 @@ export default function GroupUser() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Assignment Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control', 'manage-user-host-access']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -1,9 +1,10 @@
 import Button from '@mui/material/Button';
 import { Box } from '@mui/material';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import ReactMapGL, { Marker, Popup } from 'react-map-gl';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import useSupercluster from 'use-supercluster';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // Define your own FlyToInterpolator component
 const FlyToInterpolator = (props: any) => {
@@ -24,7 +25,12 @@ const FlyToInterpolator = (props: any) => {
 export default function LiveMap() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const data = location.state?.data;
+  const taskContext = useMemo(
+    () => mergeTaskContext(contextFromSearchParams(searchParams), { contentType: 'message' }),
+    [searchParams],
+  );
   
   const [viewport, setViewport] = useState({
     latitude: data?.map?.latitude || 0,
@@ -56,7 +62,7 @@ export default function LiveMap() {
   const SIZE = 20;
 
   const pm = (id: string) => {
-    navigate('/app/form/privateMessage', {
+    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { userId: id })), {
       state: { data: { userId: id } },
     });
   };

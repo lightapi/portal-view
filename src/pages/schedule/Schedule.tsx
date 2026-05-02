@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -17,6 +17,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ScheduleApiResponse = {
@@ -60,10 +62,20 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function Schedule() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { host, userId, email } = useUserState() as UserState;
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   
   // Determine if we are in admin mode based on the URL path
   const isAdminView = location.pathname.includes('/admin');
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', userId: userId ?? '', metadataType: 'schedule' }),
+    [host, searchContext, userId],
+  );
+  const contextForRow = useCallback(
+    (row: ScheduleType) => mergeTaskContext(taskContext, contextFromObject(row)),
+    [taskContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ScheduleType[]>([]);
@@ -182,14 +194,17 @@ export default function Schedule() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate('/app/form/updateSchedule', { state: { data: freshData, source: location.pathname } });
+      navigate(
+        buildTaskAwareRoute('/app/form/updateSchedule', searchParams, contextForRow(row.original)),
+        { state: { data: freshData, source: location.pathname } },
+      );
     } catch (error) {
       console.error("Failed to fetch schedule for update:", error);
       alert("Could not load the latest schedule data. Please try again.");
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [contextForRow, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ScheduleType>[]>(
@@ -256,7 +271,7 @@ export default function Schedule() {
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createSchedule')}>
+        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createSchedule', searchParams, taskContext))}>
           Create New Schedule
         </Button>
         {!isAdminView && (
@@ -273,5 +288,17 @@ export default function Schedule() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Portal Metadata Tasks"
+          context={taskContext}
+          taskIds={['manage-portal-metadata']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

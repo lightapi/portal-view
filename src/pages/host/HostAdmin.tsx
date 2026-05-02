@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -17,6 +17,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PersonIcon from '@mui/icons-material/Person';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { useUserState } from '../../contexts/UserContext';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // Define the shape of the API response
 type HostApiResponse = {
@@ -40,6 +43,9 @@ type HostType = {
 export default function HostAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { host } = useUserState() as { host?: string };
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<HostType[]>([]);
@@ -183,7 +189,7 @@ export default function HostAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateHost', {
+      navigate(buildTaskAwareRoute('/app/form/updateHost', searchParams, { hostId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -195,7 +201,7 @@ export default function HostAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<HostType>[]>(
@@ -272,12 +278,22 @@ export default function HostAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Details">
-          <IconButton onClick={() => navigate('/app/host/hostDetail', { state: { data: { hostId: row.original.hostId } } })}>
+          <IconButton
+            onClick={() => navigate(
+              buildTaskAwareRoute('/app/host/hostDetail', searchParams, { hostId: row.original.hostId }),
+              { state: { data: { hostId: row.original.hostId } } },
+            )}
+          >
             <SettingsIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Host Users">
-          <IconButton onClick={() => navigate('/app/host/hostUser', { state: { data: { hostId: row.original.hostId } } })}>
+          <IconButton
+            onClick={() => navigate(
+              buildTaskAwareRoute('/app/host/hostUser', searchParams, { hostId: row.original.hostId }),
+              { state: { data: { hostId: row.original.hostId } } },
+            )}
+          >
             <PersonIcon />
           </IconButton>
         </Tooltip>
@@ -288,12 +304,24 @@ export default function HostAdmin() {
       <Button
         variant="contained"
         startIcon={<AddBoxIcon />}
-        onClick={() => navigate('/app/form/createHost')}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/createHost', searchParams, taskContext))}
       >
         Create New Host
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Host And User Tasks"
+          context={taskContext}
+          taskIds={['manage-user-host-access']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

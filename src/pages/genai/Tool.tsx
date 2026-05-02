@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -49,6 +50,12 @@ export default function Tool() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContext = useMemo(() => buildGenAiTaskContext(host, searchParams), [host, searchParams]);
+    const contextForRow = useCallback(
+        (row: ToolType) => buildGenAiTaskContext(host, searchParams, row),
+        [host, searchParams],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<ToolType[]>([]);
@@ -155,7 +162,7 @@ export default function Tool() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateTool', {
+            navigate(buildGenAiTaskRoute('/app/form/updateTool', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -167,7 +174,7 @@ export default function Tool() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ToolType>[]>(
@@ -235,11 +242,15 @@ export default function Tool() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createTool')}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createTool', searchParams, taskContext))}>
                 Create New Tool
             </Button>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <GenAiTaskLayout context={taskContext}>
+            <MaterialReactTable table={table} />
+        </GenAiTaskLayout>
+    );
 }

@@ -17,6 +17,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PipelineApiResponse = {
@@ -64,7 +66,16 @@ export default function PipelineAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialPlatformId = location.state?.data?.platformId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialPlatformId = location.state?.data?.platformId ?? searchContext.platformId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      platformId: initialPlatformId ?? '',
+    }),
+    [host, initialPlatformId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<PipelineType[]>([]);
@@ -183,7 +194,13 @@ export default function PipelineAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updatePipeline', {
+      navigate(buildTaskAwareRoute('/app/form/updatePipeline', searchParams, {
+        ...taskContext,
+        platformId: row.original.platformId,
+        pipelineId,
+        systemEnv: row.original.systemEnv,
+        runtimeEnv: row.original.runtimeEnv ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -195,7 +212,7 @@ export default function PipelineAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PipelineType>[]>(
@@ -287,11 +304,30 @@ export default function PipelineAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPipeline')}>
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => navigate(
+          buildTaskAwareRoute('/app/form/createPipeline', searchParams, taskContext),
+          { state: { data: { platformId: initialPlatformId } } },
+        )}
+      >
         Create New Pipeline
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Deployment Tasks"
+          context={taskContext}
+          taskIds={['manage-deployment']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

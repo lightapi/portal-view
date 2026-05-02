@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -17,6 +17,8 @@ import LinkIcon from '@mui/icons-material/Link';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RelationTypeApiResponse = {
@@ -39,7 +41,14 @@ interface UserState {
 
 export default function RelationTypeAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RelationType[]>([]);
@@ -133,6 +142,12 @@ export default function RelationTypeAdmin() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: RelationType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    relationId: row.relationId,
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RelationType>[]>(
     () => [
@@ -179,7 +194,7 @@ export default function RelationTypeAdmin() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
-          <IconButton onClick={() => navigate('/app/form/updateRefRelationType', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefRelationType', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
@@ -189,18 +204,30 @@ export default function RelationTypeAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Relations">
-          <IconButton onClick={() => navigate('/app/ref/relation', { state: { data: { relationId: row.original.relationId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/relation', searchParams, contextForRow(row.original)), { state: { data: { relationId: row.original.relationId } } })}>
             <LinkIcon />
           </IconButton>
         </Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createRefRelationType')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefRelationType', searchParams, taskContext))}>
         Create New Relation Type
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Reference Data Tasks"
+        context={taskContext}
+        taskIds={['manage-reference-data', 'portal-snapshot-migration']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

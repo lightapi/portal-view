@@ -16,6 +16,8 @@ import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type InstanceAppApiApiResponse = {
@@ -46,7 +48,35 @@ export default function InstanceAppApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as { host: string };
-  const initialData = location.state?.data || {};
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      instanceId: initialData.instanceId ?? '',
+      instanceAppId: initialData.instanceAppId ?? '',
+      instanceApiId: initialData.instanceApiId ?? '',
+      productId: initialData.productId ?? '',
+      appId: initialData.appId ?? '',
+      apiVersionId: initialData.apiVersionId ?? '',
+      apiId: initialData.apiId ?? '',
+    }),
+    [
+      host,
+      initialData.apiId,
+      initialData.apiVersionId,
+      initialData.appId,
+      initialData.instanceApiId,
+      initialData.instanceAppId,
+      initialData.instanceId,
+      initialData.productId,
+      searchContext,
+    ],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<InstanceAppApiType[]>([]);
@@ -148,6 +178,18 @@ export default function InstanceAppApi() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: InstanceAppApiType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    instanceId: row.instanceId ?? '',
+    instanceAppId: row.instanceAppId,
+    instanceApiId: row.instanceApiId,
+    productId: row.productId ?? '',
+    appId: row.appId ?? '',
+    apiVersionId: row.apiVersionId ?? '',
+    apiId: row.apiId ?? '',
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceAppApiType>[]>(
     () => [
@@ -178,7 +220,7 @@ export default function InstanceAppApi() {
         id: 'config', header: 'Config', enableSorting: false, enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Config Properties"><IconButton onClick={() => navigate('/app/config/configInstanceAppApi', { state: { data: { instanceAppId: row.original.instanceAppId, instanceApiId: row.original.instanceApiId } } })}><AddToDriveIcon /></IconButton></Tooltip>
+            <Tooltip title="Config Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceAppApi', searchParams, contextForRow(row.original)), { state: { data: { instanceAppId: row.original.instanceAppId, instanceApiId: row.original.instanceApiId } } })}><AddToDriveIcon /></IconButton></Tooltip>
           </Box>
         ),
       },
@@ -208,7 +250,7 @@ export default function InstanceAppApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createInstanceAppApi', { state: { data: initialData } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstanceAppApi', searchParams, taskContext), { state: { data: initialData } })}
           disabled={!initialData.instanceId}
         >
           Create New Association
@@ -222,5 +264,17 @@ export default function InstanceAppApi() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={['manage-instance', 'manage-configuration']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

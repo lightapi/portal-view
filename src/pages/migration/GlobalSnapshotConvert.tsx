@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Alert,
@@ -20,6 +20,13 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import fetchClient from "../../utils/fetchClient";
 import downloadJson from "../../utils/downloadJson";
 import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import type { TaskResolvedContext } from "../../tasks/types";
+import {
+  mergeTaskContext,
+  saveStoredTaskContext,
+  taskContextFromSearch,
+} from "../../tasks/taskUtils";
 
 type HostType = {
   hostId: string;
@@ -37,15 +44,43 @@ export default function GlobalSnapshotConvert() {
   const location = useLocation();
   const routeState = (location.state || {}) as LocationState;
   const { host: userHost } = useUserState() as { host?: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const taskContextState = useMemo(() => taskContextFromSearch(searchParams), [searchParams]);
 
   const [hosts, setHosts] = useState<HostType[]>([]);
-  const [targetHostId, setTargetHostId] = useState(userHost || "");
+  const [targetHostId, setTargetHostId] = useState(taskContextState?.context.targetHostId || userHost || "");
   const [snapshotText, setSnapshotText] = useState("");
   const [result, setResult] = useState("");
   const [loadingHosts, setLoadingHosts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [debugSteps, setDebugSteps] = useState<string[]>([]);
+  const routeSnapshotLoaded = useRef(false);
+
+  const taskActionContext = useMemo(
+    () => mergeTaskContext(
+      taskContextState?.context ?? {},
+      {
+        targetHostId,
+        snapshotExportReady: !!snapshotText || !!taskContextState?.context.snapshotExportReady,
+        snapshotConverted: !!result || !!taskContextState?.context.snapshotConverted,
+      },
+    ),
+    [result, snapshotText, targetHostId, taskContextState?.context],
+  );
+
+  const buildSnapshotTaskContext = useCallback(
+    (updates: TaskResolvedContext = {}) => mergeTaskContext(
+      taskContextState?.context ?? {},
+      {
+        targetHostId,
+        snapshotExportReady: !!snapshotText || !!taskContextState?.context.snapshotExportReady,
+        snapshotConverted: !!result || !!taskContextState?.context.snapshotConverted,
+      },
+      updates,
+    ),
+    [result, snapshotText, targetHostId, taskContextState?.context],
+  );
 
   const pushDebugStep = (message: string) => {
     const stamped = `${new Date().toISOString()}  ${message}`;
@@ -56,7 +91,8 @@ export default function GlobalSnapshotConvert() {
   };
 
   useEffect(() => {
-    if (!routeState.snapshotStorageKey) return;
+    if (!routeState.snapshotStorageKey || routeSnapshotLoaded.current) return;
+    routeSnapshotLoaded.current = true;
 
     const storedSnapshot = sessionStorage.getItem(routeState.snapshotStorageKey);
     if (!storedSnapshot) {
@@ -66,7 +102,22 @@ export default function GlobalSnapshotConvert() {
 
     setSnapshotText(storedSnapshot);
     sessionStorage.removeItem(routeState.snapshotStorageKey);
-  }, [routeState.snapshotStorageKey]);
+    if (taskContextState) {
+      saveStoredTaskContext(
+        taskContextState.taskId,
+        mergeTaskContext(
+          taskContextState.context,
+          { targetHostId, snapshotExportReady: true },
+        ),
+      );
+    }
+  }, [routeState.snapshotStorageKey, targetHostId, taskContextState]);
+
+  useEffect(() => {
+    if (taskContextState?.context.targetHostId) {
+      setTargetHostId(taskContextState.context.targetHostId);
+    }
+  }, [taskContextState?.context.targetHostId]);
 
   useEffect(() => {
     const loadHosts = async () => {
@@ -117,6 +168,12 @@ export default function GlobalSnapshotConvert() {
       setError("");
       setSnapshotText(text);
       setResult("");
+      if (taskContextState) {
+        saveStoredTaskContext(
+          taskContextState.taskId,
+          buildSnapshotTaskContext({ snapshotExportReady: true, snapshotConverted: false }),
+        );
+      }
       pushDebugStep(`Snapshot file loaded into editor (${text.length} characters).`);
     } catch (readError) {
       pushDebugStep(
@@ -176,6 +233,16 @@ export default function GlobalSnapshotConvert() {
       pushDebugStep("Received successful response from convertSnapshotToEvents.");
       const text = JSON.stringify(json, null, 2);
       setResult(text);
+      if (taskContextState) {
+        saveStoredTaskContext(
+          taskContextState.taskId,
+          buildSnapshotTaskContext({
+            targetHostId,
+            snapshotExportReady: true,
+            snapshotConverted: true,
+          }),
+        );
+      }
       pushDebugStep(`Rendered converted event list (${text.length} characters).`);
     } catch (err: any) {
       pushDebugStep(`Conversion failed before UI render: ${err?.message || JSON.stringify(err) || err}`);
@@ -207,6 +274,13 @@ export default function GlobalSnapshotConvert() {
             existing CLI or portal event import flow.
           </Typography>
         </Box>
+
+        <TaskActionPanel
+          title="Snapshot Workflow"
+          context={taskActionContext}
+          taskIds={["portal-snapshot-migration"]}
+          maxActions={1}
+        />
 
         <Paper sx={{ p: 3 }}>
           <Stack spacing={3}>

@@ -18,6 +18,8 @@ import CodeOffIcon from '@mui/icons-material/CodeOff';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type InstanceApiApiResponse = {
@@ -51,7 +53,22 @@ export default function InstanceApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as { host: string };
-  const initialData = location.state?.data || {};
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: initialData.hostId ?? host,
+      instanceApiId: initialData.instanceApiId ?? '',
+      instanceId: initialData.instanceId ?? '',
+      apiVersionId: initialData.apiVersionId ?? '',
+      apiId: initialData.apiId ?? '',
+    }),
+    [host, initialData.apiId, initialData.apiVersionId, initialData.hostId, initialData.instanceApiId, initialData.instanceId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<InstanceApiType[]>([]);
@@ -153,6 +170,17 @@ export default function InstanceApi() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: InstanceApiType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    instanceApiId: row.instanceApiId,
+    instanceId: row.instanceId,
+    productId: row.productId ?? '',
+    serviceId: row.serviceId ?? '',
+    apiVersionId: row.apiVersionId,
+    apiId: row.apiId ?? '',
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<InstanceApiType>[]>(
     () => [
@@ -212,17 +240,17 @@ export default function InstanceApi() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance Api Config">
-          <IconButton color="primary" onClick={() => navigate('/app/config/configInstanceApi', { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
             <AddToDriveIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Api Path Prefix">
-          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiPathPrefix', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
+          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApiPathPrefix', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
             <RouteIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance Api MCP Tool">
-          <IconButton color="primary" onClick={() => navigate('/app/instance/instanceApiMcpTool', { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
+          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApiMcpTool', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
             <CodeOffIcon />
           </IconButton>
         </Tooltip>
@@ -233,7 +261,7 @@ export default function InstanceApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createInstanceApi', { state: { data: initialData } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstanceApi', searchParams, taskContext), { state: { data: initialData } })}
           disabled={!initialData.instanceId && !initialData.apiVersionId}
         >
           Create New Instance Api
@@ -252,5 +280,16 @@ export default function InstanceApi() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={["manage-instance", "mcp-onboard-api", "register-standalone-mcp-server", "configure-access-control"]}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

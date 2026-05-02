@@ -21,6 +21,8 @@ import CameraRollIcon from '@mui/icons-material/CameraRoll';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type AttributeApiResponse = {
@@ -45,7 +47,10 @@ interface UserState {
 
 export default function AttributeAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<AttributeType[]>([]);
@@ -154,7 +159,7 @@ export default function AttributeAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateAttribute', {
+      navigate(buildTaskAwareRoute('/app/form/updateAttribute', searchParams, { ...taskContext, attributeId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -166,7 +171,7 @@ export default function AttributeAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributeType>[]>(
@@ -226,22 +231,22 @@ export default function AttributeAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Attribute Permissions">
-          <IconButton onClick={() => navigate('/app/access/attributePermission', { state: { data: { attributeId: row.original.attributeId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
             <DoNotTouchIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Attribute Row Filters">
-          <IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: { data: { attributeId: row.original.attributeId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
             <KeyboardDoubleArrowDownIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Attribute Column Filters">
-          <IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: { data: { attributeId: row.original.attributeId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
             <KeyboardDoubleArrowRightIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate('/app/access/attributeUser', { state: { data: { attributeId: row.original.attributeId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
             <AttributionIcon />
           </IconButton>
         </Tooltip>
@@ -253,11 +258,23 @@ export default function AttributeAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createAttribute')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createAttribute', searchParams, taskContext))}>
         Create New Attribute
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Control Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

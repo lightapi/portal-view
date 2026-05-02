@@ -8,6 +8,9 @@ import {
 } from 'material-react-table';
 import { Box, Tooltip } from '@mui/material';
 import fetchClient from "../../utils/fetchClient";
+import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 type ScopeType = {
   hostId: string;
@@ -31,7 +34,23 @@ const TruncatedCell = <T extends Record<string, any>>({ cell }: { cell: MRT_Cell
 
 export default function ListScope() {
   const location = useLocation();
-  const { hostId, endpointId } = location.state || {};
+  const { host } = useUserState() as { host?: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const state = location.state as Partial<ScopeType> | { data?: Partial<ScopeType> } | null;
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...('data' in (state ?? {}) ? (state as { data?: Partial<ScopeType> }).data : state) }),
+    [searchContext, state],
+  );
+  const hostId = initialData.hostId ?? host ?? '';
+  const endpointId = initialData.endpointId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId,
+      endpointId: endpointId ?? '',
+    }),
+    [endpointId, hostId, searchContext],
+  );
 
   const [data, setData] = useState<ScopeType[]>([]);
   const [isError, setIsError] = useState(false);
@@ -96,5 +115,17 @@ export default function ListScope() {
     state: { isLoading, showAlertBanner: isError },
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Endpoint Tasks"
+        context={taskContext}
+        taskIds={['configure-access-control', 'publish-api', 'mcp-onboard-api']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

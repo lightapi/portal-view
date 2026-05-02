@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     MaterialReactTable,
     useMaterialReactTable,
@@ -26,6 +26,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigSnapshotApiResponse = {
@@ -59,8 +61,18 @@ interface UserState {
 export default function ConfigSnapshot() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { host } = useUserState() as UserState;
-    const initialInstanceId = location.state?.data?.instanceId;
+    const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+    const initialInstanceId = location.state?.data?.instanceId || searchContext.instanceId;
+    const taskContext = useMemo(
+        () => mergeTaskContext(searchContext, { hostId: host ?? '', instanceId: initialInstanceId ?? '' }),
+        [host, initialInstanceId, searchContext],
+    );
+    const contextForRow = useCallback(
+        (row: ConfigSnapshotType) => mergeTaskContext(taskContext, contextFromObject(row)),
+        [taskContext],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<ConfigSnapshotType[]>([]);
@@ -175,7 +187,7 @@ export default function ConfigSnapshot() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateConfigSnapshot', {
+            navigate(buildTaskAwareRoute('/app/form/updateConfigSnapshot', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -187,7 +199,7 @@ export default function ConfigSnapshot() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [host, navigate, location.pathname]);
+    }, [contextForRow, navigate, location.pathname, searchParams]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ConfigSnapshotType>[]>(
@@ -264,52 +276,82 @@ export default function ConfigSnapshot() {
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Snapshot Properties">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <FormatListBulletedIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Snapshot Files">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotFile', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotFile', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <DescriptionIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Deployment Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotDeploymentInstanceProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotDeploymentInstanceProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <InstallMobileIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="API Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceApiProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotInstanceApiProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <ApiIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="App Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotInstanceAppProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <AppsIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="App API Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceAppApiProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotInstanceAppApiProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <FormatIndentIncreaseIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Inst Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotInstanceProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotInstanceProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <TuneIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Env Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotEnvironmentProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotEnvironmentProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <YardIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Prd Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotProductProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotProductProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <Inventory2Icon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="PV Props">
-                    <IconButton onClick={() => navigate('/app/config/configSnapshotProductVersionProperty', { state: { data: row.original } })}>
+                    <IconButton onClick={() => navigate(
+                        buildTaskAwareRoute('/app/config/configSnapshotProductVersionProperty', searchParams, contextForRow(row.original)),
+                        { state: { data: row.original } },
+                    )}>
                         <AddToDriveIcon />
                     </IconButton>
                 </Tooltip>
@@ -320,7 +362,10 @@ export default function ConfigSnapshot() {
                 <Button
                     variant="contained"
                     startIcon={<AddBoxIcon />}
-                    onClick={() => navigate('/app/form/createConfigSnapshot', { state: { data: { instanceId: initialInstanceId } } })}
+                    onClick={() => navigate(
+                        buildTaskAwareRoute('/app/form/createConfigSnapshot', searchParams, taskContext),
+                        { state: { data: { instanceId: initialInstanceId } } },
+                    )}
                     disabled={!initialInstanceId}
                 >
                     Create Config Snapshot
@@ -334,5 +379,17 @@ export default function ConfigSnapshot() {
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <Box sx={{ p: 1 }}>
+            <Box sx={{ mb: 2 }}>
+                <TaskActionPanel
+                    title="Config Snapshot Tasks"
+                    context={taskContext}
+                    taskIds={['capture-config-snapshot', 'manage-instance', 'manage-configuration']}
+                    maxActions={3}
+                />
+            </Box>
+            <MaterialReactTable table={table} />
+        </Box>
+    );
 }

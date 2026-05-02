@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RefRelationApiResponse = {
@@ -44,7 +46,20 @@ export default function RefRelation() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialRelationId = location.state?.data?.relationId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialRelationId = initialData.relationId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      relationId: initialRelationId ?? '',
+    }),
+    [host, initialRelationId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RefRelationType[]>([]);
@@ -144,6 +159,13 @@ export default function RefRelation() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: RefRelationType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    relationId: row.relationId,
+    valueId: row.valueIdFrom,
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefRelationType>[]>(
     () => [
@@ -185,7 +207,7 @@ export default function RefRelation() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Relation">
-          <IconButton onClick={() => navigate('/app/form/updateRefRelation', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefRelation', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
@@ -200,7 +222,7 @@ export default function RefRelation() {
       <Button
         variant="contained"
         startIcon={<AddBoxIcon />}
-        onClick={() => navigate('/app/form/createRefRelation', { state: { data: { relationId: initialRelationId } } })}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefRelation', searchParams, taskContext), { state: { data: { relationId: initialRelationId } } })}
         disabled={!initialRelationId}
       >
         Create New Relation
@@ -208,5 +230,17 @@ export default function RefRelation() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Reference Data Tasks"
+        context={taskContext}
+        taskIds={['manage-reference-data']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

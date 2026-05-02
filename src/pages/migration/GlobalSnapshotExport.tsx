@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
   Box,
@@ -25,6 +25,15 @@ import TransformIcon from "@mui/icons-material/Transform";
 import fetchClient from "../../utils/fetchClient";
 import downloadJson from "../../utils/downloadJson";
 import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import { taskRegistry } from "../../tasks/taskRegistry";
+import type { TaskResolvedContext } from "../../tasks/types";
+import {
+  buildTaskStepRoute,
+  mergeTaskContext,
+  saveStoredTaskContext,
+  taskContextFromSearch,
+} from "../../tasks/taskUtils";
 
 type HostType = {
   hostId: string;
@@ -84,16 +93,47 @@ const SNAPSHOT_STORAGE_KEY_PREFIX = "globalSnapshotExport:";
 
 export default function GlobalSnapshotExport() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host: userHost } = useUserState() as { host?: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const taskContextState = useMemo(() => taskContextFromSearch(searchParams), [searchParams]);
+  const initialSourceHostId = taskContextState?.context.sourceHostId || taskContextState?.context.hostId || userHost || "";
 
   const [hosts, setHosts] = useState<HostType[]>([]);
-  const [sourceHostId, setSourceHostId] = useState(userHost || "");
+  const [sourceHostId, setSourceHostId] = useState(initialSourceHostId);
   const [exportScope, setExportScope] = useState<ExportScope>("host");
   const [entityTypes, setEntityTypes] = useState<string[]>([]);
   const [loadingHosts, setLoadingHosts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<string>("");
+
+  const taskActionContext = useMemo(
+    () => mergeTaskContext(
+      taskContextState?.context ?? {},
+      {
+        hostId: sourceHostId,
+        sourceHostId,
+        snapshotExportReady: !!result || !!taskContextState?.context.snapshotExportReady,
+      },
+    ),
+    [result, sourceHostId, taskContextState?.context],
+  );
+
+  const buildSnapshotTaskContext = (updates: TaskResolvedContext = {}) => mergeTaskContext(
+    taskContextState?.context ?? {},
+    {
+      hostId: sourceHostId,
+      sourceHostId,
+      snapshotExportReady: !!result || !!taskContextState?.context.snapshotExportReady,
+    },
+    updates,
+  );
+
+  useEffect(() => {
+    const nextSourceHostId = taskContextState?.context.sourceHostId || taskContextState?.context.hostId;
+    if (nextSourceHostId) setSourceHostId(nextSourceHostId);
+  }, [taskContextState?.context.hostId, taskContextState?.context.sourceHostId]);
 
   useEffect(() => {
     const loadHosts = async () => {
@@ -158,6 +198,12 @@ export default function GlobalSnapshotExport() {
       });
       const text = JSON.stringify(json, null, 2);
       setResult(text);
+      if (taskContextState) {
+        saveStoredTaskContext(
+          taskContextState.taskId,
+          buildSnapshotTaskContext({ snapshotExportReady: true }),
+        );
+      }
     } catch (err: any) {
       setError(err?.message || "Global export failed.");
       setResult("");
@@ -192,7 +238,19 @@ export default function GlobalSnapshotExport() {
     const snapshotStorageKey = getSnapshotStorageKey(sourceHostId);
     removeLegacySnapshotEntries(sourceHostId);
     sessionStorage.setItem(snapshotStorageKey, result);
-    navigate("/app/migration/convert", {
+    const nextTaskContext = buildSnapshotTaskContext({ snapshotExportReady: true });
+    if (taskContextState) {
+      saveStoredTaskContext(taskContextState.taskId, nextTaskContext);
+    }
+    const convertStep = taskContextState
+      ? taskRegistry
+        .find((task) => task.id === taskContextState.taskId)
+        ?.steps.find((step) => step.id === "convert")
+      : undefined;
+    const convertRoute = taskContextState && convertStep
+      ? buildTaskStepRoute(taskContextState.taskId, convertStep, searchParams, nextTaskContext)
+      : "/app/migration/convert";
+    navigate(convertRoute, {
       state: { snapshotStorageKey, sourceHostId },
     });
   };
@@ -221,6 +279,13 @@ export default function GlobalSnapshotExport() {
             Export host-owned rows or shared global baseline data as a portable snapshot JSON file.
           </Typography>
         </Box>
+
+        <TaskActionPanel
+          title="Snapshot Workflow"
+          context={taskActionContext}
+          taskIds={["portal-snapshot-migration"]}
+          maxActions={1}
+        />
 
         <Paper sx={{ p: 3 }}>
           <Stack spacing={3}>

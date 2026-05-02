@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 type ProductVersionEnvironmentApiResponse = {
   productEnvironments: Array<ProductVersionEnvironmentType>;
@@ -44,10 +46,25 @@ export default function ProductEnvironment() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialData = location.state?.data || {};
-  const initialProductVersionId = location.state?.data?.productVersionId;
-  const initialSystemEnv = location.state?.data?.systemEnv;
-  const initialRuntimeEnv = location.state?.data?.runtimeEnv;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialProductVersionId = location.state?.data?.productVersionId ?? searchContext.productVersionId;
+  const initialSystemEnv = location.state?.data?.systemEnv ?? searchContext.systemEnv;
+  const initialRuntimeEnv = location.state?.data?.runtimeEnv ?? searchContext.runtimeEnv;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      productId: initialData.productId ?? '',
+      productVersionId: initialProductVersionId ?? '',
+      systemEnv: initialSystemEnv ?? '',
+      runtimeEnv: initialRuntimeEnv ?? '',
+    }),
+    [host, initialData.productId, initialProductVersionId, initialRuntimeEnv, initialSystemEnv, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionEnvironmentType[]>([]);
@@ -169,7 +186,13 @@ export default function ProductEnvironment() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateProductVersionEnvironment', {
+      navigate(buildTaskAwareRoute('/app/form/updateProductVersionEnvironment', searchParams, {
+        ...taskContext,
+        productId: row.original.productId,
+        productVersionId: row.original.productVersionId,
+        systemEnv: row.original.systemEnv,
+        runtimeEnv: row.original.runtimeEnv,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -181,7 +204,7 @@ export default function ProductEnvironment() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionEnvironmentType>[]>(
@@ -260,7 +283,10 @@ export default function ProductEnvironment() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProductVersionEnvironment', { state: { data: { productVersionId: initialProductVersionId, systemEnv: initialSystemEnv, runtimeEnv: initialRuntimeEnv } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createProductVersionEnvironment', searchParams, taskContext),
+            { state: { data: { productVersionId: initialProductVersionId, systemEnv: initialSystemEnv, runtimeEnv: initialRuntimeEnv } } },
+          )}
           disabled={!initialData.productVersionId && !initialSystemEnv && !initialRuntimeEnv}
         >
           Add Product Version Environment
@@ -279,5 +305,17 @@ export default function ProductEnvironment() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Product Release Tasks"
+          context={taskContext}
+          taskIds={['manage-product-release', 'manage-deployment']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

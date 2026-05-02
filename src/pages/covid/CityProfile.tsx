@@ -1,16 +1,27 @@
 import Button from '@mui/material/Button';
 import { Box } from '@mui/material';
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 export default function CityProfile() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const data = location.state?.data;
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      contextFromObject(data),
+      { contentType: 'city' },
+    ),
+    [data, searchParams],
+  );
 
   const updateCityMap = () => {
-    navigate('/app/form/updateCityMap', {
+    navigate(buildTaskAwareRoute('/app/form/updateCityMap', searchParams, taskContext), {
       state: { data },
     });
   };
@@ -40,6 +51,14 @@ export default function CityProfile() {
           justifyContent: 'space-between',
         }}
       >
+        <Box sx={{ mb: 2 }}>
+          <TaskActionPanel
+            title="Community Content Tasks"
+            context={taskContext}
+            taskIds={['manage-community-content']}
+            maxActions={1}
+          />
+        </Box>
         <Box sx={{ '& > *': { m: 1 } }}>
           <Button variant="contained" color="primary" onClick={updateCityMap}>
             Update

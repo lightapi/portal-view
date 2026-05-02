@@ -18,6 +18,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigInstanceApiApiResponse = {
@@ -63,11 +65,23 @@ export default function ConfigInstanceApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialConfigId = location.state?.data?.configId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialConfigId = location.state?.data?.configId || searchContext.configId;
   const initialInstanceId = location.state?.data?.instanceId;
-  const initialInstanceApiId = location.state?.data?.instanceApiId;
+  const initialInstanceApiId = location.state?.data?.instanceApiId || searchContext.instanceApiId;
   const initialApiId = location.state?.data?.apiId;
   const initialApiVersion = location.state?.data?.apiVersion;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      configId: initialConfigId ?? '',
+      instanceApiId: initialInstanceApiId ?? '',
+      instanceId: initialInstanceId ?? '',
+      apiId: initialApiId ?? '',
+    }),
+    [host, initialApiId, initialConfigId, initialInstanceApiId, initialInstanceId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceApiType[]>([]);
@@ -185,7 +199,12 @@ export default function ConfigInstanceApi() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigInstanceApi', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigInstanceApi', searchParams, {
+        ...taskContext,
+        configId: row.original.configId,
+        instanceApiId: row.original.instanceApiId,
+        propertyId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -197,7 +216,7 @@ export default function ConfigInstanceApi() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
 
   const handleSync = useCallback(async () => {
@@ -319,7 +338,10 @@ export default function ConfigInstanceApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceApi', { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigInstanceApi', searchParams, taskContext),
+            { state: { data: { instanceId: initialInstanceId, instanceApiId: initialInstanceApiId, configId: initialConfigId } } },
+          )}
           disabled={!initialConfigId && !initialInstanceApiId}
         >
           Add Config to Instance Api
@@ -346,5 +368,17 @@ export default function ConfigInstanceApi() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'mcp-onboard-api']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

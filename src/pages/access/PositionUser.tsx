@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PositionUserApiResponse = {
@@ -49,8 +51,18 @@ export default function PositionUser() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialPositionId = location.state?.data?.positionId;
-  const initialUserId = location.state?.data?.userId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialPositionId = location.state?.data?.positionId ?? searchContext.positionId;
+  const initialUserId = location.state?.data?.userId ?? searchContext.userId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      positionId: initialPositionId ?? '',
+      userId: initialUserId ?? '',
+    }),
+    [host, initialPositionId, initialUserId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<PositionUserType[]>([]);
@@ -162,7 +174,11 @@ export default function PositionUser() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updatePositionUser', {
+      navigate(buildTaskAwareRoute('/app/form/updatePositionUser', searchParams, {
+        ...taskContext,
+        positionId,
+        userId: row.original.userId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -174,7 +190,7 @@ export default function PositionUser() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionUserType>[]>(
@@ -252,7 +268,10 @@ export default function PositionUser() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createPositionUser', { state: { data: { positionId: initialPositionId, userId: initialUserId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createPositionUser', searchParams, taskContext),
+            { state: { data: { positionId: initialPositionId, userId: initialUserId } } },
+          )}
         >
           Add User to Position
         </Button>
@@ -270,5 +289,17 @@ export default function PositionUser() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Assignment Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control', 'manage-user-host-access']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

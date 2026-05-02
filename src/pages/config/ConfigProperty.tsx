@@ -17,6 +17,8 @@ import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigPropertyApiResponse = {
@@ -62,7 +64,13 @@ export default function ConfigPropertyAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialConfigId = location.state?.data?.configId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialConfigId = location.state?.data?.configId || searchContext.configId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', configId: initialConfigId ?? '' }),
+    [host, initialConfigId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigPropertyType[]>([]);
@@ -180,7 +188,11 @@ export default function ConfigPropertyAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigProperty', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigProperty', searchParams, {
+        ...taskContext,
+        configId: row.original.configId,
+        propertyId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -192,7 +204,7 @@ export default function ConfigPropertyAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigPropertyType>[]>(
@@ -281,7 +293,10 @@ export default function ConfigPropertyAdmin() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigProperty', { state: { data: { configId: initialConfigId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigProperty', searchParams, taskContext),
+            { state: { data: { configId: initialConfigId } } },
+          )}
           disabled={!initialConfigId}
         >
           Create New Property
@@ -295,5 +310,17 @@ export default function ConfigPropertyAdmin() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

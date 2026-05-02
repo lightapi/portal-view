@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type DeploymentApiResponse = {
@@ -46,6 +48,12 @@ export default function DeploymentAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<DeploymentType[]>([]);
@@ -55,11 +63,13 @@ export default function DeploymentAdmin() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    [
-      { id: 'active', value: 'true' }
-    ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (searchContext.deploymentId) initialFilters.push({ id: 'deploymentId', value: searchContext.deploymentId });
+    if (searchContext.deploymentInstanceId) initialFilters.push({ id: 'deploymentInstanceId', value: searchContext.deploymentInstanceId });
+    if (searchContext.serviceId) initialFilters.push({ id: 'serviceId', value: searchContext.serviceId });
+    return initialFilters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -156,7 +166,12 @@ export default function DeploymentAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateDeployment', {
+      navigate(buildTaskAwareRoute('/app/form/updateDeployment', searchParams, {
+        ...taskContext,
+        deploymentId,
+        deploymentInstanceId: row.original.deploymentInstanceId ?? '',
+        serviceId: row.original.serviceId ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -168,7 +183,7 @@ export default function DeploymentAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<DeploymentType>[]>(
@@ -242,11 +257,23 @@ export default function DeploymentAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createDeployment')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createDeployment', searchParams, taskContext))}>
         Create New Deployment
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Deployment Tasks"
+          context={taskContext}
+          taskIds={['manage-deployment', 'manage-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

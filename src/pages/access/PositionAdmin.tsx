@@ -20,6 +20,8 @@ import RadarIcon from '@mui/icons-material/Radar';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PositionApiResponse = {
@@ -45,7 +47,10 @@ interface UserState {
 
 export default function PositionAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<PositionType[]>([]);
@@ -154,7 +159,7 @@ export default function PositionAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updatePosition', {
+      navigate(buildTaskAwareRoute('/app/form/updatePosition', searchParams, { ...taskContext, positionId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -166,7 +171,7 @@ export default function PositionAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionType>[]>(
@@ -227,22 +232,22 @@ export default function PositionAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Position Permissions">
-          <IconButton onClick={() => navigate('/app/access/positionPermission', { state: { data: { positionId: row.original.positionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionPermission', searchParams, { ...taskContext, positionId: row.original.positionId }), { state: { data: { positionId: row.original.positionId } } })}>
             <DoNotTouchIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Position Row Filters">
-          <IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: { data: { positionId: row.original.positionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionRowFilter', searchParams, { ...taskContext, positionId: row.original.positionId }), { state: { data: { positionId: row.original.positionId } } })}>
             <KeyboardDoubleArrowDownIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Position Column Filters">
-          <IconButton onClick={() => navigate('/app/access/positionColFilter', { state: { data: { positionId: row.original.positionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionColFilter', searchParams, { ...taskContext, positionId: row.original.positionId }), { state: { data: { positionId: row.original.positionId } } })}>
             <KeyboardDoubleArrowRightIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate('/app/access/positionUser', { state: { data: { positionId: row.original.positionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionUser', searchParams, { ...taskContext, positionId: row.original.positionId }), { state: { data: { positionId: row.original.positionId } } })}>
             <RadarIcon />
           </IconButton>
         </Tooltip>
@@ -254,11 +259,23 @@ export default function PositionAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createPosition')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createPosition', searchParams, taskContext))}>
         Create New Position
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Control Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

@@ -15,6 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ProviderApiResponse = {
@@ -40,7 +42,21 @@ export default function ProviderApi() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialProviderId = location.state?.data?.providerId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialProviderId = initialData.providerId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      providerId: initialProviderId ?? '',
+      apiId: initialData.apiId ?? '',
+    }),
+    [host, initialData.apiId, initialProviderId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProviderApiType[]>([]);
@@ -190,7 +206,10 @@ export default function ProviderApi() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProviderApi', { state: { data: { providerId: initialProviderId, hostId: host } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createProviderApi', searchParams, taskContext),
+            { state: { data: { providerId: initialProviderId, hostId: host } } },
+          )}
           disabled={!initialProviderId}
         >
           Add API to Provider
@@ -204,5 +223,17 @@ export default function ProviderApi() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="OAuth Provider Tasks"
+        context={taskContext}
+        taskIds={['manage-oauth-provider']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

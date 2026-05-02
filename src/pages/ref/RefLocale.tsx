@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RefLocaleApiResponse = {
@@ -42,7 +44,22 @@ export default function RefLocale() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialValueId = location.state?.data?.valueId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialValueId = initialData.valueId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      tableId: initialData.tableId ?? '',
+      valueId: initialValueId ?? '',
+      language: initialData.language ?? '',
+    }),
+    [host, initialData.language, initialData.tableId, initialValueId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RefLocaleType[]>([]);
@@ -142,6 +159,13 @@ export default function RefLocale() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: RefLocaleType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    valueId: row.valueId,
+    language: row.language,
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefLocaleType>[]>(
     () => [
@@ -175,7 +199,7 @@ export default function RefLocale() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Locale">
-          <IconButton onClick={() => navigate('/app/form/updateRefLocale', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefLocale', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
@@ -191,7 +215,7 @@ export default function RefLocale() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRefLocale', { state: { data: { valueId: initialValueId } } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefLocale', searchParams, taskContext), { state: { data: { valueId: initialValueId } } })}
           disabled={!initialValueId}
         >
           Create New Locale
@@ -205,5 +229,17 @@ export default function RefLocale() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Reference Data Tasks"
+        context={taskContext}
+        taskIds={['manage-reference-data']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

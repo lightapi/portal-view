@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
     Table,
@@ -19,6 +19,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 // --- Type Definitions ---
 type ConditionType = {
@@ -85,6 +87,8 @@ export default function RuleDetail() {
     const location = useLocation();
     const navigate = useNavigate();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
     const [testCases, setTestCases] = useState<RuleTestCaseType[]>([]);
     const [testCaseError, setTestCaseError] = useState(false);
     const [runningTestId, setRunningTestId] = useState<string | null>(null);
@@ -103,6 +107,13 @@ export default function RuleDetail() {
             console.error("Failed to parse ruleBody in Detail page:", e);
         }
     }
+    const taskContext = useMemo(
+        () => mergeTaskContext(searchContext, {
+            hostId: host ?? ruleData.hostId ?? "",
+            ruleId: ruleData.ruleId ?? "",
+        }),
+        [host, ruleData.hostId, ruleData.ruleId, searchContext],
+    );
 
     const renderSection = (title: string, content: React.ReactNode) => (
         <Box mb={4}>
@@ -161,7 +172,7 @@ export default function RuleDetail() {
     }, [fetchTestCases]);
 
     const handleCreateTestCase = () => {
-        navigate("/app/form/createRuleTestCase", {
+        navigate(buildTaskAwareRoute("/app/form/createRuleTestCase", searchParams, taskContext), {
             state: {
                 data: {
                     hostId: host ?? ruleData.hostId,
@@ -217,6 +228,13 @@ export default function RuleDetail() {
 
     return (
         <Box p={2}>
+            <TaskActionPanel
+                title="Schema and Rule Tasks"
+                context={taskContext}
+                taskIds={["manage-schema-rules"]}
+                maxActions={3}
+            />
+
             <Box mb={2} display="flex" justifyContent="flex-start">
                 <Button
                     variant="outlined"

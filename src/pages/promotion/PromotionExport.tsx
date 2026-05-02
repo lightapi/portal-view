@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     MaterialReactTable,
     useMaterialReactTable,
@@ -30,6 +30,15 @@ import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import PreviewIcon from '@mui/icons-material/Preview';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { taskRegistry } from '../../tasks/taskRegistry';
+import type { TaskResolvedContext } from '../../tasks/types';
+import {
+    buildTaskStepRoute,
+    mergeTaskContext,
+    saveStoredTaskContext,
+    taskContextFromSearch,
+} from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type HostType = {
@@ -142,14 +151,18 @@ const steps = ['Select Source & Type', 'Select Entities', 'Preview & Export'];
 
 export default function PromotionExport() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { host: userContextHost } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContextState = useMemo(() => taskContextFromSearch(searchParams), [searchParams]);
+    const initialSourceHostId = taskContextState?.context.sourceHostId || taskContextState?.context.hostId || userContextHost || '';
 
     // Stepper state
     const [activeStep, setActiveStep] = useState(0);
 
     // Step 1: Source selection
-    const [sourceHostId, setSourceHostId] = useState(userContextHost || '');
-    const [entityType, setEntityType] = useState('instance');
+    const [sourceHostId, setSourceHostId] = useState(initialSourceHostId);
+    const [entityType, setEntityType] = useState(taskContextState?.context.entityType || 'instance');
     const [hosts, setHosts] = useState<HostType[]>([]);
     const [isLoadingHosts, setIsLoadingHosts] = useState(false);
 
@@ -173,7 +186,46 @@ export default function PromotionExport() {
     const [exportResult, setExportResult] = useState<object | null>(null);
 
     // Target host for same-instance promotion
-    const [targetHostId, setTargetHostId] = useState('');
+    const [targetHostId, setTargetHostId] = useState(taskContextState?.context.targetHostId || '');
+
+    const taskActionContext = useMemo(
+        () => mergeTaskContext(
+            taskContextState?.context ?? {},
+            {
+                hostId: sourceHostId,
+                sourceHostId,
+                targetHostId,
+                entityType,
+            },
+        ),
+        [entityType, sourceHostId, targetHostId, taskContextState?.context],
+    );
+
+    const buildPromotionTaskContext = useCallback(
+        (updates: TaskResolvedContext = {}) => mergeTaskContext(
+            taskContextState?.context ?? {},
+            {
+                hostId: sourceHostId,
+                sourceHostId,
+                targetHostId,
+                entityType,
+            },
+            updates,
+        ),
+        [entityType, sourceHostId, targetHostId, taskContextState?.context],
+    );
+
+    useEffect(() => {
+        const nextSourceHostId = taskContextState?.context.sourceHostId || taskContextState?.context.hostId;
+        if (nextSourceHostId) setSourceHostId(nextSourceHostId);
+        if (taskContextState?.context.targetHostId) setTargetHostId(taskContextState.context.targetHostId);
+        if (taskContextState?.context.entityType) setEntityType(taskContextState.context.entityType);
+    }, [
+        taskContextState?.context.entityType,
+        taskContextState?.context.hostId,
+        taskContextState?.context.sourceHostId,
+        taskContextState?.context.targetHostId,
+    ]);
 
     // Load hosts on mount
     useEffect(() => {
@@ -271,6 +323,13 @@ export default function PromotionExport() {
             const json = await fetchClient(url);
             setExportResult(json);
 
+            if (taskContextState) {
+                saveStoredTaskContext(
+                    taskContextState.taskId,
+                    buildPromotionTaskContext({ promotionExportReady: true }),
+                );
+            }
+
             // Download as JSON file
             const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
             const downloadUrl = URL.createObjectURL(blob);
@@ -287,7 +346,7 @@ export default function PromotionExport() {
         } finally {
             setIsExporting(false);
         }
-    }, [rowSelection, sourceHostId, entityType]);
+    }, [buildPromotionTaskContext, rowSelection, sourceHostId, entityType, taskContextState]);
 
     // Promote to another host (same instance)
     const handlePromoteToHost = useCallback(async () => {
@@ -309,9 +368,23 @@ export default function PromotionExport() {
             };
             const exportUrl = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(exportCmd));
             const snapshot = await fetchClient(exportUrl);
+            const nextTaskContext = buildPromotionTaskContext({ promotionExportReady: true, targetHostId });
+
+            if (taskContextState) {
+                saveStoredTaskContext(taskContextState.taskId, nextTaskContext);
+            }
+
+            const importStep = taskContextState
+                ? taskRegistry
+                    .find((task) => task.id === taskContextState.taskId)
+                    ?.steps.find((step) => step.id === 'import')
+                : undefined;
+            const importRoute = taskContextState && importStep
+                ? buildTaskStepRoute(taskContextState.taskId, importStep, searchParams, nextTaskContext)
+                : '/app/promotion/import';
 
             // Navigate to import page with the snapshot and target host
-            navigate('/app/promotion/import', {
+            navigate(importRoute, {
                 state: {
                     snapshot,
                     targetHostId,
@@ -324,7 +397,7 @@ export default function PromotionExport() {
         } finally {
             setIsExporting(false);
         }
-    }, [rowSelection, sourceHostId, entityType, targetHostId, navigate]);
+    }, [buildPromotionTaskContext, rowSelection, sourceHostId, entityType, targetHostId, taskContextState, searchParams, navigate]);
 
     // Instance table columns
     const instanceColumns = useMemo<MRT_ColumnDef<any>[]>(
@@ -857,6 +930,15 @@ export default function PromotionExport() {
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
                 Export Entities for Promotion
             </Typography>
+
+            <Box sx={{ mb: 3 }}>
+                <TaskActionPanel
+                    title="Promotion Workflow"
+                    context={taskActionContext}
+                    taskIds={['promote-configuration']}
+                    maxActions={1}
+                />
+            </Box>
 
             <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
                 {steps.map((label) => (

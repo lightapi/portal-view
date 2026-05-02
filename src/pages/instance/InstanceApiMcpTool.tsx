@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     MaterialReactTable,
     useMaterialReactTable,
@@ -11,6 +11,14 @@ import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import {
+    buildTaskReturnRoute,
+    contextFromSearchParams,
+    mergeTaskContext,
+    saveStoredTaskContext,
+    taskContextFromSearch,
+} from '../../tasks/taskUtils';
 
 type McpToolType = {
     name: string;
@@ -39,9 +47,12 @@ function toSnakeCase(str: string): string {
 
 export default function InstanceApiMcpTool() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { host } = useUserState() as UserState;
-    const initialData = location.state?.data || {};
-    const { instanceApiId, apiVersion, apiId, instanceName, apiVersionId, serviceId, apiName, apiType, protocol, envTag, targetHost, productId } = initialData;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+    const initialData = { ...searchContext, ...(location.state?.data || {}) };
+    const { instanceApiId, instanceId, apiVersion, apiId, instanceName, apiVersionId, serviceId, apiName, apiType, protocol, envTag, targetHost, productId } = initialData;
 
     const [data, setData] = useState<McpToolType[]>([]);
     const [metadata, setMetadata] = useState<{
@@ -55,6 +66,20 @@ export default function InstanceApiMcpTool() {
     const [isLoading, setIsLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    const hasSelectedTools = useMemo(
+        () => data.some((tool) => tool.selected || rowSelection[tool.endpoint]),
+        [data, rowSelection],
+    );
+    const taskActionContext = useMemo(() => ({
+        hostId: host,
+        instanceApiId,
+        instanceId,
+        apiVersionId,
+        apiId,
+        productId,
+        serviceId,
+        mcpToolsConfigured: hasSelectedTools,
+    }), [host, instanceApiId, instanceId, apiVersionId, apiId, productId, serviceId, hasSelectedTools]);
 
     const fetchData = useCallback(async () => {
         if (!host || !instanceApiId || !apiVersionId) return;
@@ -211,6 +236,20 @@ export default function InstanceApiMcpTool() {
                 method: 'POST',
                 body: JSON.stringify(cmd),
             });
+            const taskContext = taskContextFromSearch(searchParams);
+            if (taskContext) {
+                const nextContext = mergeTaskContext(
+                    taskContext.context,
+                    taskActionContext,
+                    { mcpToolsConfigured: selectedTools.length > 0 },
+                );
+                saveStoredTaskContext(taskContext.taskId, nextContext);
+                navigate(
+                    buildTaskReturnRoute(taskContext.taskId, taskContext.returnTo, searchParams, nextContext),
+                    { state: { data: nextContext } },
+                );
+                return;
+            }
             setSuccessMsg('MCP Tools configuration task submitted successfully');
             // Refresh data to get updated version and status
             setTimeout(fetchData, 1000);
@@ -325,8 +364,15 @@ export default function InstanceApiMcpTool() {
     });
 
     return (
-        <>
-            <MaterialReactTable table={table} />
+        <Box>
+            <TaskActionPanel
+                title="Recommended Task Actions"
+                context={taskActionContext}
+                taskIds={["manage-instance", "mcp-onboard-api", "configure-access-control"]}
+            />
+            <Box mt={2}>
+                <MaterialReactTable table={table} />
+            </Box>
             <Snackbar open={!!successMsg} autoHideDuration={6000} onClose={handleCloseSuccess}>
                 <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
                     {successMsg}
@@ -337,6 +383,6 @@ export default function InstanceApiMcpTool() {
                     {errorMsg}
                 </Alert>
             </Snackbar>
-        </>
+        </Box>
     );
 }

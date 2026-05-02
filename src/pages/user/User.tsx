@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -31,6 +31,8 @@ import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type UserApiResponse = {
@@ -69,7 +71,9 @@ interface UserState {
 export default function User() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState() as UserState;
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<UserType[]>([]);
@@ -198,7 +202,7 @@ export default function User() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateUser', {
+      navigate(buildTaskAwareRoute('/app/form/updateUser', searchParams, { hostId: row.original.hostId, userId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -210,7 +214,7 @@ export default function User() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<UserType>[]>(
@@ -283,20 +287,36 @@ export default function User() {
             </IconButton>
           </span>
         </Tooltip>
-        <Tooltip title="Roles"><IconButton onClick={() => navigate('/app/access/roleUser', { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><CameraRollIcon /></IconButton></Tooltip>
-        <Tooltip title="Groups"><IconButton onClick={() => navigate('/app/access/groupUser', { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><GroupsIcon /></IconButton></Tooltip>
-        <Tooltip title="Positions"><IconButton onClick={() => navigate('/app/access/positionUser', { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><RadarIcon /></IconButton></Tooltip>
-        <Tooltip title="Attributes"><IconButton onClick={() => navigate('/app/access/attributeUser', { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><AttributionIcon /></IconButton></Tooltip>
-        <Tooltip title="Permissions"><IconButton onClick={() => navigate('/app/access/userPermission', { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
+        <Tooltip title="Roles"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><CameraRollIcon /></IconButton></Tooltip>
+        <Tooltip title="Groups"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><GroupsIcon /></IconButton></Tooltip>
+        <Tooltip title="Positions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><RadarIcon /></IconButton></Tooltip>
+        <Tooltip title="Attributes"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><AttributionIcon /></IconButton></Tooltip>
+        <Tooltip title="Permissions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
         <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/onboardUser')}>
+      <Button
+        variant="contained"
+        startIcon={<AddBoxIcon />}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/onboardUser', searchParams, taskContext))}
+      >
         Onboard New User
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="User And Host Tasks"
+          context={taskContext}
+          taskIds={['manage-user-host-access']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

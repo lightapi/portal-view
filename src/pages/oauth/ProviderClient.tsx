@@ -15,6 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ProviderClientApiResponse = {
@@ -43,7 +45,23 @@ export default function ProviderClient() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialProviderId = location.state?.data?.providerId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialProviderId = initialData.providerId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      providerId: initialProviderId ?? '',
+      clientId: initialData.clientId ?? '',
+      apiId: initialData.apiId ?? '',
+      appId: initialData.appId ?? '',
+    }),
+    [host, initialData.apiId, initialData.appId, initialData.clientId, initialProviderId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProviderClientType[]>([]);
@@ -196,7 +214,10 @@ export default function ProviderClient() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProviderClient', { state: { data: { providerId: initialProviderId, hostId: host } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createProviderClient', searchParams, taskContext),
+            { state: { data: { providerId: initialProviderId, hostId: host } } },
+          )}
           disabled={!initialProviderId}
         >
           Add Client to Provider
@@ -210,5 +231,17 @@ export default function ProviderClient() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="OAuth Provider Tasks"
+        context={taskContext}
+        taskIds={['manage-oauth-provider']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

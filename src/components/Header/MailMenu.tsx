@@ -3,15 +3,16 @@ import {
   MailOutline as MailIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Fab, IconButton, Menu, MenuItem, Box, useTheme, CircularProgress } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
 import { useInterval } from "../../hooks/useInterval";
 import { timeConversion } from "../../utils";
 import UserAvatar from "../UserAvatar/UserAvatar";
 import { Badge, Typography } from "../Wrappers/Wrappers";
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 export default function MailMenu({ openAbove = false }: { openAbove?: boolean }) {
   const [mailMenu, setMailMenu] = useState<null | HTMLElement>(null);
@@ -20,7 +21,15 @@ export default function MailMenu({ openAbove = false }: { openAbove?: boolean })
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const navigate = useNavigate();
-  const { email } = useUserState();
+  const [searchParams] = useSearchParams();
+  const { email, userId } = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { userId: userId ?? "", accountSection: "messages" },
+    ),
+    [searchParams, userId],
+  );
 
   const cmd = {
     host: "lightapi.net",
@@ -54,11 +63,11 @@ export default function MailMenu({ openAbove = false }: { openAbove?: boolean })
   }, 600000);
 
   const sendMessage = () => {
-    navigate("/app/form/privateMessage");
+    navigate(buildTaskAwareRoute("/app/form/privateMessage", searchParams, taskContext));
   };
 
   const manageMessages = () => {
-    navigate("/app/messages", {
+    navigate(buildTaskAwareRoute("/app/messages", searchParams, taskContext), {
       state: { data: messages },
     });
   };

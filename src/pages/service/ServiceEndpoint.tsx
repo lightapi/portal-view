@@ -18,6 +18,8 @@ import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArro
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type EndpointApiResponse = {
@@ -27,6 +29,7 @@ type EndpointApiResponse = {
 
 type EndpointType = {
   hostId: string;
+  endpointId: string;
   apiVersionId: string;
   apiId: string;
   apiVersion: string;
@@ -57,7 +60,23 @@ export default function ServiceEndpoint() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialApiVersionId = location.state?.data?.apiVersionId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const state = location.state as { data?: Partial<EndpointType> } | Partial<EndpointType> | null;
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...('data' in (state ?? {}) ? (state as { data?: Partial<EndpointType> }).data : state) }),
+    [searchContext, state],
+  );
+  const initialApiVersionId = initialData.apiVersionId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: initialData.hostId ?? host ?? '',
+      apiId: initialData.apiId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialData.endpointId ?? '',
+    }),
+    [host, initialApiVersionId, initialData.apiId, initialData.endpointId, initialData.hostId, searchContext],
+  );
 
   // Data and fetching state (unchanged)
   const [data, setData] = useState<EndpointType[]>([]);
@@ -149,6 +168,14 @@ export default function ServiceEndpoint() {
     [],
   );
 
+  const contextForRow = useCallback((row: EndpointType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    apiId: row.apiId,
+    apiVersionId: row.apiVersionId,
+    endpointId: row.endpointId,
+  }), [taskContext]);
+
   // Table instance configuration
   const table = useMaterialReactTable({
     columns,
@@ -157,80 +184,81 @@ export default function ServiceEndpoint() {
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => {
       const s = { data: { ...row.original } };
+      const rowContext = contextForRow(row.original);
       return (
         <Box sx={{ display: 'flex', gap: '0.1rem' }}>
           <Tooltip title="List Scopes">
-            <IconButton onClick={() => navigate('/app/listScope', { state: row.original })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/listScope', searchParams, rowContext), { state: row.original })}>
               <AccessibleForwardIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="List Rules">
-            <IconButton onClick={() => navigate('/app/listRule', { state: row.original })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/listRule', searchParams, rowContext), { state: row.original })}>
               <FilterListIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Role Permission">
-            <IconButton onClick={() => navigate('/app/access/rolePermission', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, rowContext), { state: s })}>
               <DoNotTouchIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Role Row Filter">
-            <IconButton onClick={() => navigate('/app/access/roleRowFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowDownIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Role Col Filter">
-            <IconButton onClick={() => navigate('/app/access/roleColFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowRightIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Group Permission">
-            <IconButton onClick={() => navigate('/app/access/groupPermission', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, rowContext), { state: s })}>
               <DoNotTouchIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Group Row Filter">
-            <IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowDownIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Group Col Filter">
-            <IconButton onClick={() => navigate('/app/access/groupColFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowRightIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Position Permission">
-            <IconButton onClick={() => navigate('/app/access/positionPermission', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionPermission', searchParams, rowContext), { state: s })}>
               <DoNotTouchIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Position Row Filter">
-            <IconButton onClick={() => navigate('/app/access/positionRowFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionRowFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowDownIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Position Col Filter">
-            <IconButton onClick={() => navigate('/app/access/positionColFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionColFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowRightIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Attribute Permission">
-            <IconButton onClick={() => navigate('/app/access/attributePermission', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, rowContext), { state: s })}>
               <DoNotTouchIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Attribute Row Filter">
-            <IconButton onClick={() => navigate('/app/access/attributeRowFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowDownIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Attribute Col Filter">
-            <IconButton onClick={() => navigate('/app/access/attributeColFilter', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, rowContext), { state: s })}>
               <KeyboardDoubleArrowRightIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="User Permission">
-            <IconButton onClick={() => navigate('/app/access/userPermission', { state: s })}>
+            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, rowContext), { state: s })}>
               <AccessibilityIcon />
             </IconButton>
           </Tooltip>
@@ -251,5 +279,17 @@ export default function ServiceEndpoint() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading endpoints' } : undefined,
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Endpoint Tasks"
+        context={taskContext}
+        taskIds={['publish-api', 'mcp-onboard-api', 'configure-access-control']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

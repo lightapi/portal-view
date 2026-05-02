@@ -2,15 +2,18 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useMemo } from 'react';
 import Widget from '../../components/Widget/Widget';
 import { useUserState } from '../../contexts/UserContext';
 import { useApiGet } from '../../hooks/useApiGet';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 export default function EntityProfile() {
   const navigate = useNavigate();
-  const { email } = useUserState();
+  const [searchParams] = useSearchParams();
+  const { email, userId } = useUserState();
   
   const cmd = {
     host: 'lightapi.net',
@@ -24,6 +27,14 @@ export default function EntityProfile() {
   const headers = {};
 
   const { isLoading, data, error } = useApiGet({ url, headers });
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      contextFromObject(data),
+      { userId: userId ?? '', contentType: 'entity' },
+    ),
+    [data, searchParams, userId],
+  );
 
   const deleteEntity = () => {
     if (window.confirm('Are you sure you want to delete the entity?')) {
@@ -39,14 +50,14 @@ export default function EntityProfile() {
         'Updating category and subcategory will remove the Website and Status.'
       )
     ) {
-      navigate('/app/form/updateCovidEntity', {
+      navigate(buildTaskAwareRoute('/app/form/updateCovidEntity', searchParams, taskContext), {
         state: { data },
       });
     }
   };
 
   const createEntity = () => {
-    navigate('/app/form/createCovidEntity');
+    navigate(buildTaskAwareRoute('/app/form/createCovidEntity', searchParams, taskContext));
   };
 
   const buttonSx = {
@@ -97,6 +108,14 @@ export default function EntityProfile() {
           justifyContent: 'space-between',
         }}
       >
+        <Box sx={{ mb: 2 }}>
+          <TaskActionPanel
+            title="Community Content Tasks"
+            context={taskContext}
+            taskIds={['manage-community-content']}
+            maxActions={1}
+          />
+        </Box>
         {buttons}
         <Box component="pre" sx={{ overflowX: 'auto', p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
           {data ? JSON.stringify(data, null, 2) : error}

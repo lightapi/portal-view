@@ -15,6 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ProductVersionPipelineApiResponse = {
@@ -44,7 +46,18 @@ export default function ProductVersionPipeline() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialProductVersionId = location.state?.data?.productVersionId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialProductVersionId = location.state?.data?.productVersionId ?? searchContext.productVersionId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      productId: location.state?.data?.productId ?? searchContext.productId ?? '',
+      productVersionId: initialProductVersionId ?? '',
+      pipelineId: searchContext.pipelineId ?? '',
+    }),
+    [host, initialProductVersionId, location.state, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ProductVersionPipelineType[]>([]);
@@ -53,16 +66,12 @@ export default function ProductVersionPipeline() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialProductVersionId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'productVersionId', value: initialProductVersionId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const initialFilters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialProductVersionId) initialFilters.push({ id: 'productVersionId', value: initialProductVersionId });
+    if (searchContext.pipelineId) initialFilters.push({ id: 'pipelineId', value: searchContext.pipelineId });
+    return initialFilters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -201,7 +210,10 @@ export default function ProductVersionPipeline() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createProductVersionPipeline', { state: { data: { productVersionId: initialProductVersionId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createProductVersionPipeline', searchParams, taskContext),
+            { state: { data: { productVersionId: initialProductVersionId } } },
+          )}
           disabled={!initialProductVersionId}
         >
           Add Pipeline to Product Version
@@ -215,5 +227,17 @@ export default function ProductVersionPipeline() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Product Release Tasks"
+          context={taskContext}
+          taskIds={['manage-product-release', 'manage-deployment']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

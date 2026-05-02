@@ -17,6 +17,8 @@ import LanguageIcon from '@mui/icons-material/Language';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type RefValueApiResponse = {
@@ -47,7 +49,21 @@ export default function RefValue() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialTableId = location.state?.data?.tableId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const initialTableId = initialData.tableId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      tableId: initialTableId ?? '',
+      valueId: initialData.valueId ?? '',
+    }),
+    [host, initialData.valueId, initialTableId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RefValueType[]>([]);
@@ -148,6 +164,13 @@ export default function RefValue() {
     }
   }, [data]);
 
+  const contextForRow = useCallback((row: RefValueType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    tableId: row.tableId,
+    valueId: row.valueId,
+  }), [taskContext]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefValueType>[]>(
     () => [
@@ -183,7 +206,7 @@ export default function RefValue() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Value">
-          <IconButton onClick={() => navigate('/app/form/updateRefValue', { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefValue', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
@@ -193,7 +216,7 @@ export default function RefValue() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Locales">
-          <IconButton onClick={() => navigate('/app/ref/locale', { state: { data: { valueId: row.original.valueId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/locale', searchParams, contextForRow(row.original)), { state: { data: { valueId: row.original.valueId, tableId: row.original.tableId } } })}>
             <LanguageIcon />
           </IconButton>
         </Tooltip>
@@ -204,7 +227,7 @@ export default function RefValue() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createRefValue', { state: { data: { tableId: initialTableId } } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefValue', searchParams, taskContext), { state: { data: { tableId: initialTableId } } })}
         >
           Create New Value
         </Button>
@@ -217,5 +240,17 @@ export default function RefValue() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Reference Data Tasks"
+        context={taskContext}
+        taskIds={['manage-reference-data']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

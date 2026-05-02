@@ -11,6 +11,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from "../../api/apiPost";
+import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 type RuleType = {
   hostId: string;
@@ -26,7 +29,24 @@ type RuleType = {
 export default function ListRule() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hostId, endpointId, apiId, apiVersion, endpoint } = location.state || {};
+  const { host } = useUserState() as { host?: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const state = location.state as Partial<RuleType> | { data?: Partial<RuleType> } | null;
+  const initialData = useMemo<Partial<RuleType>>(
+    () => ({ ...searchContext, ...('data' in (state ?? {}) ? (state as { data?: Partial<RuleType> }).data : state) }),
+    [searchContext, state],
+  );
+  const { endpointId, apiId, apiVersion, endpoint } = initialData;
+  const hostId = initialData.hostId ?? host ?? '';
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId,
+      apiId: apiId ?? '',
+      endpointId: endpointId ?? '',
+    }),
+    [apiId, endpointId, hostId, searchContext],
+  );
 
   const [data, setData] = useState<RuleType[]>([]);
   const [isError, setIsError] = useState(false);
@@ -100,7 +120,7 @@ export default function ListRule() {
   };
 
   const handleCreateRule = () => {
-    navigate("/app/form/createApiEndpointRule", {
+    navigate(buildTaskAwareRoute("/app/form/createApiEndpointRule", searchParams, taskContext), {
       state: { data: { hostId, endpointId, apiId, apiVersion, endpoint } },
     });
   };
@@ -161,5 +181,17 @@ export default function ListRule() {
     state: { isLoading, showAlertBanner: isError, columnFilters },
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Endpoint Tasks"
+        context={taskContext}
+        taskIds={['configure-access-control', 'publish-api', 'mcp-onboard-api']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

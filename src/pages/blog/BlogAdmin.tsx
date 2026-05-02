@@ -12,10 +12,12 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import React, { useEffect, useState, ReactNode } from "react";
+import React, { useEffect, useMemo, useState, ReactNode } from "react";
 import fetchClient from "../../utils/fetchClient";
 import { useUserState } from "../../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 interface RowProps {
   id: string;
@@ -24,6 +26,14 @@ interface RowProps {
 
 function Row({ id, host }: RowProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { hostId: host, blogId: id, contentType: "blog" },
+    ),
+    [host, id, searchParams],
+  );
   const [loading, setLoading] = useState(false);
 
   const handleUpdate = async () => {
@@ -39,7 +49,7 @@ function Row({ id, host }: RowProps) {
       setLoading(true);
       const data = await fetchClient(url);
       setLoading(false);
-      navigate("/app/form/updateBlog", { state: { data } });
+      navigate(buildTaskAwareRoute("/app/form/updateBlog", searchParams, taskContext), { state: { data } });
     } catch (e) {
       console.error(e);
       setLoading(false);
@@ -105,7 +115,15 @@ function BlogAdminList({ blogs }: BlogAdminListProps) {
 
 export default function BlogAdmin() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { hostId: host ?? "", contentType: "blog" },
+    ),
+    [host, searchParams],
+  );
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [loading, setLoading] = useState(false);
@@ -151,7 +169,7 @@ export default function BlogAdmin() {
   };
 
   const handleCreate = () => {
-    navigate("/app/form/createBlog");
+    navigate(buildTaskAwareRoute("/app/form/createBlog", searchParams, taskContext));
   };
 
   let content: ReactNode;
@@ -189,5 +207,17 @@ export default function BlogAdmin() {
     );
   }
 
-  return <Box className="App">{content}</Box>;
+  return (
+    <Box className="App">
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Community Content Tasks"
+          context={taskContext}
+          taskIds={["manage-community-content"]}
+          maxActions={1}
+        />
+      </Box>
+      {content}
+    </Box>
+  );
 }

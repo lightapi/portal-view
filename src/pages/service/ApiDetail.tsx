@@ -32,6 +32,9 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { useUserState } from '../../contexts/UserContext';
 
 // --- Type Definitions ---
 type ServiceType = {
@@ -75,9 +78,24 @@ export default function ApiDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState<ServiceVersionType[]>([]);
-  const { service } = location.state as { service: ServiceType };
+  const { host } = useUserState() as { host?: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const state = location.state as { service?: ServiceType; data?: ServiceType } | null;
+  const service = useMemo(
+    () => state?.service ?? state?.data ?? {
+      hostId: searchContext.hostId ?? host ?? '',
+      apiId: searchContext.apiId ?? '',
+      active: true,
+    },
+    [host, searchContext.apiId, searchContext.hostId, state?.data, state?.service],
+  );
   const { hostId, apiId } = service;
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null); // Will store the appId being fetched
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId, apiId }),
+    [apiId, hostId, searchContext],
+  );
 
   // State for service versions data
   const [isLoading, setIsLoading] = useState(true);
@@ -147,7 +165,11 @@ export default function ApiDetail() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateApiVersion', {
+      navigate(buildTaskAwareRoute('/app/form/updateApiVersion', searchParams, {
+        ...taskContext,
+        apiVersionId,
+        serviceId: row.original.serviceId ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -159,7 +181,15 @@ export default function ApiDetail() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, searchParams, taskContext]);
+
+  const contextForRow = useCallback((row: ServiceVersionType) => ({
+    ...taskContext,
+    hostId: row.hostId,
+    apiId: row.apiId,
+    apiVersionId: row.apiVersionId,
+    serviceId: row.serviceId ?? '',
+  }), [taskContext]);
 
   // Column definitions for the MaterialReactTable
   const columns = useMemo<MRT_ColumnDef<ServiceVersionType>[]>(
@@ -219,7 +249,7 @@ export default function ApiDetail() {
         <Tooltip title="Edit Specification">
           <IconButton onClick={() => {
             const path = row.original.apiType === 'openapi' ? '/app/openapiEditor' : row.original.apiType === 'hybrid' ? '/app/hybridEditor' : '/app/graphqlEditor';
-            navigate(path, { state: { data: { serviceVersion: row.original } } });
+            navigate(buildTaskAwareRoute(path, searchParams, contextForRow(row.original)), { state: { data: { serviceVersion: row.original } } });
           }}>
             <ImageAspectRatioIcon />
           </IconButton>
@@ -230,32 +260,32 @@ export default function ApiDetail() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Instance API">
-          <IconButton onClick={() => navigate('/app/instance/InstanceApi', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, apiId: row.original.apiId, serviceId: row.original.serviceId } } })}>
             <ApiIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Create OAuth Client">
-          <IconButton onClick={() => navigate('/app/form/createClient', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
             <VpnKeyIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Endpoint">
-          <IconButton onClick={() => navigate('/app/serviceEndpoint', { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceEndpoint', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersionId: row.original.apiVersionId } } })}>
             <FormatListBulletedIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Codegen">
-          <IconButton onClick={() => navigate('/app/serviceCodegen', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceCodegen', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
             <InputIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Deploy">
-          <IconButton onClick={() => navigate('/app/serviceDeploy', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceDeploy', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
             <SettingsIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Test">
-          <IconButton onClick={() => navigate('/app/serviceTest', { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceTest', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
             <BugReportIcon />
           </IconButton>
         </Tooltip>
@@ -265,7 +295,7 @@ export default function ApiDetail() {
       <Button
         variant="contained"
         startIcon={<AddBoxIcon />}
-        onClick={() => navigate('/app/form/createApiVersion', { state: { data: { apiId } } })}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/createApiVersion', searchParams, taskContext), { state: { data: { apiId } } })}
       >
         Create New Version
       </Button>
@@ -293,6 +323,14 @@ export default function ApiDetail() {
           </Table>
         </TableContainer>
       </Widget>
+
+      <Box mt={2}>
+        <TaskActionPanel
+          title="Recommended Task Actions"
+          context={taskContext}
+          taskIds={["publish-api", "mcp-onboard-api"]}
+        />
+      </Box>
 
       <Box mt={2}>
         <MaterialReactTable table={table} />

@@ -15,6 +15,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type PositionPermissionApiResponse = {
@@ -46,9 +48,20 @@ export default function PositionPermission() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialPositionId = location.state?.data?.positionId;
-  const initialApiVersionId = location.state?.data?.apiVersionId;
-  const initialEndpointId = location.state?.data?.endpointId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialPositionId = location.state?.data?.positionId ?? searchContext.positionId;
+  const initialApiVersionId = location.state?.data?.apiVersionId ?? searchContext.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId ?? searchContext.endpointId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      positionId: initialPositionId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialEndpointId ?? '',
+    }),
+    [host, initialApiVersionId, initialEndpointId, initialPositionId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<PositionPermissionType[]>([]);
@@ -207,7 +220,7 @@ export default function PositionPermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createPositionPermission', {
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createPositionPermission', searchParams, taskContext), {
             state: {
               data: {
                 positionId: initialPositionId,
@@ -238,5 +251,17 @@ export default function PositionPermission() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Permission Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

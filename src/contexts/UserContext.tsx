@@ -3,6 +3,8 @@ import Cookies from "universal-cookie";
 import fetchClient from "../utils/fetchClient";
 import { config, isSsoEnabled } from "../../config";
 import type { IPublicClientApplication } from "@azure/msal-browser";
+import { buildTaskAwareRoute } from "../tasks/taskUtils";
+import type { TaskResolvedContext } from "../tasks/types";
 
 interface UserState {
   isAuthenticated: boolean;
@@ -232,12 +234,17 @@ async function signOut(
   }
 }
 
+function taskAwareRoute(route: string, context: TaskResolvedContext = {}) {
+  if (typeof window === "undefined") return route;
+  return buildTaskAwareRoute(route, new URLSearchParams(window.location.search), context);
+}
+
 function changePassword(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
-  navigate("/app/form/changePasswordForm");
+  navigate(taskAwareRoute("/app/form/changePasswordForm", { accountSection: "password" }));
 }
 
 function signUp(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
-  navigate("/app/form/signupForm");
+  navigate(taskAwareRoute("/app/form/signupForm", { accountSection: "profile" }));
 }
 
 function getProfile(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void, userId: string) {
@@ -257,17 +264,17 @@ function getOrders(dispatch: React.Dispatch<UserAction>, navigate: (path: string
 }
 
 function createOrg(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
-  navigate("/app/form/createOrg");
+  navigate(taskAwareRoute("/app/form/createOrg", { metadataType: "org" }));
 }
 
 function updateOrgForm(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   // load the org associated with the user. The user is allowed to update as it is org-admin role.
-  navigate("/app/form/updateOrgForm");
+  navigate(taskAwareRoute("/app/form/updateOrgForm", { metadataType: "org" }));
 }
 
 function deleteOrgForm(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void) {
   // load the org associated with the user. The user is allowed to delete as it is org-admin role.
-  navigate("/app/form/deleteOrgForm");
+  navigate(taskAwareRoute("/app/form/deleteOrgForm", { metadataType: "org" }));
 }
 
 function userHost(dispatch: React.Dispatch<UserAction>, navigate: (path: string, options?: any) => void, userId: string) {

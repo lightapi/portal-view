@@ -17,6 +17,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
 // --- Type Definitions ---
 type WfDefinitionApiResponse = {
@@ -45,6 +46,12 @@ export default function WfDefinition() {
     const navigate = useNavigate();
     const location = useLocation();
     const { host } = useUserState() as UserState;
+    const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
+    const contextForRow = useCallback(
+        (row: WfDefinitionType) => buildWorkflowTaskContext(host, searchParams, row),
+        [host, searchParams],
+    );
 
     // Data and fetching state
     const [data, setData] = useState<WfDefinitionType[]>([]);
@@ -154,7 +161,7 @@ export default function WfDefinition() {
             console.log("freshData", freshData);
 
             // Navigate with the fresh data
-            navigate('/app/form/updateWfDefinition', {
+            navigate(buildWorkflowTaskRoute('/app/form/updateWfDefinition', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -166,10 +173,10 @@ export default function WfDefinition() {
         } finally {
             setIsUpdateLoading(null);
         }
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     const handleStart = useCallback((row: MRT_Row<WfDefinitionType>) => {
-        navigate('/app/form/startWorkflow', {
+        navigate(buildWorkflowTaskRoute('/app/form/startWorkflow', searchParams, contextForRow(row.original)), {
             state: {
                 data: {
                     hostId: row.original.hostId,
@@ -179,7 +186,7 @@ export default function WfDefinition() {
                 source: location.pathname
             }
         });
-    }, [navigate, location.pathname]);
+    }, [navigate, location.pathname, searchParams, contextForRow]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<WfDefinitionType>[]>(
@@ -268,11 +275,15 @@ export default function WfDefinition() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createWfDefinition', { state: { data: { hostId: host } } })}>
+            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWfDefinition', searchParams, taskContext), { state: { data: { hostId: host } } })}>
                 Create New WfDefinition
             </Button>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <WorkflowTaskLayout context={taskContext}>
+            <MaterialReactTable table={table} />
+        </WorkflowTaskLayout>
+    );
 }

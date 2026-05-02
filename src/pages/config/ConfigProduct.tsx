@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigProductApiResponse = {
@@ -45,7 +47,16 @@ export default function ConfigProduct() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialConfigId = location.state?.data?.configId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialConfigId = location.state?.data?.configId ?? searchContext.configId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      configId: initialConfigId ?? '',
+    }),
+    [host, initialConfigId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigProductType[]>([]);
@@ -164,7 +175,12 @@ export default function ConfigProduct() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigProduct', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigProduct', searchParams, {
+        ...taskContext,
+        productId: row.original.productId,
+        configId: row.original.configId,
+        propertyId: row.original.propertyId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -176,7 +192,7 @@ export default function ConfigProduct() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigProductType>[]>(
@@ -249,7 +265,10 @@ export default function ConfigProduct() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigProduct', { state: { data: { configId: initialConfigId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigProduct', searchParams, taskContext),
+            { state: { data: { configId: initialConfigId } } },
+          )}
           disabled={!initialConfigId}
         >
           Add Product Property
@@ -263,5 +282,17 @@ export default function ConfigProduct() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

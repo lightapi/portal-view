@@ -20,6 +20,8 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type GroupApiResponse = {
@@ -43,7 +45,10 @@ interface UserState {
 
 export default function GroupAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as UserState;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const taskContext = useMemo(() => ({ hostId: host ?? '' }), [host]);
 
   // Data and fetching state
   const [data, setData] = useState<GroupType[]>([]);
@@ -152,7 +157,7 @@ export default function GroupAdmin() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateGroup', {
+      navigate(buildTaskAwareRoute('/app/form/updateGroup', searchParams, { ...taskContext, groupId }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -164,7 +169,7 @@ export default function GroupAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<GroupType>[]>(
@@ -223,22 +228,22 @@ export default function GroupAdmin() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Group Permissions">
-          <IconButton onClick={() => navigate('/app/access/groupPermission', { state: { data: { groupId: row.original.groupId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
             <DoNotTouchIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Group Row Filters">
-          <IconButton onClick={() => navigate('/app/access/groupRowFilter', { state: { data: { groupId: row.original.groupId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
             <KeyboardDoubleArrowDownIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Group Column Filters">
-          <IconButton onClick={() => navigate('/app/access/groupColFilter', { state: { data: { groupId: row.original.groupId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
             <KeyboardDoubleArrowRightIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate('/app/access/groupUser', { state: { data: { groupId: row.original.groupId } } })}>
+          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
             <GroupsIcon />
           </IconButton>
         </Tooltip>
@@ -250,11 +255,23 @@ export default function GroupAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createGroup')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createGroup', searchParams, taskContext))}>
         Create New Group
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Control Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

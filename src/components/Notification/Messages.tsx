@@ -10,14 +10,26 @@ import {
   TableRow,
 } from '@mui/material';
 import { timeConversion } from "../../utils";
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useMemo } from "react";
+import { Box } from "@mui/material";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useUserState } from "../../contexts/UserContext";
+import TaskActionPanel from "../../tasks/TaskActionPanel";
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 function Row({ row }: { row: any }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { userId: row.fromId, accountSection: "messages" },
+    ),
+    [row.fromId, searchParams],
+  );
 
   const replyMessage = (userId: string, subject: string) => {
-    navigate("/app/form/privateMessage", {
+    navigate(buildTaskAwareRoute("/app/form/privateMessage", searchParams, taskContext), {
       state: { data: { userId, subject } },
     });
   };
@@ -56,11 +68,28 @@ function Row({ row }: { row: any }) {
 
 export default function Messages() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { userId } = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { userId: userId ?? "", accountSection: "messages" },
+    ),
+    [searchParams, userId],
+  );
   const messages = (location.state as any)?.data || [];
 
   return (
-    <div>
+    <Box>
       <h2>Private Messages</h2>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Account Tasks"
+          context={taskContext}
+          taskIds={["manage-my-account"]}
+          maxActions={1}
+        />
+      </Box>
       <TableContainer component={Paper}>
         <Table aria-label="collapsible table">
           <TableHead>
@@ -78,6 +107,6 @@ export default function Messages() {
           </TableBody>
         </Table>
       </TableContainer>
-    </div>
+    </Box>
   );
 }

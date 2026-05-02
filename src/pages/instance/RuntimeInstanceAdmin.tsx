@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // Define the shape of the API response
 type RuntimeInstanceApiResponse = {
@@ -41,7 +43,14 @@ type RuntimeInstanceType = {
 
 export default function RuntimeInstanceAdmin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { host } = useUserState() as { host: string };
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '' }),
+    [host, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<RuntimeInstanceType[]>([]);
@@ -197,7 +206,12 @@ export default function RuntimeInstanceAdmin() {
 
       try {
         const freshData = await fetchClient(url);
-        navigate('/app/form/updateRuntimeInstance', {
+        navigate(buildTaskAwareRoute('/app/form/updateRuntimeInstance', searchParams, {
+          ...taskContext,
+          hostId: row.original.hostId,
+          runtimeInstanceId,
+          serviceId: row.original.serviceId,
+        }), {
           state: {
             data: freshData,
             source: location.pathname,
@@ -210,7 +224,7 @@ export default function RuntimeInstanceAdmin() {
         setIsUpdateLoading(null);
       }
     },
-    [navigate]
+    [location.pathname, navigate, searchParams, taskContext]
   );
 
   // Column definitions
@@ -298,12 +312,24 @@ export default function RuntimeInstanceAdmin() {
       <Button
         variant="contained"
         startIcon={<AddBoxIcon />}
-        onClick={() => navigate('/app/form/createRuntimeInstance')}
+        onClick={() => navigate(buildTaskAwareRoute('/app/form/createRuntimeInstance', searchParams, taskContext))}
       >
         Create Runtime Instance
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="Instance Tasks"
+        context={taskContext}
+        taskIds={['manage-instance']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

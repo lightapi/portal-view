@@ -17,6 +17,8 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type AuthClientApiResponse = {
@@ -62,7 +64,23 @@ export default function AuthClient() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialData = location.state?.data || {};
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialData = useMemo(
+    () => ({ ...searchContext, ...(location.state?.data || {}) }),
+    [location.state, searchContext],
+  );
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      clientId: initialData.clientId ?? '',
+      appId: initialData.appId ?? '',
+      apiId: initialData.apiId ?? '',
+      apiVersionId: initialData.apiVersionId ?? '',
+      instanceId: initialData.instanceId ?? '',
+    }),
+    [host, initialData.apiId, initialData.apiVersionId, initialData.appId, initialData.clientId, initialData.instanceId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<AuthClientType[]>([]);
@@ -175,7 +193,15 @@ export default function AuthClient() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateClient', {
+      navigate(buildTaskAwareRoute('/app/form/updateClient', searchParams, {
+        ...taskContext,
+        hostId: row.original.hostId,
+        clientId,
+        appId: row.original.appId ?? '',
+        apiId: row.original.apiId ?? '',
+        apiVersionId: row.original.apiVersionId ?? '',
+        instanceId: row.original.instanceId ?? '',
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -187,7 +213,7 @@ export default function AuthClient() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
 
   // Column definitions
@@ -248,7 +274,15 @@ export default function AuthClient() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Client Tokens">
-          <IconButton color="primary" onClick={() => navigate('/app/oauth/clientToken', { state: { data: { clientId: row.original.clientId } } })}>
+          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/oauth/clientToken', searchParams, {
+            ...taskContext,
+            hostId: row.original.hostId,
+            clientId: row.original.clientId,
+            appId: row.original.appId ?? '',
+            apiId: row.original.apiId ?? '',
+            apiVersionId: row.original.apiVersionId ?? '',
+            instanceId: row.original.instanceId ?? '',
+          }), { state: { data: { clientId: row.original.clientId } } })}>
             <VpnKeyIcon />
           </IconButton>
         </Tooltip>
@@ -269,7 +303,7 @@ export default function AuthClient() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createClient', { state: { data: initialData } })}
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, taskContext), { state: { data: initialData } })}
         >
           Create New Client
         </Button>
@@ -292,5 +326,17 @@ export default function AuthClient() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box>
+      <TaskActionPanel
+        title="OAuth Client Tasks"
+        context={taskContext}
+        taskIds={['manage-oauth-provider', 'publish-api', 'mcp-onboard-api', 'manage-instance']}
+        maxActions={3}
+      />
+      <Box mt={2}>
+        <MaterialReactTable table={table} />
+      </Box>
+    </Box>
+  );
 }

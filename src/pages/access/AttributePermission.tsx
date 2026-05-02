@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type AttributePermissionApiResponse = {
@@ -47,9 +49,20 @@ export default function AttributePermission() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialAttributeId = location.state?.data?.attributeId;
-  const initialApiVersionId = location.state?.data?.apiVersionId;
-  const initialEndpointId = location.state?.data?.endpointId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialAttributeId = location.state?.data?.attributeId ?? searchContext.attributeId;
+  const initialApiVersionId = location.state?.data?.apiVersionId ?? searchContext.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId ?? searchContext.endpointId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      attributeId: initialAttributeId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialEndpointId ?? '',
+    }),
+    [host, initialApiVersionId, initialEndpointId, initialAttributeId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<AttributePermissionType[]>([]);
@@ -160,7 +173,12 @@ export default function AttributePermission() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateAttributePermission', {
+      navigate(buildTaskAwareRoute('/app/form/updateAttributePermission', searchParams, {
+        ...taskContext,
+        attributeId,
+        apiVersionId: row.original.apiVersionId,
+        endpointId: row.original.endpointId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -172,7 +190,7 @@ export default function AttributePermission() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributePermissionType>[]>(
@@ -248,7 +266,7 @@ export default function AttributePermission() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createAttributePermission', {
+          onClick={() => navigate(buildTaskAwareRoute('/app/form/createAttributePermission', searchParams, taskContext), {
             state: {
               data: {
                 attributeId: initialAttributeId,
@@ -280,5 +298,17 @@ export default function AttributePermission() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Access Permission Tasks"
+          context={taskContext}
+          taskIds={['configure-access-control']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

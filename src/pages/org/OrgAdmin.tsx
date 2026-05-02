@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type OrgApiResponse = {
@@ -41,7 +43,17 @@ interface UserState {
 export default function OrgAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { host } = useUserState() as UserState;
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, { hostId: host ?? '', metadataType: 'org' }),
+    [host, searchContext],
+  );
+  const contextForRow = useCallback(
+    (row: OrgType) => mergeTaskContext(taskContext, { domain: row.domain }),
+    [taskContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<OrgType[]>([]);
@@ -149,7 +161,7 @@ export default function OrgAdmin() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate('/app/form/updateOrg', {
+      navigate(buildTaskAwareRoute('/app/form/updateOrg', searchParams, contextForRow(row.original)), {
         state: {
           data: freshData,
           source: location.pathname
@@ -161,7 +173,7 @@ export default function OrgAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, location.pathname]);
+  }, [contextForRow, navigate, location.pathname, searchParams]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<OrgType>[]>(
@@ -221,11 +233,23 @@ export default function OrgAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate('/app/form/createOrg')}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createOrg', searchParams, taskContext))}>
         Create New Organization
       </Button>
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Portal Metadata Tasks"
+          context={taskContext}
+          taskIds={['manage-portal-metadata']}
+          maxActions={1}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

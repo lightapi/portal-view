@@ -14,11 +14,12 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserState } from '../../contexts/UserContext';
 import { timeConversion } from '../../utils';
 import fetchClient from '../../utils/fetchClient';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 interface RowProps {
   row: any;
@@ -28,10 +29,18 @@ function Row({ row }: RowProps) {
   const [fetching, setFetching] = useState(false);
   const [open, setOpen] = React.useState(false);
   const navigate = useNavigate();
-  const { email }: any = useUserState();
+  const [searchParams] = useSearchParams();
+  const { email, userId }: any = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { userId: userId ?? "", accountSection: "orders" },
+    ),
+    [searchParams, userId],
+  );
 
   const replyMessage = (userId: string, subject: string) => {
-    navigate('/app/form/privateMessage', {
+    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { userId })), {
       state: { data: { userId, subject } },
     });
   };

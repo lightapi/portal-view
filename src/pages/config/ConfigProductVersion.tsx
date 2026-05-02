@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigProductVersionApiResponse = {
@@ -48,7 +50,18 @@ export default function ConfigProductVersion() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialConfigId = location.state?.data?.configId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialConfigId = location.state?.data?.configId ?? searchContext.configId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      configId: initialConfigId ?? '',
+      productId: searchContext.productId ?? '',
+      productVersionId: searchContext.productVersionId ?? '',
+    }),
+    [host, initialConfigId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigProductVersionType[]>([]);
@@ -167,7 +180,13 @@ export default function ConfigProductVersion() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigProductVersion', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigProductVersion', searchParams, {
+        ...taskContext,
+        productId: row.original.productId,
+        productVersionId: row.original.productVersionId,
+        configId: row.original.configId,
+        propertyId: row.original.propertyId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -179,7 +198,7 @@ export default function ConfigProductVersion() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigProductVersionType>[]>(
@@ -255,7 +274,10 @@ export default function ConfigProductVersion() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigProductVersion', { state: { data: { configId: initialConfigId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigProductVersion', searchParams, taskContext),
+            { state: { data: { configId: initialConfigId } } },
+          )}
           disabled={!initialConfigId}
         >
           Add Product Version Property
@@ -269,5 +291,17 @@ export default function ConfigProductVersion() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

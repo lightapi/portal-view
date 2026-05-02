@@ -16,6 +16,8 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import TaskActionPanel from '../../tasks/TaskActionPanel';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 // --- Type Definitions ---
 type ConfigInstanceFileApiResponse = {
@@ -47,7 +49,17 @@ export default function ConfigInstanceFile() {
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
-  const initialInstanceId = location.state?.data?.instanceId;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
+  const initialInstanceId = location.state?.data?.instanceId ?? searchContext.instanceId;
+  const taskContext = useMemo(
+    () => mergeTaskContext(searchContext, {
+      hostId: host ?? '',
+      instanceId: initialInstanceId ?? '',
+      instanceFileId: searchContext.instanceFileId ?? '',
+    }),
+    [host, initialInstanceId, searchContext],
+  );
 
   // Data and fetching state
   const [data, setData] = useState<ConfigInstanceFileType[]>([]);
@@ -162,7 +174,11 @@ export default function ConfigInstanceFile() {
       console.log("freshData", freshData);
 
       // Navigate with the fresh data
-      navigate('/app/form/updateConfigInstanceFile', {
+      navigate(buildTaskAwareRoute('/app/form/updateConfigInstanceFile', searchParams, {
+        ...taskContext,
+        instanceId,
+        instanceFileId: row.original.instanceFileId,
+      }), {
         state: {
           data: freshData,
           source: location.pathname
@@ -174,7 +190,7 @@ export default function ConfigInstanceFile() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [host, navigate, location.pathname]);
+  }, [host, navigate, location.pathname, searchParams, taskContext]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceFileType>[]>(
@@ -253,7 +269,10 @@ export default function ConfigInstanceFile() {
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
-          onClick={() => navigate('/app/form/createConfigInstanceFile', { state: { data: { instanceId: initialInstanceId } } })}
+          onClick={() => navigate(
+            buildTaskAwareRoute('/app/form/createConfigInstanceFile', searchParams, taskContext),
+            { state: { data: { instanceId: initialInstanceId } } },
+          )}
           disabled={!initialInstanceId}
         >
           Add Instance File
@@ -267,5 +286,17 @@ export default function ConfigInstanceFile() {
     ),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <Box sx={{ p: 1 }}>
+      <Box sx={{ mb: 2 }}>
+        <TaskActionPanel
+          title="Configuration Tasks"
+          context={taskContext}
+          taskIds={['manage-configuration', 'promote-configuration']}
+          maxActions={2}
+        />
+      </Box>
+      <MaterialReactTable table={table} />
+    </Box>
+  );
 }

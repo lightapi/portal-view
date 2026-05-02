@@ -14,9 +14,11 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { timeConversion } from '../../utils';
+import { useUserState } from '../../contexts/UserContext';
+import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 interface RowProps {
   row: any;
@@ -25,9 +27,18 @@ interface RowProps {
 function Row({ row }: RowProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { userId: currentUserId }: any = useUserState();
+  const taskContext = useMemo(
+    () => mergeTaskContext(
+      contextFromSearchParams(searchParams),
+      { userId: currentUserId ?? "", accountSection: "orders" },
+    ),
+    [currentUserId, searchParams],
+  );
 
   const replyMessage = (userId: string, subject: string) => {
-    navigate('/app/form/privateMessage', {
+    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { userId })), {
       state: { data: { userId, subject } },
     });
   };
