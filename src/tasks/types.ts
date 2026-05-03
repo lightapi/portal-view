@@ -86,6 +86,7 @@ export type TaskStep = {
   title: string;
   description: string;
   route: string;
+  helpPath?: string;
   required: boolean;
   dependsOn?: string[];
   keywords?: string[];
@@ -118,6 +119,7 @@ export type TaskDefinition = {
   description: string;
   category: TaskCategory;
   roles?: string[];
+  helpPath?: string;
   keywords: string[];
   steps: TaskStep[];
 };
@@ -130,6 +132,7 @@ export type PageDefinition = {
   category: string;
   kind?: "Page" | "Form";
   roles?: string[];
+  helpPath?: string;
   keywords: string[];
   entities?: string[];
 };

@@ -2150,6 +2150,7 @@
   },
   "createApp": {
     "formId": "createApp",
+    "helpPath": "/help/portal-view/forms/create-app",
     "actions": [
       {
         "host": "lightapi.net",
@@ -2251,6 +2252,7 @@
   },
   "updateApp": {
     "formId": "updateApp",
+    "helpPath": "/help/portal-view/forms/update-app",
     "actions": [
       {
         "host": "lightapi.net",
@@ -2353,6 +2355,7 @@
   },
   "createClient": {
     "formId": "createClient",
+    "helpPath": "/help/portal-view/forms/create-client",
     "actions": [
       {
         "host": "lightapi.net",
@@ -2589,6 +2592,7 @@
   },
   "updateClient": {
     "formId": "updateClient",
+    "helpPath": "/help/portal-view/forms/update-client",
     "actions": [
       {
         "host": "lightapi.net",
@@ -2829,6 +2833,7 @@
   },
   "createApi": {
     "formId": "createApi",
+    "helpPath": "/help/portal-view/forms/create-api",
     "actions": [
       {
         "host": "lightapi.net",
@@ -3040,6 +3045,7 @@
   },
   "updateApi": {
     "formId": "updateApi",
+    "helpPath": "/help/portal-view/forms/update-api",
     "actions": [
       {
         "host": "lightapi.net",
@@ -3252,6 +3258,7 @@
   },
   "createApiVersion": {
     "formId": "createApiVersion",
+    "helpPath": "/help/portal-view/forms/create-api-version",
     "actions": [
       {
         "host": "lightapi.net",
@@ -3385,6 +3392,7 @@
   },
   "updateApiVersion": {
     "formId": "updateApiVersion",
+    "helpPath": "/help/portal-view/forms/update-api-version",
     "actions": [
       {
         "host": "lightapi.net",
@@ -10244,6 +10252,7 @@
   },
   "createSchedule": {
     "formId": "createSchedule",
+    "helpPath": "/help/portal-view/forms/create-schedule",
     "actions": [
       {
         "host": "lightapi.net",
@@ -10376,6 +10385,7 @@
   },
   "updateSchedule": {
     "formId": "updateSchedule",
+    "helpPath": "/help/portal-view/forms/update-schedule",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14126,6 +14136,7 @@
   },
   "createInstance": {
     "formId": "createInstance",
+    "helpPath": "/help/portal-view/forms/create-instance",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14300,6 +14311,7 @@
   },
   "updateInstance": {
     "formId": "updateInstance",
+    "helpPath": "/help/portal-view/forms/update-instance",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14481,6 +14493,7 @@
   },
   "createInstanceApi": {
     "formId": "createInstanceApi",
+    "helpPath": "/help/portal-view/forms/create-instance-api",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14559,6 +14572,7 @@
   },
   "createInstanceApiPathPrefix": {
     "formId": "createInstanceApiPathPrefix",
+    "helpPath": "/help/portal-view/forms/create-instance-api-path-prefix",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14642,6 +14656,7 @@
   },
   "updateInstanceApiPathPrefix": {
     "formId": "updateInstanceApiPathPrefix",
+    "helpPath": "/help/portal-view/forms/update-instance-api-path-prefix",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14725,6 +14740,7 @@
   },
   "createInstanceApp": {
     "formId": "createInstanceApp",
+    "helpPath": "/help/portal-view/forms/create-instance-app",
     "actions": [
       {
         "host": "lightapi.net",
@@ -14809,6 +14825,7 @@
   },
   "createInstanceAppApi": {
     "formId": "createInstanceAppApi",
+    "helpPath": "/help/portal-view/forms/create-instance-app-api",
     "actions": [
       {
         "host": "lightapi.net",
@@ -15869,6 +15886,7 @@
   },
   "createWfDefinition": {
     "formId": "createWfDefinition",
+    "helpPath": "/help/portal-view/forms/create-wf-definition",
     "actions": [
       {
         "host": "lightapi.net",
@@ -15943,6 +15961,7 @@
   },
   "updateWfDefinition": {
     "formId": "updateWfDefinition",
+    "helpPath": "/help/portal-view/forms/update-wf-definition",
     "actions": [
       {
         "host": "lightapi.net",
@@ -19251,6 +19270,7 @@
   },
   "createClientToken": {
     "formId": "createClientToken",
+    "helpPath": "/help/portal-view/forms/create-client-token",
     "actions": [
       {
         "host": "lightapi.net",
@@ -19433,6 +19453,7 @@
   },
   "createRuntimeInstance": {
     "formId": "createRuntimeInstance",
+    "helpPath": "/help/portal-view/forms/create-runtime-instance",
     "actions": [
       {
         "host": "lightapi.net",
@@ -19526,6 +19547,7 @@
   },
   "updateRuntimeInstance": {
     "formId": "updateRuntimeInstance",
+    "helpPath": "/help/portal-view/forms/update-runtime-instance",
     "actions": [
       {
         "host": "lightapi.net",

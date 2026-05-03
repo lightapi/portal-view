@@ -8,6 +8,7 @@ type AppConfig = {
     redirectUri: string;
     apiOnboardUrl: string;
     productReleaseUrl: string;
+    portalDocBaseUrl: string;
 }
 
 export const config: AppConfig = {
@@ -20,6 +21,7 @@ export const config: AppConfig = {
     redirectUri: import.meta.env.VITE_REDIRECT_URI ?? "",
     apiOnboardUrl: import.meta.env.VITE_API_ONBOARD_URL ?? 'https://lightapi.net',
     productReleaseUrl: import.meta.env.VITE_PRODUCT_RELEASE_URL ?? 'https://lightapi.net/releases',
+    portalDocBaseUrl: import.meta.env.VITE_PORTAL_DOC_BASE_URL ?? 'https://doc.lightapi.net',
 }
 
 export const isSsoEnabled = config.ssoEnabled.toLowerCase() === "true";

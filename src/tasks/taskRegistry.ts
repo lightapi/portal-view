@@ -8,6 +8,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Select or create an API, link a version to a gateway, choose MCP tools, and review access control.",
     category: "MCP Gateway",
     roles: ["user"],
+    helpPath: "/help/portal-view/tasks/mcp-onboard-api",
     keywords: ["mcp", "gateway", "api", "onboard", "tools", "access"],
     steps: [
       {
@@ -72,6 +73,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Register an MCP server, define its version and transport, link it to a gateway, and select tools.",
     category: "MCP Gateway",
     roles: ["user"],
+    helpPath: "/help/portal-view/tasks/register-standalone-mcp-server",
     keywords: ["mcp", "server", "standalone", "transport", "tools"],
     steps: [
       {
@@ -118,6 +120,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Register an API, add a version, and review marketplace visibility before consumers use it.",
     category: "API Marketplace",
     roles: ["user"],
+    helpPath: "/help/portal-view/tasks/publish-api",
     keywords: ["api", "publish", "marketplace", "version", "service"],
     steps: [
       {
@@ -288,6 +291,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Create or review client applications, OAuth clients, instance app links, and client tokens.",
     category: "Portal Administration",
     roles: ["user", "app-admin", "oauth-client-admin", "instance-admin"],
+    helpPath: "/help/portal-view/tasks/manage-client-app",
     keywords: ["client", "app", "oauth", "token", "instance"],
     steps: [
       {
@@ -557,6 +561,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Create or review instances, runtime endpoints, API links, app links, and path prefixes.",
     category: "Platform Operations",
     roles: ["user", "instance-admin"],
+    helpPath: "/help/portal-view/tasks/manage-instance",
     keywords: ["instance", "runtime", "api link", "app link", "path prefix", "gateway"],
     steps: [
       {
@@ -937,6 +942,7 @@ export const taskRegistry: TaskDefinition[] = [
       "Create or review workflow definitions, start workflow instances, track processes, tasks, assignments, worklists, and audit logs.",
     category: "Platform Operations",
     roles: ["admin"],
+    helpPath: "/help/portal-view/tasks/manage-workflow",
     keywords: ["workflow", "process", "task", "assignment", "worklist", "audit"],
     steps: [
       {
