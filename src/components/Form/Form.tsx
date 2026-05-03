@@ -1,5 +1,6 @@
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
 import { useEffect, useState } from "react";
 import { SchemaForm, utils } from "react-schema-form";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
@@ -7,12 +8,16 @@ import forms from "../../data/Forms";
 import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import HelpLink from "../HelpLink";
 import fetchClient, { BASE_URL } from "../../utils/fetchClient";
+import { allPageRegistry } from "../../tasks/pageRegistry";
+import { taskRegistry } from "../../tasks/taskRegistry";
 import {
   buildTaskReturnRoute,
   contextFromObject,
   contextFromSearchParams,
   mergeTaskContext,
+  pageDefinitionForRoute,
   saveStoredTaskContext,
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
@@ -56,6 +61,7 @@ function Form() {
   const [schema, setSchema] = useState<any>(null);
   const [form, setForm] = useState<any[] | null>(null);
   const [actions, setActions] = useState<any[] | null>(null);
+  const [helpPath, setHelpPath] = useState<string | null>(null);
   const [model, setModel] = useState<any>({});
   const { isAuthenticated, host }: any = useUserState();
 
@@ -66,6 +72,7 @@ function Form() {
     setSchema(formData.schema);
     setForm(withBaseUrlForDynaSelect(formData.form));
     setActions(formData.actions);
+    setHelpPath(formData.helpPath ?? null);
 
     const searchParams = new URLSearchParams(location.search);
     const schemaProperties = formData.schema?.properties ?? {};
@@ -159,6 +166,15 @@ function Form() {
   }
 
   if (schema) {
+    const searchParams = new URLSearchParams(location.search);
+    const taskContext = taskContextFromSearch(searchParams);
+    const task = taskRegistry.find((item) => item.id === taskContext?.taskId);
+    const page = pageDefinitionForRoute(allPageRegistry, location.pathname);
+    const primaryHelpPath = helpPath ?? task?.helpPath ?? page?.helpPath;
+    const taskHelpPath = task?.helpPath && task.helpPath !== primaryHelpPath
+      ? task.helpPath
+      : null;
+
     return (
       <Box sx={{ p: 1 }}>
         {fetching && (
@@ -166,9 +182,29 @@ function Form() {
             <CircularProgress />
           </Box>
         )}
-        <Typography variant="h4" component="h2" gutterBottom>
-          {schema.title}
-        </Typography>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          justifyContent="space-between"
+          sx={{ mb: 2 }}
+        >
+          <Typography variant="h4" component="h2">
+            {schema.title}
+          </Typography>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap", rowGap: 1 }}>
+            <HelpLink
+              helpPath={primaryHelpPath}
+              tooltip={`Help: ${schema.title}`}
+            />
+            <HelpLink
+              helpPath={taskHelpPath}
+              label="Task Help"
+              tooltip={task ? `Related task help: ${task.title}` : undefined}
+              fallback={false}
+            />
+          </Stack>
+        </Stack>
         <SchemaForm
           schema={schema}
           form={form}

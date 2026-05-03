@@ -4,6 +4,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import { useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import HelpLink from "../components/HelpLink";
 import { taskRegistry } from "./taskRegistry";
 import { buildTaskReturnRoute, taskContextFromSearch } from "./taskUtils";
 
@@ -79,7 +80,12 @@ export default function TaskContextPanel() {
           </Box>
         </Stack>
 
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0, flexWrap: "wrap", rowGap: 1 }}>
+          <HelpLink
+            helpPath={step?.helpPath ?? task.helpPath}
+            label="Task Help"
+            tooltip={step ? `Help: ${step.title}` : `Help: ${task.title}`}
+          />
           <Button
             size="small"
             variant="outlined"

@@ -9,6 +9,7 @@ import {
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useUserState } from "../contexts/UserContext";
+import HelpLink from "../components/HelpLink";
 import { allPageRegistry } from "./pageRegistry";
 import { taskRegistry } from "./taskRegistry";
 import {
@@ -57,6 +58,7 @@ export default function TaskPageContextBar() {
   const title = task?.title ?? page?.title ?? "";
   const category = task ? "Tasks" : page?.category;
   const description = task?.description ?? page?.description;
+  const helpPath = task?.helpPath ?? page?.helpPath;
   const taskCenterRoute = task
     ? buildContextRoute(`/app/tasks?taskCategory=${encodeURIComponent(task.category)}`, context)
     : buildContextRoute("/app/tasks", context);
@@ -122,7 +124,12 @@ export default function TaskPageContextBar() {
           )}
         </Box>
 
-        <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75, flexShrink: 0 }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexWrap: "wrap", rowGap: 0.75, flexShrink: 0 }}>
+          <HelpLink
+            helpPath={helpPath}
+            tooltip={`Help: ${title}`}
+            buttonVariant="text"
+          />
           <Chip size="small" variant="outlined" label={task ? task.category : page?.kind ?? "Page"} />
           {contextEntries.map(({ key, value }) => (
             <Chip
