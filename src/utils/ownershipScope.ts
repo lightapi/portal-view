@@ -99,10 +99,6 @@ export function applyOwnershipFilter<TFilter extends OwnershipFilter>(
       && filter.id !== ownership.ownerPositionField)
     : [...filters];
 
-  if (ownership.ownerFilter) {
-    scopedFilters.push(ownership.ownerFilter);
-  }
-
   return scopedFilters;
 }
 
