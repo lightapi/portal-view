@@ -194,12 +194,12 @@ export default function RoleUser() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleUserType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'roleId', header: 'Role Id' },
+      { accessorKey: 'email', header: 'Email' },
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'userId', header: 'User Id' },
       { accessorKey: 'startTs', header: 'Start Ts' },
       { accessorKey: 'endTs', header: 'End Ts' },
-      { accessorKey: 'email', header: 'Email' },
       { accessorKey: 'firstName', header: 'First Name' },
       { accessorKey: 'lastName', header: 'Last Name' },
       { accessorKey: 'userType', header: 'Type' },

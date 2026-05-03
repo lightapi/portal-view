@@ -219,9 +219,9 @@ export default function User() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<UserType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'userId', header: 'User Id', size: 300 },
       { accessorKey: 'email', header: 'Email', size: 250 },
+      { accessorKey: 'userId', header: 'User Id', size: 300 },
+      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'language', header: 'Language' },
       { accessorKey: 'userType', header: 'User Type' },
       { accessorKey: 'entityId', header: 'Entity Id' },
