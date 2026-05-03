@@ -2197,6 +2197,10 @@
         "deliveryOwner": {
           "title": "Delivery Owner",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -2227,6 +2231,17 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -2284,6 +2299,10 @@
         "deliveryOwner": {
           "title": "Delivery Owner",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -2314,6 +2333,17 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22user%22%2C%22action%22%3A%22getUserLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -2418,6 +2448,10 @@
         "tokenExType": {
           "title": "Token Exchange Type",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -2539,6 +2573,17 @@
         "action": {
           "url": "/r/data?name=token_ex_type"
         }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -2647,6 +2692,10 @@
         "tokenExType": {
           "title": "Token Exchange Type",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -2764,6 +2813,17 @@
         "action": {
           "url": "/r/data?name=token_ex_type"
         }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -2845,6 +2905,10 @@
         "apiTags": {
           "title": "Api Tags",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -2956,6 +3020,17 @@
         "multiple": true,
         "action": {
           "url": "/r/data?name=api_tag&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -3042,6 +3117,10 @@
         "apiTags": {
           "title": "Api Tags",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -3157,6 +3236,17 @@
             "hostId"
           ]
         }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -3237,6 +3327,10 @@
         "targetHost": {
           "title": "Target Host",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -3275,7 +3369,18 @@
       },
       "protocol",
       "envTag",
-      "targetHost"
+      "targetHost",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "updateApiVersion": {
@@ -3357,6 +3462,10 @@
         "targetHost": {
           "title": "Target Host",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -3395,7 +3504,18 @@
       },
       "protocol",
       "envTag",
-      "targetHost"
+      "targetHost",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "createApiEndpointRule": {
@@ -10319,6 +10439,10 @@
         "eventData": {
           "type": "string",
           "title": "Event Data"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -10375,6 +10499,17 @@
         "type": "textarea",
         "placeholder": "Json CloudEvent",
         "rows": 15
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -14070,6 +14205,10 @@
         "topicClassification": {
           "title": "Topic Classification",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14145,7 +14284,18 @@
       "resourceName",
       "businessName",
       "envTag",
-      "topicClassification"
+      "topicClassification",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "updateInstance": {
@@ -14234,6 +14384,10 @@
         "topicClassification": {
           "title": "Topic Classification",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14311,7 +14465,18 @@
       "resourceName",
       "businessName",
       "envTag",
-      "topicClassification"
+      "topicClassification",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "createInstanceApi": {
@@ -14343,6 +14508,10 @@
         "apiVersionId": {
           "type": "string",
           "title": "Api Version Id"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14370,6 +14539,17 @@
         "multiple": false,
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22service%22%2C%22action%22%3A%22getApiVersionIdLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%20%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -14427,6 +14607,10 @@
         "pathPrefix": {
           "type": "string",
           "title": "Path Prefix"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14442,7 +14626,18 @@
       "productId",
       "apiId",
       "apiVersion",
-      "pathPrefix"
+      "pathPrefix",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "updateInstanceApiPathPrefix": {
@@ -14495,6 +14690,10 @@
         "pathPrefix": {
           "type": "string",
           "title": "Path Prefix"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14510,7 +14709,18 @@
       "productId",
       "apiId",
       "apiVersion",
-      "pathPrefix"
+      "pathPrefix",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "createInstanceApp": {
@@ -14546,6 +14756,10 @@
         "appVersion": {
           "type": "string",
           "title": "App Version"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14579,7 +14793,18 @@
           ]
         }
       },
-      "appVersion"
+      "appVersion",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "createInstanceAppApi": {
@@ -14615,6 +14840,10 @@
         "instanceApiId": {
           "type": "string",
           "title": "Instance Api Id"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -14658,6 +14887,17 @@
           "params": [
             "hostId",
             "instanceId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
           ]
         }
       }
@@ -15283,6 +15523,10 @@
         "runtimeEnv": {
           "title": "Runtime Env",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -15318,6 +15562,17 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -15381,6 +15636,10 @@
         "runtimeEnv": {
           "title": "Runtime Env",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -15417,6 +15676,17 @@
         "multiple": false,
         "action": {
           "url": "/r/data?name=runtime_env&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -15634,6 +15904,10 @@
         "definition": {
           "title": "Definition (YAML)",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -15653,6 +15927,17 @@
         "key": "definition",
         "type": "textarea",
         "rows": 10
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -15702,6 +15987,10 @@
         "active": {
           "title": "Active",
           "type": "boolean"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       },
       "required": [
@@ -15723,6 +16012,17 @@
         "key": "definition",
         "type": "textarea",
         "rows": 10
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       },
       "active"
     ]
@@ -18984,6 +19284,10 @@
         "clientSecret": {
           "title": "Client Secret",
           "type": "string"
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -18999,6 +19303,17 @@
         "key": "clientSecret",
         "title": "Client Secret",
         "type": "password"
+      },
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       }
     ]
   },
@@ -19181,6 +19496,10 @@
             "Running",
             "Shutdown"
           ]
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -19191,7 +19510,18 @@
       "protocol",
       "ipAddress",
       "portNumber",
-      "instanceStatus"
+      "instanceStatus",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "updateRuntimeInstance": {
@@ -19270,6 +19600,10 @@
             "Running",
             "Shutdown"
           ]
+        },
+        "ownerPositionId": {
+          "type": "string",
+          "title": "Owner Position"
         }
       }
     },
@@ -19281,7 +19615,18 @@
       "protocol",
       "ipAddress",
       "portNumber",
-      "instanceStatus"
+      "instanceStatus",
+      {
+        "key": "ownerPositionId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22position%22%2C%22action%22%3A%22getPositionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   }
 }
