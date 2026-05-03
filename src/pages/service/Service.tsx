@@ -55,6 +55,7 @@ interface UserState {
   userId?: string;
   email?: string;
   roles?: string | null;
+  positions?: string | null;
 }
 
 const allApiScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
@@ -73,17 +74,17 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function Service() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host, userId, email, roles } = useUserState() as UserState;
+  const { host, userId, email, roles, positions } = useUserState() as UserState;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const apiOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allApiScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = apiOwnership.ownedOnly;
   const hasOwnerContext = apiOwnership.hasOwnerContext;

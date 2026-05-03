@@ -88,17 +88,17 @@ export default function ApiDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const [data, setData] = useState<ServiceVersionType[]>([]);
-  const { host, userId, email, roles } = useUserState() as { host?: string; userId?: string; email?: string; roles?: string | null };
+  const { host, userId, email, roles, positions } = useUserState() as { host?: string; userId?: string; email?: string; roles?: string | null; positions?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const apiVersionOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allApiVersionScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = apiVersionOwnership.ownedOnly;
   const hasOwnerContext = apiVersionOwnership.hasOwnerContext;

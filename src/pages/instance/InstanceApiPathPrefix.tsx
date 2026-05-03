@@ -52,16 +52,17 @@ export default function InstanceApiPathPrefix() {
   const userId = userState?.userId;
   const email = userState?.email;
   const roles = userState?.roles;
+  const positions = userState?.positions;
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const pathPrefixOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allInstanceApiPathPrefixScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = pathPrefixOwnership.ownedOnly;
   const hasOwnerContext = pathPrefixOwnership.hasOwnerContext;

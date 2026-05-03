@@ -41,6 +41,7 @@ interface UserState {
     userId?: string;
     email?: string;
     roles?: string | null;
+  positions?: string | null;
 }
 
 const allClientTokenScopeRoles = [...defaultAllScopeRoles, 'oauth-client-admin'];
@@ -60,17 +61,17 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 export default function ClientToken() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host, userId, email, roles } = useUserState() as UserState;
+    const { host, userId, email, roles, positions } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
     const clientTokenOwnership = useMemo(
         () => ownershipScope({
             roles,
-            userId,
-            ownerField: 'updateUser',
+            positions,
+      ownerField: 'ownerUserId',
             allScopeRoles: allClientTokenScopeRoles,
         }),
-        [roles, userId],
+        [roles, userId, positions],
     );
     const ownedOnly = clientTokenOwnership.ownedOnly;
     const hasOwnerContext = clientTokenOwnership.hasOwnerContext;

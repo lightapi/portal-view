@@ -48,6 +48,7 @@ interface UserState {
   userId?: string;
   email?: string;
   roles?: string | null;
+  positions?: string | null;
 }
 
 const allClientAppScopeRoles = [...defaultAllScopeRoles, 'app-admin'];
@@ -56,16 +57,16 @@ export default function ClientApp() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { host, userId, email, roles } = useUserState() as UserState;
+  const { host, userId, email, roles, positions } = useUserState() as UserState;
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const clientAppOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allClientAppScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = clientAppOwnership.ownedOnly;
   const hasOwnerContext = clientAppOwnership.hasOwnerContext;

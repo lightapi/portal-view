@@ -37,6 +37,8 @@ type ScheduleType = {
   eventTopic: string;
   eventType: string;
   eventData: string;
+  ownerUserId?: string;
+  ownerPositionId?: string;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -48,6 +50,7 @@ interface UserState {
   userId?: string;
   email?: string;
   roles?: string | null;
+  positions?: string | null;
 }
 
 const allScheduleScopeRoles = [...defaultAllScopeRoles, 'schedule-admin'];
@@ -67,7 +70,7 @@ export default function Schedule() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { host, userId, email, roles } = useUserState() as UserState;
+  const { host, userId, email, roles, positions } = useUserState() as UserState;
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   
   // Determine if we are in admin mode based on the URL path
@@ -75,8 +78,8 @@ export default function Schedule() {
   const scheduleOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allScheduleScopeRoles,
       allScopeAllowed: isAdminView,
     }),
@@ -247,6 +250,8 @@ export default function Schedule() {
           header: 'Event Data',
           Cell: TruncatedCell,
         },
+        { accessorKey: 'ownerUserId', header: 'Owner User' },
+        { accessorKey: 'ownerPositionId', header: 'Owner Position' },
         { accessorKey: 'updateUser', header: 'Update User' },
         { accessorKey: 'updateTs', header: 'Update Timestamp' },
         { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
@@ -288,8 +293,10 @@ export default function Schedule() {
           },
         },
       ];
-      // Hide Update User column for owner-scoped users.
-      return ownedOnly ? allColumns.filter(col => col.accessorKey !== 'updateUser') : allColumns;
+      // Hide owner/audit columns for owner-scoped users.
+      return ownedOnly
+        ? allColumns.filter(col => col.accessorKey !== 'ownerUserId' && col.accessorKey !== 'ownerPositionId' && col.accessorKey !== 'updateUser')
+        : allColumns;
     },
     [ownedOnly, isUpdateLoading, canModifySchedule, handleUpdate, handleDelete],
   );

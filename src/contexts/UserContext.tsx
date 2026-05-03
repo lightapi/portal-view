@@ -12,11 +12,12 @@ interface UserState {
   userId: string | null;
   eid: string | null;
   roles: string | null;
+  positions: string | null;
   host: string | null;
 }
 
 type UserAction =
-  | { type: "LOGIN_SUCCESS"; isAuthenticated?: boolean; email?: string | null; userId?: string | null; eid?: string | null; roles?: string | null; host?: string | null }
+  | { type: "LOGIN_SUCCESS"; isAuthenticated?: boolean; email?: string | null; userId?: string | null; eid?: string | null; roles?: string | null; positions?: string | null; host?: string | null }
   | { type: "SIGN_OUT_SUCCESS" }
   | { type: "UPDATE_PROFILE"; userId: string; host: string }
   | { type: "LOGIN_FAILURE" };
@@ -34,6 +35,7 @@ function userReducer(state: UserState, action: UserAction): UserState {
         userId: action.userId ?? state.userId,
         eid: action.eid ?? state.eid,
         roles: action.roles ?? state.roles,
+        positions: action.positions ?? state.positions,
         host: action.host ?? state.host,
       };
     case "SIGN_OUT_SUCCESS":
@@ -44,6 +46,7 @@ function userReducer(state: UserState, action: UserAction): UserState {
         userId: null,
         eid: null,
         roles: null,
+        positions: null,
         host: null,
       };
     case "UPDATE_PROFILE":
@@ -61,7 +64,8 @@ function UserProvider({ children }: { children: React.ReactNode }) {
   const host = cookies.get("host");
   const email = cookies.get("email");
   const eid = cookies.get("eid");
-  const roles = cookies.get("roles") ? atob(cookies.get("roles")) : null;
+  const roles = decodedCookie(cookies, "roles");
+  const positions = decodedCookie(cookies, "positions") ?? decodedCookie(cookies, "position") ?? decodedCookie(cookies, "pos");
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
@@ -69,6 +73,7 @@ function UserProvider({ children }: { children: React.ReactNode }) {
     host: host,
     email: email,
     roles: roles,
+    positions: positions,
   });
 
   if (email == null && refreshToken != null) {
@@ -96,7 +101,8 @@ function UserProvider({ children }: { children: React.ReactNode }) {
             type: "LOGIN_SUCCESS",
             isAuthenticated: !!cookies.get("userId"),
             email: cookies.get("userId"),
-            roles: cookies.get("roles") ? atob(cookies.get("roles")) : null,
+            roles: decodedCookie(cookies, "roles"),
+            positions: decodedCookie(cookies, "positions") ?? decodedCookie(cookies, "position") ?? decodedCookie(cookies, "pos"),
           });
         }
       } catch (e) {
@@ -148,14 +154,25 @@ export {
   userHost,
 };
 
+function decodedCookie(cookies: Cookies, name: string) {
+  const value = cookies.get(name);
+  if (!value) return null;
+
+  try {
+    return atob(value);
+  } catch {
+    return value;
+  }
+}
+
 function syncUserFromCookies(dispatch: React.Dispatch<UserAction>) {
   const cookies = new Cookies();
   const userId = cookies.get("userId") ?? null;
   const email = cookies.get("email") ?? userId;
   const eid = cookies.get("eid") ?? null;
   const host = cookies.get("host") ?? null;
-  const encodedRoles = cookies.get("roles");
-  const roles = encodedRoles ? atob(encodedRoles) : null;
+  const roles = decodedCookie(cookies, "roles");
+  const positions = decodedCookie(cookies, "positions") ?? decodedCookie(cookies, "position") ?? decodedCookie(cookies, "pos");
 
   dispatch({
     type: "LOGIN_SUCCESS",
@@ -165,6 +182,7 @@ function syncUserFromCookies(dispatch: React.Dispatch<UserAction>) {
     eid,
     host,
     roles,
+    positions,
   });
 }
 

@@ -55,17 +55,17 @@ const allInstanceApiScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
 export default function InstanceApi() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host, userId, email, roles } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null };
+  const { host, userId, email, roles, positions } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null; positions?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const instanceApiOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allInstanceApiScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = instanceApiOwnership.ownedOnly;
   const hasOwnerContext = instanceApiOwnership.hasOwnerContext;

@@ -47,17 +47,17 @@ const allRuntimeInstanceScopeRoles = [...defaultAllScopeRoles, 'instance-admin']
 export default function RuntimeInstanceAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host, userId, email, roles } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null };
+  const { host, userId, email, roles, positions } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null; positions?: string | null };
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const runtimeInstanceOwnership = useMemo(
     () => ownershipScope({
       roles,
-      userId,
-      ownerField: 'updateUser',
+      positions,
+      ownerField: 'ownerUserId',
       allScopeRoles: allRuntimeInstanceScopeRoles,
     }),
-    [roles, userId],
+    [roles, userId, positions],
   );
   const ownedOnly = runtimeInstanceOwnership.ownedOnly;
   const hasOwnerContext = runtimeInstanceOwnership.hasOwnerContext;
