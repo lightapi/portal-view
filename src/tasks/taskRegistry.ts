@@ -715,18 +715,18 @@ export const taskRegistry: TaskDefinition[] = [
     id: "portal-snapshot-migration",
     title: "Export or Convert Portal Snapshot",
     description:
-      "Export global or host-scoped portal data and convert snapshots for target hosts.",
+      "Export global, host-scoped, or combined portal data and convert snapshots for target hosts.",
     category: "Portal Administration",
     roles: ["admin"],
-    keywords: ["snapshot", "migration", "export", "convert", "host", "global"],
+    keywords: ["snapshot", "migration", "export", "convert", "host", "global", "both"],
     steps: [
       {
         id: "export",
         title: "Export snapshot",
-        description: "Create a global or host-scoped portal snapshot.",
+        description: "Create a global, host-scoped, or combined portal snapshot.",
         route: "/app/migration/export",
         required: true,
-        keywords: ["snapshot", "export"],
+        keywords: ["snapshot", "export", "both"],
       },
       {
         id: "convert",

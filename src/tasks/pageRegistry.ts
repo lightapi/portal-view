@@ -204,11 +204,11 @@ export const pageRegistry: PageDefinition[] = [
   {
     id: "snapshot-export",
     title: "Snapshot Export",
-    description: "Export global or host-scoped portal data snapshots.",
+    description: "Export global, host-scoped, or combined portal data snapshots.",
     route: "/app/migration/export",
     category: "Portal Administration",
     roles: ["admin"],
-    keywords: ["snapshot", "export", "migration", "host", "global"],
+    keywords: ["snapshot", "export", "migration", "host", "global", "both"],
     entities: ["snapshot"],
   },
   {

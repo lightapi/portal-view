@@ -42,7 +42,19 @@ type HostType = {
   hostDesc?: string;
 };
 
-type ExportScope = "host" | "global";
+type ExportScope = "host" | "global" | "both";
+
+const EXPORT_SCOPE_LABELS: Record<ExportScope, string> = {
+  host: "Host",
+  global: "Global",
+  both: "Both",
+};
+
+const EXPORT_SCOPE_DESCRIPTIONS: Record<ExportScope, string> = {
+  host: "Export rows owned by the selected source host.",
+  global: "Export shared rows and tables that are not host-owned.",
+  both: "Export host-owned rows plus shared global baseline data.",
+};
 
 const ENTITY_OPTIONS = [
   "user",
@@ -276,7 +288,7 @@ export default function GlobalSnapshotExport() {
             Global Snapshot Export
           </Typography>
           <Typography color="text.secondary">
-            Export host-owned rows or shared global baseline data as a portable snapshot JSON file.
+            Export host-owned rows, shared global baseline data, or both as a portable snapshot JSON file.
           </Typography>
         </Box>
 
@@ -335,11 +347,14 @@ export default function GlobalSnapshotExport() {
                   control={<Radio />}
                   label="Global entities"
                 />
+                <FormControlLabel
+                  value="both"
+                  control={<Radio />}
+                  label="Both entities"
+                />
               </RadioGroup>
               <Typography variant="body2" color="text.secondary">
-                {exportScope === "host"
-                  ? "Export rows owned by the selected source host."
-                  : "Export shared rows and tables that are not host-owned."}
+                {EXPORT_SCOPE_DESCRIPTIONS[exportScope]}
               </Typography>
             </FormControl>
 
@@ -395,7 +410,7 @@ export default function GlobalSnapshotExport() {
 
             {result && (
               <Alert severity="success">
-                {exportScope === "host" ? "Host" : "Global"} snapshot export completed for{" "}
+                {EXPORT_SCOPE_LABELS[exportScope]} snapshot export completed for{" "}
                 <strong>{selectedHostLabel}</strong>.
               </Alert>
             )}
