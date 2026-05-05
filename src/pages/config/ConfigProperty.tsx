@@ -209,11 +209,13 @@ export default function ConfigPropertyAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigPropertyType>[]>(
     () => [
-      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
-      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
+      { accessorKey: 'propertyValue', header: 'Value' },
+      { accessorKey: 'valueType', header: 'Value Type' },
       { accessorKey: 'propertyType', header: 'Type' },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'light4jVersion', header: 'Light4j Version' },
       { accessorKey: 'displayOrder', header: 'Display Order' },
       {
@@ -229,8 +231,6 @@ export default function ConfigPropertyAdmin() {
         Cell: TruncatedCell,
         muiTableBodyCellProps: { sx: { maxWidth: '200px' } }
       },
-      { accessorKey: 'propertyValue', header: 'Value' },
-      { accessorKey: 'valueType', header: 'Value Type' },
       { accessorKey: 'resourceType', header: 'Resource Type' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
