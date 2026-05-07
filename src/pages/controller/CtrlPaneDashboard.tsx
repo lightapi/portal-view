@@ -833,7 +833,7 @@ function CtrlPaneDashboard() {
             <TableHead>
               <TableRow>
                 <TableCell>Protocol</TableCell>
-                <TableCell>Address</TableCell>
+                <TableCell>Host</TableCell>
                 <TableCell align="right">Port</TableCell>
                 <TableCell align="center">Live Status</TableCell>
                 <TableCell align="right">Check</TableCell>
