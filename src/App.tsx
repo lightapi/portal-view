@@ -496,9 +496,9 @@ const App = () => {
             <Route path="mcp/setup" element={<McpTaskWizard />} />
             <Route path="mcp/wizard" element={<McpServerForm />} />
             <Route path="mcp/servers" element={<Navigate to="/app/mcp/gateway" replace />} />
-            <Route path="mcp/create" element={<Navigate to="/app/mcp/setup" replace />} />
+            <Route path="mcp/create" element={<Navigate to="/app/mcp/wizard" replace />} />
             <Route path="mcp/edit" element={<Navigate to="/app/mcp/wizard" replace />} />
-            <Route path="mcp/onboard" element={<Navigate to="/app/mcp/setup?workflow=api" replace />} />
+            <Route path="mcp/onboard" element={<Navigate to="/app/mcp/wizard?flow=onboard" replace />} />
             <Route path="controller/services" element={<CtrlPaneDashboard />} />
             <Route path="controller/check" element={<HealthCheck />} />
             <Route path="controller/info" element={<ServerInfo />} />
