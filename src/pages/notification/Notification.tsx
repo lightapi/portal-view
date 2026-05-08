@@ -40,6 +40,20 @@ type NotificationApiResponse = {
   total?: number;
 };
 
+const NOTIFICATION_FAILURES_READ_EVENT = 'portal:notification-failures-read';
+
+const buildQueryUrl = (action: string, data: Record<string, unknown>) => {
+  const cmd = {
+    host: 'lightapi.net',
+    service: 'user',
+    action,
+    version: '0.1.0',
+    data,
+  };
+
+  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+};
+
 const statusOptions = [
   { label: 'Pending', value: 'PENDING' },
   { label: 'Succeeded', value: 'SUCCEEDED' },
@@ -204,6 +218,21 @@ export default function Notification() {
     setSeededUserId(userId);
   }, [seededUserId, userId]);
 
+  const markFailuresRead = useCallback(async () => {
+    if (!host || !userId) return;
+
+    try {
+      await fetchClient(buildQueryUrl('markFailureNotificationsRead', { hostId: host, userId }));
+      window.dispatchEvent(new CustomEvent(NOTIFICATION_FAILURES_READ_EVENT));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [host, userId]);
+
+  useEffect(() => {
+    markFailuresRead();
+  }, [markFailuresRead]);
+
   const fetchData = useCallback(async () => {
     if (!host || !userId) {
       setData([]);
@@ -228,23 +257,16 @@ export default function Notification() {
       error: getFilterValue(columnFilters, 'error'),
     };
 
-    const cmd = {
-      host: 'lightapi.net',
-      service: 'user',
-      action: 'getNotification',
-      version: '0.1.0',
-      data: {
-        hostId: host,
-        offset: pagination.pageIndex * pagination.pageSize,
-        limit: pagination.pageSize,
-        sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(columnFilters ?? []),
-        globalFilter: globalFilter ?? '',
-        ...legacyFilters,
-      },
-    };
-
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    const url = buildQueryUrl('getNotification', {
+      hostId: host,
+      userId,
+      offset: pagination.pageIndex * pagination.pageSize,
+      limit: pagination.pageSize,
+      sorting: JSON.stringify(sorting ?? []),
+      filters: JSON.stringify(columnFilters ?? []),
+      globalFilter: globalFilter ?? '',
+      ...legacyFilters,
+    });
 
     try {
       const json = await fetchClient(url) as NotificationApiResponse;

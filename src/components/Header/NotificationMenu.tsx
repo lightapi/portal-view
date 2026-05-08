@@ -1,136 +1,195 @@
 import {
   Build as ManageIcon,
   NotificationsNone as NotificationsIcon,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 import {
-  Fab,
+  Box,
+  Button,
+  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
-  CircularProgress,
-  Box,
-} from "@mui/material"; // Import Box from MUI
-import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
-import { useUserState } from "../../contexts/UserContext";
-import { useApiGet } from "../../hooks/useApiGet";
-import Notification from "../Notification/Notification";
-import { Badge } from "../Wrappers/Wrappers"; // Assuming Badge is still needed
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUserState } from '../../contexts/UserContext';
+import { useInterval } from '../../hooks/useInterval';
+import fetchClient from '../../utils/fetchClient';
+import { Badge } from '../Wrappers/Wrappers';
+
+type CountResponse = {
+  count?: number;
+};
+
+const NOTIFICATION_FAILURES_READ_EVENT = 'portal:notification-failures-read';
+
+const buildQueryUrl = (action: string, data: Record<string, unknown>) => {
+  const cmd = {
+    host: 'lightapi.net',
+    service: 'user',
+    action,
+    version: '0.1.0',
+    data,
+  };
+
+  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+};
 
 export default function NotificationMenu({ openAbove = false }: { openAbove?: boolean }) {
-  var [notificationsMenu, setNotificationsMenu] = useState(null);
-  var [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
-  // var classes = props.classes; // No more classes prop needed with sx
+  const [notificationsMenu, setNotificationsMenu] = useState<null | HTMLElement>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [menuUnreadCount, setMenuUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const hasLoadedCountRef = useRef(false);
   const navigate = useNavigate();
-  var { host, userId } = useUserState();
-  const cmd = {
-    host: "lightapi.net",
-    service: "user",
-    action: "getNotification",
-    version: "0.1.0",
-    data: { limit: 10, offset: 0, hostId: host, userId },
+  const theme = useTheme();
+  const { host, userId } = useUserState();
+
+  const queryUnreadCount = useCallback(async () => {
+    if (!host || !userId) {
+      setUnreadCount(0);
+      setIsLoading(false);
+      hasLoadedCountRef.current = false;
+      return;
+    }
+
+    const isInitialLoad = !hasLoadedCountRef.current;
+    try {
+      if (isInitialLoad) setIsLoading(true);
+      const response = await fetchClient(buildQueryUrl('getUnreadNotificationCount', { hostId: host, userId })) as CountResponse;
+      setUnreadCount(Number(response.count || 0));
+      setIsError(false);
+    } catch (error) {
+      setUnreadCount(0);
+      setIsError(true);
+      console.error(error);
+    } finally {
+      hasLoadedCountRef.current = true;
+      setIsLoading(false);
+    }
+  }, [host, userId]);
+
+  const markFailuresRead = useCallback(async () => {
+    if (!host || !userId) return;
+
+    try {
+      await fetchClient(buildQueryUrl('markFailureNotificationsRead', { hostId: host, userId }));
+      setUnreadCount(0);
+      window.dispatchEvent(new CustomEvent(NOTIFICATION_FAILURES_READ_EVENT));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [host, userId]);
+
+  useEffect(() => {
+    hasLoadedCountRef.current = false;
+    setUnreadCount(0);
+    setMenuUnreadCount(0);
+    setIsError(false);
+  }, [host, userId]);
+
+  useEffect(() => {
+    queryUnreadCount();
+  }, [queryUnreadCount]);
+
+  useInterval(() => {
+    queryUnreadCount();
+  }, host && userId ? 60000 : null);
+
+  useEffect(() => {
+    const handleFailuresRead = () => {
+      setUnreadCount(0);
+      setMenuUnreadCount(0);
+    };
+
+    window.addEventListener(NOTIFICATION_FAILURES_READ_EVENT, handleFailuresRead);
+    return () => window.removeEventListener(NOTIFICATION_FAILURES_READ_EVENT, handleFailuresRead);
+  }, []);
+
+  const openMenu = (event: MouseEvent<HTMLElement>) => {
+    setNotificationsMenu(event.currentTarget);
+    setMenuUnreadCount(unreadCount);
+    if (unreadCount > 0) {
+      markFailuresRead();
+    }
   };
 
-  const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-  const headers = {};
-  const { isLoading, data, error } = useApiGet({ url, headers });
-
-  const notificationDetail = () => {
-    navigate("/app/notificationDetail", { state: { data } });
+  const closeMenu = () => {
+    setNotificationsMenu(null);
   };
 
-  let wait;
-  if (isLoading) {
-    wait = (
-      <div>
-        <CircularProgress />
-      </div>
-    );
-  } else if (error) {
-    wait = (
-      <div>
-        <p style={{ color: "red" }}>
-          Error fetching notifications: {error.message || "Unknown error"}
-        </p>
-      </div>
-    );
-  } else if (data && data.length > 0) {
-    wait = (
-      <React.Fragment>
-        <IconButton
-          color="inherit"
-          aria-haspopup="true"
-          aria-controls="notifications-menu" // Corrected id to match aria-controls
-          onClick={(e) => {
-            setNotificationsMenu(e.currentTarget);
-            setIsNotificationsUnread(false);
-          }}
-          sx={{
-            // Using sx prop for styling
-            marginRight: "10px", // Example spacing - adjust as needed
-          }}
-          size="large"
+  const openNotificationPage = () => {
+    closeMenu();
+    navigate('/app/notification');
+  };
+
+  return (
+    <Box>
+      <IconButton
+        color="inherit"
+        aria-haspopup="true"
+        aria-controls="notifications-menu"
+        onClick={openMenu}
+        sx={{ ml: 1, p: 0.5 }}
+        size="large"
+      >
+        <Badge
+          badgeContent={unreadCount > 0 ? unreadCount : null}
+          color="error"
         >
-          <Badge
-            badgeContent={isNotificationsUnread ? data.length : null}
-            color="warning"
-          >
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
             <NotificationsIcon
               sx={{
-                // Styling the icon with sx prop
-                fontSize: "2rem", // Example icon size - adjust as needed
+                color: unreadCount > 0 ? theme.palette.error.main : (theme.palette as any).custom?.darkBlue,
+                fontSize: 28,
               }}
             />
-          </Badge>
-        </IconButton>
-        <Menu
-          id="notifications-menu"
-          open={Boolean(notificationsMenu)}
-          anchorEl={notificationsMenu}
-          onClose={() => setNotificationsMenu(null)}
-          anchorOrigin={openAbove ? { vertical: 'top', horizontal: 'left' } : { vertical: 'bottom', horizontal: 'left' }}
-          transformOrigin={openAbove ? { vertical: 'bottom', horizontal: 'left' } : { vertical: 'top', horizontal: 'left' }}
-          sx={openAbove ? {} : { marginTop: '5px' }}
-          disableAutoFocusItem
-        >
-          <Fab
-            variant="extended"
-            color="primary"
-            aria-label="Notification Detail"
-            onClick={notificationDetail}
-            sx={{
-              // Styling the Fab with sx prop
-              marginBottom: "10px", // Example spacing
-              marginRight: "auto",
-              marginLeft: "auto",
-              display: "block",
-            }}
+          )}
+        </Badge>
+      </IconButton>
+      <Menu
+        id="notifications-menu"
+        open={Boolean(notificationsMenu)}
+        anchorEl={notificationsMenu}
+        onClose={closeMenu}
+        anchorOrigin={openAbove ? { vertical: 'top', horizontal: 'left' } : { vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={openAbove ? { vertical: 'bottom', horizontal: 'left' } : { vertical: 'top', horizontal: 'left' }}
+        sx={openAbove ? {} : { mt: 7 }}
+        PaperProps={{ sx: { minWidth: 280 } }}
+        disableAutoFocusItem
+      >
+        <Box sx={{ display: 'grid', gap: 1, p: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Notifications
+          </Typography>
+          <Typography color={menuUnreadCount > 0 ? 'error' : 'text.secondary'} variant="body2">
+            {menuUnreadCount > 0
+              ? `${menuUnreadCount} unread failure${menuUnreadCount === 1 ? '' : 's'}`
+              : 'No unread failures'}
+          </Typography>
+          {isError ? (
+            <Typography color="error" variant="body2">
+              Unable to load notification count
+            </Typography>
+          ) : null}
+        </Box>
+        <MenuItem disableRipple sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
+          <Button
+            fullWidth
+            onClick={openNotificationPage}
+            startIcon={<ManageIcon />}
+            variant="contained"
+            sx={{ textTransform: 'none' }}
           >
-            Notification Detail
-            <ManageIcon
-              sx={{
-                // Styling the ManageIcon within Fab with sx prop
-                marginLeft: "5px", // Example icon spacing
-              }}
-            />
-          </Fab>
-          {data.map((notification, index) => (
-            <MenuItem
-              key={index}
-              onClick={() => setNotificationsMenu(null)}
-              sx={{
-                // Styling the MenuItem with sx prop
-                padding: "8px 16px", // Example padding
-              }}
-            >
-              <Notification {...notification} typographyVariant="inherit" />
-            </MenuItem>
-          ))}
-        </Menu>
-      </React.Fragment>
-    );
-  } else {
-    wait = null; // Or you can render a default state if needed when no data and no error
-  }
-  return <Box>{wait}</Box>; // Using Box from MUI instead of a plain div for better styling consistency if needed
+            Open Notifications
+          </Button>
+        </MenuItem>
+      </Menu>
+    </Box>
+  );
 }
