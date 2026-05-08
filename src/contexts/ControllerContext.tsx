@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useReducer, useRef, useCal
 import { McpClient } from '../controller/mcpClient';
 import Cookies from 'universal-cookie';
 import { useUserState } from './UserContext';
+import { config } from '../../config';
 
 interface ControllerState {
   isLiveConnected: boolean; // Unified status
@@ -38,6 +39,22 @@ interface ControllerContextValue extends ControllerState {
 }
 
 const ControllerContext = createContext<ControllerContextValue | undefined>(undefined);
+const MCP_ENDPOINT = '/ctrl/mcp';
+
+function buildMcpUrl(): string {
+  const configuredBaseUrl = (config.apiBaseUrl || '').trim();
+  const useDevProxy = import.meta.env.DEV && MCP_ENDPOINT.startsWith('/');
+  const httpUrl = (useDevProxy || !configuredBaseUrl)
+    ? new URL(MCP_ENDPOINT, window.location.href).toString()
+    : `${configuredBaseUrl.replace(/\/+$/, '')}${MCP_ENDPOINT}`;
+  const mcpUrl = new URL(httpUrl, window.location.href);
+  if (mcpUrl.protocol === 'https:') {
+    mcpUrl.protocol = 'wss:';
+  } else if (mcpUrl.protocol === 'http:') {
+    mcpUrl.protocol = 'ws:';
+  }
+  return mcpUrl.toString();
+}
 
 export function ControllerProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(controllerReducer, initialState);
@@ -67,15 +84,11 @@ export function ControllerProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (!isAuthenticated || !shouldConnect) return;
 
-    // Follow the same BFF connection pattern as Chat.tsx:
     // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
     // The csrf token is passed via Sec-WebSocket-Protocol header for BFF validation.
     const cookies = new Cookies();
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const mcpUrlObject = new URL('/ctrl/mcp', window.location.href);
-    mcpUrlObject.protocol = protocol;
-    const mcpUrl = mcpUrlObject.toString();
+    const mcpUrl = buildMcpUrl();
     const mcpClient = new McpClient(mcpUrl, () => {
       const token = cookies.get('csrf');
       return token ? [`csrf.${token}`] : [];
