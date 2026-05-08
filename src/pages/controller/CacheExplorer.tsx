@@ -4,6 +4,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Paper,
   Stack,
   Table,
@@ -15,6 +20,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useController } from '../../contexts/ControllerContext';
 
@@ -44,7 +50,10 @@ export default function CacheExplorer() {
   const [pageIndex, setPageIndex] = useState(0);
   const [loadingCaches, setLoadingCaches] = useState(true);
   const [loadingEntries, setLoadingEntries] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const fetchCaches = async () => {
     if (!runtimeInstanceId) {
@@ -54,6 +63,7 @@ export default function CacheExplorer() {
     }
     setLoadingCaches(true);
     setError(null);
+    setNotice(null);
     try {
       const result = await callTool('list_caches', { runtimeInstanceId });
       setCaches(Array.isArray(result?.caches) ? result.caches : []);
@@ -70,6 +80,7 @@ export default function CacheExplorer() {
     }
     setLoadingEntries(true);
     setError(null);
+    setNotice(null);
     try {
       const result = await callTool('get_cache_entries', { runtimeInstanceId, name: cacheName });
       const rawEntries = result?.entries && typeof result.entries === 'object' ? result.entries : {};
@@ -83,6 +94,39 @@ export default function CacheExplorer() {
       setSelectedCache(null);
     } finally {
       setLoadingEntries(false);
+    }
+  };
+
+  const clearSelectedCache = async () => {
+    if (!runtimeInstanceId || !selectedCache) {
+      return;
+    }
+    const cacheName = selectedCache;
+    setClearingCache(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await callTool('clear_cache', { runtimeInstanceId, name: cacheName });
+      if (result?.supported === false || result?.status === 'unsupported') {
+        setError(result?.message ?? `Cache ${cacheName} cannot be cleared on this runtime instance.`);
+        return;
+      }
+      if (result?.status && result.status !== 'success') {
+        setError(result?.message ?? `Failed to clear cache ${cacheName}.`);
+        return;
+      }
+      await fetchEntries(cacheName);
+      const beforeSize = typeof result?.beforeSize === 'number' ? result.beforeSize : null;
+      const afterSize = typeof result?.afterSize === 'number' ? result.afterSize : null;
+      const sizeDetails = beforeSize !== null && afterSize !== null
+        ? ` Entries: ${beforeSize} -> ${afterSize}.`
+        : '';
+      setNotice(`Cleared cache ${cacheName}.${sizeDetails}`);
+    } catch (err: any) {
+      setError(err?.message ?? JSON.stringify(err));
+    } finally {
+      setClearingCache(false);
+      setClearDialogOpen(false);
     }
   };
 
@@ -133,6 +177,7 @@ export default function CacheExplorer() {
         </Paper>
 
         {error && <Alert severity="error">{error}</Alert>}
+        {notice && <Alert severity="success">{notice}</Alert>}
 
         <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2}>
           <Paper variant="outlined" sx={{ p: 2, minWidth: 280 }}>
@@ -166,7 +211,7 @@ export default function CacheExplorer() {
 
           <Paper variant="outlined" sx={{ p: 2, flexGrow: 1 }}>
             <Stack spacing={2}>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {selectedCache ? `Entries: ${selectedCache}` : 'Select a cache'}
                 </Typography>
@@ -176,6 +221,16 @@ export default function CacheExplorer() {
                   onChange={(event) => setSearch(event.target.value)}
                   fullWidth
                 />
+                <Button
+                  color="error"
+                  disabled={!selectedCache || loadingEntries || clearingCache}
+                  startIcon={clearingCache ? <CircularProgress color="inherit" size={16} /> : <DeleteSweepIcon />}
+                  variant="outlined"
+                  onClick={() => setClearDialogOpen(true)}
+                  sx={{ flexShrink: 0 }}
+                >
+                  Clear
+                </Button>
               </Stack>
 
               {loadingEntries ? (
@@ -235,6 +290,38 @@ export default function CacheExplorer() {
           </Paper>
         </Stack>
       </Stack>
+
+      <Dialog
+        open={clearDialogOpen}
+        onClose={() => {
+          if (!clearingCache) {
+            setClearDialogOpen(false);
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Clear Cache</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Clear all entries from {selectedCache}?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearDialogOpen(false)} disabled={clearingCache}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            onClick={clearSelectedCache}
+            disabled={clearingCache}
+            startIcon={clearingCache ? <CircularProgress color="inherit" size={16} /> : <DeleteSweepIcon />}
+            variant="contained"
+          >
+            Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
