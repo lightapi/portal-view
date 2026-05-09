@@ -48,6 +48,8 @@ export const taskContextKeys: TaskContextKey[] = [
   "entityType",
   "deploymentMode",
   "userId",
+  "toUserId",
+  "conversationId",
   "configId",
   "propertyId",
   "environment",

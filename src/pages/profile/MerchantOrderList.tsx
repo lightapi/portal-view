@@ -39,9 +39,9 @@ function Row({ row }: RowProps) {
     [searchParams, userId],
   );
 
-  const replyMessage = (userId: string, subject: string) => {
-    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { userId })), {
-      state: { data: { userId, subject } },
+  const replyMessage = (toUserId: string, subject: string) => {
+    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { toUserId })), {
+      state: { data: { toUserId, subject } },
     });
   };
 

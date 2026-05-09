@@ -62,8 +62,8 @@ export default function LiveMap() {
   const SIZE = 20;
 
   const pm = (id: string) => {
-    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { userId: id })), {
-      state: { data: { userId: id } },
+    navigate(buildTaskAwareRoute('/app/form/privateMessage', searchParams, mergeTaskContext(taskContext, { toUserId: id })), {
+      state: { data: { toUserId: id } },
     });
   };
 

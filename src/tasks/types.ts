@@ -18,6 +18,8 @@ export type TaskContextKey =
   | "entityType"
   | "deploymentMode"
   | "userId"
+  | "toUserId"
+  | "conversationId"
   | "configId"
   | "propertyId"
   | "environment"
