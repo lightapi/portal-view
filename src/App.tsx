@@ -326,6 +326,7 @@ const App = () => {
           <Route path="blog/blogList" element={<BlogList />} />
           <Route path="form/:formId" element={<Form />} />
           <Route path="notification" element={<Notification />} />
+          <Route path="event/notifications" element={<Notification />} />
           <Route path="failure" element={<Failure />} />
           <Route path="success" element={<Success />} />
           <Route path="profile" element={<Profile />} />
