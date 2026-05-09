@@ -30,6 +30,7 @@ type ConfigInstanceFileType = {
   instanceFileId: string;
   instanceId: string;
   instanceName: string;
+  configPhase: string;
   fileType: string;
   fileName: string;
   fileValue: string;
@@ -222,6 +223,7 @@ export default function ConfigInstanceFile() {
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceId', header: 'Instance Id' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'configPhase', header: 'Phase' },
       { accessorKey: 'fileName', header: 'File Name' },
       { accessorKey: 'fileType', header: 'File Type' },
       { accessorKey: 'fileDesc', header: 'Description' },

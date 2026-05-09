@@ -12690,9 +12690,15 @@
           "type": "string",
           "title": "Instance Id"
         },
+        "configPhase": {
+          "type": "string",
+          "title": "Config Phase",
+          "default": "R"
+        },
         "fileType": {
           "type": "string",
-          "title": "File Type"
+          "title": "File Type",
+          "default": "File"
         },
         "fileName": {
           "type": "string",
@@ -12715,6 +12721,7 @@
       "required": [
         "hostId",
         "instanceId",
+        "configPhase",
         "fileName",
         "fileValue",
         "fileDesc"
@@ -12734,6 +12741,25 @@
         }
       },
       {
+        "key": "configPhase",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "G",
+            "label": "Generic"
+          },
+          {
+            "id": "D",
+            "label": "Deployment"
+          },
+          {
+            "id": "R",
+            "label": "Runtime"
+          }
+        ]
+      },
+      {
         "key": "fileType",
         "type": "dynaselect",
         "multiple": false,
@@ -12741,6 +12767,10 @@
           {
             "id": "File",
             "label": "File"
+          },
+          {
+            "id": "Cert",
+            "label": "Cert"
           }
         ]
       },
@@ -12794,9 +12824,15 @@
           "title": "Instance Id",
           "readonly": true
         },
+        "configPhase": {
+          "type": "string",
+          "title": "Config Phase",
+          "default": "R"
+        },
         "fileType": {
           "type": "string",
-          "title": "File Type"
+          "title": "File Type",
+          "default": "File"
         },
         "fileName": {
           "type": "string",
@@ -12820,6 +12856,7 @@
         "hostId",
         "instanceFileId",
         "instanceId",
+        "configPhase",
         "fileType",
         "fileName",
         "fileValue",
@@ -12831,6 +12868,25 @@
       "instanceFileId",
       "instanceId",
       {
+        "key": "configPhase",
+        "type": "dynaselect",
+        "multiple": false,
+        "options": [
+          {
+            "id": "G",
+            "label": "Generic"
+          },
+          {
+            "id": "D",
+            "label": "Deployment"
+          },
+          {
+            "id": "R",
+            "label": "Runtime"
+          }
+        ]
+      },
+      {
         "key": "fileType",
         "type": "dynaselect",
         "multiple": false,
@@ -12838,6 +12894,10 @@
           {
             "id": "File",
             "label": "File"
+          },
+          {
+            "id": "Cert",
+            "label": "Cert"
           }
         ]
       },

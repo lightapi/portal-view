@@ -18,6 +18,7 @@ type SnapshotInstanceFileType = {
     hostId: string;
     instanceFileId: string;
     instanceId: string;
+    configPhase: string;
     fileType: string;
     fileName: string;
     fileValue: string;
@@ -83,6 +84,7 @@ export default function ConfigSnapshotFile() {
         () => [
             { accessorKey: 'instanceFileId', header: 'File Id' },
             { accessorKey: 'instanceId', header: 'Instance Id' },
+            { accessorKey: 'configPhase', header: 'Phase' },
             { accessorKey: 'fileType', header: 'Type' },
             { accessorKey: 'fileName', header: 'Name' },
             { accessorKey: 'fileValue', header: 'Value' },
