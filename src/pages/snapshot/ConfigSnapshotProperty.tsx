@@ -20,6 +20,7 @@ type ConfigSnapshotPropertyType = {
     snapshotId: string;
     configPhase: string;
     configId: string;
+    configName?: string;
     propertyId: string;
     propertyName: string;
     propertyType: string;
@@ -96,6 +97,7 @@ export default function ConfigSnapshotProperty() {
     const columns = useMemo<MRT_ColumnDef<ConfigSnapshotPropertyType>[]>(
         () => [
             { accessorKey: 'configPhase', header: 'Phase' },
+            { accessorKey: 'configName', header: 'Config Name' },
             { accessorKey: 'propertyName', header: 'Property Name' },
             { accessorKey: 'propertyType', header: 'Property Type' },
             {
