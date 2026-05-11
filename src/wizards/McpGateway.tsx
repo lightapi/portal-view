@@ -167,13 +167,13 @@ export default function McpGateway() {
 
     const filtered = q
       ? withTools.filter(({ g }) => {
-          const fields = [g.instanceName, g.instanceId, g.envTag ?? '', g.region ?? ''];
-          for (const s of g.servers) {
-            fields.push(s.apiName, s.apiId, s.apiVersion);
-            if (s.mcpStatus.phase === 'ready') fields.push(...s.mcpStatus.tools);
-          }
-          return fields.some((v) => v.toLowerCase().includes(q));
-        })
+        const fields = [g.instanceName, g.instanceId, g.envTag ?? '', g.region ?? ''];
+        for (const s of g.servers) {
+          fields.push(s.apiName, s.apiId, s.apiVersion);
+          if (s.mcpStatus.phase === 'ready') fields.push(...s.mcpStatus.tools);
+        }
+        return fields.some((v) => v.toLowerCase().includes(q));
+      })
       : withTools;
 
     return [...filtered].sort((a, b) => {
@@ -214,7 +214,7 @@ export default function McpGateway() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/app/mcp/wizard?flow=onboard')}
+          onClick={() => navigate('/app/mcp/wizard')}
           sx={{ mt: 0.5, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
         >
           Onboard to Gateway
