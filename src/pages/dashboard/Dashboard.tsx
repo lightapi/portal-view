@@ -379,7 +379,7 @@ const GuestDashboard = () => {
         <Stack direction="row" spacing={4} justifyContent="center">
           <Link href="https://github.com/networknt" target="_blank" color="inherit">GitHub</Link>
           <Link href="https://www.youtube.com/channel/UCHCRMWJVXw8iB7zKxF55Byw" target="_blank" color="inherit">YouTube</Link>
-          <Link href="https://gitter.im/networknt/light-portal" target="_blank" color="inherit">Gitter</Link>
+          <Link href="https://x.com/networkntcom" target="_blank" color="inherit">X</Link>
         </Stack>
       </Box>
     </Box>
