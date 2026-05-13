@@ -3324,12 +3324,14 @@
           "type": "string"
         },
         "spec": {
-          "title": "Spec",
+          "title": "Spec / MCP Tools JSON",
+          "description": "For OpenAPI or Hybrid APIs, paste the API specification. For MCP APIs, paste the tools/list JSON output when the portal service cannot reach the MCP server directly.",
           "type": "string"
         },
         "transportConfig": {
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
+          "description": "For MCP APIs, provide the transport and URL used for live tool discovery and runtime invocation.",
           "type": "string"
         },
         "protocol": {
@@ -3378,9 +3380,15 @@
       },
       "specLink",
       {
+        "type": "help",
+        "condition": "model.apiType === 'mcp'",
+        "description": "For MCP APIs, fill Transport Config when the portal service can reach the MCP server. If it cannot, paste the tools/list output into Spec / MCP Tools JSON. Accepted formats are the full JSON-RPC response, an object with a tools array, or the raw tools array.",
+        "align": "left"
+      },
+      {
         "key": "spec",
         "type": "textarea",
-        "rows": 5
+        "rows": 8
       },
       {
         "key": "transportConfig",
@@ -3460,12 +3468,14 @@
           "type": "string"
         },
         "spec": {
-          "title": "Spec",
+          "title": "Spec / MCP Tools JSON",
+          "description": "For OpenAPI or Hybrid APIs, paste the API specification. For MCP APIs, paste the tools/list JSON output when the portal service cannot reach the MCP server directly.",
           "type": "string"
         },
         "transportConfig": {
           "title": "Transport Config",
           "default": "{\"transport\": \"streamable http\", \"url\": \"https://lightapi.net/mcp\"}",
+          "description": "For MCP APIs, provide the transport and URL used for live tool discovery and runtime invocation.",
           "type": "string"
         },
         "protocol": {
@@ -3514,9 +3524,15 @@
       },
       "specLink",
       {
+        "type": "help",
+        "condition": "model.apiType === 'mcp'",
+        "description": "For MCP APIs, fill Transport Config when the portal service can reach the MCP server. If it cannot, paste the tools/list output into Spec / MCP Tools JSON. Accepted formats are the full JSON-RPC response, an object with a tools array, or the raw tools array.",
+        "align": "left"
+      },
+      {
         "key": "spec",
         "type": "textarea",
-        "rows": 5
+        "rows": 8
       },
       {
         "key": "transportConfig",
