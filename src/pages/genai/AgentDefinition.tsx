@@ -27,6 +27,14 @@ type AgentDefinitionApiResponse = {
 type AgentDefinitionType = {
     hostId: string;
     agentDefId: string;
+    apiVersionId?: string;
+    apiId?: string;
+    apiName?: string;
+    apiVersion?: string;
+    apiType?: string;
+    serviceId?: string;
+    envTag?: string;
+    targetHost?: string;
     agentName: string;
     modelProvider: string;
     modelName: string;
@@ -102,7 +110,7 @@ export default function AgentDefinition() {
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const json = await fetchClient(url);
-            setData(json.agentDefinitions || []);
+            setData(json.agentDefinitions || json.agents || []);
             setRowCount(json.total || 0);
         } catch (error) {
             setIsError(true); console.error(error);
@@ -175,7 +183,11 @@ export default function AgentDefinition() {
     const columns = useMemo<MRT_ColumnDef<AgentDefinitionType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'agentDefId', header: 'Agent Def Id' },
+            { accessorKey: 'agentDefId', header: 'API Version Id' },
+            { accessorKey: 'apiId', header: 'API Id' },
+            { accessorKey: 'apiName', header: 'API Name' },
+            { accessorKey: 'apiVersion', header: 'API Version' },
+            { accessorKey: 'serviceId', header: 'Service Id' },
             { accessorKey: 'agentName', header: 'Agent Name' },
             { accessorKey: 'modelProvider', header: 'Model Provider' },
             { accessorKey: 'modelName', header: 'Model Name' },
@@ -235,7 +247,21 @@ export default function AgentDefinition() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createAgentDefinition', searchParams, taskContext))}>
+            <Button
+                variant="contained"
+                startIcon={<AddBoxIcon />}
+                onClick={() => navigate(
+                    buildGenAiTaskRoute('/app/form/createAgentDefinition', searchParams, taskContext),
+                    {
+                        state: {
+                            data: {
+                                hostId: host,
+                                agentDefId: taskContext.agentDefId ?? taskContext.apiVersionId,
+                            },
+                        },
+                    },
+                )}
+            >
                 Create New Agent Definition
             </Button>
         ),

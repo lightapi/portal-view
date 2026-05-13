@@ -5,6 +5,7 @@ import type { TaskResolvedContext } from '../../tasks/types';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 const genAiContextKeys = [
+    'apiVersionId',
     'agentDefId',
     'skillId',
     'parentSkillId',
@@ -44,8 +45,12 @@ export function buildGenAiTaskContext(
     entity: GenAiContextSource = {},
 ) {
     const searchContext = contextFromSearchParams(searchParams);
+    const agentApiVersionContext = !searchContext.agentDefId && searchContext.apiVersionId
+        ? { agentDefId: searchContext.apiVersionId }
+        : {};
     return mergeTaskContext(
         searchContext,
+        agentApiVersionContext,
         host ? { hostId: host } : {},
         collectGenAiContext(entity),
     );

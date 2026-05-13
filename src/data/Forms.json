@@ -16497,8 +16497,8 @@
           "title": "Host Id",
           "readonly": true
         },
-        "agentName": {
-          "title": "Agent Name",
+        "agentDefId": {
+          "title": "API Version Id",
           "type": "string"
         },
         "modelProvider": {
@@ -16525,14 +16525,14 @@
       },
       "required": [
         "hostId",
-        "agentName",
+        "agentDefId",
         "modelProvider",
         "modelName"
       ]
     },
     "form": [
       "hostId",
-      "agentName",
+      "agentDefId",
       "modelProvider",
       "modelName",
       "apiKeyRef",
@@ -16563,13 +16563,9 @@
           "readonly": true
         },
         "agentDefId": {
-          "title": "Agent Def Id",
+          "title": "API Version Id",
           "type": "string",
           "readonly": true
-        },
-        "agentName": {
-          "title": "Agent Name",
-          "type": "string"
         },
         "modelProvider": {
           "title": "Model Provider",
@@ -16599,7 +16595,6 @@
       "required": [
         "hostId",
         "agentDefId",
-        "agentName",
         "modelProvider",
         "modelName",
         "active"
@@ -16608,7 +16603,6 @@
     "form": [
       "hostId",
       "agentDefId",
-      "agentName",
       "modelProvider",
       "modelName",
       "apiKeyRef",
