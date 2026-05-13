@@ -17,6 +17,9 @@ import Business from "@mui/icons-material/Business";
 import CastForEducationIcon from "@mui/icons-material/CastForEducation";
 import ForumIcon from "@mui/icons-material/Forum";
 import HelpIcon from "@mui/icons-material/Help";
+import ChatIcon from '@mui/icons-material/Chat';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import PermDataSettingIcon from "@mui/icons-material/PermDataSetting";
 import PublishIcon from "@mui/icons-material/Publish";
 import SecurityIcon from "@mui/icons-material/Security";
@@ -93,6 +96,7 @@ const structure = [
     id: 1000, type: "group", label: "Platform", defaultOpen: true,
     children: [
       { id: 5, label: "Controller", link: "/app/controller/services", icon: <SportsEsportsIcon /> },
+      { id: 4, label: "GenAI Chat", link: "/app/genai/chat", icon: <ChatIcon /> },
       { id: 3, label: "Scheduler", link: "/app/scheduler", icon: <AlarmIcon /> },
     ],
   },
@@ -188,7 +192,7 @@ const structure = [
       { id: 111, label: "Pipeline Admin", link: "/app/deployment/PipelineAdmin", icon: <SettingsInputComponentIcon /> },
       { id: 112, label: "Platform Admin", link: "/app/deployment/PlatformAdmin", icon: <IntegrationInstructionsIcon /> },
       { id: 113, label: "Instance Admin", role: "user instance-admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
-      { id: 113.5, label: "Runtime Instance", role: "user instance-admin", link: "/app/instance/RuntimeInstanceAdmin", icon: <ContentCopyIcon /> },
+      { id: 113.5, label: "Runtime Instance", role: "user instance-admin", link: "/app/instance/RuntimeInstanceAdmin", icon: <DirectionsRunIcon /> },
       { id: 114, label: "Deployment Admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
       { id: 115, label: "Config Admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
       {
@@ -205,11 +209,10 @@ const structure = [
           { label: "User Memory", link: "/app/genai/UserMemory" },
           { label: "Agent Memory", link: "/app/genai/AgentMemory" },
           { label: "Org Memory", link: "/app/genai/OrgMemory" },
-          { label: "GenAI Chat", link: "/app/genai/chat" },
         ],
       },
       {
-        id: 116, label: "Workflow Admin", role: "user workflow-admin", link: "/app/workflow/WfDefinition", icon: <PrecisionManufacturingIcon />,
+        id: 116, label: "Workflow Admin", role: "user workflow-admin", link: "/app/workflow/WfDefinition", icon: <AccountTreeIcon />,
         children: [
           { label: "Wf Definition", role: "user workflow-admin", link: "/app/workflow/WfDefinition" },
           { label: "Worklist", link: "/app/workflow/Worklist" },
