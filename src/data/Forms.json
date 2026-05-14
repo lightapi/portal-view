@@ -17614,6 +17614,7 @@
           "title": "Implementation Type",
           "type": "string",
           "enum": [
+            "lightapi_endpoint",
             "java",
             "mcp_server",
             "rest",
@@ -17637,13 +17638,27 @@
           "title": "API Method",
           "type": "string",
           "enum": [
+            "delete",
+            "get",
+            "patch",
+            "post",
+            "put",
+            "call",
             "GET",
             "POST"
           ]
         },
+        "endpointId": {
+          "title": "Endpoint Id",
+          "type": "string"
+        },
         "scriptContent": {
           "title": "Script Content",
           "type": "string"
+        },
+        "responseSchema": {
+          "title": "Response Schema",
+          "type": "object"
         },
         "version": {
           "title": "Version",
@@ -17675,17 +17690,26 @@
       },
       {
         "key": "apiEndpoint",
-        "condition": "model.implementationType === 'rest'"
+        "condition": "model.implementationType === 'rest' || model.implementationType === 'lightapi_endpoint'"
       },
       {
         "key": "apiMethod",
-        "condition": "model.implementationType === 'rest'"
+        "condition": "model.implementationType === 'rest' || model.implementationType === 'lightapi_endpoint'"
+      },
+      {
+        "key": "endpointId",
+        "condition": "model.implementationType === 'lightapi_endpoint'"
       },
       {
         "key": "scriptContent",
         "type": "textarea",
         "rows": 10,
         "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      {
+        "key": "responseSchema",
+        "type": "textarea",
+        "condition": "model.implementationType === 'lightapi_endpoint'"
       },
       "version"
     ]
@@ -17729,6 +17753,7 @@
           "title": "Implementation Type",
           "type": "string",
           "enum": [
+            "lightapi_endpoint",
             "java",
             "mcp_server",
             "rest",
@@ -17752,13 +17777,28 @@
           "title": "API Method",
           "type": "string",
           "enum": [
+            "delete",
+            "get",
+            "patch",
+            "post",
+            "put",
+            "call",
             "GET",
             "POST"
           ]
         },
+        "endpointId": {
+          "title": "Endpoint Id",
+          "type": "string",
+          "readonly": true
+        },
         "scriptContent": {
           "title": "Script Content",
           "type": "string"
+        },
+        "responseSchema": {
+          "title": "Response Schema",
+          "type": "object"
         },
         "version": {
           "title": "Version",
@@ -17797,17 +17837,26 @@
       },
       {
         "key": "apiEndpoint",
-        "condition": "model.implementationType === 'rest'"
+        "condition": "model.implementationType === 'rest' || model.implementationType === 'lightapi_endpoint'"
       },
       {
         "key": "apiMethod",
-        "condition": "model.implementationType === 'rest'"
+        "condition": "model.implementationType === 'rest' || model.implementationType === 'lightapi_endpoint'"
+      },
+      {
+        "key": "endpointId",
+        "condition": "model.implementationType === 'lightapi_endpoint'"
       },
       {
         "key": "scriptContent",
         "type": "textarea",
         "rows": 10,
         "condition": "model.implementationType === 'python' || model.implementationType === 'javascript'"
+      },
+      {
+        "key": "responseSchema",
+        "type": "textarea",
+        "condition": "model.implementationType === 'lightapi_endpoint'"
       },
       "version",
       "active"

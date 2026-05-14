@@ -34,7 +34,9 @@ type ToolType = {
     mcpServerName?: string;
     apiEndpoint?: string;
     apiMethod?: string;
+    endpointId?: string;
     scriptContent?: string;
+    responseSchema?: string;
     version?: string;
     aggregateVersion: number;
     active: boolean;
@@ -183,6 +185,10 @@ export default function Tool() {
             { accessorKey: 'toolId', header: 'Tool Id' },
             { accessorKey: 'name', header: 'Name' },
             { accessorKey: 'description', header: 'Description' },
+            { accessorKey: 'implementationType', header: 'Implementation Type' },
+            { accessorKey: 'endpointId', header: 'Endpoint Id' },
+            { accessorKey: 'apiEndpoint', header: 'API Endpoint' },
+            { accessorKey: 'apiMethod', header: 'API Method' },
             { accessorKey: 'version', header: 'Version' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
