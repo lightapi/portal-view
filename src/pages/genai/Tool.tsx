@@ -37,6 +37,12 @@ type ToolType = {
     endpointId?: string;
     scriptContent?: string;
     responseSchema?: string;
+    routingDomain?: string;
+    semanticNamespace?: string;
+    sensitivityTier?: string;
+    semanticWeight?: number;
+    sourceProtocol?: string;
+    targetPersonas?: string;
     version?: string;
     aggregateVersion: number;
     active: boolean;
@@ -189,6 +195,12 @@ export default function Tool() {
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'apiEndpoint', header: 'API Endpoint' },
             { accessorKey: 'apiMethod', header: 'API Method' },
+            { accessorKey: 'routingDomain', header: 'Routing Domain' },
+            { accessorKey: 'semanticNamespace', header: 'Semantic Namespace' },
+            { accessorKey: 'sensitivityTier', header: 'Sensitivity Tier' },
+            { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
+            { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
+            { accessorKey: 'targetPersonas', header: 'Target Personas' },
             { accessorKey: 'version', header: 'Version' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {

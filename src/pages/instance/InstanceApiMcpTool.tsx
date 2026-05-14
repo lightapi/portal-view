@@ -29,6 +29,12 @@ type McpToolType = {
     description: string;
     inputSchema?: string;
     toolMetadata?: string;
+    routingDomain?: string;
+    semanticNamespace?: string;
+    sensitivityTier?: string;
+    semanticWeight?: number;
+    sourceProtocol?: string;
+    targetPersonas?: string;
     selected: boolean;
 };
 
@@ -171,6 +177,12 @@ export default function InstanceApiMcpTool() {
                 inputSchema: tool.inputSchema,
                 toolSchema: tool.inputSchema,
                 toolMetadata: tool.toolMetadata,
+                routingDomain: tool.routingDomain,
+                semanticNamespace: tool.semanticNamespace,
+                sensitivityTier: tool.sensitivityTier,
+                semanticWeight: tool.semanticWeight,
+                sourceProtocol: tool.sourceProtocol,
+                targetPersonas: tool.targetPersonas,
                 productId,
                 serviceId,
                 apiType,
@@ -296,6 +308,12 @@ export default function InstanceApiMcpTool() {
             { accessorKey: 'path', header: 'Path' },
             { accessorKey: 'inputSchema', header: 'Input Schema' },
             { accessorKey: 'toolMetadata', header: 'Tool Metadata' },
+            { accessorKey: 'routingDomain', header: 'Routing Domain' },
+            { accessorKey: 'semanticNamespace', header: 'Semantic Namespace' },
+            { accessorKey: 'sensitivityTier', header: 'Sensitivity Tier' },
+            { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
+            { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
+            { accessorKey: 'targetPersonas', header: 'Target Personas' },
         ],
         [],
     );

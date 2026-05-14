@@ -38,6 +38,12 @@ type EndpointType = {
   endpointPath: string;
   toolSchema?: string;
   toolMetadata?: string;
+  routingDomain?: string;
+  semanticNamespace?: string;
+  sensitivityTier?: string;
+  semanticWeight?: number;
+  sourceProtocol?: string;
+  targetPersonas?: string;
   endpointDesc: string;
   active: boolean;
 };
@@ -156,6 +162,12 @@ export default function ServiceEndpoint() {
       { accessorKey: 'endpointPath', header: 'Path' },
       { accessorKey: 'toolSchema', header: 'Tool Schema', Cell: TruncatedCell },
       { accessorKey: 'toolMetadata', header: 'Tool Metadata', Cell: TruncatedCell },
+      { accessorKey: 'routingDomain', header: 'Routing Domain' },
+      { accessorKey: 'semanticNamespace', header: 'Semantic Namespace' },
+      { accessorKey: 'sensitivityTier', header: 'Sensitivity Tier' },
+      { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
+      { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
+      { accessorKey: 'targetPersonas', header: 'Target Personas', Cell: TruncatedCell },
       { accessorKey: 'endpointDesc', header: 'Description', Cell: TruncatedCell },
       {
         accessorKey: 'active',
