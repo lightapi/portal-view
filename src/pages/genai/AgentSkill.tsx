@@ -13,6 +13,7 @@ import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -24,13 +25,16 @@ type AgentSkillApiResponse = {
     total: number;
 };
 
-type AgentSkillType = {
+export type AgentSkillType = {
     hostId: string;
     agentDefId: string;
+    agentName?: string;
     skillId: string;
+    skillName?: string;
     config?: string;
     priority?: number;
     sequenceId?: number;
+    activeToolCount?: number;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -169,15 +173,37 @@ export default function AgentSkill() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleValidate = useCallback(async (row: MRT_Row<AgentSkillType>) => {
+        const cmd = {
+            host: 'lightapi.net', service: 'genai', action: 'validateAgentSkillAssignment', version: '0.1.0',
+            data: {
+                hostId: row.original.hostId,
+                agentDefId: row.original.agentDefId,
+                skillId: row.original.skillId,
+            },
+        };
+        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+        try {
+            await fetchClient(url);
+            alert('Agent skill assignment is valid.');
+        } catch (error) {
+            console.error("Agent skill assignment validation failed:", error);
+            alert("Agent skill assignment validation failed.");
+        }
+    }, []);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<AgentSkillType>[]>(
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
             { accessorKey: 'agentDefId', header: 'Agent Def Id' },
+            { accessorKey: 'agentName', header: 'Agent' },
             { accessorKey: 'skillId', header: 'Skill Id' },
+            { accessorKey: 'skillName', header: 'Skill' },
             { accessorKey: 'config', header: 'Config' },
             { accessorKey: 'priority', header: 'Priority' },
             { accessorKey: 'sequenceId', header: 'Sequence Id' },
+            { accessorKey: 'activeToolCount', header: 'Active Tools' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
                 accessorKey: 'updateTs',
@@ -218,6 +244,11 @@ export default function AgentSkill() {
             const idKey = `${row.original.agentDefId}-${row.original.skillId}`;
             return (
                 <Box sx={{ display: 'flex', gap: '1rem' }}>
+                    <Tooltip title="Validate Assignment">
+                        <IconButton color="primary" onClick={() => handleValidate(row)}>
+                            <VerifiedIcon />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title="Update Agent Skill">
                         <IconButton
                             onClick={() => handleUpdate(row)}

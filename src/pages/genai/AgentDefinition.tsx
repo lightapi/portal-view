@@ -13,6 +13,7 @@ import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -179,6 +180,15 @@ export default function AgentDefinition() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleAssignSkills = useCallback((row: MRT_Row<AgentDefinitionType>) => {
+        navigate(buildGenAiTaskRoute('/app/genai/AgentAssignment', searchParams, contextForRow(row.original)), {
+            state: {
+                data: row.original,
+                source: location.pathname
+            }
+        });
+    }, [navigate, location.pathname, searchParams, contextForRow]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<AgentDefinitionType>[]>(
         () => [
@@ -227,6 +237,11 @@ export default function AgentDefinition() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Assign Skills">
+                    <IconButton color="primary" onClick={() => handleAssignSkills(row)}>
+                        <AssignmentTurnedInIcon />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title="Update Agent Definition">
                     <IconButton
                         onClick={() => handleUpdate(row)}

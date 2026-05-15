@@ -153,6 +153,7 @@ import WorkflowEditor from "./pages/workflow/WorkflowEditor";
 import Worklist from "./pages/workflow/Worklist";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
+import AgentAssignment from "./pages/genai/AgentAssignment";
 import TaskInfo from "./pages/workflow/TaskInfo";
 import TaskAsst from "./pages/workflow/TaskAsst";
 import AuditLog from "./pages/workflow/AuditLog";
@@ -548,6 +549,7 @@ const App = () => {
           <Route path="workflow/Worklist" element={<Worklist />} />
           <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
+          <Route path="genai/AgentAssignment" element={<AgentAssignment />} />
           <Route path="workflow/TaskInfo" element={<TaskInfo />} />
           <Route path="workflow/TaskAsst" element={<TaskAsst />} />
           <Route path="workflow/AuditLog" element={<AuditLog />} />

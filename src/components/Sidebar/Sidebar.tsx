@@ -206,6 +206,7 @@ const structure = [
           { label: "Skill Workflow", link: "/app/genai/SkillWorkflow" },
           { label: "Skill Dependency", link: "/app/genai/SkillDependency" },
           { label: "Agent Skill", link: "/app/genai/AgentSkill" },
+          { label: "Agent Assignment", link: "/app/genai/AgentAssignment" },
           { label: "Agent Session", link: "/app/genai/AgentSessionHistory" },
           { label: "Session Memory", link: "/app/genai/SessionMemory" },
           { label: "User Memory", link: "/app/genai/UserMemory" },
