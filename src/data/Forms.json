@@ -18512,8 +18512,28 @@
     },
     "form": [
       "hostId",
-      "skillId",
-      "toolId",
+      {
+        "key": "skillId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getSkillLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "toolId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getToolLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       {
         "key": "config",
         "type": "textarea"
@@ -18587,6 +18607,182 @@
         "type": "textarea"
       },
       "accessLevel",
+      "active"
+    ]
+  },
+  "createSkillWorkflow": {
+    "formId": "createSkillWorkflow",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createSkillWorkflow",
+        "version": "0.1.0",
+        "title": "Create Skill Workflow Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Skill Workflow Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill",
+          "type": "string"
+        },
+        "wfDefId": {
+          "title": "Workflow Definition",
+          "type": "string"
+        },
+        "workflowRole": {
+          "title": "Workflow Role",
+          "type": "string",
+          "default": "primary",
+          "enum": [
+            "primary",
+            "validation",
+            "remediation",
+            "test"
+          ]
+        },
+        "startMode": {
+          "title": "Start Mode",
+          "type": "string",
+          "default": "manual",
+          "enum": [
+            "manual",
+            "agent",
+            "scheduled",
+            "portal"
+          ]
+        },
+        "config": {
+          "title": "Config",
+          "type": "string",
+          "default": "{}"
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "wfDefId",
+        "workflowRole"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "skillId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getSkillLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "wfDefId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22workflow%22%2C%22action%22%3A%22getWfDefinitionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "workflowRole",
+      "startMode",
+      {
+        "key": "config",
+        "type": "textarea",
+        "rows": 10
+      }
+    ]
+  },
+  "updateSkillWorkflow": {
+    "formId": "updateSkillWorkflow",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateSkillWorkflow",
+        "version": "0.1.0",
+        "title": "Update Skill Workflow Form",
+        "success": "/app/success",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Skill Workflow Form",
+      "type": "object",
+      "properties": {
+        "hostId": {
+          "type": "string",
+          "title": "Host Id",
+          "readonly": true
+        },
+        "skillId": {
+          "title": "Skill Id",
+          "type": "string",
+          "readonly": true
+        },
+        "wfDefId": {
+          "title": "Workflow Definition Id",
+          "type": "string",
+          "readonly": true
+        },
+        "workflowRole": {
+          "title": "Workflow Role",
+          "type": "string",
+          "readonly": true
+        },
+        "startMode": {
+          "title": "Start Mode",
+          "type": "string",
+          "enum": [
+            "manual",
+            "agent",
+            "scheduled",
+            "portal"
+          ]
+        },
+        "config": {
+          "title": "Config",
+          "type": "string"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "hostId",
+        "skillId",
+        "wfDefId",
+        "workflowRole",
+        "active"
+      ]
+    },
+    "form": [
+      "hostId",
+      "skillId",
+      "wfDefId",
+      "workflowRole",
+      "startMode",
+      {
+        "key": "config",
+        "type": "textarea",
+        "rows": 10
+      },
       "active"
     ]
   },

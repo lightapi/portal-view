@@ -12,6 +12,7 @@ import {
 import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import HubIcon from '@mui/icons-material/Hub';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
@@ -170,6 +171,15 @@ export default function Skill() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleWorkspace = useCallback((row: MRT_Row<SkillType>) => {
+        navigate(buildGenAiTaskRoute('/app/genai/SkillWorkspace', searchParams, contextForRow(row.original)), {
+            state: {
+                data: row.original,
+                source: location.pathname
+            }
+        });
+    }, [navigate, location.pathname, searchParams, contextForRow]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<SkillType>[]>(
         () => [
@@ -217,6 +227,11 @@ export default function Skill() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Open Skill Workspace">
+                    <IconButton color="primary" onClick={() => handleWorkspace(row)}>
+                        <HubIcon />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title="Update Skill">
                     <IconButton
                         onClick={() => handleUpdate(row)}

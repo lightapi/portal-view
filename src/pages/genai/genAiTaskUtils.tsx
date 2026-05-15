@@ -9,6 +9,8 @@ const genAiContextKeys = [
     'agentDefId',
     'skillId',
     'parentSkillId',
+    'wfDefId',
+    'workflowRole',
     'toolId',
     'paramId',
     'memId',

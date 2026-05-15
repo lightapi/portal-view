@@ -202,6 +202,8 @@ const structure = [
           { label: "Skill", link: "/app/genai/Skill" },
           { label: "Tool", link: "/app/genai/Tool" },
           { label: "Tool Param", link: "/app/genai/ToolParam" },
+          { label: "Skill Tool", link: "/app/genai/SkillTool" },
+          { label: "Skill Workflow", link: "/app/genai/SkillWorkflow" },
           { label: "Skill Dependency", link: "/app/genai/SkillDependency" },
           { label: "Agent Skill", link: "/app/genai/AgentSkill" },
           { label: "Agent Session", link: "/app/genai/AgentSessionHistory" },
@@ -215,6 +217,7 @@ const structure = [
         id: 116, label: "Workflow Admin", role: "user workflow-admin", link: "/app/workflow/WfDefinition", icon: <AccountTreeIcon />,
         children: [
           { label: "Wf Definition", role: "user workflow-admin", link: "/app/workflow/WfDefinition" },
+          { label: "Workflow Editor", role: "user workflow-admin", link: "/app/workflow/editor" },
           { label: "Worklist", link: "/app/workflow/Worklist" },
           { label: "Process Info", link: "/app/workflow/ProcessInfo" },
           { label: "Task Info", link: "/app/workflow/TaskInfo" },

@@ -189,8 +189,7 @@ export default function WfDefinition() {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
 
-            // Navigate with the fresh data
-            navigate(buildWorkflowTaskRoute('/app/form/updateWfDefinition', searchParams, contextForRow(row.original)), {
+            navigate(buildWorkflowTaskRoute('/app/workflow/editor', searchParams, contextForRow(row.original)), {
                 state: {
                     data: freshData,
                     source: location.pathname
@@ -311,7 +310,7 @@ export default function WfDefinition() {
         ),
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWfDefinition', searchParams, taskContext), { state: { data: { hostId: host } } })}>
+                <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/workflow/editor', searchParams, taskContext), { state: { data: { hostId: host }, source: location.pathname } })}>
                     Create New WfDefinition
                 </Button>
                 {ownedOnly ? (

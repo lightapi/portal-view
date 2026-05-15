@@ -149,6 +149,7 @@ import DeploymentInstance from "./pages/deployment/DeploymentInstance";
 import InstanceApiMcpTool from "./pages/instance/InstanceApiMcpTool";
 import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/workflow/WfDefinition";
+import WorkflowEditor from "./pages/workflow/WorkflowEditor";
 import Worklist from "./pages/workflow/Worklist";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
@@ -158,6 +159,9 @@ import AuditLog from "./pages/workflow/AuditLog";
 import Skill from "./pages/genai/Skill";
 import Tool from "./pages/genai/Tool";
 import ToolParam from "./pages/genai/ToolParam";
+import SkillTool from "./pages/genai/SkillTool";
+import SkillWorkflow from "./pages/genai/SkillWorkflow";
+import SkillWorkspace from "./pages/genai/SkillWorkspace";
 import SkillDependency from "./pages/genai/SkillDependency";
 import AgentSkill from "./pages/genai/AgentSkill";
 import AgentSessionHistory from "./pages/genai/AgentSessionHistory";
@@ -540,6 +544,7 @@ const App = () => {
           />
           <Route path="deployment/instance" element={<DeploymentInstance />} />
           <Route path="workflow/WfDefinition" element={<WfDefinition />} />
+          <Route path="workflow/editor" element={<WorkflowEditor />} />
           <Route path="workflow/Worklist" element={<Worklist />} />
           <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
@@ -547,8 +552,11 @@ const App = () => {
           <Route path="workflow/TaskAsst" element={<TaskAsst />} />
           <Route path="workflow/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
+          <Route path="genai/SkillWorkspace" element={<SkillWorkspace />} />
           <Route path="genai/Tool" element={<Tool />} />
           <Route path="genai/ToolParam" element={<ToolParam />} />
+          <Route path="genai/SkillTool" element={<SkillTool />} />
+          <Route path="genai/SkillWorkflow" element={<SkillWorkflow />} />
           <Route path="genai/SkillDependency" element={<SkillDependency />} />
           <Route path="genai/AgentSkill" element={<AgentSkill />} />
           <Route path="genai/AgentSessionHistory" element={<AgentSessionHistory />} />
