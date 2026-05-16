@@ -43,6 +43,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
+import WorkflowGraph from './WorkflowGraph';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -681,6 +682,92 @@ function buildReferenceSnippet(reference: CatalogReference) {
     }
 }
 
+function formatYaml(parsed: unknown) {
+    return `${YAML.stringify(parsed).trimEnd()}\n`;
+}
+
+function findStepRecord(container: unknown, stepId: string): Record<string, unknown> | null {
+    if (Array.isArray(container)) {
+        for (const item of container) {
+            const record = toRecord(item);
+            if (Object.prototype.hasOwnProperty.call(record, stepId)) {
+                const body = record[stepId];
+                if (body && typeof body === 'object' && !Array.isArray(body)) return body as Record<string, unknown>;
+                record[stepId] = {};
+                return record[stepId] as Record<string, unknown>;
+            }
+            if (record.name === stepId || record.id === stepId) return record;
+        }
+    }
+    const record = toRecord(container);
+    if (Object.prototype.hasOwnProperty.call(record, stepId)) {
+        const body = record[stepId];
+        if (body && typeof body === 'object' && !Array.isArray(body)) return body as Record<string, unknown>;
+        record[stepId] = {};
+        return record[stepId] as Record<string, unknown>;
+    }
+    return null;
+}
+
+function updateDefinitionTransition(definition: string, sourceStepId: string, targetStepId: string) {
+    try {
+        const parsed = YAML.parse(definition);
+        const root = toRecord(parsed);
+        for (const key of ['steps', 'tasks', 'do', 'states']) {
+            const container = root[key];
+            if (!container) continue;
+            const stepRecord = findStepRecord(container, sourceStepId);
+            if (!stepRecord) continue;
+            if (key === 'states' && Object.prototype.hasOwnProperty.call(stepRecord, 'transition')) {
+                stepRecord.transition = targetStepId;
+            } else {
+                stepRecord.next = targetStepId;
+            }
+            return formatYaml(parsed);
+        }
+    } catch {
+        return definition;
+    }
+    return definition;
+}
+
+function removeTransitionTarget(value: unknown, targetStepId: string): boolean {
+    let changed = false;
+    if (Array.isArray(value)) {
+        value.forEach(item => {
+            if (removeTransitionTarget(item, targetStepId)) changed = true;
+        });
+        return changed;
+    }
+    const record = toRecord(value);
+    for (const [key, child] of Object.entries(record)) {
+        if (['next', 'then', 'to', 'transition', 'else'].includes(key) && child === targetStepId) {
+            delete record[key];
+            changed = true;
+        } else if (child && typeof child === 'object') {
+            if (removeTransitionTarget(child, targetStepId)) changed = true;
+        }
+    }
+    return changed;
+}
+
+function removeDefinitionTransition(definition: string, sourceStepId: string, targetStepId: string) {
+    try {
+        const parsed = YAML.parse(definition);
+        const root = toRecord(parsed);
+        for (const key of ['steps', 'tasks', 'do', 'states']) {
+            const container = root[key];
+            if (!container) continue;
+            const stepRecord = findStepRecord(container, sourceStepId);
+            if (!stepRecord) continue;
+            return removeTransitionTarget(stepRecord, targetStepId) ? formatYaml(parsed) : definition;
+        }
+    } catch {
+        return definition;
+    }
+    return definition;
+}
+
 function normalizeServerProblems(value: unknown): ValidationProblem[] {
     return Array.isArray(value)
         ? value.map(toRecord).map(problem => ({
@@ -1006,6 +1093,7 @@ export default function WorkflowEditor() {
     const [selectedReferenceId, setSelectedReferenceId] = useState('');
     const [selectedTemplateId, setSelectedTemplateId] = useState(stepTemplates[0].id);
     const [stepIdInput, setStepIdInput] = useState(stepTemplates[0].defaultStepId);
+    const [selectedGraphStepId, setSelectedGraphStepId] = useState('');
     const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
     const [isServerValidating, setIsServerValidating] = useState(false);
     const [runtimeDiagnosticsUrl, setRuntimeDiagnosticsUrl] = useState('/diagnostics/tools');
@@ -1058,6 +1146,10 @@ export default function WorkflowEditor() {
     const failedProcesses = useMemo(() => testSnapshot.processes.filter(process => isFailedStatus(process.statusCode)), [testSnapshot.processes]);
     const failedTasks = useMemo(() => testSnapshot.tasks.filter(task => isFailedStatus(task.statusCode)), [testSnapshot.tasks]);
     const timeline = useMemo(() => buildTimeline(testRun, testSnapshot), [testRun, testSnapshot]);
+    const graphStatusByStep = useMemo(() => testSnapshot.tasks.reduce<Record<string, string>>((statuses, task) => {
+        if (task.wfTaskId) statuses[task.wfTaskId] = task.statusCode;
+        return statuses;
+    }, {}), [testSnapshot.tasks]);
     const selectedAskTask = useMemo(
         () => waitingHumanTasks.find(task => task.taskId === selectedAskTaskId) || waitingHumanTasks[0],
         [selectedAskTaskId, waitingHumanTasks],
@@ -1453,6 +1545,28 @@ export default function WorkflowEditor() {
         });
     }, [failedProcesses, failedTasks, hostId, location.pathname, name, navigate, testRun, testSnapshot.processes]);
 
+    const handleGraphConnect = useCallback((sourceStepId: string, targetStepId: string) => {
+        const updated = updateDefinitionTransition(definition, sourceStepId, targetStepId);
+        if (updated === definition) {
+            setMessage(`Unable to update transition from ${sourceStepId} to ${targetStepId}.`);
+            return;
+        }
+        setDefinition(updated);
+        setSelectedGraphStepId(sourceStepId);
+        setMessage(`Transition updated: ${sourceStepId} -> ${targetStepId}.`);
+    }, [definition]);
+
+    const handleGraphDisconnect = useCallback((sourceStepId: string, targetStepId: string) => {
+        const updated = removeDefinitionTransition(definition, sourceStepId, targetStepId);
+        if (updated === definition) {
+            setMessage(`Unable to remove transition from ${sourceStepId} to ${targetStepId}.`);
+            return;
+        }
+        setDefinition(updated);
+        setSelectedGraphStepId(sourceStepId);
+        setMessage(`Transition removed: ${sourceStepId} -> ${targetStepId}.`);
+    }, [definition]);
+
     const handleSave = useCallback(async () => {
         setMessage('');
         if (!hostId || !namespace || !name || !version || !definition.trim()) {
@@ -1562,7 +1676,7 @@ export default function WorkflowEditor() {
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Steps</Typography>
                     <List dense>
                         {analysis.steps.length ? analysis.steps.map(step => (
-                            <ListItemButton key={step}>
+                            <ListItemButton key={step} selected={selectedGraphStepId === step} onClick={() => setSelectedGraphStepId(step)}>
                                 <ListItemText primary={step} />
                             </ListItemButton>
                         )) : (
@@ -1718,6 +1832,21 @@ export default function WorkflowEditor() {
                         ) : null}
                     </Stack>
                 </Box>
+            </Box>
+
+            <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} spacing={1} sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{ flex: 1 }}>Visual Graph</Typography>
+                    {selectedGraphStepId && <Chip size="small" label={`Selected ${selectedGraphStepId}`} />}
+                </Stack>
+                <WorkflowGraph
+                    parsedDefinition={analysis.parsed}
+                    statusByStep={graphStatusByStep}
+                    selectedStepId={selectedGraphStepId}
+                    onSelectStep={setSelectedGraphStepId}
+                    onConnectSteps={handleGraphConnect}
+                    onDisconnectSteps={handleGraphDisconnect}
+                />
             </Box>
 
             <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>

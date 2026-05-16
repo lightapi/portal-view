@@ -34,6 +34,7 @@
     "@uiw/codemirror-theme-github": "^4.23.6",
     "@uiw/react-codemirror": "^4.23.6",
     "@uiw/react-markdown-editor": "^6.1.4",
+    "@xyflow/react": "^12.10.2",
     "ag-grid-community": "^32.3.2",
     "ag-grid-react": "^32.3.2",
     "braintree-web-drop-in-react": "^1.2.1",
