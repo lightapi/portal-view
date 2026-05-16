@@ -21,12 +21,19 @@ import {
     ListItemText,
     MenuItem,
     Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
     TextField,
     Typography,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import IosShareIcon from '@mui/icons-material/IosShare';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -121,6 +128,90 @@ type RuntimeDiagnosticState = {
     gatewayError?: string;
 };
 
+type WorkflowProcessInfo = {
+    hostId: string;
+    processId: string;
+    wfDefId: string;
+    wfInstanceId: string;
+    processType: string;
+    statusCode: string;
+    resultCode?: string;
+    startedTs?: string;
+    completedTs?: string;
+    updateTs?: string;
+    aggregateVersion?: number;
+};
+
+type WorkflowTaskInfo = {
+    hostId: string;
+    taskId: string;
+    taskType: string;
+    processId: string;
+    wfInstanceId: string;
+    wfTaskId: string;
+    statusCode: string;
+    locked?: string;
+    priority?: number;
+    resultCode?: string;
+    completedTs?: string;
+    updateTs?: string;
+    aggregateVersion?: number;
+};
+
+type WorkflowTaskAssignment = {
+    hostId: string;
+    taskAsstId: string;
+    taskId: string;
+    assigneeId: string;
+    reasonCode?: string;
+    categoryCode?: string;
+    updateTs?: string;
+};
+
+type WorkflowWorklist = {
+    hostId: string;
+    assigneeId: string;
+    categoryId: string;
+    statusCode: string;
+    appId?: string;
+    updateTs?: string;
+};
+
+type WorkflowAuditLog = {
+    auditLogId: string;
+    sourceTypeId?: string;
+    correlationId?: string;
+    success?: string;
+    message?: string;
+    userComment?: string;
+    eventTs?: string;
+};
+
+type WorkflowTimelineEntry = {
+    id: string;
+    type: string;
+    status: string;
+    detail: string;
+    timestamp?: string;
+};
+
+type WorkflowTestRun = {
+    wfInstanceId: string;
+    startedAt: string;
+    input: Record<string, unknown>;
+    response: Record<string, unknown>;
+};
+
+type WorkflowTestSnapshot = {
+    processes: WorkflowProcessInfo[];
+    tasks: WorkflowTaskInfo[];
+    assignments: WorkflowTaskAssignment[];
+    worklists: WorkflowWorklist[];
+    auditLogs: WorkflowAuditLog[];
+    refreshedAt?: string;
+    errors: string[];
+};
+
 const emptyDefinition = `steps:
   - ask-input:
       ask:
@@ -209,6 +300,15 @@ const emptyCatalog: CatalogState = {
     rules: [],
     agents: [],
     workflows: [],
+};
+
+const emptyTestSnapshot: WorkflowTestSnapshot = {
+    processes: [],
+    tasks: [],
+    assignments: [],
+    worklists: [],
+    auditLogs: [],
+    errors: [],
 };
 
 const stepTemplates: StepTemplate[] = [
@@ -715,6 +815,167 @@ function workflowReferences(value: unknown): CatalogReference[] {
     }).filter(ref => ref.id);
 }
 
+function parseJsonObjectInput(value: string) {
+    if (!value.trim()) return { value: {} as Record<string, unknown>, error: '' };
+    try {
+        const parsed = JSON.parse(value);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return { value: {} as Record<string, unknown>, error: 'Test input must be a JSON object.' };
+        }
+        return { value: parsed as Record<string, unknown>, error: '' };
+    } catch (error) {
+        return { value: {} as Record<string, unknown>, error: error instanceof Error ? error.message : 'Invalid JSON input.' };
+    }
+}
+
+function workflowFilters(id: string, value: string) {
+    return JSON.stringify([{ id, value }]);
+}
+
+function processInfoRows(value: unknown): WorkflowProcessInfo[] {
+    return asRecords(value, 'processInfos').map(row => ({
+        hostId: textValue(row.hostId),
+        processId: textValue(row.processId),
+        wfDefId: textValue(row.wfDefId),
+        wfInstanceId: textValue(row.wfInstanceId),
+        processType: textValue(row.processType),
+        statusCode: textValue(row.statusCode),
+        resultCode: textValue(row.resultCode),
+        startedTs: textValue(row.startedTs),
+        completedTs: textValue(row.completedTs),
+        updateTs: textValue(row.updateTs),
+        aggregateVersion: typeof row.aggregateVersion === 'number' ? row.aggregateVersion : undefined,
+    })).filter(row => row.processId);
+}
+
+function taskInfoRows(value: unknown): WorkflowTaskInfo[] {
+    return asRecords(value, 'taskInfos').map(row => ({
+        hostId: textValue(row.hostId),
+        taskId: textValue(row.taskId),
+        taskType: textValue(row.taskType),
+        processId: textValue(row.processId),
+        wfInstanceId: textValue(row.wfInstanceId),
+        wfTaskId: textValue(row.wfTaskId),
+        statusCode: textValue(row.statusCode),
+        locked: textValue(row.locked),
+        priority: typeof row.priority === 'number' ? row.priority : undefined,
+        resultCode: textValue(row.resultCode),
+        completedTs: textValue(row.completedTs),
+        updateTs: textValue(row.updateTs),
+        aggregateVersion: typeof row.aggregateVersion === 'number' ? row.aggregateVersion : undefined,
+    })).filter(row => row.taskId);
+}
+
+function taskAssignmentRows(value: unknown): WorkflowTaskAssignment[] {
+    return asRecords(value, 'taskAssts').map(row => ({
+        hostId: textValue(row.hostId),
+        taskAsstId: textValue(row.taskAsstId),
+        taskId: textValue(row.taskId),
+        assigneeId: textValue(row.assigneeId),
+        reasonCode: textValue(row.reasonCode),
+        categoryCode: textValue(row.categoryCode),
+        updateTs: textValue(row.updateTs),
+    })).filter(row => row.taskAsstId && row.taskId);
+}
+
+function worklistRows(value: unknown): WorkflowWorklist[] {
+    return asRecords(value, 'worklists').map(row => ({
+        hostId: textValue(row.hostId),
+        assigneeId: textValue(row.assigneeId),
+        categoryId: textValue(row.categoryId),
+        statusCode: textValue(row.statusCode),
+        appId: textValue(row.appId),
+        updateTs: textValue(row.updateTs),
+    })).filter(row => row.assigneeId && row.categoryId);
+}
+
+function auditLogRows(value: unknown): WorkflowAuditLog[] {
+    return asRecords(value, 'auditLogs').map(row => ({
+        auditLogId: textValue(row.auditLogId),
+        sourceTypeId: textValue(row.sourceTypeId),
+        correlationId: textValue(row.correlationId),
+        success: textValue(row.success),
+        message: textValue(row.message),
+        userComment: textValue(row.userComment),
+        eventTs: textValue(row.eventTs),
+    })).filter(row => row.auditLogId);
+}
+
+function statusCode(value: string) {
+    return value.trim().toUpperCase();
+}
+
+function isCompletedStatus(value: string) {
+    return ['C', 'COMPLETED', 'COMPLETE', 'DONE', 'SUCCESS', 'SUCCEEDED'].includes(statusCode(value));
+}
+
+function isFailedStatus(value: string) {
+    return ['F', 'FAILED', 'FAILURE', 'ERROR', 'ERR', 'REJECTED'].includes(statusCode(value));
+}
+
+function isWaitingHumanTask(task: WorkflowTaskInfo) {
+    const label = `${task.taskType} ${task.wfTaskId}`.toLowerCase();
+    return !isCompletedStatus(task.statusCode) && (label.includes('ask') || label.includes('human') || label.includes('approval') || label.includes('wait'));
+}
+
+function isAssertionTask(task: WorkflowTaskInfo) {
+    return `${task.taskType} ${task.wfTaskId}`.toLowerCase().includes('assert');
+}
+
+function displayText(value: unknown, fallback = '-') {
+    return textValue(value) || fallback;
+}
+
+function buildContextRoute(path: string, context: Record<string, string>) {
+    const params = new URLSearchParams();
+    Object.entries(context).forEach(([key, value]) => {
+        if (value) params.set(key, value);
+    });
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+}
+
+function buildTimeline(testRun: WorkflowTestRun | null, snapshot: WorkflowTestSnapshot): WorkflowTimelineEntry[] {
+    const events: WorkflowTimelineEntry[] = [];
+    if (testRun) {
+        events.push({
+            id: `start-${testRun.wfInstanceId}`,
+            type: 'WorkflowStartedEvent',
+            status: 'submitted',
+            detail: `Workflow instance ${testRun.wfInstanceId}`,
+            timestamp: testRun.startedAt,
+        });
+    }
+    snapshot.processes.forEach(process => {
+        events.push({
+            id: `process-${process.processId}`,
+            type: 'Process',
+            status: process.statusCode,
+            detail: compactText([process.processType, process.processId, process.resultCode]),
+            timestamp: process.completedTs || process.updateTs || process.startedTs,
+        });
+    });
+    snapshot.tasks.forEach(task => {
+        events.push({
+            id: `task-${task.taskId}`,
+            type: 'Task',
+            status: task.statusCode,
+            detail: compactText([task.taskType, task.wfTaskId, task.resultCode]),
+            timestamp: task.completedTs || task.updateTs,
+        });
+    });
+    snapshot.auditLogs.forEach(audit => {
+        events.push({
+            id: `audit-${audit.auditLogId}`,
+            type: audit.sourceTypeId || 'Audit',
+            status: audit.success || '',
+            detail: compactText([audit.message, audit.userComment, audit.correlationId]),
+            timestamp: audit.eventTs,
+        });
+    });
+    return events.sort((left, right) => (left.timestamp || '').localeCompare(right.timestamp || ''));
+}
+
 export default function WorkflowEditor() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -750,6 +1011,15 @@ export default function WorkflowEditor() {
     const [runtimeDiagnosticsUrl, setRuntimeDiagnosticsUrl] = useState('/diagnostics/tools');
     const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnosticState | null>(null);
     const [isRuntimeChecking, setIsRuntimeChecking] = useState(false);
+    const [testInput, setTestInput] = useState('{\n  \n}');
+    const [testRun, setTestRun] = useState<WorkflowTestRun | null>(null);
+    const [testSnapshot, setTestSnapshot] = useState<WorkflowTestSnapshot>(emptyTestSnapshot);
+    const [testMessage, setTestMessage] = useState('');
+    const [isTestStarting, setIsTestStarting] = useState(false);
+    const [isTestRefreshing, setIsTestRefreshing] = useState(false);
+    const [selectedAskTaskId, setSelectedAskTaskId] = useState('');
+    const [askResponse, setAskResponse] = useState('{\n  "answer": ""\n}');
+    const [isCompletingTask, setIsCompletingTask] = useState(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
     const selectedTemplate = useMemo(
@@ -783,6 +1053,21 @@ export default function WorkflowEditor() {
         () => selectedReferences.find(reference => reference.id === selectedReferenceId),
         [selectedReferenceId, selectedReferences],
     );
+    const waitingHumanTasks = useMemo(() => testSnapshot.tasks.filter(isWaitingHumanTask), [testSnapshot.tasks]);
+    const assertionTasks = useMemo(() => testSnapshot.tasks.filter(isAssertionTask), [testSnapshot.tasks]);
+    const failedProcesses = useMemo(() => testSnapshot.processes.filter(process => isFailedStatus(process.statusCode)), [testSnapshot.processes]);
+    const failedTasks = useMemo(() => testSnapshot.tasks.filter(task => isFailedStatus(task.statusCode)), [testSnapshot.tasks]);
+    const timeline = useMemo(() => buildTimeline(testRun, testSnapshot), [testRun, testSnapshot]);
+    const selectedAskTask = useMemo(
+        () => waitingHumanTasks.find(task => task.taskId === selectedAskTaskId) || waitingHumanTasks[0],
+        [selectedAskTaskId, waitingHumanTasks],
+    );
+    const finalOutput = useMemo(() => {
+        const completedProcess = [...testSnapshot.processes].reverse().find(process => isCompletedStatus(process.statusCode) && process.resultCode);
+        if (completedProcess?.resultCode) return completedProcess.resultCode;
+        const completedTask = [...testSnapshot.tasks].reverse().find(task => isCompletedStatus(task.statusCode) && task.resultCode);
+        return completedTask?.resultCode || '';
+    }, [testSnapshot.processes, testSnapshot.tasks]);
     const isUpdate = Boolean(wfDefId && aggregateVersion);
 
     useEffect(() => {
@@ -818,6 +1103,16 @@ export default function WorkflowEditor() {
         setServerProblems([]);
         setRuntimeDiagnostics(null);
     }, [definition]);
+
+    useEffect(() => {
+        if (!waitingHumanTasks.length) {
+            setSelectedAskTaskId('');
+            return;
+        }
+        if (!waitingHumanTasks.some(task => task.taskId === selectedAskTaskId)) {
+            setSelectedAskTaskId(waitingHumanTasks[0].taskId);
+        }
+    }, [selectedAskTaskId, waitingHumanTasks]);
 
     const loadCatalog = useCallback(async () => {
         if (!hostId) {
@@ -984,6 +1279,180 @@ export default function WorkflowEditor() {
         }
     }, [analysis.toolRefs, runtimeDiagnosticsUrl]);
 
+    const loadTestSnapshot = useCallback(async (wfInstanceIdOverride?: string) => {
+        const runInstanceId = wfInstanceIdOverride || testRun?.wfInstanceId || '';
+        if (!hostId || !runInstanceId) {
+            setTestMessage('Start a workflow test before refreshing runtime state.');
+            return;
+        }
+        setIsTestRefreshing(true);
+        const runFilters = workflowFilters('wfInstanceId', runInstanceId);
+        const results = await Promise.allSettled([
+            queryPortal('workflow', 'getProcessInfo', hostId, { filters: runFilters, limit: 50 }),
+            queryPortal('workflow', 'getTaskInfo', hostId, { filters: runFilters, limit: 100 }),
+            queryPortal('workflow', 'getTaskAsst', hostId, { limit: 200 }),
+            queryPortal('workflow', 'getWorklist', hostId, { limit: 200 }),
+            queryPortal('workflow', 'getAuditLog', hostId, { globalFilter: runInstanceId, limit: 50 }),
+        ]);
+        const processes = processInfoRows(resultValue(results[0]));
+        const tasks = taskInfoRows(resultValue(results[1]));
+        const taskIds = new Set(tasks.map(task => task.taskId));
+        const assignments = taskAssignmentRows(resultValue(results[2])).filter(assignment => taskIds.has(assignment.taskId));
+        const assignmentWorklistKeys = new Set(assignments.map(assignment => `${assignment.assigneeId}|${assignment.categoryCode}`));
+        const worklists = worklistRows(resultValue(results[3])).filter(worklist => assignmentWorklistKeys.has(`${worklist.assigneeId}|${worklist.categoryId}`));
+        const auditLogs = auditLogRows(resultValue(results[4]));
+        const errors = results
+            .filter(result => result.status === 'rejected')
+            .map(result => errorText((result as PromiseRejectedResult).reason));
+
+        setTestSnapshot({
+            processes,
+            tasks,
+            assignments,
+            worklists,
+            auditLogs,
+            refreshedAt: new Date().toISOString(),
+            errors,
+        });
+        setTestMessage(errors.length ? 'Runtime state refreshed with partial query errors.' : 'Runtime state refreshed.');
+        setIsTestRefreshing(false);
+    }, [hostId, testRun?.wfInstanceId]);
+
+    const handleStartTest = useCallback(async () => {
+        setTestMessage('');
+        if (!wfDefId) {
+            setTestMessage('Save the workflow definition before starting a test run.');
+            return;
+        }
+        if (clientBlockingProblem) {
+            setTestMessage(`Fix workflow definition before testing: ${clientBlockingProblem.message}`);
+            return;
+        }
+        const parsedInput = parseJsonObjectInput(testInput);
+        if (parsedInput.error) {
+            setTestMessage(`Fix test input: ${parsedInput.error}`);
+            return;
+        }
+        const serverResult = await runServerValidation();
+        if (!serverResult.ok) {
+            setTestMessage(`Fix workflow definition before testing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
+            return;
+        }
+        setIsTestStarting(true);
+        setTestSnapshot(emptyTestSnapshot);
+        try {
+            const cmd = {
+                host: 'lightapi.net',
+                service: 'workflow',
+                action: 'startWorkflow',
+                version: '0.1.0',
+                data: { hostId, wfDefId, input: parsedInput.value },
+            };
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+            if (result.error) {
+                setTestMessage(result.error.description || result.error.message || 'Failed to start workflow test.');
+                return;
+            }
+            const response = toRecord(result.data);
+            const wfInstanceId = textValue(response.wfInstanceId);
+            if (!wfInstanceId) {
+                setTestMessage('Workflow test started, but the response did not include wfInstanceId.');
+                return;
+            }
+            const run = {
+                wfInstanceId,
+                startedAt: new Date().toISOString(),
+                input: parsedInput.value,
+                response,
+            };
+            setTestRun(run);
+            setTestMessage(`Workflow test started for instance ${wfInstanceId}.`);
+            await loadTestSnapshot(wfInstanceId);
+        } catch (error) {
+            setTestMessage(`Failed to start workflow test: ${errorText(error)}`);
+        } finally {
+            setIsTestStarting(false);
+        }
+    }, [clientBlockingProblem, hostId, loadTestSnapshot, runServerValidation, testInput, wfDefId]);
+
+    const handleCompleteAskTask = useCallback(async () => {
+        if (!selectedAskTask) {
+            setTestMessage('Select a waiting ask task before completing it.');
+            return;
+        }
+        const parsedResponse = parseJsonObjectInput(askResponse);
+        if (parsedResponse.error) {
+            setTestMessage(`Fix ask response: ${parsedResponse.error}`);
+            return;
+        }
+        setIsCompletingTask(true);
+        try {
+            const cmd = {
+                host: 'lightapi.net',
+                service: 'workflow',
+                action: 'completeTask',
+                version: '0.1.0',
+                data: {
+                    hostId: selectedAskTask.hostId || hostId,
+                    taskId: selectedAskTask.taskId,
+                    statusCode: 'C',
+                    completedTs: new Date().toISOString(),
+                    response: parsedResponse.value,
+                    resultCode: JSON.stringify(parsedResponse.value),
+                },
+            };
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+            if (result.error) {
+                setTestMessage(result.error.description || result.error.message || 'Failed to complete ask task.');
+                return;
+            }
+            setTestMessage(`Ask task ${selectedAskTask.taskId} completed.`);
+            await loadTestSnapshot();
+        } catch (error) {
+            setTestMessage(`Failed to complete ask task: ${errorText(error)}`);
+        } finally {
+            setIsCompletingTask(false);
+        }
+    }, [askResponse, hostId, loadTestSnapshot, selectedAskTask]);
+
+    const handleOpenTestTasks = useCallback(() => {
+        if (!testRun) return;
+        navigate(buildContextRoute('/app/workflow/TaskInfo', { hostId, wfDefId, wfInstanceId: testRun.wfInstanceId }));
+    }, [hostId, navigate, testRun, wfDefId]);
+
+    const handleOpenWorklist = useCallback(() => {
+        const assignment = testSnapshot.assignments[0];
+        const context = {
+            hostId,
+            wfDefId,
+            wfInstanceId: testRun?.wfInstanceId || '',
+            assigneeId: assignment?.assigneeId || '',
+            categoryId: assignment?.categoryCode || '',
+        };
+        navigate(buildContextRoute('/app/workflow/Worklist', context));
+    }, [hostId, navigate, testRun?.wfInstanceId, testSnapshot.assignments, wfDefId]);
+
+    const handleCreateRemediationTask = useCallback(() => {
+        if (!testRun) return;
+        const failedTask = failedTasks[0];
+        const process = failedProcesses[0] || testSnapshot.processes[0];
+        navigate('/app/form/createTaskInfo', {
+            state: {
+                data: {
+                    hostId,
+                    taskType: 'remediation',
+                    processId: failedTask?.processId || process?.processId || '',
+                    wfInstanceId: testRun.wfInstanceId,
+                    wfTaskId: `remediate-${slug(failedTask?.wfTaskId || process?.processType || name || 'workflow', 'workflow')}`,
+                    statusCode: 'A',
+                    locked: 'N',
+                    priority: 5,
+                },
+                source: location.pathname,
+            },
+        });
+    }, [failedProcesses, failedTasks, hostId, location.pathname, name, navigate, testRun, testSnapshot.processes]);
+
     const handleSave = useCallback(async () => {
         setMessage('');
         if (!hostId || !namespace || !name || !version || !definition.trim()) {
@@ -1039,28 +1508,6 @@ export default function WorkflowEditor() {
         }
     }, [active, aggregateVersion, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, version, wfDefId]);
 
-    const handleStart = useCallback(async () => {
-        if (!wfDefId) {
-            setMessage('Save the workflow definition before starting it.');
-            return;
-        }
-        if (clientBlockingProblem) {
-            setMessage(`Fix workflow definition before testing: ${clientBlockingProblem.message}`);
-            return;
-        }
-        const serverResult = await runServerValidation();
-        if (!serverResult.ok) {
-            setMessage(`Fix workflow definition before testing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
-            return;
-        }
-        navigate('/app/form/startWorkflow', {
-            state: {
-                data: { hostId, wfDefId, input: "{}" },
-                source: location.pathname,
-            }
-        });
-    }, [clientBlockingProblem, hostId, location.pathname, navigate, runServerValidation, wfDefId]);
-
     return (
         <Box sx={{ p: 2 }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
@@ -1078,7 +1525,7 @@ export default function WorkflowEditor() {
                 <Button startIcon={isServerValidating ? <CircularProgress size={18} color="inherit" /> : <VerifiedIcon />} onClick={handleValidate} disabled={isServerValidating}>
                     Validate
                 </Button>
-                <Button startIcon={<PlayArrowIcon />} onClick={handleStart} disabled={!wfDefId || isServerValidating}>
+                <Button startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />} onClick={handleStartTest} disabled={!wfDefId || isServerValidating || isTestStarting}>
                     Test
                 </Button>
                 <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isSubmitting || isLoading || isServerValidating}>
@@ -1269,6 +1716,222 @@ export default function WorkflowEditor() {
                         {runtimeDiagnostics?.gatewayTools.length ? (
                             <Typography variant="caption" color="text.secondary">{runtimeDiagnostics.gatewayTools.length} runtime tools visible.</Typography>
                         ) : null}
+                    </Stack>
+                </Box>
+            </Box>
+
+            <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} spacing={1} sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{ flex: 1 }}>Test Runner</Typography>
+                    <Button
+                        variant="contained"
+                        startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />}
+                        onClick={handleStartTest}
+                        disabled={!wfDefId || isTestStarting || isServerValidating}
+                    >
+                        Start Test
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={isTestRefreshing ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
+                        onClick={() => loadTestSnapshot()}
+                        disabled={!testRun || isTestRefreshing}
+                    >
+                        Refresh
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<OpenInNewIcon />}
+                        onClick={handleOpenTestTasks}
+                        disabled={!testRun}
+                    >
+                        Review Tasks
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<OpenInNewIcon />}
+                        onClick={handleOpenWorklist}
+                        disabled={!testRun || !testSnapshot.assignments.length}
+                    >
+                        Review Worklist
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="warning"
+                        startIcon={<AssignmentTurnedInIcon />}
+                        onClick={handleCreateRemediationTask}
+                        disabled={!testRun || (!failedProcesses.length && !failedTasks.length)}
+                    >
+                        Remediate
+                    </Button>
+                </Stack>
+
+                {testMessage && <Alert severity={testMessage.includes('Failed') || testMessage.includes('Fix') ? 'warning' : 'info'} sx={{ mb: 2 }}>{testMessage}</Alert>}
+                {testSnapshot.errors.length ? (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                        {testSnapshot.errors.slice(0, 2).join(' ')}
+                    </Alert>
+                ) : null}
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '360px minmax(0, 1fr)' }, gap: 2 }}>
+                    <Stack spacing={2}>
+                        <TextField
+                            label="Sample Input JSON"
+                            value={testInput}
+                            onChange={event => setTestInput(event.target.value)}
+                            multiline
+                            minRows={7}
+                            size="small"
+                            spellCheck={false}
+                        />
+                        {testRun ? (
+                            <Stack spacing={1}>
+                                <Typography variant="subtitle2">Current Run</Typography>
+                                <Chip size="small" label={`Instance ${testRun.wfInstanceId}`} />
+                                <Typography variant="caption" color="text.secondary">Started {new Date(testRun.startedAt).toLocaleString()}</Typography>
+                                {testSnapshot.refreshedAt && (
+                                    <Typography variant="caption" color="text.secondary">Refreshed {new Date(testSnapshot.refreshedAt).toLocaleString()}</Typography>
+                                )}
+                            </Stack>
+                        ) : (
+                            <Typography variant="body2" color="text.secondary">No test run started.</Typography>
+                        )}
+                        <Divider />
+                        <Typography variant="subtitle2">Complete Ask Task</Typography>
+                        <TextField
+                            select
+                            label="Waiting Task"
+                            value={selectedAskTask?.taskId || ''}
+                            onChange={event => setSelectedAskTaskId(event.target.value)}
+                            size="small"
+                            disabled={!waitingHumanTasks.length}
+                        >
+                            {waitingHumanTasks.length ? waitingHumanTasks.map(task => (
+                                <MenuItem key={task.taskId} value={task.taskId}>{compactText([task.wfTaskId, task.taskType, task.statusCode]) || task.taskId}</MenuItem>
+                            )) : (
+                                <MenuItem value="">No waiting ask tasks</MenuItem>
+                            )}
+                        </TextField>
+                        <TextField
+                            label="Ask Response JSON"
+                            value={askResponse}
+                            onChange={event => setAskResponse(event.target.value)}
+                            multiline
+                            minRows={4}
+                            size="small"
+                            spellCheck={false}
+                            disabled={!selectedAskTask}
+                        />
+                        <Button
+                            variant="outlined"
+                            startIcon={isCompletingTask ? <CircularProgress size={16} color="inherit" /> : <AssignmentTurnedInIcon />}
+                            onClick={handleCompleteAskTask}
+                            disabled={!selectedAskTask || isCompletingTask}
+                        >
+                            Complete Task
+                        </Button>
+                    </Stack>
+
+                    <Stack spacing={2} sx={{ minWidth: 0 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1 }}>
+                            <Chip label={`${testSnapshot.processes.length} processes`} />
+                            <Chip label={`${testSnapshot.tasks.length} tasks`} />
+                            <Chip label={`${waitingHumanTasks.length} waiting`} color={waitingHumanTasks.length ? 'warning' : 'default'} />
+                            <Chip label={`${failedProcesses.length + failedTasks.length} failed`} color={failedProcesses.length || failedTasks.length ? 'error' : 'default'} />
+                        </Box>
+
+                        <Box sx={{ overflowX: 'auto' }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Processes</Typography>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Process</TableCell>
+                                        <TableCell>Type</TableCell>
+                                        <TableCell>Status</TableCell>
+                                        <TableCell>Result</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {testSnapshot.processes.length ? testSnapshot.processes.map(process => (
+                                        <TableRow key={process.processId}>
+                                            <TableCell>{process.processId}</TableCell>
+                                            <TableCell>{displayText(process.processType)}</TableCell>
+                                            <TableCell>{displayText(process.statusCode)}</TableCell>
+                                            <TableCell>{displayText(process.resultCode)}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow><TableCell colSpan={4}>No process state observed.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Box>
+
+                        <Box sx={{ overflowX: 'auto' }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Waiting Tasks And Assertions</Typography>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Task</TableCell>
+                                        <TableCell>Type</TableCell>
+                                        <TableCell>Status</TableCell>
+                                        <TableCell>Assignment</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {[...waitingHumanTasks, ...assertionTasks].length ? [...waitingHumanTasks, ...assertionTasks].map(task => {
+                                        const assignment = testSnapshot.assignments.find(item => item.taskId === task.taskId);
+                                        return (
+                                            <TableRow key={task.taskId}>
+                                                <TableCell>{displayText(task.wfTaskId || task.taskId)}</TableCell>
+                                                <TableCell>{displayText(task.taskType)}</TableCell>
+                                                <TableCell>{displayText(task.statusCode)}</TableCell>
+                                                <TableCell>{assignment ? compactText([assignment.assigneeId, assignment.categoryCode]) : '-'}</TableCell>
+                                            </TableRow>
+                                        );
+                                    }) : (
+                                        <TableRow><TableCell colSpan={4}>No waiting ask tasks or assertion tasks observed.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Box>
+
+                        <Box sx={{ overflowX: 'auto' }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Events</Typography>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Time</TableCell>
+                                        <TableCell>Type</TableCell>
+                                        <TableCell>Status</TableCell>
+                                        <TableCell>Detail</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {timeline.length ? timeline.map(event => (
+                                        <TableRow key={event.id}>
+                                            <TableCell>{event.timestamp ? new Date(event.timestamp).toLocaleString() : '-'}</TableCell>
+                                            <TableCell>{event.type}</TableCell>
+                                            <TableCell>{displayText(event.status)}</TableCell>
+                                            <TableCell>{displayText(event.detail)}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow><TableCell colSpan={4}>No workflow events observed yet.</TableCell></TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Box>
+
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Final Output</Typography>
+                            <TextField
+                                value={finalOutput || 'No final output observed.'}
+                                multiline
+                                minRows={2}
+                                size="small"
+                                fullWidth
+                                slotProps={{ input: { readOnly: true } }}
+                            />
+                        </Box>
                     </Stack>
                 </Box>
             </Box>
