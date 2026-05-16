@@ -15,9 +15,11 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    LinearProgress,
     List,
     ListItemButton,
     ListItemText,
+    MenuItem,
     Stack,
     TextField,
     Typography,
@@ -26,7 +28,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -80,6 +85,42 @@ type WorkflowHelp = {
     info: string;
 };
 
+type CatalogKind = 'tools' | 'endpoints' | 'rules' | 'agents' | 'workflows';
+
+type CatalogReference = {
+    kind: CatalogKind;
+    id: string;
+    value: string;
+    label: string;
+    secondary?: string;
+    description?: string;
+};
+
+type CatalogState = Record<CatalogKind, CatalogReference[]>;
+
+type StepTemplate = {
+    id: string;
+    label: string;
+    detail: string;
+    defaultStepId: string;
+    build: (stepId: string) => string;
+};
+
+type ServerValidationResult = {
+    ok: boolean;
+    unavailable?: boolean;
+    problems: ValidationProblem[];
+    blockingProblem?: ValidationProblem;
+};
+
+type RuntimeDiagnosticState = {
+    status: 'ok' | 'warning' | 'error';
+    message: string;
+    gatewayTools: string[];
+    missingTools: string[];
+    gatewayError?: string;
+};
+
 const emptyDefinition = `steps:
   - ask-input:
       ask:
@@ -101,6 +142,7 @@ const taskTypeHelp: Record<string, WorkflowHelp> = {
     mcp: { detail: 'MCP tool', info: 'Invoke a gateway-visible MCP tool, resource, or prompt.' },
     rule: { detail: 'Rule check', info: 'Delegate a complex check to Light-Rule.' },
     agent: { detail: 'Agent task', info: 'Delegate a bounded task to an agent worker.' },
+    workflow: { detail: 'Child workflow', info: 'Start or call another workflow definition.' },
     switch: { detail: 'Branch', info: 'Branch based on workflow context or task output.' },
     condition: { detail: 'Guard', info: 'Evaluate a conditional branch or step guard.' },
     set: { detail: 'Context update', info: 'Move values into workflow context.' },
@@ -147,7 +189,93 @@ const knownPropertyKeys = new Set([
     'tool',
     'value',
     'when',
+    'endpointId',
+    'ruleId',
+    'agentDefId',
+    'wfDefId',
 ]);
+
+const catalogKindOptions: Array<{ value: CatalogKind; label: string }> = [
+    { value: 'tools', label: 'Tools' },
+    { value: 'endpoints', label: 'Endpoints' },
+    { value: 'rules', label: 'Rules' },
+    { value: 'agents', label: 'Agents' },
+    { value: 'workflows', label: 'Workflows' },
+];
+
+const emptyCatalog: CatalogState = {
+    tools: [],
+    endpoints: [],
+    rules: [],
+    agents: [],
+    workflows: [],
+};
+
+const stepTemplates: StepTemplate[] = [
+    {
+        id: 'ask',
+        label: 'Ask',
+        detail: taskTypeHelp.ask.detail,
+        defaultStepId: 'ask-input',
+        build: stepId => `  - ${stepId}:\n      ask:\n        prompt: Provide workflow input.\n        mode: text\n`,
+    },
+    {
+        id: 'assert',
+        label: 'Assert',
+        detail: taskTypeHelp.assert.detail,
+        defaultStepId: 'assert-output',
+        build: stepId => `  - ${stepId}:\n      assert:\n        path: $.status\n        equals: ok\n`,
+    },
+    {
+        id: 'mcp',
+        label: 'MCP Tool',
+        detail: taskTypeHelp.mcp.detail,
+        defaultStepId: 'call-tool',
+        build: stepId => `  - ${stepId}:\n      mcp:\n        tool: tool_name\n        arguments: {}\n`,
+    },
+    {
+        id: 'openapi',
+        label: 'Endpoint',
+        detail: taskTypeHelp.openapi.detail,
+        defaultStepId: 'call-endpoint',
+        build: stepId => `  - ${stepId}:\n      openapi:\n        endpointId: endpoint_id\n        arguments: {}\n`,
+    },
+    {
+        id: 'rule',
+        label: 'Rule',
+        detail: taskTypeHelp.rule.detail,
+        defaultStepId: 'check-rule',
+        build: stepId => `  - ${stepId}:\n      rule:\n        ruleId: rule_id\n        input: {}\n`,
+    },
+    {
+        id: 'agent',
+        label: 'Agent',
+        detail: taskTypeHelp.agent.detail,
+        defaultStepId: 'delegate-agent',
+        build: stepId => `  - ${stepId}:\n      agent:\n        agentDefId: agent_def_id\n        input: {}\n`,
+    },
+    {
+        id: 'workflow',
+        label: 'Workflow',
+        detail: taskTypeHelp.workflow.detail,
+        defaultStepId: 'call-workflow',
+        build: stepId => `  - ${stepId}:\n      workflow:\n        wfDefId: workflow_definition_id\n        input: {}\n`,
+    },
+    {
+        id: 'switch',
+        label: 'Switch',
+        detail: taskTypeHelp.switch.detail,
+        defaultStepId: 'branch',
+        build: stepId => `  - ${stepId}:\n      switch:\n        - when: \${ .status == "ok" }\n          then: next-step\n        - else: fallback-step\n`,
+    },
+    {
+        id: 'wait',
+        label: 'Wait',
+        detail: taskTypeHelp.wait.detail,
+        defaultStepId: 'wait-for-event',
+        build: stepId => `  - ${stepId}:\n      wait:\n        duration: PT5M\n`,
+    },
+];
 
 const rootCompletions: Completion[] = Object.entries(rootKeyHelp).map(([label, help]) => ({
     label,
@@ -380,7 +508,7 @@ function formatProblemLocation(problem: ValidationProblem) {
 }
 
 function messageSeverity(message: string) {
-    return message === 'Workflow definition saved.' || message === 'Workflow definition is valid.' ? 'success' : 'warning';
+    return message === 'Workflow definition saved.' || message.startsWith('Workflow definition is valid') ? 'success' : 'warning';
 }
 
 const workflowDefinitionLinter = linter(view => {
@@ -396,6 +524,196 @@ const workflowEditorExtensions = [
     autocompletion({ override: [workflowCompletions] }),
     workflowHover,
 ];
+
+function toRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function asRecords(value: unknown, key: string): Array<Record<string, unknown>> {
+    const items = toRecord(value)[key];
+    return Array.isArray(items) ? items.map(toRecord).filter(item => Object.keys(item).length > 0) : [];
+}
+
+function textValue(value: unknown) {
+    return typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value);
+}
+
+function compactText(values: Array<unknown>) {
+    return values.map(textValue).filter(Boolean).join(' · ');
+}
+
+function slug(value: string, fallback: string) {
+    const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return normalized || fallback;
+}
+
+function yamlScalar(value: string) {
+    return /^[A-Za-z0-9_.:/@-]+$/.test(value) ? value : JSON.stringify(value);
+}
+
+function appendStepSnippet(definition: string, snippet: string) {
+    const trimmed = definition.trimEnd();
+    const normalized = trimmed.replace(/^steps:\s*\[\]\s*$/m, 'steps:');
+    if (!normalized) {
+        return `steps:\n${snippet.trimEnd()}\n`;
+    }
+    if (/^steps:\s*(?:#.*)?$/m.test(normalized)) {
+        return `${normalized}\n${snippet.trimEnd()}\n`;
+    }
+    return `${normalized}\n\nsteps:\n${snippet.trimEnd()}\n`;
+}
+
+function buildReferenceSnippet(reference: CatalogReference) {
+    const stepId = slug(reference.label, reference.kind.slice(0, -1) || 'step');
+    switch (reference.kind) {
+        case 'tools':
+            return `  - call-${stepId}:\n      mcp:\n        tool: ${yamlScalar(reference.value)}\n        arguments: {}\n`;
+        case 'endpoints':
+            return `  - call-${stepId}:\n      openapi:\n        endpointId: ${yamlScalar(reference.id)}\n        arguments: {}\n`;
+        case 'rules':
+            return `  - check-${stepId}:\n      rule:\n        ruleId: ${yamlScalar(reference.id)}\n        input: {}\n`;
+        case 'agents':
+            return `  - delegate-${stepId}:\n      agent:\n        agentDefId: ${yamlScalar(reference.id)}\n        input: {}\n`;
+        case 'workflows':
+            return `  - call-${stepId}:\n      workflow:\n        wfDefId: ${yamlScalar(reference.id)}\n        input: {}\n`;
+        default:
+            return '';
+    }
+}
+
+function normalizeServerProblems(value: unknown): ValidationProblem[] {
+    return Array.isArray(value)
+        ? value.map(toRecord).map(problem => ({
+            severity: problem.severity === 'error' ? 'error' : 'warning',
+            message: textValue(problem.message) || 'Server validation problem.',
+        }))
+        : [];
+}
+
+function errorText(error: unknown) {
+    const record = toRecord(error);
+    return textValue(record.description || record.message || error) || 'Unexpected error.';
+}
+
+function extractRuntimeToolNames(value: unknown): string[] {
+    const record = toRecord(value);
+    const result = toRecord(record.result);
+    const candidates = [
+        record.gatewayTools,
+        record.tools,
+        result.gatewayTools,
+        result.tools,
+        toRecord(record.data).tools,
+    ];
+    const source = candidates.find(Array.isArray);
+    if (!Array.isArray(source)) {
+        return [];
+    }
+    return Array.from(new Set(source.map(item => {
+        if (typeof item === 'string') return item;
+        const tool = toRecord(item);
+        return textValue(tool.name || tool.toolName || tool.tool_name);
+    }).filter(Boolean))).sort();
+}
+
+async function queryPortal(service: string, action: string, hostId: string, data: Record<string, unknown> = {}) {
+    const cmd = {
+        host: 'lightapi.net',
+        service,
+        action,
+        version: '0.1.0',
+        data: {
+            hostId,
+            active: true,
+            offset: 0,
+            limit: 500,
+            filters: JSON.stringify([]),
+            sorting: JSON.stringify([]),
+            globalFilter: '',
+            ...data,
+        },
+    };
+    return fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+}
+
+function resultValue(result: PromiseSettledResult<unknown>) {
+    return result.status === 'fulfilled' ? result.value : {};
+}
+
+function toolReferences(value: unknown): CatalogReference[] {
+    return asRecords(value, 'tools').map(tool => {
+        const name = textValue(tool.name || tool.toolName || tool.tool_name || tool.toolId);
+        const id = textValue(tool.toolId || name);
+        return {
+            kind: 'tools' as const,
+            id,
+            value: name,
+            label: name,
+            secondary: compactText([tool.implementationType, tool.sensitivityTier, tool.sourceProtocol]),
+            description: textValue(tool.description),
+        };
+    }).filter(ref => ref.id && ref.value);
+}
+
+function endpointReferences(value: unknown): CatalogReference[] {
+    return asRecords(value, 'endpoints').map(endpoint => {
+        const id = textValue(endpoint.endpointId);
+        const method = textValue(endpoint.httpMethod || endpoint.apiMethod);
+        const path = textValue(endpoint.endpointPath || endpoint.endpoint);
+        return {
+            kind: 'endpoints' as const,
+            id,
+            value: id,
+            label: compactText([method, path]) || id,
+            secondary: compactText([endpoint.routingDomain, endpoint.sensitivityTier]),
+            description: textValue(endpoint.endpointDesc || endpoint.description),
+        };
+    }).filter(ref => ref.id);
+}
+
+function ruleReferences(value: unknown): CatalogReference[] {
+    return asRecords(value, 'rules').map(rule => {
+        const id = textValue(rule.ruleId);
+        return {
+            kind: 'rules' as const,
+            id,
+            value: id,
+            label: textValue(rule.ruleName) || id,
+            secondary: compactText([rule.ruleType, rule.version]),
+            description: textValue(rule.ruleDesc),
+        };
+    }).filter(ref => ref.id);
+}
+
+function agentReferences(value: unknown): CatalogReference[] {
+    const records = asRecords(value, 'agentDefinitions');
+    const agents = records.length ? records : asRecords(value, 'agents');
+    return agents.map(agent => {
+        const id = textValue(agent.agentDefId);
+        return {
+            kind: 'agents' as const,
+            id,
+            value: id,
+            label: textValue(agent.agentName || agent.apiName) || id,
+            secondary: compactText([agent.modelProvider, agent.modelName]),
+            description: compactText([agent.apiType, agent.serviceId]),
+        };
+    }).filter(ref => ref.id);
+}
+
+function workflowReferences(value: unknown): CatalogReference[] {
+    return asRecords(value, 'workflows').map(workflow => {
+        const id = textValue(workflow.wfDefId);
+        return {
+            kind: 'workflows' as const,
+            id,
+            value: id,
+            label: textValue(workflow.name) || id,
+            secondary: compactText([workflow.namespace, workflow.version]),
+            description: textValue(workflow.definition).slice(0, 180),
+        };
+    }).filter(ref => ref.id);
+}
 
 export default function WorkflowEditor() {
     const location = useLocation();
@@ -418,10 +736,53 @@ export default function WorkflowEditor() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
+    const [catalog, setCatalog] = useState<CatalogState>(emptyCatalog);
+    const [isCatalogLoading, setIsCatalogLoading] = useState(false);
+    const [catalogError, setCatalogError] = useState('');
+    const [catalogLoaded, setCatalogLoaded] = useState(false);
+    const [catalogKind, setCatalogKind] = useState<CatalogKind>('tools');
+    const [referenceSearch, setReferenceSearch] = useState('');
+    const [selectedReferenceId, setSelectedReferenceId] = useState('');
+    const [selectedTemplateId, setSelectedTemplateId] = useState(stepTemplates[0].id);
+    const [stepIdInput, setStepIdInput] = useState(stepTemplates[0].defaultStepId);
+    const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
+    const [isServerValidating, setIsServerValidating] = useState(false);
+    const [runtimeDiagnosticsUrl, setRuntimeDiagnosticsUrl] = useState('/diagnostics/tools');
+    const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnosticState | null>(null);
+    const [isRuntimeChecking, setIsRuntimeChecking] = useState(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
-    const blockingProblem = analysis.problems.find(problem => problem.severity === 'error');
-    const warningCount = analysis.problems.filter(problem => problem.severity === 'warning').length;
+    const selectedTemplate = useMemo(
+        () => stepTemplates.find(template => template.id === selectedTemplateId) || stepTemplates[0],
+        [selectedTemplateId],
+    );
+    const catalogToolNames = useMemo(() => new Set(catalog.tools.flatMap(tool => [tool.value, tool.id])), [catalog.tools]);
+    const catalogProblems = useMemo<ValidationProblem[]>(() => {
+        if (!catalogLoaded || !catalog.tools.length) return [];
+        return analysis.toolRefs
+            .filter(ref => !catalogToolNames.has(ref))
+            .map(ref => ({ severity: 'warning', message: `Tool reference "${ref}" is not in the active tool catalog.` }));
+    }, [analysis.toolRefs, catalog.tools.length, catalogLoaded, catalogToolNames]);
+    const allProblems = useMemo(
+        () => [...analysis.problems, ...catalogProblems, ...serverProblems],
+        [analysis.problems, catalogProblems, serverProblems],
+    );
+    const clientBlockingProblem = analysis.problems.find(problem => problem.severity === 'error');
+    const blockingProblem = allProblems.find(problem => problem.severity === 'error');
+    const warningCount = allProblems.filter(problem => problem.severity === 'warning').length;
+    const selectedReferences = useMemo(() => catalog[catalogKind], [catalog, catalogKind]);
+    const filteredReferences = useMemo(() => {
+        const query = referenceSearch.trim().toLowerCase();
+        if (!query) return selectedReferences;
+        return selectedReferences.filter(reference =>
+            [reference.label, reference.id, reference.secondary, reference.description]
+                .some(value => textValue(value).toLowerCase().includes(query)),
+        );
+    }, [referenceSearch, selectedReferences]);
+    const selectedReference = useMemo(
+        () => selectedReferences.find(reference => reference.id === selectedReferenceId),
+        [selectedReferenceId, selectedReferences],
+    );
     const isUpdate = Boolean(wfDefId && aggregateVersion);
 
     useEffect(() => {
@@ -453,6 +814,48 @@ export default function WorkflowEditor() {
             .finally(() => setIsLoading(false));
     }, [host, initial.hostId, initial.wfDefId, initial.definition]);
 
+    useEffect(() => {
+        setServerProblems([]);
+        setRuntimeDiagnostics(null);
+    }, [definition]);
+
+    const loadCatalog = useCallback(async () => {
+        if (!hostId) {
+            setCatalog(emptyCatalog);
+            setCatalogLoaded(false);
+            setCatalogError('');
+            return;
+        }
+        setIsCatalogLoading(true);
+        setCatalogError('');
+        const results = await Promise.allSettled([
+            queryPortal('genai', 'getTool', hostId),
+            queryPortal('service', 'getApiEndpoint', hostId),
+            queryPortal('rule', 'getRule', hostId),
+            queryPortal('genai', 'getAgentDefinition', hostId),
+            queryPortal('workflow', 'getWfDefinition', hostId),
+        ]);
+        setCatalog({
+            tools: toolReferences(resultValue(results[0])),
+            endpoints: endpointReferences(resultValue(results[1])),
+            rules: ruleReferences(resultValue(results[2])),
+            agents: agentReferences(resultValue(results[3])),
+            workflows: workflowReferences(resultValue(results[4])),
+        });
+        const failed = results.filter(result => result.status === 'rejected');
+        setCatalogError(failed.length ? 'Some catalog references could not be loaded.' : '');
+        setCatalogLoaded(true);
+        setIsCatalogLoading(false);
+    }, [hostId]);
+
+    useEffect(() => {
+        loadCatalog();
+    }, [loadCatalog]);
+
+    useEffect(() => {
+        setSelectedReferenceId('');
+    }, [catalogKind]);
+
     const handleFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -472,17 +875,114 @@ export default function WorkflowEditor() {
         URL.revokeObjectURL(url);
     }, [definition, name]);
 
-    const handleValidate = useCallback(() => {
-        if (blockingProblem) {
-            setMessage(`Fix workflow definition: ${blockingProblem.message}`);
+    const runServerValidation = useCallback(async (): Promise<ServerValidationResult> => {
+        if (!hostId || !definition.trim()) {
+            return { ok: false, problems: [{ severity: 'error', message: 'Host and definition are required for server validation.' }] };
+        }
+        setIsServerValidating(true);
+        const cmd = {
+            host: 'lightapi.net',
+            service: 'workflow',
+            action: 'validateWfDefinition',
+            version: '0.1.0',
+            data: { hostId, definition },
+        };
+        try {
+            const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            const problems = normalizeServerProblems(toRecord(json).problems);
+            setServerProblems(problems);
+            const blocking = problems.find(problem => problem.severity === 'error');
+            return { ok: !blocking, problems, blockingProblem: blocking };
+        } catch (error) {
+            const problem = { severity: 'warning' as const, message: `Server validation unavailable: ${errorText(error)}` };
+            setServerProblems([problem]);
+            return { ok: true, unavailable: true, problems: [problem] };
+        } finally {
+            setIsServerValidating(false);
+        }
+    }, [definition, hostId]);
+
+    const handleValidate = useCallback(async () => {
+        if (clientBlockingProblem) {
+            setMessage(`Fix workflow definition: ${clientBlockingProblem.message}`);
             return;
         }
-        if (warningCount) {
-            setMessage(`Workflow definition parsed with ${warningCount} warning${warningCount === 1 ? '' : 's'}.`);
+        const serverResult = await runServerValidation();
+        if (!serverResult.ok) {
+            setMessage(`Fix workflow definition: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
         }
-        setMessage('Workflow definition is valid.');
-    }, [blockingProblem, warningCount]);
+        const totalWarnings = analysis.problems.filter(problem => problem.severity === 'warning').length
+            + catalogProblems.length
+            + serverResult.problems.filter(problem => problem.severity === 'warning').length;
+        if (totalWarnings) {
+            setMessage(`Workflow definition parsed with ${totalWarnings} warning${totalWarnings === 1 ? '' : 's'}.`);
+            return;
+        }
+        setMessage(serverResult.unavailable ? 'Workflow definition is valid. Server validation was unavailable.' : 'Workflow definition is valid.');
+    }, [analysis.problems, catalogProblems.length, clientBlockingProblem, runServerValidation]);
+
+    const insertStep = useCallback((snippet: string) => {
+        setDefinition(value => appendStepSnippet(value, snippet));
+    }, []);
+
+    const handleTemplateChange = useCallback((templateId: string) => {
+        const template = stepTemplates.find(item => item.id === templateId) || stepTemplates[0];
+        setSelectedTemplateId(template.id);
+        setStepIdInput(template.defaultStepId);
+    }, []);
+
+    const handleInsertTemplate = useCallback(() => {
+        insertStep(selectedTemplate.build(slug(stepIdInput, selectedTemplate.defaultStepId)));
+    }, [insertStep, selectedTemplate, stepIdInput]);
+
+    const handleInsertReference = useCallback(() => {
+        if (!selectedReference) return;
+        insertStep(buildReferenceSnippet(selectedReference));
+    }, [insertStep, selectedReference]);
+
+    const handleRuntimeDiagnostics = useCallback(async () => {
+        setRuntimeDiagnostics(null);
+        if (!analysis.toolRefs.length) {
+            setRuntimeDiagnostics({ status: 'ok', message: 'No MCP tool references found.', gatewayTools: [], missingTools: [] });
+            return;
+        }
+        const url = runtimeDiagnosticsUrl.trim();
+        if (!url) {
+            setRuntimeDiagnostics({ status: 'error', message: 'Runtime diagnostics URL is required.', gatewayTools: [], missingTools: analysis.toolRefs });
+            return;
+        }
+        setIsRuntimeChecking(true);
+        try {
+            const isMcpEndpoint = /\/mcp(?:$|[/?#])/.test(url) && !url.includes('/diagnostics/');
+            const json = await fetchClient(url, isMcpEndpoint ? {
+                method: 'POST',
+                body: { jsonrpc: '2.0', method: 'tools/list', params: {}, id: 'workflow-editor-tools-list' },
+            } : undefined);
+            const gatewayTools = extractRuntimeToolNames(json);
+            const gatewayToolSet = new Set(gatewayTools);
+            const missingTools = analysis.toolRefs.filter(ref => !gatewayToolSet.has(ref));
+            const gatewayError = textValue(toRecord(json).gatewayError);
+            setRuntimeDiagnostics({
+                status: gatewayError ? 'error' : missingTools.length ? 'warning' : 'ok',
+                message: gatewayError || (missingTools.length
+                    ? `${missingTools.length} referenced tool${missingTools.length === 1 ? '' : 's'} missing from runtime tools/list.`
+                    : 'Runtime tools/list covers all referenced MCP tools.'),
+                gatewayTools,
+                missingTools,
+                gatewayError,
+            });
+        } catch (error) {
+            setRuntimeDiagnostics({
+                status: 'error',
+                message: `Runtime diagnostics failed: ${errorText(error)}`,
+                gatewayTools: [],
+                missingTools: analysis.toolRefs,
+            });
+        } finally {
+            setIsRuntimeChecking(false);
+        }
+    }, [analysis.toolRefs, runtimeDiagnosticsUrl]);
 
     const handleSave = useCallback(async () => {
         setMessage('');
@@ -490,8 +990,13 @@ export default function WorkflowEditor() {
             setMessage('Host, namespace, name, version, and definition are required.');
             return;
         }
-        if (blockingProblem) {
-            setMessage(`Fix workflow definition before saving: ${blockingProblem.message}`);
+        if (clientBlockingProblem) {
+            setMessage(`Fix workflow definition before saving: ${clientBlockingProblem.message}`);
+            return;
+        }
+        const serverResult = await runServerValidation();
+        if (!serverResult.ok) {
+            setMessage(`Fix workflow definition before saving: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
         }
         setIsSubmitting(true);
@@ -532,15 +1037,20 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, blockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, version, wfDefId]);
+    }, [active, aggregateVersion, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, version, wfDefId]);
 
-    const handleStart = useCallback(() => {
+    const handleStart = useCallback(async () => {
         if (!wfDefId) {
             setMessage('Save the workflow definition before starting it.');
             return;
         }
-        if (blockingProblem) {
-            setMessage(`Fix workflow definition before testing: ${blockingProblem.message}`);
+        if (clientBlockingProblem) {
+            setMessage(`Fix workflow definition before testing: ${clientBlockingProblem.message}`);
+            return;
+        }
+        const serverResult = await runServerValidation();
+        if (!serverResult.ok) {
+            setMessage(`Fix workflow definition before testing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
         }
         navigate('/app/form/startWorkflow', {
@@ -549,7 +1059,7 @@ export default function WorkflowEditor() {
                 source: location.pathname,
             }
         });
-    }, [blockingProblem, hostId, location.pathname, navigate, wfDefId]);
+    }, [clientBlockingProblem, hostId, location.pathname, navigate, runServerValidation, wfDefId]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -565,19 +1075,19 @@ export default function WorkflowEditor() {
                 <Button startIcon={<IosShareIcon />} onClick={handleExport}>
                     Export
                 </Button>
-                <Button startIcon={<VerifiedIcon />} onClick={handleValidate}>
+                <Button startIcon={isServerValidating ? <CircularProgress size={18} color="inherit" /> : <VerifiedIcon />} onClick={handleValidate} disabled={isServerValidating}>
                     Validate
                 </Button>
-                <Button startIcon={<PlayArrowIcon />} onClick={handleStart} disabled={!wfDefId}>
+                <Button startIcon={<PlayArrowIcon />} onClick={handleStart} disabled={!wfDefId || isServerValidating}>
                     Test
                 </Button>
-                <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isSubmitting || isLoading}>
+                <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isSubmitting || isLoading || isServerValidating}>
                     Save
                 </Button>
             </Stack>
 
             {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
-            {analysis.problems.length ? (
+            {allProblems.length ? (
                 <Alert severity={blockingProblem ? 'error' : 'warning'} sx={{ mb: 2 }}>
                     {blockingProblem ? blockingProblem.message : `${warningCount} validation warning${warningCount === 1 ? '' : 's'} found.`}
                 </Alert>
@@ -585,11 +1095,11 @@ export default function WorkflowEditor() {
                 <Alert icon={<VerifiedIcon />} severity="success" sx={{ mb: 2 }}>YAML parsed successfully.</Alert>
             )}
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '280px minmax(0, 1fr) 320px' }, gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '300px minmax(0, 1fr) 380px' }, gap: 2 }}>
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2, minHeight: 420 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Problems</Typography>
                     <List dense>
-                        {analysis.problems.length ? analysis.problems.map((problem, index) => (
+                        {allProblems.length ? allProblems.map((problem, index) => (
                             <ListItemButton key={`${problem.severity}-${problem.message}-${index}`}>
                                 <ListItemText
                                     primary={problem.message}
@@ -615,7 +1125,14 @@ export default function WorkflowEditor() {
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Tool References</Typography>
                     <Stack direction="row" flexWrap="wrap" gap={1}>
-                        {analysis.toolRefs.length ? analysis.toolRefs.map(ref => <Chip key={ref} size="small" label={ref} />) : <Typography variant="body2">None</Typography>}
+                        {analysis.toolRefs.length ? analysis.toolRefs.map(ref => (
+                            <Chip
+                                key={ref}
+                                size="small"
+                                label={ref}
+                                color={catalogLoaded && catalog.tools.length && !catalogToolNames.has(ref) ? 'warning' : 'default'}
+                            />
+                        )) : <Typography variant="body2">None</Typography>}
                     </Stack>
                 </Box>
 
@@ -646,17 +1163,112 @@ export default function WorkflowEditor() {
                         <Typography variant="body2">Top-level Type: {analysis.parsed === null ? 'none' : Array.isArray(analysis.parsed) ? 'array' : typeof analysis.parsed}</Typography>
                     </Stack>
                     <Divider sx={{ my: 2 }} />
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Starter Snippets</Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Step Palette</Typography>
                     <Stack spacing={1}>
-                        <Button size="small" variant="outlined" onClick={() => setDefinition(value => `${value.trimEnd()}\n\n  - assert-output:\n      assert:\n        path: $.status\n        equals: ok\n`)}>
-                            Assert
+                        <TextField
+                            select
+                            label="Step Type"
+                            value={selectedTemplateId}
+                            onChange={event => handleTemplateChange(event.target.value)}
+                            size="small"
+                        >
+                            {stepTemplates.map(template => (
+                                <MenuItem key={template.id} value={template.id}>{template.label}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="Step Id"
+                            value={stepIdInput}
+                            onChange={event => setStepIdInput(event.target.value)}
+                            size="small"
+                        />
+                        <Typography variant="body2">{selectedTemplate.detail}</Typography>
+                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertTemplate}>
+                            Insert Step
                         </Button>
-                        <Button size="small" variant="outlined" onClick={() => setDefinition(value => `${value.trimEnd()}\n\n  - call-tool:\n      mcp:\n        tool: tool_name\n        arguments: {}\n`)}>
-                            MCP Tool
+                    </Stack>
+                    <Divider sx={{ my: 2 }} />
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                        <Typography variant="subtitle2" sx={{ flex: 1 }}>References</Typography>
+                        <Button size="small" startIcon={isCatalogLoading ? <CircularProgress size={16} color="inherit" /> : <RefreshIcon />} onClick={loadCatalog} disabled={isCatalogLoading || !hostId}>
+                            Refresh
                         </Button>
-                        <Button size="small" variant="outlined" onClick={() => setDefinition(value => `${value.trimEnd()}\n\n  - wait-approval:\n      ask:\n        prompt: Approve this step?\n        mode: choice\n        options:\n          - label: Approve\n            value: approve\n          - label: Reject\n            value: reject\n`)}>
-                            Ask
+                    </Stack>
+                    {isCatalogLoading && <LinearProgress sx={{ mb: 1 }} />}
+                    {catalogError && <Alert severity="warning" sx={{ mb: 1 }}>{catalogError}</Alert>}
+                    <Stack spacing={1}>
+                        <TextField
+                            select
+                            label="Reference Type"
+                            value={catalogKind}
+                            onChange={event => setCatalogKind(event.target.value as CatalogKind)}
+                            size="small"
+                        >
+                            {catalogKindOptions.map(option => (
+                                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="Search"
+                            value={referenceSearch}
+                            onChange={event => setReferenceSearch(event.target.value)}
+                            size="small"
+                        />
+                        <TextField
+                            select
+                            label="Reference"
+                            value={selectedReferenceId}
+                            onChange={event => setSelectedReferenceId(event.target.value)}
+                            size="small"
+                            disabled={!filteredReferences.length && !selectedReference}
+                        >
+                            <MenuItem value="">None</MenuItem>
+                            {selectedReference && !filteredReferences.some(reference => reference.id === selectedReference.id) && (
+                                <MenuItem value={selectedReference.id}>{selectedReference.label}</MenuItem>
+                            )}
+                            {filteredReferences.slice(0, 100).map(reference => (
+                                <MenuItem key={reference.id} value={reference.id}>{reference.label}</MenuItem>
+                            ))}
+                        </TextField>
+                        {selectedReference && (
+                            <Box>
+                                <Typography variant="body2">{selectedReference.secondary || selectedReference.id}</Typography>
+                                {selectedReference.description && <Typography variant="caption" color="text.secondary">{selectedReference.description}</Typography>}
+                            </Box>
+                        )}
+                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertReference} disabled={!selectedReference}>
+                            Insert Reference
                         </Button>
+                    </Stack>
+                    <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Runtime Diagnostics</Typography>
+                    <Stack spacing={1}>
+                        <TextField
+                            label="Diagnostics URL"
+                            value={runtimeDiagnosticsUrl}
+                            onChange={event => setRuntimeDiagnosticsUrl(event.target.value)}
+                            size="small"
+                        />
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={isRuntimeChecking ? <CircularProgress size={16} color="inherit" /> : <TravelExploreIcon />}
+                            onClick={handleRuntimeDiagnostics}
+                            disabled={isRuntimeChecking}
+                        >
+                            Check Tools
+                        </Button>
+                        {runtimeDiagnostics && (
+                            <Alert severity={runtimeDiagnostics.status === 'ok' ? 'success' : runtimeDiagnostics.status}>{runtimeDiagnostics.message}</Alert>
+                        )}
+                        {runtimeDiagnostics?.missingTools.length ? (
+                            <Stack direction="row" flexWrap="wrap" gap={1}>
+                                {runtimeDiagnostics.missingTools.map(tool => <Chip key={tool} size="small" color="warning" label={tool} />)}
+                            </Stack>
+                        ) : null}
+                        {runtimeDiagnostics?.gatewayTools.length ? (
+                            <Typography variant="caption" color="text.secondary">{runtimeDiagnostics.gatewayTools.length} runtime tools visible.</Typography>
+                        ) : null}
                     </Stack>
                 </Box>
             </Box>
