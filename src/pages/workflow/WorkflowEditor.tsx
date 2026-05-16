@@ -1,7 +1,11 @@
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CodeMirror from '@uiw/react-codemirror';
+import { autocompletion, snippetCompletion, type Completion, type CompletionContext } from '@codemirror/autocomplete';
 import { yaml } from '@codemirror/lang-yaml';
+import { foldGutter } from '@codemirror/language';
+import { linter, lintGutter, type Diagnostic } from '@codemirror/lint';
+import { hoverTooltip } from '@codemirror/view';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import YAML from 'yaml';
 import {
@@ -49,6 +53,33 @@ type UserState = {
     host?: string;
 };
 
+type ValidationProblem = {
+    severity: 'error' | 'warning';
+    message: string;
+    from?: number;
+    to?: number;
+    line?: number;
+    column?: number;
+};
+
+type DefinitionAnalysis = {
+    parsed: unknown;
+    error: string;
+    steps: string[];
+    toolRefs: string[];
+    problems: ValidationProblem[];
+};
+
+type YamlDiagnostic = {
+    message?: string;
+    pos?: [number, number] | null;
+};
+
+type WorkflowHelp = {
+    detail: string;
+    info: string;
+};
+
 const emptyDefinition = `steps:
   - ask-input:
       ask:
@@ -58,6 +89,198 @@ const emptyDefinition = `steps:
         as:
           answer: \${ .result }
 `;
+
+const taskTypeHelp: Record<string, WorkflowHelp> = {
+    ask: { detail: 'Human task', info: 'Pause for human input, approval, or missing values.' },
+    assert: { detail: 'Validation', info: 'Validate context, API results, or business rules.' },
+    http: { detail: 'HTTP call', info: 'Invoke an HTTP endpoint directly or through a cataloged description.' },
+    openapi: { detail: 'OpenAPI call', info: 'Invoke an API operation from a LightAPI or OpenAPI description.' },
+    jsonrpc: { detail: 'JSON-RPC call', info: 'Invoke a JSON-RPC method directly or through an OpenRPC description.' },
+    openrpc: { detail: 'OpenRPC call', info: 'Invoke a JSON-RPC method from an OpenRPC description.' },
+    grpc: { detail: 'gRPC call', info: 'Invoke a cataloged gRPC method.' },
+    mcp: { detail: 'MCP tool', info: 'Invoke a gateway-visible MCP tool, resource, or prompt.' },
+    rule: { detail: 'Rule check', info: 'Delegate a complex check to Light-Rule.' },
+    agent: { detail: 'Agent task', info: 'Delegate a bounded task to an agent worker.' },
+    switch: { detail: 'Branch', info: 'Branch based on workflow context or task output.' },
+    condition: { detail: 'Guard', info: 'Evaluate a conditional branch or step guard.' },
+    set: { detail: 'Context update', info: 'Move values into workflow context.' },
+    export: { detail: 'Output mapping', info: 'Map task results into workflow context or output.' },
+    wait: { detail: 'Durable wait', info: 'Represent a durable wait, timeout, or externally completed task.' },
+};
+
+const rootKeyHelp: Record<string, WorkflowHelp> = {
+    steps: { detail: 'Step list', info: 'Ordered Light-Fabric workflow steps.' },
+    tasks: { detail: 'Task list', info: 'Alternative task collection for workflow definitions.' },
+    states: { detail: 'State list', info: 'Serverless Workflow style state collection.' },
+    do: { detail: 'Do block', info: 'Serverless Workflow style ordered task block.' },
+    input: { detail: 'Input schema', info: 'Expected workflow input shape or defaults.' },
+    output: { detail: 'Output mapping', info: 'Workflow output shape or expression mapping.' },
+    metadata: { detail: 'Metadata', info: 'Authoring and runtime metadata for the workflow definition.' },
+    timeout: { detail: 'Timeout', info: 'Workflow-level timeout policy.' },
+    version: { detail: 'Spec version', info: 'Workflow specification or model version.' },
+};
+
+const taskTypeKeys = Object.keys(taskTypeHelp);
+const workflowContainerKeys = new Set(['steps', 'tasks', 'states', 'do']);
+const knownPropertyKeys = new Set([
+    ...taskTypeKeys,
+    ...Object.keys(rootKeyHelp),
+    'arguments',
+    'as',
+    'description',
+    'else',
+    'equals',
+    'export',
+    'from',
+    'id',
+    'input',
+    'label',
+    'mode',
+    'name',
+    'next',
+    'options',
+    'output',
+    'path',
+    'prompt',
+    'then',
+    'to',
+    'tool',
+    'value',
+    'when',
+]);
+
+const rootCompletions: Completion[] = Object.entries(rootKeyHelp).map(([label, help]) => ({
+    label,
+    type: 'property',
+    detail: help.detail,
+    info: help.info,
+    apply: `${label}: `,
+}));
+
+const taskCompletions: Completion[] = [
+    snippetCompletion('- ${stepId}:\n    ask:\n      prompt: ${prompt}\n      mode: text\n', {
+        label: 'ask step',
+        detail: 'Human task',
+        type: 'keyword',
+        info: taskTypeHelp.ask.info,
+    }),
+    snippetCompletion('- ${stepId}:\n    assert:\n      path: ${path}\n      equals: ${value}\n', {
+        label: 'assert step',
+        detail: 'Validation',
+        type: 'keyword',
+        info: taskTypeHelp.assert.info,
+    }),
+    snippetCompletion('- ${stepId}:\n    mcp:\n      tool: ${toolName}\n      arguments: {}\n', {
+        label: 'mcp step',
+        detail: 'Gateway tool',
+        type: 'keyword',
+        info: taskTypeHelp.mcp.info,
+    }),
+    snippetCompletion('- ${stepId}:\n    agent:\n      name: ${agentName}\n      input: {}\n', {
+        label: 'agent step',
+        detail: 'Agent task',
+        type: 'keyword',
+        info: taskTypeHelp.agent.info,
+    }),
+    ...Object.entries(taskTypeHelp).map(([label, help]) => ({
+        label,
+        type: 'property',
+        detail: help.detail,
+        info: help.info,
+        apply: `${label}: `,
+    })),
+];
+
+const workflowCompletions = (context: CompletionContext) => {
+    const word = context.matchBefore(/[A-Za-z0-9_-]*/);
+    if (!word || (word.from === word.to && !context.explicit)) {
+        return null;
+    }
+    return {
+        from: word.from,
+        options: [...rootCompletions, ...taskCompletions],
+        validFor: /^[A-Za-z0-9_-]*$/,
+    };
+};
+
+const workflowHover = hoverTooltip((view, pos) => {
+    const line = view.state.doc.lineAt(pos);
+    const offset = pos - line.from;
+    const matches = Array.from(line.text.matchAll(/[A-Za-z0-9_-]+/g));
+    const match = matches.find(item => {
+        const start = item.index ?? 0;
+        const end = start + item[0].length;
+        return offset >= start && offset <= end;
+    });
+    if (!match) return null;
+    const key = match[0];
+    const help = taskTypeHelp[key] || rootKeyHelp[key];
+    if (!help) return null;
+    const start = line.from + (match.index ?? 0);
+    const end = start + key.length;
+    return {
+        pos: start,
+        end,
+        above: true,
+        create() {
+            const dom = document.createElement('div');
+            dom.style.maxWidth = '280px';
+            dom.style.padding = '8px 10px';
+            const title = document.createElement('strong');
+            title.textContent = `${key} - ${help.detail}`;
+            const body = document.createElement('div');
+            body.textContent = help.info;
+            dom.append(title, body);
+            return { dom };
+        },
+    };
+});
+
+function positionToLineColumn(text: string, offset: number) {
+    const safeOffset = Math.max(0, Math.min(text.length, offset));
+    let line = 1;
+    let column = 1;
+    for (let index = 0; index < safeOffset; index += 1) {
+        if (text[index] === '\n') {
+            line += 1;
+            column = 1;
+        } else {
+            column += 1;
+        }
+    }
+    return { line, column };
+}
+
+function yamlProblem(definition: string, diagnostic: unknown, severity: ValidationProblem['severity']): ValidationProblem {
+    const source = diagnostic as YamlDiagnostic;
+    const from = Array.isArray(source.pos) ? source.pos[0] : undefined;
+    const to = Array.isArray(source.pos) ? source.pos[1] : undefined;
+    const location = typeof from === 'number' ? positionToLineColumn(definition, from) : {};
+    return {
+        severity,
+        message: source.message || (severity === 'error' ? 'Invalid YAML.' : 'YAML warning.'),
+        from,
+        to,
+        ...location,
+    };
+}
+
+function validateWorkflowShape(parsed: unknown): ValidationProblem[] {
+    if (parsed === null || parsed === undefined) {
+        return [{ severity: 'error', message: 'Definition is required.' }];
+    }
+    if (Array.isArray(parsed) || typeof parsed !== 'object') {
+        return [{ severity: 'error', message: 'Workflow definition must be a YAML mapping.' }];
+    }
+    const root = parsed as Record<string, unknown>;
+    if (!Object.keys(root).some(key => workflowContainerKeys.has(key))) {
+        return [{
+            severity: 'warning',
+            message: 'Definition should contain steps, tasks, states, or do so the workflow outline can be built.',
+        }];
+    }
+    return [];
+}
 
 function collectStepLabels(value: unknown): string[] {
     const labels: string[] = [];
@@ -72,7 +295,7 @@ function collectStepLabels(value: unknown): string[] {
         const record = node as Record<string, unknown>;
         for (const [key, child] of Object.entries(record)) {
             if (Array.isArray(child) || (child && typeof child === 'object')) {
-                if (!['ask', 'assert', 'http', 'openapi', 'jsonrpc', 'openrpc', 'grpc', 'mcp', 'rule', 'agent', 'switch', 'condition', 'set', 'export', 'wait', 'steps', 'tasks'].includes(key)) {
+                if (!knownPropertyKeys.has(key)) {
                     labels.push(key);
                 }
                 visit(child);
@@ -93,27 +316,86 @@ function extractToolRefs(definition: string): string[] {
     return Array.from(refs).sort();
 }
 
-function parseDefinition(definition: string) {
+function parseDefinition(definition: string): DefinitionAnalysis {
+    const toolRefs = extractToolRefs(definition);
     if (!definition.trim()) {
-        return { parsed: null, error: 'Definition is required.', steps: [], toolRefs: [] };
+        const problems: ValidationProblem[] = [{ severity: 'error', message: 'Definition is required.', from: 0, to: 0 }];
+        return { parsed: null, error: problems[0].message, steps: [], toolRefs, problems };
     }
     try {
-        const parsed = YAML.parse(definition);
+        const document = YAML.parseDocument(definition, { prettyErrors: false });
+        const yamlProblems = [
+            ...document.errors.map(error => yamlProblem(definition, error, 'error')),
+            ...document.warnings.map(warning => yamlProblem(definition, warning, 'warning')),
+        ];
+        if (document.errors.length) {
+            const firstError = yamlProblems.find(problem => problem.severity === 'error');
+            return { parsed: null, error: firstError?.message || 'Unable to parse YAML.', steps: [], toolRefs, problems: yamlProblems };
+        }
+        const parsed = document.toJSON();
+        const problems = [...yamlProblems, ...validateWorkflowShape(parsed)];
+        const firstError = problems.find(problem => problem.severity === 'error');
         return {
             parsed,
-            error: '',
+            error: firstError?.message || '',
             steps: collectStepLabels(parsed),
-            toolRefs: extractToolRefs(definition),
+            toolRefs,
+            problems,
         };
     } catch (error) {
+        const problems: ValidationProblem[] = [{
+            severity: 'error',
+            message: error instanceof Error ? error.message : 'Unable to parse YAML.',
+            from: 0,
+            to: Math.min(definition.length, 1),
+        }];
         return {
             parsed: null,
-            error: error instanceof Error ? error.message : 'Unable to parse YAML.',
+            error: problems[0].message,
             steps: [],
-            toolRefs: extractToolRefs(definition),
+            toolRefs,
+            problems,
         };
     }
 }
+
+function toCodeMirrorDiagnostic(problem: ValidationProblem, docLength: number): Diagnostic {
+    const from = Math.max(0, Math.min(docLength, problem.from ?? 0));
+    const fallbackTo = docLength > from ? from + 1 : from;
+    const to = Math.max(from, Math.min(docLength, problem.to ?? fallbackTo));
+    return {
+        from,
+        to,
+        severity: problem.severity,
+        message: problem.message,
+    };
+}
+
+function formatProblemLocation(problem: ValidationProblem) {
+    const prefix = problem.severity === 'error' ? 'Error' : 'Warning';
+    if (problem.line && problem.column) {
+        return `${prefix} at line ${problem.line}, column ${problem.column}`;
+    }
+    return prefix;
+}
+
+function messageSeverity(message: string) {
+    return message === 'Workflow definition saved.' || message === 'Workflow definition is valid.' ? 'success' : 'warning';
+}
+
+const workflowDefinitionLinter = linter(view => {
+    const doc = view.state.doc.toString();
+    return parseDefinition(doc).problems.map(problem => toCodeMirrorDiagnostic(problem, doc.length));
+});
+
+const workflowEditorExtensions = [
+    yaml(),
+    foldGutter(),
+    lintGutter(),
+    workflowDefinitionLinter,
+    autocompletion({ override: [workflowCompletions] }),
+    workflowHover,
+];
 
 export default function WorkflowEditor() {
     const location = useLocation();
@@ -138,6 +420,8 @@ export default function WorkflowEditor() {
     const [message, setMessage] = useState('');
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
+    const blockingProblem = analysis.problems.find(problem => problem.severity === 'error');
+    const warningCount = analysis.problems.filter(problem => problem.severity === 'warning').length;
     const isUpdate = Boolean(wfDefId && aggregateVersion);
 
     useEffect(() => {
@@ -188,14 +472,26 @@ export default function WorkflowEditor() {
         URL.revokeObjectURL(url);
     }, [definition, name]);
 
+    const handleValidate = useCallback(() => {
+        if (blockingProblem) {
+            setMessage(`Fix workflow definition: ${blockingProblem.message}`);
+            return;
+        }
+        if (warningCount) {
+            setMessage(`Workflow definition parsed with ${warningCount} warning${warningCount === 1 ? '' : 's'}.`);
+            return;
+        }
+        setMessage('Workflow definition is valid.');
+    }, [blockingProblem, warningCount]);
+
     const handleSave = useCallback(async () => {
         setMessage('');
         if (!hostId || !namespace || !name || !version || !definition.trim()) {
             setMessage('Host, namespace, name, version, and definition are required.');
             return;
         }
-        if (analysis.error) {
-            setMessage(`Fix YAML before saving: ${analysis.error}`);
+        if (blockingProblem) {
+            setMessage(`Fix workflow definition before saving: ${blockingProblem.message}`);
             return;
         }
         setIsSubmitting(true);
@@ -236,11 +532,15 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, analysis.error, definition, hostId, isUpdate, name, namespace, ownerPositionId, version, wfDefId]);
+    }, [active, aggregateVersion, blockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, version, wfDefId]);
 
     const handleStart = useCallback(() => {
         if (!wfDefId) {
             setMessage('Save the workflow definition before starting it.');
+            return;
+        }
+        if (blockingProblem) {
+            setMessage(`Fix workflow definition before testing: ${blockingProblem.message}`);
             return;
         }
         navigate('/app/form/startWorkflow', {
@@ -249,7 +549,7 @@ export default function WorkflowEditor() {
                 source: location.pathname,
             }
         });
-    }, [hostId, location.pathname, navigate, wfDefId]);
+    }, [blockingProblem, hostId, location.pathname, navigate, wfDefId]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -265,6 +565,9 @@ export default function WorkflowEditor() {
                 <Button startIcon={<IosShareIcon />} onClick={handleExport}>
                     Export
                 </Button>
+                <Button startIcon={<VerifiedIcon />} onClick={handleValidate}>
+                    Validate
+                </Button>
                 <Button startIcon={<PlayArrowIcon />} onClick={handleStart} disabled={!wfDefId}>
                     Test
                 </Button>
@@ -273,15 +576,32 @@ export default function WorkflowEditor() {
                 </Button>
             </Stack>
 
-            {message && <Alert severity={message.includes('saved') ? 'success' : 'warning'} sx={{ mb: 2 }}>{message}</Alert>}
-            {analysis.error ? (
-                <Alert severity="error" sx={{ mb: 2 }}>{analysis.error}</Alert>
+            {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
+            {analysis.problems.length ? (
+                <Alert severity={blockingProblem ? 'error' : 'warning'} sx={{ mb: 2 }}>
+                    {blockingProblem ? blockingProblem.message : `${warningCount} validation warning${warningCount === 1 ? '' : 's'} found.`}
+                </Alert>
             ) : (
                 <Alert icon={<VerifiedIcon />} severity="success" sx={{ mb: 2 }}>YAML parsed successfully.</Alert>
             )}
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '280px minmax(0, 1fr) 320px' }, gap: 2 }}>
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2, minHeight: 420 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Problems</Typography>
+                    <List dense>
+                        {analysis.problems.length ? analysis.problems.map((problem, index) => (
+                            <ListItemButton key={`${problem.severity}-${problem.message}-${index}`}>
+                                <ListItemText
+                                    primary={problem.message}
+                                    secondary={formatProblemLocation(problem)}
+                                    primaryTypographyProps={{ color: problem.severity === 'error' ? 'error.main' : 'warning.main' }}
+                                />
+                            </ListItemButton>
+                        )) : (
+                            <ListItemText primary="No problems detected." />
+                        )}
+                    </List>
+                    <Divider sx={{ my: 2 }} />
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Steps</Typography>
                     <List dense>
                         {analysis.steps.length ? analysis.steps.map(step => (
@@ -312,7 +632,7 @@ export default function WorkflowEditor() {
                         value={definition}
                         height="560px"
                         theme={githubLight}
-                        extensions={[yaml()]}
+                        extensions={workflowEditorExtensions}
                         onChange={setDefinition}
                     />
                 </Box>
