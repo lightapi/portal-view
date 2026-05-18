@@ -28,7 +28,7 @@ type TagApiResponse = {
 };
 
 type TagType = {
-  hostId?: string; // Can be null for global tags
+  hostId?: string | null; // Can be null for global tags
   globalFlag?: boolean;
   tagId: string;
   entityType: string;
@@ -167,10 +167,15 @@ export default function TagAdmin() {
   const handleUpdate = useCallback(async (row: MRT_Row<TagType>) => {
     const tagId = row.original.tagId;
     setIsUpdateLoading(tagId);
+    const freshRequest = {
+      tagId,
+      aggregateVersion: row.original.aggregateVersion,
+      ...(row.original.hostId ? { hostId: row.original.hostId } : {}),
+    };
 
     const cmd = {
       host: 'lightapi.net', service: 'tag', action: 'getFreshTag', version: '0.1.0',
-      data: row.original,
+      data: freshRequest,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 

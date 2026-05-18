@@ -28,7 +28,8 @@ type CategoryApiResponse = {
 };
 
 type CategoryType = {
-  hostId?: string;
+  hostId?: string | null;
+  globalFlag?: boolean;
   categoryId: string;
   entityType: string;
   categoryName: string;
@@ -167,10 +168,15 @@ export default function Category() {
   const handleUpdate = useCallback(async (row: MRT_Row<CategoryType>) => {
     const categoryId = row.original.categoryId;
     setIsUpdateLoading(categoryId);
+    const freshRequest = {
+      categoryId,
+      aggregateVersion: row.original.aggregateVersion,
+      ...(row.original.hostId ? { hostId: row.original.hostId } : {}),
+    };
 
     const cmd = {
       host: 'lightapi.net', service: 'category', action: 'getFreshCategory', version: '0.1.0',
-      data: row.original,
+      data: freshRequest,
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
