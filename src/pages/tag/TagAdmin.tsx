@@ -29,6 +29,7 @@ type TagApiResponse = {
 
 type TagType = {
   hostId?: string; // Can be null for global tags
+  globalFlag?: boolean;
   tagId: string;
   entityType: string;
   tagName: string;
