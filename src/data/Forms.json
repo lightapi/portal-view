@@ -3037,8 +3037,12 @@
         "key": "apiTags",
         "type": "dynaselect",
         "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "value",
         "action": {
-          "url": "/r/data?name=api_tag&host={0}",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -3250,8 +3254,12 @@
         "key": "apiTags",
         "type": "dynaselect",
         "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "value",
         "action": {
-          "url": "/r/data?name=api_tag&host={0}",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -9714,6 +9722,22 @@
         "tagDesc": {
           "type": "string",
           "title": "Tag Desc"
+        },
+        "tagGroupCode": {
+          "type": "string",
+          "title": "Tag Group Code"
+        },
+        "tagGroupLabel": {
+          "type": "string",
+          "title": "Tag Group Label"
+        },
+        "groupSortOrder": {
+          "type": "integer",
+          "title": "Group Sort Order"
+        },
+        "tagSortOrder": {
+          "type": "integer",
+          "title": "Tag Sort Order"
         }
       }
     },
@@ -9740,7 +9764,11 @@
         "type": "textarea",
         "placeholder": "Plain text description",
         "rows": 5
-      }
+      },
+      "tagGroupCode",
+      "tagGroupLabel",
+      "groupSortOrder",
+      "tagSortOrder"
     ]
   },
   "updateTag": {
@@ -9791,6 +9819,22 @@
         "tagDesc": {
           "type": "string",
           "title": "Tag Desc"
+        },
+        "tagGroupCode": {
+          "type": "string",
+          "title": "Tag Group Code"
+        },
+        "tagGroupLabel": {
+          "type": "string",
+          "title": "Tag Group Label"
+        },
+        "groupSortOrder": {
+          "type": "integer",
+          "title": "Group Sort Order"
+        },
+        "tagSortOrder": {
+          "type": "integer",
+          "title": "Tag Sort Order"
         }
       }
     },
@@ -9818,7 +9862,11 @@
         "type": "textarea",
         "placeholder": "Plain text description",
         "rows": 5
-      }
+      },
+      "tagGroupCode",
+      "tagGroupLabel",
+      "groupSortOrder",
+      "tagSortOrder"
     ]
   },
   "createSchema": {

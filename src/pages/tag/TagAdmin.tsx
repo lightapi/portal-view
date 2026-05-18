@@ -34,6 +34,10 @@ type TagType = {
   entityType: string;
   tagName: string;
   tagDesc?: string;
+  tagGroupCode?: string;
+  tagGroupLabel?: string;
+  groupSortOrder?: number;
+  tagSortOrder?: number;
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
@@ -205,6 +209,9 @@ export default function TagAdmin() {
       { accessorKey: 'tagId', header: 'Tag ID' },
       { accessorKey: 'tagName', header: 'Tag Name' },
       { accessorKey: 'entityType', header: 'Entity Type' },
+      { accessorKey: 'tagGroupLabel', header: 'Group' },
+      { accessorKey: 'groupSortOrder', header: 'Group Sort' },
+      { accessorKey: 'tagSortOrder', header: 'Tag Sort' },
       {
         accessorKey: 'tagDesc',
         header: 'Tag Desc',
