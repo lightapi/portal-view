@@ -167,11 +167,8 @@ export default function TagAdmin() {
   const handleUpdate = useCallback(async (row: MRT_Row<TagType>) => {
     const tagId = row.original.tagId;
     setIsUpdateLoading(tagId);
-    const freshRequest = {
-      tagId,
-      aggregateVersion: row.original.aggregateVersion,
-      ...(row.original.hostId ? { hostId: row.original.hostId } : {}),
-    };
+    const freshRequest = { ...row.original };
+    if (!freshRequest.hostId) delete freshRequest.hostId;
 
     const cmd = {
       host: 'lightapi.net', service: 'tag', action: 'getFreshTag', version: '0.1.0',
