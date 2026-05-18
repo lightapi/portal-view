@@ -217,22 +217,8 @@ export default function Category() {
         filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Tooltip title="Update Category">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.categoryId}>
-              {isUpdateLoading === row.original.categoryId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-        ),
-      },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (<Tooltip title="Delete Category"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
-      },
     ],
-    [handleDelete, handleUpdate, isUpdateLoading],
+    [],
   );
 
   // Table instance configuration
@@ -251,7 +237,28 @@ export default function Category() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.categoryId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    displayColumnDefOptions: {
+      'mrt-row-actions': {
+        header: 'Actions',
+        size: 110,
+      },
+    },
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 0.5 }}>
+        <Tooltip title="Update Category">
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.categoryId}>
+            {isUpdateLoading === row.original.categoryId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Category">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createCategory', searchParams, taskContext))}>
         Create New Category

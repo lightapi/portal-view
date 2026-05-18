@@ -9593,7 +9593,7 @@
       "required": [
         "hostId",
         "categoryId",
-        "entiryType",
+        "entityType",
         "categoryName"
       ],
       "properties": {
