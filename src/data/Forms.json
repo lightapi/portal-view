@@ -16109,6 +16109,22 @@
           "title": "Definition (YAML)",
           "type": "string"
         },
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "ownerPositionId": {
           "type": "string",
           "title": "Owner Position"
@@ -16131,6 +16147,33 @@
         "key": "definition",
         "type": "textarea",
         "rows": 10
+      },
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22workflow%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22workflow%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       },
       {
         "key": "ownerPositionId",
@@ -16189,6 +16232,22 @@
           "title": "Definition (YAML)",
           "type": "string"
         },
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "active": {
           "title": "Active",
           "type": "boolean"
@@ -16217,6 +16276,33 @@
         "key": "definition",
         "type": "textarea",
         "rows": 10
+      },
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22workflow%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22workflow%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
       },
       {
         "key": "ownerPositionId",
@@ -16633,6 +16719,22 @@
         "maxTokens": {
           "title": "Max Tokens",
           "type": "integer"
+        },
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       },
       "required": [
@@ -16649,7 +16751,34 @@
       "modelName",
       "apiKeyRef",
       "temperature",
-      "maxTokens"
+      "maxTokens",
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22agent%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22agent%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
     ]
   },
   "updateAgentDefinition": {
@@ -16699,6 +16828,22 @@
           "title": "Max Tokens",
           "type": "integer"
         },
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
         "active": {
           "title": "Active",
           "type": "boolean"
@@ -16720,6 +16865,33 @@
       "apiKeyRef",
       "temperature",
       "maxTokens",
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22agent%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22agent%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "active"
     ]
   },
@@ -18111,6 +18283,7 @@
         "key": "categoryIds",
         "type": "dynaselect",
         "multiple": true,
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22skill%22%7D%7D",
           "params": [
@@ -18122,6 +18295,10 @@
         "key": "tagIds",
         "type": "dynaselect",
         "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22skill%22%7D%7D",
           "params": [
@@ -18227,6 +18404,7 @@
         "key": "categoryIds",
         "type": "dynaselect",
         "multiple": true,
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22skill%22%7D%7D",
           "params": [
@@ -18238,6 +18416,10 @@
         "key": "tagIds",
         "type": "dynaselect",
         "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22skill%22%7D%7D",
           "params": [

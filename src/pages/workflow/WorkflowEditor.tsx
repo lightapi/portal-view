@@ -10,6 +10,7 @@ import { githubLight } from '@uiw/codemirror-theme-github';
 import YAML from 'yaml';
 import {
     Alert,
+    Autocomplete,
     Box,
     Button,
     Chip,
@@ -58,6 +59,8 @@ type WfDefinitionType = {
     version: string;
     definition: string;
     ownerPositionId?: string;
+    categoryIds?: string[];
+    tagIds?: string[];
     aggregateVersion?: number;
     active?: boolean;
 };
@@ -105,6 +108,17 @@ type CatalogReference = {
 };
 
 type CatalogState = Record<CatalogKind, CatalogReference[]>;
+
+type TaxonomyOption = {
+    id: string;
+    label: string;
+};
+
+type TagOption = TaxonomyOption & {
+    groupLabel?: string | null;
+    groupSortOrder?: number | null;
+    tagSortOrder?: number | null;
+};
 
 type StepTemplate = {
     id: string;
@@ -1063,6 +1077,67 @@ function buildTimeline(testRun: WorkflowTestRun | null, snapshot: WorkflowTestSn
     return events.sort((left, right) => (left.timestamp || '').localeCompare(right.timestamp || ''));
 }
 
+function buildTaxonomyQueryUrl(service: 'category' | 'tag', action: string, hostId: string) {
+    const cmd = {
+        host: 'lightapi.net',
+        service,
+        action,
+        version: '0.1.0',
+        data: { hostId, entityType: 'workflow' },
+    };
+    return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+}
+
+function orderValue(value: unknown) {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim()) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+    }
+    return Number.MAX_SAFE_INTEGER;
+}
+
+function normalizeCategoryOptions(raw: unknown): TaxonomyOption[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .map(item => {
+            const source = item as Record<string, unknown>;
+            const label = typeof source.label === 'string' ? source.label : '';
+            const id = typeof source.id === 'string' ? source.id : label;
+            return { id, label };
+        })
+        .filter(option => option.id && option.label)
+        .sort((left, right) => left.label.localeCompare(right.label));
+}
+
+function normalizeTagOptions(raw: unknown): TagOption[] {
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .map(item => {
+            const source = item as Record<string, unknown>;
+            const label = typeof source.label === 'string' ? source.label : '';
+            const id = typeof source.id === 'string' ? source.id : label;
+            return {
+                id,
+                label,
+                groupLabel: typeof source.groupLabel === 'string' && source.groupLabel.trim() ? source.groupLabel : 'General',
+                groupSortOrder: orderValue(source.groupSortOrder),
+                tagSortOrder: orderValue(source.tagSortOrder),
+            };
+        })
+        .filter(option => option.id && option.label)
+        .sort((left, right) => {
+            const groupCompare = (left.groupSortOrder ?? Number.MAX_SAFE_INTEGER) - (right.groupSortOrder ?? Number.MAX_SAFE_INTEGER);
+            if (groupCompare !== 0) return groupCompare;
+            const tagCompare = (left.tagSortOrder ?? Number.MAX_SAFE_INTEGER) - (right.tagSortOrder ?? Number.MAX_SAFE_INTEGER);
+            return tagCompare !== 0 ? tagCompare : left.label.localeCompare(right.label);
+        });
+}
+
+function idsFromOptions(options: TaxonomyOption[]) {
+    return options.map(option => option.id);
+}
+
 export default function WorkflowEditor() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -1079,6 +1154,8 @@ export default function WorkflowEditor() {
     const [version, setVersion] = useState(initial.version || '1.0.0');
     const [definition, setDefinition] = useState(initial.definition || emptyDefinition);
     const [ownerPositionId, setOwnerPositionId] = useState(initial.ownerPositionId || '');
+    const [categoryIds, setCategoryIds] = useState<string[]>(initial.categoryIds || []);
+    const [tagIds, setTagIds] = useState<string[]>(initial.tagIds || []);
     const [aggregateVersion, setAggregateVersion] = useState(initial.aggregateVersion);
     const [active, setActive] = useState(initial.active ?? true);
     const [isLoading, setIsLoading] = useState(false);
@@ -1108,8 +1185,19 @@ export default function WorkflowEditor() {
     const [selectedAskTaskId, setSelectedAskTaskId] = useState('');
     const [askResponse, setAskResponse] = useState('{\n  "answer": ""\n}');
     const [isCompletingTask, setIsCompletingTask] = useState(false);
+    const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
+    const [tagOptions, setTagOptions] = useState<TagOption[]>([]);
+    const [isTaxonomyLoading, setIsTaxonomyLoading] = useState(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
+    const selectedCategories = useMemo(
+        () => categoryOptions.filter(option => categoryIds.includes(option.id)),
+        [categoryIds, categoryOptions],
+    );
+    const selectedTags = useMemo(
+        () => tagOptions.filter(option => tagIds.includes(option.id)),
+        [tagIds, tagOptions],
+    );
     const selectedTemplate = useMemo(
         () => stepTemplates.find(template => template.id === selectedTemplateId) || stepTemplates[0],
         [selectedTemplateId],
@@ -1181,6 +1269,8 @@ export default function WorkflowEditor() {
                 setVersion(row.version || '1.0.0');
                 setDefinition(row.definition || '');
                 setOwnerPositionId(row.ownerPositionId || '');
+                setCategoryIds(Array.isArray(row.categoryIds) ? row.categoryIds : []);
+                setTagIds(Array.isArray(row.tagIds) ? row.tagIds : []);
                 setAggregateVersion(row.aggregateVersion);
                 setActive(row.active ?? true);
             })
@@ -1190,6 +1280,36 @@ export default function WorkflowEditor() {
             })
             .finally(() => setIsLoading(false));
     }, [host, initial.hostId, initial.wfDefId, initial.definition]);
+
+    useEffect(() => {
+        if (!hostId) {
+            setCategoryOptions([]);
+            setTagOptions([]);
+            return;
+        }
+        let cancelled = false;
+        setIsTaxonomyLoading(true);
+        Promise.all([
+            fetchClient(buildTaxonomyQueryUrl('category', 'getCategoryLabelByType', hostId)),
+            fetchClient(buildTaxonomyQueryUrl('tag', 'getTagLabelByType', hostId)),
+        ])
+            .then(([categories, tags]) => {
+                if (cancelled) return;
+                setCategoryOptions(normalizeCategoryOptions(categories));
+                setTagOptions(normalizeTagOptions(tags));
+            })
+            .catch(error => {
+                if (!cancelled) {
+                    console.error('Failed to load workflow taxonomy options:', error);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setIsTaxonomyLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [hostId]);
 
     useEffect(() => {
         setServerProblems([]);
@@ -1590,6 +1710,8 @@ export default function WorkflowEditor() {
             version,
             definition,
             ownerPositionId: ownerPositionId || undefined,
+            categoryIds,
+            tagIds,
         };
         if (isUpdate) {
             data.wfDefId = wfDefId;
@@ -1620,7 +1742,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, version, wfDefId]);
+    }, [active, aggregateVersion, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -1705,6 +1827,27 @@ export default function WorkflowEditor() {
                         <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" />
                         <TextField label="Version" value={version} onChange={e => setVersion(e.target.value)} size="small" />
                         <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" />
+                        <Autocomplete
+                            multiple
+                            options={categoryOptions}
+                            value={selectedCategories}
+                            loading={isTaxonomyLoading}
+                            getOptionLabel={option => option.label}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            onChange={(_, value) => setCategoryIds(idsFromOptions(value))}
+                            renderInput={params => <TextField {...params} label="Categories" size="small" />}
+                        />
+                        <Autocomplete
+                            multiple
+                            options={tagOptions}
+                            value={selectedTags}
+                            loading={isTaxonomyLoading}
+                            groupBy={option => option.groupLabel || 'General'}
+                            getOptionLabel={option => option.label}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            onChange={(_, value) => setTagIds(idsFromOptions(value))}
+                            renderInput={params => <TextField {...params} label="Tags" size="small" />}
+                        />
                     </Box>
                     <CodeMirror
                         value={definition}
