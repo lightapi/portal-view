@@ -2921,9 +2921,21 @@
           "title": "Api Status",
           "type": "string"
         },
-        "apiTags": {
-          "title": "Api Tags",
-          "type": "string"
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "ownerPositionId": {
           "type": "string",
@@ -3034,13 +3046,25 @@
         }
       },
       {
-        "key": "apiTags",
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
         "type": "dynaselect",
         "multiple": true,
         "groupByKey": "groupLabel",
         "groupSortKey": "groupSortOrder",
         "optionSortKey": "tagSortOrder",
-        "optionValueKey": "value",
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
           "params": [
@@ -3138,9 +3162,21 @@
           "title": "Api Status",
           "type": "string"
         },
-        "apiTags": {
-          "title": "Api Tags",
-          "type": "string"
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "ownerPositionId": {
           "type": "string",
@@ -3251,13 +3287,25 @@
         }
       },
       {
-        "key": "apiTags",
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "tagIds",
         "type": "dynaselect",
         "multiple": true,
         "groupByKey": "groupLabel",
         "groupSortKey": "groupSortOrder",
         "optionSortKey": "tagSortOrder",
-        "optionValueKey": "value",
+        "optionValueKey": "id",
         "action": {
           "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22api%22%7D%7D",
           "params": [

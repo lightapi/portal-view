@@ -56,7 +56,10 @@ type ServiceType = {
   capability?: string;
   gitRepo?: string;
   aggregateVersion?: number;
-  apiTags?: string;
+  tagIds?: string[];
+  tags?: string[];
+  categoryIds?: string[];
+  categories?: string[];
   apiStatus?: string;
   updateUser?: string;
   updateTs?: string;
@@ -83,6 +86,12 @@ type ServiceVersionType = {
 };
 
 const allApiVersionScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
+
+const displayValue = (value: unknown) => {
+  if (value == null) return '';
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value);
+};
 
 export default function ApiDetail() {
   const location = useLocation();
@@ -360,7 +369,7 @@ export default function ApiDetail() {
               {Object.entries(service).map(([key, value]) => (
                 <TableRow key={key}>
                   <TableCell style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{key.replace(/([A-Z])/g, ' $1').trim()}</TableCell>
-                  <TableCell>{String(value)}</TableCell>
+                  <TableCell>{displayValue(value)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

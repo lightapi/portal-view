@@ -42,7 +42,10 @@ type ServiceType = {
   platform?: string;
   capability?: string;
   gitRepo?: string;
-  apiTags?: string;
+  tagIds?: string[];
+  tags?: string[];
+  categoryIds?: string[];
+  categories?: string[];
   apiStatus?: string;
   updateUser?: string;
   updateTs?: string;
@@ -69,6 +72,11 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
       </Box>
     </Tooltip>
   );
+};
+
+const listText = (value?: string[] | string | null) => {
+  if (Array.isArray(value)) return value.join(', ');
+  return value ?? '';
 };
 
 export default function Service() {
@@ -235,6 +243,18 @@ export default function Service() {
         { accessorKey: 'operationOwner', header: 'Ops Owner' },
         { accessorKey: 'deliveryOwner', header: 'Dly Owner' },
         { accessorKey: 'apiStatus', header: 'Status' },
+        {
+          id: 'categories',
+          header: 'Categories',
+          accessorFn: (row) => listText(row.categories?.length ? row.categories : row.categoryIds),
+          Cell: TruncatedCell,
+        },
+        {
+          id: 'tags',
+          header: 'Tags',
+          accessorFn: (row) => listText(row.tags?.length ? row.tags : row.tagIds),
+          Cell: TruncatedCell,
+        },
         { accessorKey: 'gitRepo', header: 'Git Repo' },
         { accessorKey: 'updateUser', header: 'Update User' },
         { accessorKey: 'updateTs', header: 'Update Timestamp' },
