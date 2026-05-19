@@ -77,7 +77,6 @@ type UseApiCatalogArgs = {
 };
 
 const allowedPageSizes = new Set([12, 24, 48]);
-const taxonomyFilterFetchLimit = 500;
 const generalGroupSortOrder = Number.MAX_SAFE_INTEGER;
 
 const sortFields = new Set<CatalogSortField>(['apiName', 'apiId', 'apiStatus', 'updateTs']);
@@ -128,10 +127,6 @@ export function formatTaxonomyLabel(value: string) {
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function canonicalTaxonomyValue(value: string) {
-  return value.trim().toLowerCase();
 }
 
 function toNumberOrNull(value: unknown) {
@@ -225,30 +220,6 @@ function groupTags(tags: TagOption[]): TagGroup[] {
     });
 }
 
-function itemMatchesTaxonomy(item: ApiCatalogItem, params: ApiCatalogParams) {
-  const selectedCategories = new Set(params.categories.map(canonicalTaxonomyValue));
-  const selectedTags = new Set(params.tags.map(canonicalTaxonomyValue));
-
-  if (selectedCategories.size > 0) {
-    const rowCategories = (item.categories ?? []).map(canonicalTaxonomyValue);
-    const rowCategorySet = new Set(rowCategories);
-    const matchesUncategorized = selectedCategories.has('uncategorized') && rowCategorySet.size === 0;
-    const matchesCategory = rowCategories.some((category) => selectedCategories.has(category));
-    if (!matchesUncategorized && !matchesCategory) return false;
-  }
-
-  if (selectedTags.size > 0) {
-    const rowTags = new Set((item.tags ?? []).map(canonicalTaxonomyValue));
-    const selected = Array.from(selectedTags);
-    const matches = params.tagMatch === 'all'
-      ? selected.every((tag) => rowTags.has(tag))
-      : selected.some((tag) => rowTags.has(tag));
-    if (!matches) return false;
-  }
-
-  return true;
-}
-
 export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
   const [categories, setCategories] = useState<TaxonomyOption[]>([]);
   const [tags, setTags] = useState<TagOption[]>([]);
@@ -259,6 +230,8 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
   const [error, setError] = useState<string | null>(null);
 
   const taxonomyFiltersActive = params.categories.length > 0 || params.tags.length > 0;
+  const categoryFilterKey = params.categories.join('\u001f');
+  const tagFilterKey = params.tags.join('\u001f');
 
   useEffect(() => {
     if (!host) return;
@@ -296,8 +269,8 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
     setIsLoadingApis(true);
     setError(null);
 
-    const limit = taxonomyFiltersActive ? taxonomyFilterFetchLimit : params.pageSize;
-    const offset = taxonomyFiltersActive ? 0 : (params.page - 1) * params.pageSize;
+    const limit = params.pageSize;
+    const offset = (params.page - 1) * params.pageSize;
     const sorting = JSON.stringify([{ id: params.sort, desc: params.order === 'desc' }]);
 
     const url = buildPortalQueryUrl('service', 'getApi', {
@@ -308,6 +281,9 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
       filters: JSON.stringify([]),
       globalFilter: params.q,
       active: params.status === 'active',
+      categoryIds: params.categories,
+      tagIds: params.tags,
+      tagMatch: params.tagMatch,
     });
 
     fetchClient(url)
@@ -336,28 +312,19 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
     params.q,
     params.sort,
     params.status,
-    taxonomyFiltersActive,
+    params.tagMatch,
+    categoryFilterKey,
+    tagFilterKey,
   ]);
 
-  const filteredApis = useMemo(
-    () => taxonomyFiltersActive ? apis.filter((api) => itemMatchesTaxonomy(api, params)) : apis,
-    [apis, params, taxonomyFiltersActive],
-  );
-
-  const visibleApis = useMemo(() => {
-    if (!taxonomyFiltersActive) return filteredApis;
-    const start = (params.page - 1) * params.pageSize;
-    return filteredApis.slice(start, start + params.pageSize);
-  }, [filteredApis, params.page, params.pageSize, taxonomyFiltersActive]);
-
-  const total = taxonomyFiltersActive ? filteredApis.length : serverTotal;
+  const total = serverTotal;
   const tagGroups = useMemo(() => groupTags(tags), [tags]);
 
   return {
     categories,
     tags,
     tagGroups,
-    apis: visibleApis,
+    apis,
     total,
     isLoadingOptions,
     isLoadingApis,

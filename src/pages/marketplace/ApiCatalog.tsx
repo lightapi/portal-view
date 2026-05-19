@@ -194,7 +194,7 @@ export default function ApiCatalog() {
             API Catalog
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {total} {total === 1 ? 'API' : 'APIs'} found{taxonomyFiltersActive ? ' in the loaded catalog batch' : ''}
+            {total} {total === 1 ? 'API' : 'APIs'} found{taxonomyFiltersActive ? ' for the selected taxonomy filters' : ''}
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
