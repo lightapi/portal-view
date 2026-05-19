@@ -16,6 +16,7 @@ import ApiCatalogFilters from './components/ApiCatalogFilters';
 import {
   type ApiCatalogItem,
   type ApiCatalogParams,
+  type ApiCatalogSummary,
   type CatalogSortField,
   type CatalogSortOrder,
   type CatalogStatus,
@@ -125,9 +126,11 @@ export default function ApiCatalog() {
     categories,
     tagGroups,
     apis,
+    summaries,
     total,
     isLoadingOptions,
     isLoadingApis,
+    isLoadingSummaries,
     error,
     taxonomyFiltersActive,
   } = useApiCatalog({ host, params });
@@ -153,6 +156,24 @@ export default function ApiCatalog() {
       hostId: api.hostId,
       apiId: api.apiId,
     }), { state: { data: { hostId: api.hostId, apiId: api.apiId } } });
+  }, [navigate, taskContext, taskSearchParams]);
+
+  const handleOpenEndpoints = useCallback((api: ApiCatalogItem, summary?: ApiCatalogSummary) => {
+    if (!summary?.latestVersionId) return;
+    navigate(buildTaskAwareRoute('/app/serviceEndpoint', taskSearchParams, {
+      ...taskContext,
+      hostId: api.hostId,
+      apiId: api.apiId,
+      apiVersionId: summary.latestVersionId,
+    }), {
+      state: {
+        data: {
+          hostId: api.hostId,
+          apiId: api.apiId,
+          apiVersionId: summary.latestVersionId,
+        },
+      },
+    });
   }, [navigate, taskContext, taskSearchParams]);
 
   const handleUpdate = useCallback(async (api: ApiCatalogItem) => {
@@ -218,8 +239,8 @@ export default function ApiCatalog() {
       <TaskActionPanel
         title="API Tasks"
         context={taskContext}
-        taskIds={['publish-api', 'mcp-onboard-api', 'register-standalone-mcp-server']}
-        maxActions={3}
+        taskIds={['publish-api', 'mcp-onboard-api', 'register-standalone-mcp-server', 'configure-access-control']}
+        maxActions={4}
       />
 
       <Box sx={{ mt: 2 }}>
@@ -277,10 +298,13 @@ export default function ApiCatalog() {
               <ApiCatalogCard
                 key={api.apiId}
                 api={api}
+                summary={summaries[api.apiId]}
+                isSummaryLoading={isLoadingSummaries}
                 viewMode={params.view}
                 canModify={apiOwnership.canModifyRecord(api)}
                 isUpdating={updatingApiId === api.apiId}
                 onDetails={handleDetails}
+                onOpenEndpoints={handleOpenEndpoints}
                 onCreateVersion={handleCreateVersion}
                 onUpdate={handleUpdate}
               />

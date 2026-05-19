@@ -66,9 +66,26 @@ export type ApiCatalogItem = {
   active: boolean;
 };
 
+export type ApiCatalogSummary = {
+  apiId: string;
+  versionCount: number;
+  latestVersion?: string | null;
+  latestVersionId?: string | null;
+  apiTypes: string[];
+  endpointCount: number;
+  runtimeCount: number;
+  runtimeNames: string[];
+  protectedEndpointCount: number;
+  accessRuleCount: number;
+};
+
 type ApiCatalogResponse = {
   services?: ApiCatalogItem[];
   total?: number;
+};
+
+type ApiCatalogSummaryResponse = {
+  summaries?: ApiCatalogSummary[];
 };
 
 type UseApiCatalogArgs = {
@@ -224,14 +241,17 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
   const [categories, setCategories] = useState<TaxonomyOption[]>([]);
   const [tags, setTags] = useState<TagOption[]>([]);
   const [apis, setApis] = useState<ApiCatalogItem[]>([]);
+  const [summaries, setSummaries] = useState<Record<string, ApiCatalogSummary>>({});
   const [serverTotal, setServerTotal] = useState(0);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [isLoadingApis, setIsLoadingApis] = useState(false);
+  const [isLoadingSummaries, setIsLoadingSummaries] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const taxonomyFiltersActive = params.categories.length > 0 || params.tags.length > 0;
   const categoryFilterKey = params.categories.join('\u001f');
   const tagFilterKey = params.tags.join('\u001f');
+  const apiIdsKey = apis.map((api) => api.apiId).join('\u001f');
 
   useEffect(() => {
     if (!host) return;
@@ -317,6 +337,53 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
     tagFilterKey,
   ]);
 
+  useEffect(() => {
+    if (!host || apis.length === 0) {
+      setSummaries({});
+      setIsLoadingSummaries(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoadingSummaries(true);
+
+    const url = buildPortalQueryUrl('service', 'getApiCatalogSummary', {
+      hostId: host,
+      apiIds: apis.map((api) => api.apiId),
+    });
+
+    fetchClient(url)
+      .then((data: ApiCatalogSummaryResponse) => {
+        if (cancelled) return;
+        const next: Record<string, ApiCatalogSummary> = {};
+        for (const summary of data.summaries ?? []) {
+          next[summary.apiId] = {
+            ...summary,
+            versionCount: Number(summary.versionCount ?? 0),
+            endpointCount: Number(summary.endpointCount ?? 0),
+            runtimeCount: Number(summary.runtimeCount ?? 0),
+            protectedEndpointCount: Number(summary.protectedEndpointCount ?? 0),
+            accessRuleCount: Number(summary.accessRuleCount ?? 0),
+            apiTypes: summary.apiTypes ?? [],
+            runtimeNames: summary.runtimeNames ?? [],
+          };
+        }
+        setSummaries(next);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        console.error('Failed to load API catalog summaries:', e);
+        setSummaries({});
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingSummaries(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [host, apiIdsKey]);
+
   const total = serverTotal;
   const tagGroups = useMemo(() => groupTags(tags), [tags]);
 
@@ -325,9 +392,11 @@ export function useApiCatalog({ host, params }: UseApiCatalogArgs) {
     tags,
     tagGroups,
     apis,
+    summaries,
     total,
     isLoadingOptions,
     isLoadingApis,
+    isLoadingSummaries,
     error,
     taxonomyFiltersActive,
   };

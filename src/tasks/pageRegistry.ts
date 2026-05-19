@@ -38,7 +38,8 @@ export const pageRegistry: PageDefinition[] = [
     description: "Browse registered APIs by category, tag, lifecycle status, and owner context.",
     route: "/app/marketplace/api",
     category: "API Marketplace",
-    keywords: ["api", "marketplace", "service", "catalog", "category", "tag"],
+    helpPath: "/help/portal-view/pages/api-catalog",
+    keywords: ["api", "marketplace", "service", "catalog", "category", "tag", "version", "endpoint", "runtime", "access"],
     entities: ["api"],
   },
   {

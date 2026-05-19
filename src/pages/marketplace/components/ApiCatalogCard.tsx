@@ -6,22 +6,32 @@ import {
   CardContent,
   Chip,
   Divider,
+  Skeleton,
   Stack,
   Tooltip,
   Typography,
 } from '@mui/material';
+import type { ReactElement } from 'react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DetailsIcon from '@mui/icons-material/Details';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import HubIcon from '@mui/icons-material/Hub';
+import LayersIcon from '@mui/icons-material/Layers';
+import RouteIcon from '@mui/icons-material/Route';
+import SecurityIcon from '@mui/icons-material/Security';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import type { ApiCatalogItem, CatalogViewMode } from '../hooks/useApiCatalog';
+import type { ApiCatalogItem, ApiCatalogSummary, CatalogViewMode } from '../hooks/useApiCatalog';
 import { formatTaxonomyLabel } from '../hooks/useApiCatalog';
 
 type ApiCatalogCardProps = {
   api: ApiCatalogItem;
+  summary?: ApiCatalogSummary;
+  isSummaryLoading: boolean;
   viewMode: CatalogViewMode;
   canModify: boolean;
   isUpdating: boolean;
   onDetails: (api: ApiCatalogItem) => void;
+  onOpenEndpoints: (api: ApiCatalogItem, summary?: ApiCatalogSummary) => void;
   onCreateVersion: (api: ApiCatalogItem) => void;
   onUpdate: (api: ApiCatalogItem) => void;
 };
@@ -56,12 +66,47 @@ function metaValue(value: unknown) {
   return String(value);
 }
 
+function countLabel(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function SummaryChip({
+  icon,
+  label,
+  tooltip,
+}: {
+  icon: ReactElement;
+  label: string;
+  tooltip: string;
+}) {
+  return (
+    <Tooltip title={tooltip}>
+      <Chip
+        size="small"
+        icon={icon}
+        label={label}
+        variant="outlined"
+        sx={{
+          maxWidth: '100%',
+          '& .MuiChip-label': {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          },
+        }}
+      />
+    </Tooltip>
+  );
+}
+
 export default function ApiCatalogCard({
   api,
+  summary,
+  isSummaryLoading,
   viewMode,
   canModify,
   isUpdating,
   onDetails,
+  onOpenEndpoints,
   onCreateVersion,
   onUpdate,
 }: ApiCatalogCardProps) {
@@ -73,6 +118,12 @@ export default function ApiCatalogCard({
     metaValue(api.platform),
     metaValue(api.capability),
   ].filter(Boolean);
+  const runtimeTooltip = summary?.runtimeNames.length
+    ? summary.runtimeNames.join(', ')
+    : 'No runtime binding found';
+  const accessLabel = summary && summary.accessRuleCount > 0
+    ? `${summary.protectedEndpointCount}/${summary.endpointCount} protected`
+    : 'No rules';
 
   return (
     <Card
@@ -130,6 +181,43 @@ export default function ApiCatalogCard({
           )}
 
           <Stack direction="row" gap={0.75} flexWrap="wrap">
+            {isSummaryLoading ? (
+              <>
+                <Skeleton variant="rounded" width={118} height={24} />
+                <Skeleton variant="rounded" width={104} height={24} />
+                <Skeleton variant="rounded" width={98} height={24} />
+              </>
+            ) : (
+              <>
+                <SummaryChip
+                  icon={<LayersIcon fontSize="small" />}
+                  label={summary?.latestVersion ? `${summary.latestVersion} (${summary.versionCount})` : countLabel(0, 'version')}
+                  tooltip={summary?.latestVersion
+                    ? `${countLabel(summary.versionCount, 'version')} registered. Latest: ${summary.latestVersion}.`
+                    : 'No active API versions found.'}
+                />
+                <SummaryChip
+                  icon={<RouteIcon fontSize="small" />}
+                  label={countLabel(summary?.endpointCount ?? 0, 'endpoint')}
+                  tooltip={`${countLabel(summary?.endpointCount ?? 0, 'endpoint')} across active versions.`}
+                />
+                <SummaryChip
+                  icon={<HubIcon fontSize="small" />}
+                  label={countLabel(summary?.runtimeCount ?? 0, 'runtime')}
+                  tooltip={runtimeTooltip}
+                />
+                <SummaryChip
+                  icon={<SecurityIcon fontSize="small" />}
+                  label={accessLabel}
+                  tooltip={summary && summary.accessRuleCount > 0
+                    ? `${countLabel(summary.accessRuleCount, 'access rule')} on ${countLabel(summary.protectedEndpointCount, 'endpoint')}.`
+                    : 'No active endpoint access rules found.'}
+                />
+              </>
+            )}
+          </Stack>
+
+          <Stack direction="row" gap={0.75} flexWrap="wrap">
             <TaxonomyChips values={api.categories} limit={3} emptyLabel="Uncategorized" />
           </Stack>
 
@@ -153,6 +241,14 @@ export default function ApiCatalogCard({
       >
         <Button size="small" startIcon={<DetailsIcon />} onClick={() => onDetails(api)}>
           Details
+        </Button>
+        <Button
+          size="small"
+          startIcon={<FormatListBulletedIcon />}
+          disabled={!summary?.latestVersionId}
+          onClick={() => onOpenEndpoints(api, summary)}
+        >
+          Endpoints
         </Button>
         <Button size="small" startIcon={<AddBoxIcon />} onClick={() => onCreateVersion(api)}>
           Version
