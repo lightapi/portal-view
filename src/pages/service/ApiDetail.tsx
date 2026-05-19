@@ -57,9 +57,7 @@ type ServiceType = {
   gitRepo?: string;
   aggregateVersion?: number;
   tagIds?: string[];
-  tags?: string[];
   categoryIds?: string[];
-  categories?: string[];
   apiStatus?: string;
   updateUser?: string;
   updateTs?: string;

@@ -43,9 +43,7 @@ type ServiceType = {
   capability?: string;
   gitRepo?: string;
   tagIds?: string[];
-  tags?: string[];
   categoryIds?: string[];
-  categories?: string[];
   apiStatus?: string;
   updateUser?: string;
   updateTs?: string;
@@ -77,6 +75,14 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 const listText = (value?: string[] | string | null) => {
   if (Array.isArray(value)) return value.join(', ');
   return value ?? '';
+};
+
+const toApiFormData = (value: unknown) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  const data = { ...(value as Record<string, unknown>) };
+  delete data.tags;
+  delete data.categories;
+  return data;
 };
 
 export default function Service() {
@@ -221,7 +227,7 @@ export default function Service() {
         ...taskContext,
         hostId: row.original.hostId,
         apiId,
-      }), { state: { data: freshData, source: location.pathname } });
+      }), { state: { data: toApiFormData(freshData), source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch api for update:", error);
       alert("Could not load the latest api data. Please try again.");
@@ -246,13 +252,13 @@ export default function Service() {
         {
           id: 'categories',
           header: 'Categories',
-          accessorFn: (row) => listText(row.categories?.length ? row.categories : row.categoryIds),
+          accessorFn: (row) => listText(row.categoryIds),
           Cell: TruncatedCell,
         },
         {
           id: 'tags',
           header: 'Tags',
-          accessorFn: (row) => listText(row.tags?.length ? row.tags : row.tagIds),
+          accessorFn: (row) => listText(row.tagIds),
           Cell: TruncatedCell,
         },
         { accessorKey: 'gitRepo', header: 'Git Repo' },
