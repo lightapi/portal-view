@@ -43,7 +43,9 @@ type ServiceType = {
   capability?: string;
   gitRepo?: string;
   tagIds?: string[];
+  tags?: string[];
   categoryIds?: string[];
+  categories?: string[];
   apiStatus?: string;
   updateUser?: string;
   updateTs?: string;
@@ -252,13 +254,13 @@ export default function Service() {
         {
           id: 'categories',
           header: 'Categories',
-          accessorFn: (row) => listText(row.categoryIds),
+          accessorFn: (row) => listText(row.categories?.length ? row.categories : row.categoryIds),
           Cell: TruncatedCell,
         },
         {
           id: 'tags',
           header: 'Tags',
-          accessorFn: (row) => listText(row.tagIds),
+          accessorFn: (row) => listText(row.tags?.length ? row.tags : row.tagIds),
           Cell: TruncatedCell,
         },
         { accessorKey: 'gitRepo', header: 'Git Repo' },
