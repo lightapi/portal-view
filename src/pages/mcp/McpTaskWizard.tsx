@@ -123,14 +123,14 @@ function stepActions(
   if (task.id === "mcp-onboard-api") {
     if (step.id === "select-api") {
       return [
-        routeAction("Browse APIs", task, step, "/app/marketplace", searchParams, context),
+        routeAction("Browse APIs", task, step, "/app/marketplace/api", searchParams, context),
         routeAction("Create API", task, step, "/app/form/createApi", searchParams, context, false),
       ];
     }
     if (step.id === "api-version") {
       return [
         routeAction("Add API Version", task, step, "/app/form/createApiVersion", searchParams, context, !context.apiId),
-        routeAction("Browse APIs", task, step, "/app/marketplace", searchParams, context),
+        routeAction("Browse APIs", task, step, "/app/marketplace/api", searchParams, context),
       ];
     }
     if (step.id === "deployment-mode") {

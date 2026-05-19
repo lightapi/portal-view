@@ -34,11 +34,11 @@ export const pageRegistry: PageDefinition[] = [
   },
   {
     id: "api-marketplace",
-    title: "API Marketplace",
-    description: "Browse registered OpenAPI, GraphQL, and hybrid APIs.",
-    route: "/app/marketplace",
+    title: "API Catalog",
+    description: "Browse registered APIs by category, tag, lifecycle status, and owner context.",
+    route: "/app/marketplace/api",
     category: "API Marketplace",
-    keywords: ["api", "marketplace", "service", "catalog"],
+    keywords: ["api", "marketplace", "service", "catalog", "category", "tag"],
     entities: ["api"],
   },
   {

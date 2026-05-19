@@ -144,7 +144,7 @@ export const taskRegistry: TaskDefinition[] = [
         id: "review-marketplace",
         title: "Review marketplace listing",
         description: "Confirm the API appears correctly for consumers.",
-        route: "/app/marketplace",
+        route: "/app/marketplace/api",
         required: false,
         dependsOn: ["create-version"],
         keywords: ["marketplace", "consumer"],

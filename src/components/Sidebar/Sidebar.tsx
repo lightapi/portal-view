@@ -106,8 +106,9 @@ const structure = [
     id: 2000, type: "group", label: "Marketplace", defaultOpen: true,
     children: [
       {
-        id: 20, label: "Marketplace", link: "/app/marketplace", icon: <ShoppingBasketIcon />,
+        id: 20, label: "Marketplace", link: "/app/marketplace/api", icon: <ShoppingBasketIcon />,
         children: [
+          { label: "API Catalog", link: "/app/marketplace/api" },
           { label: "API Client", link: "/app/client" },
           { label: "OpenApi API", link: "/app/service/openapi" },
           { label: "GraphQL API", link: "/app/service/graphql" },
