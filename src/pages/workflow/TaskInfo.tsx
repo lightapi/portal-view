@@ -27,7 +27,6 @@ type TaskInfoApiResponse = {
 type TaskInfoType = {
     hostId: string;
     taskId: string;
-    agentDefId: string;
     taskType: string;
     processId: string;
     wfInstanceId: string;
@@ -180,7 +179,6 @@ export default function TaskInfo() {
         () => [
             { accessorKey: 'hostId', header: 'Host Id' },
             { accessorKey: 'taskId', header: 'Task Id' },
-            { accessorKey: 'agentDefId', header: 'Agent Def Id' },
             { accessorKey: 'taskType', header: 'Task Type' },
             { accessorKey: 'processId', header: 'Process Id' },
             { accessorKey: 'wfInstanceId', header: 'Wf Instance Id' },

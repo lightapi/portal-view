@@ -16917,10 +16917,6 @@
           "title": "Host Id",
           "readonly": true
         },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
         "taskType": {
           "title": "Task Type",
           "type": "string"
@@ -16958,7 +16954,6 @@
       },
       "required": [
         "hostId",
-        "agentDefId",
         "taskType",
         "processId",
         "wfInstanceId",
@@ -16970,7 +16965,6 @@
     },
     "form": [
       "hostId",
-      "agentDefId",
       "taskType",
       "processId",
       "wfInstanceId",
@@ -17006,10 +17000,6 @@
           "title": "Task Id",
           "type": "string",
           "readonly": true
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
         },
         "taskType": {
           "title": "Task Type",
@@ -17052,7 +17042,6 @@
       "required": [
         "hostId",
         "taskId",
-        "agentDefId",
         "taskType",
         "processId",
         "wfInstanceId",
@@ -17066,7 +17055,6 @@
     "form": [
       "hostId",
       "taskId",
-      "agentDefId",
       "taskType",
       "processId",
       "wfInstanceId",
