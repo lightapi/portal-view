@@ -86,6 +86,12 @@ type DefinitionAnalysis = {
     problems: ValidationProblem[];
 };
 
+type WorkflowDefinitionMetadata = {
+    namespace?: string;
+    name?: string;
+    version?: string;
+};
+
 type YamlDiagnostic = {
     message?: string;
     pos?: [number, number] | null;
@@ -599,6 +605,22 @@ function parseDefinition(definition: string): DefinitionAnalysis {
             toolRefs,
             problems,
         };
+    }
+}
+
+function extractDefinitionMetadata(definition: string): WorkflowDefinitionMetadata {
+    if (!definition.trim()) return {};
+    try {
+        const parsed = YAML.parse(definition);
+        const root = toRecord(parsed);
+        const document = toRecord(root.document);
+        return {
+            namespace: textValue(document.namespace || root.namespace),
+            name: textValue(document.name || root.name),
+            version: textValue(document.version || root.version),
+        };
+    } catch {
+        return {};
     }
 }
 
@@ -1146,13 +1168,15 @@ export default function WorkflowEditor() {
     const state = (location.state || {}) as WorkflowEditorState;
     const initial = state.data || {};
     const source = state.source || '/app/workflow/WfDefinition';
+    const initialDefinition = initial.definition || emptyDefinition;
+    const initialMetadata = extractDefinitionMetadata(initialDefinition);
 
     const [hostId, setHostId] = useState(initial.hostId || host || '');
     const [wfDefId, setWfDefId] = useState(initial.wfDefId || '');
-    const [namespace, setNamespace] = useState(initial.namespace || '');
-    const [name, setName] = useState(initial.name || '');
-    const [version, setVersion] = useState(initial.version || '1.0.0');
-    const [definition, setDefinition] = useState(initial.definition || emptyDefinition);
+    const [namespace, setNamespace] = useState(initial.namespace || initialMetadata.namespace || '');
+    const [name, setName] = useState(initial.name || initialMetadata.name || '');
+    const [version, setVersion] = useState(initial.version || initialMetadata.version || '1.0.0');
+    const [definition, setDefinition] = useState(initialDefinition);
     const [ownerPositionId, setOwnerPositionId] = useState(initial.ownerPositionId || '');
     const [categoryIds, setCategoryIds] = useState<string[]>(initial.categoryIds || []);
     const [tagIds, setTagIds] = useState<string[]>(initial.tagIds || []);
@@ -1249,6 +1273,18 @@ export default function WorkflowEditor() {
         return completedTask?.resultCode || '';
     }, [testSnapshot.processes, testSnapshot.tasks]);
     const isUpdate = Boolean(wfDefId && aggregateVersion);
+
+    const applyDefinitionMetadata = useCallback((nextDefinition: string) => {
+        const metadata = extractDefinitionMetadata(nextDefinition);
+        if (metadata.namespace) setNamespace(metadata.namespace);
+        if (metadata.name) setName(metadata.name);
+        if (metadata.version) setVersion(metadata.version);
+    }, []);
+
+    const handleDefinitionChange = useCallback((nextDefinition: string) => {
+        setDefinition(nextDefinition);
+        applyDefinitionMetadata(nextDefinition);
+    }, [applyDefinitionMetadata]);
 
     useEffect(() => {
         if (!initial.wfDefId || initial.definition) return;
@@ -1367,10 +1403,10 @@ export default function WorkflowEditor() {
         const file = event.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = e => setDefinition(String(e.target?.result || ''));
+        reader.onload = e => handleDefinitionChange(String(e.target?.result || ''));
         reader.readAsText(file);
         event.target.value = '';
-    }, []);
+    }, [handleDefinitionChange]);
 
     const handleExport = useCallback(() => {
         const blob = new Blob([definition], { type: 'text/yaml' });
@@ -1854,7 +1890,7 @@ export default function WorkflowEditor() {
                         height="560px"
                         theme={githubLight}
                         extensions={workflowEditorExtensions}
-                        onChange={setDefinition}
+                        onChange={handleDefinitionChange}
                     />
                 </Box>
 
