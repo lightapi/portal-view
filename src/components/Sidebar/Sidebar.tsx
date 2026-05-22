@@ -220,6 +220,7 @@ const structure = [
         children: [
           { label: "Wf Definition", role: "user workflow-admin", link: "/app/workflow/WfDefinition" },
           { label: "Workflow Editor", role: "user workflow-admin", link: "/app/workflow/editor" },
+          { label: "Human Tasks", link: "/app/workflow/HumanTasks" },
           { label: "Worklist", link: "/app/workflow/Worklist" },
           { label: "Process Info", link: "/app/workflow/ProcessInfo" },
           { label: "Task Info", link: "/app/workflow/TaskInfo" },

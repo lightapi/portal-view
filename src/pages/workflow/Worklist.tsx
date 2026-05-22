@@ -256,9 +256,14 @@ export default function Worklist() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWorklist', searchParams, taskContext))}>
-                Create New Worklist
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWorklist', searchParams, taskContext))}>
+                    Create New Worklist
+                </Button>
+                <Button variant="outlined" startIcon={<ListAltIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/workflow/HumanTasks', searchParams, taskContext))}>
+                    Human Tasks
+                </Button>
+            </Box>
         ),
     });
 

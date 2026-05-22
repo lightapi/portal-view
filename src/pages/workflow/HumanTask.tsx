@@ -22,6 +22,9 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
 import { SchemaForm, utils } from 'react-schema-form';
 import { useUserState } from '../../contexts/UserContext';
@@ -56,6 +59,9 @@ type HumanTaskDetail = {
     assignedTs?: string;
     assigneeId?: string;
     assignmentStatusCode?: string;
+    claimedBy?: string;
+    claimedTs?: string;
+    claimExpiresTs?: string;
     deadlineTs?: string;
     categoryCode?: string;
     reasonCode?: string;
@@ -73,7 +79,9 @@ type HumanTaskDetail = {
 };
 
 interface UserState {
-    host?: string;
+    host?: string | null;
+    userId?: string | null;
+    roles?: string | null;
 }
 
 const defaultApprovalOptions: AskOption[] = [
@@ -143,14 +151,23 @@ function modeForAsk(ask?: AskDefinition) {
     return ask?.schema ? 'object' : 'text';
 }
 
+function roleTokens(roles?: string | null) {
+    return new Set((roles || '').split(/[\s,]+/).filter(Boolean));
+}
+
+function hasOverridePermission(roles?: string | null) {
+    const tokens = roleTokens(roles);
+    return tokens.has('admin') || tokens.has('workflow.task.override');
+}
+
 export default function HumanTask() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host } = useUserState() as UserState;
+    const { host, userId, roles } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const taskAsstId = searchParams.get('taskAsstId') || '';
-    const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
-    const source = (location.state as { source?: string } | null)?.source || '/app/workflow/TaskAsst';
+    const taskContext = useMemo(() => buildWorkflowTaskContext(host || undefined, searchParams), [host, searchParams]);
+    const source = (location.state as { source?: string } | null)?.source || '/app/workflow/HumanTasks';
 
     const [task, setTask] = useState<HumanTaskDetail | null>(null);
     const [value, setValue] = useState<string>('');
@@ -161,6 +178,7 @@ export default function HumanTask() {
     const [comment, setComment] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isMutatingClaim, setIsMutatingClaim] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [completed, setCompleted] = useState(false);
 
@@ -205,9 +223,44 @@ export default function HumanTask() {
     const options = answerOptions(ask);
     const objectSchema = useMemo(() => normalizeObjectSchema(ask?.schema), [ask?.schema]);
     const objectForm = useMemo(() => objectFormItems(ask, objectSchema), [ask, objectSchema]);
-    const canSubmit = Boolean(task?.active) && task?.assignmentStatusCode === 'ASSIGNED' && task?.taskStatusCode === 'W';
+    const canOverride = hasOverridePermission(roles);
+    const isClaimed = task?.assignmentStatusCode === 'CLAIMED';
+    const isClaimedByCurrentUser = Boolean(isClaimed && task?.claimedBy && userId && task.claimedBy === userId);
+    const canSubmit = Boolean(task?.active) && task?.taskStatusCode === 'W' && (
+        task?.assignmentStatusCode === 'ASSIGNED' ||
+        isClaimedByCurrentUser ||
+        (canOverride && isClaimed)
+    );
+    const canClaim = Boolean(task?.active) && task?.taskStatusCode === 'W' && task?.assignmentStatusCode === 'ASSIGNED';
+    const canRelease = Boolean(task?.active) && task?.taskStatusCode === 'W' && isClaimed && (isClaimedByCurrentUser || canOverride);
     const allowComment = ask?.allowComment ?? (mode === 'approval' || mode === 'confirm');
     const commentMissing = allowComment && ask?.commentRequired && !comment.trim();
+
+    const mutateClaim = useCallback(async (action: 'claimHumanTask' | 'releaseHumanTask') => {
+        if (!host || !task) return;
+        setIsMutatingClaim(true);
+        setError(null);
+        const cmd = {
+            host: 'lightapi.net',
+            service: 'workflow',
+            action,
+            version: '0.1.0',
+            data: {
+                hostId: host,
+                taskAsstId: task.taskAsstId,
+                ...(action === 'claimHumanTask' ? { claimMinutes: 30 } : {}),
+            },
+        };
+        try {
+            await fetchClient('/portal/command', { method: 'POST', body: cmd });
+            await loadTask();
+        } catch (e: any) {
+            setError(e?.description || e?.message || 'Unable to update task claim.');
+            await loadTask();
+        } finally {
+            setIsMutatingClaim(false);
+        }
+    }, [host, loadTask, task]);
 
     const submit = useCallback(async (submittedValue: unknown) => {
         if (!host || !task) return;
@@ -278,8 +331,8 @@ export default function HumanTask() {
                 ? false
                 : !value.trim()
     );
-    const submitDisabled = isSubmitting || !canSubmit || valueMissing || Boolean(commentMissing);
-    const approvalSubmitDisabled = isSubmitting || !canSubmit || Boolean(commentMissing);
+    const submitDisabled = isSubmitting || isMutatingClaim || !canSubmit || valueMissing || Boolean(commentMissing);
+    const approvalSubmitDisabled = isSubmitting || isMutatingClaim || !canSubmit || Boolean(commentMissing);
 
     const onObjectModelChange = (key: string | string[], val: unknown, type?: string) => {
         utils.selectOrSet(key, objectValue, val, type);
@@ -456,6 +509,36 @@ export default function HumanTask() {
                                             Due {formatDate(task.deadlineTs)}
                                         </Typography>
                                     ) : null}
+                                    {isClaimed ? (
+                                        <Alert severity={isClaimedByCurrentUser || canOverride ? 'info' : 'warning'}>
+                                            Claimed by {task.claimedBy || 'another user'}{task.claimExpiresTs ? ` until ${formatDate(task.claimExpiresTs)}` : ''}.
+                                        </Alert>
+                                    ) : null}
+                                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<LockIcon />}
+                                            disabled={!canClaim || isMutatingClaim}
+                                            onClick={() => mutateClaim('claimHumanTask')}
+                                        >
+                                            Claim
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<LockOpenIcon />}
+                                            disabled={!canRelease || isMutatingClaim}
+                                            onClick={() => mutateClaim('releaseHumanTask')}
+                                        >
+                                            Release
+                                        </Button>
+                                        <Button
+                                            startIcon={<RefreshIcon />}
+                                            disabled={isLoading || isMutatingClaim}
+                                            onClick={loadTask}
+                                        >
+                                            Refresh
+                                        </Button>
+                                    </Stack>
                                 </Stack>
                             </Paper>
 
@@ -509,6 +592,9 @@ export default function HumanTask() {
                                 <Typography variant="body2">Category: {task.categoryCode || ''}</Typography>
                                 <Typography variant="body2">Reason: {task.reasonCode || ''}</Typography>
                                 <Typography variant="body2">Assigned: {formatDate(task.assignedTs)}</Typography>
+                                <Typography variant="body2">Claimed By: {task.claimedBy || ''}</Typography>
+                                <Typography variant="body2">Claimed: {formatDate(task.claimedTs)}</Typography>
+                                <Typography variant="body2">Claim Expires: {formatDate(task.claimExpiresTs)}</Typography>
                                 <Typography variant="body2">Task: {task.wfTaskId || task.taskId}</Typography>
                                 <Typography variant="body2">Instance: {task.wfInstanceId || ''}</Typography>
                             </Stack>

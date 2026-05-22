@@ -260,7 +260,7 @@ export default function TaskAsst() {
                         <IconButton
                             color="primary"
                             onClick={() => handleOpenTask(row)}
-                            disabled={!row.original.active || row.original.statusCode !== 'ASSIGNED'}
+                            disabled={!row.original.active || !['ASSIGNED', 'CLAIMED'].includes(row.original.statusCode || '')}
                         >
                             <PlayCircleOutlineIcon />
                         </IconButton>
