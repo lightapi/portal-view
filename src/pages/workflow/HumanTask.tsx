@@ -183,7 +183,14 @@ export default function HumanTask() {
     const [completed, setCompleted] = useState(false);
 
     const loadTask = useCallback(async () => {
-        if (!host || !taskAsstId) return;
+        if (!host) {
+            setError('Host is missing. Please select a host and open the task again.');
+            return;
+        }
+        if (!taskAsstId) {
+            setError('Task assignment id is missing. Please open the task from the Worklist, Human Tasks, or Task Asst page.');
+            return;
+        }
         setIsLoading(true);
         setError(null);
         const cmd = {

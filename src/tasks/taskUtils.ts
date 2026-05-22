@@ -97,6 +97,7 @@ export const taskContextKeys: TaskContextKey[] = [
   "auditLogId",
   "assigneeId",
   "categoryId",
+  "categoryCode",
   "correlationId",
   "sourceTypeId",
   "schemaId",

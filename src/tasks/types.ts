@@ -67,6 +67,7 @@ export type TaskContextKey =
   | "auditLogId"
   | "assigneeId"
   | "categoryId"
+  | "categoryCode"
   | "correlationId"
   | "sourceTypeId"
   | "schemaId"

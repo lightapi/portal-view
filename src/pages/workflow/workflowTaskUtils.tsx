@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Box } from '@mui/material';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import type { TaskResolvedContext } from '../../tasks/types';
-import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { buildContextRoute, buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
 const workflowContextKeys = [
     'wfDefId',
@@ -58,7 +58,9 @@ export function buildWorkflowTaskRoute(
     searchParams: URLSearchParams,
     context: TaskResolvedContext,
 ) {
-    return buildTaskAwareRoute(route, searchParams, context);
+    return searchParams.get('task')
+        ? buildTaskAwareRoute(route, searchParams, context)
+        : buildContextRoute(route, context);
 }
 
 export function WorkflowTaskLayout({
