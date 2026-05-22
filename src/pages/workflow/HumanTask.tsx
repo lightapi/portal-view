@@ -23,6 +23,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SendIcon from '@mui/icons-material/Send';
+import { SchemaForm, utils } from 'react-schema-form';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
 import { buildWorkflowTaskContext, WorkflowTaskLayout } from './workflowTaskUtils';
@@ -35,10 +36,14 @@ type AskOption = {
 
 type AskDefinition = {
     prompt?: string;
-    mode?: 'approval' | 'confirm' | 'choice' | 'multiChoice' | 'text' | string;
+    mode?: 'approval' | 'confirm' | 'choice' | 'multiChoice' | 'text' | 'object' | string;
     options?: AskOption[];
     required?: boolean;
     allowComment?: boolean;
+    commentRequired?: boolean;
+    schema?: Record<string, unknown> | string;
+    form?: Array<string | Record<string, unknown>>;
+    default?: Record<string, unknown>;
 };
 
 type HumanTaskDetail = {
@@ -96,6 +101,48 @@ function answerOptions(ask?: AskDefinition) {
     return ask?.options || [];
 }
 
+function normalizeObjectSchema(schema?: Record<string, unknown> | string) {
+    if (!schema) return null;
+    if (typeof schema === 'string') {
+        try {
+            const parsed = JSON.parse(schema);
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+        } catch {
+            return null;
+        }
+    }
+    return schema;
+}
+
+function objectFormItems(ask?: AskDefinition, schema?: Record<string, unknown> | null) {
+    if (Array.isArray(ask?.form)) return ask.form;
+    const properties = schema?.properties;
+    if (properties && typeof properties === 'object' && !Array.isArray(properties)) {
+        return Object.keys(properties as Record<string, unknown>);
+    }
+    return [];
+}
+
+function modelFromSchemaDefaults(schema?: Record<string, unknown> | null, explicitDefault?: Record<string, unknown>) {
+    if (explicitDefault && typeof explicitDefault === 'object' && !Array.isArray(explicitDefault)) {
+        return { ...explicitDefault };
+    }
+    const model: Record<string, unknown> = {};
+    const properties = schema?.properties;
+    if (!properties || typeof properties !== 'object' || Array.isArray(properties)) return model;
+    Object.entries(properties as Record<string, any>).forEach(([key, property]) => {
+        if (property && typeof property === 'object' && Object.prototype.hasOwnProperty.call(property, 'default')) {
+            model[key] = property.default;
+        }
+    });
+    return model;
+}
+
+function modeForAsk(ask?: AskDefinition) {
+    if (ask?.mode) return ask.mode;
+    return ask?.schema ? 'object' : 'text';
+}
+
 export default function HumanTask() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -108,6 +155,9 @@ export default function HumanTask() {
     const [task, setTask] = useState<HumanTaskDetail | null>(null);
     const [value, setValue] = useState<string>('');
     const [multiValue, setMultiValue] = useState<string[]>([]);
+    const [objectValue, setObjectValue] = useState<Record<string, unknown>>({});
+    const [objectValidationResult, setObjectValidationResult] = useState<any>(null);
+    const [showObjectErrors, setShowObjectErrors] = useState(false);
     const [comment, setComment] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,8 +179,15 @@ export default function HumanTask() {
             const data = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
             setTask(data);
             const options = answerOptions(data.ask);
-            if ((data.ask?.mode === 'choice' || data.ask?.mode === 'confirm') && options.length === 1) {
+            const nextMode = modeForAsk(data.ask);
+            if ((nextMode === 'choice' || nextMode === 'confirm') && options.length === 1) {
                 setValue(options[0].value);
+            }
+            if (nextMode === 'object') {
+                const schema = normalizeObjectSchema(data.ask?.schema);
+                setObjectValue(modelFromSchemaDefaults(schema, data.ask?.default));
+                setShowObjectErrors(false);
+                setObjectValidationResult(null);
             }
         } catch (e: any) {
             setError(e?.description || e?.message || 'Unable to load task.');
@@ -144,13 +201,20 @@ export default function HumanTask() {
     }, [loadTask]);
 
     const ask = task?.ask;
-    const mode = ask?.mode || 'text';
+    const mode = modeForAsk(ask);
     const options = answerOptions(ask);
+    const objectSchema = useMemo(() => normalizeObjectSchema(ask?.schema), [ask?.schema]);
+    const objectForm = useMemo(() => objectFormItems(ask, objectSchema), [ask, objectSchema]);
     const canSubmit = Boolean(task?.active) && task?.assignmentStatusCode === 'ASSIGNED' && task?.taskStatusCode === 'W';
     const allowComment = ask?.allowComment ?? (mode === 'approval' || mode === 'confirm');
+    const commentMissing = allowComment && ask?.commentRequired && !comment.trim();
 
-    const submit = useCallback(async (submittedValue: string | string[]) => {
+    const submit = useCallback(async (submittedValue: unknown) => {
         if (!host || !task) return;
+        if (commentMissing) {
+            setError('Comment is required.');
+            return;
+        }
         setIsSubmitting(true);
         setError(null);
         const submittedAt = new Date().toISOString();
@@ -181,10 +245,49 @@ export default function HumanTask() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [comment, host, loadTask, task]);
+    }, [comment, commentMissing, host, loadTask, task]);
 
-    const selectedValue = mode === 'multiChoice' ? multiValue : value;
-    const submitDisabled = isSubmitting || !canSubmit || (ask?.required !== false && (mode === 'multiChoice' ? !multiValue.length : !value.trim()));
+    const validateObjectInput = useCallback(() => {
+        if (mode !== 'object') return true;
+        if (!objectSchema) {
+            setError('Object input requires a valid ask.schema definition.');
+            return false;
+        }
+        const result = utils.validateBySchema(objectSchema, objectValue);
+        setObjectValidationResult(result);
+        setShowObjectErrors(!result.valid);
+        if (!result.valid) {
+            setError('Please correct the highlighted fields before submitting.');
+        }
+        return result.valid;
+    }, [mode, objectSchema, objectValue]);
+
+    const submitCurrentValue = useCallback(() => {
+        if (mode === 'object') {
+            if (!validateObjectInput()) return;
+            submit(objectValue);
+            return;
+        }
+        submit(mode === 'multiChoice' ? multiValue : value);
+    }, [mode, multiValue, objectValue, submit, validateObjectInput, value]);
+
+    const valueMissing = ask?.required !== false && (
+        mode === 'multiChoice'
+            ? !multiValue.length
+            : mode === 'object'
+                ? false
+                : !value.trim()
+    );
+    const submitDisabled = isSubmitting || !canSubmit || valueMissing || Boolean(commentMissing);
+    const approvalSubmitDisabled = isSubmitting || !canSubmit || Boolean(commentMissing);
+
+    const onObjectModelChange = (key: string | string[], val: unknown, type?: string) => {
+        utils.selectOrSet(key, objectValue, val, type);
+        setObjectValue({ ...objectValue });
+        if (showObjectErrors && objectSchema) {
+            setObjectValidationResult(utils.validateBySchema(objectSchema, objectValue));
+        }
+    };
 
     const renderInput = () => {
         if (!ask) {
@@ -199,7 +302,7 @@ export default function HumanTask() {
                             variant="contained"
                             color={option.value === 'REJECTED' ? 'error' : 'primary'}
                             startIcon={option.value === 'REJECTED' ? <CancelIcon /> : <CheckCircleIcon />}
-                            disabled={isSubmitting || !canSubmit}
+                            disabled={approvalSubmitDisabled}
                             onClick={() => submit(option.value)}
                         >
                             {optionLabel(option)}
@@ -272,6 +375,27 @@ export default function HumanTask() {
                         ))}
                     </FormGroup>
                 </FormControl>
+            );
+        }
+        if (mode === 'object') {
+            if (!objectSchema) {
+                return <Alert severity="error">Object input requires a valid ask.schema definition.</Alert>;
+            }
+            return (
+                <Stack spacing={2}>
+                    <SchemaForm
+                        schema={objectSchema}
+                        form={objectForm}
+                        model={objectValue}
+                        showErrors={showObjectErrors}
+                        onModelChange={onObjectModelChange}
+                    />
+                    {showObjectErrors && objectValidationResult ? (
+                        <Alert severity="error">
+                            {objectValidationResult?.errors?.[0]?.message || objectValidationResult?.error || 'The response does not match the required schema.'}
+                        </Alert>
+                    ) : null}
+                </Stack>
             );
         }
         return (
@@ -356,7 +480,7 @@ export default function HumanTask() {
                                                 variant="contained"
                                                 startIcon={<SendIcon />}
                                                 disabled={submitDisabled}
-                                                onClick={() => submit(selectedValue)}
+                                                onClick={submitCurrentValue}
                                             >
                                                 Submit
                                             </Button>
