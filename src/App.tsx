@@ -157,6 +157,7 @@ import AgentDefinition from "./pages/genai/AgentDefinition";
 import AgentAssignment from "./pages/genai/AgentAssignment";
 import TaskInfo from "./pages/workflow/TaskInfo";
 import TaskAsst from "./pages/workflow/TaskAsst";
+import HumanTask from "./pages/workflow/HumanTask";
 import AuditLog from "./pages/workflow/AuditLog";
 import Skill from "./pages/genai/Skill";
 import Tool from "./pages/genai/Tool";
@@ -555,6 +556,7 @@ const App = () => {
           <Route path="genai/AgentAssignment" element={<AgentAssignment />} />
           <Route path="workflow/TaskInfo" element={<TaskInfo />} />
           <Route path="workflow/TaskAsst" element={<TaskAsst />} />
+          <Route path="workflow/HumanTask" element={<HumanTask />} />
           <Route path="workflow/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
           <Route path="genai/SkillWorkspace" element={<SkillWorkspace />} />

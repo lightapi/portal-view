@@ -14,6 +14,7 @@ const workflowContextKeys = [
     'auditLogId',
     'assigneeId',
     'categoryId',
+    'categoryCode',
     'correlationId',
     'sourceTypeId',
     'appId',

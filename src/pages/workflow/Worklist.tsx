@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -177,6 +178,13 @@ export default function Worklist() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleOpenTasks = useCallback((row: MRT_Row<WorklistType>) => {
+        const context = contextForRow(row.original);
+        navigate(buildWorkflowTaskRoute('/app/workflow/TaskAsst', searchParams, context), {
+            state: { source: location.pathname + location.search },
+        });
+    }, [contextForRow, location.pathname, location.search, navigate, searchParams]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<WorklistType>[]>(
         () => [
@@ -223,6 +231,11 @@ export default function Worklist() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Open Assigned Tasks">
+                    <IconButton color="primary" onClick={() => handleOpenTasks(row)}>
+                        <ListAltIcon />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title="Update Worklist">
                     <IconButton
                         onClick={() => handleUpdate(row)}

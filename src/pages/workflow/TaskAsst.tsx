@@ -13,6 +13,7 @@ import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -34,6 +35,10 @@ type TaskAsstType = {
     unassignedTs?: string;
     unassignedReason?: string;
     categoryCode?: string;
+    statusCode?: string;
+    claimedBy?: string;
+    claimedTs?: string;
+    claimExpiresTs?: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -54,6 +59,14 @@ export default function TaskAsst() {
         (row: TaskAsstType) => buildWorkflowTaskContext(host, searchParams, row),
         [host, searchParams],
     );
+    const initialColumnFilters = useMemo<MRT_ColumnFiltersState>(() => {
+        const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+        const assigneeId = searchParams.get('assigneeId');
+        const categoryCode = searchParams.get('categoryCode') || searchParams.get('categoryId');
+        if (assigneeId) filters.push({ id: 'assigneeId', value: assigneeId });
+        if (categoryCode) filters.push({ id: 'categoryCode', value: categoryCode });
+        return filters;
+    }, [searchParams]);
 
     // Data and fetching state
     const [data, setData] = useState<TaskAsstType[]>([]);
@@ -63,9 +76,7 @@ export default function TaskAsst() {
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-    const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
-        { id: 'active', value: 'true' }
-    ]);
+    const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(initialColumnFilters);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
     const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -172,6 +183,13 @@ export default function TaskAsst() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleOpenTask = useCallback((row: MRT_Row<TaskAsstType>) => {
+        const context = contextForRow(row.original);
+        navigate(buildWorkflowTaskRoute('/app/workflow/HumanTask', searchParams, context), {
+            state: { source: location.pathname + location.search },
+        });
+    }, [contextForRow, location.pathname, location.search, navigate, searchParams]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<TaskAsstType>[]>(
         () => [
@@ -184,8 +202,15 @@ export default function TaskAsst() {
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
             { accessorKey: 'assigneeId', header: 'Assignee' },
+            { accessorKey: 'statusCode', header: 'Status' },
             { accessorKey: 'reasonCode', header: 'Reason Code' },
             { accessorKey: 'categoryCode', header: 'Category' },
+            { accessorKey: 'claimedBy', header: 'Claimed By' },
+            {
+                accessorKey: 'claimedTs',
+                header: 'Claimed Time',
+                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+            },
             {
                 accessorKey: 'unassignedTs',
                 header: 'Unassigned Time',
@@ -230,6 +255,17 @@ export default function TaskAsst() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Tooltip title="Open Human Task">
+                    <span>
+                        <IconButton
+                            color="primary"
+                            onClick={() => handleOpenTask(row)}
+                            disabled={!row.original.active || row.original.statusCode !== 'ASSIGNED'}
+                        >
+                            <PlayCircleOutlineIcon />
+                        </IconButton>
+                    </span>
+                </Tooltip>
                 <Tooltip title="Update Task Asst">
                     <IconButton
                         onClick={() => handleUpdate(row)}
