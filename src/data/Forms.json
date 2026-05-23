@@ -17092,7 +17092,20 @@
           "type": "string"
         },
         "assigneeId": {
-          "title": "Assignee Id",
+          "title": "Legacy Assignee Id",
+          "type": "string"
+        },
+        "assignmentType": {
+          "title": "Assignment Type",
+          "type": "string",
+          "enum": [
+            "USER",
+            "ROLE"
+          ],
+          "default": "USER"
+        },
+        "assignmentId": {
+          "title": "Assignment Id",
           "type": "string"
         },
         "reasonCode": {
@@ -17116,14 +17129,16 @@
       "required": [
         "hostId",
         "taskId",
-        "assigneeId",
+        "assignmentType",
+        "assignmentId",
         "reasonCode"
       ]
     },
     "form": [
       "hostId",
       "taskId",
-      "assigneeId",
+      "assignmentType",
+      "assignmentId",
       "reasonCode",
       "categoryCode",
       {
@@ -17165,7 +17180,19 @@
           "type": "string"
         },
         "assigneeId": {
-          "title": "Assignee Id",
+          "title": "Legacy Assignee Id",
+          "type": "string"
+        },
+        "assignmentType": {
+          "title": "Assignment Type",
+          "type": "string",
+          "enum": [
+            "USER",
+            "ROLE"
+          ]
+        },
+        "assignmentId": {
+          "title": "Assignment Id",
           "type": "string"
         },
         "reasonCode": {
@@ -17194,7 +17221,8 @@
         "hostId",
         "taskAsstId",
         "taskId",
-        "assigneeId",
+        "assignmentType",
+        "assignmentId",
         "reasonCode",
         "active"
       ]
@@ -17203,7 +17231,8 @@
       "hostId",
       "taskAsstId",
       "taskId",
-      "assigneeId",
+      "assignmentType",
+      "assignmentId",
       "reasonCode",
       "categoryCode",
       {

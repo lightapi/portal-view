@@ -58,6 +58,9 @@ type HumanTaskDetail = {
     wfTaskId?: string;
     assignedTs?: string;
     assigneeId?: string;
+    assignmentType?: string;
+    assignmentId?: string;
+    assignmentLabel?: string;
     assignmentStatusCode?: string;
     claimedBy?: string;
     claimedTs?: string;
@@ -71,6 +74,10 @@ type HumanTaskDetail = {
     ask?: AskDefinition;
     contextSummary?: Record<string, unknown>;
     context?: Record<string, unknown>;
+    canClaim?: boolean;
+    canRelease?: boolean;
+    canComplete?: boolean;
+    readOnly?: boolean;
     workflow?: {
         namespace?: string;
         name?: string;
@@ -81,7 +88,6 @@ type HumanTaskDetail = {
 interface UserState {
     host?: string | null;
     userId?: string | null;
-    roles?: string | null;
 }
 
 const defaultApprovalOptions: AskOption[] = [
@@ -151,19 +157,10 @@ function modeForAsk(ask?: AskDefinition) {
     return ask?.schema ? 'object' : 'text';
 }
 
-function roleTokens(roles?: string | null) {
-    return new Set((roles || '').split(/[\s,]+/).filter(Boolean));
-}
-
-function hasOverridePermission(roles?: string | null) {
-    const tokens = roleTokens(roles);
-    return tokens.has('admin') || tokens.has('workflow.task.override');
-}
-
 export default function HumanTask() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host, userId, roles } = useUserState() as UserState;
+    const { host, userId } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const taskAsstId = searchParams.get('taskAsstId') || '';
     const taskContext = useMemo(() => buildWorkflowTaskContext(host || undefined, searchParams), [host, searchParams]);
@@ -230,16 +227,12 @@ export default function HumanTask() {
     const options = answerOptions(ask);
     const objectSchema = useMemo(() => normalizeObjectSchema(ask?.schema), [ask?.schema]);
     const objectForm = useMemo(() => objectFormItems(ask, objectSchema), [ask, objectSchema]);
-    const canOverride = hasOverridePermission(roles);
     const isClaimed = task?.assignmentStatusCode === 'CLAIMED';
     const isClaimedByCurrentUser = Boolean(isClaimed && task?.claimedBy && userId && task.claimedBy === userId);
-    const canSubmit = Boolean(task?.active) && task?.taskStatusCode === 'W' && (
-        task?.assignmentStatusCode === 'ASSIGNED' ||
-        isClaimedByCurrentUser ||
-        (canOverride && isClaimed)
-    );
-    const canClaim = Boolean(task?.active) && task?.taskStatusCode === 'W' && task?.assignmentStatusCode === 'ASSIGNED';
-    const canRelease = Boolean(task?.active) && task?.taskStatusCode === 'W' && isClaimed && (isClaimedByCurrentUser || canOverride);
+    const canSubmit = Boolean(task?.canComplete);
+    const canClaim = Boolean(task?.canClaim);
+    const canRelease = Boolean(task?.canRelease);
+    const readOnly = task?.readOnly ?? !canSubmit;
     const allowComment = ask?.allowComment ?? (mode === 'approval' || mode === 'confirm');
     const commentMissing = allowComment && ask?.commentRequired && !comment.trim();
 
@@ -443,13 +436,15 @@ export default function HumanTask() {
             }
             return (
                 <Stack spacing={2}>
-                    <SchemaForm
-                        schema={objectSchema}
-                        form={objectForm}
-                        model={objectValue}
-                        showErrors={showObjectErrors}
-                        onModelChange={onObjectModelChange}
-                    />
+                    <Box sx={{ pointerEvents: readOnly ? 'none' : 'auto', opacity: readOnly ? 0.72 : 1 }}>
+                        <SchemaForm
+                            schema={objectSchema}
+                            form={objectForm}
+                            model={objectValue}
+                            showErrors={showObjectErrors}
+                            onModelChange={onObjectModelChange}
+                        />
+                    </Box>
                     {showObjectErrors && objectValidationResult ? (
                         <Alert severity="error">
                             {objectValidationResult?.errors?.[0]?.message || objectValidationResult?.error || 'The response does not match the required schema.'}
@@ -517,9 +512,12 @@ export default function HumanTask() {
                                         </Typography>
                                     ) : null}
                                     {isClaimed ? (
-                                        <Alert severity={isClaimedByCurrentUser || canOverride ? 'info' : 'warning'}>
+                                        <Alert severity={isClaimedByCurrentUser || canRelease ? 'info' : 'warning'}>
                                             Claimed by {task.claimedBy || 'another user'}{task.claimExpiresTs ? ` until ${formatDate(task.claimExpiresTs)}` : ''}.
                                         </Alert>
+                                    ) : null}
+                                    {!isClaimed && readOnly ? (
+                                        <Alert severity="info">Claim this task before entering a response.</Alert>
                                     ) : null}
                                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                                         <Button
@@ -595,7 +593,8 @@ export default function HumanTask() {
                             <Stack spacing={1}>
                                 <Typography variant="h6">Assignment</Typography>
                                 <Divider />
-                                <Typography variant="body2">Assignee: {task.assigneeId || ''}</Typography>
+                                <Typography variant="body2">Target: {task.assignmentLabel || task.assignmentId || task.assigneeId || ''}</Typography>
+                                <Typography variant="body2">Target Type: {task.assignmentType || ''}</Typography>
                                 <Typography variant="body2">Category: {task.categoryCode || ''}</Typography>
                                 <Typography variant="body2">Reason: {task.reasonCode || ''}</Typography>
                                 <Typography variant="body2">Assigned: {formatDate(task.assignedTs)}</Typography>

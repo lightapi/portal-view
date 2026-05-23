@@ -31,6 +31,8 @@ type TaskAsstType = {
     taskId: string;
     assignedTs: string;
     assigneeId: string;
+    assignmentType?: string;
+    assignmentId?: string;
     reasonCode: string;
     unassignedTs?: string;
     unassignedReason?: string;
@@ -202,6 +204,8 @@ export default function TaskAsst() {
                 Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
             },
             { accessorKey: 'assigneeId', header: 'Assignee' },
+            { accessorKey: 'assignmentType', header: 'Assignment Type' },
+            { accessorKey: 'assignmentId', header: 'Assignment Id' },
             { accessorKey: 'statusCode', header: 'Status' },
             { accessorKey: 'reasonCode', header: 'Reason Code' },
             { accessorKey: 'categoryCode', header: 'Category' },

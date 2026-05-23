@@ -25,6 +25,9 @@ type HumanTaskRow = {
     wfTaskId?: string;
     assignedTs?: string;
     assigneeId?: string;
+    assignmentType?: string;
+    assignmentId?: string;
+    assignmentLabel?: string;
     assignmentStatusCode?: string;
     claimedBy?: string;
     claimedTs?: string;
@@ -35,6 +38,10 @@ type HumanTaskRow = {
     taskStatusCode?: string;
     taskType?: string;
     active?: boolean;
+    canClaim?: boolean;
+    canRelease?: boolean;
+    canComplete?: boolean;
+    readOnly?: boolean;
     ask?: {
         prompt?: string;
         mode?: string;
@@ -48,21 +55,10 @@ type HumanTaskRow = {
 
 interface UserState {
     host?: string | null;
-    userId?: string | null;
-    roles?: string | null;
 }
 
 function formatDate(value?: string) {
     return value ? new Date(value).toLocaleString() : '';
-}
-
-function roleTokens(roles?: string | null) {
-    return new Set((roles || '').split(/[\s,]+/).filter(Boolean));
-}
-
-function hasOverridePermission(roles?: string | null) {
-    const tokens = roleTokens(roles);
-    return tokens.has('admin') || tokens.has('workflow.task.override');
 }
 
 function statusChip(status?: string) {
@@ -73,10 +69,9 @@ function statusChip(status?: string) {
 export default function HumanTasks() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { host, userId, roles } = useUserState() as UserState;
+    const { host } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const taskContext = useMemo(() => buildWorkflowTaskContext(host || undefined, searchParams), [host, searchParams]);
-    const canOverride = hasOverridePermission(roles);
 
     const [data, setData] = useState<HumanTaskRow[]>([]);
     const [rowCount, setRowCount] = useState(0);
@@ -180,7 +175,11 @@ export default function HumanTasks() {
                 id: 'prompt',
                 header: 'Task',
             },
-            { accessorKey: 'assigneeId', header: 'Assignee' },
+            {
+                accessorFn: (row) => row.assignmentLabel || row.assignmentId || row.assigneeId || '',
+                id: 'assignmentTarget',
+                header: 'Assignment',
+            },
             { accessorKey: 'categoryCode', header: 'Category' },
             { accessorKey: 'claimedBy', header: 'Claimed By' },
             {
@@ -216,9 +215,8 @@ export default function HumanTasks() {
         muiToolbarAlertBannerProps: error ? { color: 'error', children: error } : undefined,
         renderRowActions: ({ row }) => {
             const task = row.original;
-            const claimedByCurrentUser = Boolean(task.claimedBy && userId && task.claimedBy === userId);
-            const canClaim = task.active && task.taskStatusCode === 'W' && task.assignmentStatusCode === 'ASSIGNED';
-            const canRelease = task.active && task.taskStatusCode === 'W' && task.assignmentStatusCode === 'CLAIMED' && (claimedByCurrentUser || canOverride);
+            const canClaim = Boolean(task.canClaim);
+            const canRelease = Boolean(task.canRelease);
             return (
                 <Box sx={{ display: 'flex', gap: 1 }}>
                     <Tooltip title="Open Task">
