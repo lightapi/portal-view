@@ -272,6 +272,7 @@ export default function AgentDefinition() {
                             data: {
                                 hostId: host,
                                 agentDefId: taskContext.agentDefId ?? taskContext.apiVersionId,
+                                apiVersionId: taskContext.apiVersionId ?? taskContext.agentDefId,
                             },
                         },
                     },

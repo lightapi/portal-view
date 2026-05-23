@@ -60,6 +60,7 @@ export type TaskContextKey =
   | "tokenId"
   | "kid"
   | "wfDefId"
+  | "workflowRole"
   | "wfInstanceId"
   | "wfTaskId"
   | "taskId"
@@ -107,6 +108,8 @@ export type TaskResolvedContext = Partial<Record<TaskContextKey, string>> & {
   apiExists?: boolean;
   apiVersionExists?: boolean;
   roleExists?: boolean;
+  agentProfileExists?: boolean;
+  agentProfileIncomplete?: boolean;
   mcpToolsConfigured?: boolean;
   accessConfigured?: boolean;
   promotionExportReady?: boolean;

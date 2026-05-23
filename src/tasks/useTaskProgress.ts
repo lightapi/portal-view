@@ -36,6 +36,13 @@ type McpToolEndpoint = {
 };
 
 type ApiVersionRecord = {
+  apiId?: string;
+  apiVersionId?: string;
+  apiType?: string;
+};
+
+type AgentDefinitionRecord = {
+  agentDefId?: string;
   apiVersionId?: string;
 };
 
@@ -45,6 +52,11 @@ function has(context: TaskResolvedContext, key: keyof TaskResolvedContext) {
 
 function stepProgress(stepId: string, status: TaskStepStatus, message?: string): TaskStepProgress {
   return { stepId, status, message };
+}
+
+function normalizeApiType(apiType: string | undefined) {
+  const normalized = apiType?.trim().toLowerCase();
+  return normalized === "agent" ? "agt" : normalized;
 }
 
 function defaultProgress(task: TaskDefinition): TaskStepProgress[] {
@@ -79,6 +91,73 @@ function publishApiStepProgress(task: TaskDefinition, context: TaskResolvedConte
     versionKnown
       ? stepProgress("review-marketplace", "optional", "Review the listing before consumers use it.")
       : stepProgress("review-marketplace", "blocked", "Add an API version first."),
+  );
+
+  return task.steps.map((step) => progressByStep.get(step.id) ?? fallbackStepProgress(step, context));
+}
+
+function registerAiAgentStepProgress(task: TaskDefinition, context: TaskResolvedContext): TaskStepProgress[] {
+  const apiKnown = context.apiExists || has(context, "apiId") || has(context, "apiVersionId") || has(context, "agentDefId");
+  const versionKnown = has(context, "apiVersionId") || has(context, "agentDefId");
+  const profileKnown = context.agentProfileExists || (has(context, "agentDefId") && context.agentProfileIncomplete !== true);
+  const skillKnown = has(context, "skillId");
+  const toolKnown = has(context, "toolId");
+  const runtimeKnown = has(context, "instanceApiId") || has(context, "instanceId") || has(context, "runtimeInstanceId");
+  const progressByStep = new Map<string, TaskStepProgress>();
+
+  progressByStep.set(
+    "api",
+    apiKnown
+      ? stepProgress("api", "complete", "API context is available.")
+      : stepProgress("api", "ready", "Create or select the API that represents the agent."),
+  );
+  progressByStep.set(
+    "version",
+    versionKnown
+      ? stepProgress("version", "complete", "Agent API version context is available.")
+      : apiKnown
+        ? stepProgress("version", "ready", "Create the API version with API type agt.")
+        : stepProgress("version", "blocked", "Create or select an API first."),
+  );
+  progressByStep.set(
+    "profile",
+    profileKnown
+      ? stepProgress("profile", "complete", "Agent profile exists for this API version.")
+      : versionKnown
+        ? stepProgress("profile", "ready", "Create the agent definition for this API version.")
+        : stepProgress("profile", "blocked", "Create the agent API version first."),
+  );
+  progressByStep.set(
+    "skills",
+    skillKnown
+      ? stepProgress("skills", "complete", "Agent skill context is available.")
+      : profileKnown
+        ? stepProgress("skills", "optional", "Attach skills when the agent needs reusable behavior.")
+        : stepProgress("skills", "blocked", "Create the agent profile first."),
+  );
+  progressByStep.set(
+    "tools",
+    toolKnown
+      ? stepProgress("tools", "complete", "Tool context is available.")
+      : skillKnown
+        ? stepProgress("tools", "optional", "Review tools exposed through the assigned skills.")
+        : stepProgress("tools", "blocked", "Assign a skill before reviewing skill tools."),
+  );
+  progressByStep.set(
+    "access",
+    context.accessConfigured
+      ? stepProgress("access", "complete", "Access control exists for this agent API version.")
+      : profileKnown || versionKnown
+        ? stepProgress("access", "optional", "Create role permissions before exposing the agent.")
+        : stepProgress("access", "blocked", "Create the agent API version first."),
+  );
+  progressByStep.set(
+    "runtime",
+    runtimeKnown
+      ? stepProgress("runtime", "complete", "Runtime or instance link context is available.")
+      : profileKnown || versionKnown
+        ? stepProgress("runtime", "optional", "Link this agent version to a runtime instance when deployed.")
+        : stepProgress("runtime", "blocked", "Create the agent API version first."),
   );
 
   return task.steps.map((step) => progressByStep.get(step.id) ?? fallbackStepProgress(step, context));
@@ -1111,6 +1190,111 @@ async function resolvePublishApiContext(host: string, baseContext: TaskResolvedC
   return nextContext;
 }
 
+async function resolveRegisterAiAgentContext(host: string, baseContext: TaskResolvedContext) {
+  const nextContext = await resolvePublishApiContext(host, baseContext);
+
+  if (nextContext.apiId) {
+    const versionCmd = {
+      host: "lightapi.net",
+      service: "service",
+      action: "getApiVersion",
+      version: "0.1.0",
+      data: {
+        hostId: host,
+        apiId: nextContext.apiId,
+        offset: 0,
+        limit: 100,
+        active: true,
+        filters: "[]",
+        sorting: "[]",
+        globalFilter: "",
+      },
+    };
+    const versionData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(versionCmd)));
+    const versions = Array.isArray(versionData)
+      ? versionData as ApiVersionRecord[]
+      : Array.isArray(versionData?.apiVersions)
+        ? versionData.apiVersions as ApiVersionRecord[]
+        : [];
+    const agentVersions = versions.filter((version) => normalizeApiType(version.apiType) === "agt");
+    nextContext.apiVersionExists = agentVersions.length > 0;
+
+    if (!baseContext.apiVersionId && !baseContext.agentDefId) {
+      if (agentVersions.length === 1 && agentVersions[0]?.apiVersionId) {
+        nextContext.apiVersionId = agentVersions[0].apiVersionId;
+        nextContext.agentDefId = agentVersions[0].apiVersionId;
+      } else {
+        delete nextContext.apiVersionId;
+        delete nextContext.agentDefId;
+      }
+    }
+  }
+
+  if (!nextContext.agentDefId && nextContext.apiVersionId) {
+    nextContext.agentDefId = nextContext.apiVersionId;
+  }
+  if (!nextContext.apiVersionId && nextContext.agentDefId) {
+    nextContext.apiVersionId = nextContext.agentDefId;
+    nextContext.apiVersionExists = true;
+  }
+
+  if (nextContext.agentDefId) {
+    const agentCmd = {
+      host: "lightapi.net",
+      service: "genai",
+      action: "getAgentDefinition",
+      version: "0.1.0",
+      data: {
+        hostId: host,
+        offset: 0,
+        limit: 1,
+        active: true,
+        filters: JSON.stringify([{ id: "agentDefId", value: nextContext.agentDefId }]),
+        sorting: "[]",
+        globalFilter: "",
+      },
+    };
+    const agentData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(agentCmd)));
+    const agentDefinitions = Array.isArray(agentData)
+      ? agentData as AgentDefinitionRecord[]
+      : Array.isArray(agentData?.agentDefinitions)
+        ? agentData.agentDefinitions as AgentDefinitionRecord[]
+        : Array.isArray(agentData?.agents)
+          ? agentData.agents as AgentDefinitionRecord[]
+          : [];
+    const agentDefinition = agentDefinitions[0];
+    nextContext.agentProfileExists = !!agentDefinition;
+    nextContext.agentProfileIncomplete = !!nextContext.apiVersionId && !agentDefinition;
+    if (agentDefinition?.apiVersionId) nextContext.apiVersionId = agentDefinition.apiVersionId;
+    if (agentDefinition?.agentDefId) nextContext.agentDefId = agentDefinition.agentDefId;
+  } else if (nextContext.apiVersionId) {
+    nextContext.agentProfileExists = false;
+    nextContext.agentProfileIncomplete = true;
+  }
+
+  if (nextContext.apiVersionId) {
+    const permissionCmd = {
+      host: "lightapi.net",
+      service: "role",
+      action: "queryRolePermission",
+      version: "0.1.0",
+      data: {
+        hostId: host,
+        offset: 0,
+        limit: 1,
+        active: true,
+        filters: JSON.stringify([{ id: "apiVersionId", value: nextContext.apiVersionId }]),
+        sorting: "[]",
+        globalFilter: "",
+      },
+    };
+    const permissionData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(permissionCmd)));
+    nextContext.accessConfigured = (permissionData?.rolePermissions ?? []).length > 0;
+  }
+
+  return nextContext;
+}
+
 async function resolveAccessContext(host: string, baseContext: TaskResolvedContext) {
   const nextContext: TaskResolvedContext = { ...baseContext };
 
@@ -1169,6 +1353,9 @@ function shouldResolveTask(task: TaskDefinition, context: TaskResolvedContext) {
   if (task.id === "publish-api") {
     return !!(context.apiId || context.apiVersionId);
   }
+  if (task.id === "register-ai-agent") {
+    return !!(context.apiId || context.apiVersionId || context.agentDefId);
+  }
   if (task.id === "configure-access-control") {
     return !!(context.roleId || context.apiVersionId || context.endpointId);
   }
@@ -1181,6 +1368,9 @@ function resolveTaskContext(task: TaskDefinition, host: string, context: TaskRes
   }
   if (task.id === "publish-api") {
     return resolvePublishApiContext(host, context);
+  }
+  if (task.id === "register-ai-agent") {
+    return resolveRegisterAiAgentContext(host, context);
   }
   if (task.id === "configure-access-control") {
     return resolveAccessContext(host, context);
@@ -1244,6 +1434,8 @@ export function useTaskProgress(
       resolvedSteps = mcpStepProgress(task, context);
     } else if (task.id === "publish-api") {
       resolvedSteps = publishApiStepProgress(task, context);
+    } else if (task.id === "register-ai-agent") {
+      resolvedSteps = registerAiAgentStepProgress(task, context);
     } else if (task.id === "configure-access-control") {
       resolvedSteps = accessControlStepProgress(task, context);
     } else if (task.id === "promote-configuration") {

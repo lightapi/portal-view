@@ -49,6 +49,26 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
   });
 };
 
+function normalizeFormModel(formId: string | undefined, source: any) {
+  const next = { ...(source ?? {}) };
+
+  if (formId === "createApiVersion" || formId === "updateApiVersion") {
+    const apiType = typeof next.apiType === "string" ? next.apiType.trim().toLowerCase() : "";
+    if (apiType === "agent") next.apiType = "agt";
+  }
+
+  if (formId === "createAgentDefinition" || formId === "updateAgentDefinition") {
+    if (!next.agentDefId && next.apiVersionId) {
+      next.agentDefId = next.apiVersionId;
+    }
+    if (!next.apiVersionId && next.agentDefId) {
+      next.apiVersionId = next.agentDefId;
+    }
+  }
+
+  return next;
+}
+
 function Form() {
   const params = useParams();
   const formId = params.formId;
@@ -92,7 +112,7 @@ function Form() {
       ...initialModel,
       hostId: initialModel.hostId ?? host
     };
-    setModel(modelWithHostId);
+    setModel(normalizeFormModel(formId, modelWithHostId));
   }, [host, formId, location.state, location.search]);
 
   const onModelChange = (key: string | string[], val: any, type?: string) => {
@@ -104,21 +124,23 @@ function Form() {
   };
 
   function onButtonClick(action: any) {
-    let result = utils.validateBySchema(schema, model);
+    const normalizedModel = normalizeFormModel(formId, model);
+    setModel(normalizedModel);
+    let result = utils.validateBySchema(schema, normalizedModel);
     if (!result.valid) {
       setShowErrors(true);
       setValidationResult(result);
     } else {
-      action.data = model;
+      action.data = normalizedModel;
       const url = action.path ? action.path : "/portal/command";
       const headers = {
         "Content-Type": "application/json",
       };
-      submitForm(url, headers, action);
+      submitForm(url, headers, action, normalizedModel);
     }
   }
 
-  const submitForm = async (url: string, headers: any, action: any) => {
+  const submitForm = async (url: string, headers: any, action: any, submittedModel: any) => {
     setFetching(true);
     try {
       const data = await fetchClient(url, {
@@ -132,7 +154,7 @@ function Form() {
       if (taskContext) {
         const nextContext = mergeTaskContext(
           taskContext.context,
-          contextFromObject(model),
+          contextFromObject(submittedModel),
           contextFromObject(data),
         );
         saveStoredTaskContext(taskContext.taskId, nextContext);

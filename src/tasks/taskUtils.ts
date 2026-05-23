@@ -90,6 +90,7 @@ export const taskContextKeys: TaskContextKey[] = [
   "tokenId",
   "kid",
   "wfDefId",
+  "workflowRole",
   "wfInstanceId",
   "wfTaskId",
   "taskId",
@@ -238,7 +239,7 @@ export function contextualTaskIdsForContext(context: TaskResolvedContext) {
   const add = (...ids: string[]) => ids.forEach((id) => taskIds.add(id));
 
   if (context.apiId || context.apiVersionId || context.endpointId || context.serviceId) {
-    add("publish-api", "mcp-onboard-api", "configure-access-control", "manage-instance");
+    add("publish-api", "register-ai-agent", "mcp-onboard-api", "configure-access-control", "manage-instance");
   }
   if (context.instanceApiId || context.pathPrefix) {
     add("mcp-onboard-api", "manage-instance", "configure-access-control", "manage-configuration");
@@ -271,7 +272,7 @@ export function contextualTaskIdsForContext(context: TaskResolvedContext) {
     add("manage-reference-data", "portal-snapshot-migration");
   }
   if (context.agentDefId || context.skillId || context.toolId || context.paramId || context.memId || context.sessionId || context.sessionHistoryId) {
-    add("manage-genai-assets");
+    add("register-ai-agent", "manage-genai-assets");
   }
   if (context.providerId || context.tokenId || context.kid) {
     add("manage-oauth-provider");
@@ -395,6 +396,8 @@ function hasMeaningfulTaskContext(context: TaskResolvedContext) {
     || context.apiExists !== undefined
     || context.apiVersionExists !== undefined
     || context.roleExists !== undefined
+    || context.agentProfileExists !== undefined
+    || context.agentProfileIncomplete !== undefined
     || context.promotionExportReady !== undefined
     || context.promotionDryRunReady !== undefined
     || context.promotionExecuted !== undefined
@@ -413,6 +416,8 @@ function storedContextForHistory(context: TaskResolvedContext) {
   if (context.apiExists !== undefined) storedContext.apiExists = context.apiExists;
   if (context.apiVersionExists !== undefined) storedContext.apiVersionExists = context.apiVersionExists;
   if (context.roleExists !== undefined) storedContext.roleExists = context.roleExists;
+  if (context.agentProfileExists !== undefined) storedContext.agentProfileExists = context.agentProfileExists;
+  if (context.agentProfileIncomplete !== undefined) storedContext.agentProfileIncomplete = context.agentProfileIncomplete;
   if (context.promotionExportReady !== undefined) storedContext.promotionExportReady = context.promotionExportReady;
   if (context.promotionDryRunReady !== undefined) storedContext.promotionDryRunReady = context.promotionDryRunReady;
   if (context.promotionExecuted !== undefined) storedContext.promotionExecuted = context.promotionExecuted;

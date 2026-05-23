@@ -16699,6 +16699,11 @@
           "title": "API Version Id",
           "type": "string"
         },
+        "apiVersionId": {
+          "title": "API Version Id",
+          "type": "string",
+          "readonly": true
+        },
         "modelProvider": {
           "title": "Model Provider",
           "type": "string"
@@ -16804,6 +16809,11 @@
           "readonly": true
         },
         "agentDefId": {
+          "title": "API Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "apiVersionId": {
           "title": "API Version Id",
           "type": "string",
           "readonly": true

@@ -78,7 +78,7 @@ export function GenAiTaskLayout({
             <TaskActionPanel
                 title="GenAI Tasks"
                 context={context}
-                taskIds={['manage-genai-assets']}
+                taskIds={['register-ai-agent', 'manage-genai-assets']}
                 maxActions={3}
             />
             <Box mt={2}>
