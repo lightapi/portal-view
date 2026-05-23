@@ -1,44 +1,97 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     MaterialReactTable,
     useMaterialReactTable,
     type MRT_ColumnDef,
-    type MRT_ColumnFiltersState,
     type MRT_PaginationState,
-    type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
-import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
-import ListAltIcon from '@mui/icons-material/ListAlt';
+import {
+    Alert,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    FormControlLabel,
+    IconButton,
+    Stack,
+    Switch,
+    Tab,
+    Tabs,
+    Tooltip,
+} from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
-import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
-// --- Type Definitions ---
-type WorklistApiResponse = {
-    worklists: Array<WorklistType>;
-    total: number;
+type InboxTab = {
+    id: string;
+    label: string;
+    assignmentType?: string | null;
+    assignmentId?: string | null;
+    count: number;
 };
 
-type WorklistType = {
+type HumanTaskRow = {
     hostId: string;
-    assigneeId: string;
-    categoryId: string;
-    statusCode: string;
-    appId: string;
-    aggregateVersion: number;
-    active: boolean;
-    updateUser?: string;
-    updateTs?: string;
+    taskAsstId: string;
+    taskId: string;
+    processId?: string;
+    wfInstanceId?: string;
+    wfTaskId?: string;
+    assignedTs?: string;
+    assigneeId?: string;
+    assignmentType?: string;
+    assignmentId?: string;
+    assignmentLabel?: string;
+    assignmentStatusCode?: string;
+    claimedBy?: string;
+    claimedTs?: string;
+    claimExpiresTs?: string;
+    deadlineTs?: string;
+    categoryCode?: string;
+    reasonCode?: string;
+    taskStatusCode?: string;
+    taskType?: string;
+    active?: boolean;
+    canClaim?: boolean;
+    canRelease?: boolean;
+    canComplete?: boolean;
+    readOnly?: boolean;
+    ask?: {
+        prompt?: string;
+        mode?: string;
+    };
+    workflow?: {
+        namespace?: string;
+        name?: string;
+        version?: string;
+    };
 };
 
 interface UserState {
-    host?: string;
+    host?: string | null;
+}
+
+function formatDate(value?: string) {
+    return value ? new Date(value).toLocaleString() : '';
+}
+
+function statusChip(status?: string, claimedBy?: string) {
+    const color = status === 'CLAIMED' ? 'warning' : status === 'ASSIGNED' ? 'success' : 'default';
+    const label = status === 'CLAIMED' && claimedBy ? `${status}: ${claimedBy}` : status || '';
+    return <Chip size="small" color={color} label={label} />;
+}
+
+function workflowLabel(row: HumanTaskRow) {
+    const workflow = row.workflow;
+    if (!workflow?.name) return row.wfTaskId || row.taskId;
+    return [workflow.namespace, workflow.name, workflow.version].filter(Boolean).join(':');
 }
 
 export default function Worklist() {
@@ -46,230 +99,277 @@ export default function Worklist() {
     const location = useLocation();
     const { host } = useUserState() as UserState;
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-    const taskContext = useMemo(() => buildWorkflowTaskContext(host, searchParams), [host, searchParams]);
-    const contextForRow = useCallback(
-        (row: WorklistType) => buildWorkflowTaskContext(host, searchParams, row),
-        [host, searchParams],
-    );
+    const taskContext = useMemo(() => buildWorkflowTaskContext(host || undefined, searchParams), [host, searchParams]);
 
-    // Data and fetching state
-    const [data, setData] = useState<WorklistType[]>([]);
-    const [isError, setIsError] = useState(false);
+    const [tabs, setTabs] = useState<InboxTab[]>([]);
+    const [activeTab, setActiveTab] = useState('all');
+    const [showLocked, setShowLocked] = useState(false);
+    const [data, setData] = useState<HumanTaskRow[]>([]);
+    const [rowCount, setRowCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
-    const [rowCount, setRowCount] = useState(0);
-    const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
-
-    const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
-        { id: 'active', value: 'true' }
-    ]);
-    const [globalFilter, setGlobalFilter] = useState('');
-    const [sorting, setSorting] = useState<MRT_SortingState>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [pagination, setPagination] = useState<MRT_PaginationState>({
         pageIndex: 0,
         pageSize: 10,
     });
 
-    // Data fetching logic
-    const fetchData = useCallback(async () => {
+    const fetchSummary = useCallback(async (background = false) => {
         if (!host) return;
-        if (!data.length) setIsLoading(true); else setIsRefetching(true);
-
-        let activeStatus = true; // Default to true if not present
-        const apiFilters: MRT_ColumnFiltersState = [];
-
-        columnFilters.forEach(filter => {
-            if (filter.id === 'active') {
-                activeStatus = filter.value === 'true' || filter.value === true;
-            } else {
-                apiFilters.push(filter);
-            }
-        });
+        if (background) setIsRefetching(true);
+        setError(null);
 
         const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'getWorklist', version: '0.1.0',
+            host: 'lightapi.net',
+            service: 'workflow',
+            action: 'getHumanTaskInboxSummary',
+            version: '0.1.0',
+            data: { hostId: host },
+        };
+
+        try {
+            const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            const nextTabs = json.tabs || [];
+            setTabs(nextTabs);
+            if (nextTabs.length > 0 && !nextTabs.some((tab: InboxTab) => tab.id === activeTab)) {
+                setActiveTab(nextTabs[0].id);
+            }
+        } catch (e: any) {
+            setError(e?.description || e?.message || 'Unable to load worklist summary.');
+        } finally {
+            setIsRefetching(false);
+        }
+    }, [activeTab, host]);
+
+    const fetchData = useCallback(async (background = false) => {
+        if (!host || !activeTab) return;
+        if (background) {
+            setIsRefetching(true);
+        } else {
+            setIsLoading(true);
+        }
+        setError(null);
+
+        const cmd = {
+            host: 'lightapi.net',
+            service: 'workflow',
+            action: 'getHumanTaskList',
+            version: '0.1.0',
             data: {
-                hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
-                sorting: JSON.stringify(sorting ?? []),
-                filters: JSON.stringify(apiFilters ?? []),
-                globalFilter: globalFilter ?? '',
-                active: activeStatus,
+                hostId: host,
+                offset: pagination.pageIndex * pagination.pageSize,
+                limit: pagination.pageSize,
+                tabId: activeTab,
+                includeClaimed: true,
+                includeClaimedByOthers: showLocked,
             },
         };
 
-        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
         try {
-            const json = await fetchClient(url);
-            setData(json.worklists || []);
+            const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            setData(json.humanTasks || []);
             setRowCount(json.total || 0);
-        } catch (error) {
-            setIsError(true); console.error(error);
+        } catch (e: any) {
+            setError(e?.description || e?.message || 'Unable to load worklist tasks.');
         } finally {
-            setIsError(false); setIsLoading(false); setIsRefetching(false);
+            setIsLoading(false);
+            setIsRefetching(false);
         }
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [activeTab, host, pagination.pageIndex, pagination.pageSize, showLocked]);
 
-    // useEffect to trigger fetchData
     useEffect(() => {
-        fetchData();
+        fetchSummary(false);
+    }, [fetchSummary]);
+
+    useEffect(() => {
+        fetchData(false);
     }, [fetchData]);
 
-    // Helper ID generator for loading states and rendering keys
-    const getRowId = (row: MRT_Row<WorklistType> | WorklistType) => {
-        const data = "original" in row ? row.original : row;
-        return `${data.assigneeId}|${data.categoryId}`;
-    };
+    useEffect(() => {
+        const id = window.setInterval(() => {
+            fetchSummary(true);
+            fetchData(true);
+        }, 15000);
+        return () => window.clearInterval(id);
+    }, [fetchData, fetchSummary]);
 
-    // Delete handler with optimistic update
-    const handleDelete = useCallback(async (row: MRT_Row<WorklistType>) => {
-        const rowId = getRowId(row);
-        if (!window.confirm(`Are you sure you want to delete worklist for Assignee: ${row.original.assigneeId}, Category: ${row.original.categoryId}?`)) return;
+    const refresh = useCallback(async () => {
+        await Promise.all([fetchSummary(true), fetchData(true)]);
+    }, [fetchData, fetchSummary]);
 
-        const originalData = [...data];
-        setData(prev => prev.filter(d => getRowId(d) !== rowId));
-        setRowCount(prev => prev - 1);
+    const handleTabChange = useCallback((_event: SyntheticEvent, value: string) => {
+        setActiveTab(value);
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }, []);
 
-        const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'deleteWorklist', version: '0.1.0',
-            data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
-        };
-
-        try {
-            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
-            if (result.error) {
-                alert('Failed to delete worklist. Please try again.');
-                setData(originalData);
-                setRowCount(originalData.length);
-            }
-        } catch (e) {
-            alert('Failed to delete worklist due to a network error.');
-            setData(originalData);
-            setRowCount(originalData.length);
-        }
-    }, [data]);
-
-    const handleUpdate = useCallback(async (row: MRT_Row<WorklistType>) => {
-        const rowId = getRowId(row);
-        setIsUpdateLoading(rowId);
-
-        const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'getFreshWorklist', version: '0.1.0',
-            data: row.original,
-        };
-        const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
-        try {
-            const freshData = await fetchClient(url);
-            console.log("freshData", freshData);
-
-            // Navigate with the fresh data
-            navigate(buildWorkflowTaskRoute('/app/form/updateWorklist', searchParams, contextForRow(row.original)), {
-                state: {
-                    data: freshData,
-                    source: location.pathname
-                }
-            });
-        } catch (error) {
-            console.error("Failed to fetch worklist for update:", error);
-            alert("Could not load the latest worklist data. Please try again.");
-        } finally {
-            setIsUpdateLoading(null);
-        }
-    }, [navigate, location.pathname, searchParams, contextForRow]);
-
-    const handleOpenTasks = useCallback((row: MRT_Row<WorklistType>) => {
-        const context = contextForRow(row.original);
-        navigate(buildWorkflowTaskRoute('/app/workflow/TaskAsst', searchParams, context), {
+    const openTask = useCallback((row: MRT_Row<HumanTaskRow>) => {
+        const context = buildWorkflowTaskContext(host || undefined, searchParams, row.original);
+        navigate(buildWorkflowTaskRoute('/app/workflow/HumanTask', searchParams, context), {
             state: { source: location.pathname + location.search },
         });
-    }, [contextForRow, location.pathname, location.search, navigate, searchParams]);
+    }, [host, location.pathname, location.search, navigate, searchParams]);
 
-    // Column definitions
-    const columns = useMemo<MRT_ColumnDef<WorklistType>[]>(
-        () => [
-            { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'assigneeId', header: 'Assignee Id' },
-            { accessorKey: 'categoryId', header: 'Category Id' },
-            { accessorKey: 'statusCode', header: 'Status' },
-            { accessorKey: 'appId', header: 'App Id' },
-            { accessorKey: 'updateUser', header: 'Update User' },
-            {
-                accessorKey: 'updateTs',
-                header: 'Update Time',
-                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+    const runTaskAction = useCallback(async (action: 'claimHumanTask' | 'releaseHumanTask', row: HumanTaskRow) => {
+        if (!host) return;
+        setActionLoading(`${action}:${row.taskAsstId}`);
+        setError(null);
+
+        const cmd = {
+            host: 'lightapi.net',
+            service: 'workflow',
+            action,
+            version: '0.1.0',
+            data: {
+                hostId: host,
+                taskAsstId: row.taskAsstId,
+                ...(action === 'claimHumanTask' ? { claimMinutes: 30 } : {}),
             },
-            { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
+        };
+
+        try {
+            await fetchClient('/portal/command', { method: 'POST', body: cmd });
+            await refresh();
+        } catch (e: any) {
+            setError(e?.description || e?.message || 'Unable to update task claim.');
+            await refresh();
+        } finally {
+            setActionLoading(null);
+        }
+    }, [host, refresh]);
+
+    const columns = useMemo<MRT_ColumnDef<HumanTaskRow>[]>(
+        () => [
             {
-                accessorKey: 'active',
-                header: 'Active',
-                filterVariant: 'select',
-                filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-                Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+                accessorKey: 'assignmentStatusCode',
+                header: 'Status',
+                Cell: ({ row }) => statusChip(row.original.assignmentStatusCode, row.original.claimedBy),
+            },
+            {
+                accessorFn: workflowLabel,
+                id: 'workflowName',
+                header: 'Workflow',
+            },
+            {
+                accessorFn: (row) => row.ask?.prompt || row.wfTaskId || '',
+                id: 'prompt',
+                header: 'Task',
+            },
+            {
+                accessorFn: (row) => row.assignmentLabel || row.assignmentId || row.assigneeId || '',
+                id: 'assignmentTarget',
+                header: 'Assignment',
+            },
+            { accessorKey: 'categoryCode', header: 'Category' },
+            {
+                accessorKey: 'claimExpiresTs',
+                header: 'Claim Expires',
+                Cell: ({ cell }) => formatDate(cell.getValue<string>()),
+            },
+            {
+                accessorKey: 'deadlineTs',
+                header: 'Due',
+                Cell: ({ cell }) => formatDate(cell.getValue<string>()),
+            },
+            {
+                accessorKey: 'assignedTs',
+                header: 'Assigned',
+                Cell: ({ cell }) => formatDate(cell.getValue<string>()),
             },
         ],
         [],
     );
 
-    // Table instance configuration
     const table = useMaterialReactTable({
         columns,
         data,
-        initialState: { showColumnFilters: true, density: 'compact' },
+        initialState: { density: 'compact' },
         manualPagination: true,
-        manualSorting: true,
-        manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+        state: { isLoading, showProgressBars: isRefetching, pagination },
         onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => getRowId(row),
-        muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+        getRowId: (row) => row.taskAsstId,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Open Assigned Tasks">
-                    <IconButton color="primary" onClick={() => handleOpenTasks(row)}>
-                        <ListAltIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Update Worklist">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === getRowId(row)}
-                    >
-                        {isUpdateLoading === getRowId(row) ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Worklist">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+        muiToolbarAlertBannerProps: error ? { color: 'error', children: error } : undefined,
+        renderRowActions: ({ row }) => {
+            const task = row.original;
+            const canClaim = Boolean(task.canClaim);
+            const canRelease = Boolean(task.canRelease);
+            const claimLoading = actionLoading === `claimHumanTask:${task.taskAsstId}`;
+            const releaseLoading = actionLoading === `releaseHumanTask:${task.taskAsstId}`;
+
+            return (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title={task.readOnly ? 'Open Read-Only Task' : 'Open Task'}>
+                        <IconButton color="primary" onClick={() => openTask(row)}>
+                            <PlayCircleOutlineIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Claim Task">
+                        <span>
+                            <IconButton
+                                color="primary"
+                                disabled={!canClaim || claimLoading}
+                                onClick={() => runTaskAction('claimHumanTask', task)}
+                            >
+                                {claimLoading ? <CircularProgress size={22} /> : <LockIcon />}
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                    <Tooltip title="Release Task">
+                        <span>
+                            <IconButton
+                                disabled={!canRelease || releaseLoading}
+                                onClick={() => runTaskAction('releaseHumanTask', task)}
+                            >
+                                {releaseLoading ? <CircularProgress size={22} /> : <LockOpenIcon />}
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </Box>
+            );
+        },
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createWorklist', searchParams, taskContext))}>
-                    Create New Worklist
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Button startIcon={<RefreshIcon />} onClick={refresh}>
+                    Refresh
                 </Button>
-                <Button variant="outlined" startIcon={<ListAltIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/workflow/HumanTasks', searchParams, taskContext))}>
-                    Human Tasks
-                </Button>
-            </Box>
+                <FormControlLabel
+                    control={
+                        <Switch
+                            checked={showLocked}
+                            onChange={(event) => {
+                                setShowLocked(event.target.checked);
+                                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                            }}
+                        />
+                    }
+                    label="Show locked"
+                />
+            </Stack>
         ),
     });
 
     return (
         <WorkflowTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+            <Stack spacing={2}>
+                {error ? <Alert severity="error">{error}</Alert> : null}
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs
+                        value={tabs.some((tab) => tab.id === activeTab) ? activeTab : false}
+                        onChange={handleTabChange}
+                        variant="scrollable"
+                        scrollButtons="auto"
+                        allowScrollButtonsMobile
+                    >
+                        {tabs.map((tab) => (
+                            <Tab key={tab.id} value={tab.id} label={`${tab.label} (${tab.count})`} />
+                        ))}
+                    </Tabs>
+                </Box>
+                <MaterialReactTable table={table} />
+            </Stack>
         </WorkflowTaskLayout>
     );
 }
