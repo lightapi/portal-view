@@ -16806,8 +16806,25 @@
     "form": [
       "hostId",
       "agentDefId",
-      "modelProvider",
-      "modelName",
+      {
+        "key": "modelProvider",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_provider"
+        }
+      },
+      {
+        "key": "modelName",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_name&rela=provider_name&from={0}",
+          "params": [
+            "modelProvider"
+          ]
+        }
+      },
       "apiKeyRef",
       "temperature",
       "maxTokens",
