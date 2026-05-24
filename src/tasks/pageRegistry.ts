@@ -53,6 +53,17 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["api"],
   },
   {
+    id: "workflow-marketplace",
+    title: "Workflow Catalog",
+    description: "Browse workflow definitions by taxonomy and start visible workflows.",
+    route: "/app/marketplace/workflow",
+    category: "API Marketplace",
+    roles: ["user"],
+    helpPath: "/help/portal-view/pages/workflow-catalog",
+    keywords: ["workflow", "marketplace", "catalog", "definition", "start", "process", "task"],
+    entities: ["wfDefId"],
+  },
+  {
     id: "create-api",
     title: "Create API",
     description: "Register a new API using the service creation form.",

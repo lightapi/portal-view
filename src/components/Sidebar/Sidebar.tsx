@@ -112,6 +112,7 @@ const structure = [
         id: 20, label: "Marketplace", link: "/app/marketplace/api", icon: <ShoppingBasketIcon />,
         children: [
           { label: "API Catalog", link: "/app/marketplace/api" },
+          { label: "Workflow Catalog", link: "/app/marketplace/workflow" },
           { label: "API Client", link: "/app/client" },
           { label: "OpenApi API", link: "/app/service/openapi" },
           { label: "GraphQL API", link: "/app/service/graphql" },

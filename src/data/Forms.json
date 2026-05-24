@@ -16163,6 +16163,11 @@
           "title": "Definition (YAML)",
           "type": "string"
         },
+        "catalogVisible": {
+          "title": "Publish in Workflow Catalog",
+          "type": "boolean",
+          "default": false
+        },
         "categoryIds": {
           "title": "Categories",
           "type": "array",
@@ -16202,6 +16207,7 @@
         "type": "textarea",
         "rows": 10
       },
+      "catalogVisible",
       {
         "key": "categoryIds",
         "type": "dynaselect",
@@ -16286,6 +16292,11 @@
           "title": "Definition (YAML)",
           "type": "string"
         },
+        "catalogVisible": {
+          "title": "Publish in Workflow Catalog",
+          "type": "boolean",
+          "default": false
+        },
         "categoryIds": {
           "title": "Categories",
           "type": "array",
@@ -16331,6 +16342,7 @@
         "type": "textarea",
         "rows": 10
       },
+      "catalogVisible",
       {
         "key": "categoryIds",
         "type": "dynaselect",

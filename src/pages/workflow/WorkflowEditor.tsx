@@ -16,12 +16,14 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    FormControlLabel,
     LinearProgress,
     List,
     ListItemButton,
     ListItemText,
     MenuItem,
     Stack,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -58,6 +60,7 @@ type WfDefinitionType = {
     name: string;
     version: string;
     definition: string;
+    catalogVisible?: boolean;
     ownerPositionId?: string;
     categoryIds?: string[];
     tagIds?: string[];
@@ -1182,6 +1185,7 @@ export default function WorkflowEditor() {
     const [tagIds, setTagIds] = useState<string[]>(initial.tagIds || []);
     const [aggregateVersion, setAggregateVersion] = useState(initial.aggregateVersion);
     const [active, setActive] = useState(initial.active ?? true);
+    const [catalogVisible, setCatalogVisible] = useState(initial.catalogVisible ?? false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
@@ -1304,6 +1308,7 @@ export default function WorkflowEditor() {
                 setName(row.name || '');
                 setVersion(row.version || '1.0.0');
                 setDefinition(row.definition || '');
+                setCatalogVisible(row.catalogVisible ?? false);
                 setOwnerPositionId(row.ownerPositionId || '');
                 setCategoryIds(Array.isArray(row.categoryIds) ? row.categoryIds : []);
                 setTagIds(Array.isArray(row.tagIds) ? row.tagIds : []);
@@ -1745,6 +1750,7 @@ export default function WorkflowEditor() {
             name,
             version,
             definition,
+            catalogVisible,
             ownerPositionId: ownerPositionId || undefined,
             categoryIds,
             tagIds,
@@ -1778,7 +1784,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
+    }, [active, aggregateVersion, catalogVisible, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -1863,6 +1869,10 @@ export default function WorkflowEditor() {
                         <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" />
                         <TextField label="Version" value={version} onChange={e => setVersion(e.target.value)} size="small" />
                         <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" />
+                        <FormControlLabel
+                            control={<Switch checked={catalogVisible} onChange={event => setCatalogVisible(event.target.checked)} />}
+                            label="Publish in Workflow Catalog"
+                        />
                         <Autocomplete
                             multiple
                             options={categoryOptions}
@@ -1899,6 +1909,7 @@ export default function WorkflowEditor() {
                     <Stack spacing={1}>
                         <Typography variant="body2">Mode: {isUpdate ? 'Update' : 'Create'}</Typography>
                         <Typography variant="body2">Active: {active ? 'true' : 'false'}</Typography>
+                        <Typography variant="body2">Catalog: {catalogVisible ? 'published' : 'private'}</Typography>
                         <Typography variant="body2">Aggregate Version: {aggregateVersion ?? 'new'}</Typography>
                         <Typography variant="body2">Top-level Type: {analysis.parsed === null ? 'none' : Array.isArray(analysis.parsed) ? 'array' : typeof analysis.parsed}</Typography>
                     </Stack>
