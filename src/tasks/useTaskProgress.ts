@@ -141,7 +141,9 @@ function registerAiAgentStepProgress(task: TaskDefinition, context: TaskResolved
       ? stepProgress("tools", "complete", "Tool context is available.")
       : skillKnown
         ? stepProgress("tools", "optional", "Review tools exposed through the assigned skills.")
-        : stepProgress("tools", "blocked", "Assign a skill before reviewing skill tools."),
+        : profileKnown
+          ? stepProgress("tools", "optional", "No assigned skill context is available. Review this step only after assigning skills.")
+          : stepProgress("tools", "blocked", "Create the agent profile first."),
   );
   progressByStep.set(
     "access",

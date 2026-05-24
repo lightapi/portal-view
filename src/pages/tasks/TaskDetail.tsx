@@ -135,6 +135,10 @@ export default function TaskDetail() {
     const status = stepState?.status ?? (step.required ? "ready" : "optional");
     return status === "optional";
   });
+  const canCompleteTask = taskProgressState.steps.length > 0
+    && !taskProgressState.loading
+    && taskProgressState.steps.every((step) => step.status === "complete" || step.status === "skipped");
+  const taskCategoryRoute = `/app/tasks?taskCategory=${encodeURIComponent(task.category)}`;
 
   const handleClearContext = () => {
     clearStoredTaskContext(task.id);
@@ -151,8 +155,12 @@ export default function TaskDetail() {
     restoreSkippedTaskStep(task.id, stepId);
     setContextResetToken(Date.now());
   };
+  const handleCompleteTask = () => {
+    clearStoredTaskContext(task.id);
+    navigate(taskCategoryRoute, { replace: true });
+  };
   const taskCenterRoute = buildContextRoute(
-    `/app/tasks?taskCategory=${encodeURIComponent(task.category)}`,
+    taskCategoryRoute,
     taskProgressState.context,
   );
 
@@ -182,6 +190,17 @@ export default function TaskDetail() {
               sx={{ mt: 2, textTransform: "none" }}
             >
               Continue: {nextStep.title}
+            </Button>
+          )}
+          {canCompleteTask && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<CheckCircleOutlineIcon />}
+              onClick={handleCompleteTask}
+              sx={{ mt: 2, textTransform: "none" }}
+            >
+              Complete Task
             </Button>
           )}
         </Box>
