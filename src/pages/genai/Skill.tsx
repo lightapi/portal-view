@@ -33,6 +33,10 @@ type SkillType = {
     description?: string;
     contentMarkdown: string;
     version?: string;
+    tagIds?: string[];
+    categoryIds?: string[];
+    tags?: string[];
+    categories?: string[];
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;

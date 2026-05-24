@@ -43,8 +43,12 @@ type SkillType = {
     description?: string;
     contentMarkdown?: string;
     version?: string;
+    tagIds?: string[];
+    categoryIds?: string[];
     tags?: string[];
     categories?: string[];
+    tagNames?: string[];
+    categoryNames?: string[];
     aggregateVersion?: number;
     active?: boolean;
 };
@@ -107,8 +111,10 @@ export default function SkillWorkspace() {
             description: initial.description,
             contentMarkdown: initial.contentMarkdown,
             version: initial.version,
-            tags: parseList(initial.tags),
-            categories: parseList(initial.categories),
+            tagIds: parseList(initial.tagIds),
+            categoryIds: parseList(initial.categoryIds),
+            tags: parseList(initial.tags ?? initial.tagNames),
+            categories: parseList(initial.categories ?? initial.categoryNames),
             aggregateVersion: initial.aggregateVersion,
             active: initial.active,
         } as SkillType : null,
@@ -157,8 +163,10 @@ export default function SkillWorkspace() {
             if (freshSkill) {
                 setSkill({
                     ...freshSkill,
-                    tags: parseList(freshSkill.tags),
-                    categories: parseList(freshSkill.categories),
+                    tagIds: parseList(freshSkill.tagIds),
+                    categoryIds: parseList(freshSkill.categoryIds),
+                    tags: parseList(freshSkill.tags ?? freshSkill.tagNames),
+                    categories: parseList(freshSkill.categories ?? freshSkill.categoryNames),
                 });
             }
             setSkillTools(toolJson.skillTools || []);
