@@ -53,6 +53,7 @@ import { Box, IconButton, List, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { isSsoEnabled } from "../../../config";
 // context
 import {
   toggleSidebar,
@@ -87,7 +88,9 @@ const structure = [
   {
     id: 500, type: "group", label: "Quick Start", defaultOpen: true,
     children: [
-      { id: 2, label: "MCP Gateway", role: "user", link: "/app/mcp/gateway", icon: <RouterOutlinedIcon /> },
+      ...(isSsoEnabled
+        ? [{ id: 2, label: "MCP Gateway", role: "user", link: "/app/mcp/gateway", icon: <RouterOutlinedIcon /> }]
+        : []),
     ],
   },
 
