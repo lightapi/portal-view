@@ -69,6 +69,57 @@ function normalizeFormModel(formId: string | undefined, source: any) {
   return next;
 }
 
+function cloneDefaultValue(value: any) {
+  if (Array.isArray(value)) return [...value];
+  if (value && typeof value === "object") return { ...value };
+  return value;
+}
+
+function formItemKey(item: any): string | string[] | undefined {
+  if (typeof item === "string" || Array.isArray(item)) return item;
+  return item?.key;
+}
+
+function pathParts(path: string | string[]) {
+  return Array.isArray(path) ? path.map(String) : String(path).split(".");
+}
+
+function valueAtPath(source: any, path: string | string[]) {
+  return pathParts(path).reduce((current, part) => current?.[part], source);
+}
+
+function setValueAtPath(target: any, path: string | string[], value: any) {
+  const parts = pathParts(path);
+  let current = target;
+  parts.forEach((part, index) => {
+    if (index === parts.length - 1) {
+      current[part] = value;
+      return;
+    }
+    current[part] = current[part] && typeof current[part] === "object" ? { ...current[part] } : {};
+    current = current[part];
+  });
+}
+
+function applyInitialDefaults(formData: any, source: any) {
+  const next = { ...(source ?? {}) };
+  const schemaProperties = formData?.schema?.properties ?? {};
+  const formItems = Array.isArray(formData?.form) ? formData.form : [];
+
+  formItems.forEach((item: any) => {
+    const key = formItemKey(item);
+    if (!key) return;
+
+    const keyName = Array.isArray(key) ? key.join(".") : key;
+    const defaultValue = item?.default ?? item?.schema?.default ?? schemaProperties[keyName]?.default;
+    if (defaultValue === undefined || valueAtPath(next, key) != null) return;
+
+    setValueAtPath(next, key, cloneDefaultValue(defaultValue));
+  });
+
+  return next;
+}
+
 function submittedFormModel(formId: string | undefined, source: any) {
   const next = normalizeFormModel(formId, source);
   const formData = formId ? (forms as any)[formId] : undefined;
@@ -124,7 +175,7 @@ function Form() {
       ...initialModel,
       hostId: initialModel.hostId ?? host
     };
-    setModel(normalizeFormModel(formId, modelWithHostId));
+    setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
   }, [host, formId, location.state, location.search]);
 
   const onModelChange = (key: string | string[], val: any, type?: string) => {
