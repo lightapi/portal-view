@@ -41,17 +41,7 @@ export default function TaskPageContextBar() {
   });
   const page = task
     ? undefined
-    : location.pathname === "/app/tasks"
-      ? {
-        id: "task-center",
-        title: "Task Center",
-        description: "Start from a task and continue across related pages and forms.",
-        route: "/app/tasks",
-        category: "Tasks",
-        kind: "Page" as const,
-        keywords: ["task", "center"],
-      }
-      : pageDefinitionForRoute(allPageRegistry, location.pathname);
+    : pageDefinitionForRoute(allPageRegistry, location.pathname);
 
   if (!task && !page) return null;
 

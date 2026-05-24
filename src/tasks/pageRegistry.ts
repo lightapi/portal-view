@@ -3,6 +3,16 @@ import forms from "../data/Forms.json";
 
 export const pageRegistry: PageDefinition[] = [
   {
+    id: "task-center",
+    title: "Task Center",
+    description: "Start from a task and continue across related pages and forms.",
+    route: "/app/tasks",
+    category: "Tasks",
+    kind: "Page",
+    helpPath: "/help/portal-view/pages/task-center",
+    keywords: ["task", "center", "workflow", "search", "recent", "suggested"],
+  },
+  {
     id: "mcp-gateway",
     title: "MCP Gateway",
     description: "View onboarded MCP servers, gateway instances, and selected tools.",
