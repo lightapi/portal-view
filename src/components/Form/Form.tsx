@@ -69,6 +69,18 @@ function normalizeFormModel(formId: string | undefined, source: any) {
   return next;
 }
 
+function submittedFormModel(formId: string | undefined, source: any) {
+  const next = normalizeFormModel(formId, source);
+  const formData = formId ? (forms as any)[formId] : undefined;
+  const submitOmitFields = formData?.submitOmitFields;
+  if (Array.isArray(submitOmitFields)) {
+    for (const field of submitOmitFields) {
+      delete next[field];
+    }
+  }
+  return next;
+}
+
 function Form() {
   const params = useParams();
   const formId = params.formId;
@@ -131,12 +143,13 @@ function Form() {
       setShowErrors(true);
       setValidationResult(result);
     } else {
-      action.data = normalizedModel;
+      const modelToSubmit = submittedFormModel(formId, normalizedModel);
+      action.data = modelToSubmit;
       const url = action.path ? action.path : "/portal/command";
       const headers = {
         "Content-Type": "application/json",
       };
-      submitForm(url, headers, action, normalizedModel);
+      submitForm(url, headers, action, modelToSubmit);
     }
   }
 

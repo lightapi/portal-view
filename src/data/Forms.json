@@ -7227,6 +7227,10 @@
   },
   "createRefRelation": {
     "formId": "createRefRelation",
+    "submitOmitFields": [
+      "fromTableId",
+      "toTableId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -7246,8 +7250,16 @@
           "title": "Relation Id",
           "type": "string"
         },
+        "fromTableId": {
+          "title": "From Table",
+          "type": "string"
+        },
         "valueIdFrom": {
           "title": "Value Id From",
+          "type": "string"
+        },
+        "toTableId": {
+          "title": "To Table",
           "type": "string"
         },
         "valueIdTo": {
@@ -7268,8 +7280,50 @@
     },
     "form": [
       "relationId",
-      "valueIdFrom",
-      "valueIdTo",
+      {
+        "key": "fromTableId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22ref%22%2C%22action%22%3A%22getRefTableLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "valueIdFrom",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22ref%22%2C%22action%22%3A%22getRefValueLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22tableId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "fromTableId"
+          ]
+        }
+      },
+      {
+        "key": "toTableId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22ref%22%2C%22action%22%3A%22getRefTableLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "valueIdTo",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22ref%22%2C%22action%22%3A%22getRefValueLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22tableId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "toTableId"
+          ]
+        }
+      },
       "active"
     ]
   },
