@@ -18350,6 +18350,11 @@
           "title": "Name",
           "type": "string"
         },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        },
         "description": {
           "title": "Description",
           "type": "string"
@@ -18373,11 +18378,6 @@
             "type": "string"
           },
           "default": []
-        },
-        "version": {
-          "title": "Version",
-          "type": "string",
-          "default": "1.0.0"
         }
       },
       "required": [
@@ -18400,6 +18400,7 @@
         }
       },
       "name",
+      "version",
       {
         "key": "description",
         "type": "textarea"
@@ -18435,8 +18436,7 @@
             "hostId"
           ]
         }
-      },
-      "version"
+      }
     ]
   },
   "updateSkill": {
@@ -18474,6 +18474,11 @@
           "title": "Name",
           "type": "string"
         },
+        "version": {
+          "title": "Version",
+          "type": "string",
+          "default": "1.0.0"
+        },
         "description": {
           "title": "Description",
           "type": "string"
@@ -18497,11 +18502,6 @@
             "type": "string"
           },
           "default": []
-        },
-        "version": {
-          "title": "Version",
-          "type": "string",
-          "default": "1.0.0"
         },
         "active": {
           "title": "Active",
@@ -18531,6 +18531,7 @@
         }
       },
       "name",
+      "version",
       {
         "key": "description",
         "type": "textarea"
@@ -18567,7 +18568,6 @@
           ]
         }
       },
-      "version",
       "active"
     ]
   },
