@@ -10,6 +10,7 @@ interface UserState {
   isAuthenticated: boolean;
   email: string | null;
   userId: string | null;
+  sessionId: string | null;
   eid: string | null;
   roles: string | null;
   positions: string | null;
@@ -17,7 +18,7 @@ interface UserState {
 }
 
 type UserAction =
-  | { type: "LOGIN_SUCCESS"; isAuthenticated?: boolean; email?: string | null; userId?: string | null; eid?: string | null; roles?: string | null; positions?: string | null; host?: string | null }
+  | { type: "LOGIN_SUCCESS"; isAuthenticated?: boolean; email?: string | null; userId?: string | null; sessionId?: string | null; eid?: string | null; roles?: string | null; positions?: string | null; host?: string | null }
   | { type: "SIGN_OUT_SUCCESS" }
   | { type: "UPDATE_PROFILE"; userId: string; host: string }
   | { type: "LOGIN_FAILURE" };
@@ -33,6 +34,7 @@ function userReducer(state: UserState, action: UserAction): UserState {
         isAuthenticated: action.isAuthenticated ?? state.isAuthenticated,
         email: action.email ?? state.email,
         userId: action.userId ?? state.userId,
+        sessionId: action.sessionId ?? state.sessionId,
         eid: action.eid ?? state.eid,
         roles: action.roles ?? state.roles,
         positions: action.positions ?? state.positions,
@@ -44,6 +46,7 @@ function userReducer(state: UserState, action: UserAction): UserState {
         isAuthenticated: false,
         email: null,
         userId: null,
+        sessionId: null,
         eid: null,
         roles: null,
         positions: null,
@@ -60,6 +63,7 @@ function userReducer(state: UserState, action: UserAction): UserState {
 function UserProvider({ children }: { children: React.ReactNode }) {
   const cookies = new Cookies();
   const userId = cookies.get("userId");
+  const sessionId = cookies.get("sessionId");
   const refreshToken = cookies.get("refreshToken");
   const host = cookies.get("host");
   const email = cookies.get("email");
@@ -69,6 +73,7 @@ function UserProvider({ children }: { children: React.ReactNode }) {
   var [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
+    sessionId: sessionId,
     eid: eid,
     host: host,
     email: email,
@@ -168,6 +173,7 @@ function decodedCookie(cookies: Cookies, name: string) {
 function syncUserFromCookies(dispatch: React.Dispatch<UserAction>) {
   const cookies = new Cookies();
   const userId = cookies.get("userId") ?? null;
+  const sessionId = cookies.get("sessionId") ?? null;
   const email = cookies.get("email") ?? userId;
   const eid = cookies.get("eid") ?? null;
   const host = cookies.get("host") ?? null;
@@ -179,6 +185,7 @@ function syncUserFromCookies(dispatch: React.Dispatch<UserAction>) {
     isAuthenticated: !!userId,
     email,
     userId,
+    sessionId,
     eid,
     host,
     roles,

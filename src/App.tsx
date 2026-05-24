@@ -402,6 +402,9 @@ const App = () => {
           <Route path="oauth/refreshToken" element={<RefreshToken />} />
           <Route path="oauth/authCode" element={<AuthCode />} />
           <Route path="oauth/clientToken" element={<ClientToken />} />
+          <Route path="user/session" element={<AuthSession viewMode="self" />} />
+          <Route path="user/session/refresh-tokens" element={<RefreshToken viewMode="self" />} />
+          <Route path="user/session/audit" element={<AuthSessionAudit viewMode="self" />} />
           <Route path="category/admin" element={<Category />} />
           <Route path="tag/admin" element={<TagAdmin />} />
           <Route path="blog/adminList" element={<BlogAdmin />} />

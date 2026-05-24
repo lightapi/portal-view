@@ -22,6 +22,12 @@ import {
   SuspiciousEventMarker,
   TruncatedCell,
 } from './OAuthTableHelpers';
+import {
+  isSelfSessionView,
+  lockedCurrentUserFilter,
+  type OAuthSessionPageProps,
+  withLockedFilter,
+} from './oauthSessionScope';
 
 type AuthSessionAuditType = {
   auditId: string;
@@ -43,12 +49,16 @@ type AuthSessionAuditType = {
 };
 
 interface UserState {
-  host?: string;
+  host?: string | null;
+  userId?: string | null;
+  email?: string | null;
 }
 
-export default function AuthSessionAudit() {
+export default function AuthSessionAudit({ viewMode = 'admin' }: OAuthSessionPageProps) {
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const { host, userId } = useUserState() as UserState;
+  const selfView = isSelfSessionView(viewMode);
+  const missingSelfContext = selfView && !userId;
   const initialData = location.state?.data || {};
 
   const [data, setData] = useState<AuthSessionAuditType[]>([]);
@@ -71,19 +81,27 @@ export default function AuthSessionAudit() {
 
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (missingSelfContext) {
+      setData([]);
+      setRowCount(0);
+      setIsLoading(false);
+      setIsRefetching(false);
+      return;
+    }
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    const apiFilters = withLockedFilter(columnFilters ?? [], lockedCurrentUserFilter(selfView ? userId : null));
 
     const cmd = {
       host: 'lightapi.net',
       service: 'oauth',
-      action: 'getAuthSessionAudit',
+      action: selfView ? 'getMyAuthSessionAudit' : 'getAuthSessionAudit',
       version: '0.1.0',
       data: {
         hostId: host,
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(columnFilters ?? []),
+        filters: JSON.stringify(apiFilters),
         globalFilter: globalFilter ?? '',
       },
     };
@@ -99,7 +117,7 @@ export default function AuthSessionAudit() {
       setIsLoading(false);
       setIsRefetching(false);
     }
-  }, [host, data.length, pagination.pageIndex, pagination.pageSize, sorting, columnFilters, globalFilter]);
+  }, [host, missingSelfContext, data.length, columnFilters, selfView, userId, pagination.pageIndex, pagination.pageSize, sorting, globalFilter]);
 
   useEffect(() => {
     fetchData();
@@ -166,25 +184,29 @@ export default function AuthSessionAudit() {
   const table = useMaterialReactTable({
     columns,
     data,
-    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false, oldRefreshTokenId: false, newRefreshTokenId: false } },
+    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false, oldRefreshTokenId: false, newRefreshTokenId: false, userId: !selfView, email: !selfView } },
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: isError || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.auditId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading session audit' } : undefined,
+    muiToolbarAlertBannerProps: missingSelfContext
+      ? { color: 'warning', children: 'User context is required to load your session audit.' }
+      : isError
+        ? { color: 'error', children: 'Error loading session audit' }
+        : undefined,
     muiTableBodyRowProps: ({ row }) => ({
       sx: suspiciousAuditRow(row.original.eventType, row.original.result)
         ? { backgroundColor: 'rgba(211, 47, 47, 0.06)' }
         : undefined,
     }),
     renderTopToolbarCustomActions: () => (
-      <Typography variant="h5">Session Audit</Typography>
+      <Typography variant="h5">{selfView ? 'My Session Audit' : 'Session Audit'}</Typography>
     ),
   });
 

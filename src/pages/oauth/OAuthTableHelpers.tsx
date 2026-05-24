@@ -182,11 +182,12 @@ export function SuspiciousEventMarker({ eventType, result }: { eventType?: strin
 }
 
 export function RevokeDialog({ target, onCancel, onConfirm }: RevokeDialogProps) {
-  const [reason, setReason] = useState(target?.defaultReason ?? 'ADMIN_REVOKED');
+  const defaultReason = target?.defaultReason ?? 'ADMIN_REVOKED';
+  const [reason, setReason] = useState(defaultReason);
 
   useEffect(() => {
-    setReason(target?.defaultReason ?? 'ADMIN_REVOKED');
-  }, [target]);
+    setReason(defaultReason);
+  }, [defaultReason]);
 
   if (!target) return null;
 
@@ -207,7 +208,7 @@ export function RevokeDialog({ target, onCancel, onConfirm }: RevokeDialogProps)
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button color="error" variant="contained" onClick={() => onConfirm(reason.trim() || 'ADMIN_REVOKED')}>
+        <Button color="error" variant="contained" onClick={() => onConfirm(reason.trim() || defaultReason)}>
           {target.confirmLabel ?? 'Revoke'}
         </Button>
       </DialogActions>

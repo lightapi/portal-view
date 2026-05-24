@@ -12,7 +12,7 @@ import {
 import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-import { useUserState } from '../../contexts/UserContext.jsx';
+import { signOut, useUserDispatch, useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
 import {
@@ -22,6 +22,13 @@ import {
   type RevokeDialogTarget,
   TruncatedCell,
 } from './OAuthTableHelpers';
+import {
+  isSelfSessionView,
+  lockedCurrentUserFilter,
+  type OAuthSessionPageProps,
+  userScopedRouteState,
+  withLockedFilter,
+} from './oauthSessionScope';
 
 // --- Type Definitions ---
 type RefreshTokenApiResponse = {
@@ -52,13 +59,19 @@ type RefreshTokenType = {
 };
 
 interface UserState {
-  host?: string;
+  host?: string | null;
+  userId?: string | null;
+  email?: string | null;
+  sessionId?: string | null;
 }
 
-export default function RefreshTokenAdmin() {
+export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const userDispatch = useUserDispatch();
+  const { host, userId, sessionId: currentSessionId } = useUserState() as UserState;
+  const selfView = isSelfSessionView(viewMode);
+  const missingSelfContext = selfView && !userId;
   const initialData = location.state?.data || {};
 
   // Data and fetching state
@@ -86,10 +99,17 @@ export default function RefreshTokenAdmin() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (missingSelfContext) {
+      setData([]);
+      setRowCount(0);
+      setIsLoading(false);
+      setIsRefetching(false);
+      return;
+    }
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
-    const apiFilters: MRT_ColumnFiltersState = [];
+    let apiFilters: MRT_ColumnFiltersState = [];
 
     columnFilters.forEach(filter => {
       if (filter.id === 'active') {
@@ -100,9 +120,10 @@ export default function RefreshTokenAdmin() {
         apiFilters.push(filter);
       }
     });
+    apiFilters = withLockedFilter(apiFilters, lockedCurrentUserFilter(selfView ? userId : null));
 
     const cmd = {
-      host: 'lightapi.net', service: 'oauth', action: 'getRefreshToken', version: '0.1.0',
+      host: 'lightapi.net', service: 'oauth', action: selfView ? 'getMyRefreshToken' : 'getRefreshToken', version: '0.1.0',
       data: {
         hostId: host, offset: pagination.pageIndex * pagination.pageSize, limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
@@ -123,7 +144,7 @@ export default function RefreshTokenAdmin() {
     } finally {
       setIsError(false); setIsLoading(false); setIsRefetching(false);
     }
-  }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+  }, [host, missingSelfContext, data.length, columnFilters, selfView, userId, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
   // useEffect to trigger fetchData
   useEffect(() => {
@@ -131,14 +152,29 @@ export default function RefreshTokenAdmin() {
   }, [fetchData]);
 
   const openRevokeDialog = useCallback((row: MRT_Row<RefreshTokenType>) => {
+    const currentSessionTarget = selfView && currentSessionId && row.original.sessionId === currentSessionId;
+    const unknownCurrentSession = selfView && !currentSessionId;
     setRevokeTarget({
       row: row.original,
       title: 'Revoke Session',
-      message: `Revoke the session associated with ${row.original.email || row.original.userId}?`,
+      message: (
+        <>
+          <Typography component="span" variant="body2">
+            Revoke the session associated with {row.original.email || row.original.userId}?
+          </Typography>
+          {(currentSessionTarget || unknownCurrentSession) && (
+            <Typography component="span" variant="body2" color="error" sx={{ display: 'block', mt: 1 }}>
+              {currentSessionTarget
+                ? 'This is your current browser session. You will be signed out after it is revoked.'
+                : 'If this is your current browser session, you may be signed out after it is revoked.'}
+            </Typography>
+          )}
+        </>
+      ),
       confirmLabel: 'Revoke Session',
-      defaultReason: 'ADMIN_REVOKED',
+      defaultReason: selfView ? 'USER_REVOKED' : 'ADMIN_REVOKED',
     });
-  }, []);
+  }, [currentSessionId, selfView]);
 
   // Revoke handler with optimistic update
   const handleRevoke = useCallback(async (reason: string) => {
@@ -150,7 +186,7 @@ export default function RefreshTokenAdmin() {
     setRevokeTarget(null);
 
     const cmd = {
-      host: 'lightapi.net', service: 'oauth', action: 'deleteRefreshToken', version: '0.1.0',
+      host: 'lightapi.net', service: 'oauth', action: selfView ? 'deleteMyRefreshToken' : 'deleteRefreshToken', version: '0.1.0',
       data: { hostId: row.hostId || host, refreshToken: row.refreshToken, aggregateVersion: row.aggregateVersion, reason },
     };
 
@@ -160,19 +196,21 @@ export default function RefreshTokenAdmin() {
         alert('Failed to revoke session. Please try again.');
         setData(originalData);
         setRowCount(originalData.length);
+      } else if (selfView && currentSessionId && row.sessionId === currentSessionId) {
+        await signOut(userDispatch, navigate);
       }
     } catch (e) {
       alert('Failed to revoke session due to a network error.');
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data, host, revokeTarget]);
+  }, [currentSessionId, data, host, navigate, revokeTarget, selfView, userDispatch]);
 
   const viewAudit = useCallback((row: RefreshTokenType) => {
-    navigate('/app/oauth/authSessionAudit', {
-      state: { data: { sessionId: row.sessionId, userId: row.userId, clientId: row.clientId } },
+    navigate(selfView ? '/app/user/session/audit' : '/app/oauth/authSessionAudit', {
+      state: { data: userScopedRouteState({ sessionId: row.sessionId, userId: row.userId, clientId: row.clientId }, selfView) },
     });
-  }, [navigate]);
+  }, [navigate, selfView]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefreshTokenType>[]>(
@@ -212,18 +250,22 @@ export default function RefreshTokenAdmin() {
   const table = useMaterialReactTable({
     columns,
     data,
-    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false } },
+    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false, userId: !selfView, email: !selfView, roles: false } },
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: isError || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.refreshToken,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading refresh tokens' } : undefined,
+    muiToolbarAlertBannerProps: missingSelfContext
+      ? { color: 'warning', children: 'User context is required to load your refresh tokens.' }
+      : isError
+        ? { color: 'error', children: 'Error loading refresh tokens' }
+        : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -243,7 +285,7 @@ export default function RefreshTokenAdmin() {
     ),
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">
-        Refresh Tokens
+        {selfView ? 'My Refresh Tokens' : 'Refresh Tokens'}
       </Typography>
     ),
   });

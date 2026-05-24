@@ -14,7 +14,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import KeyIcon from '@mui/icons-material/Key';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { apiPost } from '../../api/apiPost';
-import { useUserState } from '../../contexts/UserContext';
+import { signOut, useUserDispatch, useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
 import {
   CopyableTruncatedText,
@@ -26,6 +26,13 @@ import {
   TruncatedCell,
   computedSessionStatus,
 } from './OAuthTableHelpers';
+import {
+  isSelfSessionView,
+  lockedCurrentUserFilter,
+  type OAuthSessionPageProps,
+  userScopedRouteState,
+  withLockedFilter,
+} from './oauthSessionScope';
 
 type AuthSessionType = {
   hostId: string;
@@ -50,13 +57,19 @@ type AuthSessionType = {
 };
 
 interface UserState {
-  host?: string;
+  host?: string | null;
+  userId?: string | null;
+  email?: string | null;
+  sessionId?: string | null;
 }
 
-export default function AuthSession() {
+export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { host } = useUserState() as UserState;
+  const userDispatch = useUserDispatch();
+  const { host, userId, email, sessionId: currentSessionId } = useUserState() as UserState;
+  const selfView = isSelfSessionView(viewMode);
+  const missingSelfContext = selfView && !userId;
   const initialData = location.state?.data || {};
 
   const [data, setData] = useState<AuthSessionType[]>([]);
@@ -81,19 +94,27 @@ export default function AuthSession() {
 
   const fetchData = useCallback(async () => {
     if (!host) return;
+    if (missingSelfContext) {
+      setData([]);
+      setRowCount(0);
+      setIsLoading(false);
+      setIsRefetching(false);
+      return;
+    }
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
+    const apiFilters = withLockedFilter(columnFilters ?? [], lockedCurrentUserFilter(selfView ? userId : null));
 
     const cmd = {
       host: 'lightapi.net',
       service: 'oauth',
-      action: 'getAuthSession',
+      action: selfView ? 'getMyAuthSession' : 'getAuthSession',
       version: '0.1.0',
       data: {
         hostId: host,
         offset: pagination.pageIndex * pagination.pageSize,
         limit: pagination.pageSize,
         sorting: JSON.stringify(sorting ?? []),
-        filters: JSON.stringify(columnFilters ?? []),
+        filters: JSON.stringify(apiFilters),
         globalFilter: globalFilter ?? '',
       },
     };
@@ -109,33 +130,48 @@ export default function AuthSession() {
       setIsLoading(false);
       setIsRefetching(false);
     }
-  }, [host, data.length, pagination.pageIndex, pagination.pageSize, sorting, columnFilters, globalFilter]);
+  }, [host, missingSelfContext, data.length, columnFilters, selfView, userId, pagination.pageIndex, pagination.pageSize, sorting, globalFilter]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const viewAudit = useCallback((row: AuthSessionType) => {
-    navigate('/app/oauth/authSessionAudit', {
-      state: { data: { sessionId: row.sessionId, userId: row.userId, clientId: row.clientId } },
+    navigate(selfView ? '/app/user/session/audit' : '/app/oauth/authSessionAudit', {
+      state: { data: userScopedRouteState({ sessionId: row.sessionId, userId: row.userId, clientId: row.clientId }, selfView) },
     });
-  }, [navigate]);
+  }, [navigate, selfView]);
 
   const viewRefreshToken = useCallback((row: AuthSessionType) => {
-    navigate('/app/oauth/refreshToken', {
-      state: { data: { sessionId: row.sessionId, userId: row.userId, clientId: row.clientId } },
+    navigate(selfView ? '/app/user/session/refresh-tokens' : '/app/oauth/refreshToken', {
+      state: { data: userScopedRouteState({ sessionId: row.sessionId, userId: row.userId, clientId: row.clientId }, selfView) },
     });
-  }, [navigate]);
+  }, [navigate, selfView]);
 
   const openRevokeDialog = useCallback((row: MRT_Row<AuthSessionType>) => {
+    const currentSessionTarget = selfView && currentSessionId && row.original.sessionId === currentSessionId;
+    const unknownCurrentSession = selfView && !currentSessionId;
     setRevokeTarget({
       row: row.original,
       title: 'Revoke Session',
-      message: `Revoke the active session for ${row.original.email || row.original.userId}?`,
+      message: (
+        <>
+          <Typography component="span" variant="body2">
+            Revoke the active session for {row.original.email || row.original.userId}?
+          </Typography>
+          {(currentSessionTarget || unknownCurrentSession) && (
+            <Typography component="span" variant="body2" color="error" sx={{ display: 'block', mt: 1 }}>
+              {currentSessionTarget
+                ? 'This is your current browser session. You will be signed out after it is revoked.'
+                : 'If this is your current browser session, you may be signed out after it is revoked.'}
+            </Typography>
+          )}
+        </>
+      ),
       confirmLabel: 'Revoke Session',
-      defaultReason: 'ADMIN_REVOKED',
+      defaultReason: selfView ? 'USER_REVOKED' : 'ADMIN_REVOKED',
     });
-  }, []);
+  }, [currentSessionId, selfView]);
 
   const handleRevoke = useCallback(async (reason: string) => {
     if (!revokeTarget) return;
@@ -148,7 +184,7 @@ export default function AuthSession() {
     const cmd = {
       host: 'lightapi.net',
       service: 'oauth',
-      action: 'revokeAuthSession',
+      action: selfView ? 'revokeMyAuthSession' : 'revokeAuthSession',
       version: '0.1.0',
       data: { hostId: row.hostId || host, sessionId: row.sessionId, reason },
     };
@@ -158,12 +194,14 @@ export default function AuthSession() {
       if (result.error) {
         alert('Failed to revoke session. Please try again.');
         setData(originalData);
+      } else if (selfView && currentSessionId && row.sessionId === currentSessionId) {
+        await signOut(userDispatch, navigate);
       }
     } catch (error) {
       alert('Failed to revoke session due to a network error.');
       setData(originalData);
     }
-  }, [data, host, revokeTarget]);
+  }, [currentSessionId, data, host, navigate, revokeTarget, selfView, userDispatch]);
 
   const columns = useMemo<MRT_ColumnDef<AuthSessionType>[]>(
     () => [
@@ -202,18 +240,22 @@ export default function AuthSession() {
   const table = useMaterialReactTable({
     columns,
     data,
-    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false } },
+    initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false, userId: !selfView, email: !selfView, roles: false } },
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: isError || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.sessionId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading sessions' } : undefined,
+    muiToolbarAlertBannerProps: missingSelfContext
+      ? { color: 'warning', children: 'User context is required to load your sessions.' }
+      : isError
+        ? { color: 'error', children: 'Error loading sessions' }
+        : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -241,7 +283,7 @@ export default function AuthSession() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Typography variant="h5">Sessions</Typography>
+      <Typography variant="h5">{selfView ? 'My Sessions' : 'Sessions'}</Typography>
     ),
   });
 

@@ -135,10 +135,6 @@ const structure = [
         ],
       },
       */
-      {
-        id: 10, label: "OAuth 2.0", role: "user", link: "/app/oauth", icon: <SecurityIcon />,
-        children: [{ label: "Refresh Token", link: "/app/refreshToken" }],
-      },
     ],
   },
 
@@ -147,6 +143,14 @@ const structure = [
     id: 3000, type: "group", label: "Organisation",
     children: [
       { id: 24, label: "User Host", role: "user", link: "/app/userHost", icon: <GiteIcon /> },
+      {
+        id: 25, label: "User Session", role: "user", link: "/app/user/session", icon: <SecurityIcon />,
+        children: [
+          { label: "Sessions", link: "/app/user/session" },
+          { label: "Refresh Tokens", link: "/app/user/session/refresh-tokens" },
+          { label: "Session Audit", link: "/app/user/session/audit" },
+        ],
+      },
       /* { id: 30, label: "Notification", role: "user", link: "/app/notification", icon: <NotificationsIcon /> }, */
     ],
   },
