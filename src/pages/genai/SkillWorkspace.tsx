@@ -29,6 +29,7 @@ import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
 import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
 import type { SkillWorkflowType } from './SkillWorkflow';
+import HelpLink from '../../components/HelpLink';
 
 type SkillWorkspaceState = {
     data?: Partial<SkillType>;
@@ -67,6 +68,8 @@ type SkillToolType = {
 type UserState = {
     host?: string;
 };
+
+const SKILL_WORKSPACE_HELP_PATH = '/help/portal-view/pages/skill-workspace';
 
 function parseList(value: unknown): string[] {
     if (Array.isArray(value)) return value.map(item => String(item)).filter(Boolean);
@@ -270,6 +273,10 @@ export default function SkillWorkspace() {
                     <Button startIcon={<AddBoxIcon />} onClick={handleAddWorkflow} disabled={!skillId}>
                         Workflow
                     </Button>
+                    <HelpLink
+                        helpPath={SKILL_WORKSPACE_HELP_PATH}
+                        tooltip="Help: Skill Workspace"
+                    />
                     <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditSkill} disabled={!skill}>
                         Edit Skill
                     </Button>
