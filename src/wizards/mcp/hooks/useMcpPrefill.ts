@@ -68,6 +68,9 @@ export function useMcpPrefill(state: McpWizardState) {
             ...(api.capability && { capability: api.capability }),
             ...(api.gitRepo && { gitRepo: api.gitRepo }),
             ...(api.apiStatus && { apiStatus: api.apiStatus }),
+            ...(api.categoryIds && { categoryIds: Array.isArray(api.categoryIds) ? api.categoryIds : [] }),
+            ...(api.tagIds && { tagIds: Array.isArray(api.tagIds) ? api.tagIds : [] }),
+            ...(api.ownerPositionId && { ownerPositionId: api.ownerPositionId }),
             ...(api.apiTags && { apiTags: typeof api.apiTags === 'string' ? api.apiTags.split(',') : api.apiTags }),
           });
           if (api.aggregateVersion) setApiAggregateVersion(api.aggregateVersion);

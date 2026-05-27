@@ -18,6 +18,7 @@ interface WizardNavActionsProps {
   selectedInstanceId: string;
   existingApiSelection: ExistingApiSelection | null;
   selectedMcpToolsCount: number;
+  preRegisteredApiId: string | null;
   // callbacks
   onCommitApi: () => void;
   onCommitVersion: () => Promise<void>;
@@ -36,6 +37,7 @@ export default function WizardNavActions({
   step, creationType,
   committedApiId, committedApiVersionId, committedInstanceApiId, selectedInstanceId,
   existingApiSelection, selectedMcpToolsCount,
+  preRegisteredApiId,
   onCommitApi, onCommitVersion, onLinkInstance, onSaveMcpTools,
   onExistingApiContinue, onNext, onSkipToList, onAdvanceFromTools, onNavigateToList,
 }: WizardNavActionsProps) {
@@ -53,7 +55,7 @@ export default function WizardNavActions({
           onClick={onCommitApi}
           disabled={submitting}
         >
-          {committedApiId ? 'Next' : 'Save & Continue'}
+          {committedApiId ? 'Next' : preRegisteredApiId ? 'Confirm & Save' : 'Generate API ID'}
         </Button>
       )}
 

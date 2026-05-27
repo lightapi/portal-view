@@ -21,10 +21,11 @@ export interface GatewayServer {
 interface GatewayServerRowProps {
   server: GatewayServer;
   instanceId: string;
+  gatewayServiceId?: string;
   navigate: ReturnType<typeof useNavigate>;
 }
 
-export default function GatewayServerRow({ server, instanceId, navigate }: GatewayServerRowProps) {
+export default function GatewayServerRow({ server, instanceId, gatewayServiceId, navigate }: GatewayServerRowProps) {
   const iconBg = apiIconColor(server.apiName);
   const toolNames = server.mcpStatus.phase === 'ready' ? server.mcpStatus.tools : [];
   const phaseBorder =
@@ -112,7 +113,7 @@ export default function GatewayServerRow({ server, instanceId, navigate }: Gatew
         }}
       >
         <ConfigureButton
-          onClick={() => navigate(`/app/mcp/wizard?instanceApiId=${server.instanceApiId}&instanceId=${instanceId}${server.apiType === 'mcp' ? '&flow=server' : ''}`)}
+          onClick={() => navigate(`/app/mcp/wizard?instanceApiId=${server.instanceApiId}&instanceId=${instanceId}&apiId=${encodeURIComponent(server.apiId)}&apiVersion=${encodeURIComponent(server.apiVersion)}${gatewayServiceId ? `&serviceId=${encodeURIComponent(gatewayServiceId)}` : ''}${server.apiType === 'mcp' ? '&flow=server' : ''}`)}
         />
       </Box>
     </Box>

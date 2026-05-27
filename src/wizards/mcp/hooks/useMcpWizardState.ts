@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserState } from '../../../contexts/UserContext';
 import { EMPTY_CREATE_API_FORM, EMPTY_CREATE_API_VERSION_FORM } from '../types';
-import type { CreateApiForm, CreateApiVersionForm, McpToolType, McpToolsMeta, UserState } from '../types';
+import type { CreateApiForm, CreateApiVersionForm, McpToolType, McpToolsMeta, Option, UserState } from '../types';
 import type { ExistingApiSelection } from '../SelectExistingApiStep';
 import type { ApiOrigin } from '../SelectApiOriginStep';
 import type { McpCreationType } from '../SelectTypeStep';
@@ -15,6 +15,8 @@ export function useMcpWizardState() {
 
   const preApiId         = searchParams.get('apiId') ?? '';
   const preApiVersionId  = searchParams.get('apiVersionId') ?? '';
+  const preApiVersion    = searchParams.get('apiVersion') ?? '';
+  const preServiceId     = searchParams.get('serviceId') ?? '';
   const preInstanceApiId = searchParams.get('instanceApiId') ?? '';
   const preInstanceId    = searchParams.get('instanceId') ?? '';
   const preFlow          = searchParams.get('flow') ?? '';
@@ -56,7 +58,7 @@ export function useMcpWizardState() {
   const [committedApiId, setCommittedApiId] = useState(preApiId);
   const [committedApiVersionId, setCommittedApiVersionId] = useState(preApiVersionId);
 
-  const [versionForm, setVersionForm] = useState<CreateApiVersionForm>({ ...EMPTY_CREATE_API_VERSION_FORM });
+  const [versionForm, setVersionForm] = useState<CreateApiVersionForm>({ ...EMPTY_CREATE_API_VERSION_FORM, ...(preApiVersion && { apiVersion: preApiVersion }), ...(preServiceId && { serviceId: preServiceId }) });
   const [versionErrors, setVersionErrors] = useState<Partial<Record<keyof CreateApiVersionForm, string>>>({});
   const [versionAggregateVersion, setVersionAggregateVersion] = useState<number>(0);
 
@@ -74,6 +76,15 @@ export function useMcpWizardState() {
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [preRegisteredApiId, setPreRegisteredApiId] = useState<string | null>(null);
+  const [preRegisteredServiceId, setPreRegisteredServiceId] = useState<string | null>(null);
+  // Persists the external registry's apiId (from pre-registration) for the tools sync endpoint
+  const [registrationExternalApiId, setRegistrationExternalApiId] = useState<string | null>(null);
+
+  const [optionLookup, setOptionLookup] = useState<Record<string, Option[]>>({});
+  const registerOptions = useCallback((field: string, opts: Option[]) => {
+    setOptionLookup((prev) => ({ ...prev, [field]: opts }));
+  }, []);
 
   const patch = useCallback((p: Partial<CreateApiForm>) => setForm((f) => ({ ...f, ...p })), []);
   const patchVersion = useCallback((p: Partial<CreateApiVersionForm>) => setVersionForm((f) => ({ ...f, ...p })), []);
@@ -111,8 +122,10 @@ export function useMcpWizardState() {
     accessExists,
     setAccessExists,
     maxStep,
+    registerOptions,
+    preRegisteredServiceId,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [host, form, apiErrors, versionForm, versionErrors, committedApiId, committedApiVersionId, committedInstanceApiId, selectedInstanceId, gatewayMode, apiOrigin, mcpMeta, existingApiSelection, toolsCommitted, accessExists, maxStep]);
+  }), [host, form, apiErrors, versionForm, versionErrors, committedApiId, committedApiVersionId, committedInstanceApiId, selectedInstanceId, gatewayMode, apiOrigin, mcpMeta, existingApiSelection, toolsCommitted, accessExists, maxStep, registerOptions, preRegisteredServiceId]);
 
   const stepMeta = currentFlowStep ?? SELECT_STEP;
 
@@ -145,9 +158,14 @@ export function useMcpWizardState() {
     toolsCommitted, setToolsCommitted,
     // access
     accessExists,
+    // option lookup (for pre-registration payload ID resolution)
+    optionLookup, registerOptions,
     // submission UI
     submitting, setSubmitting,
     submitError, setSubmitError,
+    preRegisteredApiId, setPreRegisteredApiId,
+    preRegisteredServiceId, setPreRegisteredServiceId,
+    registrationExternalApiId, setRegistrationExternalApiId,
     // stable callbacks
     patch, patchVersion,
     handleSetMcpMeta, handleSetSelectedMcpTools, handleSetExistingApiSelection,

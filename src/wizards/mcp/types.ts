@@ -19,6 +19,9 @@ export type CreateApiForm = {
   capability: string;
   gitRepo: string;
   apiStatus: string;
+  categoryIds: string[];
+  tagIds: string[];
+  ownerPositionId: string;
   apiTags: string[];
 };
 
@@ -36,6 +39,9 @@ export const EMPTY_CREATE_API_FORM: CreateApiForm = {
   capability: '',
   gitRepo: '',
   apiStatus: '',
+  categoryIds: [],
+  tagIds: [],
+  ownerPositionId: '',
   apiTags: [],
 };
 

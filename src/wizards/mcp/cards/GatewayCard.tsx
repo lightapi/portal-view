@@ -144,7 +144,7 @@ export default function GatewayCard({ gateway, navigate }: GatewayCardProps) {
       ) : (
         <Stack divider={<Divider />}>
           {gateway.servers.map((s) => (
-            <GatewayServerRow key={s.instanceApiId} server={s} instanceId={gateway.instanceId} navigate={navigate} />
+            <GatewayServerRow key={s.instanceApiId} server={s} instanceId={gateway.instanceId} gatewayServiceId={gateway.serviceId} navigate={navigate} />
           ))}
         </Stack>
       )}

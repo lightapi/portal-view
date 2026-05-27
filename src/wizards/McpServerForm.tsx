@@ -23,6 +23,7 @@ export default function McpServerForm() {
     committedApiId, committedApiVersionId, committedInstanceApiId,
     selectedInstanceId, existingApiSelection,
     selectedMcpTools,
+    preRegisteredApiId, preRegisteredServiceId,
   } = state;
 
   return (
@@ -68,6 +69,13 @@ export default function McpServerForm() {
         </Stack>
 
         {submitError && <Alert severity="error" sx={{ mt: 3 }}>{submitError}</Alert>}
+        {!submitError && preRegisteredApiId && (
+          <Alert severity="success" sx={{ mt: 3 }}>
+            <strong>Registration successful.</strong>
+            {' '}API ID: <strong>{preRegisteredApiId}</strong>
+            {preRegisteredServiceId && <>{' '}· Service ID: <strong>{preRegisteredServiceId}</strong></>}
+          </Alert>
+        )}
 
         <WizardNavActions
           action={currentFlowStep?.action}
@@ -82,6 +90,7 @@ export default function McpServerForm() {
           selectedInstanceId={selectedInstanceId}
           existingApiSelection={existingApiSelection}
           selectedMcpToolsCount={selectedMcpTools.length}
+          preRegisteredApiId={preRegisteredApiId}
           onCommitApi={handlers.handleCommitApi}
           onCommitVersion={handlers.handleCommitVersion}
           onLinkInstance={handlers.handleLinkInstance}
