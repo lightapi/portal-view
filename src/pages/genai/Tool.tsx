@@ -9,9 +9,10 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Chip, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
@@ -43,6 +44,17 @@ type ToolType = {
     semanticWeight?: number;
     sourceProtocol?: string;
     targetPersonas?: string;
+    descriptionSource?: string;
+    descriptionManualOverride?: boolean;
+    descriptionOverrideTs?: string;
+    descriptionOverrideUser?: string;
+    descriptionEmbeddingModel?: string;
+    descriptionEmbeddingDimension?: number;
+    descriptionEmbeddingSourceHash?: string;
+    descriptionEmbeddingTs?: string;
+    descriptionEmbeddingStatus?: string;
+    descriptionEmbeddingError?: string;
+    descriptionEmbeddingPresent?: boolean;
     version?: string;
     aggregateVersion: number;
     active: boolean;
@@ -53,6 +65,20 @@ type ToolType = {
 interface UserState {
     host?: string;
 }
+
+type ChipColor = 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+
+const embeddingStatusColor = (status?: string): ChipColor => {
+    switch (status) {
+        case 'ready': return 'success';
+        case 'pending': return 'warning';
+        case 'running': return 'info';
+        case 'failed': return 'error';
+        case 'disabled': return 'default';
+        case 'blank': return 'default';
+        default: return 'default';
+    }
+};
 
 export default function Tool() {
     const navigate = useNavigate();
@@ -72,6 +98,7 @@ export default function Tool() {
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+    const [isEmbeddingRefreshLoading, setIsEmbeddingRefreshLoading] = useState<string | null>(null);
 
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
         { id: 'active', value: 'true' }
@@ -184,6 +211,39 @@ export default function Tool() {
         }
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleRefreshEmbedding = useCallback(async (row: MRT_Row<ToolType>) => {
+        const toolId = row.original.toolId;
+        const failed = row.original.descriptionEmbeddingStatus === 'failed';
+        setIsEmbeddingRefreshLoading(toolId);
+
+        const cmd = {
+            host: 'lightapi.net', service: 'genai', action: 'refreshToolEmbedding', version: '0.1.0',
+            data: {
+                hostId: row.original.hostId,
+                toolId,
+                force: !failed,
+            },
+        };
+
+        try {
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+            if (result.error) {
+                alert(failed ? 'Failed to retry embedding.' : 'Failed to refresh embedding.');
+                return;
+            }
+            if ('data' in result && result.data?.queued) {
+                setData(prev => prev.map(tool => tool.toolId === toolId
+                    ? { ...tool, descriptionEmbeddingStatus: 'pending', descriptionEmbeddingError: undefined }
+                    : tool));
+            }
+            await fetchData();
+        } catch (e) {
+            alert(failed ? 'Failed to retry embedding due to a network error.' : 'Failed to refresh embedding due to a network error.');
+        } finally {
+            setIsEmbeddingRefreshLoading(null);
+        }
+    }, [fetchData]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ToolType>[]>(
         () => [
@@ -201,6 +261,37 @@ export default function Tool() {
             { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
             { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
             { accessorKey: 'targetPersonas', header: 'Target Personas' },
+            { accessorKey: 'descriptionSource', header: 'Description Source' },
+            {
+                accessorKey: 'descriptionManualOverride',
+                header: 'Manual Override',
+                Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+            },
+            {
+                accessorKey: 'descriptionEmbeddingStatus',
+                header: 'Embedding Status',
+                filterVariant: 'select',
+                filterSelectOptions: [
+                    { label: 'Pending', value: 'pending' },
+                    { label: 'Running', value: 'running' },
+                    { label: 'Ready', value: 'ready' },
+                    { label: 'Failed', value: 'failed' },
+                    { label: 'Disabled', value: 'disabled' },
+                    { label: 'Blank', value: 'blank' },
+                ],
+                Cell: ({ cell }) => {
+                    const status = cell.getValue<string>();
+                    return <Chip size="small" color={embeddingStatusColor(status)} variant={status ? 'filled' : 'outlined'} label={status || 'none'} />;
+                },
+            },
+            { accessorKey: 'descriptionEmbeddingModel', header: 'Embedding Model' },
+            { accessorKey: 'descriptionEmbeddingDimension', header: 'Embedding Dimension' },
+            {
+                accessorKey: 'descriptionEmbeddingTs',
+                header: 'Embedding Updated',
+                Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
+            },
+            { accessorKey: 'descriptionEmbeddingError', header: 'Embedding Error' },
             { accessorKey: 'version', header: 'Version' },
             { accessorKey: 'updateUser', header: 'Update User' },
             {
@@ -249,6 +340,18 @@ export default function Tool() {
                             <CircularProgress size={22} />
                         ) : (
                             <SystemUpdateIcon />
+                        )}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title={row.original.descriptionEmbeddingStatus === 'failed' ? 'Retry Embedding' : 'Refresh Embedding'}>
+                    <IconButton
+                        onClick={() => handleRefreshEmbedding(row)}
+                        disabled={!row.original.active || isEmbeddingRefreshLoading === row.original.toolId}
+                    >
+                        {isEmbeddingRefreshLoading === row.original.toolId ? (
+                            <CircularProgress size={22} />
+                        ) : (
+                            <RefreshIcon />
                         )}
                     </IconButton>
                 </Tooltip>
