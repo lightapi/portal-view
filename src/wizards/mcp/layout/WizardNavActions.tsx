@@ -1,6 +1,7 @@
 import { Box, Button, CircularProgress } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckIcon from '@mui/icons-material/Check';
+import { isPreRegistrationEnabled } from '../../../../config';
 import type { ExistingApiSelection } from '../SelectExistingApiStep';
 import type { McpCreationType } from '../SelectTypeStep';
 
@@ -18,6 +19,7 @@ interface WizardNavActionsProps {
   selectedInstanceId: string;
   existingApiSelection: ExistingApiSelection | null;
   selectedMcpToolsCount: number;
+  preRegisteredApiId: string | null;
   // callbacks
   onCommitApi: () => void;
   onCommitVersion: () => Promise<void>;
@@ -36,6 +38,7 @@ export default function WizardNavActions({
   step, creationType,
   committedApiId, committedApiVersionId, committedInstanceApiId, selectedInstanceId,
   existingApiSelection, selectedMcpToolsCount,
+  preRegisteredApiId,
   onCommitApi, onCommitVersion, onLinkInstance, onSaveMcpTools,
   onExistingApiContinue, onNext, onSkipToList, onAdvanceFromTools, onNavigateToList,
 }: WizardNavActionsProps) {
@@ -53,7 +56,7 @@ export default function WizardNavActions({
           onClick={onCommitApi}
           disabled={submitting}
         >
-          {committedApiId ? 'Next' : 'Save & Continue'}
+          {committedApiId ? 'Next' : preRegisteredApiId ? 'Confirm & Save' : isPreRegistrationEnabled ? 'Generate API ID' : 'Save & Continue'}
         </Button>
       )}
 

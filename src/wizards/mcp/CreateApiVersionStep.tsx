@@ -22,9 +22,10 @@ interface Props {
   patch: (p: Partial<CreateApiVersionForm>) => void;
   host: string;
   mode?: 'server';
+  lockedServiceId?: string;
 }
 
-export default function CreateApiVersionStep({ committedApiId, form, errors, patch, host, mode }: Props) {
+export default function CreateApiVersionStep({ committedApiId, form, errors, patch, host, mode, lockedServiceId }: Props) {
   const isServer = mode === 'server';
   const useStructuredTransport = isServer || form.apiType === 'mcp';
   const [apiTypeOptions, setApiTypeOptions] = useState<Option[]>([]);
@@ -92,9 +93,11 @@ export default function CreateApiVersionStep({ committedApiId, form, errors, pat
           <TextField
             label="Service ID" required fullWidth
             value={form.serviceId}
-            onChange={(e) => patch({ serviceId: e.target.value })}
+            onChange={lockedServiceId ? undefined : (e) => patch({ serviceId: e.target.value })}
+            slotProps={lockedServiceId ? { input: { readOnly: true } } : undefined}
             error={!!errors.serviceId}
-            helperText={errors.serviceId || 'The backing service identifier'}
+            helperText={errors.serviceId || (lockedServiceId ? 'Auto-populated from pre-registration response' : 'The backing service identifier')}
+            sx={lockedServiceId ? { '& .MuiInputBase-input': { color: 'text.secondary' } } : undefined}
           />
           <TextField
             label="Description" fullWidth multiline minRows={2}
