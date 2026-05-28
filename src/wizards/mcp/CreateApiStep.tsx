@@ -149,7 +149,7 @@ export default function CreateApiStep({
     registerOptions('platform', platformOptions);
     registerOptions('capability', capabilityOptions);
     registerOptions('categoryIds', categoryOptions);
-    registerOptions('tagIds', specTagOptions);
+    registerOptions('tagIds', entityTagOptions);
     registerOptions('apiTags', specTagOptions);
     registerOptions('apiStatus', statusOptions);
     registerOptions('ownerPositionId', positionOptions);

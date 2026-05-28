@@ -90,7 +90,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
         const labels = opts && opts.length > 0
           ? raw.map((id) => opts.find((o) => o.value === id)?.label ?? id)
           : raw;
-        registrationPayload[payloadKey] = labels.map((l: unknown) => String(l).toLowerCase()).join('');
+        registrationPayload[payloadKey] = labels.map((l: unknown) => String(l).toLowerCase()).join(',');
       } else if (typeof raw === 'string' && raw) {
         registrationPayload[payloadKey] = opts && opts.length > 0
           ? (opts.find((o) => o.value === raw)?.label ?? raw)
@@ -274,7 +274,8 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     }
     if (!committedApiId) setCommittedApiId(effectiveApiId);
     setPreRegisteredApiId(null);
-    setPreRegisteredServiceId(null);
+    // Keep preRegisteredServiceId alive until the Version step has committed,
+    // so CreateApiVersionStep can use it as a locked value.
     advance();
   };
 
@@ -336,6 +337,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       }
     }
 
+    setPreRegisteredServiceId(null);
     setSubmitting(false);
     advance();
   };
