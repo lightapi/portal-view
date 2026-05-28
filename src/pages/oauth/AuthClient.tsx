@@ -9,9 +9,25 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext.jsx';
@@ -33,6 +49,8 @@ type AuthClientType = {
   ownerId?: string;
   ownerType?: 'app' | 'api_version' | 'instance' | 'service_account';
   ownerName?: string;
+  ownerPositionId?: string;
+  ownerUserId?: string;
   clientName: string;
   appId?: string;
   appName?: string;
@@ -44,7 +62,8 @@ type AuthClientType = {
   instanceName?: string;
   clientType: 'public' | 'confidential' | 'trusted' | 'external';
   clientProfile: 'webserver' | 'mobile' | 'browser' | 'service' | 'batch';
-  clientSecret: string;
+  clientSecret?: string;
+  hasClientSecret?: boolean;
   clientScope?: string;
   customClaim?: string;
   redirectUri?: string;
@@ -55,6 +74,14 @@ type AuthClientType = {
   updateUser?: string;
   updateTs?: string;
   aggregateVersion?: number;
+};
+
+type RegeneratedSecret = {
+  hostId: string;
+  clientId: string;
+  clientSecret: string;
+  aggregateVersion?: number;
+  rotatedTs?: string;
 };
 
 interface UserState {
@@ -108,6 +135,9 @@ export default function AuthClient() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+  const [isSecretLoading, setIsSecretLoading] = useState<string | null>(null);
+  const [regeneratedSecret, setRegeneratedSecret] = useState<RegeneratedSecret | null>(null);
+  const [secretCopied, setSecretCopied] = useState(false);
 
   // Table state, pre-filtered by context if provided
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() =>
@@ -245,6 +275,77 @@ export default function AuthClient() {
     }
   }, [oauthClientOwnership, navigate, location.pathname, searchParams, taskContext]);
 
+  const handleCopy = useCallback(async (value: string, markSecretCopied = false) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      if (markSecretCopied) setSecretCopied(true);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      alert('Could not copy to clipboard. Please copy the value manually.');
+    }
+  }, []);
+
+  const handleRegenerateSecret = useCallback(async (row: MRT_Row<AuthClientType>) => {
+    if (!oauthClientOwnership.canModifyRecord(row.original)) {
+      alert('You can only regenerate secrets for OAuth clients you own.');
+      return;
+    }
+    if (row.original.aggregateVersion == null) {
+      alert('Cannot regenerate the secret because the client version is missing. Please refresh and try again.');
+      return;
+    }
+    if (!window.confirm(`Regenerate the secret for client: ${row.original.clientName}? The current secret will stop working for new token requests once the event is processed.`)) {
+      return;
+    }
+
+    const clientId = row.original.clientId;
+    setIsSecretLoading(clientId);
+    setSecretCopied(false);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'oauth', action: 'regenerateClientSecret', version: '0.1.0',
+      data: {
+        hostId: row.original.hostId,
+        clientId,
+        aggregateVersion: row.original.aggregateVersion,
+        ownerPositionId: row.original.ownerPositionId,
+      },
+    };
+
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to regenerate client secret. Please refresh and try again.');
+        return;
+      }
+      const rawResponse = result.data || {};
+      const response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+      if (!response.clientSecret) {
+        alert('Client secret was regenerated, but the response did not include the clear secret. Please contact support before closing this page.');
+        await fetchData();
+        return;
+      }
+      setRegeneratedSecret({
+        hostId: response.hostId ?? row.original.hostId,
+        clientId: response.clientId ?? clientId,
+        clientSecret: response.clientSecret,
+        aggregateVersion: response.aggregateVersion,
+        rotatedTs: response.rotatedTs,
+      });
+      await fetchData();
+    } catch (error) {
+      console.error('Failed to regenerate client secret:', error);
+      alert('Failed to regenerate client secret due to a network error.');
+    } finally {
+      setIsSecretLoading(null);
+    }
+  }, [fetchData, oauthClientOwnership]);
+
+  const handleCloseSecretDialog = useCallback(() => {
+    setRegeneratedSecret(null);
+    setSecretCopied(false);
+  }, []);
+
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthClientType>[]>(
@@ -325,6 +426,13 @@ export default function AuthClient() {
             </IconButton>
           </span>
         </Tooltip>
+        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Regenerate Client Secret' : 'You can only regenerate secrets for OAuth clients you own.'}>
+          <span>
+            <IconButton color="warning" onClick={() => handleRegenerateSecret(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original) || isSecretLoading === row.original.clientId}>
+              {isSecretLoading === row.original.clientId ? <CircularProgress size={22} /> : <LockResetIcon />}
+            </IconButton>
+          </span>
+        </Tooltip>
         <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Delete Client' : 'You can only delete OAuth clients you own.'}>
           <span>
             <IconButton color="error" onClick={() => handleDelete(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original)}>
@@ -383,6 +491,49 @@ export default function AuthClient() {
         )}
         <MaterialReactTable table={table} />
       </Box>
+      <Dialog open={Boolean(regeneratedSecret)} onClose={handleCloseSecretDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>New Client Secret</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This secret is shown only once. Store it before closing this dialog.
+          </Alert>
+          {regeneratedSecret && (
+            <Stack spacing={2}>
+              <TextField
+                label="Client Id"
+                value={regeneratedSecret.clientId}
+                InputProps={{ readOnly: true }}
+                fullWidth
+              />
+              <TextField
+                label="Client Secret"
+                value={regeneratedSecret.clientSecret}
+                InputProps={{ readOnly: true }}
+                fullWidth
+              />
+              {regeneratedSecret.aggregateVersion != null && (
+                <Typography variant="body2" color="text.secondary">
+                  Version {regeneratedSecret.aggregateVersion}
+                  {regeneratedSecret.rotatedTs ? ` rotated at ${regeneratedSecret.rotatedTs}` : ''}
+                </Typography>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          {regeneratedSecret && (
+            <>
+              <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopy(regeneratedSecret.clientId)}>
+                Copy Client Id
+              </Button>
+              <Button variant="contained" startIcon={<ContentCopyIcon />} onClick={() => handleCopy(regeneratedSecret.clientSecret, true)}>
+                {secretCopied ? 'Secret Copied' : 'Copy Secret'}
+              </Button>
+            </>
+          )}
+          <Button onClick={handleCloseSecretDialog}>Done</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
