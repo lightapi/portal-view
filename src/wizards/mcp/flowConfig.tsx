@@ -31,7 +31,7 @@ import AccessControlStep from './AccessControlStep';
 import SelectExistingApiStep from './SelectExistingApiStep';
 import UploadSpecStep from './UploadSpecStep';
 import type { ExistingApiSelection } from './SelectExistingApiStep';
-import type { CreateApiForm, CreateApiVersionForm, McpToolType, McpToolsMeta } from './types';
+import type { CreateApiForm, CreateApiVersionForm, McpToolType, McpToolsMeta, Option } from './types';
 import type { McpCreationType } from './SelectTypeStep';
 
 // ── Shared wizard state injected into every step ─────────────────────────────
@@ -62,6 +62,8 @@ export type WizardCtx = {
   accessExists: boolean;
   setAccessExists: (v: boolean) => void;
   maxStep: number;
+  registerOptions: (field: string, opts: Option[]) => void;
+  preRegisteredServiceId: string | null;
 };
 
 // ── Primary button action — drives button rendering in the wizard shell ───────
@@ -140,7 +142,7 @@ const API_FLOW: FlowConfig = {
       action: 'save-api',
       isDone: (ctx) => !!ctx.committedApiId,
       render: (ctx) => (
-        <CreateApiStep form={ctx.form} errors={ctx.apiErrors} patch={ctx.patch} host={ctx.host} />
+        <CreateApiStep form={ctx.form} errors={ctx.apiErrors} patch={ctx.patch} host={ctx.host} registerOptions={ctx.registerOptions} />
       ),
     },
     {
@@ -159,6 +161,7 @@ const API_FLOW: FlowConfig = {
           errors={ctx.versionErrors}
           patch={ctx.patchVersion}
           host={ctx.host}
+          lockedServiceId={ctx.preRegisteredServiceId ?? undefined}
         />
       ),
     },
@@ -272,7 +275,7 @@ const SERVER_FLOW: FlowConfig = {
       action: 'save-api',
       isDone: (ctx) => !!ctx.committedApiId,
       render: (ctx) => (
-        <CreateApiStep form={ctx.form} errors={ctx.apiErrors} patch={ctx.patch} host={ctx.host} mode="server" />
+        <CreateApiStep form={ctx.form} errors={ctx.apiErrors} patch={ctx.patch} host={ctx.host} mode="server" registerOptions={ctx.registerOptions} />
       ),
     },
     {
@@ -292,6 +295,7 @@ const SERVER_FLOW: FlowConfig = {
           patch={ctx.patchVersion}
           host={ctx.host}
           mode="server"
+          lockedServiceId={ctx.preRegisteredServiceId ?? undefined}
         />
       ),
     },
