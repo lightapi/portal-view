@@ -17,7 +17,8 @@ function toKebabCase(str: string): string {
 }
 
 function normalizeSemanticWeight(value: unknown): number | undefined {
-  if (value == null || value === '') return undefined;
+  if (value == null) return undefined;
+  if (typeof value === 'string' && value.trim() === '') return undefined;
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
