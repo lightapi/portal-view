@@ -64,6 +64,12 @@ export default function SelectMcpToolsStep({ host, instanceApiId, apiVersionId, 
           inputSchema: t.inputSchema ?? t.toolSchema ?? '',
           toolMetadata: t.toolMetadata ?? '',
           selected: !!t.selected,
+          ...(t.routingDomain != null && { routingDomain: t.routingDomain }),
+          ...(t.semanticNamespace != null && { semanticNamespace: t.semanticNamespace }),
+          ...(t.sensitivityTier != null && { sensitivityTier: t.sensitivityTier }),
+          ...(t.semanticWeight != null && { semanticWeight: String(t.semanticWeight) }),
+          ...(t.sourceProtocol != null && { sourceProtocol: t.sourceProtocol }),
+          ...(t.targetPersonas != null && { targetPersonas: t.targetPersonas }),
         };
       });
       setTools(normalized);

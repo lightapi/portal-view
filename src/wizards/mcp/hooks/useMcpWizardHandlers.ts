@@ -395,6 +395,12 @@ export function useMcpWizardHandlers(state: McpWizardState) {
         description: t.description,
         ...(t.endpoint?.trim() && { identifier: t.endpoint.trim() }),
         ...(gatewayServiceId && { gateways: [gatewayServiceId] }),
+        ...(t.routingDomain != null && { routingDomain: t.routingDomain }),
+        ...(t.semanticNamespace != null && { semanticNamespace: t.semanticNamespace }),
+        ...(t.sensitivityTier != null && { sensitivityTier: t.sensitivityTier }),
+        ...(t.semanticWeight != null && { semanticWeight: t.semanticWeight }),
+        ...(t.sourceProtocol != null && { sourceProtocol: t.sourceProtocol }),
+        ...(t.targetPersonas != null && { targetPersonas: t.targetPersonas }),
       })),
     };
     const idToken = await getIdToken();
