@@ -84,7 +84,7 @@ export type McpToolType = {
   routingDomain?: string;
   semanticNamespace?: string;
   sensitivityTier?: string;
-  semanticWeight?: string;
+  semanticWeight?: number;
   sourceProtocol?: string;
   targetPersonas?: string;
 };

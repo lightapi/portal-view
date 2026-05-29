@@ -451,6 +451,12 @@ export function useMcpWizardHandlers(state: McpWizardState) {
           description: t.description,
           inputSchema: t.inputSchema ? (() => { try { return JSON.parse(t.inputSchema!); } catch { return t.inputSchema; } })() : undefined,
           toolMetadata: t.toolMetadata ? (() => { try { return JSON.parse(t.toolMetadata!); } catch { return undefined; } })() : undefined,
+          routingDomain: t.routingDomain,
+          semanticNamespace: t.semanticNamespace,
+          sensitivityTier: t.sensitivityTier,
+          semanticWeight: t.semanticWeight,
+          sourceProtocol: t.sourceProtocol,
+          targetPersonas: t.targetPersonas,
         };
         return Object.fromEntries(Object.entries(obj).filter(([, v]) => v != null));
       }),

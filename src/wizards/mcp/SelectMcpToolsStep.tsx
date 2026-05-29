@@ -16,6 +16,12 @@ function toKebabCase(str: string): string {
     .toLowerCase();
 }
 
+function normalizeSemanticWeight(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 interface Props {
   host: string;
   instanceApiId: string;
@@ -50,6 +56,7 @@ export default function SelectMcpToolsStep({ host, instanceApiId, apiVersionId, 
       const normalized: McpToolType[] = raw.map((t) => {
         const endpointName = t.endpointName || '';
         let finalName = t.name;
+        const semanticWeight = normalizeSemanticWeight(t.semanticWeight);
         if (!finalName || finalName === endpointName) {
           finalName = toKebabCase(`lp-${apiName}-${endpointName}`);
         }
@@ -67,7 +74,7 @@ export default function SelectMcpToolsStep({ host, instanceApiId, apiVersionId, 
           ...(t.routingDomain != null && { routingDomain: t.routingDomain }),
           ...(t.semanticNamespace != null && { semanticNamespace: t.semanticNamespace }),
           ...(t.sensitivityTier != null && { sensitivityTier: t.sensitivityTier }),
-          ...(t.semanticWeight != null && { semanticWeight: String(t.semanticWeight) }),
+          ...(semanticWeight != null && { semanticWeight }),
           ...(t.sourceProtocol != null && { sourceProtocol: t.sourceProtocol }),
           ...(t.targetPersonas != null && { targetPersonas: t.targetPersonas }),
         };
