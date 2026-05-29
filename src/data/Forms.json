@@ -8629,6 +8629,15 @@
           "title": "Author",
           "type": "string"
         },
+        "conditionLanguage": {
+          "title": "Condition Language",
+          "type": "string",
+          "default": "native"
+        },
+        "expression": {
+          "title": "CEL Expression",
+          "type": "string"
+        },
         "conditions": {
           "type": "array",
           "items": {
@@ -8714,7 +8723,7 @@
         "ruleName",
         "ruleType",
         "common",
-        "conditions"
+        "conditionLanguage"
       ]
     },
     "form": [
@@ -8761,7 +8770,31 @@
         }
       },
       {
+        "key": "conditionLanguage",
+        "type": "dynaselect",
+        "multiple": false,
+        "default": "native",
+        "options": [
+          {
+            "id": "native",
+            "label": "Native"
+          },
+          {
+            "id": "cel",
+            "label": "CEL"
+          }
+        ]
+      },
+      {
+        "key": "expression",
+        "condition": "model.conditionLanguage === 'cel'",
+        "type": "textarea",
+        "rows": 8,
+        "placeholder": "context.auditInfo.role == 'admin'"
+      },
+      {
         "key": "conditions",
+        "condition": "model.conditionLanguage !== 'cel'",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",
@@ -8996,6 +9029,15 @@
           "type": "string",
           "title": "Author"
         },
+        "conditionLanguage": {
+          "title": "Condition Language",
+          "type": "string",
+          "default": "native"
+        },
+        "expression": {
+          "title": "CEL Expression",
+          "type": "string"
+        },
         "conditions": {
           "type": "array",
           "items": {
@@ -9080,7 +9122,7 @@
         "ruleName",
         "ruleType",
         "common",
-        "conditions"
+        "conditionLanguage"
       ]
     },
     "form": [
@@ -9126,7 +9168,31 @@
         }
       },
       {
+        "key": "conditionLanguage",
+        "type": "dynaselect",
+        "multiple": false,
+        "default": "native",
+        "options": [
+          {
+            "id": "native",
+            "label": "Native"
+          },
+          {
+            "id": "cel",
+            "label": "CEL"
+          }
+        ]
+      },
+      {
+        "key": "expression",
+        "condition": "model.conditionLanguage === 'cel'",
+        "type": "textarea",
+        "rows": 8,
+        "placeholder": "context.auditInfo.role == 'admin'"
+      },
+      {
         "key": "conditions",
+        "condition": "model.conditionLanguage !== 'cel'",
         "items": [
           "conditions[].conditionId",
           "conditions[].conditionDesc",

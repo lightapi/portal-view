@@ -45,6 +45,8 @@ type RuleType = {
     ruleName?: string;
     ruleType?: string;
     common?: string;
+    conditionLanguage?: "native" | "cel" | string;
+    expression?: string;
     version?: string;
     ruleBody?: string;
     author?: string;
@@ -107,6 +109,7 @@ export default function RuleDetail() {
             console.error("Failed to parse ruleBody in Detail page:", e);
         }
     }
+    ruleData.conditionLanguage = ruleData.conditionLanguage ?? (ruleData.expression ? "cel" : "native");
     const taskContext = useMemo(
         () => mergeTaskContext(searchContext, {
             hostId: host ?? ruleData.hostId ?? "",
@@ -129,6 +132,7 @@ export default function RuleDetail() {
         { label: "Rule ID", value: ruleData.ruleId },
         { label: "Rule Name", value: ruleData.ruleName },
         { label: "Rule Type", value: ruleData.ruleType },
+        { label: "Condition Language", value: ruleData.conditionLanguage },
         { label: "Common", value: ruleData.common },
         { label: "Version", value: ruleData.version },
         { label: "Author", value: ruleData.author },
@@ -275,8 +279,16 @@ export default function RuleDetail() {
                     </TableContainer>
                 ))}
 
+                {ruleData.conditionLanguage === "cel" && ruleData.expression && renderSection("CEL Expression", (
+                    <Paper sx={{ p: 2, backgroundColor: '#f7f7f7', overflowX: 'auto' }}>
+                        <pre style={{ margin: 0, fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {ruleData.expression}
+                        </pre>
+                    </Paper>
+                ))}
+
                 {/* Conditions Section */}
-                {ruleData.conditions && ruleData.conditions.length > 0 && renderSection("Conditions", (
+                {ruleData.conditionLanguage !== "cel" && ruleData.conditions && ruleData.conditions.length > 0 && renderSection("Conditions", (
                     <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #eee' }}>
                         <Table size="small">
                             <TableBody>

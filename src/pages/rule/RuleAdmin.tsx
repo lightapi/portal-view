@@ -33,6 +33,7 @@ type RuleType = {
   ruleName?: string;
   ruleType?: string;
   common?: string;
+  conditionLanguage?: string;
   version?: string;
   ruleDesc?: string;
   ruleBody?: string;
@@ -100,6 +101,9 @@ const normalizeRuleForForm = (data: any) => {
   normalized.author = normalized.author ?? normalized.ruleOwner;
   normalized.ruleName = normalized.ruleName ?? normalized.ruleId;
   normalized.common = normalized.common ?? 'N';
+  normalized.conditionLanguage = typeof normalized.conditionLanguage === 'string' && normalized.conditionLanguage.trim()
+    ? normalized.conditionLanguage.trim().toLowerCase()
+    : (typeof normalized.expression === 'string' && normalized.expression.trim() ? 'cel' : 'native');
 
   if (Array.isArray(normalized.conditions)) {
     normalized.conditions = normalized.conditions.map((condition: any) => ({
@@ -287,6 +291,7 @@ export default function RuleAdmin() {
       { accessorKey: 'ruleId', header: 'Rule Id' },
       { accessorKey: 'ruleName', header: 'Rule Name' },
       { accessorKey: 'ruleType', header: 'Type' },
+      { accessorKey: 'conditionLanguage', header: 'Condition Language' },
       { accessorKey: 'version', header: 'Version' },
       { accessorKey: 'ruleDesc', header: 'Description', Cell: TruncatedCell },
       {
