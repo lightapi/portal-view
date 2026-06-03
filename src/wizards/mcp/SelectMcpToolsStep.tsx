@@ -16,6 +16,13 @@ function toKebabCase(str: string): string {
     .toLowerCase();
 }
 
+function normalizeSemanticWeight(value: unknown): number | undefined {
+  if (value == null) return undefined;
+  if (typeof value === 'string' && value.trim() === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 interface Props {
   host: string;
   instanceApiId: string;
@@ -50,6 +57,7 @@ export default function SelectMcpToolsStep({ host, instanceApiId, apiVersionId, 
       const normalized: McpToolType[] = raw.map((t) => {
         const endpointName = t.endpointName || '';
         let finalName = t.name;
+        const semanticWeight = normalizeSemanticWeight(t.semanticWeight);
         if (!finalName || finalName === endpointName) {
           finalName = toKebabCase(`lp-${apiName}-${endpointName}`);
         }
@@ -64,6 +72,12 @@ export default function SelectMcpToolsStep({ host, instanceApiId, apiVersionId, 
           inputSchema: t.inputSchema ?? t.toolSchema ?? '',
           toolMetadata: t.toolMetadata ?? '',
           selected: !!t.selected,
+          ...(t.routingDomain != null && { routingDomain: t.routingDomain }),
+          ...(t.semanticNamespace != null && { semanticNamespace: t.semanticNamespace }),
+          ...(t.sensitivityTier != null && { sensitivityTier: t.sensitivityTier }),
+          ...(semanticWeight != null && { semanticWeight }),
+          ...(t.sourceProtocol != null && { sourceProtocol: t.sourceProtocol }),
+          ...(t.targetPersonas != null && { targetPersonas: t.targetPersonas }),
         };
       });
       setTools(normalized);

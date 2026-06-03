@@ -81,6 +81,12 @@ export type McpToolType = {
   inputSchema?: string;
   toolMetadata?: string;
   selected: boolean;
+  routingDomain?: string;
+  semanticNamespace?: string;
+  sensitivityTier?: string;
+  semanticWeight?: number;
+  sourceProtocol?: string;
+  targetPersonas?: string;
 };
 
 export type McpToolsMeta = {
