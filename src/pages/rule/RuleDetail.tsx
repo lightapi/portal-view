@@ -46,6 +46,7 @@ type RuleType = {
     ruleType?: string;
     common?: string;
     conditionLanguage?: "native" | "cel" | string;
+    conditionSecurityProfile?: "strict" | "standard" | "internal-admin" | string;
     expression?: string;
     version?: string;
     ruleBody?: string;
@@ -110,6 +111,9 @@ export default function RuleDetail() {
         }
     }
     ruleData.conditionLanguage = ruleData.conditionLanguage ?? (ruleData.expression ? "cel" : "native");
+    if (ruleData.conditionLanguage === "cel" && !ruleData.conditionSecurityProfile) {
+        ruleData.conditionSecurityProfile = "strict";
+    }
     const taskContext = useMemo(
         () => mergeTaskContext(searchContext, {
             hostId: host ?? ruleData.hostId ?? "",
@@ -133,6 +137,7 @@ export default function RuleDetail() {
         { label: "Rule Name", value: ruleData.ruleName },
         { label: "Rule Type", value: ruleData.ruleType },
         { label: "Condition Language", value: ruleData.conditionLanguage },
+        { label: "Condition Security Profile", value: ruleData.conditionLanguage === "cel" ? ruleData.conditionSecurityProfile : "N/A" },
         { label: "Common", value: ruleData.common },
         { label: "Version", value: ruleData.version },
         { label: "Author", value: ruleData.author },

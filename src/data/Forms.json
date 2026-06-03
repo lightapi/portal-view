@@ -8634,6 +8634,11 @@
           "type": "string",
           "default": "native"
         },
+        "conditionSecurityProfile": {
+          "title": "Condition Security Profile",
+          "type": "string",
+          "default": "strict"
+        },
         "expression": {
           "title": "CEL Expression",
           "type": "string"
@@ -8782,6 +8787,23 @@
           {
             "id": "cel",
             "label": "CEL"
+          }
+        ]
+      },
+      {
+        "key": "conditionSecurityProfile",
+        "condition": "model.conditionLanguage === 'cel'",
+        "type": "dynaselect",
+        "multiple": false,
+        "default": "strict",
+        "options": [
+          {
+            "id": "strict",
+            "label": "Strict"
+          },
+          {
+            "id": "standard",
+            "label": "Standard"
           }
         ]
       },
@@ -9034,6 +9056,11 @@
           "type": "string",
           "default": "native"
         },
+        "conditionSecurityProfile": {
+          "title": "Condition Security Profile",
+          "type": "string",
+          "default": "strict"
+        },
         "expression": {
           "title": "CEL Expression",
           "type": "string"
@@ -9180,6 +9207,23 @@
           {
             "id": "cel",
             "label": "CEL"
+          }
+        ]
+      },
+      {
+        "key": "conditionSecurityProfile",
+        "condition": "model.conditionLanguage === 'cel'",
+        "type": "dynaselect",
+        "multiple": false,
+        "default": "strict",
+        "options": [
+          {
+            "id": "strict",
+            "label": "Strict"
+          },
+          {
+            "id": "standard",
+            "label": "Standard"
           }
         ]
       },
