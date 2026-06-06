@@ -15,11 +15,13 @@ import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import TuneIcon from '@mui/icons-material/Tune';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { buildConfigUpdateRoute } from './configUpdateRoute';
 
 // --- Type Definitions ---
 type ConfigInstanceApiResponse = {
@@ -313,7 +315,15 @@ export default function ConfigInstance() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<TuneIcon />}
+          onClick={() => navigate(buildConfigUpdateRoute('instance', searchParams, taskContext))}
+          disabled={!initialInstanceId}
+        >
+          Update Config Values
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}

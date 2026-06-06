@@ -14,12 +14,14 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SyncIcon from '@mui/icons-material/Sync';
+import TuneIcon from '@mui/icons-material/Tune';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { buildConfigUpdateRoute } from './configUpdateRoute';
 
 // --- Type Definitions ---
 type ConfigInstanceApiApiResponse = {
@@ -334,7 +336,15 @@ export default function ConfigInstanceApi() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<TuneIcon />}
+          onClick={() => navigate(buildConfigUpdateRoute('api', searchParams, taskContext))}
+          disabled={!initialInstanceApiId}
+        >
+          Update Config Values
+        </Button>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}

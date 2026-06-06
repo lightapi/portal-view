@@ -25,6 +25,17 @@ function has(context: TaskResolvedContext, key: keyof TaskResolvedContext) {
   return !!context[key];
 }
 
+function hasConfigUpdateTarget(context: TaskResolvedContext) {
+  return !!(
+    context.environment
+    || context.productId
+    || context.productVersionId
+    || context.instanceId
+    || context.instanceApiId
+    || context.instanceAppId
+  );
+}
+
 function selectTaskStep(task: TaskDefinition, context: TaskResolvedContext): TaskStep {
   if (task.id === "publish-api") {
     if (!has(context, "apiId")) return task.steps.find((step) => step.id === "create-api") ?? task.steps[0];
@@ -118,6 +129,7 @@ function selectTaskStep(task: TaskDefinition, context: TaskResolvedContext): Tas
   }
 
   if (task.id === "manage-configuration") {
+    if (hasConfigUpdateTarget(context)) return task.steps.find((step) => step.id === "instance-api") ?? task.steps[0];
     if (!has(context, "configId")) return task.steps.find((step) => step.id === "config") ?? task.steps[0];
     return task.steps.find((step) => step.id === "properties") ?? task.steps[0];
   }
@@ -241,6 +253,7 @@ function actionLabel(task: TaskDefinition, step: TaskStep) {
   if (task.id === "manage-community-content" && step.id === "message") return "Send Message";
   if (task.id === "manage-configuration" && step.id === "config") return "Review Configs";
   if (task.id === "manage-configuration" && step.id === "properties") return "Manage Properties";
+  if (task.id === "manage-configuration" && step.id === "instance-api") return "Update Config";
   if (task.id === "capture-config-snapshot" && step.id === "instance") return "Review Instances";
   if (task.id === "capture-config-snapshot" && step.id === "snapshot") return "Review Snapshots";
   if (task.id === "capture-config-snapshot" && step.id === "properties") return "Review Properties";

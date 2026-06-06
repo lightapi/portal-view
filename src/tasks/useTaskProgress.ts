@@ -465,6 +465,12 @@ function communityContentStepProgress(task: TaskDefinition, context: TaskResolve
 
 function configStepProgress(task: TaskDefinition, context: TaskResolvedContext): TaskStepProgress[] {
   const configKnown = has(context, "configId");
+  const scopedTargetKnown = has(context, "environment")
+    || has(context, "productId")
+    || has(context, "productVersionId")
+    || has(context, "instanceId")
+    || has(context, "instanceApiId")
+    || has(context, "instanceAppId");
   const progressByStep = new Map<string, TaskStepProgress>();
 
   progressByStep.set(
@@ -481,9 +487,11 @@ function configStepProgress(task: TaskDefinition, context: TaskResolvedContext):
   );
   progressByStep.set(
     "instance-api",
-    configKnown
-      ? stepProgress("instance-api", "optional", "Review instance API bindings for this config.")
-      : stepProgress("instance-api", "blocked", "Create or select a config first."),
+    scopedTargetKnown
+      ? stepProgress("instance-api", "complete", "Scoped config update target is available.")
+      : configKnown
+        ? stepProgress("instance-api", "optional", "Open the unified config update page for scoped overrides.")
+        : stepProgress("instance-api", "optional", "Select a target to update scoped config values."),
   );
   progressByStep.set(
     "promote",
