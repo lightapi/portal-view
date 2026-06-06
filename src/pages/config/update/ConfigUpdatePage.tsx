@@ -8,10 +8,12 @@ import {
 } from 'material-react-table';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Checkbox,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -41,10 +43,21 @@ import UndoIcon from '@mui/icons-material/Undo';
 import { useUserState } from '../../../contexts/UserContext';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../../tasks/taskUtils';
 import ConfigStructuredValueDialog from './ConfigStructuredValueDialog';
-import { applyConfigUpdate, fetchConfigUpdateProperties, getFreshOverride, targetPayload } from './configUpdateApi';
-import { configUpdateScopes, isConfigUpdateScopeId, scopeById, targetLabel, type ConfigUpdateScopeId } from './configUpdateScopes';
+import {
+  applyConfigUpdate,
+  fetchConfigUpdateProperties,
+  fetchEnvironmentOptions,
+  fetchInstanceApiOptions,
+  fetchInstanceAppOptions,
+  fetchInstanceOptions,
+  fetchProductOptions,
+  fetchProductVersionOptions,
+  getFreshOverride,
+  targetPayload,
+} from './configUpdateApi';
+import { configUpdateScopes, isConfigUpdateScopeId, scopeById, targetLabel, type ConfigUpdateScopeId, type ConfigUpdateTargetKey } from './configUpdateScopes';
 import { currentCommittedValue, displayValue, rowKey, structuredInitialValue, validateAndNormalizeValue } from './configValue';
-import type { ConfigUpdateDraft, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateTarget } from './types';
+import type { ConfigTargetOption, ConfigUpdateDraft, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateTarget } from './types';
 
 type UserState = {
   host?: string | null;
@@ -102,6 +115,18 @@ function draftChip(row: ConfigUpdateProperty, draft?: ConfigUpdateDraft) {
   return <Chip size="small" variant="outlined" label="inherited" />;
 }
 
+function targetInputKeysForScope(scopeId: ConfigUpdateScopeId): ConfigUpdateTargetKey[] {
+  if (scopeId === 'api') return ['instanceId', 'instanceApiId'];
+  if (scopeId === 'app') return ['instanceId', 'instanceAppId'];
+  if (scopeId === 'appApi') return ['instanceId', 'instanceAppId', 'instanceApiId'];
+  return scopeById[scopeId].targetKeys;
+}
+
+function selectedTargetOption(options: ConfigTargetOption[], value?: string) {
+  if (!value) return null;
+  return options.find((option) => option.id === value) ?? { id: value, label: value };
+}
+
 export default function ConfigUpdatePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -131,6 +156,9 @@ export default function ConfigUpdatePage() {
   const [isError, setIsError] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [targetOptions, setTargetOptions] = useState<Partial<Record<ConfigUpdateTargetKey, ConfigTargetOption[]>>>({});
+  const [targetOptionsLoading, setTargetOptionsLoading] = useState<Partial<Record<ConfigUpdateTargetKey, boolean>>>({});
+  const [targetOptionErrors, setTargetOptionErrors] = useState<Partial<Record<ConfigUpdateTargetKey, string>>>({});
   const [drafts, setDrafts] = useState<Record<string, ConfigUpdateDraft>>({});
   const [applyingRows, setApplyingRows] = useState<Record<string, boolean>>({});
   const [structuredRow, setStructuredRow] = useState<ConfigUpdateProperty | null>(null);
@@ -163,6 +191,8 @@ export default function ConfigUpdatePage() {
     () => selectedScope.targetKeys.every((key) => Boolean(target[key])),
     [selectedScope.targetKeys, target],
   );
+
+  const targetInputKeys = useMemo(() => targetInputKeysForScope(scopeId), [scopeId]);
 
   const draftEntries = useMemo(
     () => Object.entries(drafts).filter(([, draft]) => draft.operation || draft.error),
@@ -202,8 +232,63 @@ export default function ConfigUpdatePage() {
     void fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadOptionSet = async (key: ConfigUpdateTargetKey) => {
+      if (!host) return;
+      if ((key === 'instanceApiId' || key === 'instanceAppId') && !target.instanceId) {
+        setTargetOptions((prev) => ({ ...prev, [key]: [] }));
+        return;
+      }
+
+      setTargetOptionsLoading((prev) => ({ ...prev, [key]: true }));
+      setTargetOptionErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+
+      try {
+        let options: ConfigTargetOption[] = [];
+        if (key === 'environment') options = await fetchEnvironmentOptions(host);
+        if (key === 'productId') options = await fetchProductOptions(host);
+        if (key === 'productVersionId') options = await fetchProductVersionOptions(host);
+        if (key === 'instanceId') options = await fetchInstanceOptions(host);
+        if (key === 'instanceApiId' && target.instanceId) options = await fetchInstanceApiOptions(host, target.instanceId);
+        if (key === 'instanceAppId' && target.instanceId) options = await fetchInstanceAppOptions(host, target.instanceId);
+
+        if (!cancelled) setTargetOptions((prev) => ({ ...prev, [key]: options }));
+      } catch (error) {
+        if (!cancelled) {
+          setTargetOptions((prev) => ({ ...prev, [key]: [] }));
+          setTargetOptionErrors((prev) => ({ ...prev, [key]: errorSummary(error) ?? 'Failed to load options' }));
+        }
+      } finally {
+        if (!cancelled) setTargetOptionsLoading((prev) => ({ ...prev, [key]: false }));
+      }
+    };
+
+    setTargetOptions((prev) => {
+      const next: Partial<Record<ConfigUpdateTargetKey, ConfigTargetOption[]>> = {};
+      for (const key of targetInputKeys) next[key] = prev[key] ?? [];
+      return next;
+    });
+
+    for (const key of targetInputKeys) void loadOptionSet(key);
+    return () => {
+      cancelled = true;
+    };
+  }, [host, scopeId, target.instanceId, targetInputKeys]);
+
   const setTargetValue = (key: keyof ConfigUpdateTarget, value: string) => {
-    setTarget((prev) => ({ ...prev, [key]: value.trim() || undefined }));
+    setTarget((prev) => {
+      const next = { ...prev, [key]: value.trim() || undefined };
+      if (key === 'instanceId' && scopeId !== 'instance') {
+        next.instanceApiId = undefined;
+        next.instanceAppId = undefined;
+      }
+      return next;
+    });
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     setHasLoaded(false);
   };
@@ -517,16 +602,66 @@ export default function ConfigUpdatePage() {
             </Select>
           </FormControl>
 
-          {selectedScope.targetKeys.map((key) => (
-            <TextField
-              key={key}
-              size="small"
-              label={targetLabel(key)}
-              value={target[key] ?? ''}
-              onChange={(event) => setTargetValue(key, event.target.value)}
-              sx={{ minWidth: 300 }}
-            />
-          ))}
+          {targetInputKeys.map((key) => {
+            const options = targetOptions[key] ?? [];
+            const loading = Boolean(targetOptionsLoading[key]);
+            const value = selectedTargetOption(options, target[key]);
+            const dependsOnInstance = key === 'instanceApiId' || key === 'instanceAppId';
+            const disabled = !host;
+            const optionError = targetOptionErrors[key];
+
+            return (
+              <Autocomplete
+                key={key}
+                freeSolo
+                size="small"
+                options={options}
+                value={value}
+                loading={loading}
+                disabled={disabled}
+                getOptionLabel={(option) => typeof option === 'string' ? option : option.label}
+                isOptionEqualToValue={(option, selected) => option.id === (typeof selected === 'string' ? selected : selected.id)}
+                onChange={(_, nextValue) => {
+                  if (typeof nextValue === 'string') {
+                    setTargetValue(key, nextValue);
+                  } else {
+                    setTargetValue(key, nextValue?.id ?? '');
+                  }
+                }}
+                onInputChange={(_, nextInput, reason) => {
+                  if (reason === 'input' || reason === 'clear') setTargetValue(key, nextInput);
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <Box>
+                      <Typography variant="body2">{option.label}</Typography>
+                      {option.label !== option.id && (
+                        <Typography variant="caption" color="text.secondary">{option.id}</Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={targetLabel(key)}
+                    helperText={optionError ?? (dependsOnInstance && !target.instanceId ? 'Select an instance to load options.' : undefined)}
+                    error={Boolean(optionError)}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loading ? <CircularProgress color="inherit" size={16} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                sx={{ minWidth: 320 }}
+              />
+            );
+          })}
 
           <Button startIcon={<RefreshIcon />} variant="outlined" onClick={fetchData} disabled={!targetComplete || !host || isLoading}>
             Refresh

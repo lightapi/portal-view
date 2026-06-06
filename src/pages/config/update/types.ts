@@ -88,3 +88,8 @@ export type ConfigUpdateFilters = {
   propertyTypes?: string[];
   configPhases?: string[];
 };
+
+export type ConfigTargetOption = {
+  id: string;
+  label: string;
+};

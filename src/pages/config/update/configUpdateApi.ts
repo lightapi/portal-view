@@ -1,7 +1,7 @@
 import { apiPost } from '../../../api/apiPost';
 import fetchClient from '../../../utils/fetchClient';
 import { scopeById, type ConfigUpdateScopeId } from './configUpdateScopes';
-import type { ConfigSchemaRef, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateResponse, ConfigUpdateTarget } from './types';
+import type { ConfigSchemaRef, ConfigTargetOption, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateResponse, ConfigUpdateTarget } from './types';
 
 type FetchConfigUpdatePropertiesArgs = {
   hostId: string;
@@ -106,6 +106,76 @@ export async function fetchSchemaByRef(row: ConfigUpdateProperty): Promise<Confi
   });
   schemaCache.set(cacheKey, promise);
   return promise;
+}
+
+function labelQuery(service: string, action: string, data?: Record<string, string | undefined>) {
+  const cmd = {
+    host: 'lightapi.net',
+    service,
+    action,
+    version: '0.1.0',
+    ...(data ? { data } : {}),
+  };
+  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+}
+
+function normalizeTargetOption(value: unknown): ConfigTargetOption | null {
+  if (typeof value === 'string') return { id: value, label: value };
+  if (!value || typeof value !== 'object') return null;
+
+  const objectValue = value as Record<string, unknown>;
+  const id = objectValue.id ?? objectValue.value ?? objectValue.code ?? objectValue.key ?? objectValue.name;
+  if (id === undefined || id === null) return null;
+
+  const idText = String(id);
+  const label = objectValue.label ?? objectValue.name ?? objectValue.displayName ?? objectValue.value ?? objectValue.description ?? idText;
+  return { id: idText, label: String(label) };
+}
+
+function normalizeTargetOptions(payload: unknown): ConfigTargetOption[] {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as { data?: unknown; options?: unknown; values?: unknown; items?: unknown }).data
+        ?? (payload as { options?: unknown }).options
+        ?? (payload as { values?: unknown }).values
+        ?? (payload as { items?: unknown }).items
+      : [];
+
+  if (!Array.isArray(source)) return [];
+
+  const seen = new Set<string>();
+  return source
+    .map(normalizeTargetOption)
+    .filter((option): option is ConfigTargetOption => {
+      if (!option || seen.has(option.id)) return false;
+      seen.add(option.id);
+      return true;
+    });
+}
+
+export async function fetchEnvironmentOptions(hostId: string) {
+  return normalizeTargetOptions(await fetchClient(`/r/data?name=environment&host=${encodeURIComponent(hostId)}`));
+}
+
+export async function fetchProductOptions(hostId: string) {
+  return normalizeTargetOptions(await fetchClient(labelQuery('product', 'getProductIdLabel', { hostId })));
+}
+
+export async function fetchProductVersionOptions(hostId: string) {
+  return normalizeTargetOptions(await fetchClient(labelQuery('product', 'getProductVersionIdLabel', { hostId })));
+}
+
+export async function fetchInstanceOptions(hostId: string) {
+  return normalizeTargetOptions(await fetchClient(labelQuery('instance', 'getInstanceLabel', { hostId })));
+}
+
+export async function fetchInstanceApiOptions(hostId: string, instanceId: string) {
+  return normalizeTargetOptions(await fetchClient(labelQuery('instance', 'getInstanceApiLabel', { hostId, instanceId })));
+}
+
+export async function fetchInstanceAppOptions(hostId: string, instanceId: string) {
+  return normalizeTargetOptions(await fetchClient(labelQuery('instance', 'getInstanceAppLabel', { hostId, instanceId })));
 }
 
 export function targetPayload(row: Pick<ConfigUpdateProperty, 'hostId' | 'environment' | 'productId' | 'productVersionId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'scope'>) {
