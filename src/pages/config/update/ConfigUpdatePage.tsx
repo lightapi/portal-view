@@ -21,6 +21,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   IconButton,
   InputLabel,
   MenuItem,
@@ -609,6 +610,49 @@ export default function ConfigUpdatePage() {
             const dependsOnInstance = key === 'instanceApiId' || key === 'instanceAppId';
             const disabled = !host;
             const optionError = targetOptionErrors[key];
+            const selectOptions = target[key] && !options.some((option) => option.id === target[key])
+              ? [{ id: target[key] as string, label: target[key] as string }, ...options]
+              : options;
+
+            if (dependsOnInstance) {
+              const selectDisabled = disabled || !target.instanceId || loading;
+              const emptyLabel = !target.instanceId
+                ? 'Select an instance first'
+                : loading
+                  ? 'Loading...'
+                  : `Select ${targetLabel(key)}`;
+
+              return (
+                <FormControl key={key} size="small" sx={{ minWidth: 320 }} error={Boolean(optionError)} disabled={selectDisabled}>
+                  <InputLabel>{targetLabel(key)}</InputLabel>
+                  <Select
+                    label={targetLabel(key)}
+                    value={target[key] ?? ''}
+                    onChange={(event) => setTargetValue(key, event.target.value)}
+                  >
+                    <MenuItem value=""><em>{emptyLabel}</em></MenuItem>
+                    {selectOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        <Box>
+                          <Typography variant="body2">{option.label}</Typography>
+                          {option.label !== option.id && (
+                            <Typography variant="caption" color="text.secondary">{option.id}</Typography>
+                          )}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {(optionError || !target.instanceId || (!loading && target.instanceId && selectOptions.length === 0)) && (
+                    <FormHelperText>
+                      {optionError
+                        ?? (!target.instanceId
+                          ? 'Select an instance to load options.'
+                          : `No ${targetLabel(key).toLowerCase()} options found for this instance.`)}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              );
+            }
 
             return (
               <Autocomplete
