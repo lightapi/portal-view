@@ -112,6 +112,7 @@ const structure = [
         id: 20, label: "Marketplace", link: "/app/marketplace/api", icon: <ShoppingBasketIcon />,
         children: [
           { label: "API Catalog", link: "/app/marketplace/api" },
+          { label: "Schema Catalog", link: "/app/marketplace/schema" },
           { label: "Workflow Catalog", link: "/app/marketplace/workflow" },
           { label: "API Client", link: "/app/client" },
           { label: "OpenApi API", link: "/app/service/openapi" },
@@ -130,7 +131,7 @@ const structure = [
           { label: "GraphQL API", link: "/app/form/createService" },
           { label: "Hybrid API", link: "/app/form/createService" },
           { label: "Schema Form", link: "/app/form/createSchemaForm" },
-          { label: "JSON Schema", link: "/app/form/createJsonSchema" },
+          { label: "JSON Schema", link: "/app/form/createSchema" },
           { label: "Error Code", link: "/app/form/createErrorCode" },
           { label: "YAML Rule", link: "/app/form/createRule" },
         ],

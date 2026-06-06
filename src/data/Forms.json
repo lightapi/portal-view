@@ -10118,6 +10118,10 @@
           "type": "string",
           "title": "Schema Id that is unique within the hostId"
         },
+        "schemaAlias": {
+          "type": "string",
+          "title": "URL-friendly Schema Alias"
+        },
         "schemaVersion": {
           "type": "string",
           "title": "Schema Version"
@@ -10154,16 +10158,27 @@
           "type": "string",
           "title": "Schema Status"
         },
+        "externalVisible": {
+          "type": "boolean",
+          "title": "Expose Through /r/schema"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Schema"
+        },
         "categoryIds": {
           "type": "array",
           "title": "Category Ids",
-          "itmes": {
+          "items": {
             "type": "string"
           }
         },
         "tagIds": {
-          "type": "string",
-          "title": "Tag Ids"
+          "type": "array",
+          "title": "Tag Ids",
+          "items": {
+            "type": "string"
+          }
         },
         "example": {
           "type": "string",
@@ -10178,7 +10193,8 @@
     "form": [
       "hostId",
       "schemaId",
-      "schemaVesion",
+      "schemaAlias",
+      "schemaVersion",
       {
         "key": "schemaType",
         "type": "dynaselect",
@@ -10187,10 +10203,6 @@
           {
             "id": "json",
             "label": "json"
-          },
-          {
-            "id": "yaml",
-            "label": "yaml"
           }
         ]
       },
@@ -10265,12 +10277,14 @@
           }
         ]
       },
+      "externalVisible",
+      "globalFlag",
       {
         "key": "categoryIds",
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22schema%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -10281,7 +10295,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22schema%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -10311,21 +10325,21 @@
     ]
   },
   "updateSchema": {
-    "formId": "updateCategory",
+    "formId": "updateSchema",
     "actions": [
       {
         "host": "lightapi.net",
-        "service": "category",
-        "action": "updateCategory",
+        "service": "schema",
+        "action": "updateSchema",
         "version": "0.1.0",
-        "title": "Update Category",
+        "title": "Update Schema",
         "success": "/app/success",
         "failure": "/app/failure"
       }
     ],
     "schema": {
       "type": "object",
-      "title": "Category",
+      "title": "Schema",
       "required": [
         "hostId",
         "schemaId",
@@ -10347,6 +10361,10 @@
           "type": "string",
           "title": "Schema Id that is unique within the hostId",
           "readonly": true
+        },
+        "schemaAlias": {
+          "type": "string",
+          "title": "URL-friendly Schema Alias"
         },
         "schemaVersion": {
           "type": "string",
@@ -10384,16 +10402,27 @@
           "type": "string",
           "title": "Schema Status"
         },
+        "externalVisible": {
+          "type": "boolean",
+          "title": "Expose Through /r/schema"
+        },
+        "globalFlag": {
+          "type": "boolean",
+          "title": "Global Schema"
+        },
         "categoryIds": {
           "type": "array",
           "title": "Category Ids",
-          "itmes": {
+          "items": {
             "type": "string"
           }
         },
         "tagIds": {
-          "type": "string",
-          "title": "Tag Ids"
+          "type": "array",
+          "title": "Tag Ids",
+          "items": {
+            "type": "string"
+          }
         },
         "example": {
           "type": "string",
@@ -10408,7 +10437,8 @@
     "form": [
       "hostId",
       "schemaId",
-      "schemaVesion",
+      "schemaAlias",
+      "schemaVersion",
       {
         "key": "schemaType",
         "type": "dynaselect",
@@ -10417,10 +10447,6 @@
           {
             "id": "json",
             "label": "json"
-          },
-          {
-            "id": "yaml",
-            "label": "yaml"
           }
         ]
       },
@@ -10495,12 +10521,14 @@
           }
         ]
       },
+      "externalVisible",
+      "globalFlag",
       {
         "key": "categoryIds",
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22schema%22%7D%7D",
           "params": [
             "hostId"
           ]
@@ -10511,7 +10539,7 @@
         "type": "dynaselect",
         "multiple": true,
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D%0A%0A",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22schema%22%7D%7D",
           "params": [
             "hostId"
           ]

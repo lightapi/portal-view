@@ -31,6 +31,7 @@ import UserHost from "./pages/user/UserHost";
 import Service from "./pages/service/Service";
 import ApiDetail from "./pages/service/ApiDetail";
 import ApiCatalog from "./pages/marketplace/ApiCatalog";
+import SchemaCatalog from "./pages/marketplace/SchemaCatalog";
 import WorkflowCatalog from "./pages/marketplace/WorkflowCatalog";
 import OpenapiEditor from "./pages/service/OpenapiEditor";
 import HybridEditor from "./pages/service/HybridEditor";
@@ -353,6 +354,7 @@ const App = () => {
           <Route path="userHost" element={<UserHost />} />
           <Route path="marketplace" element={<RedirectWithQuery to="/app/marketplace/api" />} />
           <Route path="marketplace/api" element={<ApiCatalog />} />
+          <Route path="marketplace/schema" element={<SchemaCatalog />} />
           <Route path="marketplace/workflow" element={<WorkflowCatalog />} />
           <Route path="service/:apiType" element={<Service />} />
           <Route path="service/admin" element={<Service />} />

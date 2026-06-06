@@ -152,7 +152,7 @@ export default function SchemaAdmin() {
     setRowCount(prev => prev - 1);
 
     const cmd = {
-      host: 'lightapi.net', service: 'schema', action: 'deleteJsonSchema', version: '0.1.0',
+      host: 'lightapi.net', service: 'schema', action: 'deleteSchema', version: '0.1.0',
       data: row.original,
     };
     try {
@@ -182,7 +182,7 @@ export default function SchemaAdmin() {
 
     try {
       const freshData = await fetchClient(url);
-      navigate(buildTaskAwareRoute('/app/form/updateJsonSchema', searchParams, contextForRow(row.original)), { state: { data: freshData, source: location.pathname } });
+      navigate(buildTaskAwareRoute('/app/form/updateSchema', searchParams, contextForRow(row.original)), { state: { data: freshData, source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch schema for update:", error);
       alert("Could not load the latest schema data. Please try again.");
@@ -268,7 +268,7 @@ export default function SchemaAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createJsonSchema', searchParams, taskContext))}>
+      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createSchema', searchParams, taskContext))}>
         Create New Schema
       </Button>
     ),

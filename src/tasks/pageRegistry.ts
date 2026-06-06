@@ -64,6 +64,17 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["wfDefId"],
   },
   {
+    id: "schema-marketplace",
+    title: "Schema Catalog",
+    description: "Browse JSON schemas by category, tag, status, and external alias.",
+    route: "/app/marketplace/schema",
+    category: "API Marketplace",
+    roles: ["user"],
+    helpPath: "/help/portal-view/pages/schema-catalog",
+    keywords: ["schema", "json", "marketplace", "catalog", "category", "tag", "alias"],
+    entities: ["schema"],
+  },
+  {
     id: "create-api",
     title: "Create API",
     description: "Register a new API using the service creation form.",
