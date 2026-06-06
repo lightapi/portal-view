@@ -203,7 +203,13 @@ const structure = [
       { id: 113, label: "Instance Admin", role: "user instance-admin", link: "/app/instance/InstanceAdmin", icon: <ContentCopyIcon /> },
       { id: 113.5, label: "Runtime Instance", role: "user instance-admin", link: "/app/instance/RuntimeInstanceAdmin", icon: <DirectionsRunIcon /> },
       { id: 114, label: "Deployment Admin", link: "/app/deployment/DeploymentAdmin", icon: <AirplanemodeActiveIcon /> },
-      { id: 115, label: "Config Admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon /> },
+      {
+        id: 115, label: "Config Admin", link: "/app/config/configAdmin", icon: <PermDataSettingIcon />,
+        children: [
+          { label: "Config Records", link: "/app/config/configAdmin" },
+          { label: "Config Update", link: "/app/config/update" },
+        ],
+      },
       {
         id: 115.5, label: "GenAI Admin", link: "/app/genai/chat", icon: <PrecisionManufacturingIcon />,
         children: [

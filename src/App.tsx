@@ -82,6 +82,7 @@ import ConfigInstanceApi from "./pages/config/ConfigInstanceApi";
 import ConfigInstanceApp from "./pages/config/ConfigInstanceApp";
 import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
+import ConfigUpdatePage from "./pages/config/update/ConfigUpdatePage";
 import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
 import ConfigSnapshotProperty from "./pages/snapshot/ConfigSnapshotProperty";
 import ConfigSnapshotFile from "./pages/snapshot/ConfigSnapshotFile";
@@ -459,6 +460,7 @@ const App = () => {
             path="config/configInstanceFile"
             element={<ConfigInstanceFile />}
           />
+          <Route path="config/update" element={<ConfigUpdatePage />} />
           <Route
             path="config/configDeploymentInstance"
             element={<ConfigDeploymentInstance />}

@@ -527,12 +527,12 @@ export const taskRegistry: TaskDefinition[] = [
       },
       {
         id: "instance-api",
-        title: "Review instance API config",
-        description: "Review configuration attached to instance APIs and MCP tool exposure.",
-        route: "/app/config/configInstanceApi",
+        title: "Update scoped config values",
+        description: "Edit inherited and overridden configuration values for instances, APIs, apps, and app APIs.",
+        route: "/app/config/update",
         required: false,
         dependsOn: ["config"],
-        keywords: ["instance api", "mcp", "gateway"],
+        keywords: ["instance", "api", "app", "override", "configuration"],
       },
       {
         id: "promote",
