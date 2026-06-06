@@ -73,6 +73,27 @@ function valueSummary(value: unknown) {
   return text.length > 80 ? `${text.slice(0, 80)}...` : text;
 }
 
+function errorSummary(error: unknown) {
+  if (!error) return null;
+  if (typeof error === 'string') return error;
+  if (typeof error !== 'object') return String(error);
+
+  const errorObject = error as Record<string, unknown>;
+  const parts = [
+    errorObject.message,
+    errorObject.description,
+    errorObject.code,
+    errorObject.status,
+  ].filter((value): value is string | number => typeof value === 'string' || typeof value === 'number');
+
+  if (parts.length) return parts.map(String).join(' ');
+  try {
+    return JSON.stringify(errorObject);
+  } catch {
+    return 'Unknown error';
+  }
+}
+
 function draftChip(row: ConfigUpdateProperty, draft?: ConfigUpdateDraft) {
   if (draft?.error) return <Chip size="small" color="error" label="error" />;
   if (draft?.operation === 'reset') return <Chip size="small" color="warning" label="reset" />;
@@ -108,6 +129,8 @@ export default function ConfigUpdatePage() {
   const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, ConfigUpdateDraft>>({});
   const [applyingRows, setApplyingRows] = useState<Record<string, boolean>>({});
   const [structuredRow, setStructuredRow] = useState<ConfigUpdateProperty | null>(null);
@@ -150,6 +173,8 @@ export default function ConfigUpdatePage() {
     if (!host || !targetComplete) return;
     setIsLoading(true);
     setIsError(false);
+    setLoadError(null);
+    setHasLoaded(false);
     try {
       const result = await fetchConfigUpdateProperties({
         hostId: host,
@@ -162,9 +187,12 @@ export default function ConfigUpdatePage() {
       });
       setData(result.properties || []);
       setRowCount(result.total || 0);
+      setHasLoaded(true);
     } catch (error) {
       console.error('Failed to load config update properties:', error);
       setIsError(true);
+      setLoadError(errorSummary(error));
+      setHasLoaded(true);
     } finally {
       setIsLoading(false);
     }
@@ -177,6 +205,7 @@ export default function ConfigUpdatePage() {
   const setTargetValue = (key: keyof ConfigUpdateTarget, value: string) => {
     setTarget((prev) => ({ ...prev, [key]: value.trim() || undefined }));
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setHasLoaded(false);
   };
 
   const setMultiFilter = (key: keyof ConfigUpdateFilters) => (event: SelectChangeEvent<string[]>) => {
@@ -186,6 +215,7 @@ export default function ConfigUpdatePage() {
       [key]: typeof value === 'string' ? value.split(',').filter(Boolean) : value,
     }));
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    setHasLoaded(false);
   };
 
   const clearDraft = (key: string) => {
@@ -478,6 +508,7 @@ export default function ConfigUpdatePage() {
               onChange={(event) => {
                 setScopeId(event.target.value as ConfigUpdateScopeId);
                 setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                setHasLoaded(false);
               }}
             >
               {configUpdateScopes.map((scope) => (
@@ -531,7 +562,11 @@ export default function ConfigUpdatePage() {
             </Select>
           </FormControl>
           <FormControlLabel
-            control={<Checkbox checked={overriddenOnly} onChange={(event) => setOverriddenOnly(event.target.checked)} />}
+            control={<Checkbox checked={overriddenOnly} onChange={(event) => {
+              setOverriddenOnly(event.target.checked);
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+              setHasLoaded(false);
+            }} />}
             label="Overridden only"
           />
         </Stack>
@@ -539,6 +574,12 @@ export default function ConfigUpdatePage() {
         {!targetComplete && (
           <Alert severity="info">
             Select a scope and enter the required target ID values to load configurable properties.
+          </Alert>
+        )}
+
+        {targetComplete && hasLoaded && !isLoading && !isError && data.length === 0 && (
+          <Alert severity="info">
+            No applicable config properties were found for this scope and target. For instance, API, app, and app API scopes, verify the product version has config and config property assignments.
           </Alert>
         )}
 
@@ -554,7 +595,10 @@ export default function ConfigUpdatePage() {
           state={tableState}
           initialState={{ density: 'compact', grouping: ['configName'], expanded: true }}
           getRowId={(row) => rowKey(row)}
-          muiToolbarAlertBannerProps={isError ? { color: 'error', children: 'Error loading config update properties' } : undefined}
+          muiToolbarAlertBannerProps={isError ? {
+            color: 'error',
+            children: loadError ? `Error loading config update properties: ${loadError}` : 'Error loading config update properties',
+          } : undefined}
           renderRowActions={({ row }: { row: MRT_Row<ConfigUpdateProperty> }) => {
             const key = rowKey(row.original);
             const draft = drafts[key];
