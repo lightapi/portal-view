@@ -715,12 +715,12 @@ export const pageRegistry: PageDefinition[] = [
   {
     id: "config-update",
     title: "Config Update",
-    description: "Update inherited and overridden configuration property values for instance-facing scopes.",
+    description: "Update inherited and overridden configuration property values for environment, product, product version, and instance-facing scopes.",
     route: "/app/config/update",
     category: "Platform Operations",
     roles: ["admin"],
-    keywords: ["config", "configuration", "property", "override", "instance", "api", "app"],
-    entities: ["config", "propertyId", "instanceId", "instanceApiId", "instanceAppId"],
+    keywords: ["config", "configuration", "property", "override", "environment", "product", "version", "instance", "api", "app"],
+    entities: ["config", "propertyId", "environment", "productId", "productVersionId", "instanceId", "instanceApiId", "instanceAppId"],
   },
   {
     id: "config-snapshot",

@@ -1,9 +1,11 @@
-export type ConfigUpdateScopeId = 'instance' | 'api' | 'app' | 'appApi';
+export type ConfigUpdateScopeId = 'environment' | 'product' | 'productVersion' | 'instance' | 'api' | 'app' | 'appApi';
+
+export type ConfigUpdateTargetKey = 'environment' | 'productId' | 'productVersionId' | 'instanceId' | 'instanceApiId' | 'instanceAppId';
 
 export type ConfigUpdateScope = {
   id: ConfigUpdateScopeId;
   label: string;
-  targetKeys: Array<'instanceId' | 'instanceApiId' | 'instanceAppId'>;
+  targetKeys: ConfigUpdateTargetKey[];
   createAction: string;
   updateAction: string;
   deleteAction: string;
@@ -14,6 +16,39 @@ export type ConfigUpdateScope = {
 };
 
 export const configUpdateScopes: ConfigUpdateScope[] = [
+  {
+    id: 'environment',
+    label: 'Environment',
+    targetKeys: ['environment'],
+    createAction: 'createConfigEnvironment',
+    updateAction: 'updateConfigEnvironment',
+    deleteAction: 'deleteConfigEnvironment',
+    getFreshAction: 'getFreshConfigEnvironment',
+    createForm: 'createConfigEnvironment',
+    updateForm: 'updateConfigEnvironment',
+  },
+  {
+    id: 'product',
+    label: 'Product',
+    targetKeys: ['productId'],
+    createAction: 'createConfigProduct',
+    updateAction: 'updateConfigProduct',
+    deleteAction: 'deleteConfigProduct',
+    getFreshAction: 'getFreshConfigProduct',
+    createForm: 'createConfigProduct',
+    updateForm: 'updateConfigProduct',
+  },
+  {
+    id: 'productVersion',
+    label: 'Product Version',
+    targetKeys: ['productVersionId'],
+    createAction: 'createConfigProductVersion',
+    updateAction: 'updateConfigProductVersion',
+    deleteAction: 'deleteConfigProductVersion',
+    getFreshAction: 'getFreshConfigProductVersion',
+    createForm: 'createConfigProductVersion',
+    updateForm: 'updateConfigProductVersion',
+  },
   {
     id: 'instance',
     label: 'Instance',
@@ -68,7 +103,13 @@ export const scopeById = Object.fromEntries(
 ) as Record<ConfigUpdateScopeId, ConfigUpdateScope>;
 
 export function isConfigUpdateScopeId(value: string | null | undefined): value is ConfigUpdateScopeId {
-  return value === 'instance' || value === 'api' || value === 'app' || value === 'appApi';
+  return value === 'environment'
+    || value === 'product'
+    || value === 'productVersion'
+    || value === 'instance'
+    || value === 'api'
+    || value === 'app'
+    || value === 'appApi';
 }
 
 export function targetLabel(key: string) {

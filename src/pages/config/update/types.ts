@@ -5,6 +5,10 @@ export type ConfigValueType = 'string' | 'boolean' | 'integer' | 'float' | 'map'
 export type ConfigUpdateProperty = {
   scope: ConfigUpdateScopeId;
   hostId: string;
+  environment?: string;
+  productId?: string;
+  productVersionId?: string;
+  productVersion?: string;
   instanceId?: string;
   instanceApiId?: string;
   instanceAppId?: string;
@@ -53,6 +57,9 @@ export type ConfigUpdateDraft = {
 };
 
 export type ConfigUpdateTarget = {
+  environment?: string;
+  productId?: string;
+  productVersionId?: string;
   instanceId?: string;
   instanceApiId?: string;
   instanceAppId?: string;

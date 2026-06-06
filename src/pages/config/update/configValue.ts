@@ -1,10 +1,13 @@
 import YAML from 'yaml';
 import type { ConfigUpdateProperty } from './types';
 
-export function rowKey(row: Pick<ConfigUpdateProperty, 'scope' | 'hostId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'configId' | 'propertyId'>) {
+export function rowKey(row: Pick<ConfigUpdateProperty, 'scope' | 'hostId' | 'environment' | 'productId' | 'productVersionId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'configId' | 'propertyId'>) {
   return [
     row.scope,
     row.hostId,
+    row.environment ?? '',
+    row.productId ?? '',
+    row.productVersionId ?? '',
     row.instanceId ?? '',
     row.instanceApiId ?? '',
     row.instanceAppId ?? '',

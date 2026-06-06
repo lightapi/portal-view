@@ -58,6 +58,9 @@ const resourceTypeOptions = ['none', 'api', 'app', 'api|app_api', 'app|app_api',
 function initialScope(searchParams: URLSearchParams): ConfigUpdateScopeId {
   const scope = searchParams.get('scope');
   if (isConfigUpdateScopeId(scope)) return scope;
+  if (searchParams.get('productVersionId')) return 'productVersion';
+  if (searchParams.get('productId')) return 'product';
+  if (searchParams.get('environment')) return 'environment';
   if (searchParams.get('instanceApiId') && searchParams.get('instanceAppId')) return 'appApi';
   if (searchParams.get('instanceApiId')) return 'api';
   if (searchParams.get('instanceAppId')) return 'app';
@@ -88,6 +91,9 @@ export default function ConfigUpdatePage() {
   const [scopeId, setScopeId] = useState<ConfigUpdateScopeId>(() => initialScope(searchParams));
   const selectedScope = scopeById[scopeId];
   const [target, setTarget] = useState<ConfigUpdateTarget>(() => ({
+    environment: searchContext.environment,
+    productId: searchContext.productId,
+    productVersionId: searchContext.productVersionId,
     instanceId: searchContext.instanceId,
     instanceApiId: searchContext.instanceApiId,
     instanceAppId: searchContext.instanceAppId,
@@ -111,11 +117,23 @@ export default function ConfigUpdatePage() {
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host ?? '',
+      environment: target.environment ?? '',
+      productId: target.productId ?? '',
+      productVersionId: target.productVersionId ?? '',
       instanceId: target.instanceId ?? '',
       instanceApiId: target.instanceApiId ?? '',
       instanceAppId: target.instanceAppId ?? '',
     }),
-    [host, searchContext, target.instanceApiId, target.instanceAppId, target.instanceId],
+    [
+      host,
+      searchContext,
+      target.environment,
+      target.instanceApiId,
+      target.instanceAppId,
+      target.instanceId,
+      target.productId,
+      target.productVersionId,
+    ],
   );
 
   const targetComplete = useMemo(
@@ -307,6 +325,10 @@ export default function ConfigUpdatePage() {
     const text = JSON.stringify({
       scope: row.scope,
       hostId: row.hostId,
+      environment: row.environment,
+      productId: row.productId,
+      productVersionId: row.productVersionId,
+      productVersion: row.productVersion,
       instanceId: row.instanceId,
       instanceApiId: row.instanceApiId,
       instanceAppId: row.instanceAppId,

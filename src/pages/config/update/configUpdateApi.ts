@@ -81,8 +81,12 @@ export async function applyConfigUpdate(row: ConfigUpdateProperty, operation: 'c
   return result.data;
 }
 
-export function targetPayload(row: Pick<ConfigUpdateProperty, 'hostId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'scope'>) {
-  const payload: Record<string, string | undefined> = { hostId: row.hostId };
+export function targetPayload(row: Pick<ConfigUpdateProperty, 'hostId' | 'environment' | 'productId' | 'productVersionId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'scope'>) {
+  const payload: Record<string, string | undefined> = {};
+  if (row.scope !== 'product') payload.hostId = row.hostId;
+  if (row.scope === 'environment') payload.environment = row.environment;
+  if (row.scope === 'product') payload.productId = row.productId;
+  if (row.scope === 'productVersion') payload.productVersionId = row.productVersionId;
   if (row.scope === 'instance') payload.instanceId = row.instanceId;
   if (row.scope === 'api') payload.instanceApiId = row.instanceApiId;
   if (row.scope === 'app') payload.instanceAppId = row.instanceAppId;

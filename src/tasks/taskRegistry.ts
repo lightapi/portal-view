@@ -528,11 +528,11 @@ export const taskRegistry: TaskDefinition[] = [
       {
         id: "instance-api",
         title: "Update scoped config values",
-        description: "Edit inherited and overridden configuration values for instances, APIs, apps, and app APIs.",
+        description: "Edit inherited and overridden configuration values for environments, products, product versions, instances, APIs, apps, and app APIs.",
         route: "/app/config/update",
         required: false,
         dependsOn: ["config"],
-        keywords: ["instance", "api", "app", "override", "configuration"],
+        keywords: ["environment", "product", "version", "instance", "api", "app", "override", "configuration"],
       },
       {
         id: "promote",
