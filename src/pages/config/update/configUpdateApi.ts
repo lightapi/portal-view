@@ -1,7 +1,7 @@
 import { apiPost } from '../../../api/apiPost';
 import fetchClient from '../../../utils/fetchClient';
 import { scopeById, type ConfigUpdateScopeId } from './configUpdateScopes';
-import type { ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateResponse, ConfigUpdateTarget } from './types';
+import type { ConfigSchemaRef, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateResponse, ConfigUpdateTarget } from './types';
 
 type FetchConfigUpdatePropertiesArgs = {
   hostId: string;
@@ -79,6 +79,33 @@ export async function applyConfigUpdate(row: ConfigUpdateProperty, operation: 'c
   const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
   if (result.error) throw result.error;
   return result.data;
+}
+
+const schemaCache = new Map<string, Promise<ConfigSchemaRef | null>>();
+
+export async function fetchSchemaByRef(row: ConfigUpdateProperty): Promise<ConfigSchemaRef | null> {
+  if (!row.schemaId || !row.schemaVersion || row.schemaStatus !== 'P') return null;
+  const cacheKey = `${row.hostId || 'global'}:${row.schemaId}:${row.schemaVersion}`;
+  const cached = schemaCache.get(cacheKey);
+  if (cached) return cached;
+
+  const promise = fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
+    host: 'lightapi.net',
+    service: 'schema',
+    action: 'getSchemaByRef',
+    version: '0.1.0',
+    data: {
+      hostId: row.hostId,
+      schemaId: row.schemaId,
+      schemaVersion: row.schemaVersion,
+      active: true,
+    },
+  }))).catch((error) => {
+    schemaCache.delete(cacheKey);
+    throw error;
+  });
+  schemaCache.set(cacheKey, promise);
+  return promise;
 }
 
 export function targetPayload(row: Pick<ConfigUpdateProperty, 'hostId' | 'environment' | 'productId' | 'productVersionId' | 'instanceId' | 'instanceApiId' | 'instanceAppId' | 'scope'>) {

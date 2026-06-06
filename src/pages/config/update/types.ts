@@ -37,9 +37,26 @@ export type ConfigUpdateProperty = {
   effectiveSourceType?: string | null;
   propertySource?: string | null;
   propertySourceType?: string | null;
+  schemaId?: string | null;
+  schemaVersion?: string | null;
+  schemaType?: string | null;
+  schemaStatus?: string | null;
+  hasSchema?: boolean;
   overridden?: boolean;
   canUpdate?: boolean;
   canDeleteOverride?: boolean;
+};
+
+export type ConfigSchemaRef = {
+  schemaId: string;
+  hostId?: string | null;
+  schemaVersion: string;
+  schemaType?: string | null;
+  specVersion?: string | null;
+  schemaName?: string | null;
+  schemaStatus?: string | null;
+  schemaBody?: string | null;
+  source?: string | null;
 };
 
 export type ConfigUpdateResponse = {
