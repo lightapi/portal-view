@@ -27,6 +27,12 @@ export default defineConfig(({ mode }) => {
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
+  // Optional comma-separated list of additional CORS-allowed origins for the dev server.
+  // Example: VITE_CORS_ALLOWED_ORIGINS="https://example.localhost,http://localhost:5174"
+  const extraCorsAllowedOrigins = (env.VITE_CORS_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   const httpsConfig =
     isHttpsEnabled && httpsKeyPath && httpsCertPath
@@ -35,6 +41,16 @@ export default defineConfig(({ mode }) => {
           cert: fs.readFileSync(path.resolve(process.cwd(), httpsCertPath)),
         }
       : undefined;
+  const devServerProtocol = httpsConfig ? "https" : "http";
+  const corsAllowedOrigins = [
+    `${devServerProtocol}://localhost:${port}`,
+    "https://signin.localhost",
+    "https://local.localhost",
+    "https://oauth.localhost",
+    "http://localhost:5173",
+    "http://0.0.0.0:6274",
+    ...extraCorsAllowedOrigins,
+  ];
 
   return {
     plugins: [react()],
@@ -57,7 +73,10 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port,
-      cors: true,
+      cors: {
+        origin: corsAllowedOrigins,
+        credentials: true,
+      },
       https: httpsConfig,
       proxy: {
         "/api": {
