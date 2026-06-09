@@ -27,6 +27,16 @@ export default defineConfig(({ mode }) => {
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
+  const corsAllowedOrigins = [
+    "https://localhost:3000",
+    "https://signin.localhost",
+    "https://local.localhost",
+    "https://oauth.localhost",
+    "https://dev.lightapi.net",
+    "https://devsignin.lightapi.net",
+    "http://localhost:5173",
+    "http://0.0.0.0:6274",
+  ];
 
   const httpsConfig =
     isHttpsEnabled && httpsKeyPath && httpsCertPath
@@ -57,7 +67,10 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port,
-      cors: true,
+      cors: {
+        origin: corsAllowedOrigins,
+        credentials: true,
+      },
       https: httpsConfig,
       proxy: {
         "/api": {
