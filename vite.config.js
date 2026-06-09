@@ -27,11 +27,19 @@ export default defineConfig(({ mode }) => {
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
-  const devServerProtocol = isHttpsEnabled ? "https" : "http";
   const extraCorsAllowedOrigins = (env.VITE_CORS_ALLOWED_ORIGINS || "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  const httpsConfig =
+    isHttpsEnabled && httpsKeyPath && httpsCertPath
+      ? {
+          key: fs.readFileSync(path.resolve(process.cwd(), httpsKeyPath)),
+          cert: fs.readFileSync(path.resolve(process.cwd(), httpsCertPath)),
+        }
+      : undefined;
+  const devServerProtocol = httpsConfig ? "https" : "http";
   const corsAllowedOrigins = [
     `${devServerProtocol}://localhost:${port}`,
     "https://signin.localhost",
@@ -41,14 +49,6 @@ export default defineConfig(({ mode }) => {
     "http://0.0.0.0:6274",
     ...extraCorsAllowedOrigins,
   ];
-
-  const httpsConfig =
-    isHttpsEnabled && httpsKeyPath && httpsCertPath
-      ? {
-          key: fs.readFileSync(path.resolve(process.cwd(), httpsKeyPath)),
-          cert: fs.readFileSync(path.resolve(process.cwd(), httpsCertPath)),
-        }
-      : undefined;
 
   return {
     plugins: [react()],
