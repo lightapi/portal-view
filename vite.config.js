@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => {
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
+  // Optional comma-separated list of additional CORS-allowed origins for the dev server.
+  // Example: VITE_CORS_ALLOWED_ORIGINS="https://example.localhost,http://localhost:5174"
   const extraCorsAllowedOrigins = (env.VITE_CORS_ALLOWED_ORIGINS || "")
     .split(",")
     .map((origin) => origin.trim())
