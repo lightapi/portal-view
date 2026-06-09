@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
   const httpsCertPath = env.VITE_HTTPS_CERT_PATH;
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
+  const apiBaseUrl = env.VITE_API_BASE_URL || "https://localhost";
   // Optional comma-separated list of additional CORS-allowed origins for the dev server.
   // Example: VITE_CORS_ALLOWED_ORIGINS="https://example.localhost,http://localhost:5174"
   const extraCorsAllowedOrigins = (env.VITE_CORS_ALLOWED_ORIGINS || "")
@@ -80,69 +81,69 @@ export default defineConfig(({ mode }) => {
       https: httpsConfig,
       proxy: {
         "/api": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/oauth2": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/portal/command": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/portal/query": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/r/data": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/authorization": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/logout": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/config-server": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/services": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/schedules": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
         },
         "/chat": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           ws: true,
           changeOrigin: true,
           secure: false,
         },
         "/ctrl/mcp": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           ws: true,
           changeOrigin: true,
           secure: false,
         },
         "/auth/ms": {
-          target: env.VITE_API_BASE_URL,
+          target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
           configure: (proxy) => {

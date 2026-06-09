@@ -13,6 +13,11 @@ target host, API base URL, or sign-in URL changes, rebuild `portal-view` and
 copy the generated `dist` directory into the asset repository used by that
 target.
 
+The committed `.env` leaves `VITE_API_BASE_URL` empty so default builds use
+same-origin API paths and do not bake a localhost URL into non-local assets.
+Set `VITE_API_BASE_URL` explicitly in local or target-specific build commands
+when the API is not served from the same origin.
+
 Run `npm install` before the first build if `node_modules` is not present.
 
 ### portal-config-loc lightapi into service-asset
@@ -23,7 +28,7 @@ source for local gateway UI assets.
 
 ```bash
 cd ~/lightapi/portal-view
-VITE_API_BASE_URL=https://local.lightapi.net \
+VITE_API_BASE_URL=https://localhost \
 VITE_SIGNIN_URL='https://signin.localhost?client_id=f7d42348-c647-4efb-a52d-4c5787421e72' \
 npm run build
 
