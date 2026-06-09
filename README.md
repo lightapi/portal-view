@@ -23,7 +23,7 @@ source for local gateway UI assets.
 
 ```bash
 cd ~/lightapi/portal-view
-VITE_API_BASE_URL=https://local.lightapi.net \
+VITE_API_BASE_URL=https://localhost \
 VITE_SIGNIN_URL='https://signin.localhost?client_id=f7d42348-c647-4efb-a52d-4c5787421e72' \
 npm run build
 
