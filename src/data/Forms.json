@@ -139,6 +139,7 @@
         "domain",
         "orgName",
         "orgDesc",
+        "orgOwner",
         "subDomain",
         "hostDesc",
         "hostOwner"
@@ -14555,10 +14556,6 @@
           "title": "Readonly",
           "type": "boolean"
         },
-        "environment": {
-          "title": "Environment",
-          "type": "string"
-        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
@@ -14589,7 +14586,9 @@
         },
         "envTag": {
           "title": "Env Tag",
-          "type": "string"
+          "type": "string",
+          "pattern": "^\\S+$",
+          "validationMessage": "Env Tag is required."
         },
         "topicClassification": {
           "title": "Topic Classification",
@@ -14604,7 +14603,8 @@
         "hostId",
         "instanceName",
         "productVersionId",
-        "serviceId"
+        "serviceId",
+        "envTag"
       ]
     },
     "form": [
@@ -14624,17 +14624,6 @@
       "serviceId",
       "current",
       "readonly",
-      {
-        "key": "environment",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/r/data?name=environment&host={0}",
-          "params": [
-            "hostId"
-          ]
-        }
-      },
       "serviceDesc",
       "instanceDesc",
       {
@@ -14735,10 +14724,6 @@
           "title": "Readonly",
           "type": "boolean"
         },
-        "environment": {
-          "title": "Environment",
-          "type": "string"
-        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
@@ -14769,7 +14754,9 @@
         },
         "envTag": {
           "title": "Env Tag",
-          "type": "string"
+          "type": "string",
+          "pattern": "^\\S+$",
+          "validationMessage": "Env Tag is required."
         },
         "topicClassification": {
           "title": "Topic Classification",
@@ -14785,7 +14772,8 @@
         "instanceId",
         "instanceName",
         "productVersionId",
-        "serviceId"
+        "serviceId",
+        "envTag"
       ]
     },
     "form": [
@@ -14806,17 +14794,6 @@
       "serviceId",
       "current",
       "readonly",
-      {
-        "key": "environment",
-        "type": "dynaselect",
-        "multiple": false,
-        "action": {
-          "url": "/r/data?name=environment&host={0}",
-          "params": [
-            "hostId"
-          ]
-        }
-      },
       "serviceDesc",
       "instanceDesc",
       {
@@ -20522,6 +20499,7 @@
       "required": [
         "hostId",
         "serviceId",
+        "envTag",
         "protocol",
         "ipAddress",
         "portNumber",
@@ -20539,7 +20517,9 @@
         },
         "envTag": {
           "type": "string",
-          "title": "Env Tag"
+          "title": "Env Tag",
+          "pattern": "^\\S+$",
+          "validationMessage": "Env Tag is required."
         },
         "protocol": {
           "type": "string",
@@ -20617,6 +20597,7 @@
         "hostId",
         "runtimeInstanceId",
         "serviceId",
+        "envTag",
         "protocol",
         "ipAddress",
         "portNumber",
@@ -20641,7 +20622,9 @@
         "envTag": {
           "type": "string",
           "title": "Env Tag",
-          "readonly": true
+          "readonly": true,
+          "pattern": "^\\S+$",
+          "validationMessage": "Env Tag is required."
         },
         "protocol": {
           "type": "string",

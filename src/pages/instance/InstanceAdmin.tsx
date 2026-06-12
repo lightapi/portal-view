@@ -249,7 +249,7 @@ export default function InstanceAdmin() {
         { accessorKey: 'productId', header: 'Product ID' },
         { accessorKey: 'productVersion', header: 'Product Version' },
         { accessorKey: 'serviceId', header: 'Service ID' },
-        { accessorKey: 'environment', header: 'Environment' },
+        { accessorKey: 'envTag', header: 'Env Tag' },
         {
           accessorKey: 'current',
           header: 'Current',
@@ -306,7 +306,7 @@ export default function InstanceAdmin() {
     productId: row.productId ?? '',
     productVersionId: row.productVersionId ?? '',
     serviceId: row.serviceId ?? '',
-    environment: row.environment ?? '',
+    environment: row.envTag ?? '',
   }), [taskContext]);
 
   // Table instance configuration
