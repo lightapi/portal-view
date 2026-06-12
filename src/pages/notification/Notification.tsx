@@ -319,7 +319,7 @@ export default function Notification() {
   const { host, roles, userId } = useUserState();
   const location = useLocation();
   const isAdminView = location.pathname.endsWith('/event/notifications');
-  const isAdmin = hasAnyRole(roles, ['admin']);
+  const isAdmin = hasAnyRole(roles, ['admin', 'host-admin']);
   const [data, setData] = useState<NotificationData[]>([]);
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

@@ -397,7 +397,7 @@ function Sidebar() {
 }
 
 function filterSidebarItems(items: any[], userRoles: string | null, insideAdminSection = false): any[] {
-  const isAdmin = hasSidebarRole(userRoles, "admin");
+  const isAdmin = hasSidebarRole(userRoles, "admin host-admin");
 
   return items.reduce<any[]>((visibleItems, item) => {
     const inAdminSection = insideAdminSection || item.id === 9000;

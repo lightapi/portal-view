@@ -134,7 +134,7 @@ function ProfileMenuContent({
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Payment
             </MenuItem>
-            {hasAnyRole(roles, ["admin"]) && (
+            {hasAnyRole(roles, ["admin", "host-admin"]) && (
               <MenuItem
                 sx={{
                   color: 'text.hint',
