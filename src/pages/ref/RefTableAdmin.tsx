@@ -214,9 +214,10 @@ export default function RefTableAdmin() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefTableType>[]>(
     () => [
-      { accessorKey: 'tableId', header: 'Table ID' },
       { accessorKey: 'tableName', header: 'Table Name' },
       { accessorKey: 'tableDesc', header: 'Description' },
+      { accessorKey: 'hostId', header: 'Host Id', Cell: ({ cell }) => cell.getValue<string>() || 'Global' },
+      { accessorKey: 'tableId', header: 'Table Id' },
       { accessorKey: 'active', header: 'Active', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
       { accessorKey: 'editable', header: 'Editable', Cell: ({ cell }) => (cell.getValue() ? 'Yes' : 'No') },
       { accessorKey: 'updateUser', header: 'Update User' },
@@ -273,9 +274,11 @@ export default function RefTableAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefTable', searchParams, taskContext))}>
-        Create New Ref Table
-      </Button>
+      <Box sx={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefTable', searchParams, taskContext))}>
+          Create New Ref Table
+        </Button>
+      </Box>
     ),
   });
 

@@ -343,6 +343,7 @@ export const pageRegistry: PageDefinition[] = [
     roles: ["admin"],
     keywords: ["reference", "ref", "table", "admin"],
     entities: ["table"],
+    helpPath: "/help/portal-view/pages/ref-table-admin",
   },
   {
     id: "ref-value",
