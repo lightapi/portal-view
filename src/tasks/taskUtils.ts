@@ -165,8 +165,8 @@ function normalizePageRoute(route: string) {
 }
 
 export function pageDefinitionForRoute(pages: PageDefinition[], route: string) {
-  const normalizedRoute = normalizePageRoute(route);
-  return pages.find((page) => normalizePageRoute(page.route) === normalizedRoute);
+  const normalizedRoute = normalizePageRoute(route).toLowerCase();
+  return pages.find((page) => normalizePageRoute(page.route).toLowerCase() === normalizedRoute);
 }
 
 export function contextFromSearchParams(searchParams: URLSearchParams): TaskResolvedContext {
