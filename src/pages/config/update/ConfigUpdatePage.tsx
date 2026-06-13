@@ -152,7 +152,7 @@ export default function ConfigUpdatePage() {
   const [overriddenOnly, setOverriddenOnly] = useState(false);
   const [data, setData] = useState<ConfigUpdateProperty[]>([]);
   const [rowCount, setRowCount] = useState(0);
-  const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 50 });
+
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -212,8 +212,8 @@ export default function ConfigUpdatePage() {
         scope: scopeId,
         target,
         filters,
-        offset: pagination.pageIndex * pagination.pageSize,
-        limit: pagination.pageSize,
+        offset: 0,
+        limit: 10000,
         overriddenOnly,
       });
       setData(result.properties || []);
@@ -227,7 +227,7 @@ export default function ConfigUpdatePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, host, overriddenOnly, pagination.pageIndex, pagination.pageSize, scopeId, target, targetComplete]);
+  }, [filters, host, overriddenOnly, scopeId, target, targetComplete]);
 
   useEffect(() => {
     void fetchData();
@@ -290,7 +290,6 @@ export default function ConfigUpdatePage() {
       }
       return next;
     });
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     setHasLoaded(false);
   };
 
@@ -579,7 +578,6 @@ export default function ConfigUpdatePage() {
   const tableState = {
     isLoading,
     showAlertBanner: isError,
-    pagination,
   };
 
   return (
@@ -593,7 +591,6 @@ export default function ConfigUpdatePage() {
               value={scopeId}
               onChange={(event) => {
                 setScopeId(event.target.value as ConfigUpdateScopeId);
-                setPagination((prev) => ({ ...prev, pageIndex: 0 }));
                 setHasLoaded(false);
               }}
             >
@@ -743,7 +740,6 @@ export default function ConfigUpdatePage() {
           <FormControlLabel
             control={<Checkbox checked={overriddenOnly} onChange={(event) => {
               setOverriddenOnly(event.target.checked);
-              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
               setHasLoaded(false);
             }} />}
             label="Overridden only"
@@ -768,11 +764,8 @@ export default function ConfigUpdatePage() {
           enableGrouping
           enableColumnResizing
           enableRowActions
-          manualPagination
-          rowCount={rowCount}
-          onPaginationChange={setPagination}
           state={tableState}
-          initialState={{ density: 'compact', grouping: ['configName'], expanded: true }}
+          initialState={{ density: 'compact', grouping: ['configName'], expanded: true, pagination: { pageSize: 50, pageIndex: 0 } }}
           getRowId={(row) => rowKey(row)}
           muiToolbarAlertBannerProps={isError ? {
             color: 'error',
