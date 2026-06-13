@@ -16,6 +16,13 @@ export function buildConfigUpdateRoute(
     nextParams.set('taskStep', 'instance-api');
   }
 
+  if (context.environment) nextParams.set('environment', context.environment);
+  if (context.productId) nextParams.set('productId', context.productId);
+  if (context.productVersionId) nextParams.set('productVersionId', context.productVersionId);
+  if (context.instanceId) nextParams.set('instanceId', context.instanceId);
+  if (context.instanceApiId) nextParams.set('instanceApiId', context.instanceApiId);
+  if (context.instanceAppId) nextParams.set('instanceAppId', context.instanceAppId);
+
   const nextQuery = nextParams.toString();
   return nextQuery ? `${path}?${nextQuery}` : path;
 }
