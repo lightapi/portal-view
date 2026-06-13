@@ -32,6 +32,7 @@ type RefLocaleType = {
   valueDesc?: string;
   language: string;
   valueLabel: string;
+  active?: boolean;
   updateUser: string;
   updateTs: string;
   aggregateVersion?: number;
