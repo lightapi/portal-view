@@ -8633,7 +8633,7 @@
         "conditionLanguage": {
           "title": "Condition Language",
           "type": "string",
-          "default": "native"
+          "default": "cel"
         },
         "conditionSecurityProfile": {
           "title": "Condition Security Profile",
@@ -8682,6 +8682,7 @@
         },
         "actions": {
           "type": "array",
+          "default": [],
           "items": {
             "type": "object",
             "properties": {
@@ -8779,7 +8780,7 @@
         "key": "conditionLanguage",
         "type": "dynaselect",
         "multiple": false,
-        "default": "native",
+        "default": "cel",
         "options": [
           {
             "id": "native",
@@ -8987,6 +8988,7 @@
       },
       {
         "key": "actions",
+        "condition": "model.conditionLanguage !== 'cel'",
         "items": [
           "actions[].actionId",
           "actions[].actionDesc",
@@ -9055,7 +9057,7 @@
         "conditionLanguage": {
           "title": "Condition Language",
           "type": "string",
-          "default": "native"
+          "default": "cel"
         },
         "conditionSecurityProfile": {
           "title": "Condition Security Profile",
@@ -9104,6 +9106,7 @@
         },
         "actions": {
           "type": "array",
+          "default": [],
           "items": {
             "type": "object",
             "properties": {
@@ -9199,7 +9202,7 @@
         "key": "conditionLanguage",
         "type": "dynaselect",
         "multiple": false,
-        "default": "native",
+        "default": "cel",
         "options": [
           {
             "id": "native",
@@ -9407,6 +9410,7 @@
       },
       {
         "key": "actions",
+        "condition": "model.conditionLanguage !== 'cel'",
         "items": [
           "actions[].actionId",
           "actions[].actionDesc",
