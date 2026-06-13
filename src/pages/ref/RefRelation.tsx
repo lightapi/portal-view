@@ -12,7 +12,6 @@ import {
 import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
@@ -206,11 +205,6 @@ export default function RefRelation() {
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Relation">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefRelation', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
-            <SystemUpdateIcon />
-          </IconButton>
-        </Tooltip>
         <Tooltip title="Delete Relation">
           <IconButton color="error" onClick={() => handleDelete(row)}>
             <DeleteForeverIcon />

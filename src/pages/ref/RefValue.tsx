@@ -70,6 +70,7 @@ export default function RefValue() {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
@@ -171,6 +172,39 @@ export default function RefValue() {
     valueId: row.valueId,
   }), [taskContext]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<RefValueType>) => {
+    if (isUpdateLoading !== null) return;
+
+    setIsUpdateLoading(row.original.valueId);
+
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'ref',
+      action: 'getFreshRefValue',
+      version: '0.1.0',
+      data: {
+        valueId: row.original.valueId,
+        aggregateVersion: row.original.aggregateVersion
+      }
+    };
+
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    try {
+      const freshData = await fetchClient(url);
+      navigate(buildTaskAwareRoute('/app/form/updateRefValue', searchParams, contextForRow(row.original)), {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch fresh data for update:", error);
+      alert(error.message || "Could not load the latest data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [navigate, searchParams, contextForRow, location.pathname, isUpdateLoading]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefValueType>[]>(
     () => [
@@ -206,7 +240,7 @@ export default function RefValue() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Value">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefValue', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
