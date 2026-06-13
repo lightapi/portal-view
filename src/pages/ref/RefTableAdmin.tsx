@@ -204,7 +204,7 @@ export default function RefTableAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, searchParams, contextForRow, location.pathname]);
+  }, [navigate, searchParams, contextForRow, location.pathname, host]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefTableType>[]>(
