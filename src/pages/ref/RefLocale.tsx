@@ -169,6 +169,8 @@ export default function RefLocale() {
   }), [taskContext]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<RefLocaleType>) => {
+    if (isUpdateLoading !== null) return;
+
     setIsUpdateLoading(`${row.original.valueId}-${row.original.language}`);
 
     const cmd = {
@@ -202,7 +204,7 @@ export default function RefLocale() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, searchParams, contextForRow, location.pathname]);
+  }, [navigate, searchParams, contextForRow, location.pathname, isUpdateLoading]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefLocaleType>[]>(
@@ -237,7 +239,7 @@ export default function RefLocale() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Locale">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === `${row.original.valueId}-${row.original.language}`}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>

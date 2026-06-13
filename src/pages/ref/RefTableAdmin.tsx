@@ -27,7 +27,7 @@ type RefTableApiResponse = {
 };
 
 type RefTableType = {
-  hostId?: string;
+  hostId?: string | null;
   tableId: string;
   tableName: string;
   tableDesc: string;
@@ -40,6 +40,9 @@ type RefTableType = {
 interface UserState {
   host?: string;
 }
+
+const refTableScope = (hostId?: string | null): { hostId?: string } =>
+  hostId ? { hostId } : {};
 
 export default function RefTableAdmin() {
   const navigate = useNavigate();
@@ -141,7 +144,7 @@ export default function RefTableAdmin() {
     try {
       const cmdFetch = {
         host: 'lightapi.net', service: 'ref', action: 'getFreshRefTable', version: '0.1.0',
-        data: { hostId: row.original.hostId ?? host, tableId: row.original.tableId, aggregateVersion: row.original.aggregateVersion },
+        data: { ...refTableScope(row.original.hostId), tableId: row.original.tableId, aggregateVersion: row.original.aggregateVersion },
       };
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdFetch));
       freshData = await fetchClient(url) as RefTableType;
@@ -157,7 +160,7 @@ export default function RefTableAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'ref', action: 'deleteRefTable', version: '0.1.0',
-      data: { hostId: host, tableId: freshData.tableId, aggregateVersion: freshData.aggregateVersion },
+      data: { ...refTableScope(freshData.hostId), tableId: freshData.tableId, aggregateVersion: freshData.aggregateVersion },
     };
 
     try {
@@ -172,7 +175,7 @@ export default function RefTableAdmin() {
       setData(originalData);
       setRowCount(originalData.length);
     }
-  }, [data, host]);
+  }, [data]);
   const contextForRow = useCallback((row: RefTableType) => ({
     ...taskContext,
     hostId: row.hostId ?? host ?? '',
@@ -180,12 +183,14 @@ export default function RefTableAdmin() {
   }), [host, taskContext]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<RefTableType>) => {
+    if (isUpdateLoading !== null) return;
+
     const tableId = row.original.tableId;
     setIsUpdateLoading(tableId);
 
     const cmd = {
       host: 'lightapi.net', service: 'ref', action: 'getFreshRefTable', version: '0.1.0',
-      data: { hostId: row.original.hostId ?? host, tableId, aggregateVersion: row.original.aggregateVersion },
+      data: { ...refTableScope(row.original.hostId), tableId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
@@ -204,7 +209,7 @@ export default function RefTableAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, searchParams, contextForRow, location.pathname, host]);
+  }, [navigate, searchParams, contextForRow, location.pathname, isUpdateLoading]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefTableType>[]>(
@@ -246,7 +251,7 @@ export default function RefTableAdmin() {
         <Tooltip title="Update">
           <IconButton
             onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.tableId}
+            disabled={isUpdateLoading !== null}
           >
             {isUpdateLoading === row.original.tableId ? (
               <CircularProgress size={22} />

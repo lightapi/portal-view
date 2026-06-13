@@ -173,6 +173,8 @@ export default function RefValue() {
   }), [taskContext]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<RefValueType>) => {
+    if (isUpdateLoading !== null) return;
+
     setIsUpdateLoading(row.original.valueId);
 
     const cmd = {
@@ -201,7 +203,7 @@ export default function RefValue() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, searchParams, contextForRow, location.pathname]);
+  }, [navigate, searchParams, contextForRow, location.pathname, isUpdateLoading]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefValueType>[]>(
@@ -238,7 +240,7 @@ export default function RefValue() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Value">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.valueId}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>

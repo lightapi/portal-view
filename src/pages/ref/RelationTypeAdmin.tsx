@@ -151,6 +151,8 @@ export default function RelationTypeAdmin() {
   }), [taskContext]);
 
   const handleUpdate = useCallback(async (row: MRT_Row<RelationType>) => {
+    if (isUpdateLoading !== null) return;
+
     setIsUpdateLoading(row.original.relationId);
 
     const cmd = {
@@ -183,7 +185,7 @@ export default function RelationTypeAdmin() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [navigate, searchParams, contextForRow, location.pathname]);
+  }, [navigate, searchParams, contextForRow, location.pathname, isUpdateLoading]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RelationType>[]>(
@@ -231,7 +233,7 @@ export default function RelationTypeAdmin() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.relationId}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>
