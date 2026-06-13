@@ -159,21 +159,10 @@ export default function ProductVersionProperty() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ProductVersionPropertyType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
-      { accessorKey: 'productVersionId', header: 'Product Version Id' },
       { accessorKey: 'productId', header: 'Product Id' },
       { accessorKey: 'productVersion', header: 'Product Version' },
-      { accessorKey: 'configId', header: 'Config Id' },
       { accessorKey: 'configName', header: 'Config Name' },
-      { accessorKey: 'propertyId', header: 'Property Id' },
       { accessorKey: 'propertyName', header: 'Property Name' },
-      { accessorKey: 'updateUser', header: 'Update User' },
-      {
-        accessorKey: 'updateTs',
-        header: 'Update Time',
-        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
-      },
-      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
       {
         accessorKey: 'active',
         header: 'Active',
@@ -181,11 +170,17 @@ export default function ProductVersionProperty() {
         filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'productVersionId', header: 'Product Version Id' },
+      { accessorKey: 'configId', header: 'Config Id' },
+      { accessorKey: 'propertyId', header: 'Property Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
       {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Product Version Property"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+        accessorKey: 'updateTs',
+        header: 'Update Time',
+        Cell: ({ cell }) => cell.getValue<string>() ? new Date(cell.getValue<string>()).toLocaleString() : '',
       },
+      { accessorKey: 'aggregateVersion', header: 'AggregateVersion' },
     ],
     [],
   );
@@ -206,7 +201,17 @@ export default function ProductVersionProperty() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.productVersionId}-${row.propertyId}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
-    enableRowActions: false,
+    enableRowActions: true,
+    positionActionsColumn: 'first',
+    renderRowActions: ({ row }) => (
+      <Box sx={{ display: 'flex', gap: '1rem' }}>
+        <Tooltip title="Delete Product Version Property">
+          <IconButton color="error" onClick={() => handleDelete(row)}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    ),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
