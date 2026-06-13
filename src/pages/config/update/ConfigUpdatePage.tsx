@@ -299,7 +299,6 @@ export default function ConfigUpdatePage() {
       ...prev,
       [key]: typeof value === 'string' ? value.split(',').filter(Boolean) : value,
     }));
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     setHasLoaded(false);
   };
 
@@ -755,6 +754,12 @@ export default function ConfigUpdatePage() {
         {targetComplete && hasLoaded && !isLoading && !isError && data.length === 0 && (
           <Alert severity="info">
             No applicable config properties were found for this scope and target. For instance, API, app, and app API scopes, verify the product version has config and config property assignments.
+          </Alert>
+        )}
+
+        {targetComplete && hasLoaded && !isLoading && !isError && rowCount > data.length && (
+          <Alert severity="warning">
+            Showing only the first {data.length} properties. Some properties are hidden because the result exceeded the maximum fetch limit of 10,000.
           </Alert>
         )}
 
