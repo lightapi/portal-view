@@ -189,8 +189,7 @@ export default function RefTableAdmin() {
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
-      const freshData = await fetchClient(url);
-      console.log("freshData", freshData);
+      const freshData = await fetchClient(url) as RefTableType;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateRefTable', searchParams, contextForRow(row.original)), {
