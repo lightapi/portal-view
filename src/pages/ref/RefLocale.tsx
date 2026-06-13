@@ -66,6 +66,7 @@ export default function RefLocale() {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
   const [rowCount, setRowCount] = useState(0);
 
   // Table state, pre-filtered by valueId if provided
@@ -166,6 +167,42 @@ export default function RefLocale() {
     language: row.language,
   }), [taskContext]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<RefLocaleType>) => {
+    setIsUpdateLoading(`${row.original.valueId}-${row.original.language}`);
+
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'ref',
+      action: 'getFreshRefLocale',
+      version: '0.1.0',
+      data: {
+        valueId: row.original.valueId,
+        language: row.original.language,
+        aggregateVersion: row.original.aggregateVersion
+      }
+    };
+
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    try {
+      const freshData = await fetchClient(url) as RefLocaleType;
+      if (freshData.active === false) {
+        alert("This locale has been deleted or deactivated. Please refresh the list before updating it.");
+        return;
+      }
+      navigate(buildTaskAwareRoute('/app/form/updateRefLocale', searchParams, contextForRow(row.original)), {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch fresh data for update:", error);
+      alert(error.message || "Could not load the latest data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [navigate, searchParams, contextForRow, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefLocaleType>[]>(
     () => [
@@ -199,7 +236,7 @@ export default function RefLocale() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update Locale">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefLocale', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === `${row.original.valueId}-${row.original.language}`}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>

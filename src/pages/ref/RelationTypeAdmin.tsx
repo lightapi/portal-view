@@ -31,6 +31,7 @@ type RelationType = {
   relationId: string;
   relationName: string;
   relationDesc: string;
+  active: boolean;
   updateUser: string;
   updateTs: string;
   aggregateVersion?: number;
@@ -55,6 +56,7 @@ export default function RelationTypeAdmin() {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
   const [rowCount, setRowCount] = useState(0);
 
   // Table state
@@ -148,6 +150,41 @@ export default function RelationTypeAdmin() {
     relationId: row.relationId,
   }), [taskContext]);
 
+  const handleUpdate = useCallback(async (row: MRT_Row<RelationType>) => {
+    setIsUpdateLoading(row.original.relationId);
+
+    const cmd = {
+      host: 'lightapi.net',
+      service: 'ref',
+      action: 'getFreshRefRelationType',
+      version: '0.1.0',
+      data: {
+        relationId: row.original.relationId,
+        aggregateVersion: row.original.aggregateVersion
+      }
+    };
+
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    try {
+      const freshData = await fetchClient(url) as RelationType;
+      if (freshData.active === false) {
+        alert("This relation type has been deleted or deactivated. Please refresh the list before updating it.");
+        return;
+      }
+      navigate(buildTaskAwareRoute('/app/form/updateRefRelationType', searchParams, contextForRow(row.original)), {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch fresh data for update:", error);
+      alert(error.message || "Could not load the latest data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [navigate, searchParams, contextForRow, location.pathname]);
+
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RelationType>[]>(
     () => [
@@ -194,7 +231,7 @@ export default function RelationTypeAdmin() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefRelationType', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
+          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.relationId}>
             <SystemUpdateIcon />
           </IconButton>
         </Tooltip>

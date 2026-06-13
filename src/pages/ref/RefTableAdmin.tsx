@@ -9,7 +9,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -58,6 +58,7 @@ export default function RefTableAdmin() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
+  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
   // Table state
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
@@ -136,13 +137,27 @@ export default function RefTableAdmin() {
   const handleDelete = useCallback(async (row: MRT_Row<RefTableType>) => {
     if (!window.confirm(`Are you sure you want to delete refTable: ${row.original.tableName}?`)) return;
 
+    let freshData = row.original;
+    try {
+      const cmdFetch = {
+        host: 'lightapi.net', service: 'ref', action: 'getFreshRefTable', version: '0.1.0',
+        data: { hostId: row.original.hostId ?? host, tableId: row.original.tableId, aggregateVersion: row.original.aggregateVersion },
+      };
+      const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmdFetch));
+      freshData = await fetchClient(url) as RefTableType;
+    } catch (error: any) {
+      console.error("Failed to fetch fresh data for delete:", error);
+      alert(error.message || "Could not verify the latest state before deleting. Please try again.");
+      return;
+    }
+
     const originalData = [...data];
-    setData(prev => prev.filter(table => table.tableId !== row.original.tableId));
+    setData(prev => prev.filter(table => table.tableId !== freshData.tableId));
     setRowCount(prev => prev - 1);
 
     const cmd = {
       host: 'lightapi.net', service: 'ref', action: 'deleteRefTable', version: '0.1.0',
-      data: { hostId: host, tableId: row.original.tableId, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: host, tableId: freshData.tableId, aggregateVersion: freshData.aggregateVersion },
     };
 
     try {
@@ -158,6 +173,39 @@ export default function RefTableAdmin() {
       setRowCount(originalData.length);
     }
   }, [data, host]);
+  const contextForRow = useCallback((row: RefTableType) => ({
+    ...taskContext,
+    hostId: row.hostId ?? host ?? '',
+    tableId: row.tableId,
+  }), [host, taskContext]);
+
+  const handleUpdate = useCallback(async (row: MRT_Row<RefTableType>) => {
+    const tableId = row.original.tableId;
+    setIsUpdateLoading(tableId);
+
+    const cmd = {
+      host: 'lightapi.net', service: 'ref', action: 'getFreshRefTable', version: '0.1.0',
+      data: { hostId: row.original.hostId ?? host, tableId, aggregateVersion: row.original.aggregateVersion },
+    };
+    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+    try {
+      const freshData = await fetchClient(url);
+      console.log("freshData", freshData);
+
+      // Navigate with the fresh data
+      navigate(buildTaskAwareRoute('/app/form/updateRefTable', searchParams, contextForRow(row.original)), {
+        state: {
+          data: freshData,
+          source: location.pathname
+        }
+      });
+    } catch (error: any) {
+      console.error("Failed to fetch refTable for update:", error);
+      alert(error.message || "Could not load the latest reference table data. Please try again.");
+    } finally {
+      setIsUpdateLoading(null);
+    }
+  }, [navigate, searchParams, contextForRow, location.pathname]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RefTableType>[]>(
@@ -175,12 +223,6 @@ export default function RefTableAdmin() {
     ],
     [],
   );
-
-  const contextForRow = useCallback((row: RefTableType) => ({
-    ...taskContext,
-    hostId: row.hostId ?? host ?? '',
-    tableId: row.tableId,
-  }), [host, taskContext]);
 
   // Table instance configuration
   const table = useMaterialReactTable({
@@ -203,8 +245,15 @@ export default function RefTableAdmin() {
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
         <Tooltip title="Update">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/updateRefTable', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
-            <SystemUpdateIcon />
+          <IconButton
+            onClick={() => handleUpdate(row)}
+            disabled={isUpdateLoading === row.original.tableId}
+          >
+            {isUpdateLoading === row.original.tableId ? (
+              <CircularProgress size={22} />
+            ) : (
+              <SystemUpdateIcon />
+            )}
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete">
