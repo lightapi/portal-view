@@ -14556,6 +14556,10 @@
           "title": "Readonly",
           "type": "boolean"
         },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
@@ -14604,6 +14608,7 @@
         "instanceName",
         "productVersionId",
         "serviceId",
+        "environment",
         "envTag"
       ]
     },
@@ -14624,6 +14629,14 @@
       "serviceId",
       "current",
       "readonly",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment"
+        }
+      },
       "serviceDesc",
       "instanceDesc",
       {
@@ -14661,7 +14674,17 @@
       },
       "resourceName",
       "businessName",
-      "envTag",
+      {
+        "key": "envTag",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "topicClassification",
       {
         "key": "ownerPositionId",
@@ -14724,6 +14747,10 @@
           "title": "Readonly",
           "type": "boolean"
         },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
         "serviceDesc": {
           "title": "Service Desc",
           "type": "string"
@@ -14773,6 +14800,7 @@
         "instanceName",
         "productVersionId",
         "serviceId",
+        "environment",
         "envTag"
       ]
     },
@@ -14794,6 +14822,14 @@
       "serviceId",
       "current",
       "readonly",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment"
+        }
+      },
       "serviceDesc",
       "instanceDesc",
       {
@@ -14831,7 +14867,17 @@
       },
       "resourceName",
       "businessName",
-      "envTag",
+      {
+        "key": "envTag",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "topicClassification",
       {
         "key": "ownerPositionId",
