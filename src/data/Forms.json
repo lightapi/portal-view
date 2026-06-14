@@ -3348,7 +3348,8 @@
         "apiId",
         "apiVersion",
         "apiType",
-        "serviceId"
+        "serviceId",
+        "evnTag"
       ],
       "properties": {
         "hostId": {
@@ -3401,7 +3402,7 @@
           "default": "https"
         },
         "envTag": {
-          "title": "Environment Tag",
+          "title": "Env Tag",
           "type": "string"
         },
         "targetHost": {
@@ -3431,6 +3432,17 @@
       },
       "serviceId",
       {
+        "key": "envTag",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
         "key": "apiVersionDesc",
         "type": "textarea",
         "rows": 5
@@ -3454,7 +3466,6 @@
         "rows": 5
       },
       "protocol",
-      "envTag",
       "targetHost",
       {
         "key": "ownerPositionId",
@@ -3490,7 +3501,8 @@
         "apiId",
         "apiVersion",
         "apiType",
-        "serviceId"
+        "serviceId",
+        "envTag"
       ],
       "properties": {
         "hostId": {
@@ -3545,7 +3557,7 @@
           "default": "https"
         },
         "envTag": {
-          "title": "Environment Tag",
+          "title": "Env Tag",
           "type": "string"
         },
         "targetHost": {
@@ -3575,6 +3587,17 @@
       },
       "serviceId",
       {
+        "key": "envTag",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
         "key": "apiVersionDesc",
         "type": "textarea",
         "rows": 5
@@ -3598,7 +3621,6 @@
         "rows": 5
       },
       "protocol",
-      "envTag",
       "targetHost",
       {
         "key": "ownerPositionId",
