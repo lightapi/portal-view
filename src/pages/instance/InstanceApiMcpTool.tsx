@@ -22,6 +22,7 @@ import {
 
 type McpToolType = {
     name: string;
+    endpointName: string;   // raw operationId from api_endpoint_t – used by the gateway to invoke the real MCP tool
     endpointId: string;
     endpoint: string;
     method?: string;
@@ -110,8 +111,8 @@ export default function InstanceApiMcpTool() {
             const standardizedData: McpToolType[] = fetchedData.map(t => {
                 const safeApiName = apiName || '';
 
+                const endpointName: string = t.endpointName || '';
                 let finalName = t.name;
-                const endpointName = t.endpointName || '';
 
                 if (!finalName || finalName === endpointName) {
                     // Default case: name is missing or same as endpointName, apply enhancement pattern
@@ -124,6 +125,7 @@ export default function InstanceApiMcpTool() {
                 return {
                     ...t,
                     name: finalName,
+                    endpointName,              // keep the raw operationId from api_endpoint_t
                     description: t.description || t.endpointDesc || '',
                     path: t.path || t.endpointPath || '',
                     method: t.method || t.httpMethod || '',
@@ -169,6 +171,7 @@ export default function InstanceApiMcpTool() {
 
             const obj: any = {
                 endpointId: tool.endpointId,
+                endpointName: tool.endpointName,   // raw operationId – the gateway uses this to call the real MCP tool
                 name: tool.name,
                 endpoint: tool.endpoint,
                 method: tool.method,
@@ -303,6 +306,7 @@ export default function InstanceApiMcpTool() {
                 ),
             },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
+            { accessorKey: 'endpointName', header: 'Endpoint Name' },
             { accessorKey: 'endpoint', header: 'Endpoint' },
             { accessorKey: 'method', header: 'Method' },
             { accessorKey: 'path', header: 'Path' },
