@@ -24,6 +24,7 @@ import {
   FormHelperText,
   IconButton,
   InputLabel,
+  Link,
   MenuItem,
   Select,
   Snackbar,
@@ -59,6 +60,7 @@ import {
 import { configUpdateScopes, isConfigUpdateScopeId, scopeById, targetLabel, type ConfigUpdateScopeId, type ConfigUpdateTargetKey } from './configUpdateScopes';
 import { currentCommittedValue, displayValue, rowKey, structuredInitialValue, validateAndNormalizeValue } from './configValue';
 import type { ConfigTargetOption, ConfigUpdateDraft, ConfigUpdateFilters, ConfigUpdateProperty, ConfigUpdateTarget } from './types';
+import { buildPortalHelpUrl } from '../../../utils/helpLinks';
 
 type UserState = {
   host?: string | null;
@@ -68,6 +70,37 @@ const propertyTypeOptions = ['Config', 'File', 'Cert'];
 const configPhaseOptions = ['G', 'D', 'R'];
 const configTypeOptions = ['Module', 'Handler', 'Template'];
 const resourceTypeOptions = ['none', 'api', 'app', 'api|app_api', 'app|app_api', 'app_api', 'all'];
+
+function configDocSegment(value: string) {
+  return value
+    .trim()
+    .replace(/\.(ya?ml|json)$/i, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function configDocUrl(configName: string, propertyName?: string) {
+  const configSegment = configDocSegment(configName);
+  if (!configSegment) return buildPortalHelpUrl('/help/portal-view/configs');
+
+  const propertySegment = propertyName ? configDocSegment(propertyName.split('.').pop() ?? propertyName) : '';
+  const path = propertySegment
+    ? `/help/portal-view/configs/${configSegment}/${propertySegment}`
+    : `/help/portal-view/configs/${configSegment}`;
+  return buildPortalHelpUrl(path);
+}
+
+function ConfigDocLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">
+      <Typography component="span" variant="body2" noWrap>
+        {children}
+      </Typography>
+    </Link>
+  );
+}
 
 function initialScope(searchParams: URLSearchParams): ConfigUpdateScopeId {
   const scope = searchParams.get('scope');
@@ -522,8 +555,26 @@ export default function ConfigUpdatePage() {
 
   const columns = useMemo<MRT_ColumnDef<ConfigUpdateProperty>[]>(
     () => [
-      { accessorKey: 'configName', header: 'Config', size: 220 },
-      { accessorKey: 'propertyName', header: 'Property', size: 240 },
+      {
+        accessorKey: 'configName',
+        header: 'Config',
+        size: 220,
+        Cell: ({ row }) => (
+          <ConfigDocLink href={configDocUrl(row.original.configName)}>
+            {row.original.configName}
+          </ConfigDocLink>
+        ),
+      },
+      {
+        accessorKey: 'propertyName',
+        header: 'Property',
+        size: 240,
+        Cell: ({ row }) => (
+          <ConfigDocLink href={configDocUrl(row.original.configName, row.original.propertyName)}>
+            {row.original.propertyName}
+          </ConfigDocLink>
+        ),
+      },
       { accessorKey: 'valueType', header: 'Type', size: 90 },
       {
         accessorKey: 'inheritedValue',
