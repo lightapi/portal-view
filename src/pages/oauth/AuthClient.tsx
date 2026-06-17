@@ -51,6 +51,7 @@ type AuthClientType = {
   ownerName?: string;
   ownerPositionId?: string;
   ownerUserId?: string;
+  providerId?: string;
   clientName: string;
   appId?: string;
   appName?: string;
@@ -120,12 +121,13 @@ export default function AuthClient() {
       hostId: host ?? '',
       userId: userId ?? '',
       clientId: initialData.clientId ?? '',
+      providerId: initialData.providerId ?? '',
       appId: initialData.appId ?? '',
       apiId: initialData.apiId ?? '',
       apiVersionId: initialData.apiVersionId ?? '',
       instanceId: initialData.instanceId ?? '',
     }),
-    [host, userId, initialData.apiId, initialData.apiVersionId, initialData.appId, initialData.clientId, initialData.instanceId, searchContext],
+    [host, userId, initialData.apiId, initialData.apiVersionId, initialData.appId, initialData.clientId, initialData.instanceId, initialData.providerId, searchContext],
   );
 
   // Data and fetching state
@@ -250,20 +252,23 @@ export default function AuthClient() {
 
     try {
       const freshData = await fetchClient(url);
-      console.log("freshData", freshData);
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateClient', searchParams, {
         ...taskContext,
         hostId: row.original.hostId,
         clientId,
+        providerId: freshData.providerId ?? row.original.providerId ?? initialData.providerId ?? taskContext.providerId ?? '',
         appId: row.original.appId ?? '',
         apiId: row.original.apiId ?? '',
         apiVersionId: row.original.apiVersionId ?? '',
         instanceId: row.original.instanceId ?? '',
       }), {
         state: {
-          data: freshData,
+          data: {
+            ...freshData,
+            providerId: freshData.providerId ?? row.original.providerId ?? initialData.providerId ?? taskContext.providerId,
+          },
           source: location.pathname
         }
       });
@@ -273,7 +278,7 @@ export default function AuthClient() {
     } finally {
       setIsUpdateLoading(null);
     }
-  }, [oauthClientOwnership, navigate, location.pathname, searchParams, taskContext]);
+  }, [oauthClientOwnership, navigate, location.pathname, searchParams, taskContext, initialData.providerId]);
 
   const handleCopy = useCallback(async (value: string, markSecretCopied = false) => {
     try {
@@ -350,38 +355,38 @@ export default function AuthClient() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthClientType>[]>(
     () => applyOwnershipColumns([
-        { accessorKey: 'clientId', header: 'Client Id' },
-        { accessorKey: 'clientName', header: 'Client Name' },
-        { accessorKey: 'ownerType', header: 'Owner Type' },
-        { accessorKey: 'ownerName', header: 'Owner Name' },
-        { accessorKey: 'clientType', header: 'Type' },
-        { accessorKey: 'clientProfile', header: 'Profile' },
-        { accessorKey: 'tokenExType', header: 'Token Ex Type' },
-        { accessorKey: 'appId', header: 'App Id' },
-        { accessorKey: 'appName', header: 'App Name' },
-        { accessorKey: 'apiId', header: 'API Id' },
-        { accessorKey: 'apiName', header: 'API Name' },
-        { accessorKey: 'apiVersion', header: 'API Version' },
-        { accessorKey: 'apiVersionId', header: 'API Version Id' },
-        { accessorKey: 'instanceName', header: 'Instance Name' },
-        { accessorKey: 'instanceId', header: 'Instance Id' },
-        { accessorKey: 'clientScope', header: 'Scope' },
-        { accessorKey: 'customClaim', header: 'Custom Claim' },
-        { accessorKey: 'redirectUri', header: 'Redirect URI' },
-        { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
-        { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
-        { accessorKey: 'hostId', header: 'Host Id' },
-        { accessorKey: 'updateUser', header: 'Update User' },
-        { accessorKey: 'updateTs', header: 'Update Timestamp' },
-        { accessorKey: 'aggregateVersion', header: 'Version' },
-        {
-          accessorKey: 'active',
-          header: 'Active',
-          filterVariant: 'select',
-          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-        },
-      ],
+      { accessorKey: 'clientId', header: 'Client Id' },
+      { accessorKey: 'clientName', header: 'Client Name' },
+      { accessorKey: 'ownerType', header: 'Owner Type' },
+      { accessorKey: 'ownerName', header: 'Owner Name' },
+      { accessorKey: 'clientType', header: 'Type' },
+      { accessorKey: 'clientProfile', header: 'Profile' },
+      { accessorKey: 'tokenExType', header: 'Token Ex Type' },
+      { accessorKey: 'appId', header: 'App Id' },
+      { accessorKey: 'appName', header: 'App Name' },
+      { accessorKey: 'apiId', header: 'API Id' },
+      { accessorKey: 'apiName', header: 'API Name' },
+      { accessorKey: 'apiVersion', header: 'API Version' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'instanceName', header: 'Instance Name' },
+      { accessorKey: 'instanceId', header: 'Instance Id' },
+      { accessorKey: 'clientScope', header: 'Scope' },
+      { accessorKey: 'customClaim', header: 'Custom Claim' },
+      { accessorKey: 'redirectUri', header: 'Redirect URI' },
+      { accessorKey: 'authenticateClass', header: 'Authenticate Class' },
+      { accessorKey: 'deRefClientId', header: 'Dereference Client Id' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+    ],
       oauthClientOwnership,
     ),
     [oauthClientOwnership],
