@@ -162,8 +162,9 @@ function flattenHistoryContent(content: Record<string, any> | undefined): Histor
 }
 
 function normalizeHistoryRows(payload: any): HistoryRow[] {
-  if (Array.isArray(payload)) {
-    return payload.map((log: any) => {
+  const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.logs) ? payload.logs : null;
+  if (rows) {
+    return rows.map((log: any) => {
       const logger = log?.logger ?? log?.target ?? '';
       const timestampMs = normalizeTimestampMs(log?.timestamp);
       return {
