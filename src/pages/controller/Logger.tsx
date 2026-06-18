@@ -732,7 +732,7 @@ export default function Logger() {
     setStreamStatus('connecting');
     setStreamError(null);
     try {
-      await callTool('start_logs', {
+      const result = await callTool('start_logs', {
         runtimeInstanceId,
         ...(rustRuntime
           ? { filter: streamFilter.trim() || 'info' }
@@ -740,6 +740,9 @@ export default function Logger() {
             ? { level: streamLevel }
             : {}),
       });
+      if (result?.supported === false || result?.status === 'unsupported') {
+        throw new Error(result?.message ?? 'Live log streaming is not supported by this runtime');
+      }
       liveActiveRef.current = true;
       setStreamStatus('streaming');
     } catch (err: any) {
@@ -755,7 +758,10 @@ export default function Logger() {
     }
 
     try {
-      await callTool('stop_logs', { runtimeInstanceId });
+      const result = await callTool('stop_logs', { runtimeInstanceId });
+      if (result?.supported === false || result?.status === 'unsupported') {
+        throw new Error(result?.message ?? 'Live log streaming is not supported by this runtime');
+      }
     } catch (err: any) {
       setStreamError(err?.message ?? JSON.stringify(err));
       setStreamStatus('error');
