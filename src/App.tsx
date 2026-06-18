@@ -284,14 +284,6 @@ const MsalSessionBootstrap = () => {
         if (tokenResponse?.idToken) {
           await exchangeToken(tokenResponse.idToken);
           syncUserFromCookies(userDispatch);
-
-          // Fallback for cases where backend cookies are httpOnly or delayed.
-          userDispatch({
-            type: "LOGIN_SUCCESS",
-            isAuthenticated: true,
-            email: tokenResponse.account?.username ?? null,
-            userId: tokenResponse.account?.username ?? null,
-          });
         }
       } catch (error) {
         // Reset so we can retry later if silent token or exchange fails.
