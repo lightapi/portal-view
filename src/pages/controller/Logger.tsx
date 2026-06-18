@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -30,6 +31,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useController } from '../../contexts/ControllerContext';
+import fetchClient from '../../utils/fetchClient';
 
 type LoggerEntry = {
   name: string;
@@ -59,6 +61,7 @@ type LiveRow = {
 type LoggerNode = {
   runtimeInstanceId?: string;
   serviceId?: string;
+  productId?: string;
   protocol?: string;
   address?: string;
   ipAddress?: string;
@@ -68,7 +71,19 @@ type LoggerNode = {
   envTag?: string;
 };
 
+type TargetOption = {
+  id: string;
+  label: string;
+};
+
+type RustFilterRow = {
+  target: string;
+  level: string;
+};
+
 const LOG_LEVELS = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL', 'OFF'];
+const RUST_LOG_LEVELS = ['error', 'warn', 'info', 'debug', 'trace', 'off'];
+const RUST_PRODUCT_IDS = new Set(['gtw', 'agt', 'api', 'dpl', 'wf']);
 const LIVE_BUFFER_LIMIT = 1000;
 const HISTORY_PRESETS = [
   { label: 'Last 5 Minutes', minutes: 5 },
@@ -146,6 +161,113 @@ function flattenHistoryContent(content: Record<string, any> | undefined): Histor
   return rows;
 }
 
+function normalizeHistoryRows(payload: any): HistoryRow[] {
+  if (Array.isArray(payload)) {
+    return payload.map((log: any) => {
+      const logger = log?.logger ?? log?.target ?? '';
+      const timestampMs = normalizeTimestampMs(log?.timestamp);
+      return {
+        ...log,
+        logger,
+        timestampMs,
+        timestamp: formatTimestamp(log?.timestamp),
+        level: log?.level ?? '',
+        message: log?.message ?? log?.logMessage ?? '',
+        thread: log?.thread ?? '',
+        exception: log?.exception ?? '',
+      };
+    }).sort((left, right) => right.timestampMs - left.timestampMs);
+  }
+  return flattenHistoryContent(payload?.content ?? payload);
+}
+
+function normalizeTargetOption(value: unknown): TargetOption | null {
+  if (typeof value === 'string') {
+    return { id: value, label: value };
+  }
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const objectValue = value as Record<string, unknown>;
+  const id = objectValue.id ?? objectValue.value ?? objectValue.code ?? objectValue.key ?? objectValue.name;
+  if (id === undefined || id === null) {
+    return null;
+  }
+
+  const idText = String(id);
+  const label = objectValue.label ?? objectValue.name ?? objectValue.displayName ?? objectValue.description ?? idText;
+  return { id: idText, label: String(label) };
+}
+
+function normalizeTargetOptions(payload: unknown): TargetOption[] {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as { data?: unknown; options?: unknown; values?: unknown; items?: unknown }).data
+        ?? (payload as { options?: unknown }).options
+        ?? (payload as { values?: unknown }).values
+        ?? (payload as { items?: unknown }).items
+      : [];
+
+  if (!Array.isArray(source)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  return source
+    .map(normalizeTargetOption)
+    .filter((option): option is TargetOption => {
+      if (!option || seen.has(option.id)) {
+        return false;
+      }
+      seen.add(option.id);
+      return true;
+    });
+}
+
+function isRustNode(node: LoggerNode | undefined) {
+  const productId = (node?.productId ?? '').toLowerCase();
+  return RUST_PRODUCT_IDS.has(productId);
+}
+
+function normalizeRustFilterResponse(result: any) {
+  if (typeof result === 'string') {
+    return { filter: result, source: '' };
+  }
+  if (!result || typeof result !== 'object') {
+    return { filter: '', source: '' };
+  }
+  return {
+    filter: String(result.filter ?? result.loggingFilter ?? result.value ?? result.currentFilter ?? ''),
+    source: String(result.source ?? result.filterSource ?? result.configSource ?? ''),
+  };
+}
+
+function parseRustFilterExpression(filter: string) {
+  const parts = filter.split(',').map((part) => part.trim()).filter(Boolean);
+  const defaultLevel = RUST_LOG_LEVELS.includes(parts[0]) ? parts[0] : 'info';
+  const rows = parts
+    .filter((part) => part.includes('='))
+    .map((part) => {
+      const [target, level] = part.split('=');
+      return {
+        target: target.trim(),
+        level: RUST_LOG_LEVELS.includes(level?.trim()) ? level.trim() : 'debug',
+      };
+    })
+    .filter((row) => row.target);
+  return { defaultLevel, rows };
+}
+
+function buildRustFilter(defaultLevel: string, rows: RustFilterRow[]) {
+  const targetParts = rows
+    .map((row) => ({ target: row.target.trim(), level: row.level.trim() }))
+    .filter((row) => row.target && row.level)
+    .map((row) => `${row.target}=${row.level}`);
+  return [defaultLevel || 'info', ...targetParts].join(',');
+}
+
 function tabIndexFromStateTab(rawTab: any) {
   switch (rawTab) {
     case 'config':
@@ -178,6 +300,7 @@ export default function Logger() {
   const stateData = (location.state as any)?.data || {};
   const node: LoggerNode = stateData.node || stateData;
   const runtimeInstanceId = node?.runtimeInstanceId;
+  const rustRuntime = isRustNode(node);
 
   const [tabIndex, setTabIndex] = useState(() =>
     stateData.tab ? tabIndexFromStateTab(stateData.tab) : tabIndexFromPath(location.pathname),
@@ -196,6 +319,13 @@ export default function Logger() {
   const [configError, setConfigError] = useState<string | null>(null);
   const [configSuccess, setConfigSuccess] = useState<string | null>(null);
   const [loggerChangedThisSession, setLoggerChangedThisSession] = useState(false);
+  const [loggingTargets, setLoggingTargets] = useState<TargetOption[]>([]);
+  const [targetLoadError, setTargetLoadError] = useState<string | null>(null);
+  const [rustCurrentFilter, setRustCurrentFilter] = useState('');
+  const [rustFilterSource, setRustFilterSource] = useState('');
+  const [rustDefaultLevel, setRustDefaultLevel] = useState('info');
+  const [rustTargetRows, setRustTargetRows] = useState<RustFilterRow[]>([]);
+  const [rustFilterDraft, setRustFilterDraft] = useState('info');
 
   const [historyStart, setHistoryStart] = useState<Dayjs | null>(() =>
     dayjs(Date.now() - 5 * 60 * 1000),
@@ -207,8 +337,10 @@ export default function Logger() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historySearch, setHistorySearch] = useState('');
   const [historyLoggerFilter, setHistoryLoggerFilter] = useState('All');
+  const [historyTargetFilter, setHistoryTargetFilter] = useState('');
 
   const [streamLevel, setStreamLevel] = useState('INFO');
+  const [streamFilter, setStreamFilter] = useState('info');
   const [liveRows, setLiveRows] = useState<LiveRow[]>([]);
   const [streamStatus, setStreamStatus] = useState<'idle' | 'connecting' | 'streaming' | 'stopped' | 'error'>('idle');
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -227,6 +359,22 @@ export default function Logger() {
     setConfigLoading(true);
     setConfigError(null);
     try {
+      if (rustRuntime) {
+        const result = await callTool('get_logging_filter', { runtimeInstanceId });
+        const normalized = normalizeRustFilterResponse(result);
+        const filter = normalized.filter || 'info';
+        const parsed = parseRustFilterExpression(filter);
+        setRustCurrentFilter(filter);
+        setRustFilterSource(normalized.source);
+        setRustDefaultLevel(parsed.defaultLevel);
+        setRustTargetRows(parsed.rows);
+        setRustFilterDraft(filter);
+        setStreamFilter(filter);
+        setPendingLoggers({});
+        setNewLoggers([]);
+        setLoggers([]);
+        return;
+      }
       const result = await callTool('get_loggers', { runtimeInstanceId });
       setLoggers(Array.isArray(result) ? result : []);
       setPendingLoggers({});
@@ -240,7 +388,31 @@ export default function Logger() {
 
   useEffect(() => {
     fetchLoggers();
-  }, [runtimeInstanceId]);
+  }, [runtimeInstanceId, rustRuntime]);
+
+  useEffect(() => {
+    if (!rustRuntime) {
+      return;
+    }
+    let ignore = false;
+    const fetchTargets = async () => {
+      try {
+        setTargetLoadError(null);
+        const result = await fetchClient('/r/data?name=logging_target');
+        if (!ignore) {
+          setLoggingTargets(normalizeTargetOptions(result));
+        }
+      } catch (err: any) {
+        if (!ignore) {
+          setTargetLoadError(err?.message ?? JSON.stringify(err));
+        }
+      }
+    };
+    fetchTargets();
+    return () => {
+      ignore = true;
+    };
+  }, [rustRuntime]);
 
   useEffect(() => {
     return subscribeToNotifications((method, params) => {
@@ -251,7 +423,7 @@ export default function Logger() {
       const row: LiveRow = {
         timestamp: formatTimestamp(params?.timestamp),
         level: params?.level ?? '',
-        logger: params?.logger ?? '',
+        logger: params?.logger ?? params?.target ?? '',
         message: params?.message ?? '',
         thread: params?.thread ?? '',
         exception: params?.exception ?? '',
@@ -311,6 +483,43 @@ export default function Logger() {
 
   const hasPendingConfigChanges =
     Object.keys(pendingLoggers).length > 0 || newLoggers.length > 0;
+
+  const learnedTargets = useMemo(() => {
+    const names = new Set<string>();
+    historyRows.forEach((row) => {
+      if (row.logger) {
+        names.add(row.logger);
+      }
+    });
+    liveRows.forEach((row) => {
+      if (row.logger) {
+        names.add(row.logger);
+      }
+    });
+    rustTargetRows.forEach((row) => {
+      if (row.target) {
+        names.add(row.target);
+      }
+    });
+    return Array.from(names);
+  }, [historyRows, liveRows, rustTargetRows]);
+
+  const targetOptions = useMemo(() => {
+    const options = [...loggingTargets];
+    const seen = new Set(options.map((option) => option.id));
+    learnedTargets.forEach((target) => {
+      if (!seen.has(target)) {
+        seen.add(target);
+        options.push({ id: target, label: target });
+      }
+    });
+    return options.sort((left, right) => left.id.localeCompare(right.id));
+  }, [learnedTargets, loggingTargets]);
+
+  const generatedRustFilter = useMemo(
+    () => buildRustFilter(rustDefaultLevel, rustTargetRows),
+    [rustDefaultLevel, rustTargetRows],
+  );
 
   const historyLoggerOptions = useMemo(() => {
     const names = new Set(historyRows.map((row) => row.logger).filter(Boolean));
@@ -388,6 +597,29 @@ export default function Logger() {
       return;
     }
 
+    if (rustRuntime) {
+      const filter = rustFilterDraft.trim();
+      if (!filter) {
+        setConfigError('Filter expression is required');
+        return;
+      }
+
+      setConfigApplying(true);
+      setConfigError(null);
+      setConfigSuccess(null);
+      try {
+        await callTool('set_logging_filter', { runtimeInstanceId, filter });
+        setConfigSuccess('Logging filter applied');
+        setLoggerChangedThisSession(true);
+        await fetchLoggers();
+      } catch (err: any) {
+        setConfigError(err?.message ?? JSON.stringify(err));
+      } finally {
+        setConfigApplying(false);
+      }
+      return;
+    }
+
     const changedExisting = Object.entries(pendingLoggers).map(([name, level]) => ({ name, level }));
     const added = newLoggers.map((logger) => ({ name: logger.name.trim(), level: logger.level }));
     const updates = [...changedExisting, ...added];
@@ -408,6 +640,41 @@ export default function Logger() {
     } finally {
       setConfigApplying(false);
     }
+  };
+
+  const handleResetRustFilter = async () => {
+    if (!runtimeInstanceId) {
+      return;
+    }
+
+    setConfigApplying(true);
+    setConfigError(null);
+    setConfigSuccess(null);
+    try {
+      await callTool('reload_modules', { runtimeInstanceId, modules: ['runtime/logging'] });
+      setConfigSuccess('Logging filter reloaded from config');
+      await fetchLoggers();
+    } catch (err: any) {
+      setConfigError(err?.message ?? JSON.stringify(err));
+    } finally {
+      setConfigApplying(false);
+    }
+  };
+
+  const handleAddRustTarget = () => {
+    setRustTargetRows((current) => [...current, { target: '', level: 'debug' }]);
+  };
+
+  const handleRustTargetChange = (index: number, row: RustFilterRow) => {
+    setConfigSuccess(null);
+    setRustTargetRows((current) =>
+      current.map((currentRow, currentIndex) => (currentIndex === index ? row : currentRow)),
+    );
+  };
+
+  const handleRemoveRustTarget = (index: number) => {
+    setConfigSuccess(null);
+    setRustTargetRows((current) => current.filter((_, currentIndex) => currentIndex !== index));
   };
 
   const handleHistoryPreset = (minutes: number) => {
@@ -444,8 +711,11 @@ export default function Logger() {
       if (historyLevel) {
         args.loggerLevel = historyLevel;
       }
+      if (historyTargetFilter.trim()) {
+        args.loggerName = historyTargetFilter.trim();
+      }
       const result = await callTool('get_log_content', args);
-      setHistoryRows(flattenHistoryContent(result?.content));
+      setHistoryRows(normalizeHistoryRows(result));
     } catch (err: any) {
       setHistoryError(err?.message ?? JSON.stringify(err));
       setHistoryRows([]);
@@ -464,7 +734,11 @@ export default function Logger() {
     try {
       await callTool('start_logs', {
         runtimeInstanceId,
-        ...(streamLevel ? { level: streamLevel } : {}),
+        ...(rustRuntime
+          ? { filter: streamFilter.trim() || 'info' }
+          : streamLevel
+            ? { level: streamLevel }
+            : {}),
       });
       liveActiveRef.current = true;
       setStreamStatus('streaming');
@@ -538,6 +812,11 @@ export default function Logger() {
               <Typography variant="body2" color="text.secondary">
                 Endpoint: {addressLabel}:{portLabel}
               </Typography>
+              {node.productId && (
+                <Typography variant="body2" color="text.secondary">
+                  Product: {node.productId}
+                </Typography>
+              )}
             </Box>
             <Stack direction="row" spacing={1} alignItems="flex-start">
               <Button variant="outlined" onClick={() => navigate(-1)}>
@@ -549,7 +828,7 @@ export default function Logger() {
 
         <Paper variant="outlined">
           <Tabs value={tabIndex} onChange={(_, value) => setTabIndex(value)}>
-            <Tab label="Config" />
+            <Tab label={rustRuntime ? 'Filter' : 'Config'} />
             <Tab label="History" />
             <Tab label="Live Stream" />
           </Tabs>
@@ -557,113 +836,227 @@ export default function Logger() {
 
           {tabIndex === 0 && (
             <Box sx={{ p: 2 }}>
-              <Stack spacing={2}>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
-                  <TextField
-                    label="Filter loggers"
-                    size="small"
-                    value={configFilter}
-                    onChange={(event) => setConfigFilter(event.target.value)}
-                    sx={{ minWidth: 260 }}
-                  />
-                  <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" onClick={handleAddLoggerRow}>
-                      Add Logger
-                    </Button>
-                    <Button variant="outlined" onClick={fetchLoggers} disabled={configLoading || configApplying}>
-                      Refresh
-                    </Button>
-                    <Button
-                      variant="contained"
-                      onClick={handleApplyConfig}
-                      disabled={!hasPendingConfigChanges || !!configValidationError || configApplying}
-                    >
-                      {configApplying ? <CircularProgress size={20} /> : 'Apply Changes'}
-                    </Button>
+              {rustRuntime ? (
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
+                    <Box>
+                      <Typography variant="h6">Rust Logging Filter</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Active filter: {rustCurrentFilter || 'unknown'}
+                      </Typography>
+                      {rustFilterSource && (
+                        <Typography variant="body2" color="text.secondary">
+                          Source: {rustFilterSource}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Button variant="outlined" onClick={fetchLoggers} disabled={configLoading || configApplying}>
+                        Refresh
+                      </Button>
+                      <Button variant="outlined" onClick={handleResetRustFilter} disabled={configLoading || configApplying}>
+                        Reset From Config
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleApplyConfig}
+                        disabled={!rustFilterDraft.trim() || configApplying}
+                      >
+                        {configApplying ? <CircularProgress size={20} /> : 'Apply Live'}
+                      </Button>
+                    </Stack>
                   </Stack>
+
+                  {targetLoadError && <Alert severity="warning">{targetLoadError}</Alert>}
+                  {configError && <Alert severity="error">{configError}</Alert>}
+                  {configSuccess && <Alert severity="success">{configSuccess}</Alert>}
+
+                  {configLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <>
+                      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                        <FormControl sx={{ minWidth: 180 }}>
+                          <InputLabel id="rust-default-level-label">Default Level</InputLabel>
+                          <Select
+                            labelId="rust-default-level-label"
+                            value={rustDefaultLevel}
+                            label="Default Level"
+                            onChange={(event: SelectChangeEvent) => {
+                              setConfigSuccess(null);
+                              setRustDefaultLevel(event.target.value);
+                            }}
+                          >
+                            {RUST_LOG_LEVELS.map((level) => (
+                              <MenuItem key={level} value={level}>
+                                {level}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          label="Generated Filter"
+                          value={generatedRustFilter}
+                          fullWidth
+                          InputProps={{ readOnly: true }}
+                        />
+                        <Button
+                          variant="outlined"
+                          onClick={() => setRustFilterDraft(generatedRustFilter)}
+                          sx={{ minWidth: 180 }}
+                        >
+                          Use Generated
+                        </Button>
+                      </Stack>
+
+                      <Stack spacing={1}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography variant="subtitle1">Target Overrides</Typography>
+                          <Button variant="outlined" onClick={handleAddRustTarget}>
+                            Add Target
+                          </Button>
+                        </Stack>
+                        <TableContainer component={Paper} variant="outlined">
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Target</TableCell>
+                                <TableCell width={180}>Level</TableCell>
+                                <TableCell width={120}>Action</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {rustTargetRows.map((row, index) => (
+                                <TableRow key={`rust-target-${index}`}>
+                                  <TableCell>
+                                    <Autocomplete
+                                      freeSolo
+                                      options={targetOptions}
+                                      getOptionLabel={(option) =>
+                                        typeof option === 'string' ? option : option.label
+                                      }
+                                      value={
+                                        targetOptions.find((option) => option.id === row.target) ?? row.target
+                                      }
+                                      onChange={(_, value) => {
+                                        const target = typeof value === 'string' ? value : value?.id ?? '';
+                                        handleRustTargetChange(index, { ...row, target });
+                                      }}
+                                      onInputChange={(_, value) =>
+                                        handleRustTargetChange(index, { ...row, target: value })
+                                      }
+                                      renderInput={(params) => (
+                                        <TextField {...params} size="small" placeholder="light_pingora::security" />
+                                      )}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <Select
+                                      size="small"
+                                      fullWidth
+                                      value={row.level}
+                                      onChange={(event) =>
+                                        handleRustTargetChange(index, { ...row, level: event.target.value })
+                                      }
+                                    >
+                                      {RUST_LOG_LEVELS.map((level) => (
+                                        <MenuItem key={level} value={level}>
+                                          {level}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button color="error" onClick={() => handleRemoveRustTarget(index)}>
+                                      Remove
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {rustTargetRows.length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={3}>No target overrides</TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Stack>
+
+                      <TextField
+                        label="Filter Expression"
+                        value={rustFilterDraft}
+                        onChange={(event) => {
+                          setConfigSuccess(null);
+                          setRustFilterDraft(event.target.value);
+                        }}
+                        multiline
+                        minRows={3}
+                        fullWidth
+                      />
+                    </>
+                  )}
                 </Stack>
+              ) : (
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between">
+                    <TextField
+                      label="Filter loggers"
+                      size="small"
+                      value={configFilter}
+                      onChange={(event) => setConfigFilter(event.target.value)}
+                      sx={{ minWidth: 260 }}
+                    />
+                    <Stack direction="row" spacing={1}>
+                      <Button variant="outlined" onClick={handleAddLoggerRow}>
+                        Add Logger
+                      </Button>
+                      <Button variant="outlined" onClick={fetchLoggers} disabled={configLoading || configApplying}>
+                        Refresh
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={handleApplyConfig}
+                        disabled={!hasPendingConfigChanges || !!configValidationError || configApplying}
+                      >
+                        {configApplying ? <CircularProgress size={20} /> : 'Apply Changes'}
+                      </Button>
+                    </Stack>
+                  </Stack>
 
-                {configValidationError && <Alert severity="warning">{configValidationError}</Alert>}
-                {configError && <Alert severity="error">{configError}</Alert>}
-                {configSuccess && <Alert severity="success">{configSuccess}</Alert>}
+                  {configValidationError && <Alert severity="warning">{configValidationError}</Alert>}
+                  {configError && <Alert severity="error">{configError}</Alert>}
+                  {configSuccess && <Alert severity="success">{configSuccess}</Alert>}
 
-                {configLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <>
-                    <TableContainer component={Paper} variant="outlined">
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Logger Name</TableCell>
-                            <TableCell width={180}>Current Level</TableCell>
-                            <TableCell width={180}>New Level</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {filteredLoggers.map((logger) => (
-                            <TableRow key={logger.name}>
-                              <TableCell>{logger.name}</TableCell>
-                              <TableCell>{logger.level}</TableCell>
-                              <TableCell>
-                                <Select
-                                  size="small"
-                                  fullWidth
-                                  value={pendingLoggers[logger.name] || logger.level}
-                                  onChange={(event) =>
-                                    handleExistingLevelChange(logger.name, event.target.value)
-                                  }
-                                >
-                                  {LOG_LEVELS.map((level) => (
-                                    <MenuItem key={level} value={level}>
-                                      {level}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                          {filteredLoggers.length === 0 && (
-                            <TableRow>
-                              <TableCell colSpan={3}>No matching loggers</TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-
-                    {newLoggers.length > 0 && (
+                  {configLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <>
                       <TableContainer component={Paper} variant="outlined">
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>New Logger Name</TableCell>
-                              <TableCell width={180}>Level</TableCell>
-                              <TableCell width={120}>Action</TableCell>
+                              <TableCell>Logger Name</TableCell>
+                              <TableCell width={180}>Current Level</TableCell>
+                              <TableCell width={180}>New Level</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {newLoggers.map((logger, index) => (
-                              <TableRow key={`new-${index}`}>
-                                <TableCell>
-                                  <TextField
-                                    size="small"
-                                    fullWidth
-                                    value={logger.name}
-                                    onChange={(event) =>
-                                      handleNewLoggerChange(index, 'name', event.target.value)
-                                    }
-                                  />
-                                </TableCell>
+                            {filteredLoggers.map((logger) => (
+                              <TableRow key={logger.name}>
+                                <TableCell>{logger.name}</TableCell>
+                                <TableCell>{logger.level}</TableCell>
                                 <TableCell>
                                   <Select
                                     size="small"
                                     fullWidth
-                                    value={logger.level}
+                                    value={pendingLoggers[logger.name] || logger.level}
                                     onChange={(event) =>
-                                      handleNewLoggerChange(index, 'level', event.target.value)
+                                      handleExistingLevelChange(logger.name, event.target.value)
                                     }
                                   >
                                     {LOG_LEVELS.map((level) => (
@@ -673,20 +1066,71 @@ export default function Logger() {
                                     ))}
                                   </Select>
                                 </TableCell>
-                                <TableCell>
-                                  <Button color="error" onClick={() => handleRemoveNewLogger(index)}>
-                                    Remove
-                                  </Button>
-                                </TableCell>
                               </TableRow>
                             ))}
+                            {filteredLoggers.length === 0 && (
+                              <TableRow>
+                                <TableCell colSpan={3}>No matching loggers</TableCell>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </TableContainer>
-                    )}
-                  </>
-                )}
-              </Stack>
+
+                      {newLoggers.length > 0 && (
+                        <TableContainer component={Paper} variant="outlined">
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>New Logger Name</TableCell>
+                                <TableCell width={180}>Level</TableCell>
+                                <TableCell width={120}>Action</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {newLoggers.map((logger, index) => (
+                                <TableRow key={`new-${index}`}>
+                                  <TableCell>
+                                    <TextField
+                                      size="small"
+                                      fullWidth
+                                      value={logger.name}
+                                      onChange={(event) =>
+                                        handleNewLoggerChange(index, 'name', event.target.value)
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <Select
+                                      size="small"
+                                      fullWidth
+                                      value={logger.level}
+                                      onChange={(event) =>
+                                        handleNewLoggerChange(index, 'level', event.target.value)
+                                      }
+                                    >
+                                      {LOG_LEVELS.map((level) => (
+                                        <MenuItem key={level} value={level}>
+                                          {level}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button color="error" onClick={() => handleRemoveNewLogger(index)}>
+                                      Remove
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      )}
+                    </>
+                  )}
+                </Stack>
+              )}
             </Box>
           )}
 
@@ -738,6 +1182,24 @@ export default function Logger() {
                       ))}
                     </Select>
                   </FormControl>
+                  <Autocomplete
+                    freeSolo
+                    options={targetOptions}
+                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
+                    value={
+                      targetOptions.find((option) => option.id === historyTargetFilter)
+                        ?? historyTargetFilter
+                    }
+                    onChange={(_, value) => {
+                      const target = typeof value === 'string' ? value : value?.id ?? '';
+                      setHistoryTargetFilter(target);
+                    }}
+                    onInputChange={(_, value) => setHistoryTargetFilter(value)}
+                    sx={{ minWidth: 260 }}
+                    renderInput={(params) => (
+                      <TextField {...params} label={rustRuntime ? 'Target' : 'Logger'} />
+                    )}
+                  />
                   <Button variant="contained" onClick={handleFetchHistory} disabled={historyLoading}>
                     {historyLoading ? <CircularProgress size={20} /> : 'Fetch Logs'}
                   </Button>
@@ -818,21 +1280,30 @@ export default function Logger() {
                 {streamError && <Alert severity="error">{streamError}</Alert>}
 
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
-                  <FormControl sx={{ minWidth: 200 }}>
-                    <InputLabel id="stream-level-label">Min Level</InputLabel>
-                    <Select
-                      labelId="stream-level-label"
-                      value={streamLevel}
-                      label="Min Level"
-                      onChange={(event: SelectChangeEvent) => setStreamLevel(event.target.value)}
-                    >
-                      {LOG_LEVELS.filter((level) => level !== 'OFF').map((level) => (
-                        <MenuItem key={level} value={level}>
-                          {level}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  {rustRuntime ? (
+                    <TextField
+                      label="Stream Filter"
+                      value={streamFilter}
+                      onChange={(event) => setStreamFilter(event.target.value)}
+                      sx={{ minWidth: { xs: '100%', md: 420 } }}
+                    />
+                  ) : (
+                    <FormControl sx={{ minWidth: 200 }}>
+                      <InputLabel id="stream-level-label">Min Level</InputLabel>
+                      <Select
+                        labelId="stream-level-label"
+                        value={streamLevel}
+                        label="Min Level"
+                        onChange={(event: SelectChangeEvent) => setStreamLevel(event.target.value)}
+                      >
+                        {LOG_LEVELS.filter((level) => level !== 'OFF').map((level) => (
+                          <MenuItem key={level} value={level}>
+                            {level}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
                   <Button
                     variant="contained"
                     onClick={handleStartStream}
