@@ -204,6 +204,13 @@ export default function ApiDetail() {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
 
+      // If the backend echoed our short map, it means the version hasn't changed.
+      // Use row.original which has all the fields.
+      // If the version DID change, the backend fetched and returned the FULL new entity.
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion
+        ? row.original
+        : freshData;
+
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateApiVersion', searchParams, {
         ...taskContext,
@@ -211,7 +218,7 @@ export default function ApiDetail() {
         serviceId: row.original.serviceId ?? '',
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });
