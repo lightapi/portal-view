@@ -128,7 +128,7 @@ export default function PositionAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePosition', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.original.hostId, positionId: row.original.positionId },
     };
 
     try {

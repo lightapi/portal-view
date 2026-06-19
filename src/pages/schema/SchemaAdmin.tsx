@@ -153,7 +153,7 @@ export default function SchemaAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'schema', action: 'deleteSchema', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, schemaId: row.original.schemaId },
     };
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });

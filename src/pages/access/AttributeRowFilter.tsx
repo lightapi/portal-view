@@ -142,7 +142,7 @@ export default function AttributeRowFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'attribute', action: 'deleteAttributeRowFilter', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, endpointId: row.original.endpointId, colName: row.original.colName },
     };
 
     try {

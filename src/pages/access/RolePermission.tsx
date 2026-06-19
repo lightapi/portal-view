@@ -144,7 +144,7 @@ export default function RolePermission() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRolePermission', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, roleId: row.original.roleId, endpointId: row.original.endpointId },
     };
 
     try {

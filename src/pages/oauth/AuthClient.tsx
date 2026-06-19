@@ -219,7 +219,7 @@ export default function AuthClient() {
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'deleteClient', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, clientId: row.original.clientId },
     };
 
     try {

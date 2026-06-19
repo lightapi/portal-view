@@ -169,7 +169,7 @@ export default function ConfigInstanceAppApi() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigInstanceAppApi', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, instanceAppId: row.original.instanceAppId, instanceApiId: row.original.instanceApiId, propertyId: row.original.propertyId },
     };
 
     try {

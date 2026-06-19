@@ -131,7 +131,7 @@ export default function OrgAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'deleteOrg', version: '0.1.0',
-      data: row.original,
+      data: { domain: row.original.domain },
     };
 
     try {

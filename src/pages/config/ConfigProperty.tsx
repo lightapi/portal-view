@@ -157,7 +157,7 @@ export default function ConfigPropertyAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigProperty', version: '0.1.0',
-      data: row.original,
+      data: { configId: row.original.configId, propertyId: row.original.propertyId },
     };
 
     try {

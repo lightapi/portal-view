@@ -141,7 +141,7 @@ export default function AttributeColFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'attribute', action: 'deleteAttributeColFilter', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, endpointId: row.original.endpointId },
     };
 
     try {

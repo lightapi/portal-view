@@ -126,7 +126,7 @@ export default function GroupAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'deleteGroup', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.original.hostId, groupId: row.original.groupId },
     };
 
     try {

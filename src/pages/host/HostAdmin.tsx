@@ -147,9 +147,8 @@ export default function HostAdmin() {
     const cmd = {
       host: 'lightapi.net',
       service: 'host',
-      action: 'deleteHost',
-      version: '0.1.0',
-      data: row.original,
+      action: 'deleteHost', version: '0.1.0',
+      data: { hostId: row.original.hostId },
     };
 
     try {

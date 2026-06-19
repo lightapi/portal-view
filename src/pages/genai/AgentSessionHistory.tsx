@@ -124,7 +124,7 @@ export default function AgentSessionHistory() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteAgentSessionHistory', version: '0.1.0',
-            data: { ...row.original },
+            data: { hostId: row.original.hostId, sessionHistoryId: row.original.sessionHistoryId },
         };
 
         try {
@@ -152,7 +152,7 @@ export default function AgentSessionHistory() {
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
-      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
+            const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateAgentSessionHistory', searchParams, contextForRow(row.original)), {

@@ -134,7 +134,7 @@ export default function DeploymentAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'deleteDeployment', version: '0.1.0',
-      data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.original.hostId, deploymentId: row.original.deploymentId },
     };
 
     try {

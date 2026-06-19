@@ -139,7 +139,7 @@ export default function HostUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'deleteUserHost', version: '0.1.0', // Assuming this action exists
-      data: row.original,
+      data: { hostId: row.original.hostId, userId: row.original.userId },
     };
 
     try {

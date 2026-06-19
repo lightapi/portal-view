@@ -142,7 +142,7 @@ export default function GroupUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'deleteGroupUser', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, userId: row.original.userId },
     };
 
     try {

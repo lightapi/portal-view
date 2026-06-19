@@ -154,7 +154,7 @@ export default function WfDefinition() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'deleteWfDefinition', version: '0.1.0',
-            data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.original.hostId, wfDefId: row.original.wfDefId, aggregateVersion: row.original.aggregateVersion },
         };
 
         try {

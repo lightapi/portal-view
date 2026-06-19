@@ -139,7 +139,7 @@ export default function ProductVersionProperty() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionConfigProperty', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, propertyId: row.original.propertyId },
     };
 
     try {

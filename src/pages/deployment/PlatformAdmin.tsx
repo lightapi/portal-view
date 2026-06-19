@@ -141,7 +141,7 @@ export default function PlatformAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'deletePlatform', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, platformId: row.original.platformId },
     };
 
     try {

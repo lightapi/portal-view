@@ -148,7 +148,7 @@ export default function Category() {
 
     const cmd = {
       host: 'lightapi.net', service: 'category', action: 'deleteCategory', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, categoryId: row.original.categoryId },
     };
 
     try {

@@ -128,7 +128,7 @@ export default function AgentSkill() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteAgentSkill', version: '0.1.0',
-            data: { ...row.original, aggregateVersion: row.original.aggregateVersion },
+      data: { hostId: row.original.hostId, agentDefId: row.original.agentDefId, skillId: row.original.skillId },
         };
 
         try {

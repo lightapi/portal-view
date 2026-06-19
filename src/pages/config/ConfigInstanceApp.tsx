@@ -162,7 +162,7 @@ export default function ConfigInstanceApp() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigInstanceApp', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, instanceAppId: row.original.instanceAppId, propertyId: row.original.propertyId },
     };
 
     try {
