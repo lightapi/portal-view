@@ -145,17 +145,18 @@ export default function SkillDependency() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'getFreshSkillDependency', version: '0.1.0',
-            data: row.original,
+      data: { hostId: row.original.hostId, skillId: row.original.skillId, dependencyId: row.original.dependencyId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateSkillDependency', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

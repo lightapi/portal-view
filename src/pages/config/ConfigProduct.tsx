@@ -167,12 +167,13 @@ export default function ConfigProduct() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getFreshConfigProduct', version: '0.1.0',
-      data: row.original,
+      data: { productId: row.original.productId, propertyId: row.original.propertyId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateConfigProduct', searchParams, {
@@ -182,7 +183,7 @@ export default function ConfigProduct() {
         propertyId: row.original.propertyId,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

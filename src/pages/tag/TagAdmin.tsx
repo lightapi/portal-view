@@ -182,9 +182,10 @@ export default function TagAdmin() {
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(buildTaskAwareRoute('/app/form/updateTag', searchParams, contextForRow(row.original)), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

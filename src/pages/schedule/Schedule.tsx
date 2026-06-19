@@ -217,15 +217,16 @@ export default function Schedule() {
 
     const cmd = {
       host: 'lightapi.net', service: 'schedule', action: 'getFreshSchedule', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, scheduleId: row.original.scheduleId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(
         buildTaskAwareRoute('/app/form/updateSchedule', searchParams, contextForRow(row.original)),
-        { state: { data: freshData, source: location.pathname } },
+        { state: { data: dataForForm, source: location.pathname } },
       );
     } catch (error) {
       console.error("Failed to fetch schedule for update:", error);

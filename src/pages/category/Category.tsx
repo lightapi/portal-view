@@ -179,9 +179,10 @@ export default function Category() {
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(
         buildTaskAwareRoute('/app/form/updateCategory', searchParams, contextForRow(row.original)),
-        { state: { data: freshData, source: location.pathname } },
+        { state: { data: dataForForm, source: location.pathname } },
       );
     } catch (error) {
       console.error("Failed to fetch category for update:", error);

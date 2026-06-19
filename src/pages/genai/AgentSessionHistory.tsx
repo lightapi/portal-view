@@ -152,11 +152,12 @@ export default function AgentSessionHistory() {
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateAgentSessionHistory', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

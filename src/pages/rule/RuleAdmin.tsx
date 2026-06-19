@@ -256,7 +256,7 @@ export default function RuleAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'rule', action: 'getFreshRule', version: '0.1.0',
-      data: row.original,
+      data: { ruleId: row.original.ruleId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 

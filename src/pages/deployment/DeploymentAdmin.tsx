@@ -157,13 +157,14 @@ export default function DeploymentAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'getFreshDeployment', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, deploymentId: row.original.deploymentId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateDeployment', searchParams, {
@@ -173,7 +174,7 @@ export default function DeploymentAdmin() {
         serviceId: row.original.serviceId ?? '',
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

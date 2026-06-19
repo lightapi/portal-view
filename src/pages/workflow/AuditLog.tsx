@@ -144,11 +144,12 @@ export default function AuditLog() {
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildWorkflowTaskRoute('/app/form/updateAuditLog', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

@@ -193,12 +193,13 @@ export default function ConfigInstanceApi() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getFreshConfigInstanceApi', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, instanceApiId: row.original.instanceApiId, propertyId: row.original.propertyId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateConfigInstanceApi', searchParams, {
@@ -208,7 +209,7 @@ export default function ConfigInstanceApi() {
         propertyId,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

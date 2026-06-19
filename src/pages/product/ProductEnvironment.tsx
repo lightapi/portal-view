@@ -177,13 +177,14 @@ export default function ProductEnvironment() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'getFreshProductVersionEnvironment', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, systemEnv: row.original.systemEnv, runtimeEnv: row.original.runtimeEnv, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateProductVersionEnvironment', searchParams, {
@@ -194,7 +195,7 @@ export default function ProductEnvironment() {
         runtimeEnv: row.original.runtimeEnv,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

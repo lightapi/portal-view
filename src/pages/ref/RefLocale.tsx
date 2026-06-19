@@ -188,13 +188,14 @@ export default function RefLocale() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url) as RefLocaleType;
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       if (freshData.active === false) {
         alert("This locale has been deleted or deactivated. Please refresh the list before updating it.");
         return;
       }
       navigate(buildTaskAwareRoute('/app/form/updateRefLocale', searchParams, contextForRow(row.original)), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

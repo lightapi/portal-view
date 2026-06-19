@@ -165,12 +165,13 @@ export default function GroupUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'getFreshGroupUser', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, userId: row.original.userId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateGroupUser', searchParams, {
@@ -179,7 +180,7 @@ export default function GroupUser() {
         userId: row.original.userId,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

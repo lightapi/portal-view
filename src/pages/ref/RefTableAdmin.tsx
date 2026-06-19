@@ -195,11 +195,12 @@ export default function RefTableAdmin() {
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url) as RefTableType;
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateRefTable', searchParams, contextForRow(row.original)), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

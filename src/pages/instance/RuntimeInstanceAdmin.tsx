@@ -161,9 +161,8 @@ export default function RuntimeInstanceAdmin() {
       const getFreshCmd = {
         host: 'lightapi.net',
         service: 'instance',
-        action: 'getFreshRuntimeInstance',
-        version: '0.1.0',
-        data: row.original,
+        action: 'getFreshRuntimeInstance', version: '0.1.0',
+      data: { hostId: row.original.hostId, runtimeInstanceId: row.original.runtimeInstanceId, aggregateVersion: row.original.aggregateVersion },
       };
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(getFreshCmd));
 
@@ -223,14 +222,14 @@ export default function RuntimeInstanceAdmin() {
       const cmd = {
         host: 'lightapi.net',
         service: 'instance',
-        action: 'getFreshRuntimeInstance',
-        version: '0.1.0',
-        data: row.original,
+        action: 'getFreshRuntimeInstance', version: '0.1.0',
+      data: { hostId: row.original.hostId, runtimeInstanceId: row.original.runtimeInstanceId, aggregateVersion: row.original.aggregateVersion },
       };
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
       try {
         const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
         navigate(buildTaskAwareRoute('/app/form/updateRuntimeInstance', searchParams, {
           ...taskContext,
           hostId: row.original.hostId,
@@ -238,7 +237,7 @@ export default function RuntimeInstanceAdmin() {
           serviceId: row.original.serviceId,
         }), {
           state: {
-            data: freshData,
+            data: dataForForm,
             source: location.pathname,
           },
         });

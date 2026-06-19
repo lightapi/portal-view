@@ -168,17 +168,18 @@ export default function ConfigAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'getFreshConfig', version: '0.1.0',
-      data: row.original,
+      data: { configId: row.original.configId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateConfig', searchParams, { hostId: host ?? '', configId }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

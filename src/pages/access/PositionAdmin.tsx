@@ -151,17 +151,18 @@ export default function PositionAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'getFreshPosition', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, positionId: row.original.positionId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updatePosition', searchParams, { ...taskContext, positionId }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

@@ -165,12 +165,13 @@ export default function RoleUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'getFreshRoleUser', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, roleId: row.original.roleId, userId: row.original.userId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateRoleUser', searchParams, {
@@ -179,7 +180,7 @@ export default function RoleUser() {
         userId: row.original.userId,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

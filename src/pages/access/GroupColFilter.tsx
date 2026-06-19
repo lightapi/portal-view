@@ -164,12 +164,13 @@ export default function GroupColFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'getFreshGroupColFilter', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, endpointId: row.original.endpointId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateGroupColFilter', searchParams, {
@@ -179,7 +180,7 @@ export default function GroupColFilter() {
         endpointId: row.original.endpointId,
       }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

@@ -130,6 +130,7 @@ export default function SkillTool() {
 
         try {
             const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             const deleteCmd = {
                 host: 'lightapi.net', service: 'genai', action: 'deleteSkillTool', version: '0.1.0',
@@ -162,11 +163,12 @@ export default function SkillTool() {
 
         try {
             const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateSkillTool', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

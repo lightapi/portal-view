@@ -151,17 +151,18 @@ export default function ProcessInfo() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'getFreshProcessInfo', version: '0.1.0',
-            data: row.original,
+      data: { hostId: row.original.hostId, aggregateVersion: row.original.aggregateVersion, processId: row.original.processId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildWorkflowTaskRoute('/app/form/updateProcessInfo', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

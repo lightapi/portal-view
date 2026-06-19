@@ -149,17 +149,18 @@ export default function GroupAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'getFreshGroup', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateGroup', searchParams, { ...taskContext, groupId }), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

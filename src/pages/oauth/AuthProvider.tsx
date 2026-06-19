@@ -173,18 +173,19 @@ export default function AuthProvider() {
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getFreshProvider', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, providerId: row.original.providerId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateProvider', searchParams, contextForRow(row.original)), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

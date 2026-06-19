@@ -149,17 +149,18 @@ export default function SessionMemory() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'getFreshSessionMemory', version: '0.1.0',
-            data: row.original,
+      data: { hostId: row.original.hostId, aggregateVersion: row.original.aggregateVersion, memId: row.original.memId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateSessionMemory', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

@@ -246,7 +246,7 @@ export default function AuthClient() {
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'getFreshClient', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, clientId: row.original.clientId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 

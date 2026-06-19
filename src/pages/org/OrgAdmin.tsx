@@ -155,15 +155,16 @@ export default function OrgAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'host', action: 'getFreshOrg', version: '0.1.0',
-      data: row.original,
+      data: { domain: row.original.domain, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(buildTaskAwareRoute('/app/form/updateOrg', searchParams, contextForRow(row.original)), {
         state: {
-          data: freshData,
+          data: dataForForm,
           source: location.pathname
         }
       });

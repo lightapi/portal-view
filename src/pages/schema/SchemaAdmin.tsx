@@ -176,13 +176,14 @@ export default function SchemaAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'schema', action: 'getFreshSchema', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, schemaId: row.original.schemaId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
     try {
       const freshData = await fetchClient(url);
-      navigate(buildTaskAwareRoute('/app/form/updateSchema', searchParams, contextForRow(row.original)), { state: { data: freshData, source: location.pathname } });
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
+      navigate(buildTaskAwareRoute('/app/form/updateSchema', searchParams, contextForRow(row.original)), { state: { data: dataForForm, source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch schema for update:", error);
       alert("Could not load the latest schema data. Please try again.");

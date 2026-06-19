@@ -140,6 +140,7 @@ export default function SkillWorkflow() {
 
         try {
             const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
             const deleteCmd = {
                 host: 'lightapi.net', service: 'genai', action: 'deleteSkillWorkflow', version: '0.1.0',
                 data: { ...freshData, aggregateVersion: freshData.aggregateVersion },
@@ -176,9 +177,10 @@ export default function SkillWorkflow() {
 
         try {
             const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
             navigate(buildGenAiTaskRoute('/app/form/updateSkillWorkflow', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

@@ -163,17 +163,18 @@ export default function TaskAsst() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'getFreshTaskAsst', version: '0.1.0',
-            data: row.original,
+      data: { hostId: row.original.hostId, aggregateVersion: row.original.aggregateVersion, taskAsstId: row.original.taskAsstId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             // Navigate with the fresh data
             navigate(buildWorkflowTaskRoute('/app/form/updateTaskAsst', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });

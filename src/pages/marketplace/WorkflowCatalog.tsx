@@ -183,8 +183,9 @@ export default function WorkflowCatalog() {
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(buildWorkflowTaskRoute('/app/workflow/editor', taskSearchParams, contextForWorkflow(workflow)), {
-        state: { data: freshData, source: location.pathname },
+        state: { data: dataForForm, source: location.pathname },
       });
     } catch (e) {
       console.error('Failed to fetch workflow definition for edit:', e);

@@ -181,17 +181,18 @@ export default function WfDefinition() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'getFreshWfDefinition', version: '0.1.0',
-            data: row.original,
+      data: { hostId: row.original.hostId, wfDefId: row.original.wfDefId, aggregateVersion: row.original.aggregateVersion },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
             navigate(buildWorkflowTaskRoute('/app/workflow/editor', searchParams, contextForRow(row.original)), {
                 state: {
-                    data: freshData,
+                    data: dataForForm,
                     source: location.pathname
                 }
             });
