@@ -196,7 +196,7 @@ export default function ApiDetail() {
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'getFreshApiVersion', version: '0.1.0',
-      data: row.original,
+      data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, aggregateVersion: row.original.aggregateVersion },
     };
     const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
@@ -234,28 +234,28 @@ export default function ApiDetail() {
   // Column definitions for the MaterialReactTable
   const columns = useMemo<MRT_ColumnDef<ServiceVersionType>[]>(
     () => applyOwnershipColumns([
-        { accessorKey: 'apiVersionId', header: 'Version Id' },
-        { accessorKey: 'apiId', header: 'Api Id' },
-        { accessorKey: 'apiVersion', header: 'Api Version' },
-        { accessorKey: 'apiType', header: 'Api Type' },
-        { accessorKey: 'apiVersionDesc', header: 'Description' },
-        { accessorKey: 'specLink', header: 'Spec Link' },
-        { accessorKey: 'transportConfig', header: 'Transport Config' },
-        { accessorKey: 'serviceId', header: 'Service Id' },
-        { accessorKey: 'protocol', header: 'Protocol' },
-        { accessorKey: 'envTag', header: 'Env Tag' },
-        { accessorKey: 'targetHost', header: 'Target Host' },
-        { accessorKey: 'updateUser', header: 'Update User' },
-        { accessorKey: 'updateTs', header: 'Update Timestamp' },
-        { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
-        {
-          accessorKey: 'active',
-          header: 'Active',
-          filterVariant: 'select',
-          filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
-          Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
-        },
-      ],
+      { accessorKey: 'apiVersionId', header: 'Version Id' },
+      { accessorKey: 'apiId', header: 'Api Id' },
+      { accessorKey: 'apiVersion', header: 'Api Version' },
+      { accessorKey: 'apiType', header: 'Api Type' },
+      { accessorKey: 'apiVersionDesc', header: 'Description' },
+      { accessorKey: 'specLink', header: 'Spec Link' },
+      { accessorKey: 'transportConfig', header: 'Transport Config' },
+      { accessorKey: 'serviceId', header: 'Service Id' },
+      { accessorKey: 'protocol', header: 'Protocol' },
+      { accessorKey: 'envTag', header: 'Env Tag' },
+      { accessorKey: 'targetHost', header: 'Target Host' },
+      { accessorKey: 'updateUser', header: 'Update User' },
+      { accessorKey: 'updateTs', header: 'Update Timestamp' },
+      { accessorKey: 'aggregateVersion', header: 'Aggregate Version' },
+      {
+        accessorKey: 'active',
+        header: 'Active',
+        filterVariant: 'select',
+        filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
+        Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
+      },
+    ],
       apiVersionOwnership,
     ),
     [apiVersionOwnership],
