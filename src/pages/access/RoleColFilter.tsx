@@ -196,14 +196,14 @@ export default function RoleColFilter() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleColFilterType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'roleId', header: 'Role Id' },
-      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'columns', header: 'Filtered Columns' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
