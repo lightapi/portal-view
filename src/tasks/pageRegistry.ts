@@ -701,6 +701,7 @@ export const pageRegistry: PageDefinition[] = [
     route: "/app/rule/admin",
     category: "Platform Operations",
     roles: ["admin"],
+    helpPath: "/help/portal-view/pages/rule-admin",
     keywords: ["rule", "yaml", "condition", "action"],
     entities: ["ruleId"],
   },
