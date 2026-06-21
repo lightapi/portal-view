@@ -60,42 +60,6 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
   );
 };
 
-const operatorAliases: Record<string, string> = {
-  '==': 'equals',
-  eq: 'equals',
-  '!=': 'notEquals',
-  ne: 'notEquals',
-  not_equals: 'notEquals',
-  '>': 'greaterThan',
-  '<': 'lessThan',
-  '>=': 'greaterThanOrEqual',
-  '<=': 'lessThanOrEqual',
-  match: 'matches',
-  exists: 'isNotNull',
-  notExists: 'isNull',
-};
-
-const normalizeExpected = (condition: any) => {
-  if (condition.expected !== undefined) {
-    return Array.isArray(condition.expected)
-      ? condition.expected.map((value: unknown) => String(value)).join(', ')
-      : condition.expected;
-  }
-  const firstValue = Array.isArray(condition.conditionValues) ? condition.conditionValues[0] : undefined;
-  if (firstValue?.conditionValue !== undefined) return firstValue.conditionValue;
-  if (condition.value !== undefined) return condition.value;
-  return undefined;
-};
-
-const normalizeActionValues = (actionValues: any) => {
-  if (Array.isArray(actionValues)) return actionValues;
-  if (!actionValues || typeof actionValues !== 'object') return [];
-  return Object.entries(actionValues).map(([actionValueId, value]) => ({
-    actionValueId,
-    value: value == null ? '' : String(value),
-  }));
-};
-
 const normalizeRuleForForm = (data: any) => {
   const normalized = { ...data };
   normalized.version = normalized.version ?? normalized.ruleVersion;
@@ -104,32 +68,16 @@ const normalizeRuleForForm = (data: any) => {
   normalized.common = normalized.common ?? 'N';
   normalized.conditionLanguage = typeof normalized.conditionLanguage === 'string' && normalized.conditionLanguage.trim()
     ? normalized.conditionLanguage.trim().toLowerCase()
-    : (typeof normalized.expression === 'string' && normalized.expression.trim() ? 'cel' : 'native');
+    : 'cel';
   if (normalized.conditionLanguage === 'cel') {
     normalized.conditionSecurityProfile = typeof normalized.conditionSecurityProfile === 'string' && normalized.conditionSecurityProfile.trim()
       ? normalized.conditionSecurityProfile.trim().toLowerCase()
       : 'strict';
-  } else {
-    delete normalized.conditionSecurityProfile;
-  }
-
-  if (Array.isArray(normalized.conditions)) {
-    normalized.conditions = normalized.conditions.map((condition: any) => ({
-      conditionId: condition.conditionId,
-      conditionDesc: condition.conditionDesc,
-      operand: condition.operand ?? condition.propertyPath ?? condition.field,
-      operator: operatorAliases[condition.operator ?? condition.operatorCode] ?? condition.operator ?? condition.operatorCode,
-      expected: normalizeExpected(condition),
-      joinCode: condition.joinCode,
-    }));
   }
 
   if (Array.isArray(normalized.actions)) {
     normalized.actions = normalized.actions.map((action: any) => ({
-      actionId: action.actionId,
-      actionDesc: action.actionDesc,
-      actionRef: action.actionRef ?? action.actionClassName,
-      actionValues: normalizeActionValues(action.actionValues),
+      actionClassName: action.actionClassName,
     }));
   }
 
@@ -263,14 +211,15 @@ export default function RuleAdmin() {
     try {
       const freshData = await fetchClient(url) as any;
       console.log("freshData", freshData);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
 
-      // Parse the stringified ruleBody to inflate conditions and actions for the form
-      let parsedData = { ...freshData };
+      // Parse the stringified ruleBody to inflate CEL expression and actions for the form
+      let parsedData = { ...dataForForm };
       if (parsedData.ruleBody) {
         try {
           const bodyObj = JSON.parse(parsedData.ruleBody);
           // Omit ruleBody string from the merged object to avoid recursive conflicts if needed,
-          // but we spread bodyObj so its properties (like conditions and actions) become top-level.
+          // but we spread bodyObj so its properties become top-level.
           parsedData = { ...parsedData, ...bodyObj };
         } catch (e) {
           console.error("Failed to parse ruleBody JSON:", e);

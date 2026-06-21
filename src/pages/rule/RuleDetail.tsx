@@ -23,20 +23,8 @@ import TaskActionPanel from "../../tasks/TaskActionPanel";
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from "../../tasks/taskUtils";
 
 // --- Type Definitions ---
-type ConditionType = {
-    conditionId: string;
-    conditionDesc?: string;
-    operator?: string;
-    operand?: string;
-    expected?: unknown;
-    joinCode?: string;
-};
-
 type ActionType = {
-    actionId: string;
-    actionDesc?: string;
-    actionRef?: string;
-    actionValues?: Record<string, unknown>;
+    actionClassName?: string;
 };
 
 type RuleType = {
@@ -45,14 +33,13 @@ type RuleType = {
     ruleName?: string;
     ruleType?: string;
     common?: string;
-    conditionLanguage?: "native" | "cel" | string;
+    conditionLanguage?: "cel" | string;
     conditionSecurityProfile?: "strict" | "standard" | "internal-admin" | string;
     expression?: string;
     version?: string;
     ruleBody?: string;
     author?: string;
     ruleDesc?: string;
-    conditions?: ConditionType[];
     actions?: ActionType[];
     updateUser?: string;
     updateTs?: string;
@@ -100,9 +87,9 @@ export default function RuleDetail() {
     // Data passed from RuleAdmin via navigate state
     const rule = (location.state as { rule?: RuleType } | null)?.rule;
 
-    // Parse ruleBody if it exists but conditions/actions are missing (optional fallback)
+    // Parse ruleBody if it exists but expression/actions are missing (optional fallback)
     let ruleData: Partial<RuleType> = rule ? { ...rule } : {};
-    if (rule?.ruleBody && (!rule.conditions || !rule.actions)) {
+    if (rule?.ruleBody && (!rule.expression || !rule.actions)) {
         try {
             const bodyObj = JSON.parse(rule.ruleBody);
             ruleData = { ...ruleData, ...bodyObj };
@@ -110,8 +97,8 @@ export default function RuleDetail() {
             console.error("Failed to parse ruleBody in Detail page:", e);
         }
     }
-    ruleData.conditionLanguage = ruleData.conditionLanguage ?? (ruleData.expression ? "cel" : "native");
-    if (ruleData.conditionLanguage === "cel" && !ruleData.conditionSecurityProfile) {
+    ruleData.conditionLanguage = ruleData.conditionLanguage ?? "cel";
+    if (!ruleData.conditionSecurityProfile) {
         ruleData.conditionSecurityProfile = "strict";
     }
     const taskContext = useMemo(
@@ -137,7 +124,7 @@ export default function RuleDetail() {
         { label: "Rule Name", value: ruleData.ruleName },
         { label: "Rule Type", value: ruleData.ruleType },
         { label: "Condition Language", value: ruleData.conditionLanguage },
-        { label: "Condition Security Profile", value: ruleData.conditionLanguage === "cel" ? ruleData.conditionSecurityProfile : "N/A" },
+        { label: "Condition Security Profile", value: ruleData.conditionSecurityProfile },
         { label: "Common", value: ruleData.common },
         { label: "Version", value: ruleData.version },
         { label: "Author", value: ruleData.author },
@@ -284,36 +271,12 @@ export default function RuleDetail() {
                     </TableContainer>
                 ))}
 
-                {ruleData.conditionLanguage === "cel" && ruleData.expression && renderSection("CEL Expression", (
+                {ruleData.expression && renderSection("CEL Expression", (
                     <Paper sx={{ p: 2, backgroundColor: '#f7f7f7', overflowX: 'auto' }}>
                         <pre style={{ margin: 0, fontSize: '13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                             {ruleData.expression}
                         </pre>
                     </Paper>
-                ))}
-
-                {/* Conditions Section */}
-                {ruleData.conditionLanguage !== "cel" && ruleData.conditions && ruleData.conditions.length > 0 && renderSection("Conditions", (
-                    <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #eee' }}>
-                        <Table size="small">
-                            <TableBody>
-                                {ruleData.conditions.map((condition, idx) => (
-                                    <TableRow key={condition.conditionId || idx} hover sx={{ verticalAlign: 'top' }}>
-                                        <TableCell sx={{ width: '40px', fontWeight: 'bold' }}>{idx + 1}</TableCell>
-                                        <TableCell>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{condition.conditionId}</Typography>
-                                            <Typography variant="body2" color="textSecondary">{condition.conditionDesc}</Typography>
-                                            <Box mt={1} display="flex" gap={2}>
-                                                <Typography variant="caption"><strong>Operator:</strong> {condition.operator}</Typography>
-                                                <Typography variant="caption"><strong>Operand:</strong> {condition.operand}</Typography>
-                                                <Typography variant="caption"><strong>Expected:</strong> {String(condition.expected ?? "N/A")}</Typography>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
                 ))}
 
                 {/* Actions Section */}
@@ -322,14 +285,11 @@ export default function RuleDetail() {
                         <Table size="small">
                             <TableBody>
                                 {ruleData.actions.map((action, idx) => (
-                                    <TableRow key={action.actionId || idx} hover sx={{ verticalAlign: 'top' }}>
+                                    <TableRow key={action.actionClassName || idx} hover sx={{ verticalAlign: 'top' }}>
                                         <TableCell sx={{ width: '40px', fontWeight: 'bold' }}>{idx + 1}</TableCell>
                                         <TableCell>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>{action.actionId}</Typography>
-                                            <Typography variant="body2" color="textSecondary">{action.actionDesc}</Typography>
                                             <Box mt={1} display="flex" gap={2} flexDirection="column">
-                                                <Typography variant="caption"><strong>Action Ref:</strong> <code>{action.actionRef}</code></Typography>
-                                                <Typography variant="caption"><strong>Action Values:</strong> {JSON.stringify(action.actionValues ?? {})}</Typography>
+                                                <Typography variant="caption"><strong>Action Class:</strong> <code>{action.actionClassName}</code></Typography>
                                             </Box>
                                         </TableCell>
                                     </TableRow>

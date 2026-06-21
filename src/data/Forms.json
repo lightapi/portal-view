@@ -8666,83 +8666,18 @@
           "title": "CEL Expression",
           "type": "string"
         },
-        "conditions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "conditionId": {
-                "type": "string"
-              },
-              "conditionDesc": {
-                "type": "string"
-              },
-              "operand": {
-                "title": "Operand",
-                "type": "string"
-              },
-              "operator": {
-                "type": "string",
-                "title": "Operator"
-              },
-              "expected": {
-                "title": "Expected",
-                "type": "string",
-                "description": "For list operators, enter comma-separated values. Examples: admin, user or 2, 4, 5. Do not include JSON quotes."
-              },
-              "joinCode": {
-                "title": "Join Code",
-                "type": "string"
-              }
-            },
-            "required": [
-              "conditionId",
-              "operand",
-              "operator"
-            ]
-          }
-        },
         "actions": {
           "type": "array",
           "default": [],
           "items": {
             "type": "object",
             "properties": {
-              "actionId": {
+              "actionClassName": {
                 "type": "string"
-              },
-              "actionDesc": {
-                "type": "string"
-              },
-              "actionRef": {
-                "title": "Action Ref",
-                "type": "string"
-              },
-              "actionValues": {
-                "title": "Action Values",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "actionValueId": {
-                      "title": "Action Value Id",
-                      "type": "string"
-                    },
-                    "value": {
-                      "title": "Value",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "actionValueId",
-                    "value"
-                  ]
-                }
               }
             },
             "required": [
-              "actionId",
-              "actionRef"
+              "actionClassName"
             ]
           }
         }
@@ -8805,10 +8740,6 @@
         "default": "cel",
         "options": [
           {
-            "id": "native",
-            "label": "Native"
-          },
-          {
             "id": "cel",
             "label": "CEL"
           }
@@ -8816,7 +8747,6 @@
       },
       {
         "key": "conditionSecurityProfile",
-        "condition": "model.conditionLanguage === 'cel'",
         "type": "dynaselect",
         "multiple": false,
         "default": "strict",
@@ -8833,195 +8763,15 @@
       },
       {
         "key": "expression",
-        "condition": "model.conditionLanguage === 'cel'",
         "type": "textarea",
         "rows": 8,
         "placeholder": "context.auditInfo.role == 'admin'"
       },
       {
-        "key": "conditions",
-        "condition": "model.conditionLanguage !== 'cel'",
-        "items": [
-          "conditions[].conditionId",
-          "conditions[].conditionDesc",
-          "conditions[].operand",
-          {
-            "key": "conditions[].operator",
-            "type": "dynaselect",
-            "multiple": false,
-            "style": {
-              "width": "100%",
-              "minWidth": 240
-            },
-            "otherProps": {
-              "fullWidth": true
-            },
-            "options": [
-              {
-                "id": "equals",
-                "label": "equals"
-              },
-              {
-                "id": "notEquals",
-                "label": "notEquals"
-              },
-              {
-                "id": "greaterThan",
-                "label": "greaterThan"
-              },
-              {
-                "id": "greaterThanOrEqual",
-                "label": "greaterThanOrEqual"
-              },
-              {
-                "id": "lessThan",
-                "label": "lessThan"
-              },
-              {
-                "id": "lessThanOrEqual",
-                "label": "lessThanOrEqual"
-              },
-              {
-                "id": "contains",
-                "label": "contains"
-              },
-              {
-                "id": "notContains",
-                "label": "notContains"
-              },
-              {
-                "id": "containsIgnoreCase",
-                "label": "containsIgnoreCase"
-              },
-              {
-                "id": "inList",
-                "label": "inList"
-              },
-              {
-                "id": "notInList",
-                "label": "notInList"
-              },
-              {
-                "id": "containsAny",
-                "label": "containsAny"
-              },
-              {
-                "id": "containsAll",
-                "label": "containsAll"
-              },
-              {
-                "id": "containsNone",
-                "label": "containsNone"
-              },
-              {
-                "id": "matches",
-                "label": "matches"
-              },
-              {
-                "id": "notMatches",
-                "label": "notMatches"
-              },
-              {
-                "id": "startsWith",
-                "label": "startsWith"
-              },
-              {
-                "id": "endsWith",
-                "label": "endsWith"
-              },
-              {
-                "id": "isNull",
-                "label": "isNull"
-              },
-              {
-                "id": "isNotNull",
-                "label": "isNotNull"
-              },
-              {
-                "id": "isEmpty",
-                "label": "isEmpty"
-              },
-              {
-                "id": "isNotEmpty",
-                "label": "isNotEmpty"
-              },
-              {
-                "id": "isBlank",
-                "label": "isBlank"
-              },
-              {
-                "id": "isNotBlank",
-                "label": "isNotBlank"
-              },
-              {
-                "id": "lengthEquals",
-                "label": "lengthEquals"
-              },
-              {
-                "id": "lengthGreaterThan",
-                "label": "lengthGreaterThan"
-              },
-              {
-                "id": "lengthLessThan",
-                "label": "lengthLessThan"
-              },
-              {
-                "id": "before",
-                "label": "date before"
-              },
-              {
-                "id": "after",
-                "label": "date after"
-              },
-              {
-                "id": "on",
-                "label": "date equals"
-              }
-            ]
-          },
-          {
-            "key": "conditions[].expected",
-            "placeholder": "admin, user or 2, 4, 5",
-            "description": "For list operators, use comma-separated values without JSON quotes."
-          },
-          {
-            "key": "conditions[].joinCode",
-            "type": "dynaselect",
-            "multiple": false,
-            "style": {
-              "width": "100%",
-              "minWidth": 160
-            },
-            "otherProps": {
-              "fullWidth": true
-            },
-            "options": [
-              {
-                "id": "and",
-                "label": "and"
-              },
-              {
-                "id": "or",
-                "label": "or"
-              }
-            ]
-          }
-        ]
-      },
-      {
         "key": "actions",
-        "condition": "model.conditionLanguage !== 'cel'",
+        "startEmpty": true,
         "items": [
-          "actions[].actionId",
-          "actions[].actionDesc",
-          "actions[].actionRef",
-          {
-            "key": "actions[].actionValues",
-            "items": [
-              "actions[].actionValues[].actionValueId",
-              "actions[].actionValues[].value"
-            ]
-          }
+          "actions[].actionClassName"
         ]
       }
     ]
@@ -9090,82 +8840,18 @@
           "title": "CEL Expression",
           "type": "string"
         },
-        "conditions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "conditionId": {
-                "type": "string"
-              },
-              "conditionDesc": {
-                "type": "string"
-              },
-              "operand": {
-                "title": "Operand",
-                "type": "string"
-              },
-              "operator": {
-                "type": "string",
-                "title": "Operator"
-              },
-              "expected": {
-                "title": "Expected",
-                "type": "string",
-                "description": "For list operators, enter comma-separated values. Examples: admin, user or 2, 4, 5. Do not include JSON quotes."
-              },
-              "joinCode": {
-                "title": "Join Code",
-                "type": "string"
-              }
-            },
-            "required": [
-              "conditionId",
-              "operand",
-              "operator"
-            ]
-          }
-        },
         "actions": {
           "type": "array",
           "default": [],
           "items": {
             "type": "object",
             "properties": {
-              "actionId": {
+              "actionClassName": {
                 "type": "string"
-              },
-              "actionDesc": {
-                "type": "string"
-              },
-              "actionRef": {
-                "title": "Action Ref",
-                "type": "string"
-              },
-              "actionValues": {
-                "title": "Action Values",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "actionValueId": {
-                      "title": "Action Value Id",
-                      "type": "string"
-                    },
-                    "value": {
-                      "title": "Value",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "actionValueId"
-                  ]
-                }
               }
             },
             "required": [
-              "actionId",
-              "actionRef"
+              "actionClassName"
             ]
           }
         }
@@ -9227,10 +8913,6 @@
         "default": "cel",
         "options": [
           {
-            "id": "native",
-            "label": "Native"
-          },
-          {
             "id": "cel",
             "label": "CEL"
           }
@@ -9238,7 +8920,6 @@
       },
       {
         "key": "conditionSecurityProfile",
-        "condition": "model.conditionLanguage === 'cel'",
         "type": "dynaselect",
         "multiple": false,
         "default": "strict",
@@ -9255,232 +8936,17 @@
       },
       {
         "key": "expression",
-        "condition": "model.conditionLanguage === 'cel'",
         "type": "textarea",
         "rows": 8,
         "placeholder": "context.auditInfo.role == 'admin'"
       },
       {
-        "key": "conditions",
-        "condition": "model.conditionLanguage !== 'cel'",
-        "items": [
-          "conditions[].conditionId",
-          "conditions[].conditionDesc",
-          "conditions[].operand",
-          {
-            "key": "conditions[].operator",
-            "type": "dynaselect",
-            "multiple": false,
-            "style": {
-              "width": "100%",
-              "minWidth": 240
-            },
-            "otherProps": {
-              "fullWidth": true
-            },
-            "options": [
-              {
-                "id": "equals",
-                "label": "equals"
-              },
-              {
-                "id": "notEquals",
-                "label": "notEquals"
-              },
-              {
-                "id": "greaterThan",
-                "label": "greaterThan"
-              },
-              {
-                "id": "greaterThanOrEqual",
-                "label": "greaterThanOrEqual"
-              },
-              {
-                "id": "lessThan",
-                "label": "lessThan"
-              },
-              {
-                "id": "lessThanOrEqual",
-                "label": "lessThanOrEqual"
-              },
-              {
-                "id": "contains",
-                "label": "contains"
-              },
-              {
-                "id": "notContains",
-                "label": "notContains"
-              },
-              {
-                "id": "containsIgnoreCase",
-                "label": "containsIgnoreCase"
-              },
-              {
-                "id": "inList",
-                "label": "inList"
-              },
-              {
-                "id": "notInList",
-                "label": "notInList"
-              },
-              {
-                "id": "containsAny",
-                "label": "containsAny"
-              },
-              {
-                "id": "containsAll",
-                "label": "containsAll"
-              },
-              {
-                "id": "containsNone",
-                "label": "containsNone"
-              },
-              {
-                "id": "matches",
-                "label": "matches"
-              },
-              {
-                "id": "notMatches",
-                "label": "notMatches"
-              },
-              {
-                "id": "startsWith",
-                "label": "startsWith"
-              },
-              {
-                "id": "endsWith",
-                "label": "endsWith"
-              },
-              {
-                "id": "isNull",
-                "label": "isNull"
-              },
-              {
-                "id": "isNotNull",
-                "label": "isNotNull"
-              },
-              {
-                "id": "isEmpty",
-                "label": "isEmpty"
-              },
-              {
-                "id": "isNotEmpty",
-                "label": "isNotEmpty"
-              },
-              {
-                "id": "isBlank",
-                "label": "isBlank"
-              },
-              {
-                "id": "isNotBlank",
-                "label": "isNotBlank"
-              },
-              {
-                "id": "lengthEquals",
-                "label": "lengthEquals"
-              },
-              {
-                "id": "lengthGreaterThan",
-                "label": "lengthGreaterThan"
-              },
-              {
-                "id": "lengthLessThan",
-                "label": "lengthLessThan"
-              },
-              {
-                "id": "before",
-                "label": "date before"
-              },
-              {
-                "id": "after",
-                "label": "date after"
-              },
-              {
-                "id": "on",
-                "label": "date equals"
-              }
-            ]
-          },
-          {
-            "key": "conditions[].expected",
-            "placeholder": "admin, user or 2, 4, 5",
-            "description": "For list operators, use comma-separated values without JSON quotes."
-          },
-          {
-            "key": "conditions[].joinCode",
-            "type": "dynaselect",
-            "multiple": false,
-            "style": {
-              "width": "100%",
-              "minWidth": 160
-            },
-            "otherProps": {
-              "fullWidth": true
-            },
-            "options": [
-              {
-                "id": "and",
-                "label": "and"
-              },
-              {
-                "id": "or",
-                "label": "or"
-              }
-            ]
-          }
-        ]
-      },
-      {
         "key": "actions",
-        "condition": "model.conditionLanguage !== 'cel'",
+        "startEmpty": true,
         "items": [
-          "actions[].actionId",
-          "actions[].actionDesc",
-          "actions[].actionRef",
-          {
-            "key": "actions[].actionValues",
-            "items": [
-              "actions[].actionValues[].actionValueId",
-              "actions[].actionValues[].value"
-            ]
-          }
+          "actions[].actionClassName"
         ]
       }
-    ]
-  },
-  "deleteRule": {
-    "id": "deleteRule",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "rule",
-        "action": "deleteRule",
-        "version": "0.1.0",
-        "title": "Delete Rule",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Delete Rule",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "title": "Host Id",
-          "type": "string"
-        },
-        "ruleId": {
-          "title": "Rule Id",
-          "type": "string"
-        }
-      },
-      "required": [
-        "ruleId"
-      ]
-    },
-    "form": [
-      "hostId",
-      "ruleId"
     ]
   },
   "createRuleTestCase": {
