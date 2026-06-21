@@ -136,7 +136,7 @@ const ENTITY_META: Record<EntityType, EntityMeta> = {
     tag:                            { service: 'tag',         action: 'getTag',                      responseKey: 'tags' },
     category:                       { service: 'category',    action: 'getCategory',                 responseKey: 'categories' },
     rule:                           { service: 'rule',        action: 'getRule',                     responseKey: 'rules' },
-    api:                            { service: 'api',         action: 'getApi',                      responseKey: 'apis' },
+    api:                            { service: 'service',     action: 'getApi',                      responseKey: 'services' },
     app:                            { service: 'client',      action: 'getApp',                      responseKey: 'apps' },
     environment_property:           { service: 'config',      action: 'getConfigEnvironment',        responseKey: 'configEnvironments' },
     platform:                       { service: 'deployment',  action: 'getPlatform',                 responseKey: 'platforms' },
