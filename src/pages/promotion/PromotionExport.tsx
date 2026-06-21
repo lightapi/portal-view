@@ -112,6 +112,7 @@ const ENTITY_TYPES = [
 ];
 
 type EntityType = typeof ENTITY_TYPES[number]['value'];
+type ExportSelectionMode = 'selectedIds' | 'allMatching';
 
 interface EntityMeta {
     service: string;
@@ -149,6 +150,21 @@ const ENTITY_META: Record<EntityType, EntityMeta> = {
 
 const steps = ['Select Source & Type', 'Select Entities', 'Preview & Export'];
 
+function buildEntityQueryCriteria(columnFilters: MRT_ColumnFiltersState) {
+    const apiFilters: MRT_ColumnFiltersState = [];
+    let activeStatus = true;
+    columnFilters.forEach(filter => {
+        if (filter.id === 'active') {
+            activeStatus = filter.value === 'true' || filter.value === true;
+        } else if (filter.id === 'current') {
+            apiFilters.push({ ...filter, value: filter.value === 'true' });
+        } else {
+            apiFilters.push(filter);
+        }
+    });
+    return { activeStatus, apiFilters };
+}
+
 export default function PromotionExport() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -169,6 +185,7 @@ export default function PromotionExport() {
     // Step 2: Entity selection
     const [entities, setEntities] = useState<any[]>([]);
     const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+    const [selectionMode, setSelectionMode] = useState<ExportSelectionMode>('selectedIds');
     const [isLoadingEntities, setIsLoadingEntities] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
@@ -187,6 +204,47 @@ export default function PromotionExport() {
 
     // Target host for same-instance promotion
     const [targetHostId, setTargetHostId] = useState(taskContextState?.context.targetHostId || '');
+    const entityQueryCriteria = useMemo(
+        () => buildEntityQueryCriteria(columnFilters),
+        [columnFilters],
+    );
+    const selectedIds = useMemo(
+        () => Object.keys(rowSelection).filter(key => rowSelection[key]),
+        [rowSelection],
+    );
+    const selectedCount = selectedIds.length;
+    const allMatchingSelected = selectionMode === 'allMatching';
+    const exportSelectionCount = allMatchingSelected ? rowCount : selectedCount;
+    const canExportSelection = exportSelectionCount > 0;
+
+    const clearSelection = useCallback(() => {
+        setRowSelection({});
+        setSelectionMode('selectedIds');
+        setExportResult(null);
+    }, []);
+
+    const handleRowSelectionChange = useCallback((
+        updater: MRT_RowSelectionState | ((old: MRT_RowSelectionState) => MRT_RowSelectionState),
+    ) => {
+        setSelectionMode('selectedIds');
+        setExportResult(null);
+        setRowSelection(updater);
+    }, []);
+
+    const selectAllMatchingRows = useCallback(() => {
+        if (rowCount === 0) return;
+        setSelectionMode('allMatching');
+        setExportResult(null);
+    }, [rowCount]);
+
+    useEffect(() => {
+        clearSelection();
+        setPagination(current => (
+            current.pageIndex === 0
+                ? current
+                : { ...current, pageIndex: 0 }
+        ));
+    }, [clearSelection, sourceHostId, entityType, columnFilters, globalFilter, sorting]);
 
     const taskActionContext = useMemo(
         () => mergeTaskContext(
@@ -253,18 +311,6 @@ export default function PromotionExport() {
         if (!sourceHostId || activeStep < 1) return;
         setIsLoadingEntities(true);
 
-        const apiFilters: MRT_ColumnFiltersState = [];
-        let activeStatus = true;
-        columnFilters.forEach(filter => {
-            if (filter.id === 'active') {
-                activeStatus = filter.value === 'true' || filter.value === true;
-            } else if (filter.id === 'current') {
-                apiFilters.push({ ...filter, value: filter.value === 'true' });
-            } else {
-                apiFilters.push(filter);
-            }
-        });
-
         const { service, action, responseKey } = ENTITY_META[entityType as EntityType] ?? ENTITY_META.instance;
 
         const cmd = {
@@ -277,9 +323,9 @@ export default function PromotionExport() {
                 offset: pagination.pageIndex * pagination.pageSize,
                 limit: pagination.pageSize,
                 sorting: JSON.stringify(sorting ?? []),
-                filters: JSON.stringify(apiFilters ?? []),
+                filters: JSON.stringify(entityQueryCriteria.apiFilters ?? []),
                 globalFilter: globalFilter ?? '',
-                active: activeStatus,
+                active: entityQueryCriteria.activeStatus,
             },
         };
 
@@ -294,7 +340,7 @@ export default function PromotionExport() {
         } finally {
             setIsLoadingEntities(false);
         }
-    }, [sourceHostId, activeStep, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, entityType]);
+    }, [sourceHostId, activeStep, entityQueryCriteria, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, entityType]);
 
     useEffect(() => {
         if (activeStep >= 1) {
@@ -302,22 +348,50 @@ export default function PromotionExport() {
         }
     }, [fetchEntities, activeStep]);
 
+    const buildExportRequestData = useCallback(() => {
+        const base = {
+            sourceHostId,
+            entityType,
+            includeChildren: true,
+            includeSiblings: true,
+        };
+
+        if (allMatchingSelected) {
+            return {
+                ...base,
+                selection: {
+                    mode: 'allMatching',
+                    sorting: JSON.stringify(sorting ?? []),
+                    filters: JSON.stringify(entityQueryCriteria.apiFilters ?? []),
+                    globalFilter: globalFilter ?? '',
+                    active: entityQueryCriteria.activeStatus,
+                },
+            };
+        }
+
+        return {
+            ...base,
+            entityIds: selectedIds,
+        };
+    }, [
+        allMatchingSelected,
+        entityQueryCriteria,
+        entityType,
+        globalFilter,
+        selectedIds,
+        sorting,
+        sourceHostId,
+    ]);
+
     // Export handler
     const handleExportJSON = useCallback(async () => {
-        const selectedIds = Object.keys(rowSelection).filter(key => rowSelection[key]);
-        if (selectedIds.length === 0) return;
+        if (!canExportSelection) return;
 
         setIsExporting(true);
         try {
             const cmd = {
                 host: 'lightapi.net', service: 'user', action: 'exportSnapshot', version: '0.1.0',
-                data: {
-                    sourceHostId,
-                    entityType,
-                    entityIds: selectedIds,
-                    includeChildren: true,
-                    includeSiblings: true,
-                },
+                data: buildExportRequestData(),
             };
             const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
             const json = await fetchClient(url);
@@ -346,25 +420,18 @@ export default function PromotionExport() {
         } finally {
             setIsExporting(false);
         }
-    }, [buildPromotionTaskContext, rowSelection, sourceHostId, entityType, taskContextState]);
+    }, [buildExportRequestData, buildPromotionTaskContext, canExportSelection, taskContextState]);
 
     // Promote to another host (same instance)
     const handlePromoteToHost = useCallback(async () => {
-        const selectedIds = Object.keys(rowSelection).filter(key => rowSelection[key]);
-        if (selectedIds.length === 0 || !targetHostId) return;
+        if (!canExportSelection || !targetHostId) return;
 
         setIsExporting(true);
         try {
             // First export the snapshot
             const exportCmd = {
                 host: 'lightapi.net', service: 'user', action: 'exportSnapshot', version: '0.1.0',
-                data: {
-                    sourceHostId,
-                    entityType,
-                    entityIds: selectedIds,
-                    includeChildren: true,
-                    includeSiblings: true,
-                },
+                data: buildExportRequestData(),
             };
             const exportUrl = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(exportCmd));
             const snapshot = await fetchClient(exportUrl);
@@ -397,7 +464,7 @@ export default function PromotionExport() {
         } finally {
             setIsExporting(false);
         }
-    }, [buildPromotionTaskContext, rowSelection, sourceHostId, entityType, targetHostId, taskContextState, searchParams, navigate]);
+    }, [buildExportRequestData, buildPromotionTaskContext, canExportSelection, targetHostId, taskContextState, searchParams, navigate]);
 
     // Instance table columns
     const instanceColumns = useMemo<MRT_ColumnDef<any>[]>(
@@ -871,7 +938,7 @@ export default function PromotionExport() {
         columns,
         data: entities,
         enableRowSelection: true,
-        onRowSelectionChange: setRowSelection,
+        onRowSelectionChange: handleRowSelectionChange,
         state: {
             rowSelection,
             isLoading: isLoadingEntities,
@@ -922,8 +989,6 @@ export default function PromotionExport() {
             row.deploymentId ||
             row.deploymentInstanceId,
     });
-
-    const selectedCount = Object.keys(rowSelection).filter(k => rowSelection[k]).length;
 
     return (
         <Box sx={{ p: 2 }}>
@@ -1004,10 +1069,45 @@ export default function PromotionExport() {
                             Source: <strong>{hosts.find(h => h.hostId === sourceHostId)?.domain}/{hosts.find(h => h.hostId === sourceHostId)?.subDomain}</strong>
                         </Typography>
                         <Chip label={`Entity Type: ${entityType}`} color="primary" />
-                        {selectedCount > 0 && (
+                        {allMatchingSelected ? (
+                            <Chip label={`All ${rowCount} matching selected`} color="success" />
+                        ) : selectedCount > 0 && (
                             <Chip label={`${selectedCount} selected`} color="success" />
                         )}
+                        {canExportSelection && (
+                            <Button size="small" variant="text" onClick={clearSelection}>
+                                Clear Selection
+                            </Button>
+                        )}
                     </Box>
+
+                    {allMatchingSelected ? (
+                        <Alert severity="success" sx={{ mb: 2 }}>
+                            All <strong>{rowCount}</strong> matching {entityType} records are selected for export.
+                        </Alert>
+                    ) : (
+                        <Alert severity={selectedCount > 0 ? 'info' : 'warning'} sx={{ mb: 2 }}>
+                            {selectedCount > 0 ? (
+                                <>
+                                    <strong>{selectedCount}</strong> selected row{selectedCount === 1 ? '' : 's'} will be exported.
+                                    {rowCount > selectedCount && (
+                                        <>
+                                            {' '}This may only include rows selected from the current page or pages you have visited.
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    Select rows on the current page, or select all matching records across every page.
+                                </>
+                            )}
+                            {rowCount > 0 && rowCount > selectedCount && (
+                                <Button size="small" sx={{ ml: 2 }} onClick={selectAllMatchingRows}>
+                                    Select all {rowCount} matching records
+                                </Button>
+                            )}
+                        </Alert>
+                    )}
 
                     <MaterialReactTable table={table} />
 
@@ -1015,7 +1115,7 @@ export default function PromotionExport() {
                         <Button
                             variant="contained"
                             onClick={() => setActiveStep(2)}
-                            disabled={selectedCount === 0}
+                            disabled={!canExportSelection}
                         >
                             Next: Preview & Export
                         </Button>
@@ -1032,9 +1132,13 @@ export default function PromotionExport() {
                     </Box>
 
                     <Alert severity="info" sx={{ mb: 3 }}>
-                        <strong>{selectedCount}</strong> {entityType}(s) selected for export from{' '}
+                        <strong>{exportSelectionCount}</strong> {entityType}(s) selected for export from{' '}
                         <strong>{hosts.find(h => h.hostId === sourceHostId)?.domain}/{hosts.find(h => h.hostId === sourceHostId)?.subDomain}</strong>.
-                        All child entities (properties, files, APIs, apps) will be included automatically.
+                        {' '}
+                        {allMatchingSelected
+                            ? 'All records matching the current filters across every page will be exported.'
+                            : 'Only the selected entity IDs will be exported.'}
+                        {' '}All child entities (properties, files, APIs, apps) will be included automatically.
                     </Alert>
 
                     {/* Option 1: Download JSON */}
@@ -1049,7 +1153,7 @@ export default function PromotionExport() {
                             variant="contained"
                             startIcon={isExporting ? <CircularProgress size={20} /> : <FileDownloadIcon />}
                             onClick={handleExportJSON}
-                            disabled={isExporting}
+                            disabled={!canExportSelection || isExporting}
                         >
                             Download JSON Package
                         </Button>
@@ -1085,7 +1189,7 @@ export default function PromotionExport() {
                                 color="secondary"
                                 startIcon={isExporting ? <CircularProgress size={20} /> : <CompareArrowsIcon />}
                                 onClick={handlePromoteToHost}
-                                disabled={!targetHostId || isExporting}
+                                disabled={!canExportSelection || !targetHostId || isExporting}
                             >
                                 Promote & Preview Diff
                             </Button>
