@@ -51,12 +51,16 @@ export default function PositionColFilter() {
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const initialPositionId = location.state?.data?.positionId ?? searchContext.positionId;
+  const initialApiVersionId = location.state?.data?.apiVersionId ?? searchContext.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId ?? searchContext.endpointId;
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host ?? '',
       positionId: initialPositionId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialEndpointId ?? '',
     }),
-    [host, initialPositionId, searchContext],
+    [host, initialPositionId, initialApiVersionId, initialEndpointId, searchContext],
   );
 
   // Data and fetching state
@@ -67,16 +71,13 @@ export default function PositionColFilter() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialPositionId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'positionId', value: initialPositionId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialPositionId) filters.push({ id: 'positionId', value: initialPositionId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -195,14 +196,14 @@ export default function PositionColFilter() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<PositionColFilterType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'positionId', header: 'Position Id' },
-      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'columns', header: 'Filtered Columns' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -267,10 +268,18 @@ export default function PositionColFilter() {
           startIcon={<AddBoxIcon />}
           onClick={() => navigate(
             buildTaskAwareRoute('/app/form/createPositionColFilter', searchParams, taskContext),
-            { state: { data: { positionId: initialPositionId } } },
+            {
+              state: {
+                data: {
+                  positionId: initialPositionId,
+                  apiVersionId: initialApiVersionId,
+                  endpointId: initialEndpointId,
+                }
+              }
+            },
           )}
         >
-          Create New Filter
+          Create Position Col Filter
         </Button>
         {initialPositionId && (
           <Typography variant="subtitle1">

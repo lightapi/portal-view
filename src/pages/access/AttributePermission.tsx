@@ -276,7 +276,6 @@ export default function AttributePermission() {
               }
             }
           })}
-          disabled={!initialAttributeId}
         >
           Add Permission
         </Button>

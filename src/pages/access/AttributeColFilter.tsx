@@ -52,12 +52,16 @@ export default function AttributeColFilter() {
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const initialAttributeId = location.state?.data?.attributeId ?? searchContext.attributeId;
+  const initialApiVersionId = location.state?.data?.apiVersionId ?? searchContext.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId ?? searchContext.endpointId;
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host ?? '',
       attributeId: initialAttributeId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialEndpointId ?? '',
     }),
-    [host, initialAttributeId, searchContext],
+    [host, initialAttributeId, initialApiVersionId, initialEndpointId, searchContext],
   );
 
   // Data and fetching state
@@ -68,16 +72,13 @@ export default function AttributeColFilter() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialAttributeId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'attributeId', value: initialAttributeId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialAttributeId) filters.push({ id: 'attributeId', value: initialAttributeId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -195,15 +196,15 @@ export default function AttributeColFilter() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AttributeColFilterType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'attributeId', header: 'Attribute Id' },
       { accessorKey: 'attributeValue', header: 'Attribute Value' },
-      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'API Version' },
-      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'columns', header: 'Filtered Columns' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -268,10 +269,18 @@ export default function AttributeColFilter() {
           startIcon={<AddBoxIcon />}
           onClick={() => navigate(
             buildTaskAwareRoute('/app/form/createAttributeColFilter', searchParams, taskContext),
-            { state: { data: { attributeId: initialAttributeId } } },
+            {
+              state: {
+                data: {
+                  attributeId: initialAttributeId,
+                  apiVersionId: initialApiVersionId,
+                  endpointId: initialEndpointId,
+                }
+              }
+            },
           )}
         >
-          Create New Filter
+          Create Attribute Col Filter
         </Button>
         {initialAttributeId && (
           <Typography variant="subtitle1">

@@ -53,12 +53,16 @@ export default function RoleRowFilter() {
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
   const initialRoleId = location.state?.data?.roleId ?? searchContext.roleId;
+  const initialApiVersionId = location.state?.data?.apiVersionId ?? searchContext.apiVersionId;
+  const initialEndpointId = location.state?.data?.endpointId ?? searchContext.endpointId;
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, {
       hostId: host ?? '',
       roleId: initialRoleId ?? '',
+      apiVersionId: initialApiVersionId ?? '',
+      endpointId: initialEndpointId ?? '',
     }),
-    [host, initialRoleId, searchContext],
+    [host, initialRoleId, initialApiVersionId, initialEndpointId, searchContext],
   );
 
   // Data and fetching state
@@ -69,16 +73,13 @@ export default function RoleRowFilter() {
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
 
-  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
-    initialRoleId
-      ? [
-        { id: 'active', value: 'true' },
-        { id: 'roleId', value: initialRoleId }
-      ]
-      : [
-        { id: 'active', value: 'true' }
-      ]
-  );
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
+    const filters: MRT_ColumnFiltersState = [{ id: 'active', value: 'true' }];
+    if (initialRoleId) filters.push({ id: 'roleId', value: initialRoleId });
+    if (initialApiVersionId) filters.push({ id: 'apiVersionId', value: initialApiVersionId });
+    if (initialEndpointId) filters.push({ id: 'endpointId', value: initialEndpointId });
+    return filters;
+  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -195,16 +196,16 @@ export default function RoleRowFilter() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<RoleRowFilterType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'roleId', header: 'Role Id' },
-      { accessorKey: 'apiVersionId', header: 'API Version Id' },
       { accessorKey: 'apiId', header: 'API Id' },
       { accessorKey: 'apiVersion', header: 'Version' },
-      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'colName', header: 'Column Name' },
       { accessorKey: 'operator', header: 'Operator' },
       { accessorKey: 'colValue', header: 'Column Value' },
+      { accessorKey: 'hostId', header: 'Host Id' },
+      { accessorKey: 'apiVersionId', header: 'API Version Id' },
+      { accessorKey: 'endpointId', header: 'Endpoint Id' },
       { accessorKey: 'updateUser', header: 'Update User' },
       {
         accessorKey: 'updateTs',
@@ -269,10 +270,18 @@ export default function RoleRowFilter() {
           startIcon={<AddBoxIcon />}
           onClick={() => navigate(
             buildTaskAwareRoute('/app/form/createRoleRowFilter', searchParams, taskContext),
-            { state: { data: { roleId: initialRoleId } } },
+            {
+              state: {
+                data: {
+                  roleId: initialRoleId,
+                  apiVersionId: initialApiVersionId,
+                  endpointId: initialEndpointId,
+                }
+              }
+            },
           )}
         >
-          Create New Filter
+          Create Role Row Filter
         </Button>
         {initialRoleId && (
           <Typography variant="subtitle1">
