@@ -966,8 +966,8 @@ export default function PromotionExport() {
             (row.productId && row.configId && row.propertyName
                 ? `${row.productId}-${row.configId}-${row.propertyName}`
                 : null) ||
-            row.productVersionId ||
             row.instanceId ||
+            row.productVersionId ||
             row.configId ||
             row.tableId ||
             row.relationId ||
