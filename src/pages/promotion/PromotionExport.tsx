@@ -957,14 +957,14 @@ export default function PromotionExport() {
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) =>
-            (row.environment && row.configId && row.propertyName
-                ? `${row.environment}-${row.configId}-${row.propertyName}`
+            (row.environment && row.propertyId
+                ? `${row.environment}|${row.propertyId}`
                 : null) ||
-            (row.deploymentInstanceId && row.configId && row.propertyName
-                ? `${row.deploymentInstanceId}-${row.configId}-${row.propertyName}`
+            (row.deploymentInstanceId && row.propertyId
+                ? `${row.deploymentInstanceId}|${row.propertyId}`
                 : null) ||
-            (row.productId && row.configId && row.propertyName
-                ? `${row.productId}-${row.configId}-${row.propertyName}`
+            (row.productId && row.propertyId
+                ? `${row.productId}|${row.propertyId}`
                 : null) ||
             row.instanceId ||
             row.productVersionId ||
