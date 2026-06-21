@@ -715,6 +715,17 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["ruleId", "testId"],
   },
   {
+    id: "list-rule",
+    title: "List Rule",
+    description: "Manage rules configured for service API endpoints.",
+    route: "/app/listRule",
+    category: "Platform Operations",
+    roles: ["admin"],
+    helpPath: "/help/portal-view/pages/list-rule",
+    keywords: ["rule", "endpoint", "api", "action"],
+    entities: ["endpointId", "ruleId"],
+  },
+  {
     id: "config-admin",
     title: "Config Admin",
     description: "Create and manage configuration records and related bindings.",

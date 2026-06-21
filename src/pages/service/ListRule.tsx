@@ -127,12 +127,12 @@ export default function ListRule() {
 
   const columns = useMemo<MRT_ColumnDef<RuleType>[]>(
     () => [
-      { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'apiId', header: 'Api Id' },
       { accessorKey: 'apiVersion', header: 'Api Version' },
       { accessorKey: 'endpoint', header: 'Endpoint' },
       { accessorKey: 'ruleType', header: 'Rule Type' },
       { accessorKey: 'ruleId', header: 'Rule Id' },
+      { accessorKey: 'hostId', header: 'Host Id' },
       {
         accessorKey: 'active',
         header: 'Active',
