@@ -966,6 +966,7 @@ export default function PromotionExport() {
             (row.productId && row.propertyId
                 ? `${row.productId}|${row.propertyId}`
                 : null) ||
+            row.deploymentInstanceId ||
             row.instanceId ||
             row.productVersionId ||
             row.configId ||
@@ -986,8 +987,7 @@ export default function PromotionExport() {
             row.appId ||
             row.pipelineId ||
             row.platformId ||
-            row.deploymentId ||
-            row.deploymentInstanceId,
+            row.deploymentId,
     });
 
     return (
