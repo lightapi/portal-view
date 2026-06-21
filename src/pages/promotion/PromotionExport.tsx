@@ -984,8 +984,8 @@ export default function PromotionExport() {
             row.ruleId ||
             row.apiId ||
             row.appId ||
-            row.platformId ||
             row.pipelineId ||
+            row.platformId ||
             row.deploymentId ||
             row.deploymentInstanceId,
     });
