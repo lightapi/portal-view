@@ -172,7 +172,7 @@ export default function ListRule() {
         variant="contained"
         startIcon={<AddBoxIcon />}
       >
-        Create Rule
+        Add Rule to Endpoint
       </Button>
     ),
     initialState: { density: 'compact', showColumnFilters: true },
