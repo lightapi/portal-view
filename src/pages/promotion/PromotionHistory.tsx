@@ -68,6 +68,7 @@ export default function PromotionHistory() {
     const fetchData = useCallback(async () => {
         if (!host) return;
         if (!data.length) setIsLoading(true); else setIsRefetching(true);
+        setIsError(false);
 
         const cmd = {
             host: 'lightapi.net', service: 'user', action: 'getPromotionHistory', version: '0.1.0',
@@ -87,11 +88,11 @@ export default function PromotionHistory() {
             const json = await fetchClient(url) as PromotionApiResponse;
             setData(json.promotions || []);
             setRowCount(json.total || 0);
+            setIsError(false);
         } catch (error) {
             setIsError(true);
             console.error(error);
         } finally {
-            setIsError(false);
             setIsLoading(false);
             setIsRefetching(false);
         }

@@ -398,7 +398,7 @@ export default function PromotionImport() {
                                 </TableHead>
                                 <TableBody>
                                     {diffPlan.items.map((item, idx) => {
-                                        const config = actionConfig[item.action] || actionConfig.ERROR;
+                                        const config = getActionConfig(item.action);
                                         const rowKey = `${item.entityType}-${item.entityId}-${idx}`;
                                         const hasDiff = item.diff && Object.keys(item.diff).length > 0;
 

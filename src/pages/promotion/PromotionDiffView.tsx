@@ -62,6 +62,10 @@ const actionConfig = {
     NOOP: { icon: <SkipNextIcon />, color: 'default' as const, label: 'Same' },
 };
 
+function getActionConfig(action: string) {
+    return (actionConfig as Record<string, { icon: React.ReactElement; color: 'success' | 'warning' | 'error' | 'default'; label: string }>)[action] || { icon: <ErrorIcon />, color: 'error' as const, label: 'Error' };
+}
+
 const statusConfig: Record<string, { icon: React.ReactElement; color: 'success' | 'error' | 'warning' | 'info' }> = {
     Success: { icon: <CheckCircleIcon />, color: 'success' },
     Failed: { icon: <ErrorIcon />, color: 'error' },
@@ -186,7 +190,7 @@ export default function PromotionDiffView() {
                             </TableHead>
                             <TableBody>
                                 {detail.items.map((item) => {
-                                    const config = actionConfig[item.action];
+                                    const config = getActionConfig(item.action);
                                     const rowKey = item.itemId;
                                     const hasDiff = item.diffSummary && Object.keys(item.diffSummary).length > 0;
                                     const execStatus = statusConfig[item.executionStatus];
