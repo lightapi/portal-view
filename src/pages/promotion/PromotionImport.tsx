@@ -77,6 +77,23 @@ type DiffPlan = {
     items: DiffItem[];
 };
 
+type ApiPostResult<T> = {
+    data?: T;
+    error?: unknown;
+};
+
+type CommandError = {
+    statusCode?: number;
+    code?: string;
+    message?: string;
+    description?: string;
+};
+
+type GlobalImportResult = {
+    imported?: number;
+    total?: number;
+};
+
 const actionConfig: Record<KnownAction, ActionConfig> = {
     CREATE: { icon: <AddCircleIcon />, color: 'success', label: 'New' },
     UPDATE: { icon: <ChangeCircleIcon />, color: 'warning', label: 'Changed' },
@@ -88,6 +105,29 @@ const actionConfig: Record<KnownAction, ActionConfig> = {
 function getActionConfig(action: string): ActionConfig {
     return (actionConfig as Record<string, ActionConfig>)[action] ?? actionConfig.ERROR;
 }
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getCommandErrorMessage = (error: unknown): string => {
+    if (!error) return '';
+    if (typeof error === 'string') return error;
+    if (isObjectRecord(error)) {
+        const commandError = error as CommandError;
+        return commandError.message || commandError.description || JSON.stringify(error);
+    }
+    return String(error);
+};
+
+const isCommandError = (payload: unknown): payload is CommandError =>
+    isObjectRecord(payload) && (
+        typeof payload.statusCode === 'number' ||
+        typeof payload.code === 'string' ||
+        typeof payload.message === 'string'
+    );
+
+const isGlobalSnapshot = (value: unknown): value is { tables: unknown } =>
+    isObjectRecord(value) && Object.prototype.hasOwnProperty.call(value, 'tables');
 
 export default function PromotionImport() {
     const navigate = useNavigate();
@@ -192,6 +232,10 @@ export default function PromotionImport() {
     // Dry run handler
     const handleDryRun = useCallback(async () => {
         if (!snapshot || !targetHostId) return;
+        if (isGlobalSnapshot(snapshot)) {
+            setDryRunError('Global migration snapshots are imported directly through the event-based global import pipeline; dry run is only available for selective entity snapshots.');
+            return;
+        }
 
         setIsDryRunning(true);
         setDiffPlan(null);
@@ -201,11 +245,20 @@ export default function PromotionImport() {
                 host: 'lightapi.net', service: 'user', action: 'importDryRun', version: '0.1.0',
                 data: { targetHostId, snapshot },
             };
-            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd }) as ApiPostResult<DiffPlan | CommandError>;
             if (result.error) {
-                alert('Dry run failed: ' + JSON.stringify(result.error));
+                setDryRunError('Dry run failed: ' + getCommandErrorMessage(result.error));
             } else {
-                const plan = result as unknown as DiffPlan;
+                const payload = result.data;
+                if (isCommandError(payload)) {
+                    setDryRunError('Dry run failed: ' + getCommandErrorMessage(payload));
+                    return;
+                }
+                if (!isObjectRecord(payload)) {
+                    setDryRunError('Dry run returned an empty response. Cannot proceed with promotion.');
+                    return;
+                }
+                const plan = payload as DiffPlan;
                 if (!Array.isArray(plan.items)) {
                     setDryRunError('Dry run returned an incomplete response (missing items). Cannot proceed with promotion.');
                 } else {
@@ -232,25 +285,38 @@ export default function PromotionImport() {
 
     // Execute promotion handler
     const handleExecute = useCallback(async () => {
-        if (!snapshot || !targetHostId || !diffPlan) return;
+        if (!snapshot || !targetHostId) return;
+        const globalSnapshot = isGlobalSnapshot(snapshot);
+        if (!globalSnapshot && !diffPlan) return;
         if (!window.confirm('Are you sure you want to execute this promotion? This will modify the target environment.')) return;
 
         setIsExecuting(true);
         try {
             const cmd = {
-                host: 'lightapi.net', service: 'user', action: 'importExecute', version: '0.1.0',
-                data: {
-                    targetHostId,
-                    promotionId: diffPlan.promotionId,
-                    snapshot,
-                    orphanAction,
-                },
+                host: 'lightapi.net',
+                service: 'user',
+                action: globalSnapshot ? 'globalSnapshotImport' : 'importExecute',
+                version: '0.1.0',
+                data: globalSnapshot
+                    ? { targetHostId, snapshot }
+                    : {
+                        targetHostId,
+                        promotionId: diffPlan?.promotionId,
+                        snapshot,
+                        orphanAction,
+                    },
             };
-            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd }) as ApiPostResult<GlobalImportResult | CommandError>;
             if (result.error) {
-                setExecuteResult({ success: false, message: JSON.stringify(result.error) });
+                setExecuteResult({ success: false, message: getCommandErrorMessage(result.error) });
+            } else if (isCommandError(result.data)) {
+                setExecuteResult({ success: false, message: getCommandErrorMessage(result.data) });
             } else {
-                setExecuteResult({ success: true, message: 'Promotion executed successfully!' });
+                const importResult = result.data as GlobalImportResult | undefined;
+                const message = globalSnapshot && importResult?.imported !== undefined
+                    ? `Global snapshot imported successfully (${importResult.imported}/${importResult.total ?? importResult.imported} events).`
+                    : 'Promotion executed successfully!';
+                setExecuteResult({ success: true, message });
                 if (taskContextState) {
                     saveStoredTaskContext(
                         taskContextState.taskId,
@@ -291,6 +357,7 @@ export default function PromotionImport() {
     const historyRoute = taskContextState && historyStep
         ? buildTaskStepRoute(taskContextState.taskId, historyStep, searchParams, taskActionContext)
         : '/app/promotion/history';
+    const snapshotIsGlobal = isGlobalSnapshot(snapshot);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -331,7 +398,13 @@ export default function PromotionImport() {
 
                     {fromExport && snapshot && (
                         <Alert severity="info" sx={{ mb: 2 }}>
-                            Using snapshot from the Export page. Ready for dry run.
+                            Using snapshot from the Export page. {snapshotIsGlobal ? 'Ready for global import.' : 'Ready for dry run.'}
+                        </Alert>
+                    )}
+
+                    {snapshotIsGlobal && (
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                            This is a global migration snapshot. It will be imported through the event-based global import pipeline; selective dry run is not available for this snapshot format.
                         </Alert>
                     )}
 
@@ -351,14 +424,26 @@ export default function PromotionImport() {
                             </Select>
                         </FormControl>
 
-                        <Button
-                            variant="contained"
-                            startIcon={isDryRunning ? <CircularProgress size={20} /> : <PreviewIcon />}
-                            onClick={handleDryRun}
-                            disabled={!snapshot || !targetHostId || isDryRunning}
-                        >
-                            Run Dry Run (Preview)
-                        </Button>
+                        {snapshotIsGlobal ? (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={isExecuting ? <CircularProgress size={20} /> : <PlayArrowIcon />}
+                                onClick={handleExecute}
+                                disabled={!snapshot || !targetHostId || isExecuting}
+                            >
+                                Execute Global Import
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="contained"
+                                startIcon={isDryRunning ? <CircularProgress size={20} /> : <PreviewIcon />}
+                                onClick={handleDryRun}
+                                disabled={!snapshot || !targetHostId || isDryRunning}
+                            >
+                                Run Dry Run (Preview)
+                            </Button>
+                        )}
                     </Box>
 
                     {dryRunError && (
@@ -469,6 +554,10 @@ export default function PromotionImport() {
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>Step 3: Execute Promotion</Typography>
 
+                        <Alert severity="info" sx={{ mb: 3 }}>
+                            Selective entity execution is currently disabled. You can review the diff plan, but applying changes requires Phase 3 event materialization.
+                        </Alert>
+
                         {(diffPlan.summary?.orphan ?? 0) > 0 && (
                             <Box sx={{ mb: 3 }}>
                                 <FormControl>
@@ -494,7 +583,7 @@ export default function PromotionImport() {
                                 color="primary"
                                 startIcon={isExecuting ? <CircularProgress size={20} /> : <PlayArrowIcon />}
                                 onClick={handleExecute}
-                                disabled={isExecuting}
+                                disabled
                             >
                                 Execute Promotion
                             </Button>
