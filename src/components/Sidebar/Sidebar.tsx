@@ -243,7 +243,7 @@ const structure = [
           { label: "Audit Log", link: "/app/workflow/AuditLog" },
         ],
       },
-      { id: 117, label: "Access Admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Role", link: "/app/access/roleAdmin" }, { label: "Position", link: "/app/access/positionAdmin" }, { label: "Group", link: "/app/access/groupAdmin" }, { label: "Attribute", link: "/app/access/attributeAdmin" }] },
+      { id: 117, label: "Access Admin", role: "access-admin", link: "/app/access/admin", icon: <AccessibleIcon />, children: [{ label: "Portal Handlers", role: "access-admin", link: "/app/access/admin" }, { label: "Role", role: "access-admin", link: "/app/access/roleAdmin" }, { label: "Position", role: "access-admin", link: "/app/access/positionAdmin" }, { label: "Group", role: "access-admin", link: "/app/access/groupAdmin" }, { label: "Attribute", role: "access-admin", link: "/app/access/attributeAdmin" }] },
       { id: 118, label: "Api Admin", role: "user api-admin", link: "/app/service/admin", icon: <ApiIcon /> },
       { id: 120, label: "Rule Admin", link: "/app/rule/admin", icon: <RuleIcon /> },
       { id: 123, label: "Tag Admin", link: "/app/tag/admin", icon: <LocalOfferIcon /> },
@@ -420,6 +420,9 @@ function filterSidebarItems(items: any[], userRoles: string | null, insideAdminS
 }
 
 function canShowSidebarItem(item: any, userRoles: string | null, insideAdminSection: boolean, isAdmin: boolean) {
+  if (item.role != null && hasSidebarRole(item.role, "access-admin")) {
+    return hasSidebarRole(userRoles, "admin access-admin");
+  }
   if (isAdmin) return true;
   if (insideAdminSection && item.role == null) return false;
   if (item.role == null) return true;

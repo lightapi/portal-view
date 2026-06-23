@@ -7,6 +7,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
+import RoleGate from "./components/RoleGate";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
 import TaskCenter from "./pages/tasks/TaskCenter";
@@ -111,6 +112,7 @@ import CacheExplorer from "./pages/controller/CacheExplorer";
 import OrgAdmin from "./pages/org/OrgAdmin";
 import HostAdmin from "./pages/host/HostAdmin";
 import HostUser from "./pages/host/HostUser";
+import AccessAdmin from "./pages/access/AccessAdmin";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
 import RolePermission from "./pages/access/RolePermission";
@@ -356,33 +358,34 @@ const App = () => {
           <Route path="graphqlEditor" element={<GraphqlEditor />} />
           <Route path="serviceEndpoint" element={<ServiceEndpoint />} />
           <Route path="listScope" element={<ListScope />} />
-          <Route path="listRule" element={<ListRule />} />
-          <Route path="access/roleAdmin" element={<RoleAdmin />} />
-          <Route path="access/roleUser" element={<RoleUser />} />
-          <Route path="access/rolePermission" element={<RolePermission />} />
-          <Route path="access/roleRowFilter" element={<RoleRowFilter />} />
-          <Route path="access/roleColFilter" element={<RoleColFilter />} />
-          <Route path="access/groupAdmin" element={<GroupAdmin />} />
-          <Route path="access/groupPermission" element={<GroupPermission />} />
-          <Route path="access/groupUser" element={<GroupUser />} />
-          <Route path="access/groupRowFilter" element={<GroupRowFilter />} />
-          <Route path="access/groupColFilter" element={<GroupColFilter />} />
-          <Route path="access/attributeAdmin" element={<AttributeAdmin />} />
+          <Route path="listRule" element={<RoleGate roles={["access-admin"]}><ListRule /></RoleGate>} />
+          <Route path="access/admin" element={<RoleGate roles={["access-admin"]}><AccessAdmin /></RoleGate>} />
+          <Route path="access/roleAdmin" element={<RoleGate roles={["access-admin"]}><RoleAdmin /></RoleGate>} />
+          <Route path="access/roleUser" element={<RoleGate roles={["access-admin"]}><RoleUser /></RoleGate>} />
+          <Route path="access/rolePermission" element={<RoleGate roles={["access-admin"]}><RolePermission /></RoleGate>} />
+          <Route path="access/roleRowFilter" element={<RoleGate roles={["access-admin"]}><RoleRowFilter /></RoleGate>} />
+          <Route path="access/roleColFilter" element={<RoleGate roles={["access-admin"]}><RoleColFilter /></RoleGate>} />
+          <Route path="access/groupAdmin" element={<RoleGate roles={["access-admin"]}><GroupAdmin /></RoleGate>} />
+          <Route path="access/groupPermission" element={<RoleGate roles={["access-admin"]}><GroupPermission /></RoleGate>} />
+          <Route path="access/groupUser" element={<RoleGate roles={["access-admin"]}><GroupUser /></RoleGate>} />
+          <Route path="access/groupRowFilter" element={<RoleGate roles={["access-admin"]}><GroupRowFilter /></RoleGate>} />
+          <Route path="access/groupColFilter" element={<RoleGate roles={["access-admin"]}><GroupColFilter /></RoleGate>} />
+          <Route path="access/attributeAdmin" element={<RoleGate roles={["access-admin"]}><AttributeAdmin /></RoleGate>} />
           <Route
             path="access/attributePermission"
-            element={<AttributePermission />}
+            element={<RoleGate roles={["access-admin"]}><AttributePermission /></RoleGate>}
           />
-          <Route path="access/attributeUser" element={<AttributeUser />} />
-          <Route path="access/attributeRowFilter" element={<AttributeRowFilter />} />
-          <Route path="access/attributeColFilter" element={<AttributeColFilter />} />
-          <Route path="access/positionAdmin" element={<PositionAdmin />} />
+          <Route path="access/attributeUser" element={<RoleGate roles={["access-admin"]}><AttributeUser /></RoleGate>} />
+          <Route path="access/attributeRowFilter" element={<RoleGate roles={["access-admin"]}><AttributeRowFilter /></RoleGate>} />
+          <Route path="access/attributeColFilter" element={<RoleGate roles={["access-admin"]}><AttributeColFilter /></RoleGate>} />
+          <Route path="access/positionAdmin" element={<RoleGate roles={["access-admin"]}><PositionAdmin /></RoleGate>} />
           <Route
             path="access/positionPermission"
-            element={<PositionPermission />}
+            element={<RoleGate roles={["access-admin"]}><PositionPermission /></RoleGate>}
           />
-          <Route path="access/positionUser" element={<PositionUser />} />
-          <Route path="access/positionRowFilter" element={<PositionRowFilter />} />
-          <Route path="access/positionColFilter" element={<PositionColFilter />} />
+          <Route path="access/positionUser" element={<RoleGate roles={["access-admin"]}><PositionUser /></RoleGate>} />
+          <Route path="access/positionRowFilter" element={<RoleGate roles={["access-admin"]}><PositionRowFilter /></RoleGate>} />
+          <Route path="access/positionColFilter" element={<RoleGate roles={["access-admin"]}><PositionColFilter /></RoleGate>} />
           <Route path="clientApp" element={<ClientApp />} />
           <Route path="ref/tableAdmin" element={<RefTableAdmin />} />
           <Route path="ref/value" element={<RefValue />} />
@@ -413,8 +416,8 @@ const App = () => {
           <Route path="schema/admin" element={<SchemaAdmin />} />
           <Route path="schedule/admin" element={<Schedule />} />
           <Route path="scheduler" element={<Schedule />} />
-          <Route path="rule/admin" element={<RuleAdmin />} />
-          <Route path="ruleDetail" element={<RuleDetail />} />
+          <Route path="rule/admin" element={<RoleGate roles={["access-admin"]}><RuleAdmin /></RoleGate>} />
+          <Route path="ruleDetail" element={<RoleGate roles={["access-admin"]}><RuleDetail /></RoleGate>} />
           <Route path="covid/cityRegistry" element={<CityRegistry />} />
           <Route path="covid/cityProfile" element={<CityProfile />} />
           <Route path="covid/deleteCity" element={<DeleteCity />} />

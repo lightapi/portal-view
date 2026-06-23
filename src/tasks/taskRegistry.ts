@@ -231,7 +231,7 @@ export const taskRegistry: TaskDefinition[] = [
     description:
       "Create roles and related access assignments before protecting APIs or MCP tools.",
     category: "Access Control",
-    roles: ["admin"],
+    roles: ["access-admin"],
     keywords: ["access", "role", "permission", "group", "attribute", "position"],
     steps: [
       {

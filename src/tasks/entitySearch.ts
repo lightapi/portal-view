@@ -65,7 +65,7 @@ const entitySources: EntitySearchSource[] = [
     action: "getRole",
     resultKey: "roles",
     route: "/app/access/roleAdmin",
-    roles: ["admin"],
+    roles: ["access-admin"],
     context: (record, hostId) => ({
       hostId: stringValue(record.hostId) || hostId,
       roleId: stringValue(record.roleId),
@@ -130,7 +130,9 @@ function stringValue(value: unknown) {
 
 function canSearchSource(roles: string | null | undefined, requiredRoles?: string[]) {
   if (!requiredRoles || requiredRoles.length === 0) return true;
-  if (hasAnyRole(roles, ["admin", "host-admin"])) return true;
+  if (hasAnyRole(roles, ["admin"])) return true;
+  if (requiredRoles.includes("access-admin")) return hasAnyRole(roles, requiredRoles);
+  if (hasAnyRole(roles, ["host-admin"])) return true;
   return hasAnyRole(roles, requiredRoles);
 }
 
