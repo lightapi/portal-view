@@ -263,6 +263,7 @@ export default function ServiceEndpointBulkAccessDrawer({
               label="Operation"
               value={operation}
               onChange={(event) => setOperation(event.target.value)}
+              inputProps={{ name: 'bulkOperation', id: 'bulk-operation-select' }}
             >
               {OPERATIONS.map((item) => (
                 <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>
@@ -277,6 +278,7 @@ export default function ServiceEndpointBulkAccessDrawer({
               label="Conflict Mode"
               value={conflictMode}
               onChange={(event) => setConflictMode(event.target.value)}
+              inputProps={{ name: 'bulkConflictMode', id: 'bulk-conflict-select' }}
             >
               <MenuItem value="skipExisting">Skip Existing</MenuItem>
               <MenuItem value="overwriteExisting">Overwrite Existing</MenuItem>
@@ -294,7 +296,9 @@ export default function ServiceEndpointBulkAccessDrawer({
                 value={ruleId}
                 onChange={(event) => setRuleId(event.target.value)}
                 disabled={lookupLoading}
+                inputProps={{ name: 'bulkRuleId', id: 'bulk-rule-id-select' }}
               >
+                <MenuItem value="" disabled><em>Select a Rule</em></MenuItem>
                 {lookupOptions.map((item) => (
                   <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
                 ))}
@@ -311,7 +315,9 @@ export default function ServiceEndpointBulkAccessDrawer({
                 value={principalId}
                 onChange={(event) => setPrincipalId(event.target.value)}
                 disabled={lookupLoading}
+                inputProps={{ name: 'bulkPrincipalId', id: 'bulk-principal-id-select' }}
               >
+                <MenuItem value="" disabled><em>Select {config.principalLabel}</em></MenuItem>
                 {lookupOptions.map((item) => (
                   <MenuItem key={item.id} value={item.id}>{item.label}</MenuItem>
                 ))}
@@ -328,7 +334,13 @@ export default function ServiceEndpointBulkAccessDrawer({
               <TextField size="small" label="Column Name" value={colName} onChange={(event) => setColName(event.target.value)} sx={{ flex: 1 }} />
               <FormControl size="small" sx={{ minWidth: 130 }}>
                 <InputLabel id="bulk-operator-label">Operator</InputLabel>
-                <Select labelId="bulk-operator-label" label="Operator" value={operator} onChange={(event) => setOperator(event.target.value)}>
+                <Select
+                  labelId="bulk-operator-label"
+                  label="Operator"
+                  value={operator}
+                  onChange={(event) => setOperator(event.target.value)}
+                  inputProps={{ name: 'bulkOperator', id: 'bulk-operator-select' }}
+                >
                   {OPERATORS.map((item) => <MenuItem key={item} value={item}>{item}</MenuItem>)}
                 </Select>
               </FormControl>
