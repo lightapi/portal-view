@@ -62,7 +62,7 @@ import {
 } from "../../contexts/LayoutContext";
 import { useUserState } from "../../contexts/UserContext";
 // api
-import { apiPost } from "../../api/apiPost";
+import fetchClient from "../../utils/fetchClient";
 // header menu components
 import CartMenu from "../Header/CartMenu";
 import HomeMenu from "../Header/HomeMenu";
@@ -284,16 +284,14 @@ function Sidebar() {
         data: { hostId: host },
       };
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-      apiPost({ url, headers: {}, body: cmd })
+      fetchClient(url)
         .then((result) => {
-          if (result.data) {
-            setDomain(result.data.domain);
-            if (result.data.subDomain) setSubDomain(result.data.subDomain);
-          } else if (result.error) {
-            console.error("Error fetching host info:", result.error);
+          if (result?.domain) {
+            setDomain(result.domain);
+            setSubDomain(result.subDomain || null);
           }
         })
-        .catch((error) => console.error("Error during apiPost:", error));
+        .catch((error) => console.error("Error fetching host info:", error));
     }
   }, [isAuthenticated, host]);
 

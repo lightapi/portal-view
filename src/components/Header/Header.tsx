@@ -35,7 +35,7 @@ import {
   SearchIconWrapper,
   StyledInputBase
 } from "./HeaderStyles";
-import { apiPost } from "../../api/apiPost";
+import fetchClient from "../../utils/fetchClient";
 
 export default function Header(props: any) {
   // global
@@ -67,22 +67,16 @@ export default function Header(props: any) {
       };
 
       const url = "/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd));
-      const headers = {};
 
-      // Use apiPost directly
-      apiPost({ url, headers, body: cmd })
+      fetchClient(url)
         .then(result => {
-          if (result.data) {
-            setDomain(result.data.domain);
-            if (result.data.subDomain) {
-              setSubDomain(result.data.subDomain);
-            }
-          } else if (result.error) {
-            console.error("Error fetching host info:", result.error);
+          if (result?.domain) {
+            setDomain(result.domain);
+            setSubDomain(result.subDomain || null);
           }
         })
         .catch(error => {
-          console.error("Error during apiPost:", error);
+          console.error("Error fetching host info:", error);
         });
     }
   }, [isAuthenticated, host]);
