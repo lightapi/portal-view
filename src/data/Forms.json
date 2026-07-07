@@ -17222,6 +17222,10 @@
           "type": "string",
           "title": "Event Types"
         },
+        "excludeEventTypes": {
+          "type": "string",
+          "title": "Exclude Event Types"
+        },
         "startTs": {
           "type": "string",
           "title": "Start Timestamp"
@@ -17256,6 +17260,14 @@
       },
       {
         "key": "eventTypes",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=event_type"
+        }
+      },
+      {
+        "key": "excludeEventTypes",
         "type": "dynaselect",
         "multiple": true,
         "action": {
