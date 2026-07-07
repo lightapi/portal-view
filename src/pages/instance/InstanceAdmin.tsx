@@ -185,7 +185,7 @@ export default function InstanceAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'instance', action: 'deleteInstance', version: '0.1.0',
-      data: { hostId: row.original.hostId, instanceId: row.original.instanceId },
+      data: { hostId: row.original.hostId, instanceId: row.original.instanceId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

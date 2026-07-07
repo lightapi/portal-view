@@ -189,7 +189,7 @@ export default function Schedule() {
 
     const cmd = {
       host: 'lightapi.net', service: 'schedule', action: 'deleteSchedule', version: '0.1.0',
-      data: { scheduleId: row.original.scheduleId },
+      data: { scheduleId: row.original.scheduleId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

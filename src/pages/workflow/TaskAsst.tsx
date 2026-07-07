@@ -140,7 +140,7 @@ export default function TaskAsst() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'deleteTaskAsst', version: '0.1.0',
-      data: { hostId: row.original.hostId, taskAsstId: row.original.taskAsstId },
+      data: { hostId: row.original.hostId, taskAsstId: row.original.taskAsstId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

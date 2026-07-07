@@ -130,7 +130,7 @@ export default function Skill() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteSkill', version: '0.1.0',
-      data: { hostId: row.original.hostId, skillId: row.original.skillId },
+      data: { hostId: row.original.hostId, skillId: row.original.skillId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

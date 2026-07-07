@@ -142,7 +142,7 @@ export default function RoleUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRoleUser', version: '0.1.0',
-      data: { hostId: row.original.hostId, roleId: row.original.roleId, userId: row.original.userId },
+      data: { hostId: row.original.hostId, roleId: row.original.roleId, userId: row.original.userId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

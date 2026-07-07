@@ -247,7 +247,7 @@ export default function InstanceApiPathPrefix() {
       host: 'lightapi.net',
       service: 'instance',
       action: 'deleteInstanceApiPathPrefix', version: '0.1.0',
-      data: { hostId: row.original.hostId, instanceApiId: row.original.instanceApiId, pathPrefix: row.original.pathPrefix },
+      data: { hostId: row.original.hostId, instanceApiId: row.original.instanceApiId, pathPrefix: row.original.pathPrefix , aggregateVersion: row.original.aggregateVersion},
     };
     const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
     if (result.data) {

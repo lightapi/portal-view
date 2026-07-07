@@ -142,7 +142,7 @@ export default function GroupRowFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'deleteGroupRowFilter', version: '0.1.0',
-      data: { hostId: row.original.hostId, groupId: row.original.groupId, endpointId: row.original.endpointId, colName: row.original.colName },
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, endpointId: row.original.endpointId, colName: row.original.colName , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

@@ -139,7 +139,7 @@ export default function ProductVersionPipeline() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionPipeline', version: '0.1.0',
-      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, pipelineId: row.original.pipelineId },
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, pipelineId: row.original.pipelineId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

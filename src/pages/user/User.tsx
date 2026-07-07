@@ -171,7 +171,7 @@ export default function User() {
     setData(prev => prev.filter(user => user.userId !== row.original.userId));
     setRowCount(prev => prev - 1);
 
-    const cmd = { host: 'lightapi.net', service: 'user', action: 'deleteUserById', version: '0.1.0', data: { hostId: row.original.hostId, userId: row.original.userId } };
+    const cmd = { host: 'lightapi.net', service: 'user', action: 'deleteUserById', version: '0.1.0', data: { hostId: row.original.hostId, userId: row.original.userId , aggregateVersion: row.original.aggregateVersion} };
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {

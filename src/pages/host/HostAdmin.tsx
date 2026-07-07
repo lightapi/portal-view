@@ -148,7 +148,7 @@ export default function HostAdmin() {
       host: 'lightapi.net',
       service: 'host',
       action: 'deleteHost', version: '0.1.0',
-      data: { hostId: row.original.hostId },
+      data: { hostId: row.original.hostId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

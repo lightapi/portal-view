@@ -144,7 +144,7 @@ export default function ConfigProduct() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigProduct', version: '0.1.0',
-      data: { productId: row.original.productId, propertyId: row.original.propertyId },
+      data: { productId: row.original.productId, propertyId: row.original.propertyId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

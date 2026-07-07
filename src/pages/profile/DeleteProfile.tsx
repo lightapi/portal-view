@@ -5,12 +5,13 @@ import { useApiPost } from '../../hooks/useApiPost';
 export default function DeleteProfile(props) {
   console.log(props.location.state.data);
   const email = props.location.state.data.email;
+  const aggregateVersion = props.location.state.data.aggregateVersion;
   const body = {
     host: 'lightapi.net',
     service: 'user',
     action: 'deleteUserById',
     version: '0.1.0',
-    data: { email },
+    data: { email, aggregateVersion },
   };
   const url = '/portal/command';
   const headers = {};

@@ -143,7 +143,7 @@ export default function PositionUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePositionUser', version: '0.1.0',
-      data: { hostId: row.original.hostId, positionId: row.original.positionId, userId: row.original.userId },
+      data: { hostId: row.original.hostId, positionId: row.original.positionId, userId: row.original.userId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

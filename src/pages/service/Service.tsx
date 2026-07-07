@@ -192,7 +192,7 @@ export default function Service() {
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'deleteApi', version: '0.1.0',
-      data: { hostId: row.original.hostId, apiId: row.original.apiId },
+      data: { hostId: row.original.hostId, apiId: row.original.apiId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

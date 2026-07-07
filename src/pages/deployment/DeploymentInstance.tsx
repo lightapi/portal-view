@@ -151,7 +151,7 @@ export default function DeploymentInstance() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'deleteDeploymentInstance', version: '0.1.0',
-      data: { hostId: row.original.hostId, deploymentInstanceId: row.original.deploymentInstanceId },
+      data: { hostId: row.original.hostId, deploymentInstanceId: row.original.deploymentInstanceId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

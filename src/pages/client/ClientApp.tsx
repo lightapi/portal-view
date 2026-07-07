@@ -165,7 +165,7 @@ export default function ClientApp() {
 
     const cmd = {
       host: 'lightapi.net', service: 'client', action: 'deleteApp', version: '0.1.0',
-      data: { hostId: row.original.hostId, appId: row.original.appId },
+      data: { hostId: row.original.hostId, appId: row.original.appId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

@@ -128,7 +128,7 @@ export default function TaskInfo() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'deleteTaskInfo', version: '0.1.0',
-      data: { hostId: row.original.hostId, taskId: row.original.taskId },
+      data: { hostId: row.original.hostId, taskId: row.original.taskId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

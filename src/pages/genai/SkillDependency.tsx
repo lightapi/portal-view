@@ -122,7 +122,7 @@ export default function SkillDependency() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteSkillDependency', version: '0.1.0',
-            data: { hostId: row.original.hostId, skillId: row.original.skillId, dependsOnSkillId: row.original.dependsOnSkillId },
+            data: { hostId: row.original.hostId, skillId: row.original.skillId, dependsOnSkillId: row.original.dependsOnSkillId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

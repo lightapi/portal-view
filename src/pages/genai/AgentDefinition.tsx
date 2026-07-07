@@ -135,7 +135,7 @@ export default function AgentDefinition() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteAgentDefinition', version: '0.1.0',
-      data: { hostId: row.original.hostId, agentDefId: row.original.agentDefId },
+      data: { hostId: row.original.hostId, agentDefId: row.original.agentDefId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

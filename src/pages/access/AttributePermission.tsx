@@ -142,7 +142,7 @@ export default function AttributePermission() {
 
     const cmd = {
       host: 'lightapi.net', service: 'attribute', action: 'deleteAttributePermission', version: '0.1.0',
-      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, endpointId: row.original.endpointId },
+      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, endpointId: row.original.endpointId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

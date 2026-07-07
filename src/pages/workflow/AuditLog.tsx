@@ -115,7 +115,7 @@ export default function AuditLog() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'deleteAuditLog', version: '0.1.0',
-            data: { hostId: row.original.hostId, auditLogId: row.original.auditLogId },
+            data: { hostId: row.original.hostId, auditLogId: row.original.auditLogId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

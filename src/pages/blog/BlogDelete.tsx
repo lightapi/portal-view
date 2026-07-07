@@ -6,13 +6,14 @@ import { useApiPost } from "../../hooks/useApiPost";
 export default function BlogDelete(props) {
   console.log(props.location.state.data);
   const id = props.location.state.data.id;
+  const aggregateVersion = props.location.state.data.aggregateVersion;
   const { host } = useUserState();
   const body = {
     host: "lightapi.net",
     service: "blog",
     action: "deleteBlog",
     version: "0.1.0",
-    data: { id, host },
+    data: { id, host, aggregateVersion },
   };
   const url = "/portal/command";
   const headers = {};

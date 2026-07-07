@@ -150,7 +150,7 @@ export default function TagAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'tag', action: 'deleteTag', version: '0.1.0',
-      data: { hostId: row.original.hostId, tagId: row.original.tagId },
+      data: { hostId: row.original.hostId, tagId: row.original.tagId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

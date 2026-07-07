@@ -128,7 +128,7 @@ export default function AttributeAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'attribute', action: 'deleteAttribute', version: '0.1.0',
-      data: { hostId: row.original.hostId, attributeId: row.original.attributeId },
+      data: { hostId: row.original.hostId, attributeId: row.original.attributeId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

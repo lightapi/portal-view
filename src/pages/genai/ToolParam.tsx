@@ -129,7 +129,7 @@ export default function ToolParam() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteToolParam', version: '0.1.0',
-      data: { hostId: row.original.hostId, paramId: row.original.paramId },
+      data: { hostId: row.original.hostId, paramId: row.original.paramId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

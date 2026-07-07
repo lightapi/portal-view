@@ -142,7 +142,7 @@ export default function GroupColFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'group', action: 'deleteGroupColFilter', version: '0.1.0',
-      data: { hostId: row.original.hostId, groupId: row.original.groupId, endpointId: row.original.endpointId },
+      data: { hostId: row.original.hostId, groupId: row.original.groupId, endpointId: row.original.endpointId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

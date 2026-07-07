@@ -171,7 +171,7 @@ export default function ApiDetail() {
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'deleteApiVersion', version: '0.1.0',
-      data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersion: row.original.apiVersion },
+      data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersion: row.original.apiVersion , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

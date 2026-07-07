@@ -237,6 +237,7 @@ export default function InstanceApiMcpTool() {
                         hostId: host,
                         instanceApiId,
                         propertyId: metadata.propertyId,
+                        aggregateVersion: metadata.aggregateVersion,
                     },
                 };
             } else {

@@ -170,7 +170,7 @@ export default function ClientToken() {
 
         const cmd = {
             host: 'lightapi.net', service: 'oauth', action: 'deleteClientToken', version: '0.1.0',
-            data: { hostId: host, clientId: row.original.clientId, tokenId: row.original.tokenId },
+            data: { hostId: host, clientId: row.original.clientId, tokenId: row.original.tokenId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

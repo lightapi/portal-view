@@ -133,7 +133,7 @@ export default function RoleAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRole', version: '0.1.0',
-      data: { hostId: row.original.hostId, roleId: row.original.roleId },
+      data: { hostId: row.original.hostId, roleId: row.original.roleId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

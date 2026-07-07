@@ -140,7 +140,7 @@ export default function PositionPermission() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePositionPermission', version: '0.1.0',
-      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId },
+      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

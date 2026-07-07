@@ -162,7 +162,7 @@ export default function PipelineAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'deployment', action: 'deletePipeline', version: '0.1.0',
-      data: { hostId: row.original.hostId, pipelineId: row.original.pipelineId },
+      data: { hostId: row.original.hostId, pipelineId: row.original.pipelineId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

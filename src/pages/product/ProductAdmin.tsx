@@ -164,7 +164,7 @@ export default function ProductVersionAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersion', version: '0.1.0',
-      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId },
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

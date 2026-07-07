@@ -23,6 +23,7 @@ type RuleType = {
   endpoint: string;
   ruleType: string;
   ruleId: string;
+  aggregateVersion?: number;
   active: boolean;
 };
 
@@ -102,6 +103,7 @@ export default function ListRule() {
           hostId: row.hostId,
           endpointId: row.endpointId,
           ruleId: row.ruleId,
+          aggregateVersion: row.aggregateVersion,
         },
       };
 

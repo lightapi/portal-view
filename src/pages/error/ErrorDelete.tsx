@@ -6,13 +6,14 @@ import { useApiPost } from "../../hooks/useApiPost";
 export default function ErrorDelete(props) {
   console.log(props.location.state.data);
   const errorCode = props.location.state.data.errorCode;
+  const aggregateVersion = props.location.state.data.aggregateVersion;
   const { host } = useUserState();
   const body = {
     host: "lightapi.net",
     service: "error",
     action: "deleteError",
     version: "0.1.0",
-    data: { errorCode, host },
+    data: { errorCode, host, aggregateVersion },
   };
   const url = "/portal/command";
   const headers = {};

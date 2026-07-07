@@ -142,7 +142,7 @@ export default function RoleRowFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'role', action: 'deleteRoleRowFilter', version: '0.1.0',
-      data: { hostId: row.original.hostId, roleId: row.original.roleId, endpointId: row.original.endpointId, colName: row.original.colName },
+      data: { hostId: row.original.hostId, roleId: row.original.roleId, endpointId: row.original.endpointId, colName: row.original.colName , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

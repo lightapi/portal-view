@@ -142,7 +142,7 @@ export default function PositionRowFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePositionRowFilter', version: '0.1.0',
-      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId, colName: row.original.colName },
+      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId, colName: row.original.colName , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

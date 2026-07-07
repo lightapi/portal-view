@@ -124,7 +124,7 @@ export default function AgentMemory() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteAgentMemory', version: '0.1.0',
-      data: { hostId: row.original.hostId, memId: row.original.memId },
+      data: { hostId: row.original.hostId, memId: row.original.memId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

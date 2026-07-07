@@ -175,7 +175,7 @@ export default function InstanceApi() {
 
     const cmd = {
       host: 'lightapi.net', service: 'instance', action: 'deleteInstanceApi', version: '0.1.0',
-      data: { hostId: row.original.hostId, instanceApiId: row.original.instanceApiId },
+      data: { hostId: row.original.hostId, instanceApiId: row.original.instanceApiId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

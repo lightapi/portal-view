@@ -145,7 +145,7 @@ export default function ConfigAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfig', version: '0.1.0',
-      data: { configId: row.original.configId },
+      data: { configId: row.original.configId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

@@ -128,7 +128,7 @@ export default function ProcessInfo() {
 
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'deleteProcessInfo', version: '0.1.0',
-      data: { hostId: row.original.hostId, processId: row.original.processId },
+      data: { hostId: row.original.hostId, processId: row.original.processId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

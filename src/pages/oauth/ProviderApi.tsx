@@ -141,7 +141,7 @@ export default function ProviderApi() {
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'deleteProviderApi', version: '0.1.0',
-      data: { hostId: row.original.hostId, providerId: row.original.providerId, apiId: row.original.apiId },
+      data: { hostId: row.original.hostId, providerId: row.original.providerId, apiId: row.original.apiId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

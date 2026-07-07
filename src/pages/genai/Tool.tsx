@@ -165,7 +165,7 @@ export default function Tool() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteTool', version: '0.1.0',
-      data: { hostId: row.original.hostId, toolId: row.original.toolId },
+      data: { hostId: row.original.hostId, toolId: row.original.toolId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

@@ -153,7 +153,7 @@ export default function ProductEnvironment() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionEnvironment', version: '0.1.0',
-      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, systemEnv: row.original.systemEnv, runtimeEnv: row.original.runtimeEnv },
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, systemEnv: row.original.systemEnv, runtimeEnv: row.original.runtimeEnv , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

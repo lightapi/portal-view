@@ -7,12 +7,13 @@ export default function DeleteCity(props) {
   const country = props.location.state.data.country;
   const province = props.location.state.data.province;
   const city = props.location.state.data.city;
+  const aggregateVersion = props.location.state.data.aggregateVersion;
   const body = {
     host: 'lightapi.net',
     service: 'covid',
     action: 'deleteCityMap',
     version: '0.1.0',
-    data: { country, province, city },
+    data: { country, province, city, aggregateVersion },
   };
   const url = '/portal/command';
   const headers = {};

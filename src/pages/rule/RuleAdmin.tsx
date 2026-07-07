@@ -180,7 +180,7 @@ export default function RuleAdmin() {
 
     const cmd = {
       host: 'lightapi.net', service: 'rule', action: 'deleteRule', version: '0.1.0',
-      data: { hostId: row.original.hostId, ruleId: row.original.ruleId },
+      data: { hostId: row.original.hostId, ruleId: row.original.ruleId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

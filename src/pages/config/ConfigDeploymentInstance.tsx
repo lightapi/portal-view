@@ -152,7 +152,7 @@ export default function ConfigDeploymentInstance() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigDeploymentInstance', version: '0.1.0',
-      data: { hostId: row.original.hostId, deploymentInstanceId: row.original.deploymentInstanceId, propertyId: row.original.propertyId },
+      data: { hostId: row.original.hostId, deploymentInstanceId: row.original.deploymentInstanceId, propertyId: row.original.propertyId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

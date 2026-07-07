@@ -150,7 +150,7 @@ export default function AuthProvider() {
 
     const cmd = {
       host: 'lightapi.net', service: 'oauth', action: 'deleteProvider', version: '0.1.0',
-      data: { hostId: row.original.hostId, providerId: row.original.providerId },
+      data: { hostId: row.original.hostId, providerId: row.original.providerId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

@@ -142,7 +142,7 @@ export default function PositionColFilter() {
 
     const cmd = {
       host: 'lightapi.net', service: 'position', action: 'deletePositionColFilter', version: '0.1.0',
-      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId },
+      data: { hostId: row.original.hostId, positionId: row.original.positionId, endpointId: row.original.endpointId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

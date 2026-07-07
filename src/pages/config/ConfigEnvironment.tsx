@@ -144,7 +144,7 @@ export default function ConfigEnvironment() {
 
     const cmd = {
       host: 'lightapi.net', service: 'config', action: 'deleteConfigEnvironment', version: '0.1.0',
-      data: { hostId: row.original.hostId, environment: row.original.environment, configId: row.original.configId, propertyId: row.original.propertyId },
+      data: { hostId: row.original.hostId, environment: row.original.environment, configId: row.original.configId, propertyId: row.original.propertyId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

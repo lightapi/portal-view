@@ -144,7 +144,7 @@ export default function AttributeUser() {
 
     const cmd = {
       host: 'lightapi.net', service: 'attribute', action: 'deleteAttributeUser', version: '0.1.0',
-      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, userId: row.original.userId },
+      data: { hostId: row.original.hostId, attributeId: row.original.attributeId, userId: row.original.userId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {

@@ -124,7 +124,7 @@ export default function AgentSessionHistory() {
 
         const cmd = {
             host: 'lightapi.net', service: 'genai', action: 'deleteAgentSessionHistory', version: '0.1.0',
-            data: { hostId: row.original.hostId, sessionHistoryId: row.original.sessionHistoryId },
+            data: { hostId: row.original.hostId, sessionHistoryId: row.original.sessionHistoryId , aggregateVersion: row.original.aggregateVersion},
         };
 
         try {

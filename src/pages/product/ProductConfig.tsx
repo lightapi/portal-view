@@ -136,7 +136,7 @@ export default function ProductConfig() {
 
     const cmd = {
       host: 'lightapi.net', service: 'product', action: 'deleteProductVersionConfig', version: '0.1.0',
-      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, configId: row.original.configId },
+      data: { hostId: row.original.hostId, productVersionId: row.original.productVersionId, configId: row.original.configId , aggregateVersion: row.original.aggregateVersion},
     };
 
     try {
