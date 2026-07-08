@@ -1,7 +1,7 @@
 import React, { useReducer, useContext } from "react";
 
-var AppStateContext = React.createContext();
-var AppDispatchContext = React.createContext();
+const AppStateContext = React.createContext();
+const AppDispatchContext = React.createContext();
 
 function appReducer(state, action) {
   switch (action.type) {
@@ -15,7 +15,7 @@ function appReducer(state, action) {
 
 function AppProvider({ children }) {
   // console.log("AppProvider is called...");
-  var [state, dispatch] = useReducer(appReducer, {
+  const [state, dispatch] = useReducer(appReducer, {
     filter: null
   });
 
@@ -29,7 +29,7 @@ function AppProvider({ children }) {
 }
 
 function useAppState() {
-  var context = useContext(AppStateContext);
+  const context = useContext(AppStateContext);
   if (context === undefined) {
     throw new Error("useAppState must be used within a AppProvider");
   }
@@ -37,7 +37,7 @@ function useAppState() {
 }
 
 function useAppDispatch() {
-  var context = useContext(AppDispatchContext);
+  const context = useContext(AppDispatchContext);
   if (context === undefined) {
     throw new Error("useAppDispatch must be used within a AppProvider");
   }

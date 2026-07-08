@@ -189,7 +189,7 @@ function Form() {
   function onButtonClick(action: any) {
     const normalizedModel = normalizeFormModel(formId, model);
     setModel(normalizedModel);
-    let result = utils.validateBySchema(schema, normalizedModel);
+    const result = utils.validateBySchema(schema, normalizedModel);
     if (!result.valid) {
       setShowErrors(true);
       setValidationResult(result);

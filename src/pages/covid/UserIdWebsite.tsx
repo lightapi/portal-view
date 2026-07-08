@@ -3,10 +3,10 @@ import Website from './Website';
 
 // This is a wrapper component for the PeerStatus. It is responsible for getting the userId from the state or param
 export default function UserIdWebsite(props) {
-    let search = props.location.search;
-    let params = new URLSearchParams(search);
+    const search = props.location.search;
+    const params = new URLSearchParams(search);
     let userId = params.get('userId');
-    let instruction = params.get('instruction');
+    const instruction = params.get('instruction');
     if(userId == null && props.location.state) {
       userId = props.location.state.data.userId;
     }

@@ -30,10 +30,10 @@ export default function Catalog(props: CatalogProps) {
         'An anonymous user cannot checkout and receive notifications. Please log in first.'
       );
     } else {
-      let sku = selectedProduct.sku;
-      let qty = selectedProduct.quantity;
+      const sku = selectedProduct.sku;
+      const qty = selectedProduct.quantity;
       if (checkProduct(sku)) {
-        let index = cart.findIndex((x) => x.sku === sku);
+        const index = cart.findIndex((x) => x.sku === sku);
         const newCart = [...cart];
         newCart[index] = {
           ...newCart[index],

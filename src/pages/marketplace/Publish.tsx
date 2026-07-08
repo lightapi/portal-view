@@ -6,9 +6,9 @@ import FormDispatcher from './FormDispatcher';
 
 export default function Publish(props) {
   const { email } = useUserState();
-  let params = new URLSearchParams(props.location.search);
-  let category = params.get('category');
-  let subcategory = params.get('subcategory');
+  const params = new URLSearchParams(props.location.search);
+  const category = params.get('category');
+  const subcategory = params.get('subcategory');
 
   let wait;
   if (category && subcategory) {

@@ -136,7 +136,7 @@ function getFontWeight(style?: string) {
 }
 
 function getFontSize(size: string | undefined, variant = "", theme: any) {
-  var multiplier;
+  let multiplier;
 
   switch (size) {
     case "sm":
@@ -156,7 +156,7 @@ function getFontSize(size: string | undefined, variant = "", theme: any) {
       break;
   }
 
-  var defaultSize =
+  const defaultSize =
     variant && theme.typography[variant]
       ? theme.typography[variant].fontSize
       : theme.typography.fontSize + (typeof theme.typography.fontSize === 'number' ? 'px' : '');

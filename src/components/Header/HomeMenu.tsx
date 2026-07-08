@@ -13,7 +13,7 @@ import { useSiteDispatch, useSiteState } from '../../contexts/SiteContext';
 
 export default function HomeMenu(props: any) {
   const [homeMenu, setHomeMenu] = useState<null | HTMLElement>(null);
-  var siteDispatch: any = useSiteDispatch();
+  const siteDispatch: any = useSiteDispatch();
   const { site }: any = useSiteState();
 
   const changeMenu = (menu: string) => {

@@ -12,7 +12,7 @@ export default function ChaosFormSettings(props) {
 
   const elementOptions = [];
 
-  for (var i = 0; i < options.length; i++) {
+  for (let i = 0; i < options.length; i++) {
     elementOptions.push(
       <MenuItem key={i} value={options[i]}>{optionDisplays[i]}</MenuItem>
     );

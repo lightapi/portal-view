@@ -35,15 +35,16 @@ const FileUpload = ({
   };
 
   const addNewFiles = (newFiles) => {
-    for (let file of newFiles) {
+    const updatedFiles = { ...files };
+    for (const file of newFiles) {
       if (file.size <= maxFileSizeInBytes) {
         if (!otherProps.multiple) {
           return { file };
         }
-        files[file.name] = file;
+        updatedFiles[file.name] = file;
       }
     }
-    return { ...files };
+    return updatedFiles;
   };
 
   const callUpdateFilesCb = (files) => {
@@ -54,16 +55,17 @@ const FileUpload = ({
   const handleNewFileUpload = (e) => {
     const { files: newFiles } = e.target;
     if (newFiles.length) {
-      let updatedFiles = addNewFiles(newFiles);
+      const updatedFiles = addNewFiles(newFiles);
       setFiles(updatedFiles);
       callUpdateFilesCb(updatedFiles);
     }
   };
 
   const removeFile = (fileName) => {
-    delete files[fileName];
-    setFiles({ ...files });
-    callUpdateFilesCb({ ...files });
+    const updatedFiles = { ...files };
+    delete updatedFiles[fileName];
+    setFiles(updatedFiles);
+    callUpdateFilesCb(updatedFiles);
   };
 
   return (

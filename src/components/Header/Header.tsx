@@ -39,18 +39,18 @@ import fetchClient from "../../utils/fetchClient";
 
 export default function Header(props: any) {
   // global
-  var layoutState: any = useLayoutState();
-  var layoutDispatch: any = useLayoutDispatch();
+  const layoutState: any = useLayoutState();
+  const layoutDispatch: any = useLayoutDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
   // local
-  var [isSearchOpen, setSearchOpen] = useState(false);
-  var { isAuthenticated, host } = useUserState();
-  var [domain, setDomain] = useState<string | null>(null);
-  var [subDomain, setSubDomain] = useState<string | null>(null);
+  const [isSearchOpen, setSearchOpen] = useState(false);
+  const { isAuthenticated, host } = useUserState();
+  const [domain, setDomain] = useState<string | null>(null);
+  const [subDomain, setSubDomain] = useState<string | null>(null);
 
-  var siteDispatch: any = useSiteDispatch();
+  const siteDispatch: any = useSiteDispatch();
   const changeFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
     siteDispatch({ type: "UPDATE_FILTER", filter: e.target.value });
   };

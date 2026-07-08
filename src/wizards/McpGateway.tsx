@@ -149,7 +149,7 @@ export default function McpGateway() {
       setPageLoading(false);
       setPageError(true);
     }
-  }, [host]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [host]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { setPage(0); }, [filter, sortBy, sortAsc]);

@@ -126,7 +126,7 @@ export default function RefTableAdmin() {
     };
 
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [ // The effect now depends ONLY on the inputs to the fetch.
     host,
     columnFilters,

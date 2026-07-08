@@ -15,10 +15,10 @@ export default function Publish(props) {
     version: '0.1.0',
     data: { email },
   };
-  var url =
+  let url =
     '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(statusCmd));
-  var headers = {};
-  var { isLoading: siteLoading, data: site } = useApiGet({ url, headers });
+  let headers = {};
+  const { isLoading: siteLoading, data: site } = useApiGet({ url, headers });
   //console.log("siteLoading", siteLoading, site, siteError);
   const entityCmd = {
     host: 'lightapi.net',
@@ -29,7 +29,7 @@ export default function Publish(props) {
   };
   url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(entityCmd));
   headers = {};
-  var {
+  const {
     isLoading: entityLoading,
     data: entity,
     error: entityError,

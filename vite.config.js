@@ -165,9 +165,13 @@ export default defineConfig(({ mode }) => {
       minify: true,
       rollupOptions: {
         output: {
-          manualChunks: {
-            "react-vendor": ["react", "react-dom"],
-            "mui-vendor": ["@mui/material", "@mui/icons-material"],
+          manualChunks(id) {
+            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+              return 'react-vendor';
+            }
+            if (id.includes('node_modules/@mui/material/') || id.includes('node_modules/@mui/icons-material/')) {
+              return 'mui-vendor';
+            }
           },
         },
       },

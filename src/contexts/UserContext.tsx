@@ -23,8 +23,8 @@ type UserAction =
   | { type: "UPDATE_PROFILE"; userId: string; host: string }
   | { type: "LOGIN_FAILURE" };
 
-var UserStateContext = React.createContext<UserState | undefined>(undefined);
-var UserDispatchContext = React.createContext<React.Dispatch<UserAction> | undefined>(undefined);
+const UserStateContext = React.createContext<UserState | undefined>(undefined);
+const UserDispatchContext = React.createContext<React.Dispatch<UserAction> | undefined>(undefined);
 
 function userReducer(state: UserState, action: UserAction): UserState {
   switch (action.type) {
@@ -70,7 +70,7 @@ function UserProvider({ children }: { children: React.ReactNode }) {
   const eid = cookies.get("eid");
   const roles = decodedCookie(cookies, "roles");
   const positions = decodedCookie(cookies, "positions") ?? decodedCookie(cookies, "position") ?? decodedCookie(cookies, "pos");
-  var [state, dispatch] = React.useReducer(userReducer, {
+  const [state, dispatch] = React.useReducer(userReducer, {
     isAuthenticated: !!userId,
     userId: userId,
     sessionId: sessionId,
@@ -127,7 +127,7 @@ function UserProvider({ children }: { children: React.ReactNode }) {
 }
 
 function useUserState() {
-  var context = React.useContext(UserStateContext);
+  const context = React.useContext(UserStateContext);
   if (context === undefined) {
     throw new Error("useUserState must be used within a UserProvider");
   }
@@ -135,7 +135,7 @@ function useUserState() {
 }
 
 function useUserDispatch() {
-  var context = React.useContext(UserDispatchContext);
+  const context = React.useContext(UserDispatchContext);
   if (context === undefined) {
     throw new Error("useUserDispatch must be used within a UserProvider");
   }

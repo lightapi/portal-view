@@ -26,7 +26,7 @@ export default function OpenapiEditor() {
 
   const onUpload = (files) => {
     files.forEach((file) => {
-      var reader = new FileReader();
+      const reader = new FileReader();
       reader.onload = function (e) {
         setSpec(e.target.result as string);
       };

@@ -128,7 +128,7 @@ export default function HostAdmin() {
   // useEffect to trigger fetchData when table state changes
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [fetchData]);
 
   // Delete handler

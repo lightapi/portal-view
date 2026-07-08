@@ -27,8 +27,8 @@ export default function Widget({
   upperTitle,
   ...props
 }: WidgetProps) {
-  var [moreButtonRef, setMoreButtonRef] = useState<HTMLElement | null>(null);
-  var [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreButtonRef, setMoreButtonRef] = useState<HTMLElement | null>(null);
+  const [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100%' }}>

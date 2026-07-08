@@ -355,7 +355,7 @@ const CartTotal = ({
 
   const subtotal = (items: any[]) => {
     let total = 0;
-    for (var i = 0; i < items.length; i++) {
+    for (let i = 0; i < items.length; i++) {
       total += items[i].price * parseInt(items[i].quantity);
     }
     return total;

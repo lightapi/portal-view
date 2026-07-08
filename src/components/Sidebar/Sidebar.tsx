@@ -261,18 +261,18 @@ const structure = [
 ];
 
 function Sidebar() {
-  var theme = useTheme();
+  const theme = useTheme();
 
   // global
-  var { isSidebarOpened } = useLayoutState() as any;
-  var layoutDispatch = useLayoutDispatch();
-  var { roles, isAuthenticated, host } = useUserState();
+  const { isSidebarOpened } = useLayoutState() as any;
+  const layoutDispatch = useLayoutDispatch();
+  const { roles, isAuthenticated, host } = useUserState();
   const location = useLocation();
 
   // local
-  var [isPermanent, setPermanent] = useState(true);
-  var [domain, setDomain] = useState<string | null>(null);
-  var [subDomain, setSubDomain] = useState<string | null>(null);
+  const [isPermanent, setPermanent] = useState(true);
+  const [domain, setDomain] = useState<string | null>(null);
+  const [subDomain, setSubDomain] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && host) {
@@ -382,9 +382,9 @@ function Sidebar() {
   );
 
   function handleWindowWidthChange() {
-    var windowWidth = window.innerWidth;
-    var breakpointWidth = (theme as any).breakpoints?.values?.md || 960;
-    var isSmallScreen = windowWidth < breakpointWidth;
+    const windowWidth = window.innerWidth;
+    const breakpointWidth = (theme as any).breakpoints?.values?.md || 960;
+    const isSmallScreen = windowWidth < breakpointWidth;
 
     if (isSmallScreen && isPermanent) {
       setPermanent(false);

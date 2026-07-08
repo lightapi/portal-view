@@ -14,7 +14,7 @@ import { useSiteDispatch, useSiteState } from '../../contexts/SiteContext';
 import forms from '../../data/Forms';
 
 // Global spec variable used in the original file
-var spec: any = null;
+let spec: any = null;
 
 const baseStyle: React.CSSProperties = {
   flex: 1,
@@ -125,7 +125,7 @@ function ConfigDetail({ step, fileUpload }: ConfigDetailProps) {
   const [updated, setUpdated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [configDetail, setConfigDetail] = useState<any>();
-  let siteDispatch = useSiteDispatch();
+  const siteDispatch = useSiteDispatch();
   const mounted = useRef(false);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ function ConfigDetail({ step, fileUpload }: ConfigDetailProps) {
         console.log('ConfigDetail is updated', spec);
         const domain =
           spec && spec.host ? spec.host.split('.').reverse().join('.') : '';
-        let newConfigDetail = {
+        const newConfigDetail = {
           name: spec && spec.name ? spec.name.toLowerCase() : null,
           version: spec && spec.version ? spec.version : null,
           style: spec && spec.style ? spec.style : null,
@@ -162,7 +162,7 @@ function ConfigDetail({ step, fileUpload }: ConfigDetailProps) {
     return null;
   }
 
-  let formData = forms['configDetailForm'];
+  const formData = forms['configDetailForm'];
 
   const onModelChange = (key: string, val: any, type: string) => {
     utils.selectOrSet(key, model, val, type);
@@ -170,7 +170,7 @@ function ConfigDetail({ step, fileUpload }: ConfigDetailProps) {
   };
 
   const onButtonClick = (item: any) => {
-    let validationResult = utils.validateBySchema(formData.schema, model);
+    const validationResult = utils.validateBySchema(formData.schema, model);
     if (!validationResult.valid) {
       setShowErrors(true);
     } else {
@@ -217,12 +217,12 @@ interface SpecDetailProps extends StepProps {
 function SpecDetail({ step, fileUpload, configDetail }: SpecDetailProps) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  let initialStyle = searchParams.get('style');
+  const initialStyle = searchParams.get('style');
   const [model, setModel] = useState({ ...useSiteState().specDetail, style: initialStyle });
   const [showErrors, setShowErrors] = useState(false);
   const [specDetail, setSpecDetail] = useState<any>();
 
-  let siteDispatch = useSiteDispatch();
+  const siteDispatch = useSiteDispatch();
 
   useEffect(() => {
     if (specDetail) {
@@ -235,7 +235,7 @@ function SpecDetail({ step, fileUpload, configDetail }: SpecDetailProps) {
     return null;
   }
 
-  let formData = forms['specDetailForm'];
+  const formData = forms['specDetailForm'];
 
   const onModelChange = (key: string, val: any, type: string) => {
     utils.selectOrSet(key, model, val, type);
@@ -243,7 +243,7 @@ function SpecDetail({ step, fileUpload, configDetail }: SpecDetailProps) {
   };
 
   const onButtonClick = (item: any) => {
-    let validationResult = utils.validateBySchema(formData.schema, model);
+    const validationResult = utils.validateBySchema(formData.schema, model);
     if (!validationResult.valid) {
       setShowErrors(true);
     } else {

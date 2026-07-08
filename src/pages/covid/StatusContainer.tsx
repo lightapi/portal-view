@@ -11,43 +11,36 @@ export default function StatusContainer(props) {
 
   const createItem = (category, item) => {
     console.log('createItem is called!', category, item);
-    let list = subjects[category];
-    var object = {};
-    object[Date.now().toString()] = item;
-    list.unshift(object);
-    //console.log("list = ", list);
-    object = {};
-    object[category] = list;
     setSubjects((prevState) => {
-      return { ...prevState, ...object };
+      const list = [...(prevState[category] || [])];
+      const object = {};
+      object[Date.now().toString()] = item;
+      list.unshift(object);
+      return { ...prevState, [category]: list };
     });
   };
 
   const deleteItem = (category, item) => {
     console.log('deleteItem is called!', category, item);
-    let list = subjects[category];
-    console.log('list before removal', list);
-    // remove the item from the list
-    const filtered = list.filter((l) => l !== item);
-    console.log('list after removal', filtered);
-    let object = {};
-    object[category] = filtered;
     setSubjects((prevState) => {
-      return { ...prevState, ...object };
+      const list = prevState[category] || [];
+      const filtered = list.filter((l) => l !== item);
+      return { ...prevState, [category]: filtered };
     });
   };
 
   const delCategory = (category) => {
     console.log('del category is called!', category);
-    delete subjects[category];
     setSubjects((prevState) => {
-      return { ...prevState };
+      const newState = { ...prevState };
+      delete newState[category];
+      return newState;
     });
   };
 
   const addCategory = () => {
     console.log('add category is clicked!');
-    let object = {};
+    const object = {};
     object[currentCategory] = [];
     setSubjects((prevState) => {
       return { ...prevState, ...object };
