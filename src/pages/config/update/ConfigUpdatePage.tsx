@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   MaterialReactTable,
@@ -159,6 +159,10 @@ function targetInputKeysForScope(scopeId: ConfigUpdateScopeId): ConfigUpdateTarg
 function selectedTargetOption(options: ConfigTargetOption[], value?: string) {
   if (!value) return null;
   return options.find((option) => option.id === value) ?? { id: value, label: value };
+}
+
+function stopTableKeyboardShortcuts(event: KeyboardEvent<HTMLElement>) {
+  event.stopPropagation();
 }
 
 export default function ConfigUpdatePage() {
@@ -530,6 +534,7 @@ export default function ConfigUpdatePage() {
           value={stagedValue}
           disabled={disabled}
           onChange={(event) => stageValue(row, event.target.value)}
+          onKeyDown={stopTableKeyboardShortcuts}
           sx={{ minWidth: 120 }}
         >
           <MenuItem value=""><em>Inherited</em></MenuItem>
@@ -546,6 +551,7 @@ export default function ConfigUpdatePage() {
         disabled={disabled}
         placeholder={valueSummary(row.effectiveValue)}
         onChange={(event) => stageValue(row, event.target.value)}
+        onKeyDown={stopTableKeyboardShortcuts}
         error={Boolean(draft?.error)}
         helperText={draft?.error}
         sx={{ minWidth: 260 }}
