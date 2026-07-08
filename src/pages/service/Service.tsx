@@ -18,7 +18,7 @@ import AirlineSeatReclineNormalIcon from '@mui/icons-material/AirlineSeatRecline
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -61,8 +61,6 @@ interface UserState {
   positions?: string | null;
 }
 
-const allApiScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
-
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
   const value = cell.getValue<string>() ?? '';
   return (
@@ -99,7 +97,6 @@ export default function Service() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allApiScopeRoles,
     }),
     [roles, userId, positions],
   );

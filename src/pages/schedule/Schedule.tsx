@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -53,8 +53,6 @@ interface UserState {
   positions?: string | null;
 }
 
-const allScheduleScopeRoles = [...defaultAllScopeRoles, 'schedule-admin'];
-
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
   const value = cell.getValue<string>() ?? '';
   return (
@@ -81,7 +79,6 @@ export default function Schedule() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allScheduleScopeRoles,
       allScopeAllowed: isAdminView,
     }),
     [isAdminView, roles, userId],

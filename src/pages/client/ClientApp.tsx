@@ -19,7 +19,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -51,8 +51,6 @@ interface UserState {
   positions?: string | null;
 }
 
-const allClientAppScopeRoles = [...defaultAllScopeRoles, 'app-admin'];
-
 export default function ClientApp() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,7 +63,6 @@ export default function ClientApp() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allClientAppScopeRoles,
     }),
     [roles, userId, positions],
   );

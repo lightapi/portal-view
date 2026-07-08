@@ -17,7 +17,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 
 // --- Type Definitions ---
@@ -47,8 +47,6 @@ interface UserState {
   positions?: string | null;
 }
 
-const allWorkflowScopeRoles = [...defaultAllScopeRoles, 'workflow-admin'];
-
 export default function WfDefinition() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -60,7 +58,6 @@ export default function WfDefinition() {
             userId,
             positions,
       ownerField: 'ownerUserId',
-            allScopeRoles: allWorkflowScopeRoles,
         }),
         [roles, userId, positions],
     );

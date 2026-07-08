@@ -27,8 +27,8 @@ export type OwnershipScope = {
   canModifyRecord: <TRecord extends object>(record: TRecord) => boolean;
 };
 
-// Global all-record visibility. Entity-specific roles can be added per page.
-export const defaultAllScopeRoles = ['admin'];
+// Global all-record visibility.
+export const defaultAllScopeRoles = ['admin', 'host-admin'];
 
 function roleTokens(roles: string | null | undefined) {
   return new Set((roles ?? '').split(/[\s,]+/).filter(Boolean));

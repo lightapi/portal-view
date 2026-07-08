@@ -32,11 +32,9 @@ import {
 } from './hooks/useWorkflowCatalog';
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
-import { defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute } from '../workflow/workflowTaskUtils';
-
-const allWorkflowScopeRoles = [...defaultAllScopeRoles, 'workflow-admin'];
 
 function setRepeatedParam(params: URLSearchParams, key: string, values: string[]) {
   params.delete(key);
@@ -115,7 +113,6 @@ export default function WorkflowCatalog() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allWorkflowScopeRoles,
     }),
     [roles, userId, positions],
   );

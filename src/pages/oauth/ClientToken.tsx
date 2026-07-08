@@ -15,7 +15,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import { useUserState } from '../../contexts/UserContext.tsx';
 import { apiPost } from '../../api/apiPost.ts';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -44,8 +44,6 @@ interface UserState {
   positions?: string | null;
 }
 
-const allClientTokenScopeRoles = [...defaultAllScopeRoles, 'oauth-client-admin'];
-
 // Helper Cell component for truncating long text with a tooltip
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
     const value = cell.getValue<string>() ?? '';
@@ -70,7 +68,6 @@ export default function ClientToken() {
             userId,
             positions,
       ownerField: 'ownerUserId',
-            allScopeRoles: allClientTokenScopeRoles,
         }),
         [roles, userId, positions],
     );

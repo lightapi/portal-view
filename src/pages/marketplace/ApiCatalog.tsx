@@ -28,11 +28,9 @@ import {
 } from './hooks/useApiCatalog';
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
-import { defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
-
-const allApiScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
 
 function setRepeatedParam(params: URLSearchParams, key: string, values: string[]) {
   params.delete(key);
@@ -116,7 +114,6 @@ export default function ApiCatalog() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allApiScopeRoles,
     }),
     [roles, userId, positions],
   );

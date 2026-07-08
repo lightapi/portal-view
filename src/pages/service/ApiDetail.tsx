@@ -34,7 +34,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import { useUserState } from '../../contexts/UserContext';
@@ -85,8 +85,6 @@ type ServiceVersionType = {
   active?: boolean;
 };
 
-const allApiVersionScopeRoles = [...defaultAllScopeRoles, 'api-admin'];
-
 const displayValue = (value: unknown) => {
   if (value == null) return '';
   if (Array.isArray(value)) return value.join(', ');
@@ -106,7 +104,6 @@ export default function ApiDetail() {
       userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allApiVersionScopeRoles,
     }),
     [roles, userId, positions],
   );
