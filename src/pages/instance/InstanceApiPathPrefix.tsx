@@ -123,6 +123,7 @@ export default function InstanceApiPathPrefix() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (ownedOnly && !userId) return;
+    setIsError(false);
     if (!data.length) {
       setIsLoading(true);
     } else {
@@ -170,7 +171,6 @@ export default function InstanceApiPathPrefix() {
       setIsError(true);
       console.error(error);
     } finally {
-      setIsError(false);
       setIsLoading(false);
       setIsRefetching(false);
     }

@@ -122,6 +122,7 @@ export default function Schedule() {
     if (!host) return;
     if (ownedOnly && !userId) return; // Owner-scoped view must have a user id.
     
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -164,7 +165,7 @@ export default function Schedule() {
     } catch (error) {
       setIsError(true); console.error(error);
     } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
+      setIsLoading(false); setIsRefetching(false);
     }
   }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, scheduleOwnership]);
 

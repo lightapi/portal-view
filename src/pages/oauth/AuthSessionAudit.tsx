@@ -88,6 +88,7 @@ export default function AuthSessionAudit({ viewMode = 'admin' }: OAuthSessionPag
       setIsRefetching(false);
       return;
     }
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
     const apiFilters = withLockedFilter(columnFilters ?? [], lockedCurrentUserFilter(selfView ? userId : null));
 

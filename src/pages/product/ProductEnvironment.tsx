@@ -93,6 +93,7 @@ export default function ProductEnvironment() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -130,7 +131,7 @@ export default function ProductEnvironment() {
     } catch (error) {
       setIsError(true); console.error(error);
     } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
+      setIsLoading(false); setIsRefetching(false);
     }
   }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 

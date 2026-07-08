@@ -68,6 +68,7 @@ export default function HostAdmin() {
 
   // Data fetching logic
   const fetchData = useCallback(async () => {
+    setIsError(false);
     if (!data.length) {
       setIsLoading(true);
     } else {
@@ -112,7 +113,6 @@ export default function HostAdmin() {
       setIsError(true);
       console.error(error);
     } finally {
-      setIsError(false);
       setIsLoading(false);
       setIsRefetching(false);
     }

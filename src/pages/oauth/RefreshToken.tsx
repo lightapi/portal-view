@@ -106,6 +106,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
       setIsRefetching(false);
       return;
     }
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -142,7 +143,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
     } catch (error) {
       setIsError(true); console.error(error);
     } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
+      setIsLoading(false); setIsRefetching(false);
     }
   }, [host, missingSelfContext, data.length, columnFilters, selfView, userId, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 

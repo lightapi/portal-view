@@ -42,6 +42,7 @@ export default function ConfigSnapshotProductProperty() {
     // Data fetching logic
     const fetchData = useCallback(async () => {
         if (!snapshotId) return;
+        setIsError(false);
         if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
         const cmd = {
@@ -64,7 +65,7 @@ export default function ConfigSnapshotProductProperty() {
         } catch (error) {
             setIsError(true); console.error(error);
         } finally {
-            setIsError(false); setIsLoading(false); setIsRefetching(false);
+            setIsLoading(false); setIsRefetching(false);
         }
     }, [snapshotId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 

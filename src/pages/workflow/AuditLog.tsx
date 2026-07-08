@@ -76,6 +76,7 @@ export default function AuditLog() {
     // Data fetching logic
     const fetchData = useCallback(async () => {
         if (!host) return;
+        setIsError(false);
         if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
         const cmd = {
@@ -96,7 +97,7 @@ export default function AuditLog() {
         } catch (error) {
             setIsError(true); console.error(error);
         } finally {
-            setIsError(false); setIsLoading(false); setIsRefetching(false);
+            setIsLoading(false); setIsRefetching(false);
         }
     }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 

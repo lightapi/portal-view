@@ -67,8 +67,8 @@ export default function PromotionHistory() {
     // Data fetching logic
     const fetchData = useCallback(async () => {
         if (!host) return;
-        if (!data.length) setIsLoading(true); else setIsRefetching(true);
         setIsError(false);
+        if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
         const cmd = {
             host: 'lightapi.net', service: 'user', action: 'getPromotionHistory', version: '0.1.0',

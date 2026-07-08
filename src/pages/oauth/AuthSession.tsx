@@ -101,6 +101,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
       setIsRefetching(false);
       return;
     }
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
     const apiFilters = withLockedFilter(columnFilters ?? [], lockedCurrentUserFilter(selfView ? userId : null));
 

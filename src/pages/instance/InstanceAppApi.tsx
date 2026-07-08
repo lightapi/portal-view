@@ -119,6 +119,7 @@ export default function InstanceAppApi() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (ownedOnly && !userId) return;
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -156,7 +157,7 @@ export default function InstanceAppApi() {
     } catch (error) {
       setIsError(true); console.error(error);
     } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
+      setIsLoading(false); setIsRefetching(false);
     }
   }, [host, userId, ownedOnly, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting, instanceAppApiOwnership]);
 

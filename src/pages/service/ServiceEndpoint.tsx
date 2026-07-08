@@ -119,6 +119,7 @@ export default function ServiceEndpoint() {
   // Data fetching logic (unchanged)
   const fetchData = useCallback(async () => {
     if (!host || !initialApiVersionId) return;
+    setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -154,7 +155,7 @@ export default function ServiceEndpoint() {
     } catch (error) {
       setIsError(true); console.error(error);
     } finally {
-      setIsError(false); setIsLoading(false); setIsRefetching(false);
+      setIsLoading(false); setIsRefetching(false);
     }
   }, [host, initialApiVersionId, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
