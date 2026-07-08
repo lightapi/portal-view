@@ -96,6 +96,7 @@ export default function Service() {
   const apiOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
       allScopeRoles: allApiScopeRoles,

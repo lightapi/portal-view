@@ -103,6 +103,7 @@ export default function ApiDetail() {
   const apiVersionOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
       allScopeRoles: allApiVersionScopeRoles,

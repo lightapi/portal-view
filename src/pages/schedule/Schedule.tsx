@@ -78,6 +78,7 @@ export default function Schedule() {
   const scheduleOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
       allScopeRoles: allScheduleScopeRoles,

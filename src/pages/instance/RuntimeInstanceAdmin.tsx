@@ -16,7 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -42,8 +42,6 @@ type RuntimeInstanceType = {
   updateTs?: string;
 };
 
-const allRuntimeInstanceScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
-
 export default function RuntimeInstanceAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,9 +51,9 @@ export default function RuntimeInstanceAdmin() {
   const runtimeInstanceOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allRuntimeInstanceScopeRoles,
     }),
     [roles, userId, positions],
   );

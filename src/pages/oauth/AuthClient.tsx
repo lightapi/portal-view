@@ -104,6 +104,7 @@ export default function AuthClient() {
   const oauthClientOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
       allScopeRoles: allOauthClientScopeRoles,
@@ -252,23 +253,24 @@ export default function AuthClient() {
 
     try {
       const freshData = await fetchClient(url);
+      const providerId = freshData.providerId ?? row.original.providerId ?? initialData.providerId ?? taskContext.providerId ?? '';
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion
+        ? { ...row.original, providerId }
+        : { ...freshData, providerId };
 
       // Navigate with the fresh data
       navigate(buildTaskAwareRoute('/app/form/updateClient', searchParams, {
         ...taskContext,
         hostId: row.original.hostId,
         clientId,
-        providerId: freshData.providerId ?? row.original.providerId ?? initialData.providerId ?? taskContext.providerId ?? '',
-        appId: row.original.appId ?? '',
-        apiId: row.original.apiId ?? '',
-        apiVersionId: row.original.apiVersionId ?? '',
-        instanceId: row.original.instanceId ?? '',
+        providerId,
+        appId: dataForForm.appId ?? '',
+        apiId: dataForForm.apiId ?? '',
+        apiVersionId: dataForForm.apiVersionId ?? '',
+        instanceId: dataForForm.instanceId ?? '',
       }), {
         state: {
-          data: {
-            ...freshData,
-            providerId: freshData.providerId ?? row.original.providerId ?? initialData.providerId ?? taskContext.providerId,
-          },
+          data: dataForForm,
           source: location.pathname
         }
       });

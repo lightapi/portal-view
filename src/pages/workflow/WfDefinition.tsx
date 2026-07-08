@@ -57,6 +57,7 @@ export default function WfDefinition() {
     const workflowOwnership = useMemo(
         () => ownershipScope({
             roles,
+            userId,
             positions,
       ownerField: 'ownerUserId',
             allScopeRoles: allWorkflowScopeRoles,

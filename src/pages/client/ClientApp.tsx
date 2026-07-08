@@ -62,6 +62,7 @@ export default function ClientApp() {
   const clientAppOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
       allScopeRoles: allClientAppScopeRoles,

@@ -16,7 +16,7 @@ import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -45,8 +45,6 @@ type InstanceAppApiType = {
   aggregateVersion?: number;
 };
 
-const allInstanceAppApiScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
-
 export default function InstanceAppApi() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,9 +54,9 @@ export default function InstanceAppApi() {
   const instanceAppApiOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allInstanceAppApiScopeRoles,
     }),
     [roles, userId, positions],
   );

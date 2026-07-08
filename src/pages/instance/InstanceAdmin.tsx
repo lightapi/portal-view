@@ -25,7 +25,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import { applyOwnershipColumns, applyOwnershipFilter, defaultAllScopeRoles, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -74,8 +74,6 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
   );
 };
 
-const allInstanceScopeRoles = [...defaultAllScopeRoles, 'instance-admin'];
-
 export default function InstanceAdmin() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,9 +83,9 @@ export default function InstanceAdmin() {
   const instanceOwnership = useMemo(
     () => ownershipScope({
       roles,
+      userId,
       positions,
       ownerField: 'ownerUserId',
-      allScopeRoles: allInstanceScopeRoles,
     }),
     [roles, userId, positions],
   );

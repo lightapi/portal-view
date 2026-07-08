@@ -67,6 +67,7 @@ export default function ClientToken() {
     const clientTokenOwnership = useMemo(
         () => ownershipScope({
             roles,
+            userId,
             positions,
       ownerField: 'ownerUserId',
             allScopeRoles: allClientTokenScopeRoles,
