@@ -224,11 +224,12 @@ export default function Service() {
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
       navigate(buildTaskAwareRoute('/app/form/updateApi', searchParams, {
         ...taskContext,
         hostId: row.original.hostId,
         apiId,
-      }), { state: { data: toApiFormData(freshData), source: location.pathname } });
+      }), { state: { data: toApiFormData(dataForForm), source: location.pathname } });
     } catch (error) {
       console.error("Failed to fetch api for update:", error);
       alert("Could not load the latest api data. Please try again.");

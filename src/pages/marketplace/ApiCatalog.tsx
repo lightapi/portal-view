@@ -188,11 +188,12 @@ export default function ApiCatalog() {
 
     try {
       const freshData = await fetchClient(url);
+      const dataForForm = freshData.aggregateVersion === api.aggregateVersion ? api : freshData;
       navigate(buildTaskAwareRoute('/app/form/updateApi', taskSearchParams, {
         ...taskContext,
         hostId: api.hostId,
         apiId: api.apiId,
-      }), { state: { data: toApiFormData(freshData), source: location.pathname } });
+      }), { state: { data: toApiFormData(dataForForm), source: location.pathname } });
     } catch (e) {
       console.error('Failed to fetch API for update:', e);
       alert('Could not load the latest API data. Please try again.');
