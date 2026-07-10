@@ -17728,10 +17728,55 @@
         "semanticWeight": {
           "title": "Semantic Weight",
           "type": "number",
+          "minimum": 0,
+          "maximum": 10,
           "default": 1
         },
         "sourceProtocol": {
           "title": "Source Protocol",
+          "type": "string"
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "default": "active"
+        },
+        "costTier": {
+          "title": "Cost Tier",
+          "type": "string"
+        },
+        "readOnly": {
+          "title": "Read Only",
+          "type": "boolean"
+        },
+        "idempotent": {
+          "title": "Idempotent",
+          "type": "boolean"
+        },
+        "destructive": {
+          "title": "Destructive",
+          "type": "boolean"
+        },
+        "humanApprovalRequired": {
+          "title": "Human Approval Required",
+          "type": "boolean"
+        },
+        "estimatedLatencyMs": {
+          "title": "Estimated Latency Ms",
+          "type": "integer",
+          "minimum": 0
+        },
+        "cacheTtlSeconds": {
+          "title": "Cache TTL Seconds",
+          "type": "integer",
+          "minimum": 0
+        },
+        "semanticDescription": {
+          "title": "Semantic Description",
+          "type": "string"
+        },
+        "semanticKeywords": {
+          "title": "Semantic Keywords",
           "type": "string"
         },
         "targetPersonas": {
@@ -17789,11 +17834,94 @@
         "type": "textarea",
         "condition": "model.implementationType === 'lightapi_endpoint'"
       },
+      {
+        "type": "help",
+        "description": "Routing metadata",
+        "align": "left"
+      },
       "routingDomain",
       "semanticNamespace",
-      "sensitivityTier",
       "semanticWeight",
-      "sourceProtocol",
+      {
+        "key": "sourceProtocol",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=source_protocol&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "type": "help",
+        "description": "Governance metadata",
+        "align": "left"
+      },
+      {
+        "key": "sensitivityTier",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=sensitivity_tier&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "lifecycleStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lifecycle_status&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "type": "help",
+        "description": "Safety metadata",
+        "align": "left"
+      },
+      "readOnly",
+      "idempotent",
+      "destructive",
+      "humanApprovalRequired",
+      {
+        "type": "help",
+        "description": "Runtime hints",
+        "align": "left"
+      },
+      {
+        "key": "costTier",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=cost_tier&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "estimatedLatencyMs",
+      "cacheTtlSeconds",
+      {
+        "type": "help",
+        "description": "Search metadata",
+        "align": "left"
+      },
+      {
+        "key": "semanticDescription",
+        "type": "textarea",
+        "rows": 3
+      },
+      {
+        "key": "semanticKeywords",
+        "type": "textarea",
+        "rows": 2
+      },
       {
         "key": "targetPersonas",
         "type": "textarea",
@@ -17903,10 +18031,55 @@
         "semanticWeight": {
           "title": "Semantic Weight",
           "type": "number",
+          "minimum": 0,
+          "maximum": 10,
           "default": 1
         },
         "sourceProtocol": {
           "title": "Source Protocol",
+          "type": "string"
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "default": "active"
+        },
+        "costTier": {
+          "title": "Cost Tier",
+          "type": "string"
+        },
+        "readOnly": {
+          "title": "Read Only",
+          "type": "boolean"
+        },
+        "idempotent": {
+          "title": "Idempotent",
+          "type": "boolean"
+        },
+        "destructive": {
+          "title": "Destructive",
+          "type": "boolean"
+        },
+        "humanApprovalRequired": {
+          "title": "Human Approval Required",
+          "type": "boolean"
+        },
+        "estimatedLatencyMs": {
+          "title": "Estimated Latency Ms",
+          "type": "integer",
+          "minimum": 0
+        },
+        "cacheTtlSeconds": {
+          "title": "Cache TTL Seconds",
+          "type": "integer",
+          "minimum": 0
+        },
+        "semanticDescription": {
+          "title": "Semantic Description",
+          "type": "string"
+        },
+        "semanticKeywords": {
+          "title": "Semantic Keywords",
           "type": "string"
         },
         "targetPersonas": {
@@ -17971,11 +18144,94 @@
         "type": "textarea",
         "condition": "model.implementationType === 'lightapi_endpoint'"
       },
+      {
+        "type": "help",
+        "description": "Routing metadata",
+        "align": "left"
+      },
       "routingDomain",
       "semanticNamespace",
-      "sensitivityTier",
       "semanticWeight",
-      "sourceProtocol",
+      {
+        "key": "sourceProtocol",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=source_protocol&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "type": "help",
+        "description": "Governance metadata",
+        "align": "left"
+      },
+      {
+        "key": "sensitivityTier",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=sensitivity_tier&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "lifecycleStatus",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=lifecycle_status&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "type": "help",
+        "description": "Safety metadata",
+        "align": "left"
+      },
+      "readOnly",
+      "idempotent",
+      "destructive",
+      "humanApprovalRequired",
+      {
+        "type": "help",
+        "description": "Runtime hints",
+        "align": "left"
+      },
+      {
+        "key": "costTier",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=cost_tier&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "estimatedLatencyMs",
+      "cacheTtlSeconds",
+      {
+        "type": "help",
+        "description": "Search metadata",
+        "align": "left"
+      },
+      {
+        "key": "semanticDescription",
+        "type": "textarea",
+        "rows": 3
+      },
+      {
+        "key": "semanticKeywords",
+        "type": "textarea",
+        "rows": 2
+      },
       {
         "key": "targetPersonas",
         "type": "textarea",

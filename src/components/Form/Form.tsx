@@ -21,6 +21,7 @@ import {
   saveStoredTaskContext,
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
+import { compactToolMetadataForSubmit, enrichToolMetadataFields } from "../../utils/toolMetadata";
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
@@ -64,6 +65,10 @@ function normalizeFormModel(formId: string | undefined, source: any) {
     if (!next.apiVersionId && next.agentDefId) {
       next.apiVersionId = next.agentDefId;
     }
+  }
+
+  if (formId === "createTool" || formId === "updateTool") {
+    return enrichToolMetadataFields(next);
   }
 
   return next;
@@ -121,7 +126,9 @@ function applyInitialDefaults(formData: any, source: any) {
 }
 
 function submittedFormModel(formId: string | undefined, source: any) {
-  const next = normalizeFormModel(formId, source);
+  const next = formId === "createTool" || formId === "updateTool"
+    ? compactToolMetadataForSubmit(normalizeFormModel(formId, source))
+    : normalizeFormModel(formId, source);
   const formData = formId ? (forms as any)[formId] : undefined;
   const submitOmitFields = formData?.submitOmitFields;
   if (Array.isArray(submitOmitFields)) {

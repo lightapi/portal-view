@@ -16,6 +16,11 @@ import {
 } from '../../../../config';
 import type { McpWizardState } from './useMcpWizardState';
 import type { CreateApiForm, CreateApiVersionForm } from '../types';
+import {
+  buildToolMetadata,
+  validateTargetHost,
+  validateToolMetadataInputs,
+} from '../../../utils/toolMetadata';
 
 /**
  * All submit + navigation handlers for the MCP wizard.
@@ -187,6 +192,8 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     if (!versionForm.apiVersion.trim()) errs.apiVersion = 'API Version is required';
     if (!versionForm.apiType) errs.apiType = 'API Type is required';
     if (!versionForm.serviceId.trim()) errs.serviceId = 'Service ID is required';
+    const targetHostError = validateTargetHost(versionForm.targetHost);
+    if (targetHostError) errs.targetHost = targetHostError;
     setVersionErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -400,6 +407,17 @@ export function useMcpWizardHandlers(state: McpWizardState) {
         ...(t.sensitivityTier != null && { sensitivityTier: t.sensitivityTier }),
         ...(t.semanticWeight != null && { semanticWeight: t.semanticWeight }),
         ...(t.sourceProtocol != null && { sourceProtocol: t.sourceProtocol }),
+        ...(t.lifecycleStatus != null && { lifecycleStatus: t.lifecycleStatus }),
+        ...(t.costTier != null && { costTier: t.costTier }),
+        ...(t.readOnly != null && { readOnly: t.readOnly }),
+        ...(t.idempotent != null && { idempotent: t.idempotent }),
+        ...(t.destructive != null && { destructive: t.destructive }),
+        ...(t.humanApprovalRequired != null && { humanApprovalRequired: t.humanApprovalRequired }),
+        ...(t.estimatedLatencyMs != null && { estimatedLatencyMs: t.estimatedLatencyMs }),
+        ...(t.cacheTtlSeconds != null && { cacheTtlSeconds: t.cacheTtlSeconds }),
+        ...(t.semanticDescription != null && { semanticDescription: t.semanticDescription }),
+        ...(t.semanticKeywords != null && { semanticKeywords: t.semanticKeywords }),
+        ...(t.parameterMappings != null && { parameterMappings: t.parameterMappings }),
         ...(t.targetPersonas != null && { targetPersonas: t.targetPersonas }),
       })),
     };
@@ -428,6 +446,11 @@ export function useMcpWizardHandlers(state: McpWizardState) {
 
   const handleSaveMcpTools = async (): Promise<boolean> => {
     if (selectedMcpTools.length === 0 && !mcpMeta.exists) return true;
+    const toolErrors = validateToolMetadataInputs(selectedMcpTools);
+    if (toolErrors.length > 0) {
+      setSubmitError(toolErrors.join(' '));
+      return false;
+    }
     if (!mcpMeta.propertyId) {
       setSubmitError('Missing configuration metadata. Please skip this step and configure MCP tools from the Instance admin.');
       return false;
@@ -447,15 +470,28 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     const propertyValue = JSON.stringify(
       selectedMcpTools.map((t) => {
         const obj: any = {
+          endpointId: t.endpointId,
+          endpointName: t.endpointName,
           name: t.name, endpoint: t.endpoint, method: t.method, path: t.path,
           description: t.description,
           inputSchema: t.inputSchema ? (() => { try { return JSON.parse(t.inputSchema!); } catch { return t.inputSchema; } })() : undefined,
-          toolMetadata: t.toolMetadata ? (() => { try { return JSON.parse(t.toolMetadata!); } catch { return undefined; } })() : undefined,
+          toolSchema: t.inputSchema ? (() => { try { return JSON.parse(t.inputSchema!); } catch { return t.inputSchema; } })() : undefined,
+          toolMetadata: buildToolMetadata(t),
           routingDomain: t.routingDomain,
           semanticNamespace: t.semanticNamespace,
           sensitivityTier: t.sensitivityTier,
           semanticWeight: t.semanticWeight,
           sourceProtocol: t.sourceProtocol,
+          lifecycleStatus: t.lifecycleStatus,
+          costTier: t.costTier,
+          readOnly: t.readOnly,
+          idempotent: t.idempotent,
+          destructive: t.destructive,
+          humanApprovalRequired: t.humanApprovalRequired,
+          estimatedLatencyMs: t.estimatedLatencyMs,
+          cacheTtlSeconds: t.cacheTtlSeconds,
+          semanticDescription: t.semanticDescription,
+          semanticKeywords: t.semanticKeywords,
           targetPersonas: t.targetPersonas,
         };
         return Object.fromEntries(Object.entries(obj).filter(([, v]) => v != null));

@@ -19,6 +19,7 @@ import {
     saveStoredTaskContext,
     taskContextFromSearch,
 } from '../../tasks/taskUtils';
+import { buildToolMetadata, enrichToolMetadataFields } from '../../utils/toolMetadata';
 
 type McpToolType = {
     name: string;
@@ -29,12 +30,23 @@ type McpToolType = {
     path?: string;
     description: string;
     inputSchema?: string;
-    toolMetadata?: string;
+    toolMetadata?: string | Record<string, unknown>;
     routingDomain?: string;
     semanticNamespace?: string;
     sensitivityTier?: string;
     semanticWeight?: number;
     sourceProtocol?: string;
+    lifecycleStatus?: string;
+    costTier?: string;
+    readOnly?: boolean;
+    idempotent?: boolean;
+    destructive?: boolean;
+    humanApprovalRequired?: boolean;
+    estimatedLatencyMs?: number;
+    cacheTtlSeconds?: number;
+    semanticDescription?: string;
+    semanticKeywords?: string;
+    parameterMappings?: Record<string, string>;
     targetPersonas?: string;
     selected: boolean;
 };
@@ -122,7 +134,7 @@ export default function InstanceApiMcpTool() {
                 // Final cleanup of underscores
                 finalName = finalName.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 
-                return {
+                return enrichToolMetadataFields({
                     ...t,
                     name: finalName,
                     endpointName,              // keep the raw operationId from api_endpoint_t
@@ -130,7 +142,7 @@ export default function InstanceApiMcpTool() {
                     path: t.path || t.endpointPath || '',
                     method: t.method || t.httpMethod || '',
                     inputSchema: t.inputSchema || t.toolSchema || '',
-                };
+                });
             });
 
             setData(standardizedData);
@@ -179,12 +191,22 @@ export default function InstanceApiMcpTool() {
                 description: tool.description,
                 inputSchema: tool.inputSchema,
                 toolSchema: tool.inputSchema,
-                toolMetadata: tool.toolMetadata,
+                toolMetadata: buildToolMetadata(tool),
                 routingDomain: tool.routingDomain,
                 semanticNamespace: tool.semanticNamespace,
                 sensitivityTier: tool.sensitivityTier,
                 semanticWeight: tool.semanticWeight,
                 sourceProtocol: tool.sourceProtocol,
+                lifecycleStatus: tool.lifecycleStatus,
+                costTier: tool.costTier,
+                readOnly: tool.readOnly,
+                idempotent: tool.idempotent,
+                destructive: tool.destructive,
+                humanApprovalRequired: tool.humanApprovalRequired,
+                estimatedLatencyMs: tool.estimatedLatencyMs,
+                cacheTtlSeconds: tool.cacheTtlSeconds,
+                semanticDescription: tool.semanticDescription,
+                semanticKeywords: tool.semanticKeywords,
                 targetPersonas: tool.targetPersonas,
                 productId,
                 serviceId,
@@ -318,6 +340,16 @@ export default function InstanceApiMcpTool() {
             { accessorKey: 'sensitivityTier', header: 'Sensitivity Tier' },
             { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
             { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
+            { accessorKey: 'lifecycleStatus', header: 'Lifecycle' },
+            { accessorKey: 'costTier', header: 'Cost Tier' },
+            { accessorKey: 'readOnly', header: 'Read Only' },
+            { accessorKey: 'idempotent', header: 'Idempotent' },
+            { accessorKey: 'destructive', header: 'Destructive' },
+            { accessorKey: 'humanApprovalRequired', header: 'Approval' },
+            { accessorKey: 'estimatedLatencyMs', header: 'Latency Ms' },
+            { accessorKey: 'cacheTtlSeconds', header: 'Cache TTL' },
+            { accessorKey: 'semanticDescription', header: 'Semantic Description' },
+            { accessorKey: 'semanticKeywords', header: 'Semantic Keywords' },
             { accessorKey: 'targetPersonas', header: 'Target Personas' },
         ],
         [],

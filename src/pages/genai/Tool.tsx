@@ -43,6 +43,8 @@ type ToolType = {
     sensitivityTier?: string;
     semanticWeight?: number;
     sourceProtocol?: string;
+    lifecycleStatus?: string;
+    costTier?: string;
     targetPersonas?: string;
     descriptionSource?: string;
     descriptionManualOverride?: boolean;
@@ -259,9 +261,59 @@ export default function Tool() {
             { accessorKey: 'apiMethod', header: 'API Method' },
             { accessorKey: 'routingDomain', header: 'Routing Domain' },
             { accessorKey: 'semanticNamespace', header: 'Semantic Namespace' },
-            { accessorKey: 'sensitivityTier', header: 'Sensitivity Tier' },
+            {
+                accessorKey: 'sensitivityTier',
+                header: 'Sensitivity Tier',
+                filterVariant: 'select',
+                filterSelectOptions: [
+                    { label: 'Public', value: 'public' },
+                    { label: 'Internal', value: 'internal' },
+                    { label: 'Confidential', value: 'confidential' },
+                    { label: 'Restricted', value: 'restricted' },
+                ],
+            },
             { accessorKey: 'semanticWeight', header: 'Semantic Weight' },
-            { accessorKey: 'sourceProtocol', header: 'Source Protocol' },
+            {
+                accessorKey: 'sourceProtocol',
+                header: 'Source Protocol',
+                filterVariant: 'select',
+                filterSelectOptions: [
+                    { label: 'OpenAPI', value: 'openapi' },
+                    { label: 'MCP', value: 'mcp' },
+                    { label: 'LightAPI', value: 'lightapi' },
+                    { label: 'HTTP', value: 'http' },
+                ],
+            },
+            {
+                accessorKey: 'lifecycleStatus',
+                header: 'Lifecycle',
+                filterVariant: 'select',
+                filterSelectOptions: [
+                    { label: 'Active', value: 'active' },
+                    { label: 'Deprecated', value: 'deprecated' },
+                    { label: 'Retired', value: 'retired' },
+                ],
+                Cell: ({ cell }) => {
+                    const value = cell.getValue<string>();
+                    const color: ChipColor = value === 'active' ? 'success' : value === 'deprecated' ? 'warning' : value === 'retired' ? 'default' : 'default';
+                    return <Chip size="small" color={color} variant={value ? 'filled' : 'outlined'} label={value || 'none'} />;
+                },
+            },
+            {
+                accessorKey: 'costTier',
+                header: 'Cost Tier',
+                filterVariant: 'select',
+                filterSelectOptions: [
+                    { label: 'Low', value: 'low' },
+                    { label: 'Medium', value: 'medium' },
+                    { label: 'High', value: 'high' },
+                ],
+                Cell: ({ cell }) => {
+                    const value = cell.getValue<string>();
+                    const color: ChipColor = value === 'high' ? 'warning' : value === 'medium' ? 'info' : value === 'low' ? 'success' : 'default';
+                    return <Chip size="small" color={color} variant={value ? 'filled' : 'outlined'} label={value || 'none'} />;
+                },
+            },
             { accessorKey: 'targetPersonas', header: 'Target Personas' },
             { accessorKey: 'descriptionSource', header: 'Description Source' },
             {

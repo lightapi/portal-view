@@ -74,12 +74,14 @@ export const EMPTY_CREATE_API_VERSION_FORM: CreateApiVersionForm = {
 export type McpToolType = {
   name: string;
   endpointId?: string;
+  endpointName?: string;
   endpoint: string;
   method?: string;
   path?: string;
   description: string;
   inputSchema?: string;
-  toolMetadata?: string;
+  toolSchema?: string;
+  toolMetadata?: string | Record<string, unknown>;
   selected: boolean;
   routingDomain?: string;
   semanticNamespace?: string;
@@ -87,6 +89,17 @@ export type McpToolType = {
   semanticWeight?: number;
   sourceProtocol?: string;
   targetPersonas?: string;
+  lifecycleStatus?: string;
+  costTier?: string;
+  readOnly?: boolean;
+  idempotent?: boolean;
+  destructive?: boolean;
+  humanApprovalRequired?: boolean;
+  estimatedLatencyMs?: number;
+  cacheTtlSeconds?: number;
+  semanticDescription?: string;
+  semanticKeywords?: string;
+  parameterMappings?: Record<string, string>;
 };
 
 export type McpToolsMeta = {

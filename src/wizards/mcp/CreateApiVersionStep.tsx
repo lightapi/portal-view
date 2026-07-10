@@ -126,6 +126,8 @@ export default function CreateApiVersionStep({ committedApiId, form, errors, pat
           <TextField
             label="Target Host" fullWidth
             value={form.targetHost} onChange={(e) => patch({ targetHost: e.target.value })}
+            error={!!errors.targetHost}
+            helperText={errors.targetHost}
             placeholder="https://api.example.com"
           />
           <TextField
