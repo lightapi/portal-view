@@ -342,6 +342,18 @@ export default function InstanceAdmin() {
             </IconButton>
           </span>
         </Tooltip>
+        <Tooltip title={row.original.readonly ? 'Read-only instances cannot be cloned.' : instanceOwnership.canModifyRecord(row.original) ? 'Clone Instance' : 'You can only clone instances you own.'}>
+          <span>
+            <IconButton
+              onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceClone', searchParams, contextForRow(row.original)), {
+                state: { data: { ...row.original }, source: location.pathname },
+              })}
+              disabled={row.original.readonly || !instanceOwnership.canModifyRecord(row.original)}
+            >
+              <ContentCopyIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
         <Tooltip title="Snapshot">
           <IconButton
             onClick={() =>
