@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  cloneErrorText,
   cloneFormFingerprint,
+  isAbortError,
   isTerminalCloneStatus,
   mergePlannedSelections,
   nextPollingDelay,
@@ -9,6 +11,14 @@ import {
   selectedEntityIds,
   shouldPollClone,
 } from './cloneState.js';
+
+test('abort errors are ignored and numeric browser codes are never rendered', () => {
+  assert.equal(isAbortError({ name: 'AbortError', code: 20, message: 'The operation was aborted.' }), true);
+  assert.equal(isAbortError({ code: 20 }), true);
+  assert.equal(cloneErrorText({ code: 20, message: 'The operation was aborted.' }), 'The operation was aborted.');
+  assert.equal(cloneErrorText({ code: 20 }), 'Request failed.');
+  assert.equal(cloneErrorText({ code: 'PLAN_DEPENDENCY_CHANGED', message: 'stale' }), 'PLAN_DEPENDENCY_CHANGED');
+});
 
 test('planned selectors preserve locally held replacement values', () => {
   const selector = { scopeType: 'INSTANCE', sourceParentIds: { instanceId: 'source' }, propertyId: 'property', expectedAggregateVersion: 2 };

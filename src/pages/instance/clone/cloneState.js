@@ -1,5 +1,19 @@
 const TERMINAL_STATUSES = new Set(['PROJECTED', 'SNAPSHOT_READY', 'FAILED_DLQ']);
 
+export function isAbortError(error) {
+  return Boolean(error && typeof error === 'object' && (error.name === 'AbortError' || error.code === 20));
+}
+
+export function cloneErrorText(error) {
+  if (error && typeof error === 'object') {
+    if (typeof error.code === 'string' && error.code) return error.code;
+    if (typeof error.message === 'string' && error.message) return error.message;
+    if (typeof error.description === 'string' && error.description) return error.description;
+    return 'Request failed.';
+  }
+  return typeof error === 'string' ? error : 'Request failed.';
+}
+
 export function stableStringify(value) {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   if (value && typeof value === 'object') {

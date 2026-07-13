@@ -15,7 +15,7 @@ import {
   revealInstanceCloneValue,
 } from './clone/cloneApi';
 import {
-  cloneFormFingerprint, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
+  cloneErrorText, cloneFormFingerprint, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
   selectedEntityIds, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
@@ -53,14 +53,6 @@ const emptyForm: CloneForm = {
   confirmCertificates: false, includeDeployments: false, deploymentSelections: [],
   createSnapshot: false, propertySelections: [], revealedValues: {},
 };
-
-function errorText(error: unknown) {
-  if (error && typeof error === 'object') {
-    const value = error as { code?: string; message?: string; description?: string };
-    return value.code ?? value.message ?? value.description ?? 'Request failed.';
-  }
-  return typeof error === 'string' ? error : 'Request failed.';
-}
 
 function hasServerCode(error: unknown): error is { code: string } {
   return Boolean(error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string');
@@ -100,6 +92,7 @@ export default function InstanceClone() {
     fetchFreshSource(routedSource, controller.signal)
       .then((fresh) => {
         const authorized = { ...fresh, hostId: routedSource.hostId, instanceId: routedSource.instanceId };
+        setError(null);
         setSource(authorized);
         setForm((current) => ({
           ...current,
@@ -107,7 +100,7 @@ export default function InstanceClone() {
           targetProductVersionId: authorized.productVersionId ?? current.targetProductVersionId,
         }));
       })
-      .catch((requestError) => setError(errorText(requestError)))
+      .catch((requestError) => { if (!isAbortError(requestError)) setError(cloneErrorText(requestError)); })
       .finally(() => setSourceLoading(false));
     return () => controller.abort();
   }, [routedSource]);
@@ -174,7 +167,7 @@ export default function InstanceClone() {
       };
       setForm(nextForm); setPlan(result); setPlanFingerprint(cloneFormFingerprint(nextForm));
     } catch (requestError) {
-      setPlan(null); setPlanFingerprint(null); setError(errorText(requestError));
+      setPlan(null); setPlanFingerprint(null); setError(cloneErrorText(requestError));
     } finally { setPlanning(false); }
   }, [form, requestData, source]);
 
@@ -195,7 +188,7 @@ export default function InstanceClone() {
         sourceGraphDigest: plan.sourceGraphDigest, selector: selection,
       });
       setForm((current) => ({ ...current, revealedValues: { [key]: result.value } }));
-    } catch (requestError) { setError(errorText(requestError)); }
+    } catch (requestError) { setError(cloneErrorText(requestError)); }
     finally { setRevealing(null); }
   }, [plan, source]);
 
@@ -211,7 +204,7 @@ export default function InstanceClone() {
       setExecution(result); setStatus(result.status); setStatusResult(result); setPollAttempt(0); setStillProcessing(false);
     } catch (requestError) {
       if (hasServerCode(requestError)) {
-        setError(errorText(requestError));
+        setError(cloneErrorText(requestError));
       } else {
         setStatus('ACCEPTED');
         setStatusResult({
