@@ -15,7 +15,7 @@ import {
   revealInstanceCloneValue,
 } from './clone/cloneApi';
 import {
-  cloneFormFingerprint, isTerminalCloneStatus, nextPollingDelay, propertySelectionKey,
+  cloneFormFingerprint, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
   selectedEntityIds, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
@@ -169,7 +169,7 @@ export default function InstanceClone() {
         targetEnvironment: result.resolvedTarget.environment,
         targetServiceId: result.resolvedTarget.serviceId,
         targetProductVersionId: result.resolvedTarget.productVersionId,
-        propertySelections: result.propertySelections,
+        propertySelections: mergePlannedSelections(form.propertySelections, result.propertySelections),
         revealedValues: {},
       };
       setForm(nextForm); setPlan(result); setPlanFingerprint(cloneFormFingerprint(nextForm));

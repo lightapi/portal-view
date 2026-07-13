@@ -22,6 +22,15 @@ export function propertySelectionKey(selection) {
   });
 }
 
+export function mergePlannedSelections(currentSelections, plannedSelections) {
+  const currentByKey = new Map((currentSelections ?? []).map((selection) => [propertySelectionKey(selection), selection]));
+  return (plannedSelections ?? []).map((selection) => {
+    const current = currentByKey.get(propertySelectionKey(selection));
+    if (selection.action !== 'REPLACE' || current?.action !== 'REPLACE') return selection;
+    return { ...selection, replacementValue: current.replacementValue ?? null };
+  });
+}
+
 export function nextPollingDelay(attempt, random = Math.random) {
   const base = attempt < 3 ? [1000, 2000, 4000][attempt] : 5000;
   const capped = Math.min(5000, base);

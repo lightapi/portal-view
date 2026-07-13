@@ -3,11 +3,19 @@ import { test } from 'node:test';
 import {
   cloneFormFingerprint,
   isTerminalCloneStatus,
+  mergePlannedSelections,
   nextPollingDelay,
   propertySelectionKey,
   selectedEntityIds,
   shouldPollClone,
 } from './cloneState.js';
+
+test('planned selectors preserve locally held replacement values', () => {
+  const selector = { scopeType: 'INSTANCE', sourceParentIds: { instanceId: 'source' }, propertyId: 'property', expectedAggregateVersion: 2 };
+  const current = [{ ...selector, action: 'REPLACE', replacementValue: 'new-secret' }];
+  const planned = [{ ...selector, action: 'REPLACE', replacementValue: null }];
+  assert.equal(mergePlannedSelections(current, planned)[0].replacementValue, 'new-secret');
+});
 
 test('fingerprint is deterministic and ignores revealed values', () => {
   const first = cloneFormFingerprint({ target: { name: 'demo', env: 'demo' }, revealedValues: { a: 'secret' } });
