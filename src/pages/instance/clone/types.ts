@@ -74,4 +74,21 @@ export type SourceInstance = {
   productVersionId?: string;
   aggregateVersion?: number;
   readonly?: boolean;
+  instanceDesc?: string;
+  zone?: string;
+  region?: string;
+  lob?: string;
+  resourceName?: string;
+  businessName?: string;
+  topicClassification?: string;
+};
+
+export type CloneOption = { id: string; label: string };
+export type CloneTargetOptions = {
+  productVersionId: CloneOption[];
+  envTag: CloneOption[];
+  environment: CloneOption[];
+  zone: CloneOption[];
+  region: CloneOption[];
+  lob: CloneOption[];
 };

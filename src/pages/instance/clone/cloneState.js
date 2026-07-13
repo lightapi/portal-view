@@ -14,6 +14,28 @@ export function cloneErrorText(error) {
   return typeof error === 'string' ? error : 'Request failed.';
 }
 
+export function normalizeCloneOptions(payload) {
+  const source = Array.isArray(payload) ? payload
+    : payload && typeof payload === 'object' ? payload.data ?? payload.options ?? payload.values ?? payload.items ?? [] : [];
+  if (!Array.isArray(source)) return [];
+  const seen = new Set();
+  return source.flatMap((value) => {
+    if (typeof value === 'string') return seen.has(value) ? [] : (seen.add(value), [{ id: value, label: value }]);
+    if (!value || typeof value !== 'object') return [];
+    const rawId = value.id ?? value.value ?? value.code ?? value.key ?? value.name;
+    if (rawId == null) return [];
+    const id = String(rawId);
+    if (seen.has(id)) return [];
+    seen.add(id);
+    return [{ id, label: String(value.label ?? value.name ?? value.displayName ?? value.value ?? value.description ?? id) }];
+  });
+}
+
+export function includeOriginalOption(options, original) {
+  if (!original || options.some((option) => option.id === original)) return options;
+  return [{ id: original, label: original }, ...options];
+}
+
 export function stableStringify(value) {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   if (value && typeof value === 'object') {

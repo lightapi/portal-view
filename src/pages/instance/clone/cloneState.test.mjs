@@ -4,13 +4,24 @@ import {
   cloneErrorText,
   cloneFormFingerprint,
   isAbortError,
+  includeOriginalOption,
   isTerminalCloneStatus,
   mergePlannedSelections,
+  normalizeCloneOptions,
   nextPollingDelay,
   propertySelectionKey,
   selectedEntityIds,
   shouldPollClone,
 } from './cloneState.js';
+
+test('clone dropdown options normalize dynamic-select payloads and retain the original value', () => {
+  assert.deepEqual(normalizeCloneOptions({ data: [{ value: 'dev', label: 'Development' }, { value: 'dev' }, 'loc'] }), [
+    { id: 'dev', label: 'Development' }, { id: 'loc', label: 'loc' },
+  ]);
+  assert.deepEqual(includeOriginalOption([{ id: 'dev', label: 'Development' }], 'loc'), [
+    { id: 'loc', label: 'loc' }, { id: 'dev', label: 'Development' },
+  ]);
+});
 
 test('abort errors are ignored and numeric browser codes are never rendered', () => {
   assert.equal(isAbortError({ name: 'AbortError', code: 20, message: 'The operation was aborted.' }), true);

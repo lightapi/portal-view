@@ -1,5 +1,6 @@
 import fetchClient from '../../../utils/fetchClient';
-import type { CloneExecution, ClonePlan, CloneStatusResult, PropertySelection, SourceInstance } from './types';
+import { normalizeCloneOptions } from './cloneState.js';
+import type { CloneExecution, CloneOption, ClonePlan, CloneStatusResult, CloneTargetOptions, PropertySelection, SourceInstance } from './types';
 
 function rpc(action: string, data: Record<string, unknown>) {
   return { host: 'lightapi.net', service: 'instance', action, version: '0.1.0', data };
@@ -14,6 +15,30 @@ export function fetchFreshSource(source: SourceInstance, signal?: AbortSignal): 
       aggregateVersion: source.aggregateVersion ?? 0,
     }),
   });
+}
+
+function labelQuery(service: string, action: string, data: Record<string, string>) {
+  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
+    host: 'lightapi.net', service, action, version: '0.1.0', data,
+  }));
+}
+
+async function optionRequest(url: string, signal?: AbortSignal): Promise<CloneOption[]> {
+  return normalizeCloneOptions(await fetchClient(url, { signal }));
+}
+
+export async function fetchCloneTargetOptions(hostId: string, signal?: AbortSignal): Promise<CloneTargetOptions> {
+  const requests = [
+    optionRequest(labelQuery('product', 'getProductVersionIdLabel', { hostId }), signal),
+    optionRequest(`/r/data?name=environment&host=${encodeURIComponent(hostId)}`, signal),
+    optionRequest('/r/data?name=environment', signal),
+    optionRequest(`/r/data?name=network_zone&host=${encodeURIComponent(hostId)}`, signal),
+    optionRequest(`/r/data?name=region&host=${encodeURIComponent(hostId)}`, signal),
+    optionRequest(`/r/data?name=lob&host=${encodeURIComponent(hostId)}`, signal),
+  ];
+  const results = await Promise.allSettled(requests);
+  const value = (index: number) => results[index].status === 'fulfilled' ? results[index].value : [];
+  return { productVersionId: value(0), envTag: value(1), environment: value(2), zone: value(3), region: value(4), lob: value(5) };
 }
 
 export function planInstanceClone(data: Record<string, unknown>, signal?: AbortSignal): Promise<ClonePlan> {

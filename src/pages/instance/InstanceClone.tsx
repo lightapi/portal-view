@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Alert, Box, Button, Checkbox, CircularProgress, Divider, FormControlLabel, MenuItem,
+  Alert, Autocomplete, Box, Button, Checkbox, CircularProgress, Divider, FormControlLabel, MenuItem,
   Paper, Select, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField,
   Typography,
 } from '@mui/material';
@@ -11,15 +11,15 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useUserState } from '../../contexts/UserContext';
 import {
-  executeInstanceClone, fetchFreshSource, getInstanceCloneStatus, planInstanceClone,
+  executeInstanceClone, fetchCloneTargetOptions, fetchFreshSource, getInstanceCloneStatus, planInstanceClone,
   revealInstanceCloneValue,
 } from './clone/cloneApi';
 import {
-  cloneErrorText, cloneFormFingerprint, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
+  cloneErrorText, cloneFormFingerprint, includeOriginalOption, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
   selectedEntityIds, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
-  CloneExecution, ClonePlan, CloneStatus, CloneStatusResult, PropertyAction,
+  CloneExecution, CloneOption, ClonePlan, CloneStatus, CloneStatusResult, CloneTargetOptions, PropertyAction,
   PropertySelection, SourceInstance,
 } from './clone/types';
 
@@ -54,6 +54,10 @@ const emptyForm: CloneForm = {
   createSnapshot: false, propertySelections: [], revealedValues: {},
 };
 
+const emptyTargetOptions: CloneTargetOptions = {
+  productVersionId: [], envTag: [], environment: [], zone: [], region: [], lob: [],
+};
+
 function hasServerCode(error: unknown): error is { code: string } {
   return Boolean(error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string');
 }
@@ -82,6 +86,8 @@ export default function InstanceClone() {
   const [stillProcessing, setStillProcessing] = useState(false);
   const [pollAttempt, setPollAttempt] = useState(0);
   const [connectivityTick, setConnectivityTick] = useState(0);
+  const [targetOptions, setTargetOptions] = useState<CloneTargetOptions>(emptyTargetOptions);
+  const [targetOptionsLoading, setTargetOptionsLoading] = useState(false);
   const pollInFlight = useRef(false);
   const pollAbort = useRef<AbortController | null>(null);
 
@@ -104,6 +110,17 @@ export default function InstanceClone() {
       .finally(() => setSourceLoading(false));
     return () => controller.abort();
   }, [routedSource]);
+
+  useEffect(() => {
+    if (!source?.hostId) return;
+    const controller = new AbortController();
+    setTargetOptionsLoading(true);
+    fetchCloneTargetOptions(source.hostId, controller.signal)
+      .then(setTargetOptions)
+      .catch((requestError) => { if (!isAbortError(requestError)) setError(cloneErrorText(requestError)); })
+      .finally(() => setTargetOptionsLoading(false));
+    return () => controller.abort();
+  }, [source?.hostId]);
 
   useEffect(() => {
     const refresh = () => setConnectivityTick((value) => value + 1);
@@ -262,15 +279,18 @@ export default function InstanceClone() {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>Target</Typography>
         <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
-          <TextField required label="Instance Name" value={form.targetInstanceName} onChange={(e) => updateForm('targetInstanceName', e.target.value)} />
-          <TextField required label="Environment Tag" value={form.targetEnvTag} onChange={(e) => updateForm('targetEnvTag', e.target.value)} />
-          <TextField label="Environment" value={form.targetEnvironment} onChange={(e) => updateForm('targetEnvironment', e.target.value)} placeholder={form.targetEnvTag} />
-          <TextField label="Service ID" value={form.targetServiceId} onChange={(e) => updateForm('targetServiceId', e.target.value)} />
-          <TextField label="Product Version ID" value={form.targetProductVersionId} onChange={(e) => updateForm('targetProductVersionId', e.target.value)} />
-          <TextField label="Description" value={form.description} onChange={(e) => updateForm('description', e.target.value)} />
-          {(['zone', 'region', 'lob', 'resourceName', 'businessName', 'topicClassification'] as const).map((field) => (
-            <TextField key={field} label={field} value={form[field]} onChange={(e) => updateForm(field, e.target.value)} />
-          ))}
+          <OriginalTextField required label="Instance Name" value={form.targetInstanceName} original={source.instanceName} onChange={(value) => updateForm('targetInstanceName', value)} />
+          <CloneSelect label="Environment Tag" required value={form.targetEnvTag} original={source.envTag} options={targetOptions.envTag} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvTag', value)} />
+          <CloneSelect label="Environment" value={form.targetEnvironment} original={source.environment} options={targetOptions.environment} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvironment', value)} />
+          <OriginalTextField label="Service ID" value={form.targetServiceId} original={source.serviceId} onChange={(value) => updateForm('targetServiceId', value)} />
+          <CloneSelect label="Product Version ID" value={form.targetProductVersionId} original={source.productVersionId} options={targetOptions.productVersionId} loading={targetOptionsLoading} onChange={(value) => updateForm('targetProductVersionId', value)} />
+          <OriginalTextField label="Description" value={form.description} original={source.instanceDesc} onChange={(value) => updateForm('description', value)} />
+          <CloneSelect label="Network Zone" value={form.zone} original={source.zone} options={targetOptions.zone} loading={targetOptionsLoading} onChange={(value) => updateForm('zone', value)} />
+          <CloneSelect label="Region" value={form.region} original={source.region} options={targetOptions.region} loading={targetOptionsLoading} onChange={(value) => updateForm('region', value)} />
+          <CloneSelect label="LOB" value={form.lob} original={source.lob} options={targetOptions.lob} loading={targetOptionsLoading} onChange={(value) => updateForm('lob', value)} />
+          <OriginalTextField label="Resource Name" value={form.resourceName} original={source.resourceName} onChange={(value) => updateForm('resourceName', value)} />
+          <OriginalTextField label="Business Name" value={form.businessName} original={source.businessName} onChange={(value) => updateForm('businessName', value)} />
+          <OriginalTextField label="Topic Classification" value={form.topicClassification} original={source.topicClassification} onChange={(value) => updateForm('topicClassification', value)} />
         </Box>
         <Stack direction={{ xs: 'column', md: 'row' }} mt={2}>
           <FormControlLabel control={<Checkbox checked={form.includeFiles} onChange={(e) => updateForm('includeFiles', e.target.checked)} />} label="Include selected files" />
@@ -340,6 +360,27 @@ export default function InstanceClone() {
       </Paper>}
     </Box>
   );
+}
+
+function originalHelper(original?: string) {
+  return `Original: ${original && original.length > 0 ? original : '—'}`;
+}
+
+function OriginalTextField({ label, value, original, required, onChange }: {
+  label: string; value: string; original?: string; required?: boolean; onChange: (value: string) => void;
+}) {
+  return <TextField required={required} label={label} value={value} helperText={originalHelper(original)} onChange={(event) => onChange(event.target.value)} />;
+}
+
+function CloneSelect({ label, value, original, options, loading, required, onChange }: {
+  label: string; value: string; original?: string; options: CloneOption[]; loading: boolean; required?: boolean; onChange: (value: string) => void;
+}) {
+  const available = includeOriginalOption(options, original);
+  const selected = available.find((option) => option.id === value) ?? null;
+  return <Autocomplete options={available} value={selected} loading={loading} getOptionLabel={(option) => option.label}
+    isOptionEqualToValue={(option, candidate) => option.id === candidate.id}
+    onChange={(_event, option) => onChange(option?.id ?? '')}
+    renderInput={(params) => <TextField {...params} required={required} label={label} helperText={originalHelper(original)} />} />;
 }
 
 function SelectionList({ title, ids, selected, onChange }: { title: string; ids: string[]; selected: string[]; onChange: (ids: string[]) => void }) {
