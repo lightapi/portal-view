@@ -16,7 +16,7 @@ import {
 } from './clone/cloneApi';
 import {
   cloneErrorText, cloneFormFingerprint, includeOriginalOption, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
-  selectedEntityIds, shouldPollClone,
+  isTransportError, selectedEntityIds, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
   CloneExecution, CloneOption, ClonePlan, CloneStatus, CloneStatusResult, CloneTargetOptions, PropertyAction,
@@ -57,10 +57,6 @@ const emptyForm: CloneForm = {
 const emptyTargetOptions: CloneTargetOptions = {
   productVersionId: [], envTag: [], environment: [], zone: [], region: [], lob: [],
 };
-
-function hasServerCode(error: unknown): error is { code: string } {
-  return Boolean(error && typeof error === 'object' && typeof (error as { code?: unknown }).code === 'string');
-}
 
 function selectionLabel(selection: PropertySelection) {
   return `${selection.scopeType} / ${selection.propertyId}`;
@@ -166,6 +162,8 @@ export default function InstanceClone() {
     targetEnvironment: value.targetEnvironment || value.targetEnvTag,
     targetServiceId: value.targetServiceId,
     targetProductVersionId: value.targetProductVersionId,
+    ...(plan?.resolvedTarget.ownerUserId ? { targetOwnerUserId: plan.resolvedTarget.ownerUserId } : {}),
+    ...(plan?.resolvedTarget.ownerPositionId ? { targetOwnerPositionId: plan.resolvedTarget.ownerPositionId } : {}),
     description: value.description || undefined, zone: value.zone || undefined, region: value.region || undefined,
     lob: value.lob || undefined, resourceName: value.resourceName || undefined,
     businessName: value.businessName || undefined, topicClassification: value.topicClassification || undefined,
@@ -176,7 +174,7 @@ export default function InstanceClone() {
     deploymentSelections: value.includeDeployments ? value.deploymentSelections : [],
     createSnapshot: value.createSnapshot,
     propertySelections: value.propertySelections,
-  }), [host, plan?.cloneRequestId, source]);
+  }), [host, plan?.cloneRequestId, plan?.resolvedTarget.ownerPositionId, plan?.resolvedTarget.ownerUserId, source]);
 
   const handlePlan = useCallback(async () => {
     if (!source || !form.targetInstanceName.trim() || !form.targetEnvTag.trim()) {
@@ -233,8 +231,9 @@ export default function InstanceClone() {
       });
       setExecution(result); setStatus(result.status); setStatusResult(result); setPollAttempt(0); setStillProcessing(false);
     } catch (requestError) {
-      if (hasServerCode(requestError)) {
+      if (!isTransportError(requestError)) {
         setError(cloneErrorText(requestError));
+        setStatus(null); setStatusResult(null); setStillProcessing(false);
       } else {
         setStatus('ACCEPTED');
         setStatusResult({
@@ -257,8 +256,12 @@ export default function InstanceClone() {
       const result = await getInstanceCloneStatus(hostId, cloneRequestId, controller.signal);
       setStatusResult(result); setStatus(result.status); setStillProcessing(false);
       if (result.status === 'ACCEPTED') setPollAttempt((value) => value + 1);
-    } catch {
-      setStillProcessing(true);
+    } catch (requestError) {
+      if (isTransportError(requestError)) {
+        setStillProcessing(true);
+      } else {
+        setError(cloneErrorText(requestError)); setStatus(null); setStatusResult(null); setStillProcessing(false);
+      }
     } finally {
       if (pollAbort.current === controller) pollAbort.current = null;
       pollInFlight.current = false;
@@ -348,7 +351,7 @@ export default function InstanceClone() {
           {form.includeDeployments && <SelectionList title="Deployment definitions" ids={deploymentIds} selected={form.deploymentSelections} onChange={(ids) => setForm((current) => ({ ...current, deploymentSelections: ids, propertySelections: [], revealedValues: {} }))} />}
           <Divider sx={{ my: 2 }} />
           <Typography>Events: {plan.eventCount} / {plan.maxEvents}; serialized bytes: {plan.payloadBytes} / {plan.maxPayloadBytes}</Typography>
-          <Typography variant="body2">Snapshot lookup: {Object.entries(plan.snapshotLookup).map(([key, value]) => `${key}=${value}`).join(', ')}</Typography>
+          <Typography variant="body2">Target identity: {Object.entries(plan.snapshotLookup).map(([key, value]) => `${key}=${value}`).join(', ')}</Typography>
           {plan.warnings.map((warning) => <Alert key={warning} severity="warning" sx={{ mt: 1 }}>{warning}</Alert>)}
           {planFingerprint !== currentFingerprint && <Alert severity="warning" sx={{ mt: 1 }}>The form changed after planning. Plan again before cloning.</Alert>}
         </Paper>

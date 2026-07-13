@@ -4,8 +4,14 @@ export function isAbortError(error) {
   return Boolean(error && typeof error === 'object' && (error.name === 'AbortError' || error.code === 20));
 }
 
+export function isTransportError(error) {
+  return error instanceof TypeError;
+}
+
 export function cloneErrorText(error) {
   if (error && typeof error === 'object') {
+    const nestedCode = error.data && typeof error.data === 'object' ? error.data.code : null;
+    if (typeof nestedCode === 'string' && nestedCode) return nestedCode;
     if (typeof error.code === 'string' && error.code) return error.code;
     if (typeof error.message === 'string' && error.message) return error.message;
     if (typeof error.description === 'string' && error.description) return error.description;

@@ -4,6 +4,7 @@ import {
   cloneErrorText,
   cloneFormFingerprint,
   isAbortError,
+  isTransportError,
   includeOriginalOption,
   isTerminalCloneStatus,
   mergePlannedSelections,
@@ -29,6 +30,9 @@ test('abort errors are ignored and numeric browser codes are never rendered', ()
   assert.equal(cloneErrorText({ code: 20, message: 'The operation was aborted.' }), 'The operation was aborted.');
   assert.equal(cloneErrorText({ code: 20 }), 'Request failed.');
   assert.equal(cloneErrorText({ code: 'PLAN_DEPENDENCY_CHANGED', message: 'stale' }), 'PLAN_DEPENDENCY_CHANGED');
+  assert.equal(cloneErrorText({ code: -32603, data: { code: 'PLAN_DEPENDENCY_CHANGED' } }), 'PLAN_DEPENDENCY_CHANGED');
+  assert.equal(isTransportError(new TypeError('Failed to fetch')), true);
+  assert.equal(isTransportError({ code: -32603, message: 'Internal error' }), false);
 });
 
 test('planned selectors preserve locally held replacement values', () => {
