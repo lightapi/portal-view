@@ -13,6 +13,7 @@ import type { ChipProps } from '@mui/material';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
 import { hasAnyRole } from '../../utils/ownershipScope';
+import { EventReplayAdmin } from './replay/EventReplayAdmin';
 
 type NotificationStatus = 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'DLQ' | 'SKIPPED' | string;
 
@@ -624,6 +625,13 @@ export default function Notification() {
           groups={dlqRepeatGroups}
           isError={isDlqSummaryError}
           isLoading={isDlqSummaryLoading}
+        />
+      ) : null}
+      {isAdminView && host ? (
+        <EventReplayAdmin
+          hostId={host}
+          currentUserId={userId}
+          notificationTransactionIds={data.map((notification) => notification.transactionId).filter((id): id is string => !!id)}
         />
       ) : null}
       <MaterialReactTable table={table} />
