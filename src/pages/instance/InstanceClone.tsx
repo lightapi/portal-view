@@ -102,8 +102,18 @@ export default function InstanceClone() {
         setSource(authorized);
         setForm((current) => ({
           ...current,
-          targetServiceId: authorized.serviceId ?? current.targetServiceId,
-          targetProductVersionId: authorized.productVersionId ?? current.targetProductVersionId,
+          targetInstanceName: authorized.instanceName ?? '',
+          targetEnvTag: authorized.envTag ?? '',
+          targetEnvironment: authorized.environment ?? '',
+          targetServiceId: authorized.serviceId ?? '',
+          targetProductVersionId: authorized.productVersionId ?? '',
+          description: authorized.instanceDesc ?? '',
+          zone: authorized.zone ?? '',
+          region: authorized.region ?? '',
+          lob: authorized.lob ?? '',
+          resourceName: authorized.resourceName ?? '',
+          businessName: authorized.businessName ?? '',
+          topicClassification: authorized.topicClassification ?? '',
         }));
       })
       .catch((requestError) => { if (!isAbortError(requestError)) setError(cloneErrorText(requestError)); })
@@ -279,18 +289,18 @@ export default function InstanceClone() {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom>Target</Typography>
         <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
-          <OriginalTextField required label="Instance Name" value={form.targetInstanceName} original={source.instanceName} onChange={(value) => updateForm('targetInstanceName', value)} />
+          <CloneTextField required label="Instance Name" value={form.targetInstanceName} onChange={(value) => updateForm('targetInstanceName', value)} />
           <CloneSelect label="Environment Tag" required value={form.targetEnvTag} original={source.envTag} options={targetOptions.envTag} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvTag', value)} />
           <CloneSelect label="Environment" value={form.targetEnvironment} original={source.environment} options={targetOptions.environment} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvironment', value)} />
-          <OriginalTextField label="Service ID" value={form.targetServiceId} original={source.serviceId} onChange={(value) => updateForm('targetServiceId', value)} />
+          <CloneTextField label="Service ID" value={form.targetServiceId} onChange={(value) => updateForm('targetServiceId', value)} />
           <CloneSelect label="Product Version ID" value={form.targetProductVersionId} original={source.productVersionId} options={targetOptions.productVersionId} loading={targetOptionsLoading} onChange={(value) => updateForm('targetProductVersionId', value)} />
-          <OriginalTextField label="Description" value={form.description} original={source.instanceDesc} onChange={(value) => updateForm('description', value)} />
+          <CloneTextField label="Description" value={form.description} onChange={(value) => updateForm('description', value)} />
           <CloneSelect label="Network Zone" value={form.zone} original={source.zone} options={targetOptions.zone} loading={targetOptionsLoading} onChange={(value) => updateForm('zone', value)} />
           <CloneSelect label="Region" value={form.region} original={source.region} options={targetOptions.region} loading={targetOptionsLoading} onChange={(value) => updateForm('region', value)} />
           <CloneSelect label="LOB" value={form.lob} original={source.lob} options={targetOptions.lob} loading={targetOptionsLoading} onChange={(value) => updateForm('lob', value)} />
-          <OriginalTextField label="Resource Name" value={form.resourceName} original={source.resourceName} onChange={(value) => updateForm('resourceName', value)} />
-          <OriginalTextField label="Business Name" value={form.businessName} original={source.businessName} onChange={(value) => updateForm('businessName', value)} />
-          <OriginalTextField label="Topic Classification" value={form.topicClassification} original={source.topicClassification} onChange={(value) => updateForm('topicClassification', value)} />
+          <CloneTextField label="Resource Name" value={form.resourceName} onChange={(value) => updateForm('resourceName', value)} />
+          <CloneTextField label="Business Name" value={form.businessName} onChange={(value) => updateForm('businessName', value)} />
+          <CloneTextField label="Topic Classification" value={form.topicClassification} onChange={(value) => updateForm('topicClassification', value)} />
         </Box>
         <Stack direction={{ xs: 'column', md: 'row' }} mt={2}>
           <FormControlLabel control={<Checkbox checked={form.includeFiles} onChange={(e) => updateForm('includeFiles', e.target.checked)} />} label="Include selected files" />
@@ -362,14 +372,10 @@ export default function InstanceClone() {
   );
 }
 
-function originalHelper(original?: string) {
-  return `Original: ${original && original.length > 0 ? original : '—'}`;
-}
-
-function OriginalTextField({ label, value, original, required, onChange }: {
-  label: string; value: string; original?: string; required?: boolean; onChange: (value: string) => void;
+function CloneTextField({ label, value, required, onChange }: {
+  label: string; value: string; required?: boolean; onChange: (value: string) => void;
 }) {
-  return <TextField required={required} label={label} value={value} helperText={originalHelper(original)} onChange={(event) => onChange(event.target.value)} />;
+  return <TextField required={required} label={label} value={value} onChange={(event) => onChange(event.target.value)} />;
 }
 
 function CloneSelect({ label, value, original, options, loading, required, onChange }: {
@@ -380,7 +386,7 @@ function CloneSelect({ label, value, original, options, loading, required, onCha
   return <Autocomplete options={available} value={selected} loading={loading} getOptionLabel={(option) => option.label}
     isOptionEqualToValue={(option, candidate) => option.id === candidate.id}
     onChange={(_event, option) => onChange(option?.id ?? '')}
-    renderInput={(params) => <TextField {...params} required={required} label={label} helperText={originalHelper(original)} />} />;
+    renderInput={(params) => <TextField {...params} required={required} label={label} />} />;
 }
 
 function SelectionList({ title, ids, selected, onChange }: { title: string; ids: string[]; selected: string[]; onChange: (ids: string[]) => void }) {
