@@ -1,0 +1,444 @@
+{
+  "contractVersion": "event-replay-v1",
+  "canonicalEncodingVersion": "event-replay-canonical-v1",
+  "envelopeVersion": "portal-event-replay-v1",
+  "policyRegistryVersion": "event-replay-policy-v1",
+  "limitPolicyVersion": "event-replay-limits-v1",
+  "approvalPolicyVersion": "event-replay-approval-v1",
+  "apiNamespace": "lightapi.net/user",
+  "serviceVersion": "0.1.0",
+  "operations": [
+    {
+      "name": "listEventReplayCandidate",
+      "kind": "QUERY",
+      "serviceId": "lightapi.net/user/listEventReplayCandidate/0.1.0",
+      "baseScope": "portal.r",
+      "dedicatedPermission": "event-replay.read"
+    },
+    {
+      "name": "getEventReplayFailure",
+      "kind": "QUERY",
+      "serviceId": "lightapi.net/user/getEventReplayFailure/0.1.0",
+      "baseScope": "portal.r",
+      "dedicatedPermission": "event-replay.read"
+    },
+    {
+      "name": "createEventReplayPlan",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/createEventReplayPlan/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.plan"
+    },
+    {
+      "name": "getEventReplay",
+      "kind": "QUERY",
+      "serviceId": "lightapi.net/user/getEventReplay/0.1.0",
+      "baseScope": "portal.r",
+      "dedicatedPermission": "event-replay.read"
+    },
+    {
+      "name": "approveEventReplay",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/approveEventReplay/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.approve"
+    },
+    {
+      "name": "executeEventReplay",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/executeEventReplay/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.execute"
+    },
+    {
+      "name": "cancelEventReplay",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/cancelEventReplay/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.cancel"
+    },
+    {
+      "name": "waiveEventReplayFailure",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/waiveEventReplayFailure/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.waive"
+    },
+    {
+      "name": "releaseEventReplayBarrier",
+      "kind": "COMMAND",
+      "serviceId": "lightapi.net/user/releaseEventReplayBarrier/0.1.0",
+      "baseScope": "portal.w",
+      "dedicatedPermission": "event-replay.break-glass"
+    }
+  ],
+  "selectionStrategies": [
+    "EXACT",
+    "DEPENDENCY_CLOSURE"
+  ],
+  "validationModes": [
+    "VALIDATE_ONLY",
+    "ROLLBACK_DRY_RUN",
+    "EXECUTE"
+  ],
+  "validationModeSemantics": {
+    "VALIDATE_ONLY": "Build and validate an immutable dependency-complete plan without invoking projection handlers.",
+    "ROLLBACK_DRY_RUN": "Invoke only explicitly allowlisted handlers in a database transaction that is always rolled back; projectionCommitted is false and failures remain OPEN.",
+    "EXECUTE": "Invoke allowlisted handlers through the shared projection transaction executor and commit only after all transaction completion checks pass."
+  },
+  "projectionExecutionModes": [
+    "LIVE",
+    "REPLAY"
+  ],
+  "projectionExecutionModeSemantics": {
+    "LIVE": "Process a transaction from its ordinary database or Kafka source and advance that source only after projection or canonical failure capture commits.",
+    "REPLAY": "Process an immutable archived transaction without advancing or seeking an original source offset."
+  },
+  "replayPolicies": [
+    "GRAPH_ROOT",
+    "AGGREGATE_VERSION",
+    "TRANSACTION_ONLY",
+    "NOT_REPLAYABLE"
+  ],
+  "failureStatuses": [
+    "OPEN",
+    "RESOLVED",
+    "WAIVED"
+  ],
+  "failureTransitions": {
+    "OPEN": [
+      "RESOLVED",
+      "WAIVED"
+    ],
+    "RESOLVED": [
+      "OPEN"
+    ],
+    "WAIVED": []
+  },
+  "failureTransitionRules": {
+    "OPEN_TO_RESOLVED": "Replay worker only, after the archived transaction and transaction-completion checks commit.",
+    "OPEN_TO_WAIVED": "Authorized human command only, with explicit failure IDs, dependency impact, reason, and required approval.",
+    "RESOLVED_TO_OPEN": "System reconciliation only when committed repair evidence is invalidated; emits an audit event.",
+    "waiverDoesNotAdvanceProjectionMetadata": true,
+    "waiverDoesNotCascade": true,
+    "waivedDependencyStillBlocksDownstreamPlans": true
+  },
+  "replayRequestStatuses": [
+    "PLANNING",
+    "READY",
+    "AWAITING_APPROVAL",
+    "APPROVED",
+    "INSTALLING_BARRIER",
+    "RUNNING",
+    "SUCCEEDED",
+    "FAILED",
+    "CANCELLED",
+    "EXPIRED"
+  ],
+  "replayRequestTransitions": {
+    "PLANNING": [
+      "READY",
+      "FAILED"
+    ],
+    "READY": [
+      "AWAITING_APPROVAL",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "AWAITING_APPROVAL": [
+      "APPROVED",
+      "CANCELLED",
+      "EXPIRED"
+    ],
+    "APPROVED": [
+      "INSTALLING_BARRIER",
+      "CANCELLED"
+    ],
+    "INSTALLING_BARRIER": [
+      "RUNNING",
+      "FAILED"
+    ],
+    "RUNNING": [
+      "SUCCEEDED",
+      "FAILED"
+    ],
+    "SUCCEEDED": [],
+    "FAILED": [],
+    "CANCELLED": [],
+    "EXPIRED": []
+  },
+  "replayRequestTransitionActors": {
+    "PLANNING_TO_READY_OR_FAILED": "planner",
+    "READY_TO_AWAITING_APPROVAL": "create-command",
+    "READY_OR_AWAITING_APPROVAL_TO_CANCELLED": "requester-or-authorized-operator",
+    "READY_OR_AWAITING_APPROVAL_TO_EXPIRED": "expiry-worker",
+    "AWAITING_APPROVAL_TO_APPROVED": "independent-approver",
+    "APPROVED_TO_INSTALLING_BARRIER": "execute-command",
+    "INSTALLING_BARRIER_TO_RUNNING_OR_FAILED": "replay-worker",
+    "RUNNING_TO_SUCCEEDED_OR_FAILED": "replay-worker"
+  },
+  "replayItemStatuses": [
+    "PENDING",
+    "RUNNING",
+    "SUCCEEDED",
+    "FAILED"
+  ],
+  "replayAttemptResults": [
+    "RUNNING",
+    "SUCCEEDED",
+    "FAILED",
+    "ABANDONED"
+  ],
+  "barrierScopeTypes": [
+    "GRAPH_ROOT",
+    "AGGREGATE",
+    "HOST",
+    "DB_PARTITION",
+    "KAFKA_PARTITION",
+    "PROJECTION"
+  ],
+  "barrierStates": [
+    "INSTALLING",
+    "ACTIVE",
+    "DRAINING",
+    "QUARANTINED"
+  ],
+  "barrierOwnerTypes": [
+    "REPLAY_REQUEST",
+    "FAILURE_QUARANTINE"
+  ],
+  "deferredStatuses": [
+    "PENDING",
+    "RUNNING",
+    "SUCCEEDED",
+    "FAILED"
+  ],
+  "publicationStatuses": [
+    "PENDING",
+    "RETRY_WAIT",
+    "PUBLISHED",
+    "TERMINAL_FAILED"
+  ],
+  "payloadStorageTypes": [
+    "DATABASE",
+    "OBJECT"
+  ],
+  "fingerprints": {
+    "algorithm": "SHA-256",
+    "encoding": "lowercase-hex",
+    "canonicalFieldsEncoding": "UTF-8 length-delimited fields",
+    "contentFingerprintFields": [
+      "projectionName",
+      "consumerGroup",
+      "originalTransactionId",
+      "orderedEventIds",
+      "orderedPayloadDigests"
+    ],
+    "deliveryFingerprintAdditionalFields": [
+      "processorType",
+      "sourceCoordinates"
+    ],
+    "planHashFields": [
+      "contractVersion",
+      "hostId",
+      "projectionName",
+      "consumerGroup",
+      "selectionStrategy",
+      "validationMode",
+      "orderedFailureIds",
+      "contentFingerprints",
+      "projectionMetadata",
+      "acceptedProjectedGraphRevisions",
+      "sourceHighWaterMarks",
+      "policyRegistryVersion",
+      "compatibilityUpgraderArtifacts",
+      "transactionEventByteCounts",
+      "isolationScope",
+      "expiresAt"
+    ]
+  },
+  "errors": [
+    {
+      "code": "TRANSACTION_INCOMPLETE",
+      "httpStatus": 422,
+      "retryable": false
+    },
+    {
+      "code": "REPLAY_GAP",
+      "httpStatus": 422,
+      "retryable": false
+    },
+    {
+      "code": "PAYLOAD_UNAVAILABLE",
+      "httpStatus": 422,
+      "retryable": false
+    },
+    {
+      "code": "PAYLOAD_DIGEST_MISMATCH",
+      "httpStatus": 409,
+      "retryable": false
+    },
+    {
+      "code": "UNSUPPORTED_EVENT_TYPE",
+      "httpStatus": 422,
+      "retryable": false
+    },
+    {
+      "code": "UNSUPPORTED_PAYLOAD_VERSION",
+      "httpStatus": 422,
+      "retryable": false
+    },
+    {
+      "code": "STALE_PLAN",
+      "httpStatus": 409,
+      "retryable": true
+    },
+    {
+      "code": "LEASE_LOST",
+      "httpStatus": 409,
+      "retryable": true
+    },
+    {
+      "code": "PAUSE_TIMEOUT",
+      "httpStatus": 409,
+      "retryable": true
+    },
+    {
+      "code": "ARCHIVE_CAPACITY_EXCEEDED",
+      "httpStatus": 503,
+      "retryable": true
+    },
+    {
+      "code": "FAILURE_PUBLICATION_TERMINAL",
+      "httpStatus": 503,
+      "retryable": false
+    },
+    {
+      "code": "REPLAY_LIMIT_EXCEEDED",
+      "httpStatus": 413,
+      "retryable": false
+    },
+    {
+      "code": "PROJECTION_FAILED",
+      "httpStatus": 500,
+      "retryable": false
+    },
+    {
+      "code": "DEFERRED_PROJECTION_FAILED",
+      "httpStatus": 500,
+      "retryable": false
+    },
+    {
+      "code": "AUTHORIZATION_DENIED",
+      "httpStatus": 403,
+      "retryable": false
+    }
+  ],
+  "limits": {
+    "maxTransactionsPerPlan": 500,
+    "maxEventsPerPlan": 5000,
+    "maxEncryptedBytesPerTransaction": 16777216,
+    "maxDecryptedBytesPerTransaction": 16777216,
+    "maxEncryptedBytesPerPlan": 268435456,
+    "maxDecryptedBytesPerPlan": 268435456,
+    "maxPlanningSeconds": 30,
+    "maxPauseAcknowledgementSeconds": 60,
+    "maxExecutionSeconds": 1800,
+    "maxAttemptsPerTransaction": 3,
+    "planTtlSeconds": 86400,
+    "workerLeaseSeconds": 30,
+    "workerHeartbeatSeconds": 10,
+    "inlinePayloadThresholdBytes": 262144,
+    "maxSinglePayloadBytes": 4194304,
+    "maxHostInlineArchiveBytes": 536870912,
+    "softDatabaseArchiveBytes": 10737418240,
+    "hardDatabaseArchiveBytes": 21474836480,
+    "softDeferredBytes": 5368709120,
+    "hardDeferredBytes": 10737418240,
+    "softPublicationOutboxRows": 50000,
+    "hardPublicationOutboxRows": 100000,
+    "databaseFreeSpaceWarningRatio": 0.2,
+    "databaseFreeSpaceHardRatio": 0.1,
+    "databaseFreeSpaceHardBytes": 5368709120
+  },
+  "retentionDays": {
+    "unresolvedPayload": 90,
+    "resolvedPayloadAfterResolution": 14,
+    "failureMetadata": 400,
+    "replayRequestItemAttempt": 400,
+    "audit": 2555,
+    "publishedOutbox": 7,
+    "terminalOutbox": 30,
+    "externalKafkaDlq": 30
+  },
+  "featureGates": {
+    "captureEnabled": false,
+    "kafkaPublicationEnabled": false,
+    "planningEnabled": false,
+    "rollbackDryRunEnabled": false,
+    "executionEnabled": false,
+    "breakGlassReleaseEnabled": false
+  },
+  "encryption": {
+    "payloadAlgorithm": "AES-256-GCM",
+    "ivBytes": 12,
+    "tagBits": 128,
+    "dataKeyBytes": 32,
+    "keyWrappingAlgorithm": "AES-KW",
+    "keyProvider": "PKCS12_REPLAY_KEY_PROVIDER",
+    "keyAliasPrefix": "event-replay-kek-",
+    "associatedDataFields": [
+      "contractVersion",
+      "hostId",
+      "failureId",
+      "eventOrdinal",
+      "payloadDigest"
+    ]
+  },
+  "objectStore": {
+    "provider": "S3_COMPATIBLE",
+    "requiresVersioning": true,
+    "requiresServerGeneratedKeys": true,
+    "requiresObjectLockGovernance": true,
+    "payloadsAlreadyApplicationEncrypted": true
+  },
+  "approval": {
+    "productionExecutionRequiresSecondPerson": true,
+    "productionRollbackDryRunRequiresSecondPerson": true,
+    "waiverRequiresSecondPerson": true,
+    "breakGlassReleaseRequiresSecondPerson": true,
+    "requesterMayApproveOwnRequest": false,
+    "humanOperationsRequireUserIdentity": true,
+    "reasonRequiredForMutations": true
+  },
+  "kafkaDlq": {
+    "topicTemplate": "{sourceTopic}.portal-event-replay-v1.dlq",
+    "initialReplayGeneration": 0,
+    "maxReplayGeneration": 0,
+    "preserveOriginalKey": true,
+    "preserveOriginalHeaders": true,
+    "preserveOriginalCoordinates": true
+  },
+  "auditEventNames": [
+    "EVENT_REPLAY_PLAN_CREATED",
+    "EVENT_REPLAY_PLAN_APPROVAL_REQUESTED",
+    "EVENT_REPLAY_PLAN_APPROVED",
+    "EVENT_REPLAY_EXECUTION_REQUESTED",
+    "EVENT_REPLAY_ATTEMPT_STARTED",
+    "EVENT_REPLAY_ATTEMPT_SUCCEEDED",
+    "EVENT_REPLAY_ATTEMPT_FAILED",
+    "EVENT_REPLAY_REQUEST_SUCCEEDED",
+    "EVENT_REPLAY_REQUEST_FAILED",
+    "EVENT_REPLAY_REQUEST_CANCELLED",
+    "EVENT_REPLAY_FAILURE_WAIVED",
+    "EVENT_REPLAY_FAILURE_REOPENED",
+    "EVENT_REPLAY_BARRIER_RELEASED_WITH_GAP"
+  ],
+  "auditFieldLimits": {
+    "reasonCharacters": 2048,
+    "errorCodeCharacters": 128,
+    "errorMessageCharacters": 2048,
+    "identityCharacters": 255,
+    "failureIdsPerAuditRecord": 500
+  }
+}

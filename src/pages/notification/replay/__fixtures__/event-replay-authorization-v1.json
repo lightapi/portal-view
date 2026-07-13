@@ -1,0 +1,220 @@
+{
+  "fixtureVersion": "event-replay-authorization-v1",
+  "contractVersion": "event-replay-v1",
+  "auditInfoSource": "AttachmentConstants.AUDIT_INFO",
+  "roleTokenPattern": "[,\\s]+",
+  "privilegedHumanRoles": [
+    "admin",
+    "host-admin"
+  ],
+  "trustedWorkerIdentity": {
+    "type": "CLIENT_CREDENTIALS",
+    "clientIdConfigKey": "eventReplay.workerClientId",
+    "allowedOperation": "runReplayWorker",
+    "humanCommandsAllowed": false
+  },
+  "rules": {
+    "requestedHostMustEqualAuthorizedHost": true,
+    "roleMatching": "EXACT_TOKEN",
+    "uiRoleCheckIsSecurityBoundary": false,
+    "authorizationCodeUserRequiredForHumanMutation": true,
+    "reasonRequiredForHumanMutation": true,
+    "requesterMayApproveOwnRequest": false,
+    "dedicatedPermissionRequiredInAdditionToBaseScope": true
+  },
+  "decisionCases": [
+    {
+      "id": "admin-list-own-host",
+      "operation": "listEventReplayCandidate",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "user,admin",
+        "scopes": ["portal.r"],
+        "permissions": ["event-replay.read"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "expected": "ALLOW"
+    },
+    {
+      "id": "host-admin-plan-own-host",
+      "operation": "createEventReplayPlan",
+      "auditInfo": {
+        "user_id": "user-host-admin-a",
+        "host_id": "host-a",
+        "roles": "user host-admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.plan"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "Investigate graph gap",
+      "expected": "ALLOW"
+    },
+    {
+      "id": "substring-role-denied",
+      "operation": "listEventReplayCandidate",
+      "auditInfo": {
+        "user_id": "user-a",
+        "host_id": "host-a",
+        "roles": "superadmin",
+        "scopes": ["portal.r"],
+        "permissions": ["event-replay.read"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "cross-host-denied",
+      "operation": "getEventReplayFailure",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.r"],
+        "permissions": ["event-replay.read"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-b",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "read-permission-required",
+      "operation": "getEventReplay",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.r"],
+        "permissions": [],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "execute-requires-dedicated-permission",
+      "operation": "executeEventReplay",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": [],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "Execute approved repair",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "execute-with-dedicated-permission",
+      "operation": "executeEventReplay",
+      "auditInfo": {
+        "user_id": "user-admin-r",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.execute"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "Execute approved repair",
+      "approval": {
+        "requesterUserId": "user-admin-r",
+        "approverUserId": "user-admin-a"
+      },
+      "expected": "ALLOW"
+    },
+    {
+      "id": "self-approval-denied",
+      "operation": "approveEventReplay",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.approve"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "Approve dependency closure",
+      "approval": {
+        "requesterUserId": "user-admin-a",
+        "approverUserId": "user-admin-a"
+      },
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "client-credentials-human-command-denied",
+      "operation": "waiveEventReplayFailure",
+      "auditInfo": {
+        "client_id": "event-replay-worker",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.waive"],
+        "grant_type": "client_credentials"
+      },
+      "requestedHostId": "host-a",
+      "reason": "Not a human identity",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "waiver-requires-reason",
+      "operation": "waiveEventReplayFailure",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.waive"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "",
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "break-glass-requires-second-person",
+      "operation": "releaseEventReplayBarrier",
+      "auditInfo": {
+        "user_id": "user-admin-a",
+        "host_id": "host-a",
+        "roles": "admin",
+        "scopes": ["portal.w"],
+        "permissions": ["event-replay.break-glass"],
+        "grant_type": "authorization_code"
+      },
+      "requestedHostId": "host-a",
+      "reason": "RELEASE_WITH_GAP during incident",
+      "approval": {
+        "requesterUserId": "user-admin-a",
+        "approverUserId": null
+      },
+      "expected": "DENY",
+      "denialCode": "AUTHORIZATION_DENIED"
+    },
+    {
+      "id": "trusted-worker-may-run-worker-only",
+      "operation": "runReplayWorker",
+      "auditInfo": {
+        "client_id": "event-replay-worker",
+        "host_id": "host-a",
+        "grant_type": "client_credentials"
+      },
+      "configuredWorkerClientId": "event-replay-worker",
+      "requestedHostId": "host-a",
+      "expected": "ALLOW"
+    }
+  ]
+}
