@@ -97,7 +97,10 @@ export default function InstanceClone() {
     setSourceLoading(true);
     fetchFreshSource(routedSource, controller.signal)
       .then((fresh) => {
-        const authorized = { ...fresh, hostId: routedSource.hostId, instanceId: routedSource.instanceId };
+        // getFreshInstance echoes only its request keys when the supplied aggregate
+        // version is already current. Preserve the authorized admin-row values in
+        // that case, while allowing a genuinely fresher database row to override them.
+        const authorized = { ...routedSource, ...fresh, hostId: routedSource.hostId, instanceId: routedSource.instanceId };
         setError(null);
         setSource(authorized);
         setForm((current) => ({
