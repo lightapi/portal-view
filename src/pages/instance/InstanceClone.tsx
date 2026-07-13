@@ -153,6 +153,11 @@ export default function InstanceClone() {
     setError(null);
   }, []);
 
+  const updateEnvTag = useCallback((value: string) => {
+    setForm((current) => ({ ...current, targetEnvTag: value, targetEnvironment: value, revealedValues: {} }));
+    setError(null);
+  }, []);
+
   const requestData = useCallback((value: CloneForm) => ({
     hostId: source?.hostId ?? host,
     ...(plan?.cloneRequestId ? { cloneRequestId: plan.cloneRequestId } : {}),
@@ -296,8 +301,8 @@ export default function InstanceClone() {
         <Typography variant="h6" gutterBottom>Target</Typography>
         <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
           <CloneTextField required label="Instance Name" value={form.targetInstanceName} onChange={(value) => updateForm('targetInstanceName', value)} />
-          <CloneSelect label="Environment Tag" required value={form.targetEnvTag} original={source.envTag} options={targetOptions.envTag} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvTag', value)} />
-          <CloneSelect label="Environment" value={form.targetEnvironment} original={source.environment} options={targetOptions.environment} loading={targetOptionsLoading} onChange={(value) => updateForm('targetEnvironment', value)} />
+          <CloneSelect label="Environment Tag" required value={form.targetEnvTag} original={source.envTag} options={targetOptions.envTag} loading={targetOptionsLoading} onChange={updateEnvTag} />
+          <TextField label="Environment" value={form.targetEnvironment} disabled />
           <CloneTextField label="Service ID" value={form.targetServiceId} onChange={(value) => updateForm('targetServiceId', value)} />
           <CloneSelect label="Product Version ID" value={form.targetProductVersionId} original={source.productVersionId} options={targetOptions.productVersionId} loading={targetOptionsLoading} onChange={(value) => updateForm('targetProductVersionId', value)} />
           <CloneTextField label="Description" value={form.description} onChange={(value) => updateForm('description', value)} />
