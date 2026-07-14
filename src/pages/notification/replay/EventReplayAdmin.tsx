@@ -111,6 +111,6 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
         onApproveRelease={async (actionId, reason) => { await run(() => replayApi.approveBarrierRelease(hostId, actionId, reason)); }} />
     </> : <ReplayWaiverPanel failureIds={selectedIds} currentUserId={currentUserId} busy={busy} error={error}
       onRequest={async (reason) => { let response: OperatorActionResponse | null = null; await run(async () => { response = await replayApi.requestWaiver(hostId, selectedIds, reason); }, false); if (!response) throw new Error('Waiver request failed.'); return response; }}
-      onApprove={async (id, reason) => { await run(() => replayApi.approveWaiver(hostId, id, reason), false); setSelected(new Set()); await loadCandidates(); }} />}
+      onApprove={async (id, targets, downstream, reason) => { await run(() => replayApi.approveWaiver(hostId, id, targets, downstream, reason), false); setSelected(new Set()); await loadCandidates(); }} />}
   </Stack></Paper>;
 }

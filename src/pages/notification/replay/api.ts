@@ -48,8 +48,11 @@ export const replayApi = {
     invoke<OperatorActionResponse>('waiveEventReplayFailure', {
       hostId, failureIds, expectedStatuses: failureIds.map(() => 'OPEN'), acknowledgeDependencyImpact: true, reason,
     }),
-  approveWaiver: (hostId: string, waiverRequestId: string, reason: string) =>
-    invoke<OperatorActionResponse>('waiveEventReplayFailure', { hostId, waiverRequestId, reason }),
+  approveWaiver: (hostId: string, waiverRequestId: string, failureIds: string[],
+    expectedDownstreamBlockedFailureIds: string[], reason: string) =>
+    invoke<OperatorActionResponse>('waiveEventReplayFailure', {
+      hostId, waiverRequestId, failureIds, expectedDownstreamBlockedFailureIds, reason,
+    }),
   requestBarrierRelease: (hostId: string, barrierId: string, expectedEpoch: number,
     owningFailureId: string, reason: string) => invoke<OperatorActionResponse>('releaseEventReplayBarrier', {
       hostId, barrierId, expectedEpoch, owningFailureId, action: 'RELEASE_WITH_GAP', reason,
