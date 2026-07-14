@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, useTransition } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MaterialReactTable,
@@ -30,7 +30,9 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
 import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
+import { getCurrentConfigSnapshotsByInstances } from '../instance/instanceCurrentSnapshotsApi';
 import { getConfigSnapshotValues } from './configSnapshotValuesApi';
 import type { SnapshotValues } from './configSnapshotValues.types';
 import {
@@ -40,7 +42,12 @@ import {
   type SnapshotComparisonStatus,
 } from './snapshotComparison';
 import { createSnapshotComparisonWorkerClient } from './snapshotComparisonWorkerClient';
-import { canShowYamlDiff, parseSnapshotIds } from './snapshotSelection';
+import {
+  canShowYamlDiff,
+  parseSnapshotComparisonSource,
+  parseSnapshotIds,
+  sameSnapshotIdSet,
+} from './snapshotSelection';
 
 const SnapshotYamlDiff = lazy(() => import('./SnapshotYamlDiff'));
 const ALL_STATUSES: SnapshotComparisonStatus[] = ['valueChanged', 'missing', 'sourceChanged', 'same'];
@@ -57,6 +64,8 @@ export default function ConfigSnapshotCompare() {
   const { host } = useUserState();
   const snapshotIdsParam = searchParams.get('snapshotIds');
   const snapshotIds = useMemo(() => parseSnapshotIds(snapshotIdsParam), [snapshotIdsParam]);
+  const source = parseSnapshotComparisonSource(searchParams.get('source'));
+  const isCurrentInstancesSource = source === 'current-instances';
   const [snapshots, setSnapshots] = useState<SnapshotValues[]>([]);
   const [model, setModel] = useState<SnapshotComparisonModel | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
@@ -67,12 +76,19 @@ export default function ConfigSnapshotCompare() {
   const [statuses, setStatuses] = useState<SnapshotComparisonStatus[]>(['valueChanged', 'missing']);
   const [keySearch, setKeySearch] = useState('');
   const [tab, setTab] = useState<'matrix' | 'yaml'>('matrix');
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
+  const refreshController = useRef<AbortController | null>(null);
+  const refreshGeneration = useRef(0);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     setSnapshots([]);
     setModel(null);
     setError(null);
+    setRefreshError(null);
+    setRefreshMessage(null);
     setTab('matrix');
     if (!snapshotIds || !host) {
       setError(!snapshotIds
@@ -114,6 +130,18 @@ export default function ConfigSnapshotCompare() {
       workerClient.dispose();
     };
   }, [host, snapshotIds]);
+
+  useEffect(() => {
+    refreshGeneration.current += 1;
+    refreshController.current?.abort();
+    refreshController.current = null;
+    setRefreshing(false);
+  }, [host, snapshotIdsParam]);
+
+  useEffect(() => () => {
+    refreshGeneration.current += 1;
+    refreshController.current?.abort();
+  }, []);
 
   const snapshotsById = useMemo(() => new Map(snapshots.map(snapshot => [snapshot.snapshotId, snapshot])), [snapshots]);
   const filteredRows = useMemo(() => {
@@ -163,20 +191,79 @@ export default function ConfigSnapshotCompare() {
   });
 
   const crossInstance = new Set(snapshots.map(snapshot => snapshot.instanceId)).size > 1;
+  const containsNonCurrentSnapshot = isCurrentInstancesSource && snapshots.some(snapshot => !snapshot.current);
   const moveColumn = (snapshotId: string, direction: -1 | 1) => {
     setColumnOrder(current => reorderSnapshotIds(current, snapshotId, direction));
   };
+
+  const refreshCurrentSnapshots = useCallback(async () => {
+    if (!host || !snapshotIds || refreshing || !model) return;
+    const instanceIds = columnOrder.map(snapshotId => snapshotsById.get(snapshotId)?.instanceId ?? '');
+    if (instanceIds.some(instanceId => !instanceId) || new Set(instanceIds).size !== instanceIds.length) {
+      setRefreshError('The loaded snapshot metadata cannot be used to refresh this comparison.');
+      return;
+    }
+    refreshController.current?.abort();
+    const controller = new AbortController();
+    const generation = ++refreshGeneration.current;
+    refreshController.current = controller;
+    setRefreshError(null);
+    setRefreshMessage(null);
+    setRefreshing(true);
+    try {
+      const response = await getCurrentConfigSnapshotsByInstances({ hostId: host, instanceIds, signal: controller.signal });
+      if (controller.signal.aborted || generation !== refreshGeneration.current) return;
+      const resolvedIds = response.snapshots.map(snapshot => snapshot.snapshotId);
+      if (sameSnapshotIdSet(snapshotIds, resolvedIds)) {
+        setRefreshMessage('This comparison already contains the current snapshots.');
+        return;
+      }
+      navigate(`/app/config/configSnapshotCompare?snapshotIds=${resolvedIds.join(',')}&source=current-instances`, { replace: true });
+    } catch (caught: unknown) {
+      if (caught instanceof DOMException && caught.name === 'AbortError') return;
+      if (generation === refreshGeneration.current) {
+        setRefreshError(caught instanceof Error ? caught.message : 'Unable to refresh current configuration snapshots.');
+      }
+    } finally {
+      if (generation === refreshGeneration.current) {
+        refreshController.current = null;
+        setRefreshing(false);
+      }
+    }
+  }, [columnOrder, host, model, navigate, refreshing, snapshotIds, snapshotsById]);
 
   return (
     <Box sx={{ p: 2 }}>
       <Stack spacing={2}>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <IconButton aria-label="Back to snapshots" onClick={() => navigate('/app/config/configSnapshot')}>
+          <IconButton
+            aria-label={isCurrentInstancesSource ? 'Back to instances' : 'Back to snapshots'}
+            onClick={() => navigate(isCurrentInstancesSource ? '/app/instance/InstanceAdmin' : '/app/config/configSnapshot')}
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5">Config snapshot comparison</Typography>
+          <Typography variant="h5">
+            {isCurrentInstancesSource ? 'Current snapshots across instances' : 'Config snapshot comparison'}
+          </Typography>
+          {isCurrentInstancesSource && (
+            <Button
+              variant="outlined"
+              startIcon={refreshing ? <CircularProgress size={18} /> : <RefreshIcon />}
+              disabled={refreshing || !model}
+              onClick={refreshCurrentSnapshots}
+            >
+              {refreshing ? 'Refreshing…' : 'Refresh current snapshots'}
+            </Button>
+          )}
         </Stack>
         {error && <Alert severity="error">{error}</Alert>}
+        {refreshError && <Alert severity="error">{refreshError} The existing comparison has not changed.</Alert>}
+        {refreshMessage && <Alert severity="success">{refreshMessage}</Alert>}
+        {containsNonCurrentSnapshot && (
+          <Alert severity="warning">
+            At least one resolved snapshot is no longer current. This page continues to show the exact snapshots identified in the URL; refresh explicitly to resolve newer snapshots.
+          </Alert>
+        )}
         {crossInstance && <Alert severity="info">This comparison spans multiple instances or environments.</Alert>}
         {(loading || preparing) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -197,6 +284,12 @@ export default function ConfigSnapshotCompare() {
                       <Typography variant="body2">{snapshot.snapshotTs}</Typography>
                       <Typography variant="caption" display="block">{snapshot.environment} · {snapshot.serviceId}</Typography>
                       <Typography variant="caption" display="block">{snapshot.propertyCount} properties · {snapshot.sha256}</Typography>
+                      <Chip
+                        size="small"
+                        sx={{ mt: 1 }}
+                        color={snapshot.current ? 'success' : 'warning'}
+                        label={snapshot.current ? 'Current' : 'No longer current'}
+                      />
                       <Stack direction="row" spacing={0.5} mt={1}>
                         <Tooltip title="Move column left"><span><IconButton size="small" disabled={index === 0} onClick={() => moveColumn(snapshotId, -1)}><ArrowLeftIcon /></IconButton></span></Tooltip>
                         <Tooltip title="Move column right"><span><IconButton size="small" disabled={index === columnOrder.length - 1} onClick={() => moveColumn(snapshotId, 1)}><ArrowRightIcon /></IconButton></span></Tooltip>

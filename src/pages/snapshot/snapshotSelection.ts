@@ -3,6 +3,7 @@ import type { MRT_RowSelectionState } from 'material-react-table';
 import type { ConfigSnapshotSummary, SnapshotComparisonLimits } from './configSnapshotValues.types';
 
 export const MAX_COMPARE_SNAPSHOTS = 4;
+export type SnapshotComparisonSource = 'current-instances';
 
 export function snapshotSelectionKey(snapshot: Pick<ConfigSnapshotSummary, 'hostId' | 'snapshotId'>) {
   return `${snapshot.hostId}:${snapshot.snapshotId}`;
@@ -62,6 +63,14 @@ export function parseSnapshotIds(value: string | null): string[] | null {
   const ids = value.split(',').map(id => id.trim()).filter(Boolean);
   if (ids.length < 2 || ids.length > MAX_COMPARE_SNAPSHOTS || new Set(ids).size !== ids.length) return null;
   return ids.every(isUuid) ? ids : null;
+}
+
+export function parseSnapshotComparisonSource(value: string | null): SnapshotComparisonSource | null {
+  return value === 'current-instances' ? value : null;
+}
+
+export function sameSnapshotIdSet(left: string[], right: string[]) {
+  return left.length === right.length && left.every(id => right.includes(id));
 }
 
 function isUuid(value: string) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   MaterialReactTable,
@@ -8,8 +8,9 @@ import {
   type MRT_PaginationState,
   type MRT_SortingState,
   type MRT_Row,
+  type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -22,6 +23,7 @@ import ApiIcon from "@mui/icons-material/Api";
 import AppsIcon from "@mui/icons-material/Apps";
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -29,6 +31,13 @@ import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { getCurrentConfigSnapshotsByInstances } from './instanceCurrentSnapshotsApi';
+import {
+  instanceComparisonIssue,
+  instanceSelectionKey,
+  MAX_CURRENT_SNAPSHOT_INSTANCES,
+  updateSelectedInstances,
+} from './instanceCurrentSnapshotSelection';
 
 // Define the shape of the API response
 type InstanceApiResponse = {
@@ -37,7 +46,7 @@ type InstanceApiResponse = {
 };
 
 // Define the type for a single instance record
-type InstanceType = {
+export type InstanceType = {
   hostId: string;
   instanceId: string;
   instanceName?: string;
@@ -103,6 +112,12 @@ export default function InstanceAdmin() {
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+  const [selectedInstances, setSelectedInstances] = useState<Map<string, InstanceType>>(new Map());
+  const [selectionMessage, setSelectionMessage] = useState<string | null>(null);
+  const [resolverError, setResolverError] = useState<string | null>(null);
+  const [isResolvingSnapshots, setIsResolvingSnapshots] = useState(false);
+  const resolverController = useRef<AbortController | null>(null);
+  const resolverGeneration = useRef(0);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
     [
@@ -169,6 +184,95 @@ export default function InstanceAdmin() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const cancelResolver = useCallback(() => {
+    resolverGeneration.current += 1;
+    resolverController.current?.abort();
+    resolverController.current = null;
+    setIsResolvingSnapshots(false);
+  }, []);
+
+  useEffect(() => {
+    cancelResolver();
+    setSelectedInstances(new Map());
+    setSelectionMessage(null);
+    setResolverError(null);
+  }, [cancelResolver, host]);
+
+  useEffect(() => () => {
+    resolverGeneration.current += 1;
+    resolverController.current?.abort();
+  }, []);
+
+  const selectedRows = useMemo(() => Array.from(selectedInstances.values()), [selectedInstances]);
+  const selectedCount = selectedRows.length;
+  const compareIssue = useMemo(() => instanceComparisonIssue(selectedRows), [selectedRows]);
+  const rowSelection = useMemo<MRT_RowSelectionState>(
+    () => Object.fromEntries(Array.from(selectedInstances.keys()).map(key => [key, true])),
+    [selectedInstances],
+  );
+
+  const handleRowSelectionChange = useCallback((
+    updater: MRT_RowSelectionState | ((old: MRT_RowSelectionState) => MRT_RowSelectionState),
+  ) => {
+    cancelResolver();
+    setResolverError(null);
+    setSelectedInstances(current => {
+      const currentSelection = Object.fromEntries(Array.from(current.keys()).map(key => [key, true]));
+      const nextSelection = typeof updater === 'function' ? updater(currentSelection) : updater;
+      const { selected, capped } = updateSelectedInstances(current, data, nextSelection);
+      setSelectionMessage(capped ? 'You can compare at most four instances.' : null);
+      return selected;
+    });
+  }, [cancelResolver, data]);
+
+  const clearSelection = useCallback(() => {
+    cancelResolver();
+    setSelectedInstances(new Map());
+    setSelectionMessage(null);
+    setResolverError(null);
+  }, [cancelResolver]);
+
+  const removeSelectedInstance = useCallback((instance: InstanceType) => {
+    cancelResolver();
+    setResolverError(null);
+    setSelectionMessage(null);
+    setSelectedInstances(current => {
+      const next = new Map(current);
+      next.delete(instanceSelectionKey(instance));
+      return next;
+    });
+  }, [cancelResolver]);
+
+  const compareCurrentSnapshots = useCallback(async () => {
+    if (!host || compareIssue || isResolvingSnapshots) return;
+    resolverController.current?.abort();
+    const controller = new AbortController();
+    const generation = ++resolverGeneration.current;
+    resolverController.current = controller;
+    setResolverError(null);
+    setIsResolvingSnapshots(true);
+    try {
+      const response = await getCurrentConfigSnapshotsByInstances({
+        hostId: host,
+        instanceIds: selectedRows.map(instance => instance.instanceId),
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted || generation !== resolverGeneration.current) return;
+      const snapshotIds = response.snapshots.map(snapshot => snapshot.snapshotId);
+      navigate(`/app/config/configSnapshotCompare?snapshotIds=${snapshotIds.join(',')}&source=current-instances`);
+    } catch (caught: unknown) {
+      if (caught instanceof DOMException && caught.name === 'AbortError') return;
+      if (generation === resolverGeneration.current) {
+        setResolverError(caught instanceof Error ? caught.message : 'Unable to resolve current configuration snapshots.');
+      }
+    } finally {
+      if (generation === resolverGeneration.current) {
+        resolverController.current = null;
+        setIsResolvingSnapshots(false);
+      }
+    }
+  }, [compareIssue, host, isResolvingSnapshots, navigate, selectedRows]);
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<InstanceType>) => {
@@ -318,12 +422,14 @@ export default function InstanceAdmin() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => row.instanceId,
+    getRowId: (row: InstanceType) => instanceSelectionKey(row),
+    enableRowSelection: row => selectedInstances.has(instanceSelectionKey(row.original)) || selectedCount < MAX_CURRENT_SNAPSHOT_INSTANCES,
+    onRowSelectionChange: handleRowSelectionChange,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
@@ -442,10 +548,31 @@ export default function InstanceAdmin() {
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstance', searchParams, taskContext))}>
           Create New Instance
         </Button>
+        <Tooltip title={compareIssue ?? `Compare current snapshots for ${selectedCount} instances`}>
+          <span>
+            <Button
+              variant="outlined"
+              startIcon={isResolvingSnapshots ? <CircularProgress size={18} /> : <CompareArrowsIcon />}
+              disabled={Boolean(compareIssue) || isResolvingSnapshots}
+              onClick={compareCurrentSnapshots}
+            >
+              {isResolvingSnapshots ? 'Resolving current snapshots…' : `Compare current snapshots (${selectedCount})`}
+            </Button>
+          </span>
+        </Tooltip>
+        {selectedCount > 0 && <Button onClick={clearSelection}>Clear selection</Button>}
+        {selectedRows.map(instance => (
+          <Chip
+            key={instanceSelectionKey(instance)}
+            size="small"
+            label={`${instance.instanceName || instance.instanceId}${instance.envTag ? ` · ${instance.envTag}` : ''}`}
+            onDelete={() => removeSelectedInstance(instance)}
+          />
+        ))}
         {ownedOnly ? (
           <Typography variant="subtitle1">My Instances: <strong>{email || userId}</strong></Typography>
         ) : (
@@ -469,6 +596,9 @@ export default function InstanceAdmin() {
             User context is required before owner-scoped instances can be loaded.
           </Alert>
         )}
+        {selectionMessage && <Alert severity="warning" sx={{ mb: 1 }}>{selectionMessage}</Alert>}
+        {selectedCount >= 2 && compareIssue && <Alert severity="warning" sx={{ mb: 1 }}>{compareIssue}</Alert>}
+        {resolverError && <Alert severity="error" sx={{ mb: 1 }}>{resolverError}</Alert>}
         <MaterialReactTable table={table} />
       </Box>
     </Box>

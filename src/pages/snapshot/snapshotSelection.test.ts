@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   canShowYamlDiff,
   comparisonSelectionIssue,
+  parseSnapshotComparisonSource,
   parseSnapshotIds,
+  sameSnapshotIdSet,
   showSnapshotHistory,
   snapshotSelectionKey,
   updateSelectedSnapshots,
@@ -39,6 +41,10 @@ describe('snapshot selection', () => {
     expect(parseSnapshotIds(`${ids[0]},${ids[0]}`)).toBeNull();
     expect(canShowYamlDiff(2)).toBe(true);
     expect(canShowYamlDiff(3)).toBe(false);
+    expect(parseSnapshotComparisonSource('current-instances')).toBe('current-instances');
+    expect(parseSnapshotComparisonSource('unknown')).toBeNull();
+    expect(sameSnapshotIdSet(ids, [ids[1], ids[0]])).toBe(true);
+    expect(sameSnapshotIdSet(ids, [ids[0]])).toBe(false);
   });
 });
 
