@@ -86,6 +86,7 @@ import ConfigInstanceAppApi from "./pages/config/ConfigInstanceAppApi";
 import ConfigInstanceFile from "./pages/config/ConfigInstanceFile";
 import ConfigUpdatePage from "./pages/config/update/ConfigUpdatePage";
 import ConfigSnapshot from "./pages/snapshot/ConfigSnapshot";
+import ConfigSnapshotCompare from "./pages/snapshot/ConfigSnapshotCompare";
 import ConfigSnapshotProperty from "./pages/snapshot/ConfigSnapshotProperty";
 import ConfigSnapshotFile from "./pages/snapshot/ConfigSnapshotFile";
 import ConfigSnapshotDeploymentInstanceProperty from "./pages/snapshot/ConfigSnapshotDeploymentInstanceProperty";
@@ -466,6 +467,10 @@ const App = () => {
           <Route
             path="config/configSnapshot"
             element={<ConfigSnapshot />}
+          />
+          <Route
+            path="config/configSnapshotCompare"
+            element={<ConfigSnapshotCompare />}
           />
           <Route
             path="config/configSnapshotProperty"

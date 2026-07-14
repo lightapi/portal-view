@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     MaterialReactTable,
@@ -8,8 +8,9 @@ import {
     type MRT_PaginationState,
     type MRT_SortingState,
     type MRT_Row,
+    type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -23,36 +24,26 @@ import ApiIcon from "@mui/icons-material/Api";
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import TuneIcon from '@mui/icons-material/Tune';
 import DescriptionIcon from '@mui/icons-material/Description';
+import DataObjectIcon from '@mui/icons-material/DataObject';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import HistoryIcon from '@mui/icons-material/History';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import SnapshotValuesDialog from './SnapshotValuesDialog';
+import type { ConfigSnapshotListResponse, ConfigSnapshotSummary, SnapshotComparisonLimits } from './configSnapshotValues.types';
+import {
+    comparisonSelectionIssue,
+    MAX_COMPARE_SNAPSHOTS,
+    selectedPropertyCount,
+    showSnapshotHistory,
+    snapshotSelectionKey,
+    updateSelectedSnapshots,
+} from './snapshotSelection';
 
-// --- Type Definitions ---
-type ConfigSnapshotApiResponse = {
-    snapshots: Array<ConfigSnapshotType>;
-    total: number;
-};
-
-type ConfigSnapshotType = {
-    snapshotId: string;
-    snapshotTs: string;
-    snapshotType: string;
-    hostId: string;
-    instanceId: string;
-    instanceName: string;
-    current: boolean;
-    description: string;
-    userId: string;
-    deploymentId: string;
-    environmentId: string;
-    productId: string;
-    productVersion: string;
-    serviceId: string;
-    apiId: string;
-    apiVersion: string;
-};
+type ConfigSnapshotType = ConfigSnapshotSummary;
 
 interface UserState {
     host?: string;
@@ -81,6 +72,14 @@ export default function ConfigSnapshot() {
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
+    const [valuesSnapshot, setValuesSnapshot] = useState<ConfigSnapshotType | null>(null);
+    const [selectedSnapshots, setSelectedSnapshots] = useState<Map<string, ConfigSnapshotType>>(new Map());
+    const [selectionMessage, setSelectionMessage] = useState<string | null>(null);
+    const [comparisonLimits, setComparisonLimits] = useState<SnapshotComparisonLimits>({
+        maxProperties: Number.MAX_SAFE_INTEGER,
+        maxResponseBytes: Number.MAX_SAFE_INTEGER,
+    });
+    const hasLoadedData = useRef(false);
 
     // Table state, pre-filtered by instanceId if provided
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(() => {
@@ -101,7 +100,7 @@ export default function ConfigSnapshot() {
     const fetchData = useCallback(async () => {
         if (!host) return;
         setIsError(false);
-        if (!data.length) setIsLoading(true); else setIsRefetching(true);
+        if (!hasLoadedData.current) setIsLoading(true); else setIsRefetching(true);
 
         const apiFilters: MRT_ColumnFiltersState = [];
 
@@ -128,10 +127,13 @@ export default function ConfigSnapshot() {
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
         try {
-            const json = await fetchClient(url);
-            console.log("Fetched Config Snapshots:", json);
+            const json = await fetchClient(url) as ConfigSnapshotListResponse;
             setData(json.snapshots || []);
+            hasLoadedData.current = true;
             setRowCount(json.total || 0);
+            if (json.comparisonLimits?.maxProperties > 0 && json.comparisonLimits?.maxResponseBytes > 0) {
+                setComparisonLimits(json.comparisonLimits);
+            }
         } catch (error) {
             setIsError(true); console.error(error);
         } finally {
@@ -143,6 +145,46 @@ export default function ConfigSnapshot() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        hasLoadedData.current = false;
+        setSelectedSnapshots(new Map());
+        setSelectionMessage(null);
+    }, [host]);
+
+    const selectedRows = useMemo(() => Array.from(selectedSnapshots.values()), [selectedSnapshots]);
+    const selectedCount = selectedRows.length;
+    const selectedProperties = useMemo(() => selectedPropertyCount(selectedRows), [selectedRows]);
+    const compareIssue = useMemo(
+        () => comparisonSelectionIssue(selectedRows, comparisonLimits),
+        [comparisonLimits, selectedRows],
+    );
+    const rowSelection = useMemo<MRT_RowSelectionState>(
+        () => Object.fromEntries(Array.from(selectedSnapshots.keys()).map(key => [key, true])),
+        [selectedSnapshots],
+    );
+
+    const handleRowSelectionChange = useCallback((
+        updater: MRT_RowSelectionState | ((old: MRT_RowSelectionState) => MRT_RowSelectionState),
+    ) => {
+        setSelectedSnapshots(current => {
+            const currentSelection = Object.fromEntries(Array.from(current.keys()).map(key => [key, true]));
+            const nextSelection = typeof updater === 'function' ? updater(currentSelection) : updater;
+            const { selected: next, capped } = updateSelectedSnapshots(current, data, nextSelection);
+            setSelectionMessage(capped ? 'You can compare at most four snapshots.' : null);
+            return next;
+        });
+    }, [data]);
+
+    const compareSelected = () => {
+        if (compareIssue) return;
+        navigate(`/app/config/configSnapshotCompare?snapshotIds=${selectedRows.map(row => row.snapshotId).join(',')}`);
+    };
+
+    const showHistory = () => {
+        setColumnFilters(filters => showSnapshotHistory(filters));
+        setPagination(current => ({ ...current, pageIndex: 0 }));
+    };
 
     // Delete handler with optimistic update
     const handleDelete = useCallback(async (row: MRT_Row<ConfigSnapshotType>) => {
@@ -241,12 +283,14 @@ export default function ConfigSnapshot() {
         manualSorting: true,
         manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
-        getRowId: (row) => `${row.instanceId}-${row.snapshotId}`,
+        getRowId: snapshotSelectionKey,
+        enableRowSelection: row => selectedSnapshots.has(snapshotSelectionKey(row.original)) || selectedCount < MAX_COMPARE_SNAPSHOTS,
+        onRowSelectionChange: handleRowSelectionChange,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
@@ -283,6 +327,14 @@ export default function ConfigSnapshot() {
                         { state: { data: row.original } },
                     )}>
                         <FormatListBulletedIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="View canonical values.yml">
+                    <IconButton
+                        aria-label={`View values.yml for ${row.original.instanceName}`}
+                        onClick={() => setValuesSnapshot(row.original)}
+                    >
+                        <DataObjectIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Snapshot Files">
@@ -360,7 +412,7 @@ export default function ConfigSnapshot() {
             </Box>
         ),
         renderTopToolbarCustomActions: () => (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Button
                     variant="contained"
                     startIcon={<AddBoxIcon />}
@@ -372,6 +424,25 @@ export default function ConfigSnapshot() {
                 >
                     Create Config Snapshot
                 </Button>
+                <Tooltip title={compareIssue ?? `Compare ${selectedCount} snapshots (${selectedProperties.toLocaleString()} properties)`}>
+                    <span>
+                        <Button
+                            variant="outlined"
+                            startIcon={<CompareArrowsIcon />}
+                            disabled={Boolean(compareIssue)}
+                            onClick={compareSelected}
+                        >
+                            Compare selected ({selectedCount})
+                        </Button>
+                    </span>
+                </Tooltip>
+                <Button startIcon={<HistoryIcon />} onClick={showHistory}>Show snapshot history</Button>
+                {selectedCount > 0 && (
+                    <Button onClick={() => { setSelectedSnapshots(new Map()); setSelectionMessage(null); }}>Clear selection</Button>
+                )}
+                {selectedRows.map(snapshot => (
+                    <Chip key={snapshotSelectionKey(snapshot)} size="small" label={`${snapshot.instanceName}: ${snapshot.snapshotTs}`} />
+                ))}
                 {initialInstanceId && (
                     <Typography variant="subtitle1">
                         For Instance: <strong>{initialInstanceId}</strong>
@@ -391,7 +462,10 @@ export default function ConfigSnapshot() {
                     maxActions={3}
                 />
             </Box>
+            {selectionMessage && <Alert severity="warning" sx={{ mb: 1 }}>{selectionMessage}</Alert>}
+            {selectedCount >= 2 && compareIssue && <Alert severity="warning" sx={{ mb: 1 }}>{compareIssue}</Alert>}
             <MaterialReactTable table={table} />
+            <SnapshotValuesDialog hostId={host} snapshot={valuesSnapshot} onClose={() => setValuesSnapshot(null)} />
         </Box>
     );
 }

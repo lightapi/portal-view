@@ -757,6 +757,16 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["instanceId", "snapshotId"],
   },
   {
+    id: "config-snapshot-compare",
+    title: "Compare Config Snapshots",
+    description: "Compare canonical effective configuration values across two to four snapshots.",
+    route: "/app/config/configSnapshotCompare",
+    category: "Platform Operations",
+    roles: ["admin"],
+    keywords: ["config", "snapshot", "compare", "difference", "values.yml"],
+    entities: ["snapshotId"],
+  },
+  {
     id: "org-admin",
     title: "Organization Admin",
     description: "Create and manage organization records for the current host.",
