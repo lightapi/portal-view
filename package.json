@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
+    "typecheck:snapshot": "bash scripts/typecheck-snapshot.sh",
     "preview": "vite preview"
   },
   "dependencies": {
