@@ -396,6 +396,19 @@ export default function ConfigUpdatePage() {
     }));
   };
 
+  const stageBooleanValue = (row: ConfigUpdateProperty, rawValue: string) => {
+    if (rawValue !== '') {
+      stageValue(row, rawValue);
+      return;
+    }
+
+    if (row.overridden) {
+      stageReset(row);
+    } else {
+      clearDraft(rowKey(row));
+    }
+  };
+
   const applyDraft = useCallback(async (row: ConfigUpdateProperty) => {
     const key = rowKey(row);
     const draft = drafts[key];
@@ -533,11 +546,13 @@ export default function ConfigUpdatePage() {
           displayEmpty
           value={stagedValue}
           disabled={disabled}
-          onChange={(event) => stageValue(row, event.target.value)}
+          onChange={(event) => stageBooleanValue(row, event.target.value)}
           onKeyDown={stopTableKeyboardShortcuts}
           sx={{ minWidth: 120 }}
         >
-          <MenuItem value=""><em>Inherited</em></MenuItem>
+          <MenuItem value="" disabled={row.overridden && row.canDeleteOverride === false}>
+            <em>Inherited</em>
+          </MenuItem>
           <MenuItem value="true">true</MenuItem>
           <MenuItem value="false">false</MenuItem>
         </Select>

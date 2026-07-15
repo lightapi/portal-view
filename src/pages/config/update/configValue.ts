@@ -40,6 +40,7 @@ export function validateAndNormalizeValue(valueType: string | undefined, rawValu
   }
 
   if (type === 'float') {
+    if (value.trim() === '') return { error: 'Value must be a number.' };
     const numberValue = Number(value);
     if (Number.isFinite(numberValue)) return { value: String(numberValue) };
     return { error: 'Value must be a number.' };
