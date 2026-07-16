@@ -73,6 +73,9 @@ type BufferedNotification = {
   params: any;
 };
 
+export const MAX_BUFFERED_NOTIFICATIONS = 1000;
+export const BASELINE_REQUEST_TIMEOUT_MS = 15_000;
+
 type RuntimeActionProps = {
   node: RuntimeInstanceRow;
   canInvoke: boolean;
@@ -249,6 +252,41 @@ function getNotificationRuntimeInstanceId(params: any): RuntimeInstanceId | unde
   return rawPayload.runtimeInstanceId || rawPayload.runtime_instance_id;
 }
 
+export function appendBufferedNotification(
+  buffer: BufferedNotification[],
+  notification: BufferedNotification,
+): void {
+  const runtimeInstanceId = getNotificationRuntimeInstanceId(notification.params);
+  if (runtimeInstanceId) {
+    const existingIndex = buffer.findIndex(
+      (candidate) => getNotificationRuntimeInstanceId(candidate.params) === runtimeInstanceId,
+    );
+    if (existingIndex >= 0) {
+      buffer.splice(existingIndex, 1);
+    }
+  }
+  if (buffer.length >= MAX_BUFFERED_NOTIFICATIONS) {
+    buffer.shift();
+  }
+  buffer.push(notification);
+}
+
+export function instancesForCurrentHost(
+  instances: Record<RuntimeInstanceId, RuntimeInstanceView>,
+  instancesHost: string,
+  currentHost: string,
+): Record<RuntimeInstanceId, RuntimeInstanceView> {
+  return instancesHost === currentHost ? instances : {};
+}
+
+export async function fetchRuntimeInstanceBaseline(
+  url: string,
+  signal: AbortSignal,
+  client: typeof fetchClient = fetchClient,
+): Promise<RuntimeInstanceApiResponse> {
+  return client(url, { signal }) as Promise<RuntimeInstanceApiResponse>;
+}
+
 function statusChipProps(status: GroupStatus) {
   switch (status) {
     case 'All Live':
@@ -287,9 +325,9 @@ function CtrlPaneDashboard() {
   } = useController();
 
   const [instances, setInstances] = useState<Record<RuntimeInstanceId, RuntimeInstanceView>>({});
+  const [instancesHost, setInstancesHost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [hasCompletedSync, setHasCompletedSync] = useState(false);
   const [liveSyncError, setLiveSyncError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<MRT_ExpandedState>({});
@@ -306,6 +344,8 @@ function CtrlPaneDashboard() {
   const bufferedNotificationsRef = useRef<BufferedNotification[]>([]);
   const isSyncingRef = useRef(false);
   const requestVersionRef = useRef(0);
+  const baselineAbortRef = useRef<AbortController | null>(null);
+  const hasLoadedOnceRef = useRef(false);
   const queryRef = useRef({
     columnFilters,
     globalFilter: filter,
@@ -314,6 +354,21 @@ function CtrlPaneDashboard() {
   useEffect(() => {
     queryRef.current = { columnFilters, globalFilter };
   }, [columnFilters, globalFilter]);
+
+  useEffect(() => {
+    requestVersionRef.current += 1;
+    baselineAbortRef.current?.abort();
+    baselineAbortRef.current = null;
+    bufferedNotificationsRef.current = [];
+    isSyncingRef.current = false;
+    setInstances({});
+    setInstancesHost('');
+    hasLoadedOnceRef.current = false;
+    setHasCompletedSync(false);
+    setLiveSyncError(null);
+  }, [host]);
+
+  useEffect(() => () => baselineAbortRef.current?.abort(), []);
 
   useEffect(() => {
     setGlobalFilter(filter);
@@ -446,9 +501,16 @@ function CtrlPaneDashboard() {
     }
 
     const requestVersion = ++requestVersionRef.current;
+    baselineAbortRef.current?.abort();
+    const abortController = new AbortController();
+    baselineAbortRef.current = abortController;
+    const timeoutId = window.setTimeout(
+      () => abortController.abort(),
+      BASELINE_REQUEST_TIMEOUT_MS,
+    );
     const currentFilters = serverFilters;
     const currentGlobalFilter = deferredGlobalFilter;
-    const isInitialRequest = !hasLoadedOnce;
+    const isInitialRequest = !hasLoadedOnceRef.current;
 
     isSyncingRef.current = true;
     bufferedNotificationsRef.current = [];
@@ -463,7 +525,7 @@ function CtrlPaneDashboard() {
     try {
       const cmd = buildQueryCommand(host, currentFilters, currentGlobalFilter, serverSorting);
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-      const dbResponse = (await fetchClient(url)) as RuntimeInstanceApiResponse;
+      const dbResponse = await fetchRuntimeInstanceBaseline(url, abortController.signal);
       if (requestVersionRef.current !== requestVersion) {
         return;
       }
@@ -486,7 +548,8 @@ function CtrlPaneDashboard() {
         })),
       });
       setInstances(dbMap);
-      setHasLoadedOnce(true);
+      setInstancesHost(host);
+      hasLoadedOnceRef.current = true;
 
       if (!isLiveConnected && !forceLiveSync) {
         isSyncingRef.current = false;
@@ -543,13 +606,24 @@ function CtrlPaneDashboard() {
         }
       }
     } catch (syncError) {
-      console.error('Failed to load or reconcile controller services', syncError);
-      if (requestVersionRef.current === requestVersion) {
-        setHasLoadedOnce(true);
-        setHasCompletedSync(true);
-        setLiveSyncError('Failed to load controller services');
+      if (requestVersionRef.current !== requestVersion) {
+        return;
       }
+      console.error('Failed to load or reconcile controller services', syncError);
+      setInstances({});
+      setInstancesHost('');
+      hasLoadedOnceRef.current = true;
+      setHasCompletedSync(true);
+      setLiveSyncError(
+        abortController.signal.aborted
+          ? 'Controller service query timed out'
+          : 'Failed to load controller services',
+      );
     } finally {
+      window.clearTimeout(timeoutId);
+      if (baselineAbortRef.current === abortController) {
+        baselineAbortRef.current = null;
+      }
       if (requestVersionRef.current === requestVersion) {
         isSyncingRef.current = false;
         bufferedNotificationsRef.current = [];
@@ -561,7 +635,6 @@ function CtrlPaneDashboard() {
     applyBufferedNotifications,
     callTool,
     deferredGlobalFilter,
-    hasLoadedOnce,
     host,
     isLiveConnected,
     matchesFilter,
@@ -582,7 +655,7 @@ function CtrlPaneDashboard() {
       }
 
       if (isSyncingRef.current) {
-        bufferedNotificationsRef.current.push({ method, params });
+        appendBufferedNotification(bufferedNotificationsRef.current, { method, params });
         debugCtrlPane('Buffered live notification during sync', { method, params });
         return;
       }
@@ -610,7 +683,8 @@ function CtrlPaneDashboard() {
   const groupedData = useMemo(() => {
     const groups: Record<string, ServiceGroup> = {};
 
-    Object.values(instances).forEach((instance) => {
+    const visibleInstances = instancesForCurrentHost(instances, instancesHost, host);
+    Object.values(visibleInstances).forEach((instance) => {
       const key = `${instance.serviceId}|${instance.productId || ''}|${instance.envTag || ''}`;
       if (!groups[key]) {
         groups[key] = {
@@ -680,7 +754,7 @@ function CtrlPaneDashboard() {
     }
 
     return result;
-  }, [columnFilters, instances, sorting]);
+  }, [columnFilters, host, instances, instancesHost, sorting]);
 
   const pagedData = useMemo(() => {
     const start = pagination.pageIndex * pagination.pageSize;
