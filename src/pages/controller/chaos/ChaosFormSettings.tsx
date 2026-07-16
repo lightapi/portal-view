@@ -3,14 +3,23 @@ import FormGroup from '@mui/material/FormGroup';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import type { SelectChangeEvent } from '@mui/material/Select';
 
-export default function ChaosFormSettings(props) {
+type ChaosFormSettingsProps = {
+  label: string;
+  value: string;
+  options: string[];
+  optionDisplays: string[];
+  onChange: (value: string) => void;
+};
+
+export default function ChaosFormSettings(props: ChaosFormSettingsProps) {
   const label = props.label;
   const value = props.value;
   const options = props.options;
   const optionDisplays = props.optionDisplays;
 
-  const elementOptions = [];
+  const elementOptions: React.ReactNode[] = [];
 
   for (let i = 0; i < options.length; i++) {
     elementOptions.push(
@@ -18,7 +27,7 @@ export default function ChaosFormSettings(props) {
     );
   }
 
-  const handleChange = (val) => {
+  const handleChange = (val: SelectChangeEvent<string>) => {
     props.onChange(val.target.value);
   };
 

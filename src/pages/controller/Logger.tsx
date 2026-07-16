@@ -30,7 +30,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useController } from '../../contexts/ControllerContext';
+import { useController, useRuntimeCapabilities } from '../../contexts/ControllerContext';
 import fetchClient from '../../utils/fetchClient';
 
 type LoggerEntry = {
@@ -177,7 +177,7 @@ function normalizeHistoryRows(payload: any): HistoryRow[] {
         thread: log?.thread ?? '',
         exception: log?.exception ?? '',
       };
-    }).sort((left, right) => right.timestampMs - left.timestampMs);
+    }).sort((left: HistoryRow, right: HistoryRow) => right.timestampMs - left.timestampMs);
   }
   return flattenHistoryContent(payload?.content ?? payload);
 }
@@ -302,6 +302,13 @@ export default function Logger() {
   const node: LoggerNode = stateData.node || stateData;
   const runtimeInstanceId = node?.runtimeInstanceId;
   const rustRuntime = isRustNode(node);
+  const { supports } = useRuntimeCapabilities(runtimeInstanceId);
+  const canSetLogging = rustRuntime
+    ? supports('set_logging_filter')
+    : supports('set_loggers');
+  const canReloadLogging = supports('reload_modules');
+  const canStartStream = supports('start_logs');
+  const canStopStream = supports('stop_logs');
 
   const [tabIndex, setTabIndex] = useState(() =>
     stateData.tab ? tabIndexFromStateTab(stateData.tab) : tabIndexFromPath(location.pathname),
@@ -861,13 +868,13 @@ export default function Logger() {
                       <Button variant="outlined" onClick={fetchLoggers} disabled={configLoading || configApplying}>
                         Refresh
                       </Button>
-                      <Button variant="outlined" onClick={handleResetRustFilter} disabled={configLoading || configApplying}>
+                      <Button variant="outlined" onClick={handleResetRustFilter} disabled={!canReloadLogging || configLoading || configApplying}>
                         Reset From Config
                       </Button>
                       <Button
                         variant="contained"
                         onClick={handleApplyConfig}
-                        disabled={!rustFilterDraft.trim() || configApplying}
+                        disabled={!canSetLogging || !rustFilterDraft.trim() || configApplying}
                       >
                         {configApplying ? <CircularProgress size={20} /> : 'Apply Live'}
                       </Button>
@@ -921,7 +928,7 @@ export default function Logger() {
                       <Stack spacing={1}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                           <Typography variant="subtitle1">Target Overrides</Typography>
-                          <Button variant="outlined" onClick={handleAddRustTarget}>
+                          <Button variant="outlined" onClick={handleAddRustTarget} disabled={!canSetLogging}>
                             Add Target
                           </Button>
                         </Stack>
@@ -1017,7 +1024,7 @@ export default function Logger() {
                       sx={{ minWidth: 260 }}
                     />
                     <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" onClick={handleAddLoggerRow}>
+                      <Button variant="outlined" onClick={handleAddLoggerRow} disabled={!canSetLogging}>
                         Add Logger
                       </Button>
                       <Button variant="outlined" onClick={fetchLoggers} disabled={configLoading || configApplying}>
@@ -1026,7 +1033,7 @@ export default function Logger() {
                       <Button
                         variant="contained"
                         onClick={handleApplyConfig}
-                        disabled={!hasPendingConfigChanges || !!configValidationError || configApplying}
+                        disabled={!canSetLogging || !hasPendingConfigChanges || !!configValidationError || configApplying}
                       >
                         {configApplying ? <CircularProgress size={20} /> : 'Apply Changes'}
                       </Button>
@@ -1314,14 +1321,14 @@ export default function Logger() {
                   <Button
                     variant="contained"
                     onClick={handleStartStream}
-                    disabled={streamStatus === 'connecting' || streamStatus === 'streaming'}
+                    disabled={!canStartStream || streamStatus === 'connecting' || streamStatus === 'streaming'}
                   >
                     Start Stream
                   </Button>
                   <Button
                     variant="outlined"
                     onClick={handleStopStream}
-                    disabled={streamStatus !== 'streaming'}
+                    disabled={!canStopStream || streamStatus !== 'streaming'}
                   >
                     Stop Stream
                   </Button>

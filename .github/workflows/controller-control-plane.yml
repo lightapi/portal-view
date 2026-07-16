@@ -1,0 +1,21 @@
+name: Controller Control Plane
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  portal-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --run
+      - run: npm run build
+      - run: npm run lint
+      - run: npx tsc --noEmit -p tsconfig.controller.json

@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useController } from '../../contexts/ControllerContext';
+import { useController, useRuntimeCapabilities } from '../../contexts/ControllerContext';
 
 type ModuleNode = {
   runtimeInstanceId?: string;
@@ -35,6 +35,8 @@ export default function ModuleManager() {
   const stateData = (location.state as any)?.data || {};
   const node: ModuleNode = stateData.node || stateData;
   const runtimeInstanceId = node.runtimeInstanceId;
+  const { supports } = useRuntimeCapabilities(runtimeInstanceId);
+  const canReload = supports('reload_modules');
 
   const [modules, setModules] = useState<string[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -139,11 +141,11 @@ export default function ModuleManager() {
               <Button
                 variant="outlined"
                 onClick={() => handleReload(false)}
-                disabled={submitting || selectedModules.length === 0}
+                disabled={!canReload || submitting || selectedModules.length === 0}
               >
                 Reload Selected
               </Button>
-              <Button variant="contained" onClick={() => handleReload(true)} disabled={submitting}>
+              <Button variant="contained" onClick={() => handleReload(true)} disabled={!canReload || submitting}>
                 Reload All
               </Button>
             </Stack>

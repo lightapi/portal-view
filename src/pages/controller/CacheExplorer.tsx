@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useController } from '../../contexts/ControllerContext';
+import { useController, useRuntimeCapabilities } from '../../contexts/ControllerContext';
 
 type CacheNode = {
   runtimeInstanceId?: string;
@@ -42,6 +42,8 @@ export default function CacheExplorer() {
   const stateData = (location.state as any)?.data || {};
   const node: CacheNode = stateData.node || stateData;
   const runtimeInstanceId = node.runtimeInstanceId;
+  const { supports } = useRuntimeCapabilities(runtimeInstanceId);
+  const canClearCache = supports('clear_cache');
 
   const [caches, setCaches] = useState<string[]>([]);
   const [selectedCache, setSelectedCache] = useState<string | null>(null);
@@ -223,7 +225,7 @@ export default function CacheExplorer() {
                 />
                 <Button
                   color="error"
-                  disabled={!selectedCache || loadingEntries || clearingCache}
+                  disabled={!canClearCache || !selectedCache || loadingEntries || clearingCache}
                   startIcon={clearingCache ? <CircularProgress color="inherit" size={16} /> : <DeleteSweepIcon />}
                   variant="outlined"
                   onClick={() => setClearDialogOpen(true)}
@@ -314,7 +316,7 @@ export default function CacheExplorer() {
           <Button
             color="error"
             onClick={clearSelectedCache}
-            disabled={clearingCache}
+            disabled={!canClearCache || clearingCache}
             startIcon={clearingCache ? <CircularProgress color="inherit" size={16} /> : <DeleteSweepIcon />}
             variant="contained"
           >

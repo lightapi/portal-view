@@ -24,12 +24,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../contexts/AppContext';
-import { useController } from '../../contexts/ControllerContext';
+import { useController, useRuntimeCapabilities } from '../../contexts/ControllerContext';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
 import {
@@ -40,7 +41,7 @@ import {
   RuntimeInstanceType,
 } from '../../controller/types';
 
-type RuntimeInstanceView = RuntimeInstance & {
+export type RuntimeInstanceView = RuntimeInstance & {
   liveStatus: LiveStatus;
 };
 
@@ -71,6 +72,42 @@ type BufferedNotification = {
   method: string;
   params: any;
 };
+
+type RuntimeActionProps = {
+  node: RuntimeInstanceRow;
+  canInvoke: boolean;
+  onCheck: () => void;
+  onInfo: () => void;
+  onLogger: () => void;
+  onChaos: () => void;
+  onModule: () => void;
+  onCache: () => void;
+};
+
+function RuntimeActions({ node, canInvoke, onCheck, onInfo, onLogger, onChaos, onModule, onCache }: RuntimeActionProps) {
+  const { capabilities, loading, supports } = useRuntimeCapabilities(node.runtimeInstanceId);
+  const reason = loading ? 'Loading runtime capabilities' :
+    capabilities.reason || 'Operation is not supported by this runtime';
+  const action = (label: string, enabled: boolean, icon: React.ReactNode, handler: () => void) => (
+    <Tooltip title={enabled ? label : reason}>
+      <span>
+        <IconButton aria-label={label} onClick={handler} disabled={!enabled}>{icon}</IconButton>
+      </span>
+    </Tooltip>
+  );
+  const available = (tool: string) => canInvoke && !loading && supports(tool);
+
+  return (
+    <>
+      <TableCell align="right">{action('Status check', available('check'), <CloudDoneIcon />, onCheck)}</TableCell>
+      <TableCell align="right">{action('Server info', available('get_service_info'), <HelpIcon />, onInfo)}</TableCell>
+      <TableCell align="right">{action('Logger config', available('get_loggers') && supports('get_logging_filter'), <PermDataSettingIcon />, onLogger)}</TableCell>
+      <TableCell align="right">{action('Chaos monkey', available('get_chaos_monkey_config') && supports('configure_chaos_monkey') && supports('run_chaos_monkey_assault'), <AssessmentIcon />, onChaos)}</TableCell>
+      <TableCell align="right">{action('Module manager', available('get_modules'), <ViewModuleIcon />, onModule)}</TableCell>
+      <TableCell align="right">{action('Cache explorer', available('list_caches'), <StorageIcon />, onCache)}</TableCell>
+    </>
+  );
+}
 
 const DB_LIMIT = 1000;
 
@@ -240,7 +277,14 @@ function CtrlPaneDashboard() {
   const navigate = useNavigate();
   const { filter } = useAppState() as { filter: string };
   const { host } = useUserState() as { host: string };
-  const { callTool, subscribeToNotifications, isLiveConnected, error } = useController();
+  const {
+    callTool,
+    subscribeToNotifications,
+    subscribeToRehydration,
+    isLiveConnected,
+    pendingRequestCount,
+    error,
+  } = useController();
 
   const [instances, setInstances] = useState<Record<RuntimeInstanceId, RuntimeInstanceView>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -396,7 +440,7 @@ function CtrlPaneDashboard() {
     [matchesFilter],
   );
 
-  const fetchBaselineAndSync = useCallback(async () => {
+  const fetchBaselineAndSync = useCallback(async (forceLiveSync = false) => {
     if (!host) {
       return;
     }
@@ -444,7 +488,7 @@ function CtrlPaneDashboard() {
       setInstances(dbMap);
       setHasLoadedOnce(true);
 
-      if (!isLiveConnected) {
+      if (!isLiveConnected && !forceLiveSync) {
         isSyncingRef.current = false;
         setHasCompletedSync(true);
         return;
@@ -528,6 +572,8 @@ function CtrlPaneDashboard() {
   useEffect(() => {
     fetchBaselineAndSync();
   }, [fetchBaselineAndSync]);
+
+  useEffect(() => subscribeToRehydration(() => fetchBaselineAndSync(true)), [fetchBaselineAndSync, subscribeToRehydration]);
 
   useEffect(() => {
     return subscribeToNotifications((method, params) => {
@@ -811,7 +857,9 @@ function CtrlPaneDashboard() {
           <Chip
             label={
               isLiveConnected
-                ? liveSyncError
+                ? pendingRequestCount > 0
+                  ? `Control Plane Busy (${pendingRequestCount} queued)`
+                  : liveSyncError
                   ? 'Live Sync Failed'
                   : hasCompletedSync
                     ? 'Live Control Plane Connected'
@@ -821,7 +869,9 @@ function CtrlPaneDashboard() {
             size="small"
             color={
               isLiveConnected
-                ? liveSyncError
+                ? pendingRequestCount > 0
+                  ? 'info'
+                  : liveSyncError
                   ? 'warning'
                   : hasCompletedSync
                     ? 'success'
@@ -859,36 +909,16 @@ function CtrlPaneDashboard() {
                     <TableCell align="center">
                       <Chip label={chip.label} size="small" color={chip.color} variant="outlined" />
                     </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Status check" onClick={() => handleCheck(node)} disabled={!canInvoke}>
-                        <CloudDoneIcon />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Server info" onClick={() => handleInfo(node)} disabled={!canInvoke}>
-                        <HelpIcon />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Logger config" onClick={() => handleLogger(node)} disabled={!canInvoke}>
-                        <PermDataSettingIcon />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Chaos monkey" onClick={() => handleChaosMonkey(node)} disabled={!canInvoke}>
-                        <AssessmentIcon />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Module manager" onClick={() => handleModule(node)} disabled={!canInvoke}>
-                        <ViewModuleIcon />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Cache explorer" onClick={() => handleCache(node)} disabled={!canInvoke}>
-                        <StorageIcon />
-                      </IconButton>
-                    </TableCell>
+                    <RuntimeActions
+                      node={node}
+                      canInvoke={canInvoke}
+                      onCheck={() => handleCheck(node)}
+                      onInfo={() => handleInfo(node)}
+                      onLogger={() => handleLogger(node)}
+                      onChaos={() => handleChaosMonkey(node)}
+                      onModule={() => handleModule(node)}
+                      onCache={() => handleCache(node)}
+                    />
                   </TableRow>
                 );
               })}
@@ -906,7 +936,7 @@ function CtrlPaneDashboard() {
   );
 }
 
-function reconcileInstances(
+export function reconcileInstances(
   baselineInstances: Record<RuntimeInstanceId, RuntimeInstanceView>,
   liveInstances: any[],
   columnFilters: MRT_ColumnFiltersState,
@@ -945,9 +975,6 @@ function reconcileInstances(
       continue;
     }
     unmatchedLiveInstances.push(normalizedLiveInstance);
-    if (matchesFilter(normalizedLiveInstance, columnFilters, globalFilter)) {
-      reconciledInstances[normalizedLiveInstance.runtimeInstanceId] = normalizedLiveInstance;
-    }
   }
 
   Object.values(reconciledInstances).forEach((instance) => {
@@ -983,7 +1010,7 @@ function reconcileInstances(
   return reconciledInstances;
 }
 
-function applyNotificationToInstances(
+export function applyNotificationToInstances(
   currentInstances: Record<RuntimeInstanceId, RuntimeInstanceView>,
   method: string,
   params: any,
@@ -1044,16 +1071,7 @@ function applyNotificationToInstances(
     };
   }
 
-  if (!matchesFilter(normalizedInstance, columnFilters, globalFilter)) {
-    debugCtrlPane('Ignored live notification that did not match current filters', {
-      method,
-      runtimeInstanceId: normalizedInstance.runtimeInstanceId,
-      params,
-    });
-    return currentInstances;
-  }
-
-  debugCtrlPane('Inserted live-only runtime instance from notification', {
+  debugCtrlPane('Ignored live-only runtime instance notification', {
     method,
     runtimeInstanceId: normalizedInstance.runtimeInstanceId,
     serviceId: normalizedInstance.serviceId,
@@ -1062,10 +1080,7 @@ function applyNotificationToInstances(
     port: normalizedInstance.metadata.port,
   });
 
-  return {
-    ...currentInstances,
-    [normalizedInstance.runtimeInstanceId]: normalizedInstance,
-  };
+  return currentInstances;
 }
 
 export default CtrlPaneDashboard;

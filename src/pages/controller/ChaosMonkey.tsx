@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useController } from '../../contexts/ControllerContext';
+import { useController, useRuntimeCapabilities } from '../../contexts/ControllerContext';
 
 type AssaultConfig = Record<string, any>;
 
@@ -37,7 +37,7 @@ type ChaosNode = {
   portNumber?: number;
 };
 
-function cloneConfig<T extends AssaultConfig>(value: T | undefined): T {
+function cloneConfig(value: AssaultConfig | undefined): AssaultConfig {
   return JSON.parse(JSON.stringify(value ?? {}));
 }
 
@@ -93,6 +93,8 @@ export default function ChaosMonkey() {
   const stateData = (location.state as any)?.data || {};
   const node: ChaosNode = stateData.node || stateData;
   const runtimeInstanceId = node.runtimeInstanceId;
+  const { supports } = useRuntimeCapabilities(runtimeInstanceId);
+  const canConfigureChaos = supports('configure_chaos_monkey');
 
   const [tabIndex, setTabIndex] = useState(0);
   const [config, setConfig] = useState<ChaosConfigResponse>({});
@@ -143,14 +145,16 @@ export default function ChaosMonkey() {
       setDraft({});
       return;
     }
-    setDraft(cloneConfig(config[activeTab as keyof ChaosConfigResponse]));
+    const value = config[activeTab as keyof ChaosConfigResponse];
+    setDraft(cloneConfig(value && typeof value === 'object' ? value : undefined));
   }, [activeTab, config]);
 
   const handleReset = () => {
     if (activeTab === 'overview') {
       return;
     }
-    setDraft(cloneConfig(config[activeTab as keyof ChaosConfigResponse]));
+    const value = config[activeTab as keyof ChaosConfigResponse];
+    setDraft(cloneConfig(value && typeof value === 'object' ? value : undefined));
     setSuccess(null);
     setError(null);
   };
@@ -301,7 +305,7 @@ export default function ChaosMonkey() {
           <Button variant="outlined" onClick={handleReset} disabled={submitting}>
             Reset
           </Button>
-          <Button variant="contained" onClick={handleApply} disabled={submitting || !chaosSupported}>
+          <Button variant="contained" onClick={handleApply} disabled={!canConfigureChaos || submitting || !chaosSupported}>
             {submitting ? <CircularProgress size={20} /> : 'Apply'}
           </Button>
         </Stack>

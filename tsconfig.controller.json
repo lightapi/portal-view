@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "es2018",
+    "allowJs": false,
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": [
+    "config.ts",
+    "src/controller/**/*.ts",
+    "src/contexts/ControllerContext.tsx",
+    "src/pages/controller/**/*.ts",
+    "src/pages/controller/**/*.tsx"
+  ]
+}

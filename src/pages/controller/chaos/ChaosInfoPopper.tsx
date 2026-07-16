@@ -77,7 +77,7 @@ export default function ChaosInfoPopper({ formType, handlerName }: ChaosInfoPopp
         anchorEl={popperAnchor}
         transition
       >
-        {({ TransitionProps }: { TransitionProps: any }) => (
+        {({ TransitionProps }) => (
           <Fade {...TransitionProps} timeout={350}>
             <Box sx={{ border: 1, p: 2, bgcolor: 'background.paper', boxShadow: 1, borderRadius: 1 }}>
               {description}
@@ -88,5 +88,4 @@ export default function ChaosInfoPopper({ formType, handlerName }: ChaosInfoPopp
     </>
   );
 }
-
 

@@ -1,9 +1,12 @@
 import React, { useReducer, useContext } from "react";
 
-const AppStateContext = React.createContext();
-const AppDispatchContext = React.createContext();
+type AppState = { filter: string | null };
+type AppAction = { type: "UPDATE_FILTER"; filter: string };
 
-function appReducer(state, action) {
+const AppStateContext = React.createContext<AppState | undefined>(undefined);
+const AppDispatchContext = React.createContext<React.Dispatch<AppAction> | undefined>(undefined);
+
+function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "UPDATE_FILTER":
       return { ...state, filter: action.filter.toLowerCase() };
@@ -13,7 +16,7 @@ function appReducer(state, action) {
   }
 }
 
-function AppProvider({ children }) {
+function AppProvider({ children }: { children: React.ReactNode }) {
   // console.log("AppProvider is called...");
   const [state, dispatch] = useReducer(appReducer, {
     filter: null
