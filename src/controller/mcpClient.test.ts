@@ -84,6 +84,7 @@ describe('McpClient', () => {
 
   afterEach(() => {
     client.close();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -93,6 +94,44 @@ describe('McpClient', () => {
     await flush();
     await connected;
   }
+
+  it('binds default browser timers to the global receiver', async () => {
+    const delegateSetTimeout = globalThis.setTimeout;
+    const delegateClearTimeout = globalThis.clearTimeout;
+    const receiverSetTimeout = function (
+      this: unknown,
+      ...args: Parameters<typeof globalThis.setTimeout>
+    ) {
+      if (this !== globalThis) throw new TypeError('Illegal invocation');
+      return delegateSetTimeout(...args);
+    } as typeof globalThis.setTimeout;
+    const receiverClearTimeout = function (
+      this: unknown,
+      ...args: Parameters<typeof globalThis.clearTimeout>
+    ) {
+      if (this !== globalThis) throw new TypeError('Illegal invocation');
+      return delegateClearTimeout(...args);
+    } as typeof globalThis.clearTimeout;
+    vi.stubGlobal('setTimeout', receiverSetTimeout);
+    vi.stubGlobal('clearTimeout', receiverClearTimeout);
+
+    client.close();
+    sockets = [];
+    client = new McpClient('wss://portal.test/ctrl/mcp', ['csrf.token'], {
+      webSocketFactory: (_url, _protocols) => {
+        const socket = new FakeSocket();
+        sockets.push(socket);
+        return socket;
+      },
+      random: () => 0.5,
+      isOnline: () => true,
+      addOnlineListener: () => () => undefined,
+      addOfflineListener: () => () => undefined,
+    });
+
+    await ready();
+    expect(sockets).toHaveLength(1);
+  });
 
   it('initializes before readiness and accepts only an offered selected protocol', async () => {
     const states: string[] = [];

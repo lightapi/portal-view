@@ -192,8 +192,8 @@ export class McpClient {
       ? protocolsOrProvider
       : () => protocolsOrProvider || [];
     this.webSocketFactory = dependencies.webSocketFactory || defaultWebSocketFactory;
-    this.scheduleTimeout = dependencies.setTimeout || globalThis.setTimeout;
-    this.cancelTimeout = dependencies.clearTimeout || globalThis.clearTimeout;
+    this.scheduleTimeout = dependencies.setTimeout || globalThis.setTimeout.bind(globalThis);
+    this.cancelTimeout = dependencies.clearTimeout || globalThis.clearTimeout.bind(globalThis);
     this.random = dependencies.random || Math.random;
     this.now = dependencies.now || Date.now;
     this.isOnline = dependencies.isOnline || (() => typeof navigator === 'undefined' || navigator.onLine);
