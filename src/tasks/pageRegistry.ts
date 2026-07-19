@@ -396,6 +396,16 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["agentDefId", "host"],
   },
   {
+    id: "genai-llm-model-control-plane",
+    title: "LLM Model Control Plane",
+    description: "Manage model catalog, provider deployments, aliases, policy, pricing, and gateway publications.",
+    route: "/app/genai/LlmModelControlPlane",
+    category: "Portal Administration",
+    roles: ["admin"],
+    keywords: ["genai", "llm", "model", "provider", "alias", "routing", "publication"],
+    entities: ["modelCatalogId", "providerDeploymentId", "publicAliasId", "modelPolicyId"],
+  },
+  {
     id: "genai-skill",
     title: "GenAI Skills",
     description: "Create and manage reusable GenAI skills.",

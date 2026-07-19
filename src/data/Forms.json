@@ -16423,12 +16423,23 @@
           "type": "string",
           "readonly": true
         },
+        "modelAliasId": {
+          "title": "Model Alias",
+          "description": "Select either a model alias or a model policy. Do not combine either with legacy provider/model fields.",
+          "type": "string"
+        },
+        "modelPolicyId": {
+          "title": "Model Policy",
+          "description": "Policy-only agents require exactly one default alias binding.",
+          "type": "string"
+        },
         "modelProvider": {
-          "title": "Model Provider",
+          "title": "Legacy Model Provider",
+          "description": "Legacy compatibility mode only. Must be paired with Legacy Model Name.",
           "type": "string"
         },
         "modelName": {
-          "title": "Model Name",
+          "title": "Legacy Model Name",
           "type": "string"
         },
         "apiKeyRef": {
@@ -16463,9 +16474,7 @@
       },
       "required": [
         "hostId",
-        "agentDefId",
-        "modelProvider",
-        "modelName"
+        "agentDefId"
       ]
     },
     "form": [
@@ -16482,25 +16491,25 @@
         }
       },
       {
-        "key": "modelProvider",
+        "key": "modelAliasId",
         "type": "dynaselect",
         "multiple": false,
+        "optionValueKey": "id",
         "action": {
-          "url": "/r/data?name=model_provider"
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
         }
       },
       {
-        "key": "modelName",
+        "key": "modelPolicyId",
         "type": "dynaselect",
         "multiple": false,
+        "optionValueKey": "id",
         "action": {
-          "url": "/r/data?name=model_name&rela=provider_name&from={0}",
-          "params": [
-            "modelProvider"
-          ]
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelPolicyLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
         }
       },
-      "apiKeyRef",
       "temperature",
       "maxTokens",
       {
@@ -16564,12 +16573,22 @@
           "type": "string",
           "readonly": true
         },
+        "modelAliasId": {
+          "title": "Model Alias",
+          "description": "Select either a model alias or a model policy. Do not combine either with legacy provider/model fields.",
+          "type": "string"
+        },
+        "modelPolicyId": {
+          "title": "Model Policy",
+          "description": "Policy-only agents require exactly one default alias binding.",
+          "type": "string"
+        },
         "modelProvider": {
-          "title": "Model Provider",
+          "title": "Legacy Model Provider",
           "type": "string"
         },
         "modelName": {
-          "title": "Model Name",
+          "title": "Legacy Model Name",
           "type": "string"
         },
         "apiKeyRef": {
@@ -16608,17 +16627,44 @@
       "required": [
         "hostId",
         "agentDefId",
-        "modelProvider",
-        "modelName",
         "active"
       ]
     },
     "form": [
       "hostId",
       "agentDefId",
-      "modelProvider",
-      "modelName",
-      "apiKeyRef",
+      {
+        "key": "modelAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "modelPolicyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelPolicyLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "modelProvider",
+        "readonly": true
+      },
+      {
+        "key": "modelName",
+        "readonly": true
+      },
+      {
+        "key": "apiKeyRef",
+        "readonly": true
+      },
       "temperature",
       "maxTokens",
       {

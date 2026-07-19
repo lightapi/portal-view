@@ -37,8 +37,10 @@ type AgentDefinitionType = {
     envTag?: string;
     targetHost?: string;
     agentName: string;
-    modelProvider: string;
-    modelName: string;
+    modelAliasId?: string;
+    modelPolicyId?: string;
+    modelProvider?: string;
+    modelName?: string;
     apiKeyRef?: string;
     temperature?: number;
     maxTokens?: number;
@@ -201,6 +203,8 @@ export default function AgentDefinition() {
             { accessorKey: 'apiVersion', header: 'API Version' },
             { accessorKey: 'serviceId', header: 'Service Id' },
             { accessorKey: 'agentName', header: 'Agent Name' },
+            { accessorKey: 'modelAliasId', header: 'Model Alias Id' },
+            { accessorKey: 'modelPolicyId', header: 'Model Policy Id' },
             { accessorKey: 'modelProvider', header: 'Model Provider' },
             { accessorKey: 'modelName', header: 'Model Name' },
             { accessorKey: 'apiKeyRef', header: 'API Key Ref' },
