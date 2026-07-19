@@ -20,4 +20,10 @@ describe('LLM model control-plane validation', () => {
     expect(gatewaySupports({minimumGatewayVersion:'2.0.0',enabledRoutingFeatures:['streaming']},{compilerVersion:'1.9.0',features:[]})).not.toHaveLength(0);
     expect(gatewaySupports({minimumGatewayVersion:'1.0.0',enabledRoutingFeatures:['streaming']},{compilerVersion:'1.1.0',features:['streaming']})).toHaveLength(0);
   });
+  it('requires internal legacy aliases to bind to exactly one agent definition', () => {
+    const alias = llmResources.find(resource => resource.key === 'aliases')!;
+    expect(validateMutation(alias,{hostId:'h',aliasVisibility:'INTERNAL_LEGACY'}).join(' ')).toContain('boundAgentDefId');
+    expect(validateMutation(alias,{hostId:'h',aliasVisibility:'INTERNAL_LEGACY',boundAgentDefId:'11111111-1111-4111-8111-111111111111'})).toHaveLength(0);
+    expect(validateMutation(alias,{hostId:'h',aliasVisibility:'PUBLIC',boundAgentDefId:'11111111-1111-4111-8111-111111111111'}).join(' ')).toContain('cannot bind');
+  });
 });

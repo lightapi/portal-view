@@ -17,6 +17,18 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
   if (resource.key === 'routes' && ((value.routeWeight ?? 1) !== 1 || Number(value.canaryPercent ?? 0) !== 0)) {
     errors.push('MVP routes require routeWeight=1 and canaryPercent=0.');
   }
+  if (resource.key === 'aliases') {
+    const visibility = value.aliasVisibility ?? 'PUBLIC';
+    if (visibility !== 'PUBLIC' && visibility !== 'INTERNAL_LEGACY') {
+      errors.push('aliasVisibility must be PUBLIC or INTERNAL_LEGACY.');
+    } else if (visibility === 'PUBLIC' && value.boundAgentDefId != null) {
+      errors.push('PUBLIC aliases cannot bind to an agent definition.');
+    } else if (visibility === 'INTERNAL_LEGACY'
+      && (typeof value.boundAgentDefId !== 'string'
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.boundAgentDefId))) {
+      errors.push('INTERNAL_LEGACY aliases require a UUID boundAgentDefId.');
+    }
+  }
   return errors;
 }
 
