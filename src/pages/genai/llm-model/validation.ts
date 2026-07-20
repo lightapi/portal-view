@@ -52,8 +52,26 @@ function containsRawSecret(value: unknown): boolean {
 
 export function display(value: unknown): string {
   if (value == null) return '—';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
+  const sanitized = sanitizeForDisplay(value);
+  if (typeof sanitized === 'object') return JSON.stringify(sanitized);
+  return String(sanitized);
+}
+
+export function sanitizeForDisplay(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sanitizeForDisplay);
+  if (!value || typeof value !== 'object') {
+    return typeof value === 'string' && (/^sk[-_]/i.test(value) || /^Bearer\s/i.test(value))
+      ? '[redacted]' : value;
+  }
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => {
+      const normalized = key.replace(/[^A-Za-z0-9]/g,'').toLowerCase();
+      if (['secretreference','credentialref','credentialreference'].includes(normalized)) return true;
+      return !(normalized.includes('secret') || normalized.includes('apikey')
+        || normalized.includes('password') || normalized.includes('authorization')
+        || ['token','accesstoken','refreshtoken','bearertoken','idtoken','credentialvalue'].includes(normalized));
+    })
+    .map(([key,nested]) => [key,sanitizeForDisplay(nested)]));
 }
 
 export function validatePublicationCandidate(value: unknown): string[] {
@@ -74,7 +92,52 @@ export function validatePublicationCandidate(value: unknown): string[] {
       errors.push(`resources[${index}] has an invalid id/version/sequence/schemaVersion.`);
     }
     if (!resource.payload || typeof resource.payload !== 'object') errors.push(`resources[${index}].payload is required.`);
+    if (resource.resourceType === 'llm-deployment' && resource.payload && typeof resource.payload === 'object') {
+      errors.push(...validateDeploymentEvidence(resource.payload as Record<string, unknown>, index));
+    }
   });
+  return errors;
+}
+
+function validateDeploymentEvidence(payload: Record<string, unknown>, index: number): string[] {
+  const prefix = `resources[${index}].payload`;
+  if (!payload.conformanceResult || typeof payload.conformanceResult !== 'object') {
+    return [`${prefix}.conformanceResult is required.`];
+  }
+  const result = payload.conformanceResult as Record<string, unknown>;
+  const errors: string[] = [];
+  if (!/^[0-9a-f]{64}$/i.test(String(payload.conformanceDigest ?? ''))
+    || payload.conformanceDigest !== result.digest) errors.push(`${prefix} conformance digest is invalid or detached.`);
+  if (result.schemaVersion !== '1' || result.state !== 'pass') errors.push(`${prefix} conformance result must be schema 1 and passing.`);
+  if (payload.format !== result.provider || payload.model !== result.physicalModel) errors.push(`${prefix} conformance identity does not match deployment.`);
+  const validUntil = Date.parse(String(result.validUntil ?? ''));
+  if (!Number.isFinite(validUntil) || validUntil <= Date.now()) errors.push(`${prefix} conformance result is expired.`);
+  const capabilities = result.capabilities && typeof result.capabilities === 'object'
+    ? result.capabilities as Record<string, unknown> : null;
+  const content = capabilities?.content && typeof capabilities.content === 'object'
+    ? capabilities.content as Record<string, unknown> : {};
+  const evidence = result.capabilityEvidence && typeof result.capabilityEvidence === 'object'
+    ? result.capabilityEvidence as Record<string, unknown> : null;
+  if (!capabilities || !evidence || !Array.isArray(capabilities.operations)
+    || !capabilities.operations.includes('chat_completions')) {
+    errors.push(`${prefix} conformance capabilities/evidence are incomplete.`);
+    return errors;
+  }
+  const required = ['chat_completions'];
+  if (content.text === true) required.push('text');
+  if (content.images === true) required.push('images');
+  if (content.tools === true) required.push('tools');
+  if (content.parallelTools === true) required.push('parallel_tools');
+  if (content.structuredJson === true) required.push('structured_json');
+  if (capabilities.streaming === true) required.push('streaming');
+  for (const capability of required) {
+    const item = evidence[capability] && typeof evidence[capability] === 'object'
+      ? evidence[capability] as Record<string, unknown> : null;
+    if (!item || !Array.isArray(item.fixtureIds) || !item.fixtureIds.length
+      || !Array.isArray(item.provenances) || !item.provenances.includes('captured_sanitized')) {
+      errors.push(`${prefix} capability ${capability} lacks captured_sanitized evidence.`);
+    }
+  }
   return errors;
 }
 

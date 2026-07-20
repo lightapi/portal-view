@@ -8,7 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { commandLlm, listLlm, queryLlm } from './api';
 import type { LlmRecord, ResourceDefinition } from './types';
-import { display, validateMutation } from './validation';
+import { display, sanitizeForDisplay, validateMutation } from './validation';
 
 type Props = { hostId: string; resource: ResourceDefinition };
 
@@ -30,7 +30,7 @@ export default function ResourcePanel({hostId, resource}: Props) {
   useEffect(() => { void load(); }, [load]);
 
   const open = (row?: LlmRecord) => {
-    const value = row ?? {hostId, active: true};
+    const value = (row ? sanitizeForDisplay(row) : {hostId, active: true}) as LlmRecord;
     setEditing(value); setCreate(!row); setJson(JSON.stringify(value, null, 2));
   };
   const close = () => setEditing(null);
