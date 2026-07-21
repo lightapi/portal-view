@@ -18287,6 +18287,187 @@
       "active"
     ]
   },
+  "createLlmModel": {
+    "formId": "createLlmModel",
+    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmModel",
+        "version": "0.1.0",
+        "title": "Create LLM Model",
+        "success": "/app/marketplace/llm-model",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create LLM Model",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {"title": "Host Id", "type": "string", "readonly": true},
+        "providerType": {"title": "Provider Type", "type": "string", "maxLength": 32},
+        "physicalModelId": {"title": "Physical Model Id", "type": "string", "maxLength": 255},
+        "modelFamily": {"title": "Model Family", "type": "string", "maxLength": 126},
+        "modelVersion": {"title": "Model Version", "type": "string", "maxLength": 64},
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "RETIRED"],
+          "default": "DRAFT"
+        },
+        "contextTokenLimit": {"title": "Context Token Limit", "type": "integer", "minimum": 1},
+        "outputTokenLimit": {"title": "Output Token Limit", "type": "integer", "minimum": 1},
+        "modalities": {"title": "Modalities", "type": "array", "items": {"type": "string"}, "default": []},
+        "operations": {"title": "Operations", "type": "array", "items": {"type": "string"}, "default": []},
+        "declaredCapabilities": {"title": "Declared Capabilities", "type": "object", "additionalProperties": true, "default": {}},
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "active": {"title": "Active", "type": "boolean", "default": true}
+      },
+      "required": ["hostId", "providerType", "physicalModelId", "modelFamily", "contextTokenLimit", "outputTokenLimit"]
+    },
+    "form": [
+      "hostId",
+      "providerType",
+      "physicalModelId",
+      "modelFamily",
+      "modelVersion",
+      "lifecycleStatus",
+      "contextTokenLimit",
+      "outputTokenLimit",
+      "modalities",
+      "operations",
+      "declaredCapabilities",
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "active"
+    ]
+  },
+  "updateLlmModel": {
+    "formId": "updateLlmModel",
+    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmModel",
+        "version": "0.1.0",
+        "title": "Update LLM Model",
+        "success": "/app/marketplace/llm-model",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update LLM Model",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {"title": "Host Id", "type": "string", "readonly": true},
+        "modelId": {"title": "Model Id", "type": "string", "readonly": true},
+        "providerType": {"title": "Provider Type", "type": "string", "maxLength": 32},
+        "physicalModelId": {"title": "Physical Model Id", "type": "string", "maxLength": 255},
+        "modelFamily": {"title": "Model Family", "type": "string", "maxLength": 126},
+        "modelVersion": {"title": "Model Version", "type": "string", "maxLength": 64},
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "DEPRECATED", "RETIRED"]
+        },
+        "contextTokenLimit": {"title": "Context Token Limit", "type": "integer", "minimum": 1},
+        "outputTokenLimit": {"title": "Output Token Limit", "type": "integer", "minimum": 1},
+        "modalities": {"title": "Modalities", "type": "array", "items": {"type": "string"}},
+        "operations": {"title": "Operations", "type": "array", "items": {"type": "string"}},
+        "declaredCapabilities": {"title": "Declared Capabilities", "type": "object", "additionalProperties": true},
+        "categoryIds": {
+          "title": "Categories",
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "tagIds": {
+          "title": "Tags",
+          "type": "array",
+          "items": {"type": "string"},
+          "default": []
+        },
+        "aggregateVersion": {"title": "Aggregate Version", "type": "integer", "readonly": true, "minimum": 1},
+        "active": {"title": "Active", "type": "boolean"}
+      },
+      "required": ["hostId", "modelId", "aggregateVersion"]
+    },
+    "form": [
+      "hostId",
+      "modelId",
+      "providerType",
+      "physicalModelId",
+      "modelFamily",
+      "modelVersion",
+      "lifecycleStatus",
+      "contextTokenLimit",
+      "outputTokenLimit",
+      "modalities",
+      "operations",
+      "declaredCapabilities",
+      {
+        "key": "categoryIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      {
+        "key": "tagIds",
+        "type": "dynaselect",
+        "multiple": true,
+        "groupByKey": "groupLabel",
+        "groupSortKey": "groupSortOrder",
+        "optionSortKey": "tagSortOrder",
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "aggregateVersion",
+      "active"
+    ]
+  },
   "createSkill": {
     "formId": "createSkill",
     "actions": [

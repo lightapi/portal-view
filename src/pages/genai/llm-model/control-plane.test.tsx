@@ -12,7 +12,13 @@ const mocks = vi.hoisted(() => ({
   listLlm: vi.fn(),
   queryLlm: vi.fn(),
   commandLlm: vi.fn(),
+  navigate: vi.fn(),
 }));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return {...actual, useNavigate: () => mocks.navigate};
+});
 
 vi.mock('../../../contexts/UserContext', () => ({
   useUserState: () => ({host: mocks.host}),
@@ -57,6 +63,7 @@ describe('LLM control-plane wiring', () => {
     mocks.listLlm.mockResolvedValue([]);
     mocks.queryLlm.mockResolvedValue(null);
     mocks.commandLlm.mockResolvedValue(undefined);
+    mocks.navigate.mockReset();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
@@ -75,7 +82,35 @@ describe('LLM control-plane wiring', () => {
     mocks.host = 'host-a';
     render(<LlmModelCatalog/>);
     expect(screen.getByRole('heading',{name:'LLM Model Catalog'})).toBeInTheDocument();
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelCatalog','host-a'));
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModel','host-a'));
+    await userEvent.click(screen.getByRole('button',{name:'Create draft'}));
+    expect(mocks.navigate).toHaveBeenCalledWith('/app/form/createLlmModel', {
+      state: {data: {hostId:'host-a',active:true}},
+    });
+  });
+
+  it('opens typed model data for update without read-only audit fields', async () => {
+    const model = {
+      hostId:'host-a', modelId:'model-a', providerType:'openai', physicalModelId:'gpt-a',
+      modelFamily:'gpt', lifecycleStatus:'ACTIVE', contextTokenLimit:128000,
+      outputTokenLimit:4096, modalities:['text'], operations:['chat'],
+      declaredCapabilities:{tools:true}, categoryIds:['category-a'], tagIds:['tag-a'],
+      aggregateVersion:3, active:true, updateUser:'system', updateTs:'2026-07-21T00:00:00Z',
+    };
+    mocks.listLlm.mockResolvedValue([model]);
+    const models = llmResources.find(resource => resource.key === 'models')!;
+    render(<ResourcePanel hostId="host-a" resource={models}/>);
+    await userEvent.click(await screen.findByLabelText('Edit'));
+
+    expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateLlmModel', {
+      state: {data: expect.objectContaining({
+        modalities:['text'], operations:['chat'], declaredCapabilities:{tools:true},
+        categoryIds:['category-a'], tagIds:['tag-a'], aggregateVersion:3,
+      })},
+    });
+    const navigationData = mocks.navigate.mock.calls[0][1].state.data;
+    expect(navigationData).not.toHaveProperty('updateUser');
+    expect(navigationData).not.toHaveProperty('updateTs');
   });
 
   it('publishes and rolls back only complete captured-evidence roots', async () => {

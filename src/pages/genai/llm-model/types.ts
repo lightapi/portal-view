@@ -12,12 +12,15 @@ export type ResourceDefinition = {
   createAction: string;
   updateAction: string;
   deleteAction: string;
+  createForm?: string;
+  updateForm?: string;
+  formFields?: string[];
   idField: string;
   columns: string[];
 };
 
 export const llmCatalogResource: ResourceDefinition =
-  {key:'catalog',label:'Catalog',listAction:'getLlmModelCatalog',createAction:'createLlmModelCatalog',updateAction:'updateLlmModelCatalog',deleteAction:'deleteLlmModelCatalog',idField:'modelId',columns:['providerType','physicalModelId','modelFamily','categoryIds','tagIds','lifecycleStatus']};
+  {key:'models',label:'Models',listAction:'getLlmModel',createAction:'createLlmModel',updateAction:'updateLlmModel',deleteAction:'deleteLlmModel',createForm:'createLlmModel',updateForm:'updateLlmModel',formFields:['hostId','modelId','providerType','physicalModelId','modelFamily','modelVersion','lifecycleStatus','contextTokenLimit','outputTokenLimit','modalities','operations','declaredCapabilities','categoryIds','tagIds','aggregateVersion','active'],idField:'modelId',columns:['providerType','physicalModelId','modelFamily','categoryIds','tagIds','lifecycleStatus']};
 
 export const llmAdminResources: ResourceDefinition[] = [
   {key:'registrations',label:'Registrations',listAction:'getLlmModelRegistration',createAction:'createLlmModelRegistration',updateAction:'updateLlmModelRegistration',deleteAction:'deleteLlmModelRegistration',idField:'modelRegistrationId',columns:['modelId','environment','regions','lifecycleStatus']},

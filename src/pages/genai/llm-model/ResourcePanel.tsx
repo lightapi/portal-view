@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, TextField, Tooltip, Typography } from '@mui/material';
@@ -13,6 +14,7 @@ import { display, sanitizeForDisplay, validateMutation } from './validation';
 type Props = { hostId: string; resource: ResourceDefinition };
 
 export default function ResourcePanel({hostId, resource}: Props) {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<LlmRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,6 +33,14 @@ export default function ResourcePanel({hostId, resource}: Props) {
 
   const open = (row?: LlmRecord) => {
     const value = (row ? sanitizeForDisplay(row) : {hostId, active: true}) as LlmRecord;
+    const formId = row ? resource.updateForm : resource.createForm;
+    if (formId) {
+      const data = resource.formFields
+        ? Object.fromEntries(Object.entries(value).filter(([field]) => resource.formFields!.includes(field)))
+        : value;
+      navigate(`/app/form/${formId}`, {state: {data}});
+      return;
+    }
     setEditing(value); setCreate(!row); setJson(JSON.stringify(value, null, 2));
   };
   const close = () => setEditing(null);
