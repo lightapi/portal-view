@@ -34,6 +34,7 @@ import ApiDetail from "./pages/service/ApiDetail";
 import ApiCatalog from "./pages/marketplace/ApiCatalog";
 import SchemaCatalog from "./pages/marketplace/SchemaCatalog";
 import WorkflowCatalog from "./pages/marketplace/WorkflowCatalog";
+import LlmModelCatalog from "./pages/marketplace/LlmModelCatalog";
 import OpenapiEditor from "./pages/service/OpenapiEditor";
 import HybridEditor from "./pages/service/HybridEditor";
 import GraphqlEditor from "./pages/service/GraphqlEditor";
@@ -353,6 +354,7 @@ const App = () => {
           <Route path="marketplace/api" element={<ApiCatalog />} />
           <Route path="marketplace/schema" element={<SchemaCatalog />} />
           <Route path="marketplace/workflow" element={<WorkflowCatalog />} />
+          <Route path="marketplace/llm-model" element={<LlmModelCatalog />} />
           <Route path="service/:apiType" element={<Service />} />
           <Route path="service/admin" element={<Service />} />
           <Route path="apiDetail" element={<ApiDetail />} />

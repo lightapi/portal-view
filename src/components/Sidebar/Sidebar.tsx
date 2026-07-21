@@ -114,6 +114,7 @@ const structure = [
           { label: "API Catalog", link: "/app/marketplace/api" },
           { label: "Schema Catalog", link: "/app/marketplace/schema" },
           { label: "Workflow Catalog", link: "/app/marketplace/workflow" },
+          { label: "LLM Model Catalog", link: "/app/marketplace/llm-model" },
           { label: "API Client", link: "/app/client" },
           { label: "OpenApi API", link: "/app/service/openapi" },
           { label: "GraphQL API", link: "/app/service/graphql" },

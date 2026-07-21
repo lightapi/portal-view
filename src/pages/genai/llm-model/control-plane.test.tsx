@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import LlmModelControlPlane from './LlmModelControlPlane';
 import PublicationPanel from './PublicationPanel';
 import ResourcePanel from './ResourcePanel';
+import LlmModelCatalog from '../../marketplace/LlmModelCatalog';
 import { llmResources } from './types';
 
 const mocks = vi.hoisted(() => ({
@@ -64,10 +65,17 @@ describe('LLM control-plane wiring', () => {
     expect(screen.getByText('Select a host to administer LLM models.')).toBeInTheDocument();
     mocks.host = 'host-a';
     view.rerender(<LlmModelControlPlane/>);
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelCatalog','host-a'));
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelRegistration','host-a'));
     mocks.host = 'host-b';
     view.rerender(<LlmModelControlPlane/>);
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelCatalog','host-b'));
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelRegistration','host-b'));
+  });
+
+  it('loads the model catalog from its Marketplace page', async () => {
+    mocks.host = 'host-a';
+    render(<LlmModelCatalog/>);
+    expect(screen.getByRole('heading',{name:'LLM Model Catalog'})).toBeInTheDocument();
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelCatalog','host-a'));
   });
 
   it('publishes and rolls back only complete captured-evidence roots', async () => {
