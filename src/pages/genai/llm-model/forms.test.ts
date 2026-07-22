@@ -10,6 +10,21 @@ describe('LLM model dynamic forms', () => {
       expect(definition.schema.properties.operations).toMatchObject({type: 'array', items: {type: 'string'}});
       expect(definition.schema.properties.declaredCapabilities).toMatchObject({type: 'object'});
 
+      const modalities = definition.form.find(item => typeof item === 'object' && item.key === 'modalities');
+      const operations = definition.form.find(item => typeof item === 'object' && item.key === 'operations');
+      const declaredCapabilities = definition.form.find(
+        item => typeof item === 'object' && item.key === 'declaredCapabilities',
+      );
+      expect(modalities).toMatchObject({
+        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'form',
+      });
+      expect(operations).toMatchObject({
+        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'form',
+      });
+      expect(declaredCapabilities).toMatchObject({
+        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'json',
+      });
+
       const category = definition.form.find(item => typeof item === 'object' && item.key === 'categoryIds');
       const tag = definition.form.find(item => typeof item === 'object' && item.key === 'tagIds');
       expect(category).toMatchObject({type: 'dynaselect', multiple: true, optionValueKey: 'id'});

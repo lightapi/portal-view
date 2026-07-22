@@ -1,7 +1,7 @@
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SchemaForm, utils } from "react-schema-form";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
@@ -139,6 +139,21 @@ function submittedFormModel(formId: string | undefined, source: any) {
   return next;
 }
 
+function hasUnappliedStructuredDraft(container: HTMLElement | null) {
+  if (!container) return false;
+
+  const selectedTabs = container.querySelectorAll(
+    'fieldset [role="tab"][aria-selected="true"]',
+  );
+  return Array.from(selectedTabs).some((tab) => tab.textContent?.trim().endsWith("*"));
+}
+
+function hasInvalidStructuredDraft(container: HTMLElement | null) {
+  return !!container?.querySelector(
+    'fieldset [role="tabpanel"] [aria-invalid="true"]',
+  );
+}
+
 function Form() {
   const params = useParams();
   const formId = params.formId;
@@ -153,6 +168,7 @@ function Form() {
   const [actions, setActions] = useState<any[] | null>(null);
   const [helpPath, setHelpPath] = useState<string | null>(null);
   const [model, setModel] = useState<any>({});
+  const formContainerRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, host }: any = useUserState();
 
   useEffect(() => {
@@ -194,6 +210,18 @@ function Form() {
   };
 
   function onButtonClick(action: any) {
+    if (
+      hasUnappliedStructuredDraft(formContainerRef.current)
+      || hasInvalidStructuredDraft(formContainerRef.current)
+    ) {
+      setShowErrors(true);
+      setValidationResult({
+        valid: false,
+        error: "Apply or Reset structured data changes before submitting the form.",
+      });
+      return;
+    }
+
     const normalizedModel = normalizeFormModel(formId, model);
     setModel(normalizedModel);
     const result = utils.validateBySchema(schema, normalizedModel);
@@ -201,6 +229,8 @@ function Form() {
       setShowErrors(true);
       setValidationResult(result);
     } else {
+      setShowErrors(false);
+      setValidationResult(null);
       const modelToSubmit = submittedFormModel(formId, normalizedModel);
       action.data = modelToSubmit;
       const url = action.path ? action.path : "/portal/command";
@@ -298,13 +328,15 @@ function Form() {
             />
           </Stack>
         </Stack>
-        <SchemaForm
-          schema={schema}
-          form={form}
-          model={model}
-          showErrors={showErrors}
-          onModelChange={onModelChange}
-        />
+        <Box ref={formContainerRef}>
+          <SchemaForm
+            schema={schema}
+            form={form}
+            model={model}
+            showErrors={showErrors}
+            onModelChange={onModelChange}
+          />
+        </Box>
         {showErrors && (
           <Box sx={{ mt: 2, mb: 2, bgcolor: '#f8f8f8', p: 1, borderRadius: 1 }}>
             <pre>{JSON.stringify(validationResult, undefined, 2)}</pre>

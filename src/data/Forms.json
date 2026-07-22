@@ -18347,9 +18347,25 @@
       "lifecycleStatus",
       "contextTokenLimit",
       "outputTokenLimit",
-      "modalities",
-      "operations",
-      "declaredCapabilities",
+      {
+        "key": "modalities",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "form"
+      },
+      {
+        "key": "operations",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "form"
+      },
+      {
+        "key": "declaredCapabilities",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
       {
         "key": "categoryIds",
         "type": "dynaselect",
@@ -18438,9 +18454,25 @@
       "lifecycleStatus",
       "contextTokenLimit",
       "outputTokenLimit",
-      "modalities",
-      "operations",
-      "declaredCapabilities",
+      {
+        "key": "modalities",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "form"
+      },
+      {
+        "key": "operations",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "form"
+      },
+      {
+        "key": "declaredCapabilities",
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
       {
         "key": "categoryIds",
         "type": "dynaselect",
