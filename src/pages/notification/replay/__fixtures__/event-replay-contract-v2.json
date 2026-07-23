@@ -199,6 +199,7 @@
     {"code":"AUTHORIZATION_DENIED","httpStatus":403,"retryable":false,"origin":"V1"},
     {"code":"REPLAY_EXECUTION_PAUSED","httpStatus":409,"retryable":true,"origin":"V2"},
     {"code":"AGGREGATE_PROJECTION_BLOCKED","httpStatus":409,"retryable":true,"origin":"V2"},
+    {"code":"ORDERED_SCOPE_GUARD_UNAVAILABLE","httpStatus":503,"retryable":true,"origin":"V2"},
     {"code":"AGGREGATE_REPAIR_REQUIRED","httpStatus":409,"retryable":true,"origin":"V2"},
     {"code":"EVENT_REPAIR_REQUIRED","httpStatus":422,"retryable":false,"origin":"V2"},
     {"code":"EVENT_NOT_REPLAYABLE","httpStatus":422,"retryable":false,"origin":"V2"},
