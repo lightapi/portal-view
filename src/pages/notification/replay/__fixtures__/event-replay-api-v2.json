@@ -1,0 +1,304 @@
+{
+  "fixtureVersion": "event-replay-api-v2",
+  "contractVersion": "event-replay-v2",
+  "compatibleFixtureVersion": "event-replay-api-v1",
+  "compatibilityRule": "The first nine examples equal v1; createEventReplayPlan adds only response.repairId and getEventReplay adds only response.repairStatus.",
+  "examples": [
+    {
+      "operation": "listEventReplayCandidate",
+      "serviceId": "lightapi.net/user/listEventReplayCandidate/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "projectionName": "portal-query",
+        "consumerGroup": "user-query-group",
+        "status": "OPEN",
+        "page": 0,
+        "pageSize": 25
+      },
+      "response": {
+        "page": 0,
+        "pageSize": 25,
+        "total": 1,
+        "items": [
+          {
+            "failureId": "019f6000-0000-7000-8000-000000000018",
+            "status": "OPEN",
+            "eventCount": 2,
+            "replayPolicy": "GRAPH_ROOT",
+            "firstFailedTs": "2026-07-13T15:20:00Z",
+            "lastFailedTs": "2026-07-13T15:20:00Z",
+            "errorCode": "REPLAY_GAP"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "getEventReplayFailure",
+      "serviceId": "lightapi.net/user/getEventReplayFailure/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "failureId": "019f6000-0000-7000-8000-000000000018"
+      },
+      "response": {
+        "failureId": "019f6000-0000-7000-8000-000000000018",
+        "status": "OPEN",
+        "projectionName": "portal-query",
+        "consumerGroup": "user-query-group",
+        "originalTransactionId": "019f5fff-0000-7000-8000-000000000018",
+        "contentFingerprint": "sha256:4f1b5d9d0cb2d0b08834b5f76df980d31f7c56846f39c714790da8fceb7c27ab",
+        "dependencyScopes": [
+          {
+            "mode": "GRAPH_ROOT",
+            "rootInstanceId": "019d2a45-4eb7-7e20-a6b6-9cc3261e89a1",
+            "graphRevision": 18
+          }
+        ],
+        "events": [
+          {
+            "ordinal": 0,
+            "eventId": "019f5ffe-0000-7000-8000-000000000001",
+            "eventType": "ConfigInstanceApiUpdatedEvent",
+            "schemaVersion": "1",
+            "payloadDigest": "sha256:86b86b5a5f4aebefceac3b30ad2c11f212a4c57736514a937086fdfc6a64b49c",
+            "payloadAvailable": true,
+            "payloadStorage": "DATABASE"
+          }
+        ]
+      }
+    },
+    {
+      "operation": "createEventReplayPlan",
+      "serviceId": "lightapi.net/user/createEventReplayPlan/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "projectionName": "portal-query",
+        "consumerGroup": "user-query-group",
+        "failureIds": [
+          "019f6000-0000-7000-8000-000000000018"
+        ],
+        "strategy": "DEPENDENCY_CLOSURE",
+        "validationMode": "VALIDATE_ONLY",
+        "reason": "Recover missing instance API projection after metadata parser fix"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "AWAITING_APPROVAL",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a",
+        "selectedTransactionCount": 1,
+        "addedDependencyTransactionCount": 17,
+        "eventCount": 27,
+        "strategy": "DEPENDENCY_CLOSURE",
+        "validationMode": "VALIDATE_ONLY",
+        "isolationScope": {
+          "mode": "GRAPH_ROOT",
+          "projectionName": "portal-query",
+          "consumerGroup": "user-query-group",
+          "rootInstanceIds": [
+            "019d2a45-4eb7-7e20-a6b6-9cc3261e89a1"
+          ]
+        },
+        "warnings": [
+          {
+            "code": "DEPENDENCY_CLOSURE_EXPANDED",
+            "message": "Graph revisions 1 through 17 were added before selected revision 18"
+          }
+        ],
+        "expiresAt": "2026-07-13T18:00:00Z",
+        "repairId": null
+      }
+    },
+    {
+      "operation": "getEventReplay",
+      "serviceId": "lightapi.net/user/getEventReplay/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "AWAITING_APPROVAL",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a",
+        "validationMode": "VALIDATE_ONLY",
+        "projectionCommitted": false,
+        "attempts": [],
+        "repairStatus": null
+      }
+    },
+    {
+      "operation": "approveEventReplay",
+      "serviceId": "lightapi.net/user/approveEventReplay/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a",
+        "reason": "Dependency closure and graph scope reviewed"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "APPROVED",
+        "approvedBy": "019f6002-0000-7000-8000-000000000002",
+        "approvedTs": "2026-07-13T16:00:00Z"
+      }
+    },
+    {
+      "operation": "executeEventReplay",
+      "serviceId": "lightapi.net/user/executeEventReplay/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a",
+        "reason": "Run the approved immutable plan"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "INSTALLING_BARRIER",
+        "scheduled": true
+      }
+    },
+    {
+      "operation": "cancelEventReplay",
+      "serviceId": "lightapi.net/user/cancelEventReplay/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a",
+        "reason": "Superseded by a new dependency-closure plan"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "CANCELLED"
+      }
+    },
+    {
+      "operation": "waiveEventReplayFailure",
+      "serviceId": "lightapi.net/user/waiveEventReplayFailure/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "failureIds": [
+          "019f6000-0000-7000-8000-000000000018"
+        ],
+        "expectedStatuses": [
+          "OPEN"
+        ],
+        "acknowledgeDependencyImpact": true,
+        "reason": "The source tenant was permanently decommissioned"
+      },
+      "response": {
+        "status": "AWAITING_APPROVAL",
+        "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
+        "failureIds": [
+          "019f6000-0000-7000-8000-000000000018"
+        ],
+        "downstreamBlockedFailureIds": [
+          "019f6000-0000-7000-8000-000000000019"
+        ],
+        "projectionMetadataAdvanced": false
+      }
+    },
+    {
+      "operation": "releaseEventReplayBarrier",
+      "serviceId": "lightapi.net/user/releaseEventReplayBarrier/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "barrierId": "019f6004-0000-7000-8000-000000000004",
+        "expectedEpoch": 7,
+        "owningFailureId": "019f6000-0000-7000-8000-000000000018",
+        "action": "RELEASE_WITH_GAP",
+        "reason": "Emergency restore of traffic after incident commander approval"
+      },
+      "response": {
+        "barrierId": "019f6004-0000-7000-8000-000000000004",
+        "released": true,
+        "failureStatus": "OPEN",
+        "projectionMetadataAdvanced": false
+      }
+    },
+    {
+      "operation": "getEventReplayRepair",
+      "serviceId": "lightapi.net/user/getEventReplayRepair/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "repairId": "019f6010-0000-7000-8000-000000000010"
+      },
+      "response": {
+        "repairId": "019f6010-0000-7000-8000-000000000010",
+        "failureId": "019f6000-0000-7000-8000-000000000028",
+        "status": "AWAITING_APPROVAL",
+        "changedFieldNames": [
+          "firstName"
+        ],
+        "originalTransactionFingerprint": "sha256:781b7661fd5b82ee89d4681ebafec95c2f518fc25a30f6e5c03e7f373de87fc2",
+        "correctedTransactionFingerprint": "sha256:23a7db3bc11b6a81f0a6fbf1fdb74ace9dc0d4911bbac1424ce7119d9765b82d",
+        "requesterUserId": "019f6002-0000-7000-8000-000000000001",
+        "approverUserId": null
+      }
+    },
+    {
+      "operation": "createEventReplayRepair",
+      "serviceId": "lightapi.net/user/createEventReplayRepair/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "failureId": "019f6000-0000-7000-8000-000000000028",
+        "expectedOriginalTransactionFingerprint": "sha256:781b7661fd5b82ee89d4681ebafec95c2f518fc25a30f6e5c03e7f373de87fc2",
+        "repairSchemaVersion": "user-update-repair-v1",
+        "changes": {
+          "firstName": "Corrected name"
+        },
+        "reason": "Correct invalid mandatory business data"
+      },
+      "response": {
+        "repairId": "019f6010-0000-7000-8000-000000000010",
+        "status": "AWAITING_APPROVAL",
+        "changedFieldNames": [
+          "firstName"
+        ],
+        "correctedTransactionFingerprint": "sha256:23a7db3bc11b6a81f0a6fbf1fdb74ace9dc0d4911bbac1424ce7119d9765b82d"
+      }
+    },
+    {
+      "operation": "approveEventReplayRepair",
+      "serviceId": "lightapi.net/user/approveEventReplayRepair/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "repairId": "019f6010-0000-7000-8000-000000000010",
+        "expectedCorrectedTransactionFingerprint": "sha256:23a7db3bc11b6a81f0a6fbf1fdb74ace9dc0d4911bbac1424ce7119d9765b82d",
+        "decision": "APPROVE",
+        "reason": "Validated corrected business fields"
+      },
+      "response": {
+        "repairId": "019f6010-0000-7000-8000-000000000010",
+        "status": "APPROVED",
+        "approverUserId": "019f6002-0000-7000-8000-000000000002"
+      }
+    }
+  ],
+  "additionalExamples": [
+    {
+      "id": "approve-waiver-with-same-endpoint",
+      "operation": "waiveEventReplayFailure",
+      "serviceId": "lightapi.net/user/waiveEventReplayFailure/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
+        "failureIds": [
+          "019f6000-0000-7000-8000-000000000018"
+        ],
+        "expectedDownstreamBlockedFailureIds": [
+          "019f6000-0000-7000-8000-000000000019"
+        ],
+        "reason": "Independently approve the exact waiver targets and downstream impact"
+      },
+      "response": {
+        "status": "WAIVED",
+        "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
+        "failureIds": [
+          "019f6000-0000-7000-8000-000000000018"
+        ],
+        "downstreamBlockedFailureIds": [
+          "019f6000-0000-7000-8000-000000000019"
+        ],
+        "projectionMetadataAdvanced": false
+      }
+    }
+  ]
+}

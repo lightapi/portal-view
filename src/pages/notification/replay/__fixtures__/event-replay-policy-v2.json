@@ -1,0 +1,73 @@
+{
+  "policyRegistryVersion": "event-replay-policy-v2",
+  "contractVersion": "event-replay-v2",
+  "compatibleFixtureVersion": null,
+  "compatibilityNote": "The policy registry is new in v2 and has no v1 fixture baseline.",
+  "lookupKey": ["eventType", "schemaVersion"],
+  "coverageRule": "EVERY_HANDLED_EVENT_HAS_POLICY_OR_EXACT_EXCLUSION",
+  "versionPinning": {
+    "pinOnAppend": true,
+    "consumersUsePinnedVersion": true,
+    "referencedVersionMayBeRemoved": false,
+    "unknownPortalOrInternalEvent": "REJECT_APPEND",
+    "unknownExternalEvent": "DIAGNOSTIC_NON_EXECUTABLE"
+  },
+  "unknownEventPolicy": "REJECT_APPEND_OR_QUARANTINE_EXTERNAL_SOURCE",
+  "excludedEventTypes": {
+    "configurationProperty": "excludedEventTypes",
+    "matching": "EXACT",
+    "wildcardsAllowed": false,
+    "captureExcludedFailures": true,
+    "planOrExecuteExcludedFailures": false,
+    "orderedPolicyMayBeExcluded": false
+  },
+  "eventPolicySchema": {
+    "required": ["eventType", "schemaVersion", "transactionPolicy", "dependencyMetadata", "dataValidator", "replayPolicy", "repairDisposition", "repairSchema", "externalSideEffects"],
+    "transactionPolicies": ["COMPLETE_TRANSACTION"],
+    "replayPolicies": ["GRAPH_ROOT", "AGGREGATE_VERSION", "TRANSACTION_ONLY", "NOT_REPLAYABLE"],
+    "externalSideEffectPolicies": ["NONE", "REPLAY_EXCLUDED"],
+    "repairDispositions": ["SCHEMA_REPAIR", "FIX_AND_EXACT_REPLAY_ONLY", "NOT_REPAIRABLE_UNORDERED"],
+    "orderedNotReplayableAllowed": false,
+    "orderedNotRepairableAllowed": false
+  },
+  "repairSchemaDefinition": {
+    "required": ["schemaVersion", "editableFields"],
+    "editableFieldRequired": ["jsonPointer", "valueSchema"],
+    "jsonPointerMustTarget": "/data",
+    "additionalEditableFields": false,
+    "rawCloudEventEditorAllowed": false,
+    "immutableEnvelopeAndOrderingFields": true
+  },
+  "validationStages": [
+    "COMMAND_BEFORE_OFFSET_RESERVATION",
+    "DIRECT_APPEND_BEFORE_OFFSET_RESERVATION",
+    "EXTERNAL_SOURCE_BEFORE_EXECUTABLE_CANDIDATE",
+    "CANONICAL_CAPTURE",
+    "REPAIR_CREATE",
+    "PLAN_CREATE",
+    "EXECUTE_BEFORE_HANDLER"
+  ],
+  "validationFailureSemantics": {
+    "portalOrInternalAppend": "ROLLBACK_COMPLETE_TRANSACTION",
+    "externalKafka": "CAPTURE_DIAGNOSTIC_NON_EXECUTABLE_FAILURE",
+    "repair": "REJECT_REPAIR",
+    "planOrExecution": "FAIL_CLOSED"
+  },
+  "fixturePolicy": {
+    "eventType": "EventReplayContractFixtureEvent",
+    "schemaVersion": "1",
+    "transactionPolicy": "COMPLETE_TRANSACTION",
+    "dependencyMetadata": ["aggregateId", "aggregateType", "aggregateVersion"],
+    "dataValidator": "event-replay-contract-fixture-v1",
+    "replayPolicy": "AGGREGATE_VERSION",
+    "repairDisposition": "SCHEMA_REPAIR",
+    "repairSchema": {
+      "schemaVersion": "event-replay-contract-fixture-repair-v1",
+      "editableFields": [
+        {"jsonPointer": "/data/displayName", "valueSchema": {"type": "string", "minLength": 1, "maxLength": 255}}
+      ]
+    },
+    "externalSideEffects": "NONE",
+    "fixtureOnly": true
+  }
+}

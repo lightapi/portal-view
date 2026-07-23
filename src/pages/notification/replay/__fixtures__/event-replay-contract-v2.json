@@ -1,0 +1,224 @@
+{
+  "contractVersion": "event-replay-v2",
+  "compatibleContractVersion": "event-replay-v1",
+  "inheritsFrom": {
+    "fixture": "event-replay-contract-v1.json",
+    "rule": "Only inheritedSections carry forward unchanged from v1. All other v1 sections are restated by v2 or explicitly superseded and must not be applied from v1.",
+    "inheritedSections": ["envelopeVersion", "failureStatuses", "failureTransitions", "failureTransitionRules", "replayItemStatuses", "replayAttemptResults", "barrierScopeTypes", "barrierStates", "barrierOwnerTypes", "deferredStatuses", "publicationStatuses", "auditEventNames", "auditFieldLimits", "projectionExecutionModes", "projectionExecutionModeSemantics", "validationModeSemantics", "kafkaDlq", "replayPolicies"],
+    "supersededSections": ["approvalPolicyVersion", "featureGates", "encryption", "objectStore", "limits", "limitPolicyVersion", "retentionDays", "payloadStorageTypes", "policyRegistryVersion"]
+  },
+  "canonicalEncodingVersion": "event-replay-canonical-v1",
+  "apiNamespace": "lightapi.net/user",
+  "serviceVersion": "0.1.0",
+  "activation": {
+    "availableAfterSchemaAndServiceDeployment": true,
+    "enabledDefault": true,
+    "enabledControls": ["EXECUTE_TRANSITION", "WORKER_CLAIM"],
+    "enabledDoesNotControl": ["VALIDATION", "CAPTURE", "QUERY", "PLAN", "REPAIR", "APPROVAL", "AUDIT", "LISTENER_STARTUP"],
+    "excludedEventTypesMatch": "EXACT",
+    "fleetPauseConfirmationFields": ["instanceId", "configGeneration", "effectiveEnabled", "reloadTimestamp"],
+    "missingOrStaleReplicaConfirmsPause": false
+  },
+  "authorizationBoundary": {
+    "endpointAccess": "light-gateway",
+    "roleClaim": "role",
+    "endpointRoleConfiguration": "rule.endpointRules.<serviceId>.permission.roles",
+    "roleNamesAreDeploymentDefined": true,
+    "backendRoleNames": []
+  },
+  "operations": [
+    {"name":"listEventReplayCandidate","kind":"QUERY","serviceId":"lightapi.net/user/listEventReplayCandidate/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"getEventReplayFailure","kind":"QUERY","serviceId":"lightapi.net/user/getEventReplayFailure/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"createEventReplayPlan","kind":"COMMAND","serviceId":"lightapi.net/user/createEventReplayPlan/0.1.0","compatibility":"ADDITIVE_REPAIR_ID"},
+    {"name":"getEventReplay","kind":"QUERY","serviceId":"lightapi.net/user/getEventReplay/0.1.0","compatibility":"ADDITIVE_REPAIR_STATUS"},
+    {"name":"approveEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/approveEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"executeEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/executeEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"cancelEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/cancelEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"waiveEventReplayFailure","kind":"COMMAND","serviceId":"lightapi.net/user/waiveEventReplayFailure/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"releaseEventReplayBarrier","kind":"COMMAND","serviceId":"lightapi.net/user/releaseEventReplayBarrier/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"getEventReplayRepair","kind":"QUERY","serviceId":"lightapi.net/user/getEventReplayRepair/0.1.0","compatibility":"NEW_IN_V2"},
+    {"name":"createEventReplayRepair","kind":"COMMAND","serviceId":"lightapi.net/user/createEventReplayRepair/0.1.0","compatibility":"NEW_IN_V2"},
+    {"name":"approveEventReplayRepair","kind":"COMMAND","serviceId":"lightapi.net/user/approveEventReplayRepair/0.1.0","compatibility":"NEW_IN_V2"}
+  ],
+  "selectionStrategies": ["EXACT", "DEPENDENCY_CLOSURE"],
+  "validationModes": ["VALIDATE_ONLY", "ROLLBACK_DRY_RUN", "EXECUTE"],
+  "replayRequestStatuses": ["PLANNING", "READY", "AWAITING_APPROVAL", "APPROVED", "INSTALLING_BARRIER", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"],
+  "replayRequestTransitions": {
+    "PLANNING": ["READY", "FAILED"],
+    "READY": ["AWAITING_APPROVAL", "CANCELLED", "EXPIRED"],
+    "AWAITING_APPROVAL": ["APPROVED", "CANCELLED", "EXPIRED"],
+    "APPROVED": ["INSTALLING_BARRIER", "CANCELLED", "EXPIRED"],
+    "INSTALLING_BARRIER": ["RUNNING", "FAILED"],
+    "RUNNING": ["SUCCEEDED", "FAILED"],
+    "SUCCEEDED": [],
+    "FAILED": [],
+    "CANCELLED": [],
+    "EXPIRED": []
+  },
+  "replayRequestTransitionActors": {
+    "PLANNING_TO_READY_OR_FAILED": "planner",
+    "READY_TO_AWAITING_APPROVAL": "create-command",
+    "READY_OR_AWAITING_APPROVAL_OR_APPROVED_TO_CANCELLED": "requester-or-authorized-operator",
+    "READY_OR_AWAITING_APPROVAL_OR_APPROVED_TO_EXPIRED": "expiry-worker",
+    "AWAITING_APPROVAL_TO_APPROVED": "independent-approver",
+    "APPROVED_TO_INSTALLING_BARRIER": "execute-command",
+    "INSTALLING_BARRIER_TO_RUNNING_OR_FAILED": "replay-worker",
+    "RUNNING_TO_SUCCEEDED_OR_FAILED": "replay-worker"
+  },
+  "repairStatuses": ["AWAITING_APPROVAL", "APPROVED", "APPLIED", "CANCELLED", "REJECTED"],
+  "repairTransitions": {
+    "AWAITING_APPROVAL": ["APPROVED", "REJECTED", "CANCELLED"],
+    "APPROVED": ["APPLIED", "CANCELLED"],
+    "APPLIED": [],
+    "CANCELLED": [],
+    "REJECTED": []
+  },
+  "repairTransitionActors": {
+    "AWAITING_APPROVAL_TO_APPROVED_OR_REJECTED": "independent-repair-reviewer",
+    "AWAITING_APPROVAL_OR_APPROVED_TO_CANCELLED": "system-terminalization",
+    "APPROVED_TO_APPLIED": "replay-worker-in-projection-transaction"
+  },
+  "repairCommandSemantics": {
+    "approveEndpointDecisions": ["APPROVE", "REJECT"],
+    "cancelEndpointExists": false,
+    "cancelActor": "SYSTEM_TERMINALIZATION"
+  },
+  "approvalSeparation": {
+    "repairApproval": {"requesterMustDifferFromApprover": true, "binds": ["repairId", "originalTransactionFingerprint", "correctedTransactionFingerprint", "repairSchemaVersion"]},
+    "replayPlanApproval": {"requesterMustDifferFromApprover": true, "binds": ["replayRequestId", "planHash"]},
+    "repairApprovalDoesNotApproveReplayPlan": true,
+    "replayPlanApprovalDoesNotApproveRepair": true
+  },
+  "approval": {
+    "replayExecutionRequiresSecondPerson": true,
+    "rollbackDryRunRequiresSecondPerson": true,
+    "waiverRequiresSecondPerson": true,
+    "breakGlassReleaseRequiresSecondPerson": true,
+    "requesterMayApproveOwnRequest": false,
+    "humanOperationsRequireUserIdentity": true,
+    "reasonRequiredForMutations": true
+  },
+  "waiverCommandSemantics": {
+    "endpoint": "lightapi.net/user/waiveEventReplayFailure/0.1.0",
+    "requestAction": "failureIds present and waiverRequestId absent",
+    "approveAction": "waiverRequestId and exact failureIds present",
+    "requestStatus": "AWAITING_APPROVAL",
+    "approvedStatus": "WAIVED",
+    "requesterMustDifferFromApprover": true,
+    "separateApprovalEndpointExists": false
+  },
+  "repairSchema": {
+    "scope": "COMPLETE_FAILURE_TRANSACTION",
+    "inputShape": "TYPED_FIELDS_ONLY",
+    "editableFieldsSource": "event-type-and-schema-version-policy",
+    "unknownFields": "REJECT",
+    "originalSourceMutation": "FORBIDDEN",
+    "immutableFields": ["id", "type", "source", "subject", "time", "hostId", "aggregateId", "aggregateType", "aggregateVersion", "rootInstanceId", "graphRevision", "transactionId", "transactionOrdinal", "sourceCoordinates"],
+    "dispositions": ["SCHEMA_REPAIR", "FIX_AND_EXACT_REPLAY_ONLY", "NOT_REPAIRABLE_UNORDERED"],
+    "orderedNotRepairableDispositionAllowed": false
+  },
+  "fingerprints": {
+    "algorithm": "SHA-256",
+    "storageEncoding": "lowercase-hex",
+    "apiWireEncoding": "sha256:<lowercase-hex>",
+    "canonicalFieldsEncoding": "UTF-8 length-delimited fields",
+    "originalTransactionFingerprintFields": ["projectionName", "consumerGroup", "originalTransactionId", "orderedEventIds", "orderedOriginalPayloadDigests"],
+    "correctedTransactionFingerprintFields": ["originalTransactionFingerprint", "repairSchemaVersion", "orderedCorrectedPayloadDigests", "orderedChangedFieldNames"],
+    "repairApprovalFingerprintFields": ["repairId", "originalTransactionFingerprint", "correctedTransactionFingerprint", "repairSchemaVersion"],
+    "planHashAdditionalFields": ["repairId", "repairApprovalFingerprint", "originalTransactionFingerprint", "correctedTransactionFingerprint"],
+    "fieldEquivalence": {
+      "originalTransactionFingerprint": "contentFingerprint of the target canonical failure",
+      "expectedOriginalTransactionFingerprint": "caller compare-and-set value for originalTransactionFingerprint",
+      "orderedOriginalPayloadDigests": "v2 name for the v1 orderedPayloadDigests input; bytes are unchanged"
+    },
+    "hostIdExclusionReason": "Preserves v1 content identity across delivery contexts; host scope is enforced by composite database keys, authorization, and the plan hash."
+  },
+  "failureResolution": {
+    "lifecycleStatus": "RESOLVED",
+    "resolutionCodes": ["RESOLVED_BY_EXACT_REPLAY", "RESOLVED_BY_REPAIR"],
+    "repairDoesNotAddFailureStatus": true
+  },
+  "payloadRepresentations": ["DATABASE_PLAIN", "DATABASE_ENCRYPTED", "OBJECT_ENCRYPTED"],
+  "payloadDigestContract": {
+    "databasePlainColumnType": "BYTEA",
+    "digestInput": "EXACT_STORED_BYTES",
+    "jsonbReserializationAllowed": false,
+    "eventStoreJsonbMayBeSoleReplayPayload": false
+  },
+  "notification": {
+    "channel": "event_replay_ready",
+    "producer": "executeEventReplay",
+    "payload": "replayRequestId UUID text",
+    "deliveredAfterCommit": true,
+    "durableWorkRecord": "event_replay_request_t",
+    "notificationIsWakeupHintOnly": true,
+    "recoveryScans": ["STARTUP_AFTER_LISTEN", "RECONNECT_AFTER_LISTEN", "EVERY_60_SECONDS_WHILE_ENABLED"],
+    "connectionRequirement": "DIRECT_OR_SESSION_POOLING",
+    "transactionPoolingSupported": false,
+    "startupSelfTestRequired": true,
+    "recoveryScanDoesNotProveListenerHealthy": true
+  },
+  "orderedScopeGuard": {
+    "effectiveAfter": "CANONICAL_FAILURE_CAPTURE_COMMIT",
+    "preCaptureRaceCanAppendLaterVersion": true,
+    "genericGapAdvancingBreakGlass": false,
+    "orderedExclusionAllowed": false,
+    "availabilityTradeoff": "CONSISTENCY_OVER_SCOPE_AVAILABILITY"
+  },
+  "multiScopeTransaction": {
+    "isolationScope": "UNION_OF_MEMBER_SCOPES",
+    "lockOrder": "CANONICAL",
+    "partialMemberExecutionAllowed": false,
+    "oneScopeGapBlocksCompleteTransaction": true
+  },
+  "planExpiry": {
+    "continuesAfterApproval": true,
+    "approvedMayExpire": true,
+    "executionPauseExtendsTtl": false
+  },
+  "capacityProtection": {
+    "operatorFacingDevelopmentConfig": false,
+    "softThresholdAction": "DEGRADED_HEALTH_AND_ALERT",
+    "hardThresholdAction": "STOP_AFFECTED_SOURCE_BEFORE_PROGRESS"
+  },
+  "errors": [
+    {"code":"TRANSACTION_INCOMPLETE","httpStatus":422,"retryable":false,"origin":"V1"},
+    {"code":"REPLAY_GAP","httpStatus":422,"retryable":false,"origin":"V1"},
+    {"code":"PAYLOAD_UNAVAILABLE","httpStatus":422,"retryable":false,"origin":"V1"},
+    {"code":"PAYLOAD_DIGEST_MISMATCH","httpStatus":409,"retryable":false,"origin":"V1"},
+    {"code":"UNSUPPORTED_EVENT_TYPE","httpStatus":422,"retryable":false,"origin":"V1"},
+    {"code":"UNSUPPORTED_PAYLOAD_VERSION","httpStatus":422,"retryable":false,"origin":"V1"},
+    {"code":"STALE_PLAN","httpStatus":409,"retryable":true,"origin":"V1"},
+    {"code":"LEASE_LOST","httpStatus":409,"retryable":true,"origin":"V1"},
+    {"code":"PAUSE_TIMEOUT","httpStatus":409,"retryable":true,"origin":"V1"},
+    {"code":"ARCHIVE_CAPACITY_EXCEEDED","httpStatus":503,"retryable":true,"origin":"V1"},
+    {"code":"FAILURE_PUBLICATION_TERMINAL","httpStatus":503,"retryable":false,"origin":"V1"},
+    {"code":"REPLAY_LIMIT_EXCEEDED","httpStatus":413,"retryable":false,"origin":"V1"},
+    {"code":"PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
+    {"code":"DEFERRED_PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
+    {"code":"AUTHORIZATION_DENIED","httpStatus":403,"retryable":false,"origin":"V1"},
+    {"code":"REPLAY_EXECUTION_PAUSED","httpStatus":409,"retryable":true,"origin":"V2"},
+    {"code":"AGGREGATE_PROJECTION_BLOCKED","httpStatus":409,"retryable":true,"origin":"V2"},
+    {"code":"AGGREGATE_REPAIR_REQUIRED","httpStatus":409,"retryable":true,"origin":"V2"},
+    {"code":"EVENT_REPAIR_REQUIRED","httpStatus":422,"retryable":false,"origin":"V2"},
+    {"code":"EVENT_NOT_REPLAYABLE","httpStatus":422,"retryable":false,"origin":"V2"},
+    {"code":"REPAIR_NOT_FOUND","httpStatus":404,"retryable":false,"origin":"V2"},
+    {"code":"REPAIR_NOT_APPROVED","httpStatus":409,"retryable":true,"origin":"V2"},
+    {"code":"REPAIR_IMMUTABLE_FIELD","httpStatus":422,"retryable":false,"origin":"V2"},
+    {"code":"REPAIR_SCHEMA_VALIDATION_FAILED","httpStatus":422,"retryable":false,"origin":"V2"},
+    {"code":"REPAIR_APPROVER_MUST_DIFFER","httpStatus":409,"retryable":false,"origin":"V2"},
+    {"code":"REPAIR_FINGERPRINT_MISMATCH","httpStatus":409,"retryable":true,"origin":"V2"}
+  ],
+  "errorAliases": {
+    "PAYLOAD_MISMATCH": "PAYLOAD_DIGEST_MISMATCH",
+    "UNSUPPORTED_EVENT_TYPE": "Invalid or unknown event type/schema registration",
+    "EVENT_NOT_REPLAYABLE": "Valid event whose explicit replay policy rejects planning"
+  },
+  "sourceCompatibility": {
+    "controlPlane": "POSTGRESQL",
+    "liveSourceSelectedByExistingPubSubConfiguration": true,
+    "database": {"sourceAdvanceAfter": "PROJECTION_OR_CANONICAL_CAPTURE_COMMIT", "offsetRewind": false},
+    "kafka": {"sourceAdvanceAfter": "PROJECTION_OR_CANONICAL_CAPTURE_COMMIT", "deliveryBoundary": "AT_LEAST_ONCE_IDEMPOTENT", "captureCommitsBeforeOffset": true, "offsetRewind": false, "republishToLiveTopic": false}
+  },
+  "legacyFailures": {"backfillRequired": false, "diagnosticOnlyWhenNotCanonical": true}
+}

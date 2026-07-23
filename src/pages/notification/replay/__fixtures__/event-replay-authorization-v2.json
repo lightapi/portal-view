@@ -1,0 +1,49 @@
+{
+  "fixtureVersion": "event-replay-authorization-v2",
+  "contractVersion": "event-replay-v2",
+  "auditInfoSource": "AttachmentConstants.AUDIT_INFO",
+  "endpointAuthorization": {
+    "authority": "light-gateway",
+    "roleClaim": "role",
+    "endpointRoleConfiguration": "rule.endpointRules.<serviceId>.permission.roles",
+    "roleNamesAreDeploymentDefined": true,
+    "endpointCount": 12
+  },
+  "backendInvariants": ["AUTHENTICATED_ACTOR", "AUTHORIZED_HOST_MATCH", "VALID_STATE_TRANSITION", "IMMUTABLE_HASH_MATCH", "DISTINCT_APPROVER"],
+  "rules": {
+    "gatewayEndpointAuthorizationRequired": true,
+    "backendHardcodedRoleCheck": false,
+    "backendDedicatedPermissionClaimRequired": false,
+    "requestedHostMustEqualAuthorizedHost": true,
+    "reasonRequiredForHumanMutation": true,
+    "uiRoleCheckIsSecurityBoundary": false,
+    "repairRequesterMayApproveOwnRepair": false,
+    "replayRequesterMayApproveOwnPlan": false,
+    "repairApprovalGrantsReplayApproval": false,
+    "replayApprovalGrantsRepairApproval": false
+  },
+  "endpointPermissionHooks": [
+    {"operation":"listEventReplayCandidate","serviceId":"lightapi.net/user/listEventReplayCandidate/0.1.0"},
+    {"operation":"getEventReplayFailure","serviceId":"lightapi.net/user/getEventReplayFailure/0.1.0"},
+    {"operation":"createEventReplayPlan","serviceId":"lightapi.net/user/createEventReplayPlan/0.1.0"},
+    {"operation":"getEventReplay","serviceId":"lightapi.net/user/getEventReplay/0.1.0"},
+    {"operation":"approveEventReplay","serviceId":"lightapi.net/user/approveEventReplay/0.1.0"},
+    {"operation":"executeEventReplay","serviceId":"lightapi.net/user/executeEventReplay/0.1.0"},
+    {"operation":"cancelEventReplay","serviceId":"lightapi.net/user/cancelEventReplay/0.1.0"},
+    {"operation":"waiveEventReplayFailure","serviceId":"lightapi.net/user/waiveEventReplayFailure/0.1.0"},
+    {"operation":"releaseEventReplayBarrier","serviceId":"lightapi.net/user/releaseEventReplayBarrier/0.1.0"},
+    {"operation":"getEventReplayRepair","serviceId":"lightapi.net/user/getEventReplayRepair/0.1.0"},
+    {"operation":"createEventReplayRepair","serviceId":"lightapi.net/user/createEventReplayRepair/0.1.0"},
+    {"operation":"approveEventReplayRepair","serviceId":"lightapi.net/user/approveEventReplayRepair/0.1.0"}
+  ],
+  "decisionCases": [
+    {"id":"deployment-defined-role-allowed-by-gateway","operation":"getEventReplayRepair","auditInfo":{"user_id":"user-a","host_id":"host-a","roles":"any-deployment-role"},"requestedHostId":"host-a","expected":"ALLOW"},
+    {"id":"cross-host-repair-read-denied","operation":"getEventReplayRepair","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-b","expected":"DENY","denialCode":"AUTHORIZATION_DENIED"},
+    {"id":"anonymous-repair-create-denied","operation":"createEventReplayRepair","auditInfo":{"client_id":"browser-client","host_id":"host-a"},"requestedHostId":"host-a","reason":"repair","expected":"DENY","denialCode":"AUTHORIZATION_DENIED"},
+    {"id":"repair-requester-cannot-approve","operation":"approveEventReplayRepair","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","reason":"review","approval":{"requesterUserId":"user-a","approverUserId":"user-a"},"expected":"DENY","denialCode":"REPAIR_APPROVER_MUST_DIFFER"},
+    {"id":"independent-repair-approver-allowed","operation":"approveEventReplayRepair","auditInfo":{"user_id":"user-b","host_id":"host-a"},"requestedHostId":"host-a","reason":"review","approval":{"requesterUserId":"user-a","approverUserId":"user-b"},"expected":"ALLOW"},
+    {"id":"repair-approval-does-not-satisfy-plan-approval","operation":"executeEventReplay","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","reason":"execute","repairApproval":{"requesterUserId":"user-a","approverUserId":"user-b"},"replayPlanApproval":null,"expected":"DENY","denialCode":"AUTHORIZATION_DENIED"},
+    {"id":"independent-plan-approval-allows-execute","operation":"executeEventReplay","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","reason":"execute","repairApproval":{"requesterUserId":"user-a","approverUserId":"user-b"},"replayPlanApproval":{"requesterUserId":"user-a","approverUserId":"user-c"},"expected":"ALLOW"},
+    {"id":"role-name-never-interpreted-by-backend","operation":"createEventReplayPlan","auditInfo":{"user_id":"user-a","host_id":"host-a","roles":"one-of-a-thousand-custom-roles"},"requestedHostId":"host-a","reason":"plan","expected":"ALLOW"}
+  ]
+}
