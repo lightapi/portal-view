@@ -132,7 +132,7 @@ export default function SnapshotValuesDialog({ hostId, snapshot, onClose }: Snap
                   p: 2,
                   maxHeight: '60vh',
                   overflow: 'auto',
-                  bgcolor: 'grey.950',
+                  bgcolor: 'grey.900',
                   color: 'grey.100',
                   borderRadius: 1,
                   fontFamily: 'monospace',

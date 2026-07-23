@@ -53,4 +53,14 @@ describe('SnapshotValuesDialog', () => {
   it('sanitizes output filenames', () => {
     expect(snapshotValuesFilename(loaded)).not.toMatch(/[/:]/);
   });
+
+  it('renders the YAML preview with readable contrasting colors', async () => {
+    render(<MemoryRouter><SnapshotValuesDialog hostId="host" snapshot={summary} onClose={vi.fn()} /></MemoryRouter>);
+
+    const preview = await screen.findByLabelText('values.yml preview');
+    expect(preview).toHaveStyle({
+      backgroundColor: 'rgb(33, 33, 33)',
+      color: 'rgb(245, 245, 245)',
+    });
+  });
 });
