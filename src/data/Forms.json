@@ -18289,7 +18289,7 @@
   },
   "createLlmModel": {
     "formId": "createLlmModel",
-    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "helpPath": "/help/portal-view/pages/create-llm-model",
     "actions": [
       {
         "host": "lightapi.net",

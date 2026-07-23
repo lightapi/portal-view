@@ -2,6 +2,11 @@ import {describe, expect, it} from 'vitest';
 import forms from '../../../data/Forms.json';
 
 describe('LLM model dynamic forms', () => {
+  it('uses dedicated create help while retaining control-plane help for update', () => {
+    expect(forms.createLlmModel.helpPath).toBe('/help/portal-view/pages/create-llm-model');
+    expect(forms.updateLlmModel.helpPath).toBe('/help/portal-view/pages/llm-model-control-plane');
+  });
+
   it('keeps JSONB values typed and uses llm_model taxonomy selectors', () => {
     for (const formId of ['createLlmModel', 'updateLlmModel'] as const) {
       const definition = forms[formId];
