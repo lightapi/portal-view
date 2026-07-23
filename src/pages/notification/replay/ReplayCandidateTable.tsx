@@ -39,7 +39,9 @@ export function ReplayCandidateTable({ candidates, details, selected, notificati
               <TableCell>{bytes(candidate.encryptedPayloadBytes)}</TableCell>
             </TableRow>;
           })}
-          {!candidates.length ? <TableRow><TableCell colSpan={8}>No open complete failure transactions found.</TableCell></TableRow> : null}
+          {!candidates.length ? <TableRow><TableCell colSpan={8}>
+            No open canonical replay candidates found. A legacy DLQ notification shown below is not replayable until it is captured or backfilled as a complete failure transaction.
+          </TableCell></TableRow> : null}
         </TableBody>
       </Table>
     </TableContainer>

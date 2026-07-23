@@ -7,69 +7,66 @@
   "approvalPolicyVersion": "event-replay-approval-v1",
   "apiNamespace": "lightapi.net/user",
   "serviceVersion": "0.1.0",
+  "authorizationBoundary": {
+    "endpointAccess": "light-gateway",
+    "roleClaim": "role",
+    "endpointRoleConfiguration": "rule.endpointRules.<serviceId>.permission.roles",
+    "backendRoleNames": []
+  },
   "operations": [
     {
       "name": "listEventReplayCandidate",
       "kind": "QUERY",
       "serviceId": "lightapi.net/user/listEventReplayCandidate/0.1.0",
-      "baseScope": "portal.r",
-      "dedicatedPermission": "event-replay.read"
+      "baseScope": "portal.r"
     },
     {
       "name": "getEventReplayFailure",
       "kind": "QUERY",
       "serviceId": "lightapi.net/user/getEventReplayFailure/0.1.0",
-      "baseScope": "portal.r",
-      "dedicatedPermission": "event-replay.read"
+      "baseScope": "portal.r"
     },
     {
       "name": "createEventReplayPlan",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/createEventReplayPlan/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.plan"
+      "baseScope": "portal.w"
     },
     {
       "name": "getEventReplay",
       "kind": "QUERY",
       "serviceId": "lightapi.net/user/getEventReplay/0.1.0",
-      "baseScope": "portal.r",
-      "dedicatedPermission": "event-replay.read"
+      "baseScope": "portal.r"
     },
     {
       "name": "approveEventReplay",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/approveEventReplay/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.approve"
+      "baseScope": "portal.w"
     },
     {
       "name": "executeEventReplay",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/executeEventReplay/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.execute"
+      "baseScope": "portal.w"
     },
     {
       "name": "cancelEventReplay",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/cancelEventReplay/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.cancel"
+      "baseScope": "portal.w"
     },
     {
       "name": "waiveEventReplayFailure",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/waiveEventReplayFailure/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.waive"
+      "baseScope": "portal.w"
     },
     {
       "name": "releaseEventReplayBarrier",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/releaseEventReplayBarrier/0.1.0",
-      "baseScope": "portal.w",
-      "dedicatedPermission": "event-replay.break-glass"
+      "baseScope": "portal.w"
     }
   ],
   "selectionStrategies": [

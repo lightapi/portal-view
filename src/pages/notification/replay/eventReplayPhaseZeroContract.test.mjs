@@ -29,13 +29,19 @@ test('Phase 0 API examples cover every operation without returning decrypted pay
   assert.equal(waiver.response.projectionMetadataAdvanced, false);
 });
 
-test('Phase 0 authorization decisions reject substring roles, cross-host access, and self approval', () => {
+test('Phase 0 delegates endpoint roles while retaining host and approval invariants', () => {
   const decision = (id) => authorization.decisionCases.find((entry) => entry.id === id);
-  assert.equal(authorization.roleTokenPattern, '[,\\s]+');
-  assert.equal(decision('substring-role-denied').expected, 'DENY');
+  assert.equal(contract.authorizationBoundary.endpointAccess, 'light-gateway');
+  assert.equal(authorization.endpointAuthorization.roleClaim, 'role');
+  assert.equal(authorization.endpointAuthorization.roleNamesAreDeploymentDefined, true);
+  assert.ok(contract.operations.every((operation) => operation.dedicatedPermission === undefined));
+  assert.equal(decision('backend-does-not-interpret-role-name').expected, 'ALLOW');
+  assert.equal(decision('dedicated-permission-claim-not-required').expected, 'ALLOW');
   assert.equal(decision('cross-host-denied').expected, 'DENY');
   assert.equal(decision('self-approval-denied').expected, 'DENY');
   assert.equal(decision('client-credentials-human-command-denied').expected, 'DENY');
   assert.equal(decision('trusted-worker-may-run-worker-only').expected, 'ALLOW');
+  assert.equal(authorization.rules.backendHardcodedRoleCheck, false);
+  assert.equal(authorization.rules.backendDedicatedPermissionClaimRequired, false);
   assert.equal(authorization.rules.uiRoleCheckIsSecurityBoundary, false);
 });

@@ -41,6 +41,9 @@ const status = read('ReplayStatusPanel.tsx');
 assert.match(status, /STALE PLAN/);
 assert.match(status, /failureCode/);
 assert.match(status, /Dependency added/);
+const candidates = read('ReplayCandidateTable.tsx');
+assert.match(candidates, /No open canonical replay candidates found/);
+assert.match(candidates, /legacy DLQ notification.*captured or backfilled as a complete failure transaction/s);
 
 for (const file of ['api.ts', 'ReplayCandidateTable.tsx', 'ReplayStatusPanel.tsx', 'ReplayAttemptTimeline.tsx']) {
   const source = read(file);
