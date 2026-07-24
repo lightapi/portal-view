@@ -110,6 +110,8 @@
   "repairSchema": {
     "scope": "COMPLETE_FAILURE_TRANSACTION",
     "inputShape": "TYPED_FIELDS_ONLY",
+    "changeShapes": ["SINGLE_EVENT_FIELDS", "PER_EVENT_FIELDS"],
+    "changeShapeDiscriminatorRequired": true,
     "editableFieldsSource": "event-type-and-schema-version-policy",
     "unknownFields": "REJECT",
     "originalSourceMutation": "FORBIDDEN",
@@ -197,6 +199,8 @@
     {"code":"PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
     {"code":"DEFERRED_PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
     {"code":"AUTHORIZATION_DENIED","httpStatus":403,"retryable":false,"origin":"V1"},
+    {"code":"INVALID_REQUEST","httpStatus":400,"retryable":false,"origin":"V2"},
+    {"code":"FAILURE_NOT_FOUND","httpStatus":404,"retryable":false,"origin":"V2"},
     {"code":"REPLAY_EXECUTION_PAUSED","httpStatus":409,"retryable":true,"origin":"V2"},
     {"code":"AGGREGATE_PROJECTION_BLOCKED","httpStatus":409,"retryable":true,"origin":"V2"},
     {"code":"ORDERED_SCOPE_GUARD_UNAVAILABLE","httpStatus":503,"retryable":true,"origin":"V2"},

@@ -225,7 +225,7 @@
         "failureId": "019f6000-0000-7000-8000-000000000028",
         "status": "AWAITING_APPROVAL",
         "changedFieldNames": [
-          "firstName"
+          "displayName"
         ],
         "originalTransactionFingerprint": "sha256:781b7661fd5b82ee89d4681ebafec95c2f518fc25a30f6e5c03e7f373de87fc2",
         "correctedTransactionFingerprint": "sha256:23a7db3bc11b6a81f0a6fbf1fdb74ace9dc0d4911bbac1424ce7119d9765b82d",
@@ -240,9 +240,10 @@
         "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
         "failureId": "019f6000-0000-7000-8000-000000000028",
         "expectedOriginalTransactionFingerprint": "sha256:781b7661fd5b82ee89d4681ebafec95c2f518fc25a30f6e5c03e7f373de87fc2",
-        "repairSchemaVersion": "user-update-repair-v1",
+        "repairSchemaVersion": "event-replay-contract-fixture-repair-v1",
+        "changeShape": "SINGLE_EVENT_FIELDS",
         "changes": {
-          "firstName": "Corrected name"
+          "displayName": "Corrected name"
         },
         "reason": "Correct invalid mandatory business data"
       },
@@ -250,7 +251,7 @@
         "repairId": "019f6010-0000-7000-8000-000000000010",
         "status": "AWAITING_APPROVAL",
         "changedFieldNames": [
-          "firstName"
+          "displayName"
         ],
         "correctedTransactionFingerprint": "sha256:23a7db3bc11b6a81f0a6fbf1fdb74ace9dc0d4911bbac1424ce7119d9765b82d"
       }
