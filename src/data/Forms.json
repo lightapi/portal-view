@@ -1,24 +1,33 @@
 {
-  "eventReplayContractFixtureRepair": {
-    "formId": "eventReplayContractFixtureRepair",
-    "eventType": "EventReplayContractFixtureEvent",
+  "eventReplayUserUpdatedRepair": {
+    "formId": "eventReplayUserUpdatedRepair",
+    "eventType": "UserUpdatedEvent",
     "eventSchemaVersion": "1",
-    "repairSchemaVersion": "event-replay-contract-fixture-repair-v1",
+    "repairSchemaVersion": "user-updated-repair-v1",
     "schema": {
       "type": "object",
-      "title": "Correct fixture event business data",
+      "title": "Correct user update event data",
       "additionalProperties": false,
+      "minProperties": 1,
       "properties": {
-        "displayName": {
-          "type": "string",
-          "title": "Replacement display name",
-          "minLength": 1,
-          "maxLength": 255
-        }
-      },
-      "required": ["displayName"]
+        "userType": {"type": "string", "title": "User Type", "enum": ["C", "E"]},
+        "referralId": {"type": "string", "title": "Referral Id or Email", "maxLength": 320},
+        "managerId": {"type": "string", "title": "Manager Id or Email", "maxLength": 320},
+        "language": {"type": "string", "title": "Language", "enum": ["en"]},
+        "firstName": {"type": "string", "title": "First Name", "maxLength": 255},
+        "lastName": {"type": "string", "title": "Last Name", "maxLength": 255},
+        "phoneNumber": {"type": "string", "title": "Phone Number", "maxLength": 64},
+        "gender": {"type": "string", "title": "Gender", "maxLength": 32},
+        "birthday": {"type": "string", "title": "Birthday", "format": "date"},
+        "country": {"type": "string", "title": "Country", "maxLength": 128},
+        "province": {"type": "string", "title": "Province or State", "maxLength": 128},
+        "city": {"type": "string", "title": "City", "maxLength": 128},
+        "postCode": {"type": "string", "title": "Post Code", "maxLength": 32},
+        "address": {"type": "string", "title": "Address", "maxLength": 512}
+      }
     },
-    "form": ["displayName"]
+    "form": ["userType", "referralId", "managerId", "language", "firstName", "lastName",
+      "phoneNumber", "gender", "birthday", "country", "province", "city", "postCode", "address"]
   },
   "updatePayment": {
     "formId": "updatePayment",

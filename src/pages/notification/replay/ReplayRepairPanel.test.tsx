@@ -5,11 +5,11 @@ import type { ReplayFailure, ReplayRepair } from './types';
 
 vi.mock('react-schema-form', () => ({
   SchemaForm: ({ model, onModelChange }: { model: Record<string, unknown>; onModelChange: (key: string, value: string) => void }) =>
-    <input aria-label="Replacement display name" value={String(model.displayName || '')}
-      onChange={(event) => onModelChange('displayName', event.target.value)} />,
+    <input aria-label="First Name" value={String(model.firstName || '')}
+      onChange={(event) => onModelChange('firstName', event.target.value)} />,
   utils: {
     selectOrSet: (key: string, model: Record<string, unknown>, value: unknown) => { model[key] = value; },
-    validateBySchema: (_schema: unknown, model: Record<string, unknown>) => ({ valid: !!String(model.displayName || '').trim() }),
+    validateBySchema: (_schema: unknown, model: Record<string, unknown>) => ({ valid: !!String(model.firstName || '').trim() }),
   },
 }));
 
@@ -18,17 +18,17 @@ const failure: ReplayFailure = {
   replayPolicy: 'AGGREGATE_VERSION', firstFailedTs: '2026-07-24T12:00:00Z', lastFailedTs: '2026-07-24T12:00:00Z',
   payloadAvailable: true, projectionName: 'portal-query', consumerGroup: 'user-query-group',
   contentFingerprint: `sha256:${'1'.repeat(64)}`, dependencyScopes: [],
-  events: [{ ordinal: 0, eventId: 'event-1', eventType: 'EventReplayContractFixtureEvent', schemaVersion: '1', payloadAvailable: true }],
+  events: [{ ordinal: 0, eventId: 'event-1', eventType: 'UserUpdatedEvent', schemaVersion: '1', payloadAvailable: true }],
 };
 
 const repair: ReplayRepair = {
   repairId: 'repair-1', failureId: failure.failureId, status: 'AWAITING_APPROVAL', reason: 'fix data',
-  repairSchemaVersion: 'event-replay-contract-fixture-repair-v1', changedFieldNames: ['displayName'],
+  repairSchemaVersion: 'user-updated-repair-v1', changedFieldNames: ['firstName'],
   originalTransactionFingerprint: `sha256:${'1'.repeat(64)}`,
   correctedTransactionFingerprint: `sha256:${'2'.repeat(64)}`,
   requesterUserId: 'requester', requestedTs: '2026-07-24T12:00:00Z',
   events: [{ ordinal: 0, eventId: 'event-1', originalPayloadDigest: `sha256:${'3'.repeat(64)}`,
-    correctedPayloadDigest: `sha256:${'4'.repeat(64)}`, changedFieldNames: ['displayName'] }],
+    correctedPayloadDigest: `sha256:${'4'.repeat(64)}`, changedFieldNames: ['firstName'] }],
 };
 
 const callbacks = () => ({ onCreate: vi.fn(), onDecision: vi.fn(), onPlan: vi.fn(), onClose: vi.fn() });
@@ -40,11 +40,11 @@ describe('ReplayRepairPanel', () => {
     fireEvent.change(screen.getByLabelText('Repair reason'), { target: { value: 'correct invalid data' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create repair proposal' }));
     expect(screen.getByText(/Complete every required repair field/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Replacement display name'), { target: { value: 'Corrected name' } });
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Corrected name' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create repair proposal' }));
     expect(handlers.onCreate).toHaveBeenCalledWith({
-      repairSchemaVersion: 'event-replay-contract-fixture-repair-v1',
-      changeShape: 'SINGLE_EVENT_FIELDS', changes: { displayName: 'Corrected name' }, reason: 'correct invalid data',
+      repairSchemaVersion: 'user-updated-repair-v1',
+      changeShape: 'SINGLE_EVENT_FIELDS', changes: { firstName: 'Corrected name' }, reason: 'correct invalid data',
     });
   });
 
@@ -66,7 +66,7 @@ describe('ReplayRepairPanel', () => {
       { ...failure.events[0], ordinal: 1, eventId: 'event-2' },
       { ...failure.events[0], ordinal: 2, eventId: 'unchanged', eventType: 'UnrepairableEvent' }] };
     render(<ReplayRepairPanel failure={multi} repair={null} currentUserId="requester" busy={false} {...handlers} />);
-    const fields = screen.getAllByLabelText('Replacement display name');
+    const fields = screen.getAllByLabelText('First Name');
     fireEvent.change(fields[0], { target: { value: 'First corrected' } });
     fireEvent.change(fields[1], { target: { value: 'Second corrected' } });
     fireEvent.change(screen.getByLabelText('Repair reason'), { target: { value: 'repair matching members' } });
@@ -74,7 +74,7 @@ describe('ReplayRepairPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create repair proposal' }));
     expect(handlers.onCreate).toHaveBeenCalledWith(expect.objectContaining({
       changeShape: 'PER_EVENT_FIELDS',
-      changes: { 'event-1': { displayName: 'First corrected' }, 'event-2': { displayName: 'Second corrected' } },
+      changes: { 'event-1': { firstName: 'First corrected' }, 'event-2': { firstName: 'Second corrected' } },
     }));
   });
 
@@ -88,7 +88,7 @@ describe('ReplayRepairPanel', () => {
   it('shows metadata without values and clears corrected form state after creation', async () => {
     const handlers = callbacks();
     const view = render(<ReplayRepairPanel failure={failure} repair={null} currentUserId="requester" busy={false} {...handlers} />);
-    fireEvent.change(screen.getByLabelText('Replacement display name'), { target: { value: 'Sensitive corrected value' } });
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Sensitive corrected value' } });
     fireEvent.change(screen.getByLabelText('Repair reason'), { target: { value: 'repair' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create repair proposal' }));
     view.rerender(<ReplayRepairPanel failure={failure} repair={repair} currentUserId="approver" busy={false} {...handlers} />);
@@ -98,7 +98,7 @@ describe('ReplayRepairPanel', () => {
     expect(screen.getByText(repair.events[0].originalPayloadDigest)).toBeInTheDocument();
     expect(screen.getByText(repair.events[0].correctedPayloadDigest)).toBeInTheDocument();
     view.rerender(<ReplayRepairPanel failure={failure} repair={null} currentUserId="approver" busy={false} {...handlers} />);
-    await waitFor(() => expect(screen.getByLabelText('Replacement display name')).toHaveValue(''));
+    await waitFor(() => expect(screen.getByLabelText('First Name')).toHaveValue(''));
   });
 
   it('plans only an approved repair and clearly stops a stale repair', () => {

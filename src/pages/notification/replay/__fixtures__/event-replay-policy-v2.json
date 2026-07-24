@@ -69,5 +69,36 @@
     },
     "externalSideEffects": "NONE",
     "fixtureOnly": true
-  }
+  },
+  "deployedEventPolicies": [
+    {
+      "eventType": "UserUpdatedEvent",
+      "schemaVersion": "1",
+      "transactionPolicy": "COMPLETE_TRANSACTION",
+      "dependencyMetadata": ["aggregateId", "aggregateType", "aggregateVersion"],
+      "dataValidator": "USER_UPDATED_V1",
+      "replayPolicy": "AGGREGATE_VERSION",
+      "repairDisposition": "SCHEMA_REPAIR",
+      "repairSchema": {
+        "schemaVersion": "user-updated-repair-v1",
+        "editableFields": [
+          {"jsonPointer": "/data/userType", "valueSchema": {"type": "string", "enum": ["C", "E"]}},
+          {"jsonPointer": "/data/referralId", "valueSchema": {"type": "string", "maxLength": 320}},
+          {"jsonPointer": "/data/managerId", "valueSchema": {"type": "string", "maxLength": 320}},
+          {"jsonPointer": "/data/language", "valueSchema": {"type": "string", "enum": ["en"]}},
+          {"jsonPointer": "/data/firstName", "valueSchema": {"type": "string", "maxLength": 255}},
+          {"jsonPointer": "/data/lastName", "valueSchema": {"type": "string", "maxLength": 255}},
+          {"jsonPointer": "/data/phoneNumber", "valueSchema": {"type": "string", "maxLength": 64}},
+          {"jsonPointer": "/data/gender", "valueSchema": {"type": "string", "maxLength": 32}},
+          {"jsonPointer": "/data/birthday", "valueSchema": {"type": "string", "format": "date"}},
+          {"jsonPointer": "/data/country", "valueSchema": {"type": "string", "maxLength": 128}},
+          {"jsonPointer": "/data/province", "valueSchema": {"type": "string", "maxLength": 128}},
+          {"jsonPointer": "/data/city", "valueSchema": {"type": "string", "maxLength": 128}},
+          {"jsonPointer": "/data/postCode", "valueSchema": {"type": "string", "maxLength": 32}},
+          {"jsonPointer": "/data/address", "valueSchema": {"type": "string", "maxLength": 512}}
+        ]
+      },
+      "externalSideEffects": "NONE"
+    }
+  ]
 }

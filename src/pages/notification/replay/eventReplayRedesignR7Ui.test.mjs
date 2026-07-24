@@ -7,8 +7,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const read = (name) => readFileSync(resolve(here, name), 'utf8');
 const forms = JSON.parse(readFileSync(resolve(here, '../../../data/Forms.json'), 'utf8'));
 const policy = JSON.parse(read('__fixtures__/event-replay-policy-v2.json'));
-const fixtureForm = forms.eventReplayContractFixtureRepair;
-const fixturePolicy = policy.fixturePolicy;
+const fixtureForm = forms.eventReplayUserUpdatedRepair;
+const fixturePolicy = policy.deployedEventPolicies.find((entry) => entry.eventType === 'UserUpdatedEvent');
 
 assert.equal(fixtureForm.eventType, fixturePolicy.eventType);
 assert.equal(fixtureForm.eventSchemaVersion, fixturePolicy.schemaVersion);
