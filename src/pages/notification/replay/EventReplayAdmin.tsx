@@ -126,6 +126,11 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
     setPlanOpen(false); setPlanningRepairId(null);
   }, false);
   const selectedIds = useMemo(() => Array.from(selected), [selected]);
+  const orderedScopeSelected = useMemo(() => selectedIds.some((failureId) =>
+    details[failureId]?.dependencyScopes.some((scope) => {
+      const kind = String(scope.mode ?? scope.scopeType ?? '');
+      return kind === 'AGGREGATE' || kind === 'GRAPH_ROOT';
+    })), [details, selectedIds]);
 
   return <Paper variant="outlined" sx={{ p: 2, mb: 2 }}><Stack spacing={2}>
     <Typography variant="h5">Event Replay Administration</Typography>
@@ -179,6 +184,7 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
         }}
         onApproveRelease={async (actionId, reason) => { await run(() => replayApi.approveBarrierRelease(hostId, actionId, reason)); }} />
     </> : <ReplayWaiverPanel failureIds={selectedIds} currentUserId={currentUserId} busy={busy} error={error}
+      orderedScopeSelected={orderedScopeSelected}
       onRequest={async (reason) => { let response: OperatorActionResponse | null = null; await run(async () => { response = await replayApi.requestWaiver(hostId, selectedIds, reason); }, false); if (!response) throw new Error('Waiver request failed.'); return response; }}
       onApprove={async (id, targets, downstream, reason) => { await run(() => replayApi.approveWaiver(hostId, id, targets, downstream, reason), false); setSelected(new Set()); await loadCandidates(); }} />}
   </Stack></Paper>;

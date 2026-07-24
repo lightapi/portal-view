@@ -34,7 +34,10 @@ test('R0 API examples cover all operations and expose no payload material', () =
   assert.equal(create.request.eventJson, undefined);
   assert.equal(create.response.status, 'AWAITING_APPROVAL');
   assert.equal(api.compatibleFixtureVersion, 'event-replay-api-v1');
-  assert.match(api.compatibilityRule, /first nine examples equal v1/i);
+  assert.match(api.compatibilityRule, /waiver is restricted to unordered failures/i);
+  const waiver = api.examples.find(({ operation }) => operation === 'waiveEventReplayFailure');
+  assert.deepEqual(waiver.response.downstreamBlockedFailureIds, []);
+  assert.equal(contract.waiverCommandSemantics.orderedFailuresAllowed, false);
 
   const wireDigestValues = JSON.stringify(api).match(/sha256:[0-9a-f]{64}/g) ?? [];
   assert.ok(wireDigestValues.length > 0);
@@ -73,6 +76,9 @@ test('R0 explicitly inherits v1 state machines and retains error metadata', () =
   assert.equal(errors.get('AUTHORIZATION_DENIED').httpStatus, 403);
   assert.equal(errors.get('PAYLOAD_DIGEST_MISMATCH').httpStatus, 409);
   assert.equal(errors.get('EVENT_NOT_REPLAYABLE').httpStatus, 422);
+  assert.deepEqual(errors.get('INVALID_REPLAY_STATE'), {
+    code: 'INVALID_REPLAY_STATE', httpStatus: 409, retryable: false, origin: 'V2',
+  });
   assert.equal(typeof errors.get('REPAIR_FINGERPRINT_MISMATCH').retryable, 'boolean');
 });
 

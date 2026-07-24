@@ -20,6 +20,7 @@ const publicCodes = [
   'AGGREGATE_PROJECTION_BLOCKED', 'AGGREGATE_REPAIR_REQUIRED', 'EVENT_REPAIR_REQUIRED',
   'REPLAY_EXECUTION_PAUSED', 'REPAIR_SCHEMA_VALIDATION_FAILED', 'REPAIR_APPROVER_MUST_DIFFER',
   'REPAIR_NOT_APPROVED', 'REPAIR_FINGERPRINT_MISMATCH', 'STALE_PLAN', 'EVENT_NOT_REPLAYABLE',
+  'INVALID_REPLAY_STATE',
 ] as const;
 
 const publicMessage: Partial<Record<(typeof publicCodes)[number], string>> = {
@@ -32,6 +33,7 @@ const publicMessage: Partial<Record<(typeof publicCodes)[number], string>> = {
   REPAIR_NOT_APPROVED: 'The repair is no longer approved for this operation. Refresh its status.',
   REPAIR_FINGERPRINT_MISMATCH: 'The immutable repair fingerprint changed. Review the audit trail and re-plan.',
   STALE_PLAN: 'The immutable plan is stale. Refresh the failure and create a new plan.',
+  INVALID_REPLAY_STATE: 'This operation is incompatible with the current failure state. Ordered failures must be repaired or replayed.',
 };
 
 const resultCode = (value: unknown) => {

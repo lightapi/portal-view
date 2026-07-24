@@ -2,7 +2,7 @@
   "fixtureVersion": "event-replay-api-v2",
   "contractVersion": "event-replay-v2",
   "compatibleFixtureVersion": "event-replay-api-v1",
-  "compatibilityRule": "The first nine examples equal v1; createEventReplayPlan adds only response.repairId and getEventReplay adds only response.repairStatus.",
+  "compatibilityRule": "Eight legacy examples equal v1; createEventReplayPlan adds response.repairId, getEventReplay adds response.repairStatus, and waiver is restricted to unordered failures.",
   "examples": [
     {
       "operation": "listEventReplayCandidate",
@@ -175,7 +175,7 @@
       "request": {
         "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
         "failureIds": [
-          "019f6000-0000-7000-8000-000000000018"
+          "019f6000-0000-7000-8000-000000000020"
         ],
         "expectedStatuses": [
           "OPEN"
@@ -187,11 +187,9 @@
         "status": "AWAITING_APPROVAL",
         "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
         "failureIds": [
-          "019f6000-0000-7000-8000-000000000018"
+          "019f6000-0000-7000-8000-000000000020"
         ],
-        "downstreamBlockedFailureIds": [
-          "019f6000-0000-7000-8000-000000000019"
-        ],
+        "downstreamBlockedFailureIds": [],
         "projectionMetadataAdvanced": false
       }
     },
@@ -282,22 +280,18 @@
         "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
         "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
         "failureIds": [
-          "019f6000-0000-7000-8000-000000000018"
+          "019f6000-0000-7000-8000-000000000020"
         ],
-        "expectedDownstreamBlockedFailureIds": [
-          "019f6000-0000-7000-8000-000000000019"
-        ],
+        "expectedDownstreamBlockedFailureIds": [],
         "reason": "Independently approve the exact waiver targets and downstream impact"
       },
       "response": {
         "status": "WAIVED",
         "waiverRequestId": "019f6003-0000-7000-8000-000000000003",
         "failureIds": [
-          "019f6000-0000-7000-8000-000000000018"
+          "019f6000-0000-7000-8000-000000000020"
         ],
-        "downstreamBlockedFailureIds": [
-          "019f6000-0000-7000-8000-000000000019"
-        ],
+        "downstreamBlockedFailureIds": [],
         "projectionMetadataAdvanced": false
       }
     }
