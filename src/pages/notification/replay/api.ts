@@ -1,9 +1,13 @@
 import fetchClient from '../../../utils/fetchClient';
 import type {
   OperatorActionResponse,
+  CreateReplayRepairResponse,
+  RepairChangeShape,
+  RepairDecision,
   ReplayCandidateResponse,
   ReplayFailure,
   ReplayPlan,
+  ReplayRepair,
   ReplayStatus,
 } from './types';
 
@@ -12,16 +16,41 @@ const commandUrl = (action: string, data: Record<string, unknown>) => {
   return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(command));
 };
 
+const publicCodes = [
+  'AGGREGATE_PROJECTION_BLOCKED', 'AGGREGATE_REPAIR_REQUIRED', 'EVENT_REPAIR_REQUIRED',
+  'REPLAY_EXECUTION_PAUSED', 'REPAIR_SCHEMA_VALIDATION_FAILED', 'REPAIR_APPROVER_MUST_DIFFER',
+  'REPAIR_NOT_APPROVED', 'REPAIR_FINGERPRINT_MISMATCH', 'STALE_PLAN', 'EVENT_NOT_REPLAYABLE',
+] as const;
+
+const publicMessage: Partial<Record<(typeof publicCodes)[number], string>> = {
+  AGGREGATE_PROJECTION_BLOCKED: 'This ordered scope is blocked by an open projection failure.',
+  AGGREGATE_REPAIR_REQUIRED: 'This ordered scope has invalid data and requires an approved repair.',
+  EVENT_REPAIR_REQUIRED: 'Exact replay would repeat the invalid data. Create and approve a repair.',
+  REPLAY_EXECUTION_PAUSED: 'Replay execution is paused. Planning and approvals remain available.',
+  REPAIR_SCHEMA_VALIDATION_FAILED: 'The proposed business-field changes did not pass the repair schema.',
+  REPAIR_APPROVER_MUST_DIFFER: 'A different authorized user must review this repair.',
+  REPAIR_NOT_APPROVED: 'The repair is no longer approved for this operation. Refresh its status.',
+  REPAIR_FINGERPRINT_MISMATCH: 'The immutable repair fingerprint changed. Review the audit trail and re-plan.',
+  STALE_PLAN: 'The immutable plan is stale. Refresh the failure and create a new plan.',
+};
+
+const resultCode = (value: unknown) => {
+  const object = typeof value === 'object' && value ? value as Record<string, unknown> : null;
+  const candidates = [object?.code, object?.message, object?.description, object?.data, value];
+  const text = candidates.filter((candidate): candidate is string => typeof candidate === 'string').join(' ');
+  return publicCodes.find((code) => text.includes(code)) || 'REQUEST_FAILED';
+};
+
 const invoke = async <T>(action: string, data: Record<string, unknown>): Promise<T> => {
   try {
     return await fetchClient(commandUrl(action, data)) as T;
   } catch (cause) {
-    const value = cause as { code?: unknown; message?: unknown } | string | null;
-    const code = typeof value === 'object' && value && typeof value.code === 'string' ? value.code : 'REQUEST_FAILED';
+    const code = resultCode(cause);
     // Server detail is intentionally not copied into the browser: a legacy
     // exception message could contain event content. The stable code is enough
     // to correlate with the server-side audit trail.
-    throw new Error(`Event replay request failed (${code.slice(0, 128)}). Review the server audit trail.`);
+    const guidance = code === 'REQUEST_FAILED' ? 'Review the server audit trail.' : publicMessage[code] || 'Review the current replay state.';
+    throw new Error(`Event replay request failed (${code}). ${guidance}`);
   }
 };
 
@@ -35,6 +64,17 @@ export const replayApi = {
   createPlan: (hostId: string, projectionName: string, consumerGroup: string, failureIds: string[],
     strategy: string, validationMode: string, reason: string, repairId?: string) => invoke<ReplayPlan>('createEventReplayPlan', {
       hostId, projectionName, consumerGroup, failureIds, strategy, validationMode, reason, repairId,
+    }),
+  createRepair: (hostId: string, failureId: string, expectedOriginalTransactionFingerprint: string,
+    repairSchemaVersion: string, changeShape: RepairChangeShape, changes: Record<string, unknown>, reason: string) =>
+    invoke<CreateReplayRepairResponse>('createEventReplayRepair', {
+      hostId, failureId, expectedOriginalTransactionFingerprint, repairSchemaVersion, changeShape, changes, reason,
+    }),
+  getRepair: (hostId: string, repairId: string) =>
+    invoke<ReplayRepair>('getEventReplayRepair', { hostId, repairId }),
+  decideRepair: (hostId: string, repairId: string, expectedCorrectedTransactionFingerprint: string,
+    decision: RepairDecision, reason: string) => invoke<Partial<ReplayRepair>>('approveEventReplayRepair', {
+      hostId, repairId, expectedCorrectedTransactionFingerprint, decision, reason,
     }),
   getReplay: (hostId: string, replayRequestId: string) =>
     invoke<ReplayStatus>('getEventReplay', { hostId, replayRequestId }),

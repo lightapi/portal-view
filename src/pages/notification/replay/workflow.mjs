@@ -25,3 +25,10 @@ export function isNotificationMatch(failure, transactionIds = []) {
   return !!failure?.originalTransactionId && transactionIds.includes(failure.originalTransactionId);
 }
 
+export function canReviewRepair(status, requester, currentUser) {
+  return status === 'AWAITING_APPROVAL' && !!currentUser && requester !== currentUser;
+}
+
+export function canPlanRepair(status) {
+  return status === 'APPROVED';
+}

@@ -69,6 +69,7 @@ export type ReplayPlan = {
   isolationScope?: { mode?: string; rootInstanceIds?: string[] };
   warnings?: ReplayWarning[];
   expiresAt: string;
+  repairId?: string | null;
 };
 
 export type ReplayItem = {
@@ -79,6 +80,7 @@ export type ReplayItem = {
   addedDependency: boolean;
   status: string;
   attemptCount: number;
+  repairId?: string | null;
 };
 
 export type ReplayAttempt = {
@@ -90,6 +92,47 @@ export type ReplayAttempt = {
   startedTs: string;
   completedTs?: string | null;
   errorCode?: string | null;
+};
+
+export type RepairChangeShape = 'SINGLE_EVENT_FIELDS' | 'PER_EVENT_FIELDS';
+export type RepairDecision = 'APPROVE' | 'REJECT';
+
+export type ReplayRepairEvent = {
+  ordinal: number;
+  eventId: string;
+  originalPayloadDigest: string;
+  correctedPayloadDigest: string;
+  changedFieldNames: string[];
+};
+
+export type ReplayRepair = {
+  repairId: string;
+  failureId: string;
+  status: 'AWAITING_APPROVAL' | 'APPROVED' | 'APPLIED' | 'CANCELLED' | 'REJECTED' | string;
+  reason: string;
+  repairSchemaVersion: string;
+  changedFieldNames: string[];
+  originalTransactionFingerprint: string;
+  correctedTransactionFingerprint: string;
+  requesterUserId: string;
+  requestedTs: string;
+  reviewerUserId?: string | null;
+  decisionTs?: string | null;
+  approverUserId?: string | null;
+  approvedTs?: string | null;
+  appliedBy?: string | null;
+  appliedTs?: string | null;
+  completedTs?: string | null;
+  linkedReplayRequestId?: string | null;
+  linkedReplayStatus?: string | null;
+  events: ReplayRepairEvent[];
+};
+
+export type CreateReplayRepairResponse = {
+  repairId: string;
+  status: string;
+  changedFieldNames: string[];
+  correctedTransactionFingerprint: string;
 };
 
 export type ReplayBarrier = {
@@ -131,6 +174,7 @@ export type ReplayStatus = {
   failureMessage?: string | null;
   isolationMode?: string | null;
   projectionCommitted: boolean;
+  repairStatus?: string | null;
   stale: boolean;
   items: ReplayItem[];
   attempts: ReplayAttempt[];

@@ -6,3 +6,5 @@ export function canExecute(status: string, stale: boolean, validationMode: strin
   planHash: string, confirmedHash: string): boolean;
 export function replayProgress(items?: ReplayItem[]): { complete: number; total: number; percent: number };
 export function isNotificationMatch(failure?: ReplayFailure, transactionIds?: string[]): boolean;
+export function canReviewRepair(status: string, requester?: string | null, currentUser?: string | null): boolean;
+export function canPlanRepair(status: string): boolean;

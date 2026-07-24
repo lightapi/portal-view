@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 
 export type ReplayPlanInput = { strategy: string; validationMode: string; reason: string };
 
-export function ReplayPlanDialog({ open, selectionCount, busy, error, onClose, onCreate }:
-  { open: boolean; selectionCount: number; busy: boolean; error?: string | null; onClose: () => void;
+export function ReplayPlanDialog({ open, selectionCount, repairId, busy, error, onClose, onCreate }:
+  { open: boolean; selectionCount: number; repairId?: string | null; busy: boolean; error?: string | null; onClose: () => void;
     onCreate: (input: ReplayPlanInput) => void }) {
   const [strategy, setStrategy] = useState('DEPENDENCY_CLOSURE');
   const [validationMode, setValidationMode] = useState('VALIDATE_ONLY');
@@ -12,10 +12,11 @@ export function ReplayPlanDialog({ open, selectionCount, busy, error, onClose, o
   const [confirmed, setConfirmed] = useState(false);
   useEffect(() => { if (!open) { setReason(''); setConfirmed(false); } }, [open]);
   return <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="sm">
-    <DialogTitle>Create immutable replay plan</DialogTitle>
+    <DialogTitle>{repairId ? 'Create repair-bound replay plan' : 'Create immutable replay plan'}</DialogTitle>
     <DialogContent><Stack spacing={2} sx={{ mt: .5 }}>
       <Alert severity="info">Planning may add dependency transactions. Creation does not execute them; the exact plan hash must be approved separately.</Alert>
       <Typography>{selectionCount} complete failure transaction(s) selected.</Typography>
+      {repairId ? <Alert severity="warning">Approved repair <code>{repairId}</code> will be bound into this plan hash. The plan still requires a separate approval.</Alert> : null}
       <TextField select label="Selection strategy" value={strategy} onChange={(event) => setStrategy(event.target.value)}>
         <MenuItem value="DEPENDENCY_CLOSURE">Dependency closure (recommended)</MenuItem><MenuItem value="EXACT">Exact selection</MenuItem>
       </TextField>
@@ -31,4 +32,3 @@ export function ReplayPlanDialog({ open, selectionCount, busy, error, onClose, o
       onClick={() => onCreate({ strategy, validationMode, reason: reason.trim() })}>Create plan</Button></DialogActions>
   </Dialog>;
 }
-

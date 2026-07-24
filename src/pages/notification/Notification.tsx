@@ -632,6 +632,7 @@ export default function Notification() {
           hostId={host}
           currentUserId={userId}
           notificationTransactionIds={data.map((notification) => notification.transactionId).filter((id): id is string => !!id)}
+          onProjectionRefresh={async () => { await Promise.all([fetchData(), fetchDlqSummary()]); }}
         />
       ) : null}
       <MaterialReactTable table={table} />

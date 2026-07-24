@@ -1,20 +1,22 @@
 import { Alert, Button, Divider, Paper, Stack, TextField, Typography } from '@mui/material';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { replayApi } from './api';
 import { ReplayApprovalPanel } from './ReplayApprovalPanel';
 import { ReplayCandidateTable } from './ReplayCandidateTable';
 import { ReplayPlanDialog, type ReplayPlanInput } from './ReplayPlanDialog';
 import { ReplayQuarantinePanel } from './ReplayQuarantinePanel';
+import { ReplayRepairPanel } from './ReplayRepairPanel';
 import { ReplayStatusPanel } from './ReplayStatusPanel';
 import { ReplayWaiverPanel } from './ReplayWaiverPanel';
-import type { OperatorActionResponse, ReplayBarrier, ReplayCandidate, ReplayFailure, ReplayStatus } from './types';
+import type { OperatorActionResponse, RepairDecision, ReplayBarrier, ReplayCandidate, ReplayFailure, ReplayRepair, ReplayStatus } from './types';
 import { terminalReplayStatuses } from './workflow.mjs';
 
 const PAGE_SIZE = 25;
 const storageKey = (hostId: string) => `event-replay:last-request:${hostId}`;
+const repairStorageKey = (hostId: string) => `event-replay:last-repair:${hostId}`;
 
-export function EventReplayAdmin({ hostId, currentUserId, notificationTransactionIds }:
-  { hostId: string; currentUserId?: string | null; notificationTransactionIds: string[] }) {
+export function EventReplayAdmin({ hostId, currentUserId, notificationTransactionIds, onProjectionRefresh }:
+  { hostId: string; currentUserId?: string | null; notificationTransactionIds: string[]; onProjectionRefresh?: () => void | Promise<void> }) {
   const [projectionName, setProjectionName] = useState('portal-query');
   const [consumerGroup, setConsumerGroup] = useState('user-query-group');
   const [candidates, setCandidates] = useState<ReplayCandidate[]>([]);
@@ -24,6 +26,11 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
   const [loading, setLoading] = useState(false); const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null); const [planOpen, setPlanOpen] = useState(false);
   const [replay, setReplay] = useState<ReplayStatus | null>(null);
+  const [repair, setRepair] = useState<ReplayRepair | null>(null);
+  const [repairFailure, setRepairFailure] = useState<ReplayFailure | null>(null);
+  const [planningRepairId, setPlanningRepairId] = useState<string | null>(null);
+  const [repairReplayRequestId, setRepairReplayRequestId] = useState<string | null>(null);
+  const refreshedRequests = useRef(new Set<string>());
 
   const rememberReplay = useCallback((requestId: string | null) => {
     if (requestId) localStorage.setItem(storageKey(hostId), requestId); else localStorage.removeItem(storageKey(hostId));
@@ -32,10 +39,30 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
     window.history.replaceState(window.history.state, '', url);
   }, [hostId]);
 
-  const loadReplay = useCallback(async (requestId: string) => {
-    try { const next = await replayApi.getReplay(hostId, requestId); setReplay(next); setError(null); }
-    catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to load replay status.'); }
+  const rememberRepair = useCallback((repairId: string | null) => {
+    if (repairId) localStorage.setItem(repairStorageKey(hostId), repairId); else localStorage.removeItem(repairStorageKey(hostId));
+    const url = new URL(window.location.href);
+    if (repairId) url.searchParams.set('repairId', repairId); else url.searchParams.delete('repairId');
+    window.history.replaceState(window.history.state, '', url);
   }, [hostId]);
+
+  const loadRepair = useCallback(async (repairId: string) => {
+    try {
+      const next = await replayApi.getRepair(hostId, repairId);
+      const failure = await replayApi.getFailure(hostId, next.failureId);
+      setRepair(next); setRepairFailure(failure); setSelected(new Set([next.failureId]));
+      setRepairReplayRequestId(next.linkedReplayRequestId || null); setError(null);
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to load repair status.'); }
+  }, [hostId]);
+
+  const loadReplay = useCallback(async (requestId: string) => {
+    try {
+      const next = await replayApi.getReplay(hostId, requestId); setReplay(next); setError(null);
+      const linkedRepairId = next.items.find((item) => item.repairId)?.repairId;
+      if (linkedRepairId) { setRepairReplayRequestId(next.replayRequestId); rememberRepair(linkedRepairId); await loadRepair(linkedRepairId); }
+    }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Unable to load replay status.'); }
+  }, [hostId, loadRepair, rememberRepair]);
 
   const loadCandidates = useCallback(async () => {
     if (!projectionName.trim() || !consumerGroup.trim()) return;
@@ -54,14 +81,35 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
 
   useEffect(() => { loadCandidates(); }, [loadCandidates]);
   useEffect(() => {
-    const requestId = new URLSearchParams(window.location.search).get('replayRequestId') || localStorage.getItem(storageKey(hostId));
+    const params = new URLSearchParams(window.location.search);
+    const requestId = params.get('replayRequestId') || localStorage.getItem(storageKey(hostId));
+    const repairId = params.get('repairId') || localStorage.getItem(repairStorageKey(hostId));
     if (requestId) loadReplay(requestId);
-  }, [hostId, loadReplay]);
+    if (repairId) loadRepair(repairId);
+  }, [hostId, loadRepair, loadReplay]);
   useEffect(() => {
     if (!replay || terminalReplayStatuses.has(replay.status)) return;
     const timer = window.setInterval(() => loadReplay(replay.replayRequestId), 3000);
     return () => window.clearInterval(timer);
   }, [loadReplay, replay]);
+  useEffect(() => {
+    if (!repair || !['AWAITING_APPROVAL', 'APPROVED'].includes(repair.status)) return;
+    const timer = window.setInterval(() => loadRepair(repair.repairId), 3000);
+    return () => window.clearInterval(timer);
+  }, [loadRepair, repair]);
+  useEffect(() => {
+    if (!replay || replay.status !== 'SUCCEEDED' || !replay.projectionCommitted
+        || refreshedRequests.current.has(replay.replayRequestId)) return;
+    refreshedRequests.current.add(replay.replayRequestId);
+    void (async () => {
+      await loadCandidates();
+      if (repair) await loadRepair(repair.repairId);
+      await onProjectionRefresh?.();
+      window.dispatchEvent(new CustomEvent('portal:event-replay-applied', { detail: {
+        hostId, replayRequestId: replay.replayRequestId, repairId: repair?.repairId || null,
+      } }));
+    })();
+  }, [hostId, loadCandidates, loadRepair, onProjectionRefresh, repair, replay]);
 
   const run = async (operation: () => Promise<unknown>, refresh = true) => {
     setBusy(true); setError(null);
@@ -70,8 +118,12 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
     finally { setBusy(false); }
   };
   const createPlan = (input: ReplayPlanInput) => run(async () => {
-    const plan = await replayApi.createPlan(hostId, projectionName, consumerGroup, Array.from(selected), input.strategy, input.validationMode, input.reason);
-    rememberReplay(plan.replayRequestId); setReplay(await replayApi.getReplay(hostId, plan.replayRequestId)); setPlanOpen(false);
+    const failureIds = planningRepairId && repair ? [repair.failureId] : Array.from(selected);
+    const plan = await replayApi.createPlan(hostId, projectionName, consumerGroup, failureIds,
+      input.strategy, input.validationMode, input.reason, planningRepairId || undefined);
+    if (planningRepairId) setRepairReplayRequestId(plan.replayRequestId);
+    rememberReplay(plan.replayRequestId); setReplay(await replayApi.getReplay(hostId, plan.replayRequestId));
+    setPlanOpen(false); setPlanningRepairId(null);
   }, false);
   const selectedIds = useMemo(() => Array.from(selected), [selected]);
 
@@ -82,7 +134,9 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
       <TextField size="small" label="Projection" value={projectionName} onChange={(event) => { setProjectionName(event.target.value); setPage(0); }} />
       <TextField size="small" label="Consumer group" value={consumerGroup} onChange={(event) => { setConsumerGroup(event.target.value); setPage(0); }} />
       <Button onClick={loadCandidates} disabled={loading}>Refresh failures</Button>
-      <Button variant="contained" onClick={() => setPlanOpen(true)} disabled={loading || !selected.size || !!replay}>Plan selected</Button>
+      <Button variant="contained" onClick={() => { setPlanningRepairId(null); setPlanOpen(true); }} disabled={loading || !selected.size || !!replay}>Replay original</Button>
+      <Button variant="outlined" onClick={() => { const failure = details[selectedIds[0]]; if (failure) { setRepairFailure(failure); setRepair(null); rememberRepair(null); } }}
+        disabled={loading || selected.size !== 1 || !details[selectedIds[0]] || !!replay}>Repair</Button>
       {replay ? <Button onClick={() => { setReplay(null); rememberReplay(null); }}>Close replay</Button> : null}
     </Stack>
     {error ? <Alert severity="error">{error}</Alert> : null}
@@ -95,7 +149,22 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
       <Typography variant="body2">Page {page + 1}; {total} open transaction(s)</Typography>
       <Button disabled={(page + 1) * PAGE_SIZE >= total || loading} onClick={() => setPage((value) => value + 1)}>Next</Button>
     </Stack>
-    <ReplayPlanDialog open={planOpen} selectionCount={selected.size} busy={busy} error={error} onClose={() => setPlanOpen(false)} onCreate={createPlan} />
+    <ReplayPlanDialog open={planOpen} selectionCount={planningRepairId ? 1 : selected.size} repairId={planningRepairId}
+      busy={busy} error={error} onClose={() => { setPlanOpen(false); setPlanningRepairId(null); }} onCreate={createPlan} />
+    {repairFailure ? <ReplayRepairPanel failure={repairFailure} repair={repair} currentUserId={currentUserId}
+      busy={busy} error={error} linkedReplayRequestId={repairReplayRequestId}
+      onCreate={(input) => run(async () => {
+        const created = await replayApi.createRepair(hostId, repairFailure.failureId,
+          repairFailure.contentFingerprint, input.repairSchemaVersion, input.changeShape, input.changes, input.reason);
+        rememberRepair(created.repairId); await loadRepair(created.repairId);
+      }, false)}
+      onDecision={(decision: RepairDecision, reason: string) => run(async () => {
+        if (!repair) return;
+        await replayApi.decideRepair(hostId, repair.repairId, repair.correctedTransactionFingerprint, decision, reason);
+        await loadRepair(repair.repairId);
+      }, false)}
+      onPlan={() => { if (repair) { setSelected(new Set([repair.failureId])); setPlanningRepairId(repair.repairId); setPlanOpen(true); } }}
+      onClose={() => { setRepair(null); setRepairFailure(null); setRepairReplayRequestId(null); rememberRepair(null); }} /> : null}
     {replay ? <><Divider /><ReplayStatusPanel replay={replay} />
       <ReplayApprovalPanel replay={replay} currentUserId={currentUserId} busy={busy} error={error}
         onApprove={(reason) => run(() => replayApi.approve(hostId, replay.replayRequestId, replay.planHash, reason))}

@@ -1,4 +1,25 @@
 {
+  "eventReplayContractFixtureRepair": {
+    "formId": "eventReplayContractFixtureRepair",
+    "eventType": "EventReplayContractFixtureEvent",
+    "eventSchemaVersion": "1",
+    "repairSchemaVersion": "event-replay-contract-fixture-repair-v1",
+    "schema": {
+      "type": "object",
+      "title": "Correct fixture event business data",
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "title": "Replacement display name",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "required": ["displayName"]
+    },
+    "form": ["displayName"]
+  },
   "updatePayment": {
     "formId": "updatePayment",
     "actions": [
