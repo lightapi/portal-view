@@ -33,8 +33,8 @@ export const replayApi = {
   getFailure: (hostId: string, failureId: string) =>
     invoke<ReplayFailure>('getEventReplayFailure', { hostId, failureId }),
   createPlan: (hostId: string, projectionName: string, consumerGroup: string, failureIds: string[],
-    strategy: string, validationMode: string, reason: string) => invoke<ReplayPlan>('createEventReplayPlan', {
-      hostId, projectionName, consumerGroup, failureIds, strategy, validationMode, reason,
+    strategy: string, validationMode: string, reason: string, repairId?: string) => invoke<ReplayPlan>('createEventReplayPlan', {
+      hostId, projectionName, consumerGroup, failureIds, strategy, validationMode, reason, repairId,
     }),
   getReplay: (hostId: string, replayRequestId: string) =>
     invoke<ReplayStatus>('getEventReplay', { hostId, replayRequestId }),

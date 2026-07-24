@@ -4,7 +4,7 @@
   "inheritsFrom": {
     "fixture": "event-replay-contract-v1.json",
     "rule": "Only inheritedSections carry forward unchanged from v1. All other v1 sections are restated by v2 or explicitly superseded and must not be applied from v1.",
-    "inheritedSections": ["envelopeVersion", "failureStatuses", "failureTransitions", "failureTransitionRules", "replayItemStatuses", "replayAttemptResults", "barrierScopeTypes", "barrierStates", "barrierOwnerTypes", "deferredStatuses", "publicationStatuses", "auditEventNames", "auditFieldLimits", "projectionExecutionModes", "projectionExecutionModeSemantics", "validationModeSemantics", "kafkaDlq", "replayPolicies"],
+    "inheritedSections": ["envelopeVersion", "failureStatuses", "failureTransitions", "failureTransitionRules", "replayItemStatuses", "replayAttemptResults", "barrierScopeTypes", "barrierStates", "barrierOwnerTypes", "deferredStatuses", "publicationStatuses", "auditFieldLimits", "projectionExecutionModes", "projectionExecutionModeSemantics", "validationModeSemantics", "kafkaDlq", "replayPolicies"],
     "supersededSections": ["approvalPolicyVersion", "featureGates", "encryption", "objectStore", "limits", "limitPolicyVersion", "retentionDays", "payloadStorageTypes", "policyRegistryVersion"]
   },
   "canonicalEncodingVersion": "event-replay-canonical-v1",
@@ -73,6 +73,15 @@
     "CANCELLED": [],
     "REJECTED": []
   },
+  "auditEventNames": [
+    "EVENT_REPLAY_PLAN_CREATED", "EVENT_REPLAY_PLAN_APPROVAL_REQUESTED", "EVENT_REPLAY_PLAN_APPROVED",
+    "EVENT_REPLAY_EXECUTION_REQUESTED", "EVENT_REPLAY_ATTEMPT_STARTED", "EVENT_REPLAY_ATTEMPT_SUCCEEDED",
+    "EVENT_REPLAY_ATTEMPT_FAILED", "EVENT_REPLAY_REQUEST_SUCCEEDED", "EVENT_REPLAY_REQUEST_FAILED",
+    "EVENT_REPLAY_REQUEST_CANCELLED", "EVENT_REPLAY_REQUEST_EXPIRED", "EVENT_REPLAY_FAILURE_WAIVED",
+    "EVENT_REPLAY_FAILURE_REOPENED", "EVENT_REPLAY_BARRIER_INSTALLED", "EVENT_REPLAY_BARRIER_RELEASED_WITH_GAP",
+    "EVENT_REPLAY_DEFERRED_FAILED", "EVENT_REPLAY_REQUEST_RETRY_SCHEDULED", "EVENT_REPLAY_WORKER_CLAIMED",
+    "EVENT_REPAIR_CREATED", "EVENT_REPAIR_APPROVED", "EVENT_REPAIR_REJECTED", "EVENT_REPAIR_APPLIED"
+  ],
   "repairTransitionActors": {
     "AWAITING_APPROVAL_TO_APPROVED_OR_REJECTED": "independent-repair-reviewer",
     "AWAITING_APPROVAL_OR_APPROVED_TO_CANCELLED": "system-terminalization",
