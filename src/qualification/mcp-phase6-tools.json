@@ -1,0 +1,45 @@
+{
+  "tools": [
+    {
+      "name": "discriminatedOneOf",
+      "description": "discriminatedOneOf",
+      "method": "post",
+      "path": "/one-of",
+      "inputSchema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": ["model"],
+        "oneOf": [
+          {
+            "properties": {
+              "model": {
+                "const": "event"
+              },
+              "eventId": {
+                "type": "string"
+              }
+            },
+            "required": ["eventId"]
+          },
+          {
+            "properties": {
+              "model": {
+                "const": "person"
+              },
+              "personId": {
+                "type": "string"
+              }
+            },
+            "required": ["personId"]
+          }
+        ],
+        "unevaluatedProperties": false
+      }
+    }
+  ]
+}

@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
   const parsedPort = Number(env.VITE_PORT);
   const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
   const apiBaseUrl = env.VITE_API_BASE_URL || "https://localhost";
+  const buildInputs = { app: path.resolve(__dirname, "index.html") };
+  if (String(env.VITE_MCP_SCHEMA_QUALIFICATION || "false") === "true") {
+    buildInputs.mcpSchemaQualification = path.resolve(__dirname, "mcp-schema-qualification.html");
+  }
   // Optional comma-separated list of additional CORS-allowed origins for the dev server.
   // Example: VITE_CORS_ALLOWED_ORIGINS="https://example.localhost,http://localhost:5174"
   const extraCorsAllowedOrigins = (env.VITE_CORS_ALLOWED_ORIGINS || "")
@@ -164,6 +168,9 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: true,
       rollupOptions: {
+        input: {
+          ...buildInputs,
+        },
         output: {
           manualChunks(id) {
             if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
