@@ -49,6 +49,7 @@ export type ToolMetadataReferenceOptions = {
 export type EditDraft = {
   name: string;
   description: string;
+  inputSchema: string;
   routingDomain: string;
   semanticNamespace: string;
   sensitivityTier: string;
@@ -65,6 +66,9 @@ export type EditDraft = {
   semanticDescription: string;
   semanticKeywords: string;
   parameterMappings: Record<string, string>;
+  requireCompleteParameterMappings: boolean;
+  unmappedArguments: string;
+  resetInputSchema: boolean;
 };
 
 const DEFAULT_REF_OPTIONS: ToolMetadataReferenceOptions = {
@@ -110,9 +114,13 @@ function draftString(value: unknown): string {
 
 function draftFromTool(tool: McpToolType): EditDraft {
   const enriched = enrichToolMetadataFields(tool);
+  const inputSchema = typeof tool.inputSchema === 'string'
+    ? tool.inputSchema
+    : tool.inputSchema == null ? '' : JSON.stringify(tool.inputSchema, null, 2);
   return {
     name: enriched.name,
     description: enriched.description,
+    inputSchema,
     routingDomain: draftString(enriched.routingDomain),
     semanticNamespace: draftString(enriched.semanticNamespace),
     sensitivityTier: draftString(enriched.sensitivityTier),
@@ -129,6 +137,9 @@ function draftFromTool(tool: McpToolType): EditDraft {
     semanticDescription: draftString(enriched.semanticDescription),
     semanticKeywords: draftString(enriched.semanticKeywords),
     parameterMappings: { ...(enriched.parameterMappings ?? {}) },
+    requireCompleteParameterMappings: !!enriched.requireCompleteParameterMappings,
+    unmappedArguments: enriched.unmappedArguments ?? 'methodDefault',
+    resetInputSchema: !!tool.resetInputSchema,
   };
 }
 
@@ -154,6 +165,8 @@ function toolFromDraft(tool: McpToolType, draft: EditDraft): McpToolType {
     ...tool,
     name: draft.name.trim(),
     description: draft.description,
+    inputSchema: draft.inputSchema,
+    toolSchema: draft.inputSchema,
     routingDomain: optionalString(draft.routingDomain),
     semanticNamespace: optionalString(draft.semanticNamespace),
     sensitivityTier: optionalString(draft.sensitivityTier),
@@ -170,6 +183,9 @@ function toolFromDraft(tool: McpToolType, draft: EditDraft): McpToolType {
     semanticDescription: optionalString(draft.semanticDescription),
     semanticKeywords: optionalString(draft.semanticKeywords),
     parameterMappings: draft.parameterMappings,
+    requireCompleteParameterMappings: draft.requireCompleteParameterMappings,
+    unmappedArguments: draft.unmappedArguments,
+    resetInputSchema: draft.resetInputSchema,
   });
 }
 

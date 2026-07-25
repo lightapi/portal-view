@@ -100,6 +100,9 @@ export type McpToolType = {
   semanticDescription?: string;
   semanticKeywords?: string;
   parameterMappings?: Record<string, string>;
+  requireCompleteParameterMappings?: boolean;
+  unmappedArguments?: string;
+  resetInputSchema?: boolean;
 };
 
 export type McpToolsMeta = {

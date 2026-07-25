@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Checkbox,
   Chip,
@@ -24,6 +25,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
+  analyzeInputSchema,
   extractPathParameters,
   inputSchemaPropertyNames,
   missingPathParameterMappings,
@@ -63,10 +65,10 @@ function draftField(field: keyof EditDraft, editDraft: EditDraft, onEditDraftCha
   return (value: string | boolean | Record<string, string>) => onEditDraftChange({ ...editDraft, [field]: value });
 }
 
-function uniqueParameterNames(tool: McpToolType) {
+function uniqueParameterNames(tool: McpToolType, inputSchema: unknown = tool.inputSchema) {
   return Array.from(new Set([
     ...extractPathParameters(tool.path),
-    ...inputSchemaPropertyNames(tool.inputSchema),
+    ...inputSchemaPropertyNames(inputSchema),
   ]));
 }
 
@@ -76,7 +78,8 @@ export default function ToolListRow({
   referenceOptions,
   onToggle, onStartEdit, onSaveEdit, onCancelEdit, onEditDraftChange,
 }: ToolListRowProps) {
-  const parameters = uniqueParameterNames(tool);
+  const schemaAnalysis = analyzeInputSchema(isEditing ? editDraft.inputSchema : tool.inputSchema);
+  const parameters = uniqueParameterNames(tool, isEditing ? editDraft.inputSchema : tool.inputSchema);
   const pathParams = new Set(extractPathParameters(tool.path));
   const missingPathMappings = missingPathParameterMappings(tool);
 
@@ -123,6 +126,40 @@ export default function ToolListRow({
             <AccordionDetails>
               <Stack spacing={2}>
                 <Typography variant="caption" fontWeight={700} color="text.secondary">Routing</Typography>
+                <Box>
+                  <Typography variant="caption" fontWeight={700}>Input schema preview</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    A valid selected-tool override takes precedence. Enable reset below to publish the endpoint schema again.
+                  </Typography>
+                  <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>
+                    {schemaAnalysis.properties.map((property) => (
+                      <Chip
+                        key={property.name}
+                        size="small"
+                        color={property.conditional ? 'warning' : 'default'}
+                        label={`${property.name}${property.conditional ? ' (conditional)' : ''}${property.headerName ? ` → ${property.headerName}` : ''}`}
+                      />
+                    ))}
+                  </Stack>
+                  {schemaAnalysis.errors.length > 0 && <Alert severity="error" sx={{ mt: 1 }}>{schemaAnalysis.errors.join(' ')}</Alert>}
+                  {schemaAnalysis.warnings.length > 0 && <Alert severity="warning" sx={{ mt: 1 }}>{schemaAnalysis.warnings.join(' ')}</Alert>}
+                  {schemaAnalysis.properties.some((property) => property.conditional && property.headerName) && (
+                    <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                      Conditional headers must be absent when their argument is absent or null; do not mirror every advertised header.
+                    </Typography>
+                  )}
+                </Box>
+                <TextField
+                  size="small"
+                  label="Input schema JSON (advanced)"
+                  value={editDraft.inputSchema}
+                  onChange={(e) => draftField('inputSchema', editDraft, onEditDraftChange)(e.target.value)}
+                  fullWidth
+                  multiline
+                  minRows={8}
+                  error={!schemaAnalysis.valid}
+                  helperText="Draft 2020-12 object schema. Composition and local $defs references are preserved exactly."
+                />
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                   <TextField
                     size="small"
@@ -160,6 +197,30 @@ export default function ToolListRow({
                       ))}
                     </Select>
                   </FormControl>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+                  <FormControlLabel
+                    control={<Switch size="small" checked={editDraft.requireCompleteParameterMappings} onChange={(e) => draftField('requireCompleteParameterMappings', editDraft, onEditDraftChange)(e.target.checked)} />}
+                    label="Require complete mappings"
+                  />
+                  <FormControl size="small" sx={{ minWidth: 190 }}>
+                    <InputLabel>Unmapped arguments</InputLabel>
+                    <Select
+                      label="Unmapped arguments"
+                      value={editDraft.unmappedArguments}
+                      onChange={(e) => draftField('unmappedArguments', editDraft, onEditDraftChange)(e.target.value)}
+                    >
+                      <MenuItem value="methodDefault">Method default</MenuItem>
+                      <MenuItem value="query">Query</MenuItem>
+                      <MenuItem value="body">Body</MenuItem>
+                      <MenuItem value="reject">Reject</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControlLabel
+                    control={<Switch size="small" checked={editDraft.resetInputSchema} onChange={(e) => draftField('resetInputSchema', editDraft, onEditDraftChange)(e.target.checked)} />}
+                    label="Reset schema to endpoint on save"
+                  />
                 </Box>
 
                 <Typography variant="caption" fontWeight={700} color="text.secondary">Governance</Typography>

@@ -23,6 +23,9 @@ export type ToolMetadataCarrier = {
   semanticDescription?: string;
   semanticKeywords?: string | string[];
   parameterMappings?: Record<string, string>;
+  requireCompleteParameterMappings?: boolean;
+  unmappedArguments?: string;
+  resetInputSchema?: boolean;
 };
 
 export type ToolMetadataEditableFields = {
@@ -37,6 +40,8 @@ export type ToolMetadataEditableFields = {
   semanticDescription?: string;
   semanticKeywords?: string;
   parameterMappings?: Record<string, string>;
+  requireCompleteParameterMappings?: boolean;
+  unmappedArguments?: string;
 };
 
 export const PARAMETER_LOCATION_VALUES = ['path', 'query', 'header', 'cookie', 'body'] as const;
@@ -163,6 +168,7 @@ export function enrichToolMetadataFields<T extends ToolMetadataCarrier>(tool: T)
   const runtime = childRecord(metadata, 'runtime');
   const lifecycle = childRecord(metadata, 'lifecycle');
   const defaults = methodDefaults(tool);
+  const schemaDefaults = analyzeInputSchema(tool.inputSchema);
 
   const semanticWeight = numberOrUndefined(firstString(tool.semanticWeight, routing.semanticWeight, metadata.semanticWeight));
   const estimatedLatencyMs = integerOrUndefined(firstString(tool.estimatedLatencyMs, runtime.estimatedLatencyMs, metadata.estimatedLatencyMs));
@@ -191,6 +197,12 @@ export function enrichToolMetadataFields<T extends ToolMetadataCarrier>(tool: T)
       ...stringRecord(routing.parameters),
       ...stringRecord(tool.parameterMappings),
     },
+    requireCompleteParameterMappings: firstBoolean(
+      tool.requireCompleteParameterMappings,
+      routing.requireCompleteParameterMappings,
+    ) ?? (schemaDefaults.valid && schemaDefaults.closed && !schemaDefaults.openEnded),
+    unmappedArguments: firstString(tool.unmappedArguments, routing.unmappedArguments)
+      ?? (schemaDefaults.valid && schemaDefaults.closed && !schemaDefaults.openEnded ? 'reject' : 'methodDefault'),
   };
 }
 
@@ -217,6 +229,8 @@ export function buildToolMetadata(tool: ToolMetadataCarrier): Record<string, unk
 
   const parameterMappings = stringRecord(tool.parameterMappings);
   if (Object.keys(parameterMappings).length > 0) routing.parameters = parameterMappings;
+  routing.requireCompleteParameterMappings = tool.requireCompleteParameterMappings ?? false;
+  routing.unmappedArguments = firstString(tool.unmappedArguments) ?? 'methodDefault';
 
   safety.read_only = tool.readOnly ?? defaults.readOnly;
   safety.idempotent = tool.idempotent ?? defaults.idempotent;
@@ -251,13 +265,215 @@ export function compactToolMetadataForSubmit<T extends ToolMetadataCarrier>(sour
   delete next.semanticDescription;
   delete next.semanticKeywords;
   delete next.parameterMappings;
+  delete next.requireCompleteParameterMappings;
+  delete next.unmappedArguments;
   return next as T;
 }
 
 export function inputSchemaPropertyNames(inputSchema: unknown): string[] {
-  const schema = parseToolMetadataObject(inputSchema);
-  const properties = cloneRecord(schema.properties);
-  return Object.keys(properties);
+  return analyzeInputSchema(inputSchema).properties.map((property) => property.name);
+}
+
+export type InputSchemaProperty = {
+  name: string;
+  conditional: boolean;
+  headerName?: string;
+};
+
+export type InputSchemaAnalysis = {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  properties: InputSchemaProperty[];
+  openEnded: boolean;
+  closed: boolean;
+};
+
+function parseInputSchema(value: unknown): Record<string, unknown> | null {
+  if (typeof value === 'string') {
+    if (!value.trim()) return null;
+    try {
+      const parsed: unknown = JSON.parse(value);
+      return isRecord(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return isRecord(value) ? value : null;
+}
+
+function resolvePointer(root: Record<string, unknown>, reference: string): unknown {
+  if (!reference.startsWith('#/')) return undefined;
+  let current: unknown = root;
+  for (const raw of reference.slice(2).split('/')) {
+    const token = raw.replace(/~1/g, '/').replace(/~0/g, '~');
+    if (Array.isArray(current)) {
+      const index = Number(token);
+      if (!Number.isInteger(index)) return undefined;
+      current = current[index];
+    } else if (isRecord(current)) {
+      current = current[token];
+    } else return undefined;
+  }
+  return current;
+}
+
+type AnnotationPathPart = string | RegExp | null;
+
+function validateSensitiveHeaderBoundary(root: Record<string, unknown>, errors: string[]) {
+  const headers: string[][] = [];
+  const masks: AnnotationPathPart[][] = [];
+  const active = new Set<string>();
+  let visits = 0;
+
+  const walk = (candidate: unknown, path: AnnotationPathPart[], assertionOnly: boolean) => {
+    if (!isRecord(candidate) || errors.length > 20) return;
+    visits += 1;
+    if (visits > 4096) {
+      errors.push('inputSchema annotation graph exceeds the 4096-node preview budget.');
+      return;
+    }
+    const masked = candidate['x-sensitive'] === true || candidate['x-mask'] === true;
+    const hasHeader = typeof candidate['x-mcp-header'] === 'string';
+    if (assertionOnly && (masked || hasHeader)) {
+      errors.push('Gateway annotations cannot be declared in assertion-only schemas such as if.');
+      return;
+    }
+    if (masked) masks.push([...path]);
+    if (hasHeader) {
+      if (path.length === 0 || path.some((part) => typeof part !== 'string')) {
+        errors.push('x-mcp-header must annotate a statically reachable fixed property.');
+      } else headers.push(path as string[]);
+    }
+    if (typeof candidate.$ref === 'string' && candidate.$ref.startsWith('#/') && !active.has(candidate.$ref)) {
+      const target = resolvePointer(root, candidate.$ref);
+      if (target !== undefined) {
+        active.add(candidate.$ref);
+        walk(target, path, assertionOnly);
+        active.delete(candidate.$ref);
+      }
+    }
+    for (const [name, child] of Object.entries(cloneRecord(candidate.properties))) {
+      walk(child, [...path, name], assertionOnly);
+    }
+    for (const [pattern, child] of Object.entries(cloneRecord(candidate.patternProperties))) {
+      try {
+        walk(child, [...path, new RegExp(pattern)], assertionOnly);
+      } catch {
+        errors.push(`Invalid patternProperties expression ${pattern}.`);
+      }
+    }
+    for (const keyword of ['additionalProperties', 'unevaluatedProperties'] as const) {
+      if (isRecord(candidate[keyword])) walk(candidate[keyword], [...path, /.*/], assertionOnly);
+    }
+    for (const keyword of ['allOf', 'anyOf', 'oneOf'] as const) {
+      for (const child of Array.isArray(candidate[keyword]) ? candidate[keyword] : []) walk(child, path, assertionOnly);
+    }
+    if (candidate.if != null) walk(candidate.if, path, true);
+    for (const keyword of ['then', 'else'] as const) if (candidate[keyword] != null) walk(candidate[keyword], path, assertionOnly);
+    for (const child of Object.values(cloneRecord(candidate.dependentSchemas))) walk(child, path, assertionOnly);
+    for (const keyword of ['items', 'additionalItems', 'unevaluatedItems', 'contains'] as const) {
+      if (candidate[keyword] != null) walk(candidate[keyword], [...path, null], assertionOnly);
+    }
+    for (const child of Array.isArray(candidate.prefixItems) ? candidate.prefixItems : []) {
+      walk(child, [...path, null], assertionOnly);
+    }
+  };
+
+  walk(root, [], false);
+  for (const header of headers) {
+    for (const mask of masks) {
+      if (mask.length > header.length) continue;
+      const covers = mask.every((part, index) => typeof part === 'string'
+        ? part === header[index]
+        : part instanceof RegExp && part.test(header[index] ?? ''));
+      if (covers) {
+        errors.push(`x-mcp-header cannot expose sensitive property /${header.join('/')}.`);
+      }
+    }
+  }
+}
+
+export function analyzeInputSchema(inputSchema: unknown): InputSchemaAnalysis {
+  const root = parseInputSchema(inputSchema);
+  if (!root) return { valid: false, errors: ['inputSchema must be a non-empty JSON object.'], warnings: [], properties: [], openEnded: false, closed: false };
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  if (root.type !== 'object') errors.push('inputSchema must declare root type: object.');
+  if (root.$schema != null && root.$schema !== 'https://json-schema.org/draft/2020-12/schema') {
+    errors.push('inputSchema must use JSON Schema Draft 2020-12.');
+  }
+  const found = new Map<string, InputSchemaProperty>();
+  const active = new Set<string>();
+  let visits = 0;
+  let openEnded = false;
+  let hasPatternProperties = false;
+  let hasComposition = false;
+
+  const walk = (candidate: unknown, conditional: boolean) => {
+    if (!isRecord(candidate) || errors.length > 20) return;
+    visits += 1;
+    if (visits > 4096) {
+      errors.push('inputSchema graph exceeds the 4096-node preview budget.');
+      return;
+    }
+    if (typeof candidate.$ref === 'string') {
+      if (!candidate.$ref.startsWith('#/')) errors.push(`Unsupported reference ${candidate.$ref}; only local JSON Pointers are supported.`);
+      else if (!active.has(candidate.$ref)) {
+        const target = resolvePointer(root, candidate.$ref);
+        if (target === undefined) errors.push(`Unresolved local reference ${candidate.$ref}.`);
+        else {
+          active.add(candidate.$ref);
+          walk(target, conditional);
+          active.delete(candidate.$ref);
+        }
+      }
+    }
+    const properties = cloneRecord(candidate.properties);
+    for (const [name, propertyValue] of Object.entries(properties)) {
+      const property = cloneRecord(propertyValue);
+      const headerName = typeof property['x-mcp-header'] === 'string' ? property['x-mcp-header'] : undefined;
+      const existing = found.get(name);
+      if (!existing) found.set(name, { name, conditional, ...(headerName && { headerName }) });
+      else {
+        existing.conditional = existing.conditional && conditional;
+        if (existing.headerName && headerName && existing.headerName.toLowerCase() !== headerName.toLowerCase()) {
+          errors.push(`${name} has conflicting x-mcp-header declarations.`);
+        } else if (!existing.headerName && headerName) existing.headerName = headerName;
+      }
+    }
+    if (Object.keys(cloneRecord(candidate.patternProperties)).length > 0) hasPatternProperties = true;
+    if (candidate.additionalProperties == null || candidate.additionalProperties !== false) openEnded = true;
+    for (const child of Array.isArray(candidate.allOf) ? candidate.allOf : []) walk(child, conditional);
+    for (const keyword of ['anyOf', 'oneOf'] as const) {
+      const children = Array.isArray(candidate[keyword]) ? candidate[keyword] : [];
+      if (children.length > 0) hasComposition = true;
+      for (const child of children) walk(child, true);
+    }
+    if (candidate.if != null) walk(candidate.if, true);
+    for (const keyword of ['then', 'else'] as const) if (candidate[keyword] != null) walk(candidate[keyword], true);
+    for (const child of Object.values(cloneRecord(candidate.dependentSchemas))) walk(child, true);
+  };
+  walk(root, false);
+  validateSensitiveHeaderBoundary(root, errors);
+  const closed = root.unevaluatedProperties === false || root.additionalProperties === false;
+  if (hasComposition || root.$ref != null || root.if != null) {
+    warnings.push('Some MCP clients cannot consume composition, local references, or conditionals; preview client compatibility before publication.');
+  }
+  if (hasComposition && root.additionalProperties === false && root.unevaluatedProperties !== false) {
+    warnings.push('Root additionalProperties: false can reject properties declared only in composition branches; use unevaluatedProperties: false for composed schemas.');
+  }
+  if (Array.isArray(root.oneOf) && root.oneOf.some((branch) => !Array.isArray(cloneRecord(branch).required))) {
+    warnings.push('A oneOf branch without discriminating required properties may overlap another branch and reject otherwise plausible input.');
+  }
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    properties: Array.from(found.values()),
+    openEnded: hasPatternProperties || (!closed && openEnded),
+    closed,
+  };
 }
 
 export function extractPathParameters(path?: string): string[] {
@@ -280,9 +496,12 @@ export function missingPathParameterMappings(tool: ToolMetadataCarrier): string[
 export function toolMetadataWarnings(tools: ToolMetadataCarrier[]): string[] {
   return tools.flatMap((tool) => {
     const missing = missingPathParameterMappings(tool);
-    if (missing.length === 0) return [];
     const label = firstString(tool.name, tool.endpoint) ?? 'Tool';
-    return [`${label}: ${missing.join(', ')} path parameter${missing.length === 1 ? '' : 's'} should map to path.`];
+    const warnings = analyzeInputSchema(tool.inputSchema).warnings.map((warning) => `${label}: ${warning}`);
+    if (missing.length > 0) {
+      warnings.unshift(`${label}: ${missing.join(', ')} path parameter${missing.length === 1 ? '' : 's'} should map to path.`);
+    }
+    return warnings;
   });
 }
 
@@ -318,6 +537,21 @@ export function validateToolMetadataInputs(tools: ToolMetadataCarrier[]): string
       if (!PARAMETER_LOCATION_VALUES.includes(location as typeof PARAMETER_LOCATION_VALUES[number])) {
         errors.push(`${label}: ${parameter} has unsupported parameter location ${location}.`);
       }
+    }
+    const schema = analyzeInputSchema(tool.inputSchema);
+    errors.push(...schema.errors.map((error) => `${label}: ${error}`));
+    const requireComplete = firstBoolean(tool.requireCompleteParameterMappings) ?? false;
+    const unmapped = firstString(tool.unmappedArguments) ?? 'methodDefault';
+    if (requireComplete && schema.openEnded) {
+      errors.push(`${label}: complete parameter mappings require a finite inputSchema without open-ended properties.`);
+    }
+    if (requireComplete) {
+      const mappings = stringRecord(tool.parameterMappings);
+      const missing = schema.properties.filter((property) => !mappings[property.name]).map((property) => property.name);
+      if (missing.length > 0) errors.push(`${label}: missing parameter mappings for ${missing.join(', ')}.`);
+    }
+    if (unmapped === 'reject' && !schema.closed) {
+      errors.push(`${label}: unmappedArguments reject requires a closed inputSchema.`);
     }
   }
 
