@@ -22,6 +22,7 @@ import {
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
 import { compactToolMetadataForSubmit, enrichToolMetadataFields } from "../../utils/toolMetadata";
+import { createIdempotencyKey } from "../../utils/createIdempotency";
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
@@ -169,6 +170,8 @@ function Form() {
   const [helpPath, setHelpPath] = useState<string | null>(null);
   const [model, setModel] = useState<any>({});
   const formContainerRef = useRef<HTMLDivElement>(null);
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const submissionPendingRef = useRef(false);
   const { isAuthenticated, host }: any = useUserState();
 
   useEffect(() => {
@@ -201,6 +204,11 @@ function Form() {
     setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
   }, [host, formId, location.state, location.search]);
 
+  useEffect(() => {
+    idempotencyKeyRef.current = null;
+    submissionPendingRef.current = false;
+  }, [formId]);
+
   const onModelChange = (key: string | string[], val: any, type?: string) => {
     utils.selectOrSet(key, model, val, type);
     const keyParts = Array.isArray(key) ? key : String(key).split(".");
@@ -210,6 +218,7 @@ function Form() {
   };
 
   function onButtonClick(action: any) {
+    if (submissionPendingRef.current) return;
     if (
       hasUnappliedStructuredDraft(formContainerRef.current)
       || hasInvalidStructuredDraft(formContainerRef.current)
@@ -232,12 +241,23 @@ function Form() {
       setShowErrors(false);
       setValidationResult(null);
       const modelToSubmit = submittedFormModel(formId, normalizedModel);
-      action.data = modelToSubmit;
+      const submittedAction = {...action, data: modelToSubmit};
       const url = action.path ? action.path : "/portal/command";
-      const headers = {
+      const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-      submitForm(url, headers, action, modelToSubmit);
+      if (action.idempotentCreate === true) {
+        try {
+          idempotencyKeyRef.current ??= createIdempotencyKey();
+        } catch (error) {
+          setShowErrors(true);
+          setValidationResult({valid: false, error});
+          return;
+        }
+        headers["Idempotency-Key"] = idempotencyKeyRef.current;
+      }
+      submissionPendingRef.current = true;
+      submitForm(url, headers, submittedAction, modelToSubmit);
     }
   }
 
@@ -250,6 +270,8 @@ function Form() {
         headers: headers
       });
       setFetching(false);
+      submissionPendingRef.current = false;
+      if (action.idempotentCreate === true) idempotencyKeyRef.current = null;
       const searchParams = new URLSearchParams(location.search);
       const taskContext = taskContextFromSearch(searchParams);
       if (taskContext) {
@@ -268,7 +290,13 @@ function Form() {
       }
     } catch (e) {
       setFetching(false);
-      navigate(action.failure, { state: { data: e } });
+      submissionPendingRef.current = false;
+      if (action.idempotentCreate === true) {
+        setShowErrors(true);
+        setValidationResult({valid: false, error: e});
+      } else {
+        navigate(action.failure, { state: { data: e } });
+      }
     }
   };
 
@@ -348,6 +376,7 @@ function Form() {
               variant="contained"
               color="primary"
               key={index}
+              disabled={fetching}
               onClick={() => onButtonClick(item)}
             >
               {item.title}

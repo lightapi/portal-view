@@ -9234,6 +9234,7 @@
         "service": "category",
         "action": "createCategory",
         "version": "0.1.0",
+        "idempotentCreate": true,
         "title": "Create Category",
         "success": "/app/success",
         "failure": "/app/failure"
@@ -9423,6 +9424,7 @@
         "service": "tag",
         "action": "createTag",
         "version": "0.1.0",
+        "idempotentCreate": true,
         "title": "Create Tag",
         "success": "/app/success",
         "failure": "/app/failure"
