@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import PublicIcon from '@mui/icons-material/Public';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
@@ -20,6 +21,7 @@ import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { tagDeleteCommand, tagRestoreCommand, withLifecycleScope } from '../metadataLifecycleCommands';
 
 // --- Type Definitions ---
 type TagApiResponse = {
@@ -40,7 +42,7 @@ type TagType = {
   tagSortOrder?: number;
   updateUser?: string;
   updateTs?: string;
-  aggregateVersion?: number;
+  aggregateVersion: number;
   active: boolean;
 };
 
@@ -149,10 +151,7 @@ export default function TagAdmin() {
     setData(prev => prev.filter(tag => tag.tagId !== row.original.tagId));
     setRowCount(prev => prev - 1);
 
-    const cmd = {
-      host: 'lightapi.net', service: 'tag', action: 'deleteTag', version: '0.1.0',
-      data: { hostId: row.original.hostId, tagId: row.original.tagId , aggregateVersion: row.original.aggregateVersion},
-    };
+    const cmd = tagDeleteCommand(row.original);
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
@@ -183,7 +182,9 @@ export default function TagAdmin() {
 
     try {
       const freshData = await fetchClient(url);
-      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
+      const dataForForm = withLifecycleScope(
+        freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData,
+      );
       navigate(buildTaskAwareRoute('/app/form/updateTag', searchParams, contextForRow(row.original)), {
         state: {
           data: dataForForm,
@@ -197,6 +198,21 @@ export default function TagAdmin() {
       setIsUpdateLoading(null);
     }
   }, [contextForRow, navigate, location.pathname, searchParams]);
+
+  const handleRestore = useCallback(async (row: MRT_Row<TagType>) => {
+    if (!window.confirm(`Restore tag: ${row.original.tagName}?`)) return;
+    const cmd = tagRestoreCommand(row.original);
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to restore tag. Please refresh and try again.');
+        return;
+      }
+      await fetchData();
+    } catch {
+      alert('Failed to restore tag due to a network error.');
+    }
+  }, [fetchData]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<TagType>[]>(
@@ -259,16 +275,24 @@ export default function TagAdmin() {
     },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 0.5 }}>
-        <Tooltip title="Update Tag">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.tagId}>
-            {isUpdateLoading === row.original.tagId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Tag">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
+        {row.original.active ? <>
+          <Tooltip title="Update Tag">
+            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.tagId}>
+              {isUpdateLoading === row.original.tagId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Tag">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        </> : (
+          <Tooltip title="Restore Tag">
+            <IconButton color="primary" onClick={() => handleRestore(row)}>
+              <RestoreFromTrashIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
     ),
     renderTopToolbarCustomActions: () => (

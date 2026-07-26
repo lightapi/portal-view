@@ -9335,10 +9335,10 @@
       "type": "object",
       "title": "Category",
       "required": [
-        "hostId",
         "categoryId",
         "entityType",
-        "categoryName"
+        "categoryName",
+        "aggregateVersion"
       ],
       "properties": {
         "hostId": {
@@ -9374,6 +9374,11 @@
         "sortOrder": {
           "type": "integer",
           "title": "Sort Order"
+        },
+        "aggregateVersion": {
+          "type": "integer",
+          "title": "Expected Aggregate Version",
+          "readonly": true
         }
       }
     },
@@ -9525,10 +9530,10 @@
       "type": "object",
       "title": "Tag",
       "required": [
-        "hostId",
         "tagId",
         "entityType",
-        "tagName"
+        "tagName",
+        "aggregateVersion"
       ],
       "properties": {
         "hostId": {
@@ -9572,6 +9577,11 @@
         "tagSortOrder": {
           "type": "integer",
           "title": "Tag Sort Order"
+        },
+        "aggregateVersion": {
+          "type": "integer",
+          "title": "Expected Aggregate Version",
+          "readonly": true
         }
       }
     },

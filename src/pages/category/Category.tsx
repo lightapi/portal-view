@@ -13,6 +13,7 @@ import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/materia
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import PublicIcon from '@mui/icons-material/Public';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
@@ -20,6 +21,7 @@ import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { categoryDeleteCommand, categoryRestoreCommand, withLifecycleScope } from '../metadataLifecycleCommands';
 
 // --- Type Definitions ---
 type CategoryApiResponse = {
@@ -38,7 +40,7 @@ type CategoryType = {
   sortOrder?: number;
   updateUser?: string;
   updateTs?: string;
-  aggregateVersion?: number;
+  aggregateVersion: number;
   active: boolean;
 };
 
@@ -147,10 +149,7 @@ export default function Category() {
     setData(prev => prev.filter(cat => cat.categoryId !== row.original.categoryId));
     setRowCount(prev => prev - 1);
 
-    const cmd = {
-      host: 'lightapi.net', service: 'category', action: 'deleteCategory', version: '0.1.0',
-      data: { hostId: row.original.hostId, categoryId: row.original.categoryId , aggregateVersion: row.original.aggregateVersion},
-    };
+    const cmd = categoryDeleteCommand(row.original);
 
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
@@ -180,7 +179,9 @@ export default function Category() {
 
     try {
       const freshData = await fetchClient(url);
-      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
+      const dataForForm = withLifecycleScope(
+        freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData,
+      );
       navigate(
         buildTaskAwareRoute('/app/form/updateCategory', searchParams, contextForRow(row.original)),
         { state: { data: dataForForm, source: location.pathname } },
@@ -192,6 +193,21 @@ export default function Category() {
       setIsUpdateLoading(null);
     }
   }, [contextForRow, navigate, location.pathname, searchParams]);
+
+  const handleRestore = useCallback(async (row: MRT_Row<CategoryType>) => {
+    if (!window.confirm(`Restore category: ${row.original.categoryName}?`)) return;
+    const cmd = categoryRestoreCommand(row.original);
+    try {
+      const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+      if (result.error) {
+        alert('Failed to restore category. Please refresh and try again.');
+        return;
+      }
+      await fetchData();
+    } catch {
+      alert('Failed to restore category due to a network error.');
+    }
+  }, [fetchData]);
 
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<CategoryType>[]>(
@@ -252,16 +268,24 @@ export default function Category() {
     },
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 0.5 }}>
-        <Tooltip title="Update Category">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.categoryId}>
-            {isUpdateLoading === row.original.categoryId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Category">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
+        {row.original.active ? <>
+          <Tooltip title="Update Category">
+            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.categoryId}>
+              {isUpdateLoading === row.original.categoryId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Category">
+            <IconButton color="error" onClick={() => handleDelete(row)}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </Tooltip>
+        </> : (
+          <Tooltip title="Restore Category">
+            <IconButton color="primary" onClick={() => handleRestore(row)}>
+              <RestoreFromTrashIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
     ),
     renderTopToolbarCustomActions: () => (
