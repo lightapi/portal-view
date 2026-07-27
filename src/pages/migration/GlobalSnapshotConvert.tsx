@@ -51,35 +51,47 @@ export default function GlobalSnapshotConvert() {
   const [targetHostId, setTargetHostId] = useState(taskContextState?.context.targetHostId || userHost || "");
   const [snapshotText, setSnapshotText] = useState("");
   const [result, setResult] = useState("");
-  const [loadingHosts, setLoadingHosts] = useState(false);
+  const [loadingHosts, setLoadingHosts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [debugSteps, setDebugSteps] = useState<string[]>([]);
   const routeSnapshotLoaded = useRef(false);
 
+  const selectedHost = useMemo(
+    () => hosts.find((host) => host.hostId === targetHostId),
+    [hosts, targetHostId],
+  );
+  const targetHostAvailable = !!selectedHost;
+  const targetHostSelectValue = selectedHost ? targetHostId : "";
+  const selectedHostLabel = selectedHost
+    ? selectedHost.hostDesc ||
+      [selectedHost.subDomain, selectedHost.domain].filter(Boolean).join(".") ||
+      selectedHost.hostId
+    : "";
+
   const taskActionContext = useMemo(
     () => mergeTaskContext(
       taskContextState?.context ?? {},
       {
-        targetHostId,
+        targetHostId: targetHostSelectValue,
         snapshotExportReady: !!snapshotText || !!taskContextState?.context.snapshotExportReady,
         snapshotConverted: !!result || !!taskContextState?.context.snapshotConverted,
       },
     ),
-    [result, snapshotText, targetHostId, taskContextState?.context],
+    [result, snapshotText, targetHostSelectValue, taskContextState?.context],
   );
 
   const buildSnapshotTaskContext = useCallback(
     (updates: TaskResolvedContext = {}) => mergeTaskContext(
       taskContextState?.context ?? {},
       {
-        targetHostId,
+        ...(targetHostSelectValue ? { targetHostId: targetHostSelectValue } : {}),
         snapshotExportReady: !!snapshotText || !!taskContextState?.context.snapshotExportReady,
         snapshotConverted: !!result || !!taskContextState?.context.snapshotConverted,
       },
       updates,
     ),
-    [result, snapshotText, targetHostId, taskContextState?.context],
+    [result, snapshotText, targetHostSelectValue, taskContextState?.context],
   );
 
   const pushDebugStep = (message: string) => {
@@ -107,11 +119,11 @@ export default function GlobalSnapshotConvert() {
         taskContextState.taskId,
         mergeTaskContext(
           taskContextState.context,
-          { targetHostId, snapshotExportReady: true },
+          { snapshotExportReady: true },
         ),
       );
     }
-  }, [routeState.snapshotStorageKey, targetHostId, taskContextState]);
+  }, [routeState.snapshotStorageKey, taskContextState]);
 
   useEffect(() => {
     if (taskContextState?.context.targetHostId) {
@@ -148,16 +160,6 @@ export default function GlobalSnapshotConvert() {
 
     loadHosts();
   }, []);
-
-  const selectedHostLabel = useMemo(() => {
-    const selected = hosts.find((host) => host.hostId === targetHostId);
-    if (!selected) return targetHostId;
-    return (
-      selected.hostDesc ||
-      [selected.subDomain, selected.domain].filter(Boolean).join(".") ||
-      selected.hostId
-    );
-  }, [hosts, targetHostId]);
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -199,9 +201,9 @@ export default function GlobalSnapshotConvert() {
 
   const handleConvert = async () => {
     setDebugSteps([]);
-    if (!targetHostId) {
-      pushDebugStep("Conversion blocked: target host is missing.");
-      setError("Target host is required.");
+    if (!targetHostAvailable) {
+      pushDebugStep("Conversion blocked: target host is unavailable.");
+      setError("Select an available target host.");
       return;
     }
     if (!snapshotText.trim()) {
@@ -293,6 +295,13 @@ export default function GlobalSnapshotConvert() {
 
             {error && <Alert severity="error">{error}</Alert>}
 
+            {!loadingHosts && !error && targetHostId && !targetHostAvailable && (
+              <Alert severity="warning">
+                Host <strong>{targetHostId}</strong> is not in the available host list. Select a target host
+                to continue.
+              </Alert>
+            )}
+
             {routeState.sourceHostId && !error && (
               <Alert severity="info">
                 Snapshot loaded from the export page for source host <strong>{routeState.sourceHostId}</strong>.
@@ -303,10 +312,14 @@ export default function GlobalSnapshotConvert() {
               <InputLabel id="target-host-label">Target Host</InputLabel>
               <Select
                 labelId="target-host-label"
-                value={targetHostId}
+                value={targetHostSelectValue}
                 label="Target Host"
                 onChange={handleTargetHostChange}
+                disabled={loadingHosts}
               >
+                <MenuItem value="" disabled>
+                  <em>Select a target host</em>
+                </MenuItem>
                 {hosts.map((host) => (
                   <MenuItem key={host.hostId} value={host.hostId}>
                     {host.hostDesc ||
@@ -325,7 +338,7 @@ export default function GlobalSnapshotConvert() {
               <Button
                 variant="contained"
                 onClick={handleConvert}
-                disabled={submitting || !targetHostId || !snapshotText.trim()}
+                disabled={submitting || !targetHostAvailable || !snapshotText.trim()}
               >
                 {submitting ? "Converting..." : "Convert To Events"}
               </Button>

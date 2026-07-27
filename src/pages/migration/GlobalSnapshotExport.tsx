@@ -115,28 +115,40 @@ export default function GlobalSnapshotExport() {
   const [sourceHostId, setSourceHostId] = useState(initialSourceHostId);
   const [exportScope, setExportScope] = useState<ExportScope>("host");
   const [entityTypes, setEntityTypes] = useState<string[]>([]);
-  const [loadingHosts, setLoadingHosts] = useState(false);
+  const [loadingHosts, setLoadingHosts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<string>("");
+
+  const selectedHost = useMemo(
+    () => hosts.find((host) => host.hostId === sourceHostId),
+    [hosts, sourceHostId],
+  );
+  const sourceHostAvailable = !!selectedHost;
+  const sourceHostSelectValue = selectedHost ? sourceHostId : "";
+  const selectedHostLabel = selectedHost
+    ? selectedHost.hostDesc ||
+      [selectedHost.subDomain, selectedHost.domain].filter(Boolean).join(".") ||
+      selectedHost.hostId
+    : "";
 
   const taskActionContext = useMemo(
     () => mergeTaskContext(
       taskContextState?.context ?? {},
       {
-        hostId: sourceHostId,
-        sourceHostId,
+        hostId: sourceHostSelectValue,
+        sourceHostId: sourceHostSelectValue,
         snapshotExportReady: !!result || !!taskContextState?.context.snapshotExportReady,
       },
     ),
-    [result, sourceHostId, taskContextState?.context],
+    [result, sourceHostSelectValue, taskContextState?.context],
   );
 
   const buildSnapshotTaskContext = (updates: TaskResolvedContext = {}) => mergeTaskContext(
     taskContextState?.context ?? {},
     {
-      hostId: sourceHostId,
-      sourceHostId,
+      hostId: sourceHostSelectValue,
+      sourceHostId: sourceHostSelectValue,
       snapshotExportReady: !!result || !!taskContextState?.context.snapshotExportReady,
     },
     updates,
@@ -174,19 +186,9 @@ export default function GlobalSnapshotExport() {
     loadHosts();
   }, []);
 
-  const selectedHostLabel = useMemo(() => {
-    const selected = hosts.find((host) => host.hostId === sourceHostId);
-    if (!selected) return sourceHostId;
-    return (
-      selected.hostDesc ||
-      [selected.subDomain, selected.domain].filter(Boolean).join(".") ||
-      selected.hostId
-    );
-  }, [hosts, sourceHostId]);
-
   const handleExport = async () => {
-    if (!sourceHostId) {
-      setError("Source host is required.");
+    if (!sourceHostAvailable) {
+      setError("Select an available source host.");
       return;
     }
 
@@ -310,14 +312,25 @@ export default function GlobalSnapshotExport() {
 
             {error && <Alert severity="error">{error}</Alert>}
 
+            {!loadingHosts && !error && sourceHostId && !sourceHostAvailable && (
+              <Alert severity="warning">
+                Host <strong>{sourceHostId}</strong> is not in the available host list. Select a source host
+                to continue.
+              </Alert>
+            )}
+
             <FormControl fullWidth>
               <InputLabel id="source-host-label">Source Host</InputLabel>
               <Select
                 labelId="source-host-label"
-                value={sourceHostId}
+                value={sourceHostSelectValue}
                 label="Source Host"
                 onChange={handleSourceHostChange}
+                disabled={loadingHosts}
               >
+                <MenuItem value="" disabled>
+                  <em>Select a source host</em>
+                </MenuItem>
                 {hosts.map((host) => (
                   <MenuItem key={host.hostId} value={host.hostId}>
                     {host.hostDesc ||
@@ -386,7 +399,7 @@ export default function GlobalSnapshotExport() {
               <Button
                 variant="contained"
                 onClick={handleExport}
-                disabled={submitting || !sourceHostId}
+                disabled={submitting || !sourceHostAvailable}
               >
                 {submitting ? "Exporting..." : "Export Snapshot"}
               </Button>
