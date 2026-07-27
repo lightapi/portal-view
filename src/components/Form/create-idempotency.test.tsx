@@ -99,4 +99,43 @@ describe('create-form idempotency', () => {
       .toBe(mocks.fetchClient.mock.calls[1][1].headers['Idempotency-Key']);
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/success');
   });
+
+  it.each([
+    ['ENTITY_ALREADY_EXISTS', 'This entity already exists in the selected scope.'],
+    ['ENTITY_RETIRED', 'This name belongs to a retired entity. Restore it or choose a different name.'],
+    ['IDEMPOTENCY_KEY_REUSED', 'This retry key was already used for a different request. Submit again to start a new create attempt.'],
+  ])('shows actionable feedback for %s without leaving the form', async (code, message) => {
+    const user = userEvent.setup();
+    mocks.fetchClient.mockRejectedValueOnce({code, message: 'raw backend detail'});
+    renderCategory();
+
+    await user.click(await screen.findByRole('button', {name: 'Create Category'}));
+
+    expect(await screen.findByText(new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))))
+      .toBeInTheDocument();
+    expect(screen.queryByTestId('route-result')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Create Category'})).toBeEnabled();
+  });
+
+  it('starts a new attempt after a terminal typed conflict', async () => {
+    const user = userEvent.setup();
+    vi.mocked(globalThis.crypto.randomUUID)
+      .mockReturnValueOnce('00000000-0000-4000-8000-000000000123')
+      .mockReturnValueOnce('00000000-0000-4000-8000-000000000124');
+    mocks.fetchClient
+      .mockRejectedValueOnce({code: 'ENTITY_ALREADY_EXISTS'})
+      .mockResolvedValueOnce({categoryId: '00000000-0000-0000-0000-000000000456'});
+    renderCategory();
+    const button = await screen.findByRole('button', {name: 'Create Category'});
+
+    await user.click(button);
+    expect(await screen.findByText(/already exists in the selected scope/)).toBeInTheDocument();
+    await user.click(button);
+
+    await waitFor(() => expect(mocks.fetchClient).toHaveBeenCalledTimes(2));
+    expect(mocks.fetchClient.mock.calls[0][1].headers['Idempotency-Key'])
+      .toBe('00000000-0000-4000-8000-000000000123');
+    expect(mocks.fetchClient.mock.calls[1][1].headers['Idempotency-Key'])
+      .toBe('00000000-0000-4000-8000-000000000124');
+  });
 });

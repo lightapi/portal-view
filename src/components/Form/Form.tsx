@@ -23,6 +23,10 @@ import {
 } from "../../tasks/taskUtils";
 import { compactToolMetadataForSubmit, enrichToolMetadataFields } from "../../utils/toolMetadata";
 import { createIdempotencyKey } from "../../utils/createIdempotency";
+import {
+  entityCreationFeedback,
+  isTerminalEntityCreationError,
+} from "../../utils/entityCreationError";
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
@@ -292,8 +296,12 @@ function Form() {
       setFetching(false);
       submissionPendingRef.current = false;
       if (action.idempotentCreate === true) {
+        const feedback = entityCreationFeedback(e);
+        if (isTerminalEntityCreationError(feedback.code)) {
+          idempotencyKeyRef.current = null;
+        }
         setShowErrors(true);
-        setValidationResult({valid: false, error: e});
+        setValidationResult({valid: false, error: feedback});
       } else {
         navigate(action.failure, { state: { data: e } });
       }
