@@ -11,10 +11,10 @@ import type {
   ReplayStatus,
 } from './types';
 
-const commandUrl = (action: string, data: Record<string, unknown>) => {
-  const command = { host: 'lightapi.net', service: 'user', action, version: '0.1.0', data };
-  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(command));
-};
+type ReplayService = 'query' | 'command';
+
+const replayRequest = (action: string, data: Record<string, unknown>) =>
+  ({ host: 'lightapi.net', service: 'user', action, version: '0.1.0', data });
 
 const publicCodes = [
   'AGGREGATE_PROJECTION_BLOCKED', 'AGGREGATE_REPAIR_REQUIRED', 'EVENT_REPAIR_REQUIRED',
@@ -43,9 +43,12 @@ const resultCode = (value: unknown) => {
   return publicCodes.find((code) => text.includes(code)) || 'REQUEST_FAILED';
 };
 
-const invoke = async <T>(action: string, data: Record<string, unknown>): Promise<T> => {
+const invoke = async <T>(service: ReplayService, action: string, data: Record<string, unknown>): Promise<T> => {
+  const request = replayRequest(action, data);
   try {
-    return await fetchClient(commandUrl(action, data)) as T;
+    return await (service === 'command'
+      ? fetchClient('/portal/command', { method: 'POST', body: request })
+      : fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(request)))) as T;
   } catch (cause) {
     const code = resultCode(cause);
     // Server detail is intentionally not copied into the browser: a legacy
@@ -58,47 +61,47 @@ const invoke = async <T>(action: string, data: Record<string, unknown>): Promise
 
 export const replayApi = {
   listCandidates: (hostId: string, projectionName: string, consumerGroup: string, page: number, pageSize: number) =>
-    invoke<ReplayCandidateResponse>('listEventReplayCandidate', {
+    invoke<ReplayCandidateResponse>('query', 'listEventReplayCandidate', {
       hostId, projectionName, consumerGroup, status: 'OPEN', page, pageSize,
     }),
   getFailure: (hostId: string, failureId: string) =>
-    invoke<ReplayFailure>('getEventReplayFailure', { hostId, failureId }),
+    invoke<ReplayFailure>('query', 'getEventReplayFailure', { hostId, failureId }),
   createPlan: (hostId: string, projectionName: string, consumerGroup: string, failureIds: string[],
-    strategy: string, validationMode: string, reason: string, repairId?: string) => invoke<ReplayPlan>('createEventReplayPlan', {
+    strategy: string, validationMode: string, reason: string, repairId?: string) => invoke<ReplayPlan>('command', 'createEventReplayPlan', {
       hostId, projectionName, consumerGroup, failureIds, strategy, validationMode, reason, repairId,
     }),
   createRepair: (hostId: string, failureId: string, expectedOriginalTransactionFingerprint: string,
     repairSchemaVersion: string, changeShape: RepairChangeShape, changes: Record<string, unknown>, reason: string) =>
-    invoke<CreateReplayRepairResponse>('createEventReplayRepair', {
+    invoke<CreateReplayRepairResponse>('command', 'createEventReplayRepair', {
       hostId, failureId, expectedOriginalTransactionFingerprint, repairSchemaVersion, changeShape, changes, reason,
     }),
   getRepair: (hostId: string, repairId: string) =>
-    invoke<ReplayRepair>('getEventReplayRepair', { hostId, repairId }),
+    invoke<ReplayRepair>('query', 'getEventReplayRepair', { hostId, repairId }),
   decideRepair: (hostId: string, repairId: string, expectedCorrectedTransactionFingerprint: string,
-    decision: RepairDecision, reason: string) => invoke<Partial<ReplayRepair>>('approveEventReplayRepair', {
+    decision: RepairDecision, reason: string) => invoke<Partial<ReplayRepair>>('command', 'approveEventReplayRepair', {
       hostId, repairId, expectedCorrectedTransactionFingerprint, decision, reason,
     }),
   getReplay: (hostId: string, replayRequestId: string) =>
-    invoke<ReplayStatus>('getEventReplay', { hostId, replayRequestId }),
+    invoke<ReplayStatus>('query', 'getEventReplay', { hostId, replayRequestId }),
   approve: (hostId: string, replayRequestId: string, planHash: string, reason: string) =>
-    invoke<Partial<ReplayStatus>>('approveEventReplay', { hostId, replayRequestId, planHash, reason }),
+    invoke<Partial<ReplayStatus>>('command', 'approveEventReplay', { hostId, replayRequestId, planHash, reason }),
   execute: (hostId: string, replayRequestId: string, planHash: string, reason: string) =>
-    invoke<Partial<ReplayStatus>>('executeEventReplay', { hostId, replayRequestId, planHash, reason }),
+    invoke<Partial<ReplayStatus>>('command', 'executeEventReplay', { hostId, replayRequestId, planHash, reason }),
   cancel: (hostId: string, replayRequestId: string, planHash: string, reason: string) =>
-    invoke<Partial<ReplayStatus>>('cancelEventReplay', { hostId, replayRequestId, planHash, reason }),
+    invoke<Partial<ReplayStatus>>('command', 'cancelEventReplay', { hostId, replayRequestId, planHash, reason }),
   requestWaiver: (hostId: string, failureIds: string[], reason: string) =>
-    invoke<OperatorActionResponse>('waiveEventReplayFailure', {
+    invoke<OperatorActionResponse>('command', 'waiveEventReplayFailure', {
       hostId, failureIds, expectedStatuses: failureIds.map(() => 'OPEN'), acknowledgeDependencyImpact: true, reason,
     }),
   approveWaiver: (hostId: string, waiverRequestId: string, failureIds: string[],
     expectedDownstreamBlockedFailureIds: string[], reason: string) =>
-    invoke<OperatorActionResponse>('waiveEventReplayFailure', {
+    invoke<OperatorActionResponse>('command', 'waiveEventReplayFailure', {
       hostId, waiverRequestId, failureIds, expectedDownstreamBlockedFailureIds, reason,
     }),
   requestBarrierRelease: (hostId: string, barrierId: string, expectedEpoch: number,
-    owningFailureId: string, reason: string) => invoke<OperatorActionResponse>('releaseEventReplayBarrier', {
+    owningFailureId: string, reason: string) => invoke<OperatorActionResponse>('command', 'releaseEventReplayBarrier', {
       hostId, barrierId, expectedEpoch, owningFailureId, action: 'RELEASE_WITH_GAP', reason,
     }),
   approveBarrierRelease: (hostId: string, actionRequestId: string, reason: string) =>
-    invoke<OperatorActionResponse>('releaseEventReplayBarrier', { hostId, actionRequestId, reason }),
+    invoke<OperatorActionResponse>('command', 'releaseEventReplayBarrier', { hostId, actionRequestId, reason }),
 };
