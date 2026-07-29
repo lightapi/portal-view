@@ -75,7 +75,7 @@ export default function ResourcePanel({hostId, resource}: Props) {
   return <Box>
     <Box sx={{display:'flex',justifyContent:'space-between',alignItems:'center',mb:2}}>
       <Typography variant="h6">{resource.label}</Typography>
-      <Button startIcon={<AddIcon/>} variant="contained" onClick={() => open()}>Create draft</Button>
+      <Button startIcon={<AddIcon/>} variant="contained" onClick={() => open()}>{resource.createLabel ?? 'Create draft'}</Button>
     </Box>
     {error && <Alert severity="error" sx={{mb:2}} onClose={() => setError('')}>{error}</Alert>}
     {loading ? <CircularProgress/> : <TableContainer component={Paper} variant="outlined">

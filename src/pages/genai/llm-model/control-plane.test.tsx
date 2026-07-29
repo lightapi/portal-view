@@ -83,10 +83,32 @@ describe('LLM control-plane wiring', () => {
     render(<LlmModelCatalog/>);
     expect(screen.getByRole('heading',{name:'LLM Model Catalog'})).toBeInTheDocument();
     await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModel','host-a'));
-    await userEvent.click(screen.getByRole('button',{name:'Create draft'}));
+    await userEvent.click(screen.getByRole('button',{name:'Create LLM model'}));
     expect(mocks.navigate).toHaveBeenCalledWith('/app/form/createLlmModel', {
       state: {data: {hostId:'host-a',active:true}},
     });
+  });
+
+  it('shows a resource-specific create action on every admin tab', async () => {
+    mocks.host = 'host-a';
+    render(<LlmModelControlPlane/>);
+    const labels = [
+      ['Registrations','Create registration'],
+      ['Accounts','Create provider account'],
+      ['Deployments','Create provider deployment'],
+      ['Credentials','Create provider credential'],
+      ['Aliases','Create public alias'],
+      ['Routes','Create alias route'],
+      ['Pricing','Create pricing version'],
+      ['Policies','Create model policy'],
+      ['Bindings','Create policy binding'],
+    ];
+
+    for (const [tab, createLabel] of labels) {
+      await userEvent.click(screen.getByRole('tab',{name:tab}));
+      expect(screen.getByRole('button',{name:createLabel})).toBeInTheDocument();
+    }
+    expect(screen.queryByRole('button',{name:'Create draft'})).not.toBeInTheDocument();
   });
 
   it('opens typed model data for update without read-only audit fields', async () => {
