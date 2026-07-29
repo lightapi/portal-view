@@ -5,6 +5,7 @@ const TOKEN_EXCHANGE_RETRY_DELAY_MS = 500;
 const NON_RETRYABLE_EXCHANGE_ERRORS = new Set([
   "ERR10000",
   "ERR10001",
+  "ERR10008",
   "ERR10036",
   "ERR10038",
   "ERR11000",
@@ -28,6 +29,7 @@ const shouldRetryExchange = (error: unknown) => {
 
 const requestTokenExchange = (microsoftIdToken: string) =>
   fetchClient("/auth/ms/exchange", {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${microsoftIdToken}`,
     },
@@ -57,9 +59,11 @@ export const exchangeToken = async (microsoftIdToken: string) => {
   throw new Error("Token exchange retry loop exhausted");
 };
 
-export const logoutFromBackend = async () => {
+export type LogoutEndpoint = "/auth/ms/logout" | "/logout";
+
+export const logoutFromBackend = async (endpoint: LogoutEndpoint) => {
   try {
-    await fetchClient("/auth/ms/logout");
+    await fetchClient(endpoint, { method: "POST" });
   } catch (error) {
     console.error("Backend logout error:", error);
     throw error;

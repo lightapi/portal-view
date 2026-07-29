@@ -1,6 +1,7 @@
 import React from "react";
 import Cookies from "universal-cookie";
 import fetchClient from "../utils/fetchClient";
+import { logoutFromBackend } from "../api/auth";
 import { config, isSsoEnabled } from "../../config";
 import type { IPublicClientApplication } from "@azure/msal-browser";
 import { buildTaskAwareRoute } from "../tasks/taskUtils";
@@ -229,7 +230,7 @@ async function signOut(
 
   if (isSsoEnabled) {
     try {
-      await fetchClient("/auth/ms/logout");
+      await logoutFromBackend("/auth/ms/logout");
     } catch (error) {
       console.error("backend logout error=", error);
     }
@@ -249,13 +250,12 @@ async function signOut(
     navigate("/app/dashboard");
     return;
   } else {
-    fetchClient("/logout")
-    .then((data) => {
+    try {
+      await logoutFromBackend("/logout");
       navigate("/app/dashboard");
-    })
-    .catch((error) => {
+    } catch (error) {
       console.log("error=", error);
-    });
+    }
   }
 }
 
