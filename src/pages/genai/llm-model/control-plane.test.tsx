@@ -208,7 +208,7 @@ describe('LLM control-plane wiring', () => {
 
     render(<PublicationPanel hostId="host-a"/>);
     await waitFor(() => expect(screen.getByLabelText('Instance Env Tag')).toHaveTextContent('loc'));
-    expect(screen.getByText('dev',{selector:'code'})).toBeInTheDocument();
+    expect(await screen.findByText('dev',{selector:'code'})).toBeInTheDocument();
     await user.click(screen.getByRole('button',{name:'Generate from active records'}));
     await waitFor(() => expect(mocks.queryLlm).toHaveBeenCalledWith(
       'getLlmGatewayPublicationCandidate',{hostId:'host-a',environment:'dev',instanceId:'instance-a'}));

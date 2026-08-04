@@ -19670,7 +19670,7 @@
           "title": "Secret Reference",
           "type": "string",
           "maxLength": 1024,
-          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*://)"
+          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*://)"
         },
         "effectiveTs": {
           "title": "Effective Time",
@@ -19768,7 +19768,7 @@
           "title": "Secret Reference",
           "type": "string",
           "maxLength": 1024,
-          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*://)"
+          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*://)"
         },
         "effectiveTs": {
           "title": "Effective Time",

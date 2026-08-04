@@ -36,9 +36,13 @@ describe('LLM provider credential forms', () => {
     expect(definition.schema.additionalProperties).toBe(false);
     expect(definition.schema.properties).not.toHaveProperty('active');
     expect(definition.form).not.toContain('active');
-    expect(definition.schema.properties.secretReference).toMatchObject({
-      type:'string',maxLength:1024,pattern:'^[A-Za-z][A-Za-z0-9+.-]*://',
-    });
+    const secretReference = definition.schema.properties.secretReference;
+    expect(secretReference).toMatchObject({type:'string',maxLength:1024});
+    const secretReferencePattern = new RegExp(secretReference.pattern);
+    expect(secretReferencePattern.test('env:OPENAI_API_KEY')).toBe(true);
+    expect(secretReferencePattern.test('vault://llm/openai/api-key')).toBe(true);
+    expect(secretReferencePattern.test('sk-raw-secret')).toBe(false);
+    expect(secretReferencePattern.test('env:invalid-name')).toBe(false);
     expect(definition.schema.properties.effectiveTs).toMatchObject({type:'string',format:'date-time'});
     expect(definition.schema.properties.expiresTs).toMatchObject({type:'string',format:'date-time'});
   });

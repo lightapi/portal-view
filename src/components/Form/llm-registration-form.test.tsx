@@ -58,7 +58,11 @@ describe('LLM registration form routes', () => {
         .map(([request]) => String(request))
         .find(url => url.includes('getLlmModelLabel'));
       expect(modelRequest).toBeDefined();
-      expect(decodeURIComponent(modelRequest!)).toContain('"hostId":"host-a"');
+      const command = JSON.parse(new URLSearchParams(modelRequest!.split('?')[1]).get('cmd')!);
+      expect(command).toMatchObject({
+        service:'genai', action:'getLlmModelLabel', data:{filter:'',limit:200},
+      });
+      expect(command.data).not.toHaveProperty('hostId');
       expect(modelRequest).not.toContain('%7B0%7D');
     });
 

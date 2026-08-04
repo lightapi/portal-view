@@ -11,6 +11,7 @@ describe('LLM model control-plane validation', () => {
     expect(validateMutation(credential,{hostId:'h',secret:'sk-secret',secretReference:'vault://x'}).join(' ')).toContain('Raw secrets');
     expect(validateMutation(credential,{hostId:'h',api_key:'sk-secret',secretReference:'vault://x'}).join(' ')).toContain('Raw secrets');
     expect(validateMutation(credential,{hostId:'h',secretReference:'env:OPENAI_API_KEY'})).toHaveLength(0);
+    expect(validateMutation(credential,{hostId:'h',secretReference:'env:invalid-name'})).not.toHaveLength(0);
   });
   it('fails closed for unsupported route semantics and publication schemas', () => {
     const route = llmResources.find(resource => resource.key === 'routes')!;

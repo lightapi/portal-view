@@ -7,7 +7,7 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
     errors.push('Raw secrets are forbidden. Store only an external secretReference URI.');
   }
   if (resource.key === 'credentials') {
-    if (typeof value.secretReference !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(value.secretReference)) {
+    if (typeof value.secretReference !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(value.secretReference)) {
       errors.push('secretReference must be env:VARIABLE_NAME or an external URI.');
     }
   }
@@ -40,7 +40,7 @@ function containsRawSecret(value: unknown): boolean {
   return Object.entries(value as Record<string, unknown>).some(([key,nested]) => {
     const normalized = key.replace(/[^A-Za-z0-9]/g,'').toLowerCase();
     if (['secretreference','credentialref','credentialreference'].includes(normalized)) {
-      return typeof nested !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(nested);
+      return typeof nested !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(nested);
     }
     if (normalized.includes('secret') || normalized.includes('apikey') || normalized.includes('password')
       || normalized.includes('authorization') || ['token','accesstoken','refreshtoken','bearertoken','idtoken','credential','credentialvalue'].includes(normalized)) {
