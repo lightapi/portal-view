@@ -21,8 +21,9 @@ export async function queryLlm(action: string, data: Record<string, unknown>): P
   return normalize(await fetchClient(url));
 }
 
-export async function listLlm(action: string, hostId: string): Promise<LlmRecord[]> {
-  const value = await queryLlm(action, {hostId, offset: 0, limit: 200, active: true});
+export async function listLlm(action: string, hostId?: string): Promise<LlmRecord[]> {
+  const data = {offset: 0, limit: 200, active: true, ...(hostId ? {hostId} : {})};
+  const value = await queryLlm(action, data);
   if (Array.isArray(value)) return value as LlmRecord[];
   return [];
 }

@@ -10,6 +10,8 @@ describe('LLM model dynamic forms', () => {
   it('keeps JSONB values typed and uses llm_model taxonomy selectors', () => {
     for (const formId of ['createLlmModel', 'updateLlmModel'] as const) {
       const definition = forms[formId];
+      expect(definition.schema.properties).not.toHaveProperty('hostId');
+      expect(definition.form).not.toContain('hostId');
       expect(definition.actions[0].action).toBe(formId);
       expect(definition.schema.properties.modalities).toMatchObject({type: 'array', items: {type: 'string'}});
       expect(definition.schema.properties.operations).toMatchObject({type: 'array', items: {type: 'string'}});
@@ -21,10 +23,10 @@ describe('LLM model dynamic forms', () => {
         item => typeof item === 'object' && item.key === 'declaredCapabilities',
       );
       expect(modalities).toMatchObject({
-        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'form',
+        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'json',
       });
       expect(operations).toMatchObject({
-        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'form',
+        type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'json',
       });
       expect(declaredCapabilities).toMatchObject({
         type: 'structured', tabs: ['form', 'json', 'yaml'], defaultTab: 'json',
@@ -36,6 +38,9 @@ describe('LLM model dynamic forms', () => {
       expect(tag).toMatchObject({type: 'dynaselect', multiple: true, optionValueKey: 'id'});
       expect(category && typeof category === 'object' ? category.action.url : '').toContain('llm_model');
       expect(tag && typeof tag === 'object' ? tag.action.url : '').toContain('llm_model');
+      expect(category && typeof category === 'object' ? category.action.url : '').toContain('00000000-0000-0000-0000-000000000000');
+      expect(tag && typeof tag === 'object' ? tag.action.url : '').toContain('00000000-0000-0000-0000-000000000000');
     }
+    expect(forms.createLlmModel.schema.properties.globalFlag).toMatchObject({default:true,readonly:true});
   });
 });

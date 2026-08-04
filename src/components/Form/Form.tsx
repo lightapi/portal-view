@@ -201,10 +201,9 @@ function Form() {
       ...searchContext,
     };
 
-    const modelWithHostId = {
-      ...initialModel,
-      hostId: initialModel.hostId ?? host
-    };
+    const modelWithHostId = schemaProperties.hostId
+      ? {...initialModel, hostId: initialModel.hostId ?? host}
+      : initialModel;
     setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
   }, [host, formId, location.state, location.search]);
 

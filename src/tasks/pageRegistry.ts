@@ -398,10 +398,9 @@ export const pageRegistry: PageDefinition[] = [
   {
     id: "llm-model-marketplace",
     title: "LLM Model Catalog",
-    description: "Manage the provider model inventory used by the LLM Model Control Plane.",
+    description: "Browse LLM models by provider, taxonomy, lifecycle status, and capability.",
     route: "/app/marketplace/llm-model",
     category: "API Marketplace",
-    roles: ["admin"],
     helpPath: "/help/portal-view/pages/llm-model-control-plane",
     keywords: ["genai", "llm", "model", "marketplace", "catalog", "provider"],
     entities: ["modelId", "physicalModelId", "modelFamily"],
@@ -409,7 +408,7 @@ export const pageRegistry: PageDefinition[] = [
   {
     id: "genai-llm-model-control-plane",
     title: "LLM Model Control Plane",
-    description: "Manage model catalog, provider deployments, aliases, policy, pricing, and gateway publications.",
+    description: "Manage LLM models, provider deployments, aliases, policy, pricing, and gateway publications.",
     route: "/app/genai/LlmModelControlPlane",
     category: "Portal Administration",
     roles: ["admin"],

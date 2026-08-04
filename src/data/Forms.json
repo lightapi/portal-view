@@ -18422,7 +18422,7 @@
         "action": "createLlmModel",
         "version": "0.1.0",
         "title": "Create LLM Model",
-        "success": "/app/marketplace/llm-model",
+        "success": "/app/genai/LlmModelControlPlane",
         "failure": "/app/failure"
       }
     ],
@@ -18431,9 +18431,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "hostId": {
-          "title": "Host Id",
-          "type": "string",
+        "globalFlag": {
+          "title": "Global Catalog",
+          "type": "boolean",
+          "default": true,
           "readonly": true
         },
         "providerType": {
@@ -18514,15 +18515,10 @@
             "type": "string"
           },
           "default": []
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean",
-          "default": true
         }
       },
       "required": [
-        "hostId",
+        "globalFlag",
         "providerType",
         "physicalModelId",
         "modelFamily",
@@ -18531,7 +18527,7 @@
       ]
     },
     "form": [
-      "hostId",
+      "globalFlag",
       {
         "key": "providerType",
         "type": "dynaselect",
@@ -18605,10 +18601,7 @@
         "multiple": true,
         "optionValueKey": "id",
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
-          "params": [
-            "hostId"
-          ]
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%2200000000-0000-0000-0000-000000000000%22%2C%22entityType%22%3A%22llm_model%22%7D%7D"
         }
       },
       {
@@ -18620,13 +18613,9 @@
         "optionSortKey": "tagSortOrder",
         "optionValueKey": "id",
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
-          "params": [
-            "hostId"
-          ]
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%2200000000-0000-0000-0000-000000000000%22%2C%22entityType%22%3A%22llm_model%22%7D%7D"
         }
-      },
-      "active"
+      }
     ]
   },
   "updateLlmModel": {
@@ -18639,7 +18628,7 @@
         "action": "updateLlmModel",
         "version": "0.1.0",
         "title": "Update LLM Model",
-        "success": "/app/marketplace/llm-model",
+        "success": "/app/genai/LlmModelControlPlane",
         "failure": "/app/failure"
       }
     ],
@@ -18648,11 +18637,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "hostId": {
-          "title": "Host Id",
-          "type": "string",
-          "readonly": true
-        },
         "modelId": {
           "title": "Model Id",
           "type": "string",
@@ -18738,20 +18722,14 @@
           "type": "integer",
           "readonly": true,
           "minimum": 1
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
         }
       },
       "required": [
-        "hostId",
         "modelId",
         "aggregateVersion"
       ]
     },
     "form": [
-      "hostId",
       "modelId",
       {
         "key": "providerType",
@@ -18826,10 +18804,7 @@
         "multiple": true,
         "optionValueKey": "id",
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
-          "params": [
-            "hostId"
-          ]
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22category%22%2C%22action%22%3A%22getCategoryLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%2200000000-0000-0000-0000-000000000000%22%2C%22entityType%22%3A%22llm_model%22%7D%7D"
         }
       },
       {
@@ -18841,14 +18816,2274 @@
         "optionSortKey": "tagSortOrder",
         "optionValueKey": "id",
         "action": {
-          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22entityType%22%3A%22llm_model%22%7D%7D",
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22tag%22%2C%22action%22%3A%22getTagLabelByType%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%2200000000-0000-0000-0000-000000000000%22%2C%22entityType%22%3A%22llm_model%22%7D%7D"
+        }
+      },
+      "aggregateVersion"
+    ]
+  },
+  "createLlmRegistration": {
+    "formId": "createLlmRegistration",
+    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmModelRegistration",
+        "version": "0.1.0",
+        "title": "Create LLM Registration",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create LLM Registration",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelId": {
+          "title": "LLM Model",
+          "type": "string"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string",
+          "maxLength": 32
+        },
+        "regions": {
+          "title": "Regions",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "dataClassifications": {
+          "title": "Data Classifications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "capabilityRestrictions": {
+          "title": "Capability Restrictions",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ],
+          "default": "DRAFT"
+        }
+      },
+      "required": [
+        "hostId",
+        "modelId",
+        "environment"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "modelId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D"
+        }
+      },
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
           "params": [
             "hostId"
           ]
         }
       },
-      "aggregateVersion",
-      "active"
+      {
+        "key": "regions",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "dataClassifications",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 8
+      },
+      {
+        "key": "capabilityRestrictions",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "lifecycleStatus"
+    ]
+  },
+  "updateLlmRegistration": {
+    "formId": "updateLlmRegistration",
+    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmModelRegistration",
+        "version": "0.1.0",
+        "title": "Update LLM Registration",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update LLM Registration",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelRegistrationId": {
+          "title": "Model Registration Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelId": {
+          "title": "LLM Model",
+          "type": "string"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string",
+          "maxLength": 32
+        },
+        "regions": {
+          "title": "Regions",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "dataClassifications": {
+          "title": "Data Classifications",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "capabilityRestrictions": {
+          "title": "Capability Restrictions",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "modelRegistrationId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "modelRegistrationId",
+      {
+        "key": "modelId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D"
+        }
+      },
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "regions",
+        "type": "dynaselect",
+        "multiple": true,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "dataClassifications",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 8
+      },
+      {
+        "key": "capabilityRestrictions",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "lifecycleStatus",
+      "aggregateVersion"
+    ]
+  },
+  "createProviderAccount": {
+    "formId": "createProviderAccount",
+    "helpPath": "/help/portal-view/forms/create-provider-account",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmProviderAccount",
+        "version": "0.1.0",
+        "title": "Create Provider Account",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Account",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "accountName": {
+          "title": "Account Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "providerType": {
+          "title": "Provider Type",
+          "type": "string",
+          "maxLength": 32
+        },
+        "billingPrincipal": {
+          "title": "Billing Principal",
+          "type": "string",
+          "maxLength": 255
+        },
+        "quotaGroupId": {
+          "title": "Quota Group Id",
+          "type": "string",
+          "maxLength": 126
+        },
+        "capacityMetadata": {
+          "title": "Capacity Metadata",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ],
+          "default": "DRAFT"
+        }
+      },
+      "required": [
+        "hostId",
+        "accountName",
+        "providerType",
+        "billingPrincipal",
+        "quotaGroupId"
+      ]
+    },
+    "form": [
+      "hostId",
+      "accountName",
+      {
+        "key": "providerType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_provider"
+        }
+      },
+      "billingPrincipal",
+      "quotaGroupId",
+      {
+        "key": "capacityMetadata",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "lifecycleStatus"
+    ]
+  },
+  "updateProviderAccount": {
+    "formId": "updateProviderAccount",
+    "helpPath": "/help/portal-view/pages/llm-model-control-plane",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmProviderAccount",
+        "version": "0.1.0",
+        "title": "Update Provider Account",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Provider Account",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerAccountId": {
+          "title": "Provider Account Id",
+          "type": "string",
+          "readonly": true
+        },
+        "accountName": {
+          "title": "Account Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "providerType": {
+          "title": "Provider Type",
+          "type": "string",
+          "maxLength": 32
+        },
+        "billingPrincipal": {
+          "title": "Billing Principal",
+          "type": "string",
+          "maxLength": 255
+        },
+        "quotaGroupId": {
+          "title": "Quota Group Id",
+          "type": "string",
+          "maxLength": 126
+        },
+        "capacityMetadata": {
+          "title": "Capacity Metadata",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "providerAccountId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "providerAccountId",
+      "accountName",
+      {
+        "key": "providerType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_provider"
+        }
+      },
+      "billingPrincipal",
+      "quotaGroupId",
+      {
+        "key": "capacityMetadata",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "lifecycleStatus",
+      "aggregateVersion"
+    ]
+  },
+  "createProviderDeployment": {
+    "formId": "createProviderDeployment",
+    "helpPath": "/help/portal-view/forms/create-provider-deployment",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmProviderDeployment",
+        "version": "0.1.0",
+        "title": "Create Provider Deployment",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Deployment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelRegistrationId": {
+          "title": "LLM Registration",
+          "type": "string"
+        },
+        "providerAccountId": {
+          "title": "Provider Account",
+          "type": "string"
+        },
+        "deploymentName": {
+          "title": "Deployment Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "providerType": {
+          "title": "Provider Type",
+          "type": "string",
+          "maxLength": 32
+        },
+        "physicalModelId": {
+          "title": "Physical Model Id",
+          "type": "string",
+          "maxLength": 255
+        },
+        "baseUrl": {
+          "title": "Base URL",
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string",
+          "maxLength": 64
+        },
+        "transportBounds": {
+          "title": "Transport Bounds",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "refreshBeforeSeconds": {
+          "title": "Refresh Before Seconds",
+          "type": "integer",
+          "minimum": 1
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT"
+          ],
+          "default": "DRAFT"
+        }
+      },
+      "required": [
+        "hostId",
+        "modelRegistrationId",
+        "providerAccountId",
+        "deploymentName",
+        "providerType",
+        "physicalModelId",
+        "baseUrl"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "modelRegistrationId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelRegistrationLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "providerAccountId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "deploymentName",
+      {
+        "key": "providerType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_provider"
+        }
+      },
+      {
+        "key": "physicalModelId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_name&rela=provider_name&from={0}",
+          "params": [
+            "providerType"
+          ]
+        }
+      },
+      "baseUrl",
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "transportBounds",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "refreshBeforeSeconds",
+      "lifecycleStatus"
+    ]
+  },
+  "updateProviderDevelopment": {
+    "formId": "updateProviderDevelopment",
+    "helpPath": "/help/portal-view/forms/update-provider-development",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmProviderDeployment",
+        "version": "0.1.0",
+        "title": "Update Provider Deployment",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Provider Deployment",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelRegistrationId": {
+          "title": "LLM Registration",
+          "type": "string"
+        },
+        "providerAccountId": {
+          "title": "Provider Account",
+          "type": "string"
+        },
+        "deploymentName": {
+          "title": "Deployment Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "providerType": {
+          "title": "Provider Type",
+          "type": "string",
+          "maxLength": 32
+        },
+        "physicalModelId": {
+          "title": "Physical Model Id",
+          "type": "string",
+          "maxLength": 255
+        },
+        "baseUrl": {
+          "title": "Base URL",
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "region": {
+          "title": "Region",
+          "type": "string",
+          "maxLength": 64
+        },
+        "transportBounds": {
+          "title": "Transport Bounds",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "refreshBeforeSeconds": {
+          "title": "Refresh Before Seconds",
+          "type": "integer",
+          "minimum": 1
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "VALIDATING",
+            "ACTIVE",
+            "SUSPENDED",
+            "RETIRED"
+          ]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "providerDeploymentId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "providerDeploymentId",
+      {
+        "key": "modelRegistrationId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelRegistrationLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "providerAccountId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "deploymentName",
+      {
+        "key": "providerType",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_provider"
+        }
+      },
+      {
+        "key": "physicalModelId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=model_name&rela=provider_name&from={0}",
+          "params": [
+            "providerType"
+          ]
+        }
+      },
+      "baseUrl",
+      {
+        "key": "region",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=region&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "transportBounds",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "refreshBeforeSeconds",
+      "lifecycleStatus",
+      "aggregateVersion"
+    ]
+  },
+  "createProviderCredential": {
+    "formId": "createProviderCredential",
+    "helpPath": "/help/portal-view/forms/create-provider-credential",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmProviderCredential",
+        "version": "0.1.0",
+        "title": "Create Provider Credential",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Provider Credential",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "credentialVersion": {
+          "title": "Credential Version",
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "secretReference": {
+          "title": "Secret Reference",
+          "type": "string",
+          "maxLength": 1024,
+          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*://)"
+        },
+        "effectiveTs": {
+          "title": "Effective Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresTs": {
+          "title": "Expiration Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "PENDING"
+          ],
+          "default": "PENDING"
+        }
+      },
+      "required": [
+        "hostId",
+        "providerDeploymentId",
+        "credentialVersion",
+        "secretReference",
+        "effectiveTs"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "credentialVersion",
+      "secretReference",
+      {
+        "key": "effectiveTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "expiresTs",
+        "type": "timestamp"
+      },
+      "lifecycleStatus"
+    ]
+  },
+  "updateProviderCredential": {
+    "formId": "updateProviderCredential",
+    "helpPath": "/help/portal-view/forms/update-provider-credential",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmProviderCredential",
+        "version": "0.1.0",
+        "title": "Update Provider Credential",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Provider Credential",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerCredentialId": {
+          "title": "Provider Credential Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "credentialVersion": {
+          "title": "Credential Version",
+          "type": "integer",
+          "minimum": 1
+        },
+        "secretReference": {
+          "title": "Secret Reference",
+          "type": "string",
+          "maxLength": 1024,
+          "pattern": "^(?:env:[A-Za-z_][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9+.-]*://)"
+        },
+        "effectiveTs": {
+          "title": "Effective Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresTs": {
+          "title": "Expiration Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "ROTATING",
+            "REVOKED",
+            "EXPIRED"
+          ]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "providerCredentialId",
+        "providerDeploymentId",
+        "credentialVersion",
+        "secretReference",
+        "effectiveTs",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "providerCredentialId",
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "credentialVersion",
+      "secretReference",
+      {
+        "key": "effectiveTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "expiresTs",
+        "type": "timestamp"
+      },
+      "lifecycleStatus",
+      "aggregateVersion"
+    ]
+  },
+  "createPublicAlias": {
+    "formId": "createPublicAlias",
+    "helpPath": "/help/portal-view/forms/create-public-alias",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmPublicAlias",
+        "version": "0.1.0",
+        "title": "Create Public Alias",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Public Alias",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string",
+          "maxLength": 32
+        },
+        "aliasName": {
+          "title": "Alias Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "operations": {
+          "title": "Operations",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "requiredCapabilities": {
+          "title": "Required Capabilities",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "maxInputTokens": {
+          "title": "Maximum Input Tokens",
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxOutputTokens": {
+          "title": "Maximum Output Tokens",
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxRequestBytes": {
+          "title": "Maximum Request Bytes",
+          "type": "integer",
+          "minimum": 1
+        },
+        "dataClassification": {
+          "title": "Data Classification",
+          "type": "string",
+          "maxLength": 32
+        },
+        "loggingMode": {
+          "title": "Logging Mode",
+          "type": "string",
+          "enum": [
+            "NONE",
+            "METADATA",
+            "REDACTED"
+          ],
+          "default": "METADATA"
+        },
+        "piiMode": {
+          "title": "PII Mode",
+          "type": "string",
+          "enum": [
+            "DENY",
+            "REDACT",
+            "TOKENIZE",
+            "ALLOW"
+          ],
+          "default": "DENY"
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DEPRECATED",
+            "RETIRED"
+          ],
+          "default": "DRAFT"
+        },
+        "replacementAliasId": {
+          "title": "Replacement Alias",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "aliasVisibility": {
+          "title": "Alias Visibility",
+          "type": "string",
+          "enum": [
+            "PUBLIC",
+            "INTERNAL_LEGACY"
+          ],
+          "default": "PUBLIC"
+        },
+        "boundAgentDefId": {
+          "title": "Bound Agent Definition",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "hostId",
+        "environment",
+        "aliasName"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "aliasName",
+      {
+        "key": "operations",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 8
+      },
+      {
+        "key": "requiredCapabilities",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "maxInputTokens",
+      "maxOutputTokens",
+      "maxRequestBytes",
+      "dataClassification",
+      "loggingMode",
+      "piiMode",
+      "lifecycleStatus",
+      {
+        "key": "replacementAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "aliasVisibility",
+      {
+        "key": "boundAgentDefId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getAgentDefinitionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      }
+    ]
+  },
+  "updatePublicAlias": {
+    "formId": "updatePublicAlias",
+    "helpPath": "/help/portal-view/forms/update-public-alias",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmPublicAlias",
+        "version": "0.1.0",
+        "title": "Update Public Alias",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Public Alias",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "publicAliasId": {
+          "title": "Public Alias Id",
+          "type": "string",
+          "readonly": true
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string",
+          "maxLength": 32
+        },
+        "aliasName": {
+          "title": "Alias Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "operations": {
+          "title": "Operations",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "requiredCapabilities": {
+          "title": "Required Capabilities",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "maxInputTokens": {
+          "title": "Maximum Input Tokens",
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxOutputTokens": {
+          "title": "Maximum Output Tokens",
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxRequestBytes": {
+          "title": "Maximum Request Bytes",
+          "type": "integer",
+          "minimum": 1
+        },
+        "dataClassification": {
+          "title": "Data Classification",
+          "type": "string",
+          "maxLength": 32
+        },
+        "loggingMode": {
+          "title": "Logging Mode",
+          "type": "string",
+          "enum": [
+            "NONE",
+            "METADATA",
+            "REDACTED"
+          ]
+        },
+        "piiMode": {
+          "title": "PII Mode",
+          "type": "string",
+          "enum": [
+            "DENY",
+            "REDACT",
+            "TOKENIZE",
+            "ALLOW"
+          ]
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "ACTIVE",
+            "DEPRECATED",
+            "RETIRED"
+          ]
+        },
+        "replacementAliasId": {
+          "title": "Replacement Alias",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "aliasVisibility": {
+          "title": "Alias Visibility",
+          "type": "string",
+          "enum": [
+            "PUBLIC",
+            "INTERNAL_LEGACY"
+          ]
+        },
+        "boundAgentDefId": {
+          "title": "Bound Agent Definition",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "publicAliasId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "publicAliasId",
+      {
+        "key": "environment",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/r/data?name=environment&host={0}",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "aliasName",
+      {
+        "key": "operations",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 8
+      },
+      {
+        "key": "requiredCapabilities",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "maxInputTokens",
+      "maxOutputTokens",
+      "maxRequestBytes",
+      "dataClassification",
+      "loggingMode",
+      "piiMode",
+      "lifecycleStatus",
+      {
+        "key": "replacementAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "aliasVisibility",
+      {
+        "key": "boundAgentDefId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getAgentDefinitionLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "aggregateVersion"
+    ]
+  },
+  "createAliasRoute": {
+    "formId": "createAliasRoute",
+    "helpPath": "/help/portal-view/forms/create-alias-route",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmAliasRoute",
+        "version": "0.1.0",
+        "title": "Create Alias Route",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Alias Route",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "publicAliasId": {
+          "title": "Public Alias",
+          "type": "string"
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "routePriority": {
+          "title": "Route Priority",
+          "description": "Lower numbers are evaluated first and must be unique within the alias.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "routeWeight": {
+          "title": "Route Weight",
+          "description": "Fixed at 1 by the current MVP publication contract.",
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "default": 1,
+          "readonly": true
+        },
+        "fallbackEnabled": {
+          "title": "Fallback Enabled",
+          "type": "boolean",
+          "default": false
+        },
+        "canaryPercent": {
+          "title": "Canary Percent",
+          "description": "Fixed at 0 by the current MVP publication contract.",
+          "type": "number",
+          "enum": [
+            0
+          ],
+          "default": 0,
+          "readonly": true
+        },
+        "residencyConditions": {
+          "title": "Residency Conditions",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        }
+      },
+      "required": [
+        "hostId",
+        "publicAliasId",
+        "providerDeploymentId",
+        "routePriority"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "publicAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "routePriority",
+      "routeWeight",
+      "fallbackEnabled",
+      "canaryPercent",
+      {
+        "key": "residencyConditions",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      }
+    ]
+  },
+  "updateAliasRoute": {
+    "formId": "updateAliasRoute",
+    "helpPath": "/help/portal-view/forms/update-alias-route",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmAliasRoute",
+        "version": "0.1.0",
+        "title": "Update Alias Route",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Alias Route",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "aliasRouteId": {
+          "title": "Alias Route Id",
+          "type": "string",
+          "readonly": true
+        },
+        "publicAliasId": {
+          "title": "Public Alias",
+          "type": "string"
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "routePriority": {
+          "title": "Route Priority",
+          "description": "Lower numbers are evaluated first and must be unique within the alias.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "routeWeight": {
+          "title": "Route Weight",
+          "description": "Fixed at 1 by the current MVP publication contract.",
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "readonly": true
+        },
+        "fallbackEnabled": {
+          "title": "Fallback Enabled",
+          "type": "boolean"
+        },
+        "canaryPercent": {
+          "title": "Canary Percent",
+          "description": "Fixed at 0 by the current MVP publication contract.",
+          "type": "number",
+          "enum": [
+            0
+          ],
+          "readonly": true
+        },
+        "residencyConditions": {
+          "title": "Residency Conditions",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "aliasRouteId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "aliasRouteId",
+      {
+        "key": "publicAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "routePriority",
+      "routeWeight",
+      "fallbackEnabled",
+      "canaryPercent",
+      {
+        "key": "residencyConditions",
+        "type": "structured",
+        "tabs": [
+          "form",
+          "json",
+          "yaml"
+        ],
+        "defaultTab": "json",
+        "editorRows": 10
+      },
+      "aggregateVersion"
+    ]
+  },
+  "createPricingVersion": {
+    "formId": "createPricingVersion",
+    "helpPath": "/help/portal-view/forms/create-pricing-version",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmPricingVersion",
+        "version": "0.1.0",
+        "title": "Create Pricing Version",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Pricing Version",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "pricingVersion": {
+          "title": "Pricing Version",
+          "description": "Operator-assigned version number for this Deployment's rate schedule.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "inputMicrosPerMillion": {
+          "title": "Input Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputMicrosPerMillion": {
+          "title": "Output Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "cachedInputMicrosPerMillion": {
+          "title": "Cached Input Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "effectiveTs": {
+          "title": "Effective Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresTs": {
+          "title": "Expiration Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "title": "Pricing Source",
+          "type": "string",
+          "maxLength": 255
+        },
+        "approvedBy": {
+          "title": "Approved By",
+          "type": "string",
+          "maxLength": 126
+        }
+      },
+      "required": [
+        "hostId",
+        "providerDeploymentId",
+        "pricingVersion",
+        "inputMicrosPerMillion",
+        "outputMicrosPerMillion",
+        "effectiveTs",
+        "source",
+        "approvedBy"
+      ]
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "pricingVersion",
+      "inputMicrosPerMillion",
+      "outputMicrosPerMillion",
+      "cachedInputMicrosPerMillion",
+      {
+        "key": "effectiveTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "expiresTs",
+        "type": "timestamp"
+      },
+      "source",
+      "approvedBy"
+    ]
+  },
+  "updatePricingVersion": {
+    "formId": "updatePricingVersion",
+    "helpPath": "/help/portal-view/forms/update-pricing-version",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmPricingVersion",
+        "version": "0.1.0",
+        "title": "Update Pricing Version",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Pricing Version",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "pricingVersionId": {
+          "title": "Pricing Version Id",
+          "type": "string",
+          "readonly": true
+        },
+        "providerDeploymentId": {
+          "title": "Provider Deployment",
+          "type": "string"
+        },
+        "pricingVersion": {
+          "title": "Pricing Version",
+          "description": "Operator-assigned version number for this Deployment's rate schedule.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "inputMicrosPerMillion": {
+          "title": "Input Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "outputMicrosPerMillion": {
+          "title": "Output Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "cachedInputMicrosPerMillion": {
+          "title": "Cached Input Micros Per Million Tokens",
+          "type": "integer",
+          "minimum": 0
+        },
+        "effectiveTs": {
+          "title": "Effective Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresTs": {
+          "title": "Expiration Time",
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "title": "Pricing Source",
+          "type": "string",
+          "maxLength": 255
+        },
+        "approvedBy": {
+          "title": "Approved By",
+          "type": "string",
+          "maxLength": 126
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": [
+        "hostId",
+        "pricingVersionId",
+        "aggregateVersion"
+      ]
+    },
+    "form": [
+      "hostId",
+      "pricingVersionId",
+      {
+        "key": "providerDeploymentId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderDeploymentLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
+      "pricingVersion",
+      "inputMicrosPerMillion",
+      "outputMicrosPerMillion",
+      "cachedInputMicrosPerMillion",
+      {
+        "key": "effectiveTs",
+        "type": "timestamp"
+      },
+      {
+        "key": "expiresTs",
+        "type": "timestamp"
+      },
+      "source",
+      "approvedBy",
+      "aggregateVersion"
+    ]
+  },
+  "createModelPolicy": {
+    "formId": "createModelPolicy",
+    "helpPath": "/help/portal-view/forms/create-model-policy",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmModelPolicy",
+        "version": "0.1.0",
+        "title": "Create Model Policy",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Model Policy",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "policyName": {
+          "title": "Policy Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "accessPolicy": {
+          "title": "Access Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "budgetPolicy": {
+          "title": "Budget Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "contentPolicy": {
+          "title": "Content Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "cachePolicy": {
+          "title": "Cache Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "piiPolicy": {
+          "title": "PII Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "nativeExtensionPolicy": {
+          "title": "Native Extension Policy",
+          "type": "object",
+          "additionalProperties": true,
+          "default": {}
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "RETIRED"],
+          "default": "DRAFT"
+        }
+      },
+      "required": ["hostId", "policyName"]
+    },
+    "form": [
+      "hostId",
+      "policyName",
+      {"key": "accessPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "budgetPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "contentPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "cachePolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "piiPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "nativeExtensionPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      "lifecycleStatus"
+    ]
+  },
+  "updateModelPolicy": {
+    "formId": "updateModelPolicy",
+    "helpPath": "/help/portal-view/forms/update-model-policy",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmModelPolicy",
+        "version": "0.1.0",
+        "title": "Update Model Policy",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Model Policy",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelPolicyId": {
+          "title": "Model Policy Id",
+          "type": "string",
+          "readonly": true
+        },
+        "policyName": {
+          "title": "Policy Name",
+          "type": "string",
+          "maxLength": 126
+        },
+        "accessPolicy": {
+          "title": "Access Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "budgetPolicy": {
+          "title": "Budget Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "contentPolicy": {
+          "title": "Content Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "cachePolicy": {
+          "title": "Cache Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "piiPolicy": {
+          "title": "PII Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "nativeExtensionPolicy": {
+          "title": "Native Extension Policy",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "lifecycleStatus": {
+          "title": "Lifecycle Status",
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "RETIRED"]
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": ["hostId", "modelPolicyId", "aggregateVersion"]
+    },
+    "form": [
+      "hostId",
+      "modelPolicyId",
+      "policyName",
+      {"key": "accessPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "budgetPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "contentPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "cachePolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "piiPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      {"key": "nativeExtensionPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
+      "lifecycleStatus",
+      "aggregateVersion"
+    ]
+  },
+  "createPolicyBinding": {
+    "formId": "createPolicyBinding",
+    "helpPath": "/help/portal-view/forms/create-policy-binding",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "createLlmModelPolicyBinding",
+        "version": "0.1.0",
+        "title": "Create Policy Binding",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Create Policy Binding",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelPolicyId": {
+          "title": "Model Policy",
+          "type": "string"
+        },
+        "subjectType": {
+          "title": "Subject Type",
+          "type": "string",
+          "enum": ["AGENT", "CLIENT", "PRINCIPAL", "PRODUCT_PROFILE"],
+          "default": "AGENT"
+        },
+        "subjectId": {
+          "title": "Subject Id",
+          "type": "string",
+          "maxLength": 255
+        },
+        "publicAliasId": {
+          "title": "Public Alias",
+          "type": "string"
+        },
+        "agentDefault": {
+          "title": "Agent Default",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": ["hostId", "modelPolicyId", "subjectType", "subjectId"],
+      "if": {
+        "properties": {"agentDefault": {"const": true}},
+        "required": ["agentDefault"]
+      },
+      "then": {
+        "properties": {"subjectType": {"const": "AGENT"}},
+        "required": ["publicAliasId"]
+      }
+    },
+    "form": [
+      "hostId",
+      {
+        "key": "modelPolicyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelPolicyLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "subjectType",
+      "subjectId",
+      {
+        "key": "publicAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "agentDefault"
+    ]
+  },
+  "updatePolicyBinding": {
+    "formId": "updatePolicyBinding",
+    "helpPath": "/help/portal-view/forms/update-policy-binding",
+    "actions": [
+      {
+        "host": "lightapi.net",
+        "service": "genai",
+        "action": "updateLlmModelPolicyBinding",
+        "version": "0.1.0",
+        "title": "Update Policy Binding",
+        "success": "/app/genai/LlmModelControlPlane",
+        "failure": "/app/failure"
+      }
+    ],
+    "schema": {
+      "title": "Update Policy Binding",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelPolicyBindingId": {
+          "title": "Model Policy Binding Id",
+          "type": "string",
+          "readonly": true
+        },
+        "modelPolicyId": {
+          "title": "Model Policy",
+          "type": "string"
+        },
+        "subjectType": {
+          "title": "Subject Type",
+          "type": "string",
+          "enum": ["AGENT", "CLIENT", "PRINCIPAL", "PRODUCT_PROFILE"]
+        },
+        "subjectId": {
+          "title": "Subject Id",
+          "type": "string",
+          "maxLength": 255
+        },
+        "publicAliasId": {
+          "title": "Public Alias",
+          "type": "string"
+        },
+        "agentDefault": {
+          "title": "Agent Default",
+          "type": "boolean"
+        },
+        "aggregateVersion": {
+          "title": "Aggregate Version",
+          "type": "integer",
+          "readonly": true,
+          "minimum": 1
+        }
+      },
+      "required": ["hostId", "modelPolicyBindingId", "aggregateVersion"],
+      "if": {
+        "properties": {"agentDefault": {"const": true}},
+        "required": ["agentDefault"]
+      },
+      "then": {
+        "properties": {"subjectType": {"const": "AGENT"}},
+        "required": ["publicAliasId"]
+      }
+    },
+    "form": [
+      "hostId",
+      "modelPolicyBindingId",
+      {
+        "key": "modelPolicyId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmModelPolicyLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "subjectType",
+      "subjectId",
+      {
+        "key": "publicAliasId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmPublicAliasLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "agentDefault",
+      "aggregateVersion"
     ]
   },
   "createSkill": {

@@ -204,8 +204,6 @@ export default function ServiceEndpoint() {
   );
 
   const handleBulkSuccess = useCallback(() => {
-    setBulkAccessOpen(false);
-    setRowSelection({});
     setOverviewRefreshKey((value) => value + 1);
     fetchData();
   }, [fetchData]);

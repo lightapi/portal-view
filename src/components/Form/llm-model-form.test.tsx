@@ -47,7 +47,7 @@ function renderFormRoute(formId: 'createLlmModel' | 'updateLlmModel', data: Reco
     }]}>
       <Routes>
         <Route path="/app/form/:formId" element={<Form/>}/>
-        <Route path="/app/marketplace/llm-model" element={<RouteResult/>}/>
+        <Route path="/app/genai/LlmModelControlPlane" element={<RouteResult/>}/>
         <Route path="/app/failure" element={<RouteResult/>}/>
       </Routes>
     </MemoryRouter>,
@@ -72,25 +72,27 @@ describe('LLM model form routes', () => {
   beforeEach(() => {
     mocks.fetchClient.mockReset();
     mocks.fetchClient.mockResolvedValue({modelId: 'model-a'});
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      json: async () => [],
-      ok: true,
-      status: 200,
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async (request: RequestInfo | URL) => {
+      const url = String(request);
+      const values = url.includes('name=model_provider') ? ['openai']
+        : url.includes('name=model_name') ? ['gpt-pilot']
+          : url.includes('name=model_family') ? ['gpt'] : [];
+      return {json: async () => values, ok: true, status: 200};
     }));
   });
 
   it('renders the create route and submits structured values as typed data', async () => {
     const user = userEvent.setup();
-    renderFormRoute('createLlmModel', requiredModel);
+    renderFormRoute('createLlmModel', {...requiredModel, globalFlag: true});
 
     expect(await screen.findByRole('heading', {name: 'Create LLM Model'})).toBeInTheDocument();
     const capabilities = structuredGroup('Declared Capabilities');
     expect(within(capabilities).getByRole('tab', {name: 'Form'})).toBeDisabled();
     expect(within(capabilities).getByRole('tab', {name: 'JSON'}))
       .toHaveAttribute('aria-selected', 'true');
-    expect(within(structuredGroup('Modalities')).getByRole('tab', {name: 'Form'}))
+    expect(within(structuredGroup('Modalities')).getByRole('tab', {name: 'JSON'}))
       .toHaveAttribute('aria-selected', 'true');
-    expect(within(structuredGroup('Operations')).getByRole('tab', {name: 'Form'}))
+    expect(within(structuredGroup('Operations')).getByRole('tab', {name: 'JSON'}))
       .toHaveAttribute('aria-selected', 'true');
 
     await applyJson('Modalities', ['text', 'image']);
@@ -109,20 +111,18 @@ describe('LLM model form routes', () => {
     expect(Array.isArray(action.data.operations)).toBe(true);
     expect(typeof action.data.declaredCapabilities).toBe('object');
     expect(await screen.findByTestId('route-result'))
-      .toHaveTextContent('/app/marketplace/llm-model');
+      .toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
   it('loads existing structured values on the update route and submits them unchanged', async () => {
     const user = userEvent.setup();
     const existing = {
       ...requiredModel,
-      hostId: 'host-a',
       modelId: 'model-a',
       aggregateVersion: 3,
       modalities: ['text'],
       operations: ['chat_completions'],
       declaredCapabilities: {streaming: true, tools: false},
-      active: true,
     };
     renderFormRoute('updateLlmModel', existing);
 
@@ -148,8 +148,9 @@ describe('LLM model form routes', () => {
       operations: existing.operations,
       declaredCapabilities: existing.declaredCapabilities,
     });
+    expect(action.data).not.toHaveProperty('active');
     expect(await screen.findByTestId('route-result'))
-      .toHaveTextContent('/app/marketplace/llm-model');
+      .toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
   it.each([
@@ -157,7 +158,7 @@ describe('LLM model form routes', () => {
     ['YAML', 'tools: [broken'],
   ])('does not submit after an invalid %s draft fails Apply', async (format, draft) => {
     const user = userEvent.setup();
-    renderFormRoute('createLlmModel', requiredModel);
+    renderFormRoute('createLlmModel', {...requiredModel, globalFlag: true});
     const capabilities = structuredGroup('Declared Capabilities');
     await user.click(within(capabilities).getByRole('tab', {name: format}));
     fireEvent.change(within(capabilities).getByRole('textbox', {
@@ -175,7 +176,7 @@ describe('LLM model form routes', () => {
 
   it('does not submit an unapplied structured draft and recovers after Reset', async () => {
     const user = userEvent.setup();
-    renderFormRoute('createLlmModel', requiredModel);
+    renderFormRoute('createLlmModel', {...requiredModel, globalFlag: true});
     const capabilities = structuredGroup('Declared Capabilities');
     const editor = within(capabilities).getByRole('textbox', {
       name: 'Declared Capabilities JSON editor',

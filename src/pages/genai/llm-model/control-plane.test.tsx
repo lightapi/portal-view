@@ -1,17 +1,18 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import LlmModelControlPlane from './LlmModelControlPlane';
 import PublicationPanel from './PublicationPanel';
 import ResourcePanel from './ResourcePanel';
-import LlmModelCatalog from '../../marketplace/LlmModelCatalog';
 import { llmResources } from './types';
 
 const mocks = vi.hoisted(() => ({
   host: undefined as string | undefined,
+  roles: 'admin' as string | null,
   listLlm: vi.fn(),
   queryLlm: vi.fn(),
   commandLlm: vi.fn(),
+  fetchClient: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -21,78 +22,56 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../../../contexts/UserContext', () => ({
-  useUserState: () => ({host: mocks.host}),
+  useUserState: () => ({host: mocks.host,roles: mocks.roles}),
 }));
 vi.mock('./api', () => ({
   listLlm: mocks.listLlm,
   queryLlm: mocks.queryLlm,
   commandLlm: mocks.commandLlm,
 }));
+vi.mock('../../../utils/fetchClient', () => ({
+  default: mocks.fetchClient,
+}));
 
-const capturedEvidence = {
-  fixtureIds: ['captured-chat'], provenances: ['captured_sanitized'],
-};
-const conformanceResult = {
-  schemaVersion: '1', provider: 'openai', physicalModel: 'gpt-captured', state: 'pass',
-  validUntil: '2999-01-01T00:00:00Z', digest: 'a'.repeat(64),
-  capabilities: {
-    operations: ['chat_completions'],
-    content: {text: true, images: false, tools: false, parallelTools: false, structuredJson: false},
-    streaming: false,
-  },
-  capabilityEvidence: {chat_completions: capturedEvidence, text: capturedEvidence},
-};
-
-const publication = (rollback = false) => ({
-  environment: 'dev', publicationVersion: rollback ? 3 : 2, minimumGatewayVersion: '0.1.0',
-  enabledRoutingFeatures: [], ...(rollback ? {rollbackOfPublicationId: 'prior-publication'} : {}),
-  manifest: {schemaVersion: '1', resources: []},
-  resources: [{
-    schemaVersion: 1, resourceType: 'llm-deployment', resourceId: 'deployment-a',
-    resourceVersion: 1, sequence: 2,
-    payload: {
-      format: 'openai', model: 'gpt-captured', conformanceDigest: 'a'.repeat(64),
-      conformanceResult,
-    },
-  }],
+const publication = (environment = 'dev') => ({
+  environment, instanceId:'instance-a',gatewayPublicationId:'revision-a',
+  instancePublicationId:'application-a',publicationVersion:2,
+  sourceDigest:`sha256:${'a'.repeat(64)}`,propertySetDigest:`sha256:${'b'.repeat(64)}`,
+  configPropertiesDigest:`sha256:${'b'.repeat(64)}`,
+  configProperties:[{propertyId:'property-a',propertyName:'providers',valueType:'map',propertyValue:{}}],
+  differences:[], validationResult:{valid:true}, deliveryMode:'INSTANCE_PROPERTIES',
 });
 
 describe('LLM control-plane wiring', () => {
   beforeEach(() => {
     mocks.host = undefined;
+    mocks.roles = 'admin';
     mocks.listLlm.mockResolvedValue([]);
     mocks.queryLlm.mockResolvedValue(null);
     mocks.commandLlm.mockResolvedValue(undefined);
+    mocks.fetchClient.mockReset();
+    mocks.fetchClient.mockResolvedValue([]);
     mocks.navigate.mockReset();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
-  it('reloads the active resource when the selected host changes', async () => {
+  it('keeps the global model catalog stable when the selected host changes', async () => {
     const view = render(<LlmModelControlPlane/>);
-    expect(screen.getByText('Select a host to administer LLM models.')).toBeInTheDocument();
+    expect(screen.getByText('Global catalog shared by every host')).toBeInTheDocument();
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModel',undefined));
+    const calls = mocks.listLlm.mock.calls.length;
     mocks.host = 'host-a';
     view.rerender(<LlmModelControlPlane/>);
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelRegistration','host-a'));
     mocks.host = 'host-b';
     view.rerender(<LlmModelControlPlane/>);
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModelRegistration','host-b'));
-  });
-
-  it('loads the model catalog from its Marketplace page', async () => {
-    mocks.host = 'host-a';
-    render(<LlmModelCatalog/>);
-    expect(screen.getByRole('heading',{name:'LLM Model Catalog'})).toBeInTheDocument();
-    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledWith('getLlmModel','host-a'));
-    await userEvent.click(screen.getByRole('button',{name:'Create LLM model'}));
-    expect(mocks.navigate).toHaveBeenCalledWith('/app/form/createLlmModel', {
-      state: {data: {hostId:'host-a',active:true}},
-    });
+    await waitFor(() => expect(mocks.listLlm).toHaveBeenCalledTimes(calls));
   });
 
   it('shows a resource-specific create action on every admin tab', async () => {
     mocks.host = 'host-a';
     render(<LlmModelControlPlane/>);
     const labels = [
+      ['LLM Models','Create LLM model'],
       ['Registrations','Create registration'],
       ['Accounts','Create provider account'],
       ['Deployments','Create provider deployment'],
@@ -109,6 +88,59 @@ describe('LLM control-plane wiring', () => {
       expect(screen.getByRole('button',{name:createLabel})).toBeInTheDocument();
     }
     expect(screen.queryByRole('button',{name:'Create draft'})).not.toBeInTheDocument();
+  });
+
+  it('shows model category and tag labels like the API admin table', async () => {
+    mocks.host = 'host-a';
+    mocks.listLlm.mockResolvedValue([{
+      hostId:'host-a', modelId:'model-a', providerType:'openai', physicalModelId:'gpt-a',
+      modelFamily:'gpt', categoryIds:['category-a'], tagIds:['tag-a'], lifecycleStatus:'ACTIVE',
+    }]);
+    mocks.fetchClient.mockImplementation(async (url:string) => {
+      const command = JSON.parse(new URLSearchParams(url.split('?')[1]).get('cmd')!);
+      return command.service === 'category'
+        ? [{id:'category-a',label:'Foundation Models'}]
+        : [{id:'tag-a',label:'Reasoning'}];
+    });
+
+    render(<LlmModelControlPlane/>);
+    expect(await screen.findByRole('columnheader',{name:'Categories'})).toBeInTheDocument();
+    expect(screen.getByRole('columnheader',{name:'Tags'})).toBeInTheDocument();
+    expect(await screen.findByText('Foundation Models')).toBeInTheDocument();
+    expect(screen.getByText('Reasoning')).toBeInTheDocument();
+    expect(screen.queryByText('category-a')).not.toBeInTheDocument();
+    expect(screen.queryByText('tag-a')).not.toBeInTheDocument();
+  });
+
+  it('opens typed create and update forms from the Registrations tab', async () => {
+    mocks.host = 'host-a';
+    mocks.listLlm.mockImplementation(async (action:string) => action === 'getLlmModelRegistration' ? [{
+      hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
+      regions:['ca-central-1'], dataClassifications:['confidential'],
+      capabilityRestrictions:{tools:false}, lifecycleStatus:'ACTIVE', aggregateVersion:4, active:true,
+      updateUser:'system', updateTs:'2026-07-31T00:00:00Z',
+    }] : []);
+
+    render(<LlmModelControlPlane/>);
+    await userEvent.click(screen.getByRole('tab',{name:'Registrations'}));
+    await userEvent.click(await screen.findByRole('button',{name:'Create registration'}));
+    expect(mocks.navigate).toHaveBeenCalledWith('/app/form/createLlmRegistration', {
+      state:{data:{hostId:'host-a'}},
+    });
+
+    mocks.navigate.mockClear();
+    await userEvent.click(await screen.findByLabelText('Edit'));
+    expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateLlmRegistration', {
+      state:{data:expect.objectContaining({
+        modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
+        regions:['ca-central-1'], dataClassifications:['confidential'],
+        capabilityRestrictions:{tools:false}, aggregateVersion:4,
+      })},
+    });
+    const navigationData = mocks.navigate.mock.calls[0][1].state.data;
+    expect(navigationData).not.toHaveProperty('updateUser');
+    expect(navigationData).not.toHaveProperty('updateTs');
+    expect(navigationData).not.toHaveProperty('active');
   });
 
   it('opens typed model data for update without read-only audit fields', async () => {
@@ -131,24 +163,87 @@ describe('LLM control-plane wiring', () => {
       })},
     });
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;
+    expect(navigationData).not.toHaveProperty('hostId');
     expect(navigationData).not.toHaveProperty('updateUser');
     expect(navigationData).not.toHaveProperty('updateTs');
+    expect(navigationData).not.toHaveProperty('active');
   });
 
-  it('publishes and rolls back only complete captured-evidence roots', async () => {
+  it('publishes a server-generated property set and can reapply an exact revision', async () => {
     const user = userEvent.setup();
-    const view = render(<PublicationPanel hostId="host-a"/>);
-    const editor = screen.getByLabelText('Publication JSON');
-    fireEvent.change(editor,{target:{value:JSON.stringify(publication(false))}});
-    await user.click(screen.getByRole('button',{name:'Validate and publish'}));
+    mocks.fetchClient.mockImplementation(async (url:string) => url.startsWith('/r/data?') ? [] : {
+      instances:[{instanceId:'instance-a',instanceName:'Gateway A',productId:'gtw',environment:'dev',envTag:'dev'}],
+    });
+    mocks.queryLlm.mockImplementation((action: string) => {
+      if (action === 'getLlmGatewayPublicationCandidate') return Promise.resolve(publication());
+      if (action === 'getLlmGatewayInstancePublicationHistory') return Promise.resolve([publication()]);
+      return Promise.resolve(null);
+    });
+    render(<PublicationPanel hostId="host-a"/>);
+    await screen.findByText('Gateway A');
+    await user.click(screen.getByRole('button',{name:'Generate from active records'}));
+    await screen.findByLabelText('Generated llm-router properties');
+    await user.click(screen.getByRole('button',{name:'Publish to instance'}));
     await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
-      'publishLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',publicationVersion:2})));
+      'publishLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',instanceId:'instance-a',expectedPropertySetDigest:`sha256:${'b'.repeat(64)}`})));
+    await user.click(await screen.findByRole('button',{name:'Apply exact revision'}));
+    await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
+      'rollbackLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',gatewayPublicationId:'revision-a',rollbackOfInstancePublicationId:'application-a'})));
+  });
 
-    view.rerender(<PublicationPanel hostId="host-a"/>);
-    fireEvent.change(screen.getByLabelText('Publication JSON'),{target:{value:JSON.stringify(publication(true))}});
-    await user.click(screen.getByRole('button',{name:'Append rollback'}));
-    await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
-      'rollbackLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',publicationVersion:3})));
+  it('uses the selected instance logical environment rather than its env tag for generation', async () => {
+    const user = userEvent.setup();
+    mocks.fetchClient.mockImplementation(async (url:string) => url.startsWith('/r/data?') ? ['loc'] : {
+      instances:[{instanceId:'instance-a',instanceName:'portal-bff-loc',productId:'gtw',environment:'dev',envTag:'loc'}],
+    });
+    mocks.queryLlm.mockImplementation((action: string) => {
+      if (action === 'getLlmGatewayPublicationCandidate') {
+        return Promise.resolve(publication('dev'));
+      }
+      if (action === 'getLlmGatewayInstancePublicationHistory') {
+        return Promise.resolve([{...publication('dev'),updateTs:'2026-08-01T00:00:00Z',updateUser:'operator'}]);
+      }
+      return Promise.resolve(null);
+    });
+
+    render(<PublicationPanel hostId="host-a"/>);
+    await waitFor(() => expect(screen.getByLabelText('Instance Env Tag')).toHaveTextContent('loc'));
+    expect(screen.getByText('dev',{selector:'code'})).toBeInTheDocument();
+    await user.click(screen.getByRole('button',{name:'Generate from active records'}));
+    await waitFor(() => expect(mocks.queryLlm).toHaveBeenCalledWith(
+      'getLlmGatewayPublicationCandidate',{hostId:'host-a',environment:'dev',instanceId:'instance-a'}));
+    expect((screen.getByLabelText('Generated llm-router properties') as HTMLTextAreaElement).value).toContain('"propertyName": "providers"');
+    expect(await screen.findByRole('button',{name:'Apply exact revision'})).toBeInTheDocument();
+  });
+
+  it('loads every gtw instance for the selected env tag into the publication dropdown', async () => {
+    const user = userEvent.setup();
+    mocks.fetchClient.mockImplementation(async (url:string) => {
+      if (url.startsWith('/r/data?')) return ['dev'];
+      return {instances:[
+        {instanceId:'gateway-a',instanceName:'Gateway A',productId:'gtw',environment:'dev',envTag:'dev'},
+        {instanceId:'gateway-b',instanceName:'Gateway B',productId:'GTW',environment:'dev',envTag:'DEV'},
+        {instanceId:'gateway-qa',instanceName:'QA Gateway',productId:'gtw',environment:'dev',envTag:'qa'},
+        {instanceId:'other-dev',instanceName:'Other Product',productId:'lg',environment:'dev',envTag:'dev'},
+      ]};
+    });
+
+    render(<PublicationPanel hostId="host-a"/>);
+
+    expect(await screen.findByText('Gateway A')).toBeInTheDocument();
+    await user.click(screen.getByLabelText('LLM Gateway Instance'));
+    expect(screen.getByRole('option',{name:'Gateway A'})).toBeInTheDocument();
+    expect(screen.getByRole('option',{name:'Gateway B'})).toBeInTheDocument();
+    expect(screen.queryByRole('option',{name:'QA Gateway'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('option',{name:'Other Product'})).not.toBeInTheDocument();
+    const instanceUrl = String(mocks.fetchClient.mock.calls.find(([url]) =>
+      String(url).startsWith('/portal/query?'))?.[0]);
+    const command = JSON.parse(new URLSearchParams(instanceUrl.split('?')[1]).get('cmd')!);
+    expect(command).toMatchObject({service:'instance',action:'getInstance',data:{hostId:'host-a',limit:1000,active:true}});
+    expect(JSON.parse(command.data.filters)).toEqual([
+      {id:'productId',value:'gtw'},
+      {id:'envTag',value:'dev'},
+    ]);
   });
 
   it('never renders or copies raw secret fields returned by a defensive backend', async () => {
@@ -161,9 +256,13 @@ describe('LLM control-plane wiring', () => {
     await screen.findByText('credential-a');
     expect(screen.queryByText(/sk-live-must-not-render/)).not.toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('Edit'));
-    const dialog = screen.getByRole('dialog');
-    expect((within(dialog).getByRole('textbox') as HTMLTextAreaElement).value)
-      .not.toContain('sk-live-must-not-render');
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateProviderCredential',{
+      state:{data:expect.objectContaining({
+        hostId:'host-a',providerCredentialId:'credential-a',credentialVersion:1,
+        secretReference:'vault://llm/credential-a',aggregateVersion:1,
+      })},
+    }));
+    expect(mocks.navigate.mock.calls[0][1].state.data).not.toHaveProperty('apiKey');
   });
 
   it('previews governed alias eligibility without exposing provider material', async () => {

@@ -6,6 +6,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   Drawer,
   FormControlLabel,
@@ -15,6 +16,8 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import fetchClient from '../../utils/fetchClient';
+import type { EndpointType } from './ServiceEndpoint';
+import ServiceEndpointBulkAccessDrawer from './ServiceEndpointBulkAccessDrawer';
 
 type Props = {
   open: boolean;
@@ -31,6 +34,7 @@ type BucketMap = Record<string, BucketItem[]>;
 type EndpointOverview = {
   endpointId: string;
   endpoint: string;
+  endpointName?: string;
   httpMethod: string;
   endpointPath: string;
   rules: Record<string, string[]>;
@@ -78,6 +82,9 @@ export default function ServiceEndpointAccessOverviewDrawer({
   const [error, setError] = useState('');
   const [missingOnly, setMissingOnly] = useState(false);
   const [highlightOnly, setHighlightOnly] = useState(false);
+  const [selectedEndpointIds, setSelectedEndpointIds] = useState<Set<string>>(new Set());
+  const [bulkAccessOpen, setBulkAccessOpen] = useState(false);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!open || !hostId || !apiVersionId) return;
@@ -106,7 +113,14 @@ export default function ServiceEndpointAccessOverviewDrawer({
     };
     load();
     return () => { cancelled = true; };
-  }, [apiVersionId, hostId, open, refreshKey]);
+  }, [apiVersionId, hostId, localRefreshKey, open, refreshKey]);
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedEndpointIds(new Set());
+      setBulkAccessOpen(false);
+    }
+  }, [open]);
 
   const highlighted = useMemo(() => new Set(highlightedEndpointIds), [highlightedEndpointIds]);
   const endpoints = useMemo(() => {
@@ -116,6 +130,47 @@ export default function ServiceEndpointAccessOverviewDrawer({
       return true;
     });
   }, [highlightOnly, highlighted, missingOnly, overview.endpoints]);
+
+  const allVisibleSelected = endpoints.length > 0 && endpoints.every((endpoint) => selectedEndpointIds.has(endpoint.endpointId));
+  const someVisibleSelected = endpoints.some((endpoint) => selectedEndpointIds.has(endpoint.endpointId));
+  const selectedEndpoints = useMemo<EndpointType[]>(() => {
+    return (overview.endpoints ?? [])
+      .filter((endpoint) => selectedEndpointIds.has(endpoint.endpointId))
+      .map((endpoint) => ({
+        hostId,
+        endpointId: endpoint.endpointId,
+        apiVersionId,
+        apiId: '',
+        apiVersion: '',
+        endpoint: endpoint.endpoint,
+        httpMethod: endpoint.httpMethod,
+        endpointPath: endpoint.endpointPath,
+        endpointDesc: endpoint.endpointName ?? endpoint.endpoint,
+        active: true,
+      }));
+  }, [apiVersionId, hostId, overview.endpoints, selectedEndpointIds]);
+
+  const toggleEndpoint = (endpointId: string) => {
+    setSelectedEndpointIds((current) => {
+      const next = new Set(current);
+      if (next.has(endpointId)) next.delete(endpointId); else next.add(endpointId);
+      return next;
+    });
+  };
+
+  const toggleVisibleEndpoints = () => {
+    setSelectedEndpointIds((current) => {
+      const next = new Set(current);
+      endpoints.forEach((endpoint) => {
+        if (allVisibleSelected) next.delete(endpoint.endpointId); else next.add(endpoint.endpointId);
+      });
+      return next;
+    });
+  };
+
+  const handleBulkSuccess = () => {
+    setLocalRefreshKey((value) => value + 1);
+  };
 
   const copyJson = async () => {
     await navigator.clipboard.writeText(JSON.stringify(overview, null, 2));
@@ -150,8 +205,28 @@ export default function ServiceEndpointAccessOverviewDrawer({
             />
             <FormControlLabel
               control={<Switch checked={highlightOnly} onChange={(event) => setHighlightOnly(event.target.checked)} disabled={highlighted.size === 0} />}
-              label="Selected only"
+              label="Table-selected only"
             />
+            <FormControlLabel
+              control={(
+                <Checkbox
+                  checked={allVisibleSelected}
+                  indeterminate={someVisibleSelected && !allVisibleSelected}
+                  onChange={toggleVisibleEndpoints}
+                  disabled={endpoints.length === 0}
+                  inputProps={{ 'aria-label': 'Select all visible endpoints' }}
+                />
+              )}
+              label={`Select visible (${endpoints.length})`}
+            />
+            <Button
+              variant="contained"
+              size="small"
+              disabled={selectedEndpoints.length === 0}
+              onClick={() => setBulkAccessOpen(true)}
+            >
+              Bulk Access ({selectedEndpoints.length})
+            </Button>
             <Button size="small" onClick={copyJson} disabled={!overview.endpoints?.length}>Copy JSON</Button>
           </Stack>
 
@@ -163,8 +238,16 @@ export default function ServiceEndpointAccessOverviewDrawer({
                 <Accordion key={endpoint.endpointId} disableGutters>
                   <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
-                      <Chip size="small" label={endpoint.httpMethod} />
-                      <Typography variant="body2" noWrap sx={{ flex: 1 }}>{endpoint.endpointPath || endpoint.endpoint}</Typography>
+                      <Checkbox
+                        size="small"
+                        checked={selectedEndpointIds.has(endpoint.endpointId)}
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={() => toggleEndpoint(endpoint.endpointId)}
+                        inputProps={{ 'aria-label': `Select ${endpoint.endpointName || endpoint.endpoint}` }}
+                      />
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" noWrap>{endpoint.endpointName || endpoint.endpoint}</Typography>
+                      </Box>
                       <Chip size="small" color={endpoint.status === 'No access configured' ? 'warning' : 'default'} label={endpoint.status} />
                     </Stack>
                   </AccordionSummary>
@@ -185,6 +268,14 @@ export default function ServiceEndpointAccessOverviewDrawer({
           )}
         </Stack>
       </Box>
+      <ServiceEndpointBulkAccessDrawer
+        open={bulkAccessOpen}
+        hostId={hostId}
+        apiVersionId={apiVersionId}
+        endpoints={selectedEndpoints}
+        onClose={() => setBulkAccessOpen(false)}
+        onSuccess={handleBulkSuccess}
+      />
     </Drawer>
   );
 }
