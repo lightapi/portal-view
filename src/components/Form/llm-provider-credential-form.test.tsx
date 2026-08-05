@@ -64,7 +64,7 @@ describe('LLM provider credential form routes', () => {
     renderCredentialForm('updateProviderCredential',{
       hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
       credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
-      effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
+      effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
       lifecycleStatus:'ACTIVE',aggregateVersion:4,
     });
     expect(await screen.findByRole('heading',{name:'Update Provider Credential'})).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('LLM provider credential form routes', () => {
       service:'genai',action:'updateLlmProviderCredential',data:{
         hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
         credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
-        effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
+        effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
         lifecycleStatus:'ACTIVE',aggregateVersion:4,
       },
     });

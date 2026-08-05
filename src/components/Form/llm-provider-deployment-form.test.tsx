@@ -57,8 +57,8 @@ describe('LLM provider deployment form routes', () => {
     const user = userEvent.setup();
     renderDeploymentForm('createProviderDeployment',{
       hostId:'host-a', modelRegistrationId:'registration-a', providerAccountId:'account-a',
-      deploymentName:'openai-gpt4o-ca-prod', providerType:'openai', physicalModelId:'gpt-4o',
-      baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+      deploymentName:'groq-llama-dev', providerType:'groq', providerProtocol:'openai', physicalModelId:'llama-3.3-70b-versatile',
+      baseUrl:'https://api.groq.com/openai/v1', region:'ca-central-1',
     });
     expect(await screen.findByRole('heading',{name:'Create Provider Deployment'})).toBeInTheDocument();
 
@@ -69,8 +69,8 @@ describe('LLM provider deployment form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai', action:'createLlmProviderDeployment', data:{
         hostId:'host-a', modelRegistrationId:'registration-a', providerAccountId:'account-a',
-        deploymentName:'openai-gpt4o-ca-prod', providerType:'openai', physicalModelId:'gpt-4o',
-        baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+        deploymentName:'groq-llama-dev', providerType:'groq', providerProtocol:'openai', physicalModelId:'llama-3.3-70b-versatile',
+        baseUrl:'https://api.groq.com/openai/v1', region:'ca-central-1',
         transportBounds:{connectTimeoutMs:5000,requestTimeoutMs:60000},
         lifecycleStatus:'DRAFT',
       },
@@ -87,7 +87,7 @@ describe('LLM provider deployment form routes', () => {
     renderDeploymentForm('updateProviderDevelopment',{
       hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
       providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
-      physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+      providerProtocol:'openai', physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:null,
       transportBounds:{requestTimeoutMs:60000},
       lifecycleStatus:'DRAFT', aggregateVersion:5,
     });
@@ -101,7 +101,7 @@ describe('LLM provider deployment form routes', () => {
       service:'genai', action:'updateLlmProviderDeployment', data:{
         hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
         providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
-        physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+        providerProtocol:'openai', physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:null,
         transportBounds:{requestTimeoutMs:60000}, lifecycleStatus:'DRAFT', aggregateVersion:5,
       },
     });

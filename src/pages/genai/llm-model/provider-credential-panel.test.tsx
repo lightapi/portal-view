@@ -23,7 +23,7 @@ describe('Credentials resource form navigation', () => {
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
       credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
-      effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
+      effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
       lifecycleStatus:'ACTIVE',aggregateVersion:4,active:true,
       updateUser:'system',updateTs:'2026-08-01T12:00:00Z',
     }]);
@@ -44,7 +44,7 @@ describe('Credentials resource form navigation', () => {
       state:{data:expect.objectContaining({
         hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
         credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
-        effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
+        effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
         lifecycleStatus:'ACTIVE',aggregateVersion:4,
       })},
     }));

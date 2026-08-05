@@ -6,7 +6,6 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { commandLlm, listLlm, queryLlm } from './api';
 import { llmErrorMessage } from './error';
 import fetchClient from '../../../utils/fetchClient';
@@ -53,7 +52,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
   const [rows, setRows] = useState<LlmRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [editing, setEditing] = useState<LlmRecord | null>(null);
   const [create, setCreate] = useState(false);
   const [json, setJson] = useState('');
@@ -120,20 +118,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
       await load();
     } catch (reason) { setError(llmErrorMessage(reason)); }
   };
-  const deploymentAction = async (row: LlmRecord, action: string) => {
-    try {
-      setError(''); setNotice('');
-      await commandLlm(action, {hostId, providerDeploymentId: row.providerDeploymentId, aggregateVersion: row.aggregateVersion});
-      if (action === 'runLlmProviderConformance') {
-        setRows(current => current.map(item => item.providerDeploymentId === row.providerDeploymentId
-          ? {...item, conformanceState:'PENDING', aggregateVersion:Number(item.aggregateVersion) + 1}
-          : item));
-        setNotice('Conformance was queued. A trusted runner must test the deployment and record PASS, FAIL, or QUARANTINED evidence.');
-        return;
-      }
-      await load();
-    } catch (reason) { setError(llmErrorMessage(reason)); }
-  };
   const previewRoutes = async (row: LlmRecord) => {
     try { setPreview(await queryLlm('previewLlmAliasRoutes', {hostId, publicAliasId: row.publicAliasId,
       environment: row.environment, dataClassification: row.dataClassification})); }
@@ -149,7 +133,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
       {canMutate && <Button startIcon={<AddIcon/>} variant="contained" onClick={() => open()}>{resource.createLabel ?? 'Create draft'}</Button>}
     </Box>
     {error && <Alert severity="error" sx={{mb:2}} onClose={() => setError('')}>{error}</Alert>}
-    {notice && <Alert severity="success" sx={{mb:2}} onClose={() => setNotice('')}>{notice}</Alert>}
     {loading ? <CircularProgress/> : <TableContainer component={Paper} variant="outlined">
       <Table size="small"><TableHead><TableRow>
         <TableCell>Actions</TableCell><TableCell>{resource.idField}</TableCell>
@@ -160,13 +143,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
           <TableCell sx={{whiteSpace:'nowrap'}}>
             {canMutate && <><Tooltip title="Edit"><IconButton size="small" onClick={() => open(row)}><EditIcon/></IconButton></Tooltip>
             <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => void remove(row)}><DeleteIcon/></IconButton></Tooltip></>}
-            {resource.key === 'deployments' && <>
-              <Tooltip title="Validate"><IconButton size="small" onClick={() => void deploymentAction(row,'validateLlmProviderDeployment')}><PlayArrowIcon/></IconButton></Tooltip>
-              <Button size="small" disabled={row.conformanceState === 'PENDING'}
-                onClick={() => void deploymentAction(row,'runLlmProviderConformance')}>
-                {row.conformanceState === 'PENDING' ? 'Conformance pending' : 'Conformance'}
-              </Button>
-            </>}
             {resource.key === 'aliases' && <Button size="small" onClick={() => void previewRoutes(row)}>Preview routes</Button>}
           </TableCell>
           <TableCell>{display(row[resource.idField])}</TableCell>

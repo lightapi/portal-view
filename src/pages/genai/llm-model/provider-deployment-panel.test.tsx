@@ -20,12 +20,13 @@ describe('Deployments resource form navigation', () => {
   beforeEach(() => {
     mocks.navigate.mockReset();
     mocks.listLlm.mockReset();
+    mocks.commandLlm.mockReset();
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
       providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
       physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
       transportBounds:{requestTimeoutMs:60000}, quotaGroupId:'openai-production-capacity',
-      conformanceState:'UNKNOWN', lifecycleStatus:'DRAFT', aggregateVersion:5, active:true,
+      conformanceState:'PENDING', lifecycleStatus:'DRAFT', aggregateVersion:5, active:true,
       updateUser:'system', updateTs:'2026-08-01T00:00:00Z',
     }]);
   });
@@ -57,17 +58,15 @@ describe('Deployments resource form navigation', () => {
     expect(navigationData).not.toHaveProperty('conformanceState');
   });
 
-  it('shows the queued conformance state instead of silently reloading stale data', async () => {
-    mocks.commandLlm.mockResolvedValue(undefined);
+  it('does not expose inactive validation or conformance workflow controls', async () => {
     const deployment = llmAdminResources.find(resource => resource.key === 'deployments')!;
     render(<ResourcePanel hostId="host-a" resource={deployment}/>);
 
-    await userEvent.click(await screen.findByRole('button',{name:'Conformance'}));
-
-    await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith('runLlmProviderConformance', {
-      hostId:'host-a', providerDeploymentId:'deployment-a', aggregateVersion:5,
-    }));
-    expect(await screen.findByRole('button',{name:'Conformance pending'})).toBeDisabled();
-    expect(screen.getByText(/A trusted runner must test the deployment/)).toBeInTheDocument();
+    await screen.findByText('openai-gpt4o-ca-prod');
+    expect(screen.queryByLabelText('Validate')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:/Conformance/i})).not.toBeInTheDocument();
+    expect(screen.queryByText('conformanceState')).not.toBeInTheDocument();
+    expect(screen.queryByText('PENDING')).not.toBeInTheDocument();
+    expect(mocks.commandLlm).not.toHaveBeenCalled();
   });
 });

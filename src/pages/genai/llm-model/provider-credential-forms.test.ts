@@ -44,7 +44,8 @@ describe('LLM provider credential forms', () => {
     expect(secretReferencePattern.test('sk-raw-secret')).toBe(false);
     expect(secretReferencePattern.test('env:invalid-name')).toBe(false);
     expect(definition.schema.properties.effectiveTs).toMatchObject({type:'string',format:'date-time'});
-    expect(definition.schema.properties.expiresTs).toMatchObject({type:'string',format:'date-time'});
+    expect(definition.schema.properties.expiresTs)
+      .toMatchObject({type:['string','null'],format:'date-time'});
   });
 
   it('uses the active Deployment label endpoint on both forms', () => {

@@ -19,7 +19,7 @@ describe('LLM provider deployment forms', () => {
     });
     expect(deployment?.formFields).toEqual(expect.arrayContaining([
       'hostId', 'providerDeploymentId', 'modelRegistrationId', 'providerAccountId',
-      'deploymentName', 'providerType', 'physicalModelId', 'baseUrl', 'region',
+      'deploymentName', 'providerType', 'providerProtocol', 'physicalModelId', 'baseUrl', 'region',
       'transportBounds', 'refreshBeforeSeconds',
       'lifecycleStatus', 'aggregateVersion',
     ]));
@@ -57,6 +57,9 @@ describe('LLM provider deployment forms', () => {
     expect(decodeURIComponent(account && typeof account === 'object' ? account.action?.url ?? '' : ''))
       .toContain('getLlmProviderAccountLabel');
     expect(provider).toMatchObject({type:'dynaselect',multiple:false});
+    expect(definition.schema.properties.providerProtocol.enum).toEqual(['openai','anthropic']);
+    expect(definition.schema.properties.region.type).toEqual(['string','null']);
+    expect(definition.form).toContain('providerProtocol');
     expect(model).toMatchObject({type:'dynaselect',multiple:false,action:{params:['providerType']}});
     expect(region).toMatchObject({type:'dynaselect',multiple:false,action:{params:['hostId']}});
     expect(bounds).toMatchObject({type:'structured'});
@@ -65,7 +68,7 @@ describe('LLM provider deployment forms', () => {
   it('requires the callable binding on create and optimistic concurrency on update', () => {
     expect(forms.createProviderDeployment.schema.required).toEqual([
       'hostId','modelRegistrationId','providerAccountId','deploymentName',
-      'providerType','physicalModelId','baseUrl',
+      'providerType','providerProtocol','physicalModelId','baseUrl',
     ]);
     expect(forms.createProviderDeployment.schema.properties.lifecycleStatus.enum).toEqual(['DRAFT']);
     expect(forms.updateProviderDevelopment.schema.properties.lifecycleStatus.enum)

@@ -226,6 +226,9 @@
   },
   "createOrg": {
     "formId": "createOrg",
+    "submitOmitFields": [
+      "hostId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -250,6 +253,11 @@
         "hostOwner"
       ],
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "domain": {
           "title": "Org Domain",
           "type": "string"
@@ -331,6 +339,9 @@
   },
   "updateOrg": {
     "formId": "updateOrg",
+    "submitOmitFields": [
+      "hostId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -352,6 +363,11 @@
         "orgOwner"
       ],
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "domain": {
           "title": "Org Domain",
           "type": "string",
@@ -399,6 +415,9 @@
   },
   "createHost": {
     "formId": "createHost",
+    "submitOmitFields": [
+      "hostId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -420,6 +439,11 @@
         "hostOwner"
       ],
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "domain": {
           "title": "Domain",
           "type": "string"
@@ -2135,6 +2159,9 @@
   },
   "privateMessage": {
     "formId": "privateMessage",
+    "submitOmitFields": [
+      "hostId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -2150,6 +2177,11 @@
       "title": "Private Message",
       "type": "object",
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "toUserId": {
           "title": "Recipient",
           "type": "string"
@@ -7151,6 +7183,9 @@
   },
   "createRefLocale": {
     "formId": "createRefLocale",
+    "submitOmitFields": [
+      "hostId"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -7166,6 +7201,11 @@
       "title": "Ref Locale",
       "type": "object",
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "valueId": {
           "type": "string",
           "title": "Value Id",
@@ -7357,7 +7397,8 @@
     "formId": "createRefRelation",
     "submitOmitFields": [
       "fromTableId",
-      "toTableId"
+      "toTableId",
+      "hostId"
     ],
     "actions": [
       {
@@ -7374,6 +7415,11 @@
       "title": "Relation",
       "type": "object",
       "properties": {
+        "hostId": {
+          "title": "Host Id",
+          "type": "string",
+          "readonly": true
+        },
         "relationId": {
           "title": "Relation Id",
           "type": "string"
@@ -19342,6 +19388,16 @@
           "type": "string",
           "maxLength": 32
         },
+        "providerProtocol": {
+          "title": "Provider Protocol",
+          "description": "Upstream wire protocol. OpenAI-compatible providers such as Groq and Gemini use openai.",
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic"
+          ],
+          "default": "openai"
+        },
         "physicalModelId": {
           "title": "Physical Model Id",
           "type": "string",
@@ -19354,7 +19410,10 @@
         },
         "region": {
           "title": "Region",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 64
         },
         "transportBounds": {
@@ -19383,6 +19442,7 @@
         "providerAccountId",
         "deploymentName",
         "providerType",
+        "providerProtocol",
         "physicalModelId",
         "baseUrl"
       ]
@@ -19422,6 +19482,7 @@
           "url": "/r/data?name=model_provider"
         }
       },
+      "providerProtocol",
       {
         "key": "physicalModelId",
         "type": "dynaselect",
@@ -19507,6 +19568,15 @@
           "type": "string",
           "maxLength": 32
         },
+        "providerProtocol": {
+          "title": "Provider Protocol",
+          "description": "Upstream wire protocol. OpenAI-compatible providers such as Groq and Gemini use openai.",
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic"
+          ]
+        },
         "physicalModelId": {
           "title": "Physical Model Id",
           "type": "string",
@@ -19519,7 +19589,10 @@
         },
         "region": {
           "title": "Region",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 64
         },
         "transportBounds": {
@@ -19593,6 +19666,7 @@
           "url": "/r/data?name=model_provider"
         }
       },
+      "providerProtocol",
       {
         "key": "physicalModelId",
         "type": "dynaselect",
@@ -19679,7 +19753,10 @@
         },
         "expiresTs": {
           "title": "Expiration Time",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         },
         "lifecycleStatus": {
@@ -19777,7 +19854,10 @@
         },
         "expiresTs": {
           "title": "Expiration Time",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         },
         "lifecycleStatus": {
