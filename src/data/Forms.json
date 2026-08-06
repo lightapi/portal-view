@@ -19982,7 +19982,10 @@
         },
         "dataClassification": {
           "title": "Data Classification",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 32
         },
         "loggingMode": {
@@ -20187,7 +20190,10 @@
         },
         "dataClassification": {
           "title": "Data Classification",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 32
         },
         "loggingMode": {
@@ -20631,7 +20637,10 @@
         },
         "expiresTs": {
           "title": "Expiration Time",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         },
         "source": {
@@ -20747,7 +20756,10 @@
         },
         "expiresTs": {
           "title": "Expiration Time",
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date-time"
         },
         "source": {

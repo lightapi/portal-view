@@ -80,7 +80,7 @@ describe('LLM public alias form routes', () => {
     renderAliasForm('updatePublicAlias',{
       hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
       operations:['chat_completions'],requiredCapabilities:{tools:true},maxInputTokens:64000,
-      maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:'internal',
+      maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
       loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
       replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
       boundAgentDefId:'10000000-0000-4000-8000-000000000099',aggregateVersion:6,
@@ -95,7 +95,7 @@ describe('LLM public alias form routes', () => {
       service:'genai',action:'updateLlmPublicAlias',data:{
         hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
         operations:['chat_completions'],requiredCapabilities:{tools:true},maxInputTokens:64000,
-        maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:'internal',
+        maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
         loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
         replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
         boundAgentDefId:'10000000-0000-4000-8000-000000000099',aggregateVersion:6,

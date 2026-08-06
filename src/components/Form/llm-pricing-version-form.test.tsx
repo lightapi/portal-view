@@ -39,7 +39,7 @@ describe('LLM pricing version form routes', () => {
       hostId:'host-a',providerDeploymentId:'deployment-a',pricingVersion:3,
       inputMicrosPerMillion:2500000,outputMicrosPerMillion:10000000,
       cachedInputMicrosPerMillion:1250000,effectiveTs:'2026-08-01T12:00:00Z',
-      expiresTs:'2026-11-01T12:00:00Z',source:'provider-contract-2026-08',
+      expiresTs:null,source:'provider-contract-2026-08',
       approvedBy:'finops@example.com',
     });
     expect(await screen.findByRole('heading',{name:'Create Pricing Version'})).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('LLM pricing version form routes', () => {
         hostId:'host-a',providerDeploymentId:'deployment-a',pricingVersion:3,
         inputMicrosPerMillion:2500000,outputMicrosPerMillion:10000000,
         cachedInputMicrosPerMillion:1250000,effectiveTs:'2026-08-01T12:00:00Z',
-        expiresTs:'2026-11-01T12:00:00Z',source:'provider-contract-2026-08',
+        expiresTs:null,source:'provider-contract-2026-08',
         approvedBy:'finops@example.com',
       },
     });
@@ -65,7 +65,7 @@ describe('LLM pricing version form routes', () => {
       hostId:'host-a',pricingVersionId:'pricing-a',providerDeploymentId:'deployment-a',
       pricingVersion:3,inputMicrosPerMillion:2500000,outputMicrosPerMillion:10000000,
       cachedInputMicrosPerMillion:1250000,effectiveTs:'2026-08-01T12:00:00Z',
-      expiresTs:'2026-11-01T12:00:00Z',source:'provider-contract-2026-08',
+      expiresTs:null,source:'provider-contract-2026-08',
       approvedBy:'finops@example.com',aggregateVersion:4,
     });
     expect(await screen.findByRole('heading',{name:'Update Pricing Version'})).toBeInTheDocument();
@@ -79,7 +79,7 @@ describe('LLM pricing version form routes', () => {
         hostId:'host-a',pricingVersionId:'pricing-a',providerDeploymentId:'deployment-a',
         pricingVersion:3,inputMicrosPerMillion:2500000,outputMicrosPerMillion:10000000,
         cachedInputMicrosPerMillion:1250000,effectiveTs:'2026-08-01T12:00:00Z',
-        expiresTs:'2026-11-01T12:00:00Z',source:'provider-contract-2026-08',
+        expiresTs:null,source:'provider-contract-2026-08',
         approvedBy:'finops@example.com',aggregateVersion:4,
       },
     });

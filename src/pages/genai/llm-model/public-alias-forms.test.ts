@@ -40,6 +40,7 @@ describe('LLM public alias forms', () => {
     expect(definition.schema.properties.piiMode.enum).toEqual(['DENY','REDACT','TOKENIZE','ALLOW']);
     expect(definition.schema.properties.aliasVisibility.enum).toEqual(['PUBLIC','INTERNAL_LEGACY']);
     expect(definition.schema.properties.replacementAliasId.type).toEqual(['string','null']);
+    expect(definition.schema.properties.dataClassification.type).toEqual(['string','null']);
 
     const items = definition.form as FormItem[];
     expect(items.find(item => typeof item === 'object' && item.key === 'operations'))

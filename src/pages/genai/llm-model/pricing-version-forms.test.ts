@@ -41,7 +41,8 @@ describe('LLM pricing version forms', () => {
     }
     expect(definition.schema.properties.pricingVersion).toMatchObject({type:'integer',minimum:1});
     expect(definition.schema.properties.effectiveTs).toMatchObject({type:'string',format:'date-time'});
-    expect(definition.schema.properties.expiresTs).toMatchObject({type:'string',format:'date-time'});
+    expect(definition.schema.properties.expiresTs)
+      .toMatchObject({type:['string','null'],format:'date-time'});
 
     const items = definition.form as FormItem[];
     const deployment = items.find(item => typeof item === 'object' && item.key === 'providerDeploymentId');
