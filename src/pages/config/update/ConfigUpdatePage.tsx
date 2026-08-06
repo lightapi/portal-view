@@ -842,7 +842,13 @@ export default function ConfigUpdatePage() {
           enableColumnResizing
           enableRowActions
           state={tableState}
-          initialState={{ density: 'compact', grouping: ['configName'], expanded: true, pagination: { pageSize: 50, pageIndex: 0 } }}
+          initialState={{
+            density: 'compact',
+            grouping: ['configName'],
+            expanded: true,
+            showColumnFilters: true,
+            pagination: { pageSize: 50, pageIndex: 0 },
+          }}
           getRowId={(row) => rowKey(row)}
           muiToolbarAlertBannerProps={isError ? {
             color: 'error',
