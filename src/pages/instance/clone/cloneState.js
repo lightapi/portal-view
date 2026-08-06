@@ -64,6 +64,14 @@ export function propertySelectionKey(selection) {
   });
 }
 
+export function propertySelectionLabel(selection, propertyMetadata) {
+  const metadata = propertyMetadata?.[selection.propertyId];
+  if (!metadata?.configName || !metadata?.propertyName) {
+    return `${selection.scopeType} / ${selection.propertyId}`;
+  }
+  return `${selection.scopeType} / ${metadata.configName} / ${metadata.propertyName}`;
+}
+
 export function mergePlannedSelections(currentSelections, plannedSelections) {
   const currentByKey = new Map((currentSelections ?? []).map((selection) => [propertySelectionKey(selection), selection]));
   return (plannedSelections ?? []).map((selection) => {

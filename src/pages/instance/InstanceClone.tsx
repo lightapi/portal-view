@@ -16,7 +16,7 @@ import {
 } from './clone/cloneApi';
 import {
   cloneErrorText, cloneFormFingerprint, includeOriginalOption, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
-  isTransportError, selectedEntityIds, shouldPollClone,
+  isTransportError, propertySelectionLabel, selectedEntityIds, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
   CloneExecution, CloneOption, ClonePlan, CloneStatus, CloneStatusResult, CloneTargetOptions, PropertyAction,
@@ -57,10 +57,6 @@ const emptyForm: CloneForm = {
 const emptyTargetOptions: CloneTargetOptions = {
   productVersionId: [], envTag: [], environment: [], zone: [], region: [], lob: [],
 };
-
-function selectionLabel(selection: PropertySelection) {
-  return `${selection.scopeType} / ${selection.propertyId}`;
-}
 
 export default function InstanceClone() {
   const navigate = useNavigate();
@@ -220,6 +216,10 @@ export default function InstanceClone() {
     finally { setRevealing(null); }
   }, [plan, source]);
 
+  const hideRevealedValues = useCallback(() => {
+    setForm((current) => ({ ...current, revealedValues: {} }));
+  }, []);
+
   const execute = useCallback(async () => {
     if (!plan || !source || planFingerprint !== currentFingerprint) return;
     setExecuting(true); setError(null);
@@ -317,15 +317,22 @@ export default function InstanceClone() {
 
       {plan && (
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6">Property overrides</Typography>
-          <Typography variant="body2" color="text.secondary" mb={1}>Values stay masked. COPY is server-side and does not reveal the value.</Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} mb={1}>
+            <Box>
+              <Typography variant="h6">Property overrides</Typography>
+              <Typography variant="body2" color="text.secondary">Values stay masked. COPY is server-side and does not reveal the value.</Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              {Object.keys(form.revealedValues).length > 0 && <Button size="small" onClick={hideRevealedValues} disabled={revealing !== null}>Hide values</Button>}
+            </Stack>
+          </Stack>
           <Table size="small">
-            <TableHead><TableRow><TableCell>Scope / Property</TableCell><TableCell>Value</TableCell><TableCell>Action</TableCell><TableCell>Replacement / Reveal</TableCell></TableRow></TableHead>
+            <TableHead><TableRow><TableCell>Scope / Config / Property</TableCell><TableCell>Value</TableCell><TableCell>Action</TableCell><TableCell>Replacement / Reveal</TableCell></TableRow></TableHead>
             <TableBody>
               {form.propertySelections.map((selection, index) => {
                 const key = propertySelectionKey(selection); const revealed = form.revealedValues[key];
                 return <TableRow key={key}>
-                  <TableCell>{selectionLabel(selection)}</TableCell>
+                  <TableCell title={`Property ID: ${selection.propertyId}`}>{propertySelectionLabel(selection, plan.propertyMetadata)}</TableCell>
                   <TableCell>{revealed ?? '********'}</TableCell>
                   <TableCell>
                     <Select size="small" value={selection.action} onChange={(e) => changeProperty(index, { action: e.target.value as PropertyAction, replacementValue: null })}>

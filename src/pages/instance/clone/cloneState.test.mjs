@@ -11,6 +11,7 @@ import {
   normalizeCloneOptions,
   nextPollingDelay,
   propertySelectionKey,
+  propertySelectionLabel,
   selectedEntityIds,
   shouldPollClone,
 } from './cloneState.js';
@@ -51,6 +52,14 @@ test('fingerprint is deterministic and ignores revealed values', () => {
 test('stable property key does not contain replacement values', () => {
   const key = propertySelectionKey({ scopeType: 'INSTANCE', sourceParentIds: { instanceId: 'i' }, propertyId: 'p', expectedAggregateVersion: 2, replacementValue: 'secret' });
   assert.doesNotMatch(key, /secret/);
+});
+
+test('property selection label uses catalog names and falls back to the property ID', () => {
+  const selection = { scopeType: 'INSTANCE', propertyId: 'property-id' };
+  assert.equal(propertySelectionLabel(selection, {
+    'property-id': { configName: 'server', propertyName: 'enableHttp2' },
+  }), 'INSTANCE / server / enableHttp2');
+  assert.equal(propertySelectionLabel(selection, {}), 'INSTANCE / property-id');
 });
 
 test('poll delay backs off, jitters, and stays capped', () => {

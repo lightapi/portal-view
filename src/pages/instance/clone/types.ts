@@ -10,6 +10,12 @@ export type PropertySelection = {
   replacementValue?: string | null;
 };
 
+export type PropertyMetadata = {
+  configName: string;
+  propertyName: string;
+  valueType?: string | null;
+};
+
 export type PlanRow = {
   selector: string;
   label: string;
@@ -37,6 +43,7 @@ export type ClonePlan = {
   planHash: string;
   rows: PlanRow[];
   propertySelections: PropertySelection[];
+  propertyMetadata?: Record<string, PropertyMetadata>;
   warnings: string[];
   eventCount: number;
   payloadBytes: number;
