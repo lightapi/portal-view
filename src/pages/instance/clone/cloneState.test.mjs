@@ -12,7 +12,8 @@ import {
   nextPollingDelay,
   propertySelectionKey,
   propertySelectionLabel,
-  selectedEntityIds,
+  plannedSelectedEntityIds,
+  selectedEntityOptions,
   shouldPollClone,
 } from './cloneState.js';
 
@@ -78,7 +79,18 @@ test('polling is single-flight and stops for terminal states', () => {
 });
 
 test('extracts selectable file and deployment IDs from metadata rows', () => {
-  const rows = [{ selector: 'ConfigInstanceFile:file-1' }, { selector: 'DeploymentInstance:dep-1' }, { selector: 'INSTANCE:ignored' }];
-  assert.deepEqual(selectedEntityIds(rows, 'ConfigInstanceFile'), ['file-1']);
-  assert.deepEqual(selectedEntityIds(rows, 'DeploymentInstance'), ['dep-1']);
+  const rows = [
+    { selector: 'ConfigInstanceFile:file-1', label: 'File one', selected: true },
+    { selector: 'DeploymentInstance:dep-1', label: 'Deployment one', selected: true },
+    { selector: 'InstanceApi:api-1', label: 'Orders / 1.0.0', selected: true },
+    { selector: 'InstanceApi:api-2', label: 'Payments / 1.0.0', selected: false },
+    { selector: 'INSTANCE:ignored', selected: true },
+  ];
+  assert.deepEqual(plannedSelectedEntityIds(rows, 'ConfigInstanceFile'), ['file-1']);
+  assert.deepEqual(plannedSelectedEntityIds(rows, 'DeploymentInstance'), ['dep-1']);
+  assert.deepEqual(plannedSelectedEntityIds(rows, 'InstanceApi'), ['api-1']);
+  assert.deepEqual(selectedEntityOptions(rows, 'InstanceApi'), [
+    { id: 'api-1', label: 'Orders / 1.0.0' },
+    { id: 'api-2', label: 'Payments / 1.0.0' },
+  ]);
 });

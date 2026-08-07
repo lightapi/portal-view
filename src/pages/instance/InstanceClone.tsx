@@ -16,7 +16,7 @@ import {
 } from './clone/cloneApi';
 import {
   cloneErrorText, cloneFormFingerprint, includeOriginalOption, isAbortError, isTerminalCloneStatus, mergePlannedSelections, nextPollingDelay, propertySelectionKey,
-  isTransportError, propertySelectionLabel, selectedEntityIds, shouldPollClone,
+  isTransportError, propertySelectionLabel, plannedSelectedEntityIds, selectedEntityOptions, shouldPollClone,
 } from './clone/cloneState.js';
 import type {
   CloneExecution, CloneOption, ClonePlan, CloneStatus, CloneStatusResult, CloneTargetOptions, PropertyAction,
@@ -39,6 +39,10 @@ type CloneForm = {
   includeFiles: boolean;
   fileSelections: string[];
   confirmCertificates: boolean;
+  includeApis: boolean;
+  apiSelections: string[];
+  includeApps: boolean;
+  appSelections: string[];
   includeDeployments: boolean;
   deploymentSelections: string[];
   createSnapshot: boolean;
@@ -50,7 +54,8 @@ const emptyForm: CloneForm = {
   targetInstanceName: '', targetEnvTag: '', targetEnvironment: '', targetServiceId: '',
   targetProductVersionId: '', description: '', zone: '', region: '', lob: '', resourceName: '',
   businessName: '', topicClassification: '', includeFiles: false, fileSelections: [],
-  confirmCertificates: false, includeDeployments: false, deploymentSelections: [],
+  confirmCertificates: false, includeApis: true, apiSelections: [], includeApps: true, appSelections: [],
+  includeDeployments: false, deploymentSelections: [],
   createSnapshot: false, propertySelections: [], revealedValues: {},
 };
 
@@ -141,8 +146,10 @@ export default function InstanceClone() {
 
   const currentFingerprint = useMemo(() => cloneFormFingerprint(form), [form]);
   const canExecute = Boolean(plan && planFingerprint === currentFingerprint && !executing && !status);
-  const fileIds = useMemo(() => selectedEntityIds(plan?.rows, 'ConfigInstanceFile'), [plan]);
-  const deploymentIds = useMemo(() => selectedEntityIds(plan?.rows, 'DeploymentInstance'), [plan]);
+  const fileOptions = useMemo(() => selectedEntityOptions(plan?.rows, 'ConfigInstanceFile'), [plan]);
+  const apiOptions = useMemo(() => selectedEntityOptions(plan?.rows, 'InstanceApi'), [plan]);
+  const appOptions = useMemo(() => selectedEntityOptions(plan?.rows, 'InstanceApp'), [plan]);
+  const deploymentOptions = useMemo(() => selectedEntityOptions(plan?.rows, 'DeploymentInstance'), [plan]);
 
   const updateForm = useCallback(<K extends keyof CloneForm>(key: K, value: CloneForm[K]) => {
     setForm((current) => ({ ...current, [key]: value, revealedValues: {} }));
@@ -166,11 +173,15 @@ export default function InstanceClone() {
     includeFiles: value.includeFiles,
     fileSelections: value.includeFiles ? value.fileSelections : [],
     confirmedCertificateSelections: value.includeFiles && value.confirmCertificates ? value.fileSelections : [],
+    includeApis: value.includeApis,
+    ...(plan ? { apiSelections: value.includeApis ? value.apiSelections : [] } : {}),
+    includeApps: value.includeApps,
+    ...(plan ? { appSelections: value.includeApps ? value.appSelections : [] } : {}),
     includeDeployments: value.includeDeployments,
     deploymentSelections: value.includeDeployments ? value.deploymentSelections : [],
     createSnapshot: value.createSnapshot,
     propertySelections: value.propertySelections,
-  }), [host, plan?.cloneRequestId, plan?.resolvedTarget.ownerPositionId, plan?.resolvedTarget.ownerUserId, source]);
+  }), [host, plan, source]);
 
   const handlePlan = useCallback(async () => {
     if (!source || !form.targetInstanceName.trim() || !form.targetEnvTag.trim() || !form.targetEnvironment.trim()) {
@@ -186,6 +197,8 @@ export default function InstanceClone() {
         targetEnvironment: result.resolvedTarget.environment,
         targetServiceId: result.resolvedTarget.serviceId,
         targetProductVersionId: result.resolvedTarget.productVersionId,
+        apiSelections: plannedSelectedEntityIds(result.rows, 'InstanceApi'),
+        appSelections: plannedSelectedEntityIds(result.rows, 'InstanceApp'),
         propertySelections: mergePlannedSelections(form.propertySelections, result.propertySelections),
         revealedValues: {},
       };
@@ -350,12 +363,14 @@ export default function InstanceClone() {
             </TableBody>
           </Table>
 
-          {form.includeFiles && <SelectionList title="Files" ids={fileIds} selected={form.fileSelections} onChange={(ids) => updateForm('fileSelections', ids)} />}
+          <SelectionList title="Instance APIs" options={apiOptions} selected={form.apiSelections} onChange={(ids) => setForm((current) => ({ ...current, includeApis: ids.length > 0, apiSelections: ids, propertySelections: [], revealedValues: {} }))} />
+          <SelectionList title="Instance apps" options={appOptions} selected={form.appSelections} onChange={(ids) => setForm((current) => ({ ...current, includeApps: ids.length > 0, appSelections: ids, propertySelections: [], revealedValues: {} }))} />
+          {form.includeFiles && <SelectionList title="Files" options={fileOptions} selected={form.fileSelections} onChange={(ids) => updateForm('fileSelections', ids)} />}
           {form.includeFiles && form.fileSelections.length > 0 && (
             <FormControlLabel control={<Checkbox checked={form.confirmCertificates} onChange={(e) => updateForm('confirmCertificates', e.target.checked)} />}
               label="I confirm that selected files may include certificates and should be copied." />
           )}
-          {form.includeDeployments && <SelectionList title="Deployment definitions" ids={deploymentIds} selected={form.deploymentSelections} onChange={(ids) => setForm((current) => ({ ...current, deploymentSelections: ids, propertySelections: [], revealedValues: {} }))} />}
+          {form.includeDeployments && <SelectionList title="Deployment definitions" options={deploymentOptions} selected={form.deploymentSelections} onChange={(ids) => setForm((current) => ({ ...current, deploymentSelections: ids, propertySelections: [], revealedValues: {} }))} />}
           <Divider sx={{ my: 2 }} />
           <Typography>Events: {plan.eventCount} / {plan.maxEvents}; serialized bytes: {plan.payloadBytes} / {plan.maxPayloadBytes}</Typography>
           <Typography variant="body2">Target identity: {Object.entries(plan.snapshotLookup).map(([key, value]) => `${key}=${value}`).join(', ')}</Typography>
@@ -402,11 +417,15 @@ function CloneSelect({ label, value, original, options, loading, required, onCha
     renderInput={(params) => <TextField {...params} required={required} label={label} />} />;
 }
 
-function SelectionList({ title, ids, selected, onChange }: { title: string; ids: string[]; selected: string[]; onChange: (ids: string[]) => void }) {
+function SelectionList({ title, options, selected, onChange }: { title: string; options: CloneOption[]; selected: string[]; onChange: (ids: string[]) => void }) {
   return <Box mt={2}>
-    <Typography variant="subtitle1">{title}</Typography>
-    {ids.length === 0 ? <Typography variant="body2">None available.</Typography> : ids.map((id) => (
-      <FormControlLabel key={id} control={<Checkbox checked={selected.includes(id)} onChange={(event) => onChange(event.target.checked ? [...selected, id] : selected.filter((value) => value !== id))} />} label={id} />
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>{title}</Typography>
+      <Button size="small" onClick={() => onChange(options.map((option) => option.id))} disabled={options.length === 0 || selected.length === options.length}>Select all</Button>
+      <Button size="small" onClick={() => onChange([])} disabled={selected.length === 0}>Clear all</Button>
+    </Stack>
+    {options.length === 0 ? <Typography variant="body2">None available.</Typography> : options.map((option) => (
+      <FormControlLabel key={option.id} control={<Checkbox checked={selected.includes(option.id)} onChange={(event) => onChange(event.target.checked ? [...selected, option.id] : selected.filter((value) => value !== option.id))} />} label={option.label} />
     ))}
   </Box>;
 }

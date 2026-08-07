@@ -96,10 +96,20 @@ export function shouldPollClone({ status, visible, online, inFlight }) {
   return status === 'ACCEPTED' && visible && online && !inFlight;
 }
 
-export function selectedEntityIds(rows, entityType) {
+export function plannedSelectedEntityIds(rows, entityType) {
   const prefix = `${entityType}:`;
   return (rows ?? [])
+    .filter((row) => row?.selected !== false)
     .map((row) => row.selector)
     .filter((selector) => typeof selector === 'string' && selector.startsWith(prefix))
     .map((selector) => selector.slice(prefix.length));
+}
+
+export function selectedEntityOptions(rows, entityType) {
+  const prefix = `${entityType}:`;
+  return (rows ?? []).flatMap((row) => {
+    if (typeof row?.selector !== 'string' || !row.selector.startsWith(prefix)) return [];
+    const id = row.selector.slice(prefix.length);
+    return [{ id, label: typeof row.label === 'string' && row.label ? row.label : id }];
+  });
 }
