@@ -732,8 +732,8 @@ function genAiStepProgress(task: TaskDefinition, context: TaskResolvedContext): 
   const skillKnown = has(context, "skillId");
   const toolKnown = has(context, "toolId");
   const parameterKnown = has(context, "paramId");
-  const memoryKnown = has(context, "memId");
-  const sessionKnown = has(context, "sessionId") || has(context, "sessionHistoryId") || has(context, "processId");
+  const memoryKnown = has(context, "bankId");
+  const sessionKnown = has(context, "sessionId") || has(context, "processId");
   const progressByStep = new Map<string, TaskStepProgress>();
 
   progressByStep.set(

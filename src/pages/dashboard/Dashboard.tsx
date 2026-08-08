@@ -66,7 +66,7 @@ const MOCK_STATS = [
 const QUICK_ACTIONS = [
   { label: 'Onboard MCP', icon: <AddCircleIcon />, color: 'primary', route: '/app/tasks/mcp-onboard-api' },
   { label: 'Configure Agent', icon: <SettingsIcon />, color: 'secondary', route: '/app/tasks/manage-genai-assets' },
-  { label: 'Manage Memory', icon: <StorageIcon />, color: 'info', route: '/app/genai/AgentMemory' },
+  { label: 'Manage Memory', icon: <StorageIcon />, color: 'info', route: '/app/genai/MemoryBanks' },
   { label: 'Security Logs', icon: <VerifiedUserIcon />, color: 'warning', route: '/app/oauth/authSessionAudit' },
 ];
 

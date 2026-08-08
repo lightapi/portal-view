@@ -180,11 +180,12 @@ function selectTaskStep(task: TaskDefinition, context: TaskResolvedContext): Tas
   }
 
   if (task.id === "manage-genai-assets") {
+    if (has(context, "bankId") && has(context, "sessionId")) return task.steps.find((step) => step.id === "session-history") ?? task.steps[0];
+    if (has(context, "bankId")) return task.steps.find((step) => step.id === "memory") ?? task.steps[0];
     if (has(context, "skillId") && has(context, "toolId")) return task.steps.find((step) => step.id === "skill-tool") ?? task.steps[0];
     if (has(context, "agentDefId") && has(context, "skillId")) return task.steps.find((step) => step.id === "agent-skill") ?? task.steps[0];
     if (has(context, "toolId") && !has(context, "paramId")) return task.steps.find((step) => step.id === "tool-param") ?? task.steps[0];
-    if (has(context, "agentDefId") && has(context, "memId")) return task.steps.find((step) => step.id === "memory") ?? task.steps[0];
-    if (has(context, "sessionId") || has(context, "sessionHistoryId")) return task.steps.find((step) => step.id === "session-history") ?? task.steps[0];
+    if (has(context, "sessionId")) return task.steps.find((step) => step.id === "session-history") ?? task.steps[0];
     if (!has(context, "agentDefId")) return task.steps.find((step) => step.id === "agent") ?? task.steps[0];
     if (!has(context, "skillId")) return task.steps.find((step) => step.id === "skill") ?? task.steps[0];
     if (!has(context, "toolId")) return task.steps.find((step) => step.id === "tool") ?? task.steps[0];
@@ -356,9 +357,7 @@ export default function TaskActionPanel({
     || context.parentSkillId
     || context.toolId
     || context.paramId
-    || context.memId
     || context.sessionId
-    || context.sessionHistoryId
     || context.dependsOnSkillId
     || context.domain
     || context.processId

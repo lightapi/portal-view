@@ -289,7 +289,10 @@ function Form() {
           { state: { data } },
         );
       } else {
-        navigate(action.success, { state: { data } });
+        const source = typeof location.state?.source === "string" && location.state.source.startsWith("/app/")
+          ? location.state.source
+          : null;
+        navigate(action.returnToSource === true && source ? source : action.success, { state: { data } });
       }
     } catch (e) {
       setFetching(false);

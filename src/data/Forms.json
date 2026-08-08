@@ -22218,826 +22218,96 @@
       "active"
     ]
   },
-  "createAgentSessionHistory": {
-    "formId": "createAgentSessionHistory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "createAgentSessionHistory",
-        "version": "0.1.0",
-        "title": "Create Agent Session History Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
+  "createAgentMemoryBank": {
+    "formId": "createAgentMemoryBank",
+    "actions": [{"host":"lightapi.net","service":"genai","action":"createAgentMemoryBank","version":"0.1.0","title":"Create Memory Bank","success":"/app/genai/MemoryBanks","failure":"/app/failure"}],
     "schema": {
-      "title": "Create Agent Session History Form",
-      "type": "object",
+      "title": "Create Hindsight Memory Bank", "type": "object", "additionalProperties": false,
       "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "sessionHistoryId": {
-          "title": "Session History Id",
-          "type": "string"
-        },
-        "processId": {
-          "title": "Process Id",
-          "type": "string"
-        },
-        "taskId": {
-          "title": "Task Id",
-          "type": "string"
-        },
-        "role": {
-          "title": "Role",
-          "type": "string",
-          "enum": [
-            "system",
-            "user",
-            "assistant",
-            "tool"
-          ]
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "toolCallId": {
-          "title": "Tool Call Id",
-          "type": "string"
-        }
+        "hostId": {"title":"Host Id","type":"string","readonly":true},
+        "bankId": {"title":"Bank Id (optional)","type":"string"},
+        "agentDefId": {"title":"Agent Definition Id","type":"string"},
+        "userId": {"title":"User Id","type":"string"},
+        "bankName": {"title":"Bank Name","type":"string","minLength":1,"maxLength":126},
+        "disposition": {"title":"Disposition","type":"object","additionalProperties":false,"default":{"skepticism":3,"literalism":3,"empathy":3},"properties":{"skepticism":{"type":"integer","minimum":1,"maximum":5},"literalism":{"type":"integer","minimum":1,"maximum":5},"empathy":{"type":"integer","minimum":1,"maximum":5}},"required":["skepticism","literalism","empathy"]},
+        "background": {"title":"Background","type":["string","null"],"maxLength":65536}
       },
-      "required": [
-        "hostId",
-        "sessionHistoryId",
-        "processId",
-        "role",
-        "content"
-      ]
+      "required": ["hostId","bankName"]
     },
-    "form": [
-      "hostId",
-      "sessionHistoryId",
-      "processId",
-      "taskId",
-      "role",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 10
-      },
-      "toolCallId"
-    ]
+    "form": ["hostId","bankId","agentDefId","userId","bankName",{"key":"disposition","type":"structured","tabs":["form","json","yaml"],"defaultTab":"form","editorRows":8},{"key":"background","type":"textarea","rows":8}]
   },
-  "updateAgentSessionHistory": {
-    "formId": "updateAgentSessionHistory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "updateAgentSessionHistory",
-        "version": "0.1.0",
-        "title": "Update Agent Session History Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
+  "updateAgentMemoryBank": {
+    "formId": "updateAgentMemoryBank",
+    "actions": [{"host":"lightapi.net","service":"genai","action":"updateAgentMemoryBank","version":"0.1.0","title":"Update Memory Bank","success":"/app/genai/MemoryBanks","failure":"/app/failure"}],
     "schema": {
-      "title": "Update Agent Session History Form",
-      "type": "object",
+      "title": "Update Hindsight Memory Bank", "type": "object", "additionalProperties": false,
       "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "sessionHistoryId": {
-          "title": "Session History Id",
-          "type": "string",
-          "readonly": true
-        },
-        "processId": {
-          "title": "Process Id",
-          "type": "string"
-        },
-        "taskId": {
-          "title": "Task Id",
-          "type": "string"
-        },
-        "role": {
-          "title": "Role",
-          "type": "string",
-          "enum": [
-            "system",
-            "user",
-            "assistant",
-            "tool"
-          ]
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "toolCallId": {
-          "title": "Tool Call Id",
-          "type": "string"
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
-        }
+        "hostId": {"title":"Host Id","type":"string","readonly":true},
+        "bankId": {"title":"Bank Id","type":"string","readonly":true},
+        "agentDefId": {"title":"Agent Definition Id","type":["string","null"]},
+        "userId": {"title":"User Id","type":["string","null"]},
+        "bankName": {"title":"Bank Name","type":"string","minLength":1,"maxLength":126},
+        "disposition": {"title":"Disposition","type":"object","additionalProperties":false,"properties":{"skepticism":{"type":"integer","minimum":1,"maximum":5},"literalism":{"type":"integer","minimum":1,"maximum":5},"empathy":{"type":"integer","minimum":1,"maximum":5}},"required":["skepticism","literalism","empathy"]},
+        "background": {"title":"Background","type":["string","null"],"maxLength":65536},
+        "aggregateVersion": {"title":"Aggregate Version","type":"integer","minimum":1,"readonly":true}
       },
-      "required": [
-        "hostId",
-        "sessionHistoryId",
-        "processId",
-        "role",
-        "content",
-        "active"
-      ]
+      "required": ["hostId","bankId","aggregateVersion"]
     },
-    "form": [
-      "hostId",
-      "sessionHistoryId",
-      "processId",
-      "taskId",
-      "role",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 10
-      },
-      "toolCallId",
-      "active"
-    ]
+    "form": ["hostId","bankId","agentDefId","userId","bankName",{"key":"disposition","type":"structured","tabs":["form","json","yaml"],"defaultTab":"form","editorRows":8},{"key":"background","type":"textarea","rows":8},"aggregateVersion"]
   },
-  "createSessionMemory": {
-    "formId": "createSessionMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "createSessionMemory",
-        "version": "0.1.0",
-        "title": "Create Session Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Create Session Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string"
-        },
-        "sessionId": {
-          "title": "Session Id",
-          "type": "string"
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "userId": {
-          "title": "User Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "importanceScore": {
-          "title": "Importance Score",
-          "type": "number",
-          "default": 1
-        },
-        "expiresAt": {
-          "title": "Expires At",
-          "type": "string",
-          "format": "date-time"
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "sessionId",
-        "agentDefId",
-        "content"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "sessionId",
-      "agentDefId",
-      "userId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "importanceScore",
-      "expiresAt",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      }
-    ]
+  "createAgentMemoryDoc": {
+    "formId":"createAgentMemoryDoc",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"createAgentMemoryDoc","version":"0.1.0","title":"Create Document","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Create Memory Document","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"docId":{"title":"Document Id (optional)","type":"string"},"originalText":{"title":"Original Text","type":"string","maxLength":1048576},"contentHash":{"title":"Content Hash","type":"string","maxLength":128}},"required":["hostId","bankId"]},
+    "form":["hostId","bankId","docId",{"key":"originalText","type":"textarea","rows":12},"contentHash"]
   },
-  "updateSessionMemory": {
-    "formId": "updateSessionMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "updateSessionMemory",
-        "version": "0.1.0",
-        "title": "Update Session Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Update Session Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string",
-          "readonly": true
-        },
-        "sessionId": {
-          "title": "Session Id",
-          "type": "string"
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "userId": {
-          "title": "User Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "importanceScore": {
-          "title": "Importance Score",
-          "type": "number",
-          "default": 1
-        },
-        "expiresAt": {
-          "title": "Expires At",
-          "type": "string",
-          "format": "date-time"
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "sessionId",
-        "agentDefId",
-        "content",
-        "active"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "sessionId",
-      "agentDefId",
-      "userId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "importanceScore",
-      "expiresAt",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      },
-      "active"
-    ]
+  "updateAgentMemoryDoc": {
+    "formId":"updateAgentMemoryDoc",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"updateAgentMemoryDoc","version":"0.1.0","title":"Update Document","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Update Memory Document","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"docId":{"title":"Document Id","type":"string","readonly":true},"originalText":{"title":"Original Text","type":["string","null"],"maxLength":1048576},"contentHash":{"title":"Content Hash","type":["string","null"],"maxLength":128},"aggregateVersion":{"title":"Aggregate Version","type":"integer","minimum":1,"readonly":true}},"required":["hostId","bankId","docId","aggregateVersion"]},
+    "form":["hostId","bankId","docId",{"key":"originalText","type":"textarea","rows":12},"contentHash","aggregateVersion"]
   },
-  "createUserMemory": {
-    "formId": "createUserMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "createUserMemory",
-        "version": "0.1.0",
-        "title": "Create User Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Create User Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string"
-        },
-        "userId": {
-          "title": "User Id",
-          "type": "string"
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "memoryType": {
-          "title": "Memory Type",
-          "type": "string",
-          "enum": [
-            "fact",
-            "preference",
-            "summary"
-          ]
-        },
-        "importanceScore": {
-          "title": "Importance Score",
-          "type": "number",
-          "default": 1
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "userId",
-        "content"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "userId",
-      "agentDefId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "memoryType",
-      "importanceScore",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      }
-    ]
+  "createAgentMemoryEntity": {
+    "formId":"createAgentMemoryEntity",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"createAgentMemoryEntity","version":"0.1.0","title":"Create Entity","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Create Memory Entity","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"entityId":{"title":"Entity Id (optional)","type":"string"},"userId":{"title":"User Id","type":"string"},"canonicalName":{"title":"Canonical Name","type":"string","minLength":1,"maxLength":1024},"mentionCount":{"title":"Mention Count","type":"integer","minimum":0},"metadata":{"title":"Metadata","type":"object","additionalProperties":true,"default":{}}},"required":["hostId","bankId","canonicalName"]},
+    "form":["hostId","bankId","entityId","userId","canonicalName","mentionCount",{"key":"metadata","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10}]
   },
-  "updateUserMemory": {
-    "formId": "updateUserMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "updateUserMemory",
-        "version": "0.1.0",
-        "title": "Update User Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Update User Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string",
-          "readonly": true
-        },
-        "userId": {
-          "title": "User Id",
-          "type": "string"
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "memoryType": {
-          "title": "Memory Type",
-          "type": "string",
-          "enum": [
-            "fact",
-            "preference",
-            "summary"
-          ]
-        },
-        "importanceScore": {
-          "title": "Importance Score",
-          "type": "number",
-          "default": 1
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "userId",
-        "content",
-        "active"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "userId",
-      "agentDefId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "memoryType",
-      "importanceScore",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      },
-      "active"
-    ]
+  "updateAgentMemoryEntity": {
+    "formId":"updateAgentMemoryEntity",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"updateAgentMemoryEntity","version":"0.1.0","title":"Update Entity","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Update Memory Entity","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"entityId":{"title":"Entity Id","type":"string","readonly":true},"userId":{"title":"User Id","type":["string","null"]},"canonicalName":{"title":"Canonical Name","type":"string","minLength":1,"maxLength":1024},"mentionCount":{"title":"Mention Count","type":"integer","minimum":0},"metadata":{"title":"Metadata","type":"object","additionalProperties":true},"aggregateVersion":{"title":"Aggregate Version","type":"integer","minimum":1,"readonly":true}},"required":["hostId","bankId","entityId","aggregateVersion"]},
+    "form":["hostId","bankId","entityId","userId","canonicalName","mentionCount",{"key":"metadata","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},"aggregateVersion"]
   },
-  "createAgentMemory": {
-    "formId": "createAgentMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "createAgentMemory",
-        "version": "0.1.0",
-        "title": "Create Agent Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Create Agent Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string"
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "memoryType": {
-          "title": "Memory Type",
-          "type": "string",
-          "enum": [
-            "learning",
-            "state",
-            "persona",
-            "scratchpad"
-          ]
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "agentDefId",
-        "content"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "agentDefId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "memoryType",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      }
-    ]
+  "linkAgentMemoryUnitEntity": {
+    "formId":"linkAgentMemoryUnitEntity",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"linkAgentMemoryUnitEntity","version":"0.1.0","title":"Link Unit and Entity","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Link Memory Unit and Entity","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"unitId":{"title":"Unit Id","type":"string"},"entityId":{"title":"Entity Id","type":"string"}},"required":["hostId","bankId","unitId","entityId"]},
+    "form":["hostId","bankId","unitId","entityId"]
   },
-  "updateAgentMemory": {
-    "formId": "updateAgentMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "updateAgentMemory",
-        "version": "0.1.0",
-        "title": "Update Agent Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Update Agent Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string",
-          "readonly": true
-        },
-        "agentDefId": {
-          "title": "Agent Def Id",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "memoryType": {
-          "title": "Memory Type",
-          "type": "string",
-          "enum": [
-            "learning",
-            "state",
-            "persona",
-            "scratchpad"
-          ]
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "agentDefId",
-        "content",
-        "active"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "agentDefId",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "memoryType",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      },
-      "active"
-    ]
+  "createAgentMemoryLink": {
+    "formId":"createAgentMemoryLink",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"createAgentMemoryLink","version":"0.1.0","title":"Create Memory Link","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Create Memory Link","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"fromUnitId":{"title":"From Unit Id","type":"string"},"toUnitId":{"title":"To Unit Id","type":"string"},"linkType":{"title":"Link Type","type":"string","enum":["temporal","semantic","entity","causes","caused_by","enables","prevents"]},"weight":{"title":"Weight","type":"number","default":1}},"required":["hostId","bankId","fromUnitId","toUnitId","linkType"]},
+    "form":["hostId","bankId","fromUnitId","toUnitId","linkType","weight"]
   },
-  "createOrgMemory": {
-    "formId": "createOrgMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "createOrgMemory",
-        "version": "0.1.0",
-        "title": "Create Org Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Create Org Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string"
-        },
-        "domain": {
-          "title": "Domain",
-          "type": "string"
-        },
-        "source": {
-          "title": "Source",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "chunkIndex": {
-          "title": "Chunk Index",
-          "type": "integer"
-        },
-        "documentId": {
-          "title": "Document Id",
-          "type": "string"
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "domain",
-        "content"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "domain",
-      "source",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "chunkIndex",
-      "documentId",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      }
-    ]
+  "updateAgentMemoryLink": {
+    "formId":"updateAgentMemoryLink",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"updateAgentMemoryLink","version":"0.1.0","title":"Update Memory Link","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Update Memory Link","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"fromUnitId":{"title":"From Unit Id","type":"string","readonly":true},"toUnitId":{"title":"To Unit Id","type":"string","readonly":true},"linkType":{"title":"Link Type","type":"string","readonly":true,"enum":["temporal","semantic","entity","causes","caused_by","enables","prevents"]},"weight":{"title":"Weight","type":"number"},"aggregateVersion":{"title":"Aggregate Version","type":"integer","minimum":1,"readonly":true}},"required":["hostId","bankId","fromUnitId","toUnitId","linkType","weight","aggregateVersion"]},
+    "form":["hostId","bankId","fromUnitId","toUnitId","linkType","weight","aggregateVersion"]
   },
-  "updateOrgMemory": {
-    "formId": "updateOrgMemory",
-    "actions": [
-      {
-        "host": "lightapi.net",
-        "service": "genai",
-        "action": "updateOrgMemory",
-        "version": "0.1.0",
-        "title": "Update Org Memory Form",
-        "success": "/app/success",
-        "failure": "/app/failure"
-      }
-    ],
-    "schema": {
-      "title": "Update Org Memory Form",
-      "type": "object",
-      "properties": {
-        "hostId": {
-          "type": "string",
-          "title": "Host Id",
-          "readonly": true
-        },
-        "memId": {
-          "title": "Mem Id",
-          "type": "string",
-          "readonly": true
-        },
-        "domain": {
-          "title": "Domain",
-          "type": "string"
-        },
-        "source": {
-          "title": "Source",
-          "type": "string"
-        },
-        "content": {
-          "title": "Content",
-          "type": "string"
-        },
-        "chunkIndex": {
-          "title": "Chunk Index",
-          "type": "integer"
-        },
-        "documentId": {
-          "title": "Document Id",
-          "type": "string"
-        },
-        "metadata": {
-          "title": "Metadata",
-          "type": "string"
-        },
-        "active": {
-          "title": "Active",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "hostId",
-        "memId",
-        "domain",
-        "content",
-        "active"
-      ]
-    },
-    "form": [
-      "hostId",
-      "memId",
-      "domain",
-      "source",
-      {
-        "key": "content",
-        "type": "textarea",
-        "rows": 5
-      },
-      "chunkIndex",
-      "documentId",
-      {
-        "key": "metadata",
-        "type": "textarea",
-        "rows": 3
-      },
-      "active"
-    ]
+  "createAgentMemoryDirective": {
+    "formId":"createAgentMemoryDirective",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"createAgentMemoryDirective","version":"0.1.0","title":"Create Directive","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Create Memory Directive","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"directiveId":{"title":"Directive Id (optional)","type":"string"},"name":{"title":"Name","type":"string","minLength":1,"maxLength":256},"content":{"title":"Content","type":"string","minLength":1,"maxLength":1048576},"priority":{"title":"Priority","type":"integer","default":0}},"required":["hostId","bankId","name","content"]},
+    "form":["hostId","bankId","directiveId","name",{"key":"content","type":"textarea","rows":12},"priority"]
+  },
+  "updateAgentMemoryDirective": {
+    "formId":"updateAgentMemoryDirective",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"updateAgentMemoryDirective","version":"0.1.0","title":"Update Directive","success":"/app/genai/MemoryBanks","failure":"/app/failure","returnToSource":true}],
+    "schema":{"title":"Update Memory Directive","type":"object","additionalProperties":false,"properties":{"hostId":{"title":"Host Id","type":"string","readonly":true},"bankId":{"title":"Bank Id","type":"string","readonly":true},"directiveId":{"title":"Directive Id","type":"string","readonly":true},"name":{"title":"Name","type":"string","minLength":1,"maxLength":256},"content":{"title":"Content","type":"string","minLength":1,"maxLength":1048576},"priority":{"title":"Priority","type":"integer"},"aggregateVersion":{"title":"Aggregate Version","type":"integer","minimum":1,"readonly":true}},"required":["hostId","bankId","directiveId","aggregateVersion"]},
+    "form":["hostId","bankId","directiveId","name",{"key":"content","type":"textarea","rows":12},"priority","aggregateVersion"]
   },
   "createClientToken": {
     "formId": "createClientToken",

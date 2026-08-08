@@ -177,11 +177,8 @@ import SkillWorkflow from "./pages/genai/SkillWorkflow";
 import SkillWorkspace from "./pages/genai/SkillWorkspace";
 import SkillDependency from "./pages/genai/SkillDependency";
 import AgentSkill from "./pages/genai/AgentSkill";
-import AgentSessionHistory from "./pages/genai/AgentSessionHistory";
-import SessionMemory from "./pages/genai/SessionMemory";
-import UserMemory from "./pages/genai/UserMemory";
-import AgentMemory from "./pages/genai/AgentMemory";
-import OrgMemory from "./pages/genai/OrgMemory";
+import MemoryBanks from "./pages/genai/MemoryBanks";
+import MemoryBankWorkspace from "./pages/genai/MemoryBankWorkspace";
 import PromotionExport from "./pages/promotion/PromotionExport";
 import PromotionImport from "./pages/promotion/PromotionImport";
 import PromotionHistory from "./pages/promotion/PromotionHistory";
@@ -583,11 +580,8 @@ const App = () => {
           <Route path="genai/SkillWorkflow" element={<SkillWorkflow />} />
           <Route path="genai/SkillDependency" element={<SkillDependency />} />
           <Route path="genai/AgentSkill" element={<AgentSkill />} />
-          <Route path="genai/AgentSessionHistory" element={<AgentSessionHistory />} />
-          <Route path="genai/SessionMemory" element={<SessionMemory />} />
-          <Route path="genai/UserMemory" element={<UserMemory />} />
-          <Route path="genai/AgentMemory" element={<AgentMemory />} />
-          <Route path="genai/OrgMemory" element={<OrgMemory />} />
+          <Route path="genai/MemoryBanks" element={<MemoryBanks />} />
+          <Route path="genai/MemoryBanks/:bankId" element={<MemoryBankWorkspace />} />
           <Route path="genai/chat" element={<Chat />} />
           <Route path="promotion/export" element={<PromotionExport />} />
           <Route path="promotion/import" element={<PromotionImport />} />

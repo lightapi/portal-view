@@ -80,9 +80,16 @@ export const taskContextKeys: TaskContextKey[] = [
   "parentSkillId",
   "toolId",
   "paramId",
-  "memId",
+  "bankId",
+  "docId",
+  "unitId",
+  "entityId",
+  "fromUnitId",
+  "toUnitId",
+  "linkType",
+  "directiveId",
+  "reflectionId",
   "sessionId",
-  "sessionHistoryId",
   "dependsOnSkillId",
   "domain",
   "processId",
@@ -168,7 +175,12 @@ function normalizePageRoute(route: string) {
 
 export function pageDefinitionForRoute(pages: PageDefinition[], route: string) {
   const normalizedRoute = normalizePageRoute(route).toLowerCase();
-  return pages.find((page) => normalizePageRoute(page.route).toLowerCase() === normalizedRoute);
+  const routeSegments = normalizedRoute.split("/");
+  return pages.find((page) => {
+    const pageSegments = normalizePageRoute(page.route).toLowerCase().split("/");
+    return pageSegments.length === routeSegments.length
+      && pageSegments.every((segment, index) => segment.startsWith(":") || segment === routeSegments[index]);
+  });
 }
 
 export function contextFromSearchParams(searchParams: URLSearchParams): TaskResolvedContext {
@@ -273,7 +285,7 @@ export function contextualTaskIdsForContext(context: TaskResolvedContext) {
   if (context.tableId || context.valueId || context.relationId || context.language) {
     add("manage-reference-data", "portal-snapshot-migration");
   }
-  if (context.agentDefId || context.skillId || context.toolId || context.paramId || context.memId || context.sessionId || context.sessionHistoryId) {
+  if (context.agentDefId || context.skillId || context.toolId || context.paramId || context.bankId || context.sessionId) {
     add("register-ai-agent", "manage-genai-assets");
   }
   if (context.providerId || context.tokenId || context.kid) {
