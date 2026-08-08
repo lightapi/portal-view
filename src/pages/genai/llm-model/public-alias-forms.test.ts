@@ -16,8 +16,10 @@ describe('LLM public alias forms', () => {
     expect(alias).toMatchObject({createForm:'createPublicAlias',updateForm:'updatePublicAlias'});
     expect(alias?.formFields).toEqual([
       'hostId','publicAliasId','environment','aliasName','operations','requiredCapabilities',
+      'requireExpectedEmbeddingSpace','embeddingWorkloadLane',
       'maxInputTokens','maxOutputTokens','maxRequestBytes','dataClassification','loggingMode',
-      'piiMode','lifecycleStatus','replacementAliasId','aliasVisibility','boundAgentDefId','aggregateVersion',
+      'piiMode','lifecycleStatus','replacementAliasId','aliasVisibility','boundAgentDefId',
+      'boundWorkloadPrincipal','aggregateVersion',
     ]);
     expect(alias?.formFields).not.toContain('active');
   });
@@ -36,9 +38,13 @@ describe('LLM public alias forms', () => {
     expect(definition.form).not.toContain('active');
     expect(definition.schema.properties.operations).toMatchObject({type:'array',items:{type:'string'}});
     expect(definition.schema.properties.requiredCapabilities).toMatchObject({type:'object'});
+    expect(definition.schema.properties.requireExpectedEmbeddingSpace).toMatchObject({type:'boolean'});
+    expect(definition.schema.properties.embeddingWorkloadLane.enum)
+      .toEqual(['standard','kb_query','kb_index']);
     expect(definition.schema.properties.loggingMode.enum).toEqual(['NONE','METADATA','REDACTED']);
     expect(definition.schema.properties.piiMode.enum).toEqual(['DENY','REDACT','TOKENIZE','ALLOW']);
-    expect(definition.schema.properties.aliasVisibility.enum).toEqual(['PUBLIC','INTERNAL_LEGACY']);
+    expect(definition.schema.properties.aliasVisibility.enum)
+      .toEqual(['PUBLIC','INTERNAL_LEGACY','INTERNAL_WORKLOAD']);
     expect(definition.schema.properties.replacementAliasId.type).toEqual(['string','null']);
     expect(definition.schema.properties.dataClassification.type).toEqual(['string','null']);
 
@@ -66,5 +72,8 @@ describe('LLM public alias forms', () => {
     expect(forms.updatePublicAlias.schema.required).toEqual(['hostId','publicAliasId','aggregateVersion']);
     expect(forms.updatePublicAlias.schema.properties.publicAliasId.readonly).toBe(true);
     expect(forms.updatePublicAlias.schema.properties.aggregateVersion.readonly).toBe(true);
+    expect(forms.updatePublicAlias.submitOmitFields).toEqual([
+      'operations','requiredCapabilities.embeddingSpace','requireExpectedEmbeddingSpace','embeddingWorkloadLane',
+    ]);
   });
 });

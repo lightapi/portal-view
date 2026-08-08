@@ -111,6 +111,25 @@ function setValueAtPath(target: any, path: string | string[], value: any) {
   });
 }
 
+function deleteValueAtPath(target: any, path: string | string[]) {
+  const parts = pathParts(path);
+  let current = target;
+  parts.forEach((part, index) => {
+    if (!current || typeof current !== "object") return;
+    if (index === parts.length - 1) {
+      delete current[part];
+      return;
+    }
+    const child = current[part];
+    if (!child || typeof child !== "object") {
+      current = undefined;
+      return;
+    }
+    current[part] = Array.isArray(child) ? [...child] : { ...child };
+    current = current[part];
+  });
+}
+
 function applyInitialDefaults(formData: any, source: any) {
   const next = { ...(source ?? {}) };
   const schemaProperties = formData?.schema?.properties ?? {};
@@ -138,7 +157,7 @@ function submittedFormModel(formId: string | undefined, source: any) {
   const submitOmitFields = formData?.submitOmitFields;
   if (Array.isArray(submitOmitFields)) {
     for (const field of submitOmitFields) {
-      delete next[field];
+      deleteValueAtPath(next, field);
     }
   }
   return next;

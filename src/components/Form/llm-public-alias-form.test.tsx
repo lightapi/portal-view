@@ -79,7 +79,11 @@ describe('LLM public alias form routes', () => {
     const user = userEvent.setup();
     renderAliasForm('updatePublicAlias',{
       hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
-      operations:['generate'],requiredCapabilities:{tools:true},maxInputTokens:64000,
+      operations:['generate'],requiredCapabilities:{
+        tools:true,
+        embeddingSpace:{spaceId:'old-space',revision:1,dimension:768,normalization:'l2',
+          distanceMetric:'cosine',documentInputTransformVersion:'document-v1'},
+      },maxInputTokens:64000,
       maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
       loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
       replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
@@ -94,13 +98,16 @@ describe('LLM public alias form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'updateLlmPublicAlias',data:{
         hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
-        operations:['generate'],requiredCapabilities:{tools:true},maxInputTokens:64000,
+        requiredCapabilities:{tools:true},maxInputTokens:64000,
         maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
         loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
         replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
         boundAgentDefId:'10000000-0000-4000-8000-000000000099',aggregateVersion:6,
       },
     });
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('operations');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data.requiredCapabilities)
+      .not.toHaveProperty('embeddingSpace');
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });

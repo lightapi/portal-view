@@ -19977,7 +19977,34 @@
           "title": "Required Capabilities",
           "type": "object",
           "additionalProperties": true,
+          "properties": {
+            "embeddingSpace": {
+              "title": "Embedding Space Contract",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "spaceId": {"type": "string", "minLength": 1, "maxLength": 255},
+                "revision": {"type": "integer", "minimum": 1},
+                "dimension": {"type": "integer", "minimum": 1},
+                "normalization": {"type": "string", "enum": ["none", "l2"]},
+                "distanceMetric": {"type": "string", "enum": ["cosine", "inner_product", "l2"]},
+                "documentInputTransformVersion": {"type": "string", "minLength": 1, "maxLength": 255}
+              },
+              "required": ["spaceId", "revision", "dimension", "normalization", "distanceMetric", "documentInputTransformVersion"]
+            }
+          },
           "default": {}
+        },
+        "requireExpectedEmbeddingSpace": {
+          "title": "Require Expected Embedding Space",
+          "type": "boolean",
+          "default": false
+        },
+        "embeddingWorkloadLane": {
+          "title": "Embedding Workload Lane",
+          "type": "string",
+          "enum": ["standard", "kb_query", "kb_index"],
+          "default": "standard"
         },
         "maxInputTokens": {
           "title": "Maximum Input Tokens",
@@ -20046,7 +20073,8 @@
           "type": "string",
           "enum": [
             "PUBLIC",
-            "INTERNAL_LEGACY"
+            "INTERNAL_LEGACY",
+            "INTERNAL_WORKLOAD"
           ],
           "default": "PUBLIC"
         },
@@ -20056,6 +20084,11 @@
             "string",
             "null"
           ]
+        },
+        "boundWorkloadPrincipal": {
+          "title": "Bound Workload Principal",
+          "type": ["string", "null"],
+          "maxLength": 255
         }
       },
       "required": [
@@ -20100,6 +20133,8 @@
         "defaultTab": "json",
         "editorRows": 10
       },
+      "requireExpectedEmbeddingSpace",
+      "embeddingWorkloadLane",
       "maxInputTokens",
       "maxOutputTokens",
       "maxRequestBytes",
@@ -20131,11 +20166,18 @@
             "hostId"
           ]
         }
-      }
+      },
+      "boundWorkloadPrincipal"
     ]
   },
   "updatePublicAlias": {
     "formId": "updatePublicAlias",
+    "submitOmitFields": [
+      "operations",
+      "requiredCapabilities.embeddingSpace",
+      "requireExpectedEmbeddingSpace",
+      "embeddingWorkloadLane"
+    ],
     "helpPath": "/help/portal-view/forms/update-public-alias",
     "actions": [
       {
@@ -20188,7 +20230,32 @@
           "title": "Required Capabilities",
           "type": "object",
           "additionalProperties": true,
+          "properties": {
+            "embeddingSpace": {
+              "title": "Embedding Space Contract",
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "spaceId": {"type": "string", "minLength": 1, "maxLength": 255},
+                "revision": {"type": "integer", "minimum": 1},
+                "dimension": {"type": "integer", "minimum": 1},
+                "normalization": {"type": "string", "enum": ["none", "l2"]},
+                "distanceMetric": {"type": "string", "enum": ["cosine", "inner_product", "l2"]},
+                "documentInputTransformVersion": {"type": "string", "minLength": 1, "maxLength": 255}
+              },
+              "required": ["spaceId", "revision", "dimension", "normalization", "distanceMetric", "documentInputTransformVersion"]
+            }
+          },
           "default": {}
+        },
+        "requireExpectedEmbeddingSpace": {
+          "title": "Require Expected Embedding Space",
+          "type": "boolean"
+        },
+        "embeddingWorkloadLane": {
+          "title": "Embedding Workload Lane",
+          "type": "string",
+          "enum": ["standard", "kb_query", "kb_index"]
         },
         "maxInputTokens": {
           "title": "Maximum Input Tokens",
@@ -20254,7 +20321,8 @@
           "type": "string",
           "enum": [
             "PUBLIC",
-            "INTERNAL_LEGACY"
+            "INTERNAL_LEGACY",
+            "INTERNAL_WORKLOAD"
           ]
         },
         "boundAgentDefId": {
@@ -20263,6 +20331,11 @@
             "string",
             "null"
           ]
+        },
+        "boundWorkloadPrincipal": {
+          "title": "Bound Workload Principal",
+          "type": ["string", "null"],
+          "maxLength": 255
         },
         "aggregateVersion": {
           "title": "Aggregate Version",
@@ -20314,6 +20387,8 @@
         "defaultTab": "json",
         "editorRows": 10
       },
+      "requireExpectedEmbeddingSpace",
+      "embeddingWorkloadLane",
       "maxInputTokens",
       "maxOutputTokens",
       "maxRequestBytes",
@@ -20346,6 +20421,7 @@
           ]
         }
       },
+      "boundWorkloadPrincipal",
       "aggregateVersion"
     ]
   },
