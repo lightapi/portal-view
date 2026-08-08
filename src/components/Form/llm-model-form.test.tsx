@@ -96,7 +96,7 @@ describe('LLM model form routes', () => {
       .toHaveAttribute('aria-selected', 'true');
 
     await applyJson('Modalities', ['text', 'image']);
-    await applyJson('Operations', ['chat_completions', 'embeddings']);
+    await applyJson('Operations', ['generate', 'embed']);
     await applyJson('Declared Capabilities', {streaming: true, tools: true});
     await user.click(screen.getByRole('button', {name: 'Create LLM Model'}));
 
@@ -104,7 +104,7 @@ describe('LLM model form routes', () => {
     const action = mocks.fetchClient.mock.calls[0][1].body;
     expect(action.data).toMatchObject({
       modalities: ['text', 'image'],
-      operations: ['chat_completions', 'embeddings'],
+      operations: ['generate', 'embed'],
       declaredCapabilities: {streaming: true, tools: true},
     });
     expect(Array.isArray(action.data.modalities)).toBe(true);
@@ -121,7 +121,7 @@ describe('LLM model form routes', () => {
       modelId: 'model-a',
       aggregateVersion: 3,
       modalities: ['text'],
-      operations: ['chat_completions'],
+      operations: ['generate'],
       declaredCapabilities: {streaming: true, tools: false},
     };
     renderFormRoute('updateLlmModel', existing);
@@ -138,7 +138,7 @@ describe('LLM model form routes', () => {
     await user.click(within(structuredGroup('Operations')).getByRole('tab', {name: 'YAML'}));
     expect(within(structuredGroup('Operations'))
       .getByRole('textbox', {name: 'Operations YAML editor'}))
-      .toHaveValue('- chat_completions\n');
+      .toHaveValue('- generate\n');
 
     await user.click(screen.getByRole('button', {name: 'Update LLM Model'}));
     await waitFor(() => expect(mocks.fetchClient).toHaveBeenCalledTimes(1));

@@ -22,7 +22,7 @@ describe('Aliases resource form navigation', () => {
     mocks.listLlm.mockReset();
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'governed-chat',
-      operations:['chat_completions'],requiredCapabilities:{tools:true,streaming:true},
+      operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
       maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
       dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
       lifecycleStatus:'ACTIVE',aliasVisibility:'PUBLIC',aggregateVersion:5,active:true,
@@ -44,7 +44,7 @@ describe('Aliases resource form navigation', () => {
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updatePublicAlias',{
       state:{data:expect.objectContaining({
         hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'governed-chat',
-        operations:['chat_completions'],requiredCapabilities:{tools:true,streaming:true},
+        operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
         maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
         dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
         lifecycleStatus:'ACTIVE',aliasVisibility:'PUBLIC',aggregateVersion:5,

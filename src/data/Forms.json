@@ -18535,10 +18535,13 @@
         "operations": {
           "title": "Operations",
           "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
           "items": {
-            "type": "string"
+            "type": "string",
+            "enum": ["generate", "embed"]
           },
-          "default": []
+          "default": ["generate"]
         },
         "declaredCapabilities": {
           "title": "Declared Capabilities",
@@ -18738,9 +18741,13 @@
         "operations": {
           "title": "Operations",
           "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
           "items": {
-            "type": "string"
-          }
+            "type": "string",
+            "enum": ["generate", "embed"]
+          },
+          "default": ["generate"]
         },
         "declaredCapabilities": {
           "title": "Declared Capabilities",
@@ -19390,13 +19397,15 @@
         },
         "providerProtocol": {
           "title": "Provider Protocol",
-          "description": "Upstream wire protocol. OpenAI-compatible providers such as Groq and Gemini use openai.",
+          "description": "Upstream wire protocol. Choose the exact upstream API contract; provider identity is configured separately.",
           "type": "string",
           "enum": [
-            "openai",
-            "anthropic"
+            "openai_chat",
+            "openai_responses",
+            "openai_embeddings",
+            "anthropic_messages"
           ],
-          "default": "openai"
+          "default": "openai_chat"
         },
         "physicalModelId": {
           "title": "Physical Model Id",
@@ -19570,11 +19579,13 @@
         },
         "providerProtocol": {
           "title": "Provider Protocol",
-          "description": "Upstream wire protocol. OpenAI-compatible providers such as Groq and Gemini use openai.",
+          "description": "Upstream wire protocol. Choose the exact upstream API contract; provider identity is configured separately.",
           "type": "string",
           "enum": [
-            "openai",
-            "anthropic"
+            "openai_chat",
+            "openai_responses",
+            "openai_embeddings",
+            "anthropic_messages"
           ]
         },
         "physicalModelId": {
@@ -19954,10 +19965,13 @@
         "operations": {
           "title": "Operations",
           "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
           "items": {
-            "type": "string"
+            "type": "string",
+            "enum": ["generate", "embed"]
           },
-          "default": []
+          "default": ["generate"]
         },
         "requiredCapabilities": {
           "title": "Required Capabilities",
@@ -20162,10 +20176,13 @@
         "operations": {
           "title": "Operations",
           "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
           "items": {
-            "type": "string"
+            "type": "string",
+            "enum": ["generate", "embed"]
           },
-          "default": []
+          "default": ["generate"]
         },
         "requiredCapabilities": {
           "title": "Required Capabilities",
@@ -20609,6 +20626,13 @@
           "title": "Provider Deployment",
           "type": "string"
         },
+        "operation": {
+          "title": "Operation",
+          "description": "Select the operation priced by this effective-dated rate.",
+          "type": "string",
+          "enum": ["generate", "embed"],
+          "default": "generate"
+        },
         "pricingVersion": {
           "title": "Pricing Version",
           "description": "Operator-assigned version number for this Deployment's rate schedule.",
@@ -20622,7 +20646,8 @@
         },
         "outputMicrosPerMillion": {
           "title": "Output Micros Per Million Tokens",
-          "type": "integer",
+          "description": "Required for generate and omitted for embed.",
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "cachedInputMicrosPerMillion": {
@@ -20657,9 +20682,9 @@
       "required": [
         "hostId",
         "providerDeploymentId",
+        "operation",
         "pricingVersion",
         "inputMicrosPerMillion",
-        "outputMicrosPerMillion",
         "effectiveTs",
         "source",
         "approvedBy"
@@ -20679,6 +20704,7 @@
           ]
         }
       },
+      "operation",
       "pricingVersion",
       "inputMicrosPerMillion",
       "outputMicrosPerMillion",
@@ -20728,6 +20754,11 @@
           "title": "Provider Deployment",
           "type": "string"
         },
+        "operation": {
+          "title": "Operation",
+          "type": "string",
+          "enum": ["generate", "embed"]
+        },
         "pricingVersion": {
           "title": "Pricing Version",
           "description": "Operator-assigned version number for this Deployment's rate schedule.",
@@ -20741,7 +20772,8 @@
         },
         "outputMicrosPerMillion": {
           "title": "Output Micros Per Million Tokens",
-          "type": "integer",
+          "description": "Required for generate and omitted for embed.",
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "cachedInputMicrosPerMillion": {
@@ -20800,6 +20832,7 @@
           ]
         }
       },
+      "operation",
       "pricingVersion",
       "inputMicrosPerMillion",
       "outputMicrosPerMillion",

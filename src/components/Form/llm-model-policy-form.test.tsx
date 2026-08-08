@@ -13,7 +13,7 @@ vi.mock('../../utils/fetchClient', () => ({BASE_URL:'',default:mocks.fetchClient
 vi.mock('../HelpLink', () => ({default:() => null}));
 
 const policies = {
-  accessPolicy:{allowedSubjectTypes:['AGENT','CLIENT'],allowedOperations:['chat_completions']},
+  accessPolicy:{allowedSubjectTypes:['AGENT','CLIENT'],allowedOperations:['generate']},
   budgetPolicy:{maxCostMicrosPerRequest:500000,monthlyCostMicros:50000000},
   contentPolicy:{loggingMode:'METADATA',allowPromptLogging:false},
   cachePolicy:{enabled:false},

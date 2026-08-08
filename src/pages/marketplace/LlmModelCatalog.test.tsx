@@ -35,7 +35,7 @@ describe('LLM model marketplace catalog', () => {
     mocks.queryLlm.mockResolvedValue([{
       hostId:'host-a', modelId:'model-a', providerType:'openai', physicalModelId:'gpt-a',
       modelFamily:'gpt', modelVersion:'1', lifecycleStatus:'ACTIVE', contextTokenLimit:128000,
-      outputTokenLimit:4096, modalities:['text'], operations:['chat_completions'], active:true,
+      outputTokenLimit:4096, modalities:['text'], operations:['generate'], active:true,
     }]);
   });
 

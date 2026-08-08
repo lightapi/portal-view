@@ -17,7 +17,7 @@ describe('LLM pricing version forms', () => {
       createForm:'createPricingVersion',updateForm:'updatePricingVersion',
     });
     expect(pricing?.formFields).toEqual([
-      'hostId','pricingVersionId','providerDeploymentId','pricingVersion',
+      'hostId','pricingVersionId','providerDeploymentId','operation','pricingVersion',
       'inputMicrosPerMillion','outputMicrosPerMillion','cachedInputMicrosPerMillion',
       'effectiveTs','expiresTs','source','approvedBy','aggregateVersion',
     ]);
@@ -36,9 +36,13 @@ describe('LLM pricing version forms', () => {
     expect(definition.schema.additionalProperties).toBe(false);
     expect(definition.schema.properties).not.toHaveProperty('active');
     expect(definition.form).not.toContain('active');
-    for (const field of ['inputMicrosPerMillion','outputMicrosPerMillion','cachedInputMicrosPerMillion'] as const) {
+    for (const field of ['inputMicrosPerMillion','cachedInputMicrosPerMillion'] as const) {
       expect(definition.schema.properties[field]).toMatchObject({type:'integer',minimum:0});
     }
+    expect(definition.schema.properties.outputMicrosPerMillion)
+      .toMatchObject({type:['integer','null'],minimum:0});
+    expect(definition.schema.properties.operation)
+      .toMatchObject({type:'string',enum:['generate','embed']});
     expect(definition.schema.properties.pricingVersion).toMatchObject({type:'integer',minimum:1});
     expect(definition.schema.properties.effectiveTs).toMatchObject({type:'string',format:'date-time'});
     expect(definition.schema.properties.expiresTs)
@@ -59,8 +63,8 @@ describe('LLM pricing version forms', () => {
 
   it('requires effective approved rates on create and optimistic concurrency on update', () => {
     expect(forms.createPricingVersion.schema.required).toEqual([
-      'hostId','providerDeploymentId','pricingVersion','inputMicrosPerMillion',
-      'outputMicrosPerMillion','effectiveTs','source','approvedBy',
+      'hostId','providerDeploymentId','operation','pricingVersion','inputMicrosPerMillion',
+      'effectiveTs','source','approvedBy',
     ]);
     expect(forms.updatePricingVersion.schema.required).toEqual([
       'hostId','pricingVersionId','aggregateVersion',

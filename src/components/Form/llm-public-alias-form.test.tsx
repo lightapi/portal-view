@@ -56,7 +56,7 @@ describe('LLM public alias form routes', () => {
       dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
     });
     expect(await screen.findByRole('heading',{name:'Create Public Alias'})).toBeInTheDocument();
-    await applyJson('Operations',['chat_completions']);
+    await applyJson('Operations',['generate']);
     await applyJson('Required Capabilities',{tools:true,streaming:true});
 
     await user.click(screen.getByRole('button',{name:'Create Public Alias'}));
@@ -64,7 +64,7 @@ describe('LLM public alias form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'createLlmPublicAlias',data:{
         hostId:'host-a',environment:'prod',aliasName:'governed-chat',
-        operations:['chat_completions'],requiredCapabilities:{tools:true,streaming:true},
+        operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
         maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
         dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
         lifecycleStatus:'DRAFT',aliasVisibility:'PUBLIC',
@@ -79,7 +79,7 @@ describe('LLM public alias form routes', () => {
     const user = userEvent.setup();
     renderAliasForm('updatePublicAlias',{
       hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
-      operations:['chat_completions'],requiredCapabilities:{tools:true},maxInputTokens:64000,
+      operations:['generate'],requiredCapabilities:{tools:true},maxInputTokens:64000,
       maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
       loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
       replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
@@ -94,7 +94,7 @@ describe('LLM public alias form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'updateLlmPublicAlias',data:{
         hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
-        operations:['chat_completions'],requiredCapabilities:{tools:true},maxInputTokens:64000,
+        operations:['generate'],requiredCapabilities:{tools:true},maxInputTokens:64000,
         maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
         loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
         replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',

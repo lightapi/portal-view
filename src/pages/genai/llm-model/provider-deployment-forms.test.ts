@@ -57,7 +57,9 @@ describe('LLM provider deployment forms', () => {
     expect(decodeURIComponent(account && typeof account === 'object' ? account.action?.url ?? '' : ''))
       .toContain('getLlmProviderAccountLabel');
     expect(provider).toMatchObject({type:'dynaselect',multiple:false});
-    expect(definition.schema.properties.providerProtocol.enum).toEqual(['openai','anthropic']);
+    expect(definition.schema.properties.providerProtocol.enum).toEqual([
+      'openai_chat','openai_responses','openai_embeddings','anthropic_messages',
+    ]);
     expect(definition.schema.properties.region.type).toEqual(['string','null']);
     expect(definition.form).toContain('providerProtocol');
     expect(model).toMatchObject({type:'dynaselect',multiple:false,action:{params:['providerType']}});
