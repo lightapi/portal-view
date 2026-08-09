@@ -1,16 +1,15 @@
 import { Box } from '@mui/material';
-import SwaggerUI from 'swagger-ui-react';
-import 'swagger-ui-react/swagger-ui.css';
+import OpenApiSpecEditor from '../../../components/OpenApiSpecEditor';
 
 interface SpecPreviewPanelProps {
-  spec: object;
+  value: string;
 }
 
-/** Renders a SwaggerUI spec viewer with house font-family applied. */
-export default function SpecPreviewPanel({ spec }: SpecPreviewPanelProps) {
+/** Renders a read-only YAML/JSON specification source viewer. */
+export default function SpecPreviewPanel({ value }: SpecPreviewPanelProps) {
   return (
-    <Box sx={{ '& .swagger-ui': { fontFamily: 'inherit' } }}>
-      <SwaggerUI spec={spec} docExpansion="list" defaultModelsExpandDepth={-1} />
+    <Box sx={{ bgcolor: 'background.paper' }}>
+      <OpenApiSpecEditor value={value} readOnly height="480px" />
     </Box>
   );
 }

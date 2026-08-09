@@ -1,14 +1,9 @@
 import { useState } from "react";
 import Button from "@mui/material/Button";
-import CodeMirror from "@uiw/react-codemirror";
 import { useNavigate, useLocation } from "react-router-dom";
-import { yaml } from "@codemirror/lang-yaml";
-import { githubLight } from "@uiw/codemirror-theme-github";
-import YAML from "yaml";
-import SwaggerUI from "swagger-ui-react";
-import "swagger-ui-react/swagger-ui.css";
 import FileUpload from "../../components/Upload/FileUpload";
-import { CircularProgress } from "@mui/material";
+import OpenApiSpecEditor from "../../components/OpenApiSpecEditor";
+import { Box, CircularProgress, Paper, Typography } from "@mui/material";
 import { apiPost } from "../../api/apiPost";
 
 export default function OpenapiEditor() {
@@ -17,18 +12,22 @@ export default function OpenapiEditor() {
   const { data } = location.state;
   const { serviceVersion } = data;
   
-  const [spec, setSpec] = useState(serviceVersion.spec || ""); // Ensure spec is not undefined
+  const [spec, setSpec] = useState(
+    typeof serviceVersion.spec === "string" ? serviceVersion.spec : "",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false); // State to handle submission loading
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const onChange = (value) => {
+  const onChange = (value: string) => {
     setSpec(value);
   };
 
-  const onUpload = (files) => {
+  const onUpload = (files: File[]) => {
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = function (e) {
-        setSpec(e.target.result as string);
+      reader.onload = (event) => {
+        const result = event.target?.result;
+        if (typeof result === "string") setSpec(result);
       };
       reader.readAsText(file);
     });
@@ -74,35 +73,34 @@ export default function OpenapiEditor() {
   };
 
   return (
-    <div>
-      {serviceVersion.apiId} - {serviceVersion.serviceId}
-      <div style={{ display: "flex", justifyContent: "flex-end", margin: "10px 0" }}>
+    <Box>
+      <Typography variant="h6">
+        {serviceVersion.apiId} - {serviceVersion.serviceId}
+      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", my: 1.5 }}>
         <Button 
           variant="contained" 
           color="primary" 
           onClick={submitSpec}
-          disabled={isSubmitting} // Disable button while submitting
+          disabled={isSubmitting || Boolean(validationError)}
         >
           {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "SUBMIT"}
         </Button>
-      </div>
+      </Box>
       <FileUpload
-        accept=".yaml,.yml"
-        label="OpenAPI specification file in YAML"
+        accept=".yaml,.yml,.json"
+        label="OpenAPI specification file in YAML or JSON"
         multiple={false}
         updateFilesCb={onUpload}
       />
-      <CodeMirror
-        value={spec}
-        height="300px"
-        width="100%" // Use responsive width
-        theme={githubLight}
-        extensions={[yaml()]}
-        onChange={onChange}
-      />
-      <SwaggerUI
-        spec={spec === undefined || spec.length === 0 ? "" : YAML.parse(spec)}
-      />
-    </div>
+      <Paper variant="outlined" sx={{ mt: 2, overflow: "hidden" }}>
+        <OpenApiSpecEditor
+          value={spec}
+          height="600px"
+          onValidationChange={setValidationError}
+          onChange={onChange}
+        />
+      </Paper>
+    </Box>
   );
 }

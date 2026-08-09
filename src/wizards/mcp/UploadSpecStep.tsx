@@ -32,10 +32,6 @@ export default function UploadSpecStep({ patch, patchVersion }: Props) {
   const processFile = (file: File) => {
     setParseError(null);
     setPreview(null);
-    if (file.name.endsWith('.json')) {
-      setParseError('JSON specs are not supported — please upload a YAML file (.yaml or .yml).');
-      return;
-    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
@@ -104,7 +100,7 @@ export default function UploadSpecStep({ patch, patchVersion }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept=".yaml,.yml"
+          accept=".yaml,.yml,.json"
           hidden
           onChange={onFileChange}
         />
@@ -113,7 +109,7 @@ export default function UploadSpecStep({ patch, patchVersion }: Props) {
           Drop your OpenAPI spec here
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          or <Box component="span" sx={{ color: 'primary.main', textDecoration: 'underline' }}>browse</Box> · YAML only (.yaml, .yml)
+          or <Box component="span" sx={{ color: 'primary.main', textDecoration: 'underline' }}>browse</Box> · JSON or YAML (.json, .yaml, .yml)
         </Typography>
       </Paper>
 
@@ -151,8 +147,8 @@ export default function UploadSpecStep({ patch, patchVersion }: Props) {
                 </Button>
               </Box>
 
-              {/* SwaggerUI viewer */}
-              {preview && <SpecPreviewPanel spec={preview.parsedDoc} />}
+              {/* Read-only JSON/YAML source viewer */}
+              {preview && <SpecPreviewPanel value={preview.rawText} />}
             </Paper>
           </div>
         </Fade>

@@ -16,7 +16,7 @@ interface SpecSectionProps {
 }
 
 /**
- * Collapsible OpenAPI spec upload + SwaggerUI preview section.
+ * Collapsible OpenAPI spec upload + JSON/YAML source preview section.
  * Only rendered when mode !== 'server'.
  */
 export default function SpecSection({ form, patch }: SpecSectionProps) {
@@ -30,16 +30,11 @@ export default function SpecSection({ form, patch }: SpecSectionProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.name.endsWith('.json')) {
-      setParseError('JSON specs are not supported — please upload a YAML file (.yaml or .yml).');
-      e.target.value = '';
-      return;
-    }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
       const parsed = tryParseDoc(text);
-      if (!parsed) { setParseError('Could not parse file — make sure it is valid YAML.'); return; }
+      if (!parsed) { setParseError('Could not parse file — make sure it is valid JSON or YAML.'); return; }
       setParseError(null);
       patch({ spec: text });
     };
@@ -55,7 +50,7 @@ export default function SpecSection({ form, patch }: SpecSectionProps) {
         borderRadius: 2, overflow: 'hidden',
       }}
     >
-      <input ref={fileInputRef} type="file" accept=".yaml,.yml" hidden onChange={handleFileChange} />
+      <input ref={fileInputRef} type="file" accept=".yaml,.yml,.json" hidden onChange={handleFileChange} />
 
       <Box
         onClick={() => setSpecOpen((o) => !o)}
@@ -88,13 +83,13 @@ export default function SpecSection({ form, patch }: SpecSectionProps) {
                 Replace
               </Button>
             </Box>
-            <SpecPreviewPanel spec={parsedDoc} />
+            <SpecPreviewPanel value={form.spec} />
           </>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, p: 5, textAlign: 'center' }}>
             <CloudUploadOutlinedIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
             <Typography variant="body2" color="text.secondary">
-              No specification attached. Upload a YAML file (.yaml, .yml) to preview it here and have endpoints auto-generated on submit.
+              No specification attached. Upload a JSON or YAML file to preview it here and have endpoints auto-generated on submit.
             </Typography>
             {parseError && <Typography variant="caption" color="error">{parseError}</Typography>}
             <Button variant="outlined" startIcon={<CloudUploadOutlinedIcon />}
