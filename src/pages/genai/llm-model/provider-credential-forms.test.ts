@@ -18,7 +18,7 @@ describe('LLM provider credential forms', () => {
       updateForm:'updateProviderCredential',
     });
     expect(credential?.formFields).toEqual([
-      'hostId','providerCredentialId','providerDeploymentId','credentialVersion',
+      'hostId','providerCredentialId','providerDeploymentId','providerEndpointId','credentialPurpose','credentialVersion',
       'secretReference','effectiveTs','expiresTs','lifecycleStatus','aggregateVersion',
     ]);
     expect(credential?.formFields).not.toContain('active');
@@ -62,19 +62,19 @@ describe('LLM provider credential forms', () => {
 
   it('requires the credential identity and activation window', () => {
     expect(forms.createProviderCredential.schema.required).toEqual([
-      'hostId','providerDeploymentId','credentialVersion','secretReference','effectiveTs',
+      'hostId','credentialPurpose','credentialVersion','secretReference','effectiveTs',
     ]);
     expect(forms.createProviderCredential.schema.properties.lifecycleStatus.enum).toEqual(['PENDING']);
     expect(forms.updateProviderCredential.schema.properties.lifecycleStatus.enum)
       .toEqual(['PENDING','ACTIVE','ROTATING','REVOKED','EXPIRED']);
     expect(forms.updateProviderCredential.schema.required).toEqual([
-      'hostId','providerCredentialId','providerDeploymentId','credentialVersion',
+      'hostId','providerCredentialId','credentialPurpose','credentialVersion',
       'secretReference','effectiveTs','aggregateVersion',
     ]);
     for (const field of ['providerCredentialId','aggregateVersion'] as const) {
       expect(forms.updateProviderCredential.schema.properties[field].readonly).toBe(true);
     }
-    for (const field of ['providerDeploymentId','credentialVersion','secretReference'] as const) {
+    for (const field of ['providerDeploymentId','providerEndpointId','credentialPurpose','credentialVersion','secretReference'] as const) {
       expect(forms.updateProviderCredential.schema.properties[field].readonly).not.toBe(true);
     }
   });

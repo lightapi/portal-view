@@ -19353,6 +19353,108 @@
       "aggregateVersion"
     ]
   },
+  "createLlmNetworkZone": {
+    "formId": "createLlmNetworkZone",
+    "helpPath": "/help/portal-view/forms/create-llm-network-zone",
+    "actions": [{"host":"lightapi.net","service":"genai","action":"createLlmNetworkZone","version":"0.1.0","title":"Create Network Zone","success":"/app/genai/LlmModelControlPlane","failure":"/app/failure"}],
+    "schema": {
+      "title": "Create LLM Network Zone", "type": "object", "additionalProperties": false,
+      "properties": {
+        "hostId": {"title":"Host Id","type":"string","readonly":true},
+        "zoneName": {"title":"Zone Name","type":"string","minLength":1,"maxLength":126},
+        "dnsNames": {"title":"Allowed DNS Names","type":"array","items":{"type":"string"},"default":[]},
+        "cidrs": {"title":"Allowed CIDRs","type":"array","items":{"type":"string"},"default":[]},
+        "allowedPorts": {"title":"Allowed Ports","type":"array","items":{"type":"integer","minimum":1,"maximum":65535},"default":[]},
+        "allowPrivateTls": {"title":"Allow Private TLS","type":"boolean","default":true},
+        "allowPrivatePlaintext": {"title":"Allow Private Plaintext","description":"Requires explicit endpoint risk acknowledgement.","type":"boolean","default":false},
+        "lifecycleStatus": {"title":"Lifecycle Status","type":"string","enum":["DRAFT"],"default":"DRAFT"}
+      },
+      "required": ["hostId","zoneName","dnsNames","cidrs","allowedPorts","allowPrivateTls","allowPrivatePlaintext"]
+    },
+    "form": ["hostId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext","lifecycleStatus"]
+  },
+  "updateLlmNetworkZone": {
+    "formId": "updateLlmNetworkZone",
+    "helpPath": "/help/portal-view/forms/update-llm-network-zone",
+    "actions": [{"host":"lightapi.net","service":"genai","action":"updateLlmNetworkZone","version":"0.1.0","title":"Update Network Zone","success":"/app/genai/LlmModelControlPlane","failure":"/app/failure"}],
+    "schema": {
+      "title":"Update LLM Network Zone","type":"object","additionalProperties":false,
+      "properties": {
+        "hostId":{"title":"Host Id","type":"string","readonly":true},
+        "networkZoneId":{"title":"Network Zone Id","type":"string","readonly":true},
+        "zoneName":{"title":"Zone Name","type":"string","minLength":1,"maxLength":126},
+        "dnsNames":{"title":"Allowed DNS Names","type":"array","items":{"type":"string"}},
+        "cidrs":{"title":"Allowed CIDRs","type":"array","items":{"type":"string"}},
+        "allowedPorts":{"title":"Allowed Ports","type":"array","items":{"type":"integer","minimum":1,"maximum":65535}},
+        "allowPrivateTls":{"title":"Allow Private TLS","type":"boolean"},
+        "allowPrivatePlaintext":{"title":"Allow Private Plaintext","type":"boolean"},
+        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT","ACTIVE","RETIRED"]},
+        "aggregateVersion":{"title":"Aggregate Version","type":"integer","readonly":true,"minimum":1}
+      },
+      "required":["hostId","networkZoneId","aggregateVersion"]
+    },
+    "form":["hostId","networkZoneId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext","lifecycleStatus","aggregateVersion"]
+  },
+  "createLlmProviderEndpoint": {
+    "formId":"createLlmProviderEndpoint",
+    "helpPath":"/help/portal-view/forms/create-llm-provider-endpoint",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"createLlmProviderEndpoint","version":"0.1.0","title":"Create Provider Endpoint","success":"/app/genai/LlmModelControlPlane","failure":"/app/failure"}],
+    "schema": {
+      "title":"Create LLM Provider Endpoint","type":"object","additionalProperties":false,
+      "properties": {
+        "hostId":{"title":"Host Id","type":"string","readonly":true},
+        "providerAccountId":{"title":"Provider Account","type":"string"},
+        "endpointName":{"title":"Endpoint Name","type":"string","minLength":1,"maxLength":126},
+        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages"]},
+        "baseUrl":{"title":"Base URL","description":"Use an HTTPS URL except for an explicitly approved private-plaintext endpoint.","type":"string"},
+        "headers":{"title":"Safe Non-secret Headers","description":"Authorization, cookies, proxy headers, and secret-looking values are rejected.","type":"object","additionalProperties":{"type":"string"},"default":{}},
+        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY"],"default":"NONE"},
+        "apiKeyHeader":{"title":"API Key Header","type":["string","null"],"enum":["authorization","x-api-key",null],"default":null},
+        "networkProfileMode":{"title":"Network Profile","type":"string","enum":["PUBLIC_TLS","PRIVATE_TLS","PRIVATE_PLAINTEXT"],"default":"PUBLIC_TLS"},
+        "networkTermination":{"title":"Termination","type":"string","enum":["NATIVE","LIGHT_GATEWAY_SIDECAR"],"default":"NATIVE"},
+        "networkZoneId":{"title":"Network Zone","type":["string","null"]},
+        "trustBundleReference":{"title":"Trust Bundle Reference","description":"Reference only; PEM bytes are never accepted here.","type":["string","null"],"maxLength":1024},
+        "trustBundleSha256":{"title":"Resolved Trust SHA-256","type":["string","null"],"pattern":"^[0-9a-f]{64}$","readonly":true},
+        "poolIdleTimeoutMs":{"title":"Pool Idle Timeout (ms)","type":"integer","minimum":1,"default":30000},
+        "clientRefreshIntervalMs":{"title":"Client Refresh Interval (ms)","type":"integer","minimum":1,"default":300000},
+        "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean","default":false},
+        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT"],"default":"DRAFT"}
+      },
+      "required":["hostId","providerAccountId","endpointName","providerProtocol","baseUrl","endpointAuthMode","networkProfileMode","networkTermination","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
+    },
+    "form":["hostId",{"key":"providerAccountId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination",{"key":"networkZoneId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmNetworkZoneLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","lifecycleStatus"]
+  },
+  "updateLlmProviderEndpoint": {
+    "formId":"updateLlmProviderEndpoint",
+    "helpPath":"/help/portal-view/forms/update-llm-provider-endpoint",
+    "actions":[{"host":"lightapi.net","service":"genai","action":"updateLlmProviderEndpoint","version":"0.1.0","title":"Update Provider Endpoint","success":"/app/genai/LlmModelControlPlane","failure":"/app/failure"}],
+    "schema": {
+      "title":"Update LLM Provider Endpoint","type":"object","additionalProperties":false,
+      "properties": {
+        "hostId":{"title":"Host Id","type":"string","readonly":true},
+        "providerEndpointId":{"title":"Provider Endpoint Id","type":"string","readonly":true},
+        "providerAccountId":{"title":"Provider Account","type":"string"},
+        "endpointName":{"title":"Endpoint Name","type":"string"},
+        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages"]},
+        "baseUrl":{"title":"Base URL","type":"string"},
+        "headers":{"title":"Safe Non-secret Headers","type":"object","additionalProperties":{"type":"string"}},
+        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY"]},
+        "apiKeyHeader":{"title":"API Key Header","type":["string","null"],"enum":["authorization","x-api-key",null]},
+        "networkProfileMode":{"title":"Network Profile","type":"string","enum":["PUBLIC_TLS","PRIVATE_TLS","PRIVATE_PLAINTEXT"]},
+        "networkTermination":{"title":"Termination","type":"string","enum":["NATIVE","LIGHT_GATEWAY_SIDECAR"]},
+        "networkZoneId":{"title":"Network Zone","type":["string","null"]},
+        "trustBundleReference":{"title":"Trust Bundle Reference","type":["string","null"]},
+        "trustBundleSha256":{"title":"Resolved Trust SHA-256","type":["string","null"],"readonly":true},
+        "poolIdleTimeoutMs":{"title":"Pool Idle Timeout (ms)","type":"integer","minimum":1},
+        "clientRefreshIntervalMs":{"title":"Client Refresh Interval (ms)","type":"integer","minimum":1},
+        "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean"},
+        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT","ACTIVE","SUSPENDED","RETIRED"]},
+        "aggregateVersion":{"title":"Aggregate Version","type":"integer","readonly":true,"minimum":1}
+      },
+      "required":["hostId","providerEndpointId","aggregateVersion"]
+    },
+    "form":["hostId","providerEndpointId","providerAccountId","endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination","networkZoneId","trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","lifecycleStatus","aggregateVersion"]
+  },
   "createProviderDeployment": {
     "formId": "createProviderDeployment",
     "helpPath": "/help/portal-view/forms/create-provider-deployment",
@@ -19431,6 +19533,47 @@
           "additionalProperties": true,
           "default": {}
         },
+        "providerEndpointId": {
+          "title": "Provider Endpoint",
+          "type": "string"
+        },
+        "deploymentRevisionId": {
+          "title": "Deployment Revision Id",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "physicalRuntimeId": {
+          "title": "Physical Runtime Id",
+          "description": "Stable identity of the process or GPU-backed runtime, used for isolation checks.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "capacityDomainId": {
+          "title": "Capacity Domain Id",
+          "description": "Deployments in protected lanes must not share this capacity domain.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "runtimeCapacity": {
+          "title": "Runtime Capacity",
+          "description": "Declare maxParallelRequests, maxQueuedRequests, and bounded cold-start, stream-setup, and request timeouts.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "readinessPolicy": {
+          "title": "Readiness Policy",
+          "type": "string",
+          "enum": ["IMMEDIATE", "WARM_BEFORE_ELIGIBLE"],
+          "default": "WARM_BEFORE_ELIGIBLE"
+        },
+        "expectedSidecar": {
+          "title": "Expected Sidecar Identity",
+          "description": "Profile version and generated config digest only; never include runtime credentials.",
+          "type": ["object", "null"]
+        },
         "refreshBeforeSeconds": {
           "title": "Refresh Before Seconds",
           "type": "integer",
@@ -19453,7 +19596,13 @@
         "providerType",
         "providerProtocol",
         "physicalModelId",
-        "baseUrl"
+        "baseUrl",
+        "providerEndpointId",
+        "deploymentRevisionId",
+        "physicalRuntimeId",
+        "capacityDomainId",
+        "runtimeCapacity",
+        "readinessPolicy"
       ]
     },
     "form": [
@@ -19504,6 +19653,22 @@
         }
       },
       "baseUrl",
+      {
+        "key": "providerEndpointId",
+        "type": "dynaselect",
+        "multiple": false,
+        "optionValueKey": "id",
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D",
+          "params": ["hostId"]
+        }
+      },
+      "deploymentRevisionId",
+      "physicalRuntimeId",
+      "capacityDomainId",
+      {"key":"runtimeCapacity","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
+      "readinessPolicy",
+      {"key":"expectedSidecar","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
       {
         "key": "region",
         "type": "dynaselect",
@@ -19612,6 +19777,13 @@
           "additionalProperties": true,
           "default": {}
         },
+        "providerEndpointId":{"title":"Provider Endpoint","type":"string"},
+        "deploymentRevisionId":{"title":"Deployment Revision Id","type":"string","maxLength":255},
+        "physicalRuntimeId":{"title":"Physical Runtime Id","type":"string","maxLength":255},
+        "capacityDomainId":{"title":"Capacity Domain Id","type":"string","maxLength":255},
+        "runtimeCapacity":{"title":"Runtime Capacity","type":"object","additionalProperties":true},
+        "readinessPolicy":{"title":"Readiness Policy","type":"string","enum":["IMMEDIATE","WARM_BEFORE_ELIGIBLE"]},
+        "expectedSidecar":{"title":"Expected Sidecar Identity","type":["object","null"]},
         "refreshBeforeSeconds": {
           "title": "Refresh Before Seconds",
           "type": "integer",
@@ -19690,6 +19862,13 @@
         }
       },
       "baseUrl",
+      {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
+      "deploymentRevisionId",
+      "physicalRuntimeId",
+      "capacityDomainId",
+      {"key":"runtimeCapacity","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
+      "readinessPolicy",
+      {"key":"expectedSidecar","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
       {
         "key": "region",
         "type": "dynaselect",
@@ -19745,6 +19924,8 @@
           "title": "Provider Deployment",
           "type": "string"
         },
+        "providerEndpointId":{"title":"Provider Endpoint","type":"string"},
+        "credentialPurpose":{"title":"Credential Purpose","description":"ENDPOINT is resolved only by the central gateway; SIDECAR_RUNTIME is resolved only inside the sidecar.","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME"]},
         "credentialVersion": {
           "title": "Credential Version",
           "type": "integer",
@@ -19781,7 +19962,7 @@
       },
       "required": [
         "hostId",
-        "providerDeploymentId",
+        "credentialPurpose",
         "credentialVersion",
         "secretReference",
         "effectiveTs"
@@ -19789,6 +19970,8 @@
     },
     "form": [
       "hostId",
+      "credentialPurpose",
+      {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
       {
         "key": "providerDeploymentId",
         "type": "dynaselect",
@@ -19847,6 +20030,8 @@
           "title": "Provider Deployment",
           "type": "string"
         },
+        "providerEndpointId":{"title":"Provider Endpoint","type":"string"},
+        "credentialPurpose":{"title":"Credential Purpose","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME"]},
         "credentialVersion": {
           "title": "Credential Version",
           "type": "integer",
@@ -19892,7 +20077,7 @@
       "required": [
         "hostId",
         "providerCredentialId",
-        "providerDeploymentId",
+        "credentialPurpose",
         "credentialVersion",
         "secretReference",
         "effectiveTs",
@@ -19902,6 +20087,8 @@
     "form": [
       "hostId",
       "providerCredentialId",
+      "credentialPurpose",
+      {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
       {
         "key": "providerDeploymentId",
         "type": "dynaselect",
@@ -20715,6 +20902,7 @@
           "type": "integer",
           "minimum": 1
         },
+        "pricingBasis":{"title":"Pricing Basis","type":"string","enum":["EXTERNAL_PROVIDER","ZERO_MARGINAL","AMORTIZED_INTERNAL"],"default":"EXTERNAL_PROVIDER"},
         "inputMicrosPerMillion": {
           "title": "Input Micros Per Million Tokens",
           "type": "integer",
@@ -20760,6 +20948,7 @@
         "providerDeploymentId",
         "operation",
         "pricingVersion",
+        "pricingBasis",
         "inputMicrosPerMillion",
         "effectiveTs",
         "source",
@@ -20782,6 +20971,7 @@
       },
       "operation",
       "pricingVersion",
+      "pricingBasis",
       "inputMicrosPerMillion",
       "outputMicrosPerMillion",
       "cachedInputMicrosPerMillion",
@@ -20841,6 +21031,7 @@
           "type": "integer",
           "minimum": 1
         },
+        "pricingBasis":{"title":"Pricing Basis","type":"string","enum":["EXTERNAL_PROVIDER","ZERO_MARGINAL","AMORTIZED_INTERNAL"]},
         "inputMicrosPerMillion": {
           "title": "Input Micros Per Million Tokens",
           "type": "integer",
@@ -20910,6 +21101,7 @@
       },
       "operation",
       "pricingVersion",
+      "pricingBasis",
       "inputMicrosPerMillion",
       "outputMicrosPerMillion",
       "cachedInputMicrosPerMillion",

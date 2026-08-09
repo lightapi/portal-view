@@ -20,7 +20,8 @@ describe('LLM provider deployment forms', () => {
     expect(deployment?.formFields).toEqual(expect.arrayContaining([
       'hostId', 'providerDeploymentId', 'modelRegistrationId', 'providerAccountId',
       'deploymentName', 'providerType', 'providerProtocol', 'physicalModelId', 'baseUrl', 'region',
-      'transportBounds', 'refreshBeforeSeconds',
+      'transportBounds', 'providerEndpointId', 'deploymentRevisionId', 'physicalRuntimeId',
+      'capacityDomainId', 'runtimeCapacity', 'readinessPolicy', 'expectedSidecar', 'refreshBeforeSeconds',
       'lifecycleStatus', 'aggregateVersion',
     ]));
     expect(deployment?.formFields).not.toContain('active');
@@ -71,6 +72,8 @@ describe('LLM provider deployment forms', () => {
     expect(forms.createProviderDeployment.schema.required).toEqual([
       'hostId','modelRegistrationId','providerAccountId','deploymentName',
       'providerType','providerProtocol','physicalModelId','baseUrl',
+      'providerEndpointId','deploymentRevisionId','physicalRuntimeId','capacityDomainId',
+      'runtimeCapacity','readinessPolicy',
     ]);
     expect(forms.createProviderDeployment.schema.properties.lifecycleStatus.enum).toEqual(['DRAFT']);
     expect(forms.updateProviderDevelopment.schema.properties.lifecycleStatus.enum)

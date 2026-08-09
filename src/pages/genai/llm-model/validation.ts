@@ -10,9 +10,32 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
     if (typeof value.secretReference !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(value.secretReference)) {
       errors.push('secretReference must be env:VARIABLE_NAME or an external URI.');
     }
+    if (value.credentialPurpose === 'ENDPOINT' && !value.providerEndpointId) {
+      errors.push('ENDPOINT credentials require providerEndpointId.');
+    }
+    if (value.credentialPurpose === 'SIDECAR_RUNTIME' && !value.providerDeploymentId) {
+      errors.push('SIDECAR_RUNTIME credentials require providerDeploymentId.');
+    }
   }
-  if (resource.key === 'deployments' && typeof value.baseUrl === 'string' && !value.baseUrl.startsWith('https://')) {
+  if (resource.key === 'deployments' && !value.providerEndpointId
+    && typeof value.baseUrl === 'string' && !value.baseUrl.startsWith('https://')) {
     errors.push('baseUrl must use HTTPS.');
+  }
+  if (resource.key === 'providerEndpoints') {
+    const mode = value.networkProfileMode;
+    if (mode === 'PRIVATE_PLAINTEXT'
+      && (!String(value.baseUrl ?? '').startsWith('http://') || value.endpointAuthMode !== 'NONE'
+        || value.plaintextRiskAcknowledged !== true)) {
+      errors.push('Private plaintext requires HTTP, no endpoint credential, and explicit risk acknowledgement.');
+    }
+    if ((mode === 'PRIVATE_TLS' || mode === 'PRIVATE_PLAINTEXT') && !value.networkZoneId) {
+      errors.push('Private endpoints require a Network Zone.');
+    }
+  }
+  if (resource.key === 'pricing' && value.pricingBasis === 'ZERO_MARGINAL'
+    && (Number(value.inputMicrosPerMillion ?? 0) !== 0
+      || Number(value.outputMicrosPerMillion ?? 0) !== 0)) {
+    errors.push('ZERO_MARGINAL pricing requires zero input and output rates.');
   }
   if (resource.key === 'routes' && ((value.routeWeight ?? 1) !== 1 || Number(value.canaryPercent ?? 0) !== 0)) {
     errors.push('MVP routes require routeWeight=1 and canaryPercent=0.');
@@ -39,6 +62,7 @@ function containsRawSecret(value: unknown): boolean {
   }
   return Object.entries(value as Record<string, unknown>).some(([key,nested]) => {
     const normalized = key.replace(/[^A-Za-z0-9]/g,'').toLowerCase();
+    if (normalized === 'apikeyheader') return false;
     if (['secretreference','credentialref','credentialreference'].includes(normalized)) {
       return typeof nested !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(nested);
     }
@@ -67,6 +91,7 @@ export function sanitizeForDisplay(value: unknown): unknown {
     .filter(([key]) => {
       const normalized = key.replace(/[^A-Za-z0-9]/g,'').toLowerCase();
       if (['secretreference','credentialref','credentialreference'].includes(normalized)) return true;
+      if (normalized === 'apikeyheader') return true;
       return !(normalized.includes('secret') || normalized.includes('apikey')
         || normalized.includes('password') || normalized.includes('authorization')
         || ['token','accesstoken','refreshtoken','bearertoken','idtoken','credentialvalue'].includes(normalized));

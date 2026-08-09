@@ -18,6 +18,7 @@ describe('LLM pricing version forms', () => {
     });
     expect(pricing?.formFields).toEqual([
       'hostId','pricingVersionId','providerDeploymentId','operation','pricingVersion',
+      'pricingBasis',
       'inputMicrosPerMillion','outputMicrosPerMillion','cachedInputMicrosPerMillion',
       'effectiveTs','expiresTs','source','approvedBy','aggregateVersion',
     ]);
@@ -63,8 +64,8 @@ describe('LLM pricing version forms', () => {
 
   it('requires effective approved rates on create and optimistic concurrency on update', () => {
     expect(forms.createPricingVersion.schema.required).toEqual([
-      'hostId','providerDeploymentId','operation','pricingVersion','inputMicrosPerMillion',
-      'effectiveTs','source','approvedBy',
+      'hostId','providerDeploymentId','operation','pricingVersion','pricingBasis',
+      'inputMicrosPerMillion','effectiveTs','source','approvedBy',
     ]);
     expect(forms.updatePricingVersion.schema.required).toEqual([
       'hostId','pricingVersionId','aggregateVersion',
