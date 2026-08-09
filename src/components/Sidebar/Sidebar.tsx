@@ -226,6 +226,7 @@ const structure = [
           { label: "Agent Skill", link: "/app/genai/AgentSkill" },
           { label: "Agent Assignment", link: "/app/genai/AgentAssignment" },
           { label: "Hindsight Memory", link: "/app/genai/MemoryBanks" },
+          { label: "Knowledge Bases", link: "/app/genai/KnowledgeBases" },
         ],
       },
       {

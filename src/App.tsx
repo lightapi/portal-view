@@ -179,6 +179,8 @@ import SkillDependency from "./pages/genai/SkillDependency";
 import AgentSkill from "./pages/genai/AgentSkill";
 import MemoryBanks from "./pages/genai/MemoryBanks";
 import MemoryBankWorkspace from "./pages/genai/MemoryBankWorkspace";
+import KnowledgeBases from "./pages/genai/KnowledgeBases";
+import KnowledgeBaseWorkspace from "./pages/genai/KnowledgeBaseWorkspace";
 import PromotionExport from "./pages/promotion/PromotionExport";
 import PromotionImport from "./pages/promotion/PromotionImport";
 import PromotionHistory from "./pages/promotion/PromotionHistory";
@@ -582,6 +584,8 @@ const App = () => {
           <Route path="genai/AgentSkill" element={<AgentSkill />} />
           <Route path="genai/MemoryBanks" element={<MemoryBanks />} />
           <Route path="genai/MemoryBanks/:bankId" element={<MemoryBankWorkspace />} />
+          <Route path="genai/KnowledgeBases" element={<KnowledgeBases />} />
+          <Route path="genai/KnowledgeBases/:knowledgeBaseId" element={<KnowledgeBaseWorkspace />} />
           <Route path="genai/chat" element={<Chat />} />
           <Route path="promotion/export" element={<PromotionExport />} />
           <Route path="promotion/import" element={<PromotionImport />} />

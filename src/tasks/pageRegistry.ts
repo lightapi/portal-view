@@ -396,6 +396,16 @@ export const pageRegistry: PageDefinition[] = [
     entities: ["agentDefId", "host"],
   },
   {
+    id: "genai-knowledge-bases",
+    title: "Knowledge Bases",
+    description: "Build, evaluate, bind, and govern global and tenant retrieval knowledge.",
+    route: "/app/genai/KnowledgeBases",
+    category: "Portal Administration",
+    roles: ["admin"],
+    keywords: ["genai", "knowledge", "retrieval", "source", "citation", "index"],
+    entities: ["knowledgeBaseId", "sourceId", "indexGenerationId"],
+  },
+  {
     id: "llm-model-marketplace",
     title: "LLM Model Catalog",
     description: "Browse LLM models by provider, taxonomy, lifecycle status, and capability.",
