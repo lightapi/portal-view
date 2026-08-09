@@ -12,7 +12,7 @@ import { KnowledgeBaseRow, knowledgeCommand, knowledgeError, knowledgeQuery } fr
 
 type UserState = { host?: string };
 type Row = Record<string, any>;
-const TABS = ['Overview', 'Sources', 'Documents', 'Sync Runs', 'Index Generations', 'Agent Bindings', 'Access Policy', 'Retrieval Playground', 'Quality', 'Settings'];
+const TABS = ['Overview', 'Sources', 'Documents', 'Sync Runs', 'Index Generations', 'Incremental', 'Agent Bindings', 'Access Policy', 'Retrieval Playground', 'Quality', 'Settings'];
 
 function JsonRows({ rows, empty }: { rows: Row[]; empty: string }) {
     if (!rows.length) return <Alert severity="info">{empty}</Alert>;
@@ -34,6 +34,10 @@ export default function KnowledgeBaseWorkspace() {
     const [runs, setRuns] = useState<Row[]>([]);
     const [generations, setGenerations] = useState<Row[]>([]);
     const [bindings, setBindings] = useState<Row[]>([]);
+    const [incremental, setIncremental] = useState<Row[]>([]);
+    const [accessDiagnostics, setAccessDiagnostics] = useState<Row[]>([]);
+    const [simulationSubjectType, setSimulationSubjectType] = useState('USER');
+    const [simulationSubjectId, setSimulationSubjectId] = useState('');
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
     const [query, setQuery] = useState('How is a Light service configured?');
@@ -53,13 +57,22 @@ export default function KnowledgeBaseWorkspace() {
         setBusy(true);
         setMessage('');
         try {
-            const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows] = await Promise.all([
+            const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows, uploadRows, changeRows, anchorRows, compactionRows, antiEntropyRows, aclFreshnessRows, aclReconciliationRows, aclTransitionRows, connectorObjectRows] = await Promise.all([
                 knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context),
                 knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
                 knowledgeQuery<{ knowledgeDocuments?: Row[] }>('getKnowledgeDocuments', context),
                 knowledgeQuery<{ knowledgeSyncRuns?: Row[] }>('getKnowledgeSyncRuns', context),
                 knowledgeQuery<{ knowledgeIndexGenerations?: Row[] }>('getKnowledgeIndexGenerations', context),
                 knowledgeQuery<{ agentKnowledgeBaseBindings?: Row[] }>('getAgentKnowledgeBaseBindings', { hostId: host, environment }),
+                knowledgeQuery<{ knowledgeUploads?: Row[] }>('getKnowledgeUploads', context),
+                knowledgeQuery<{ knowledgeIncrementalChanges?: Row[] }>('getKnowledgeIncrementalChanges', context),
+                knowledgeQuery<{ knowledgePassageAnchors?: Row[] }>('getKnowledgePassageAnchors', context),
+                knowledgeQuery<{ knowledgeCompactionRuns?: Row[] }>('getKnowledgeCompactionRuns', context),
+                knowledgeQuery<{ knowledgeAntiEntropyRuns?: Row[] }>('getKnowledgeAntiEntropyRuns', context),
+                knowledgeQuery<{ knowledgeAclFreshness?: Row[] }>('getKnowledgeAclFreshness', context),
+                knowledgeQuery<{ knowledgeAclReconciliations?: Row[] }>('getKnowledgeAclReconciliations', context),
+                knowledgeQuery<{ knowledgeAclTransitions?: Row[] }>('getKnowledgeAclTransitions', context),
+                knowledgeQuery<{ knowledgeConnectorObjects?: Row[] }>('getKnowledgeConnectorObjects', context),
             ]);
             setBase(fresh);
             setSources(sourceRows.knowledgeSources || []);
@@ -67,6 +80,19 @@ export default function KnowledgeBaseWorkspace() {
             setRuns(syncRows.knowledgeSyncRuns || []);
             setGenerations(generationRows.knowledgeIndexGenerations || []);
             setBindings((bindingRows.agentKnowledgeBaseBindings || []).filter(row => row.knowledgeBaseId === knowledgeBaseId));
+            setIncremental([
+                ...(uploadRows.knowledgeUploads || []).map(row => ({ diagnosticType: 'UPLOAD', ...row })),
+                ...(changeRows.knowledgeIncrementalChanges || []).map(row => ({ diagnosticType: 'CHANGE', ...row })),
+                ...(anchorRows.knowledgePassageAnchors || []).map(row => ({ diagnosticType: 'PASSAGE_ANCHOR', ...row })),
+                ...(compactionRows.knowledgeCompactionRuns || []).map(row => ({ diagnosticType: 'COMPACTION', ...row })),
+                ...(antiEntropyRows.knowledgeAntiEntropyRuns || []).map(row => ({ diagnosticType: 'ANTI_ENTROPY', ...row })),
+            ]);
+            setAccessDiagnostics([
+                ...(aclFreshnessRows.knowledgeAclFreshness || []).map(row => ({ diagnosticType: 'ACL_FRESHNESS', ...row })),
+                ...(aclReconciliationRows.knowledgeAclReconciliations || []).map(row => ({ diagnosticType: 'ACL_RECONCILIATION', ...row })),
+                ...(aclTransitionRows.knowledgeAclTransitions || []).map(row => ({ diagnosticType: 'ACL_TRANSITION', ...row })),
+                ...(connectorObjectRows.knowledgeConnectorObjects || []).map(row => ({ diagnosticType: 'CONNECTOR_OBJECT', ...row })),
+            ]);
         } catch (error) {
             setMessage(knowledgeError(error));
         } finally {
@@ -95,7 +121,7 @@ export default function KnowledgeBaseWorkspace() {
         <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" sx={{ my: 2 }}>
             <Box><Stack direction="row" spacing={1} alignItems="center"><Typography variant="h4">{base?.name || knowledgeBaseId}</Typography><Chip size="small" label={base?.hostId ? 'TENANT' : 'GLOBAL'} color={base?.hostId ? 'primary' : 'secondary'} /><Chip size="small" label={base?.status || 'Loading'} /></Stack>
                 <Typography color="text.secondary">{knowledgeBaseId} · {environment}</Typography></Box>
-            <Stack direction="row" spacing={1}><Button startIcon={<RefreshIcon />} disabled={busy} onClick={() => void load()}>Refresh</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseReindex')}>Rebuild full BASE</Button></Stack>
+            <Stack direction="row" spacing={1}><Button startIcon={<RefreshIcon />} disabled={busy} onClick={() => void load()}>Refresh</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseReindex')}>Rebuild full BASE</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseCompaction')}>Compact DELTAs</Button></Stack>
         </Stack>
         {message && <Alert severity="error" sx={{ mb: 2 }}>{message}</Alert>}
         <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>{TABS.map(label => <Tab key={label} label={label} />)}</Tabs>
@@ -108,11 +134,12 @@ export default function KnowledgeBaseWorkspace() {
         {tab === 2 && <JsonRows rows={documents} empty="No immutable document versions exist before the first completed build." />}
         {tab === 3 && <JsonRows rows={runs} empty="No full-BASE sync run has been recorded." />}
         {tab === 4 && <Box>{active && <Alert severity="success" sx={{ mb: 2 }}>Active immutable BASE: {active.indexGenerationId}</Alert>}<JsonRows rows={generations} empty="No candidate generation exists." /></Box>}
-        {tab === 5 && <Box><Button variant="contained" sx={{ mb: 2 }} onClick={() => setBindingOpen(true)}>Bind Agent</Button><JsonRows rows={bindings} empty="No Agent in this tenant is bound to this Knowledge Base." /></Box>}
-        {tab === 6 && <Stack spacing={2}><Alert severity={base?.projectionState === 'ACTIVE' ? 'success' : 'warning'}>Desired state: {base?.status || '—'}; effective state: {base?.projectionState || 'pending'}. Retrieval fails closed after a 30-second projection lease.</Alert><JsonRows rows={sources.map(source => ({ sourceId: source.sourceId, aclMode: source.aclMode, sourceTrustTier: source.sourceTrustTier, approvalPolicy: source.approvalPolicy }))} empty="Source trust evidence appears after source configuration." /></Stack>}
-        {tab === 7 && <Stack spacing={2}><Alert severity="info">The playground uses the separately authorized and quota-accounted test command; it never accepts owner, profile, engine, or provider overrides.</Alert><TextField label="Question" multiline minRows={3} value={query} onChange={event => setQuery(event.target.value)} /><Button variant="contained" disabled={busy || !query.trim()} onClick={() => void command('testKnowledgeRetrieval', { query, topK: 5, tokenBudget: 2000 })}>Run authorized retrieval test</Button></Stack>}
-        {tab === 8 && <Stack spacing={2}><Alert severity="info">Phase 1a promotion evidence covers curated questions, expected documents, exact-vs-filtered Recall@10, citation resolution, no-answer, latency, cost, and quota isolation.</Alert><JsonRows rows={generations.map(row => ({ indexGenerationId: row.indexGenerationId, state: row.state, evidence: row.evidence }))} empty="Quality evidence appears on candidate generations." /></Stack>}
-        {tab === 9 && <Stack spacing={2}><Card variant="outlined"><CardContent><Typography variant="h6">Lifecycle and retention</Typography><Divider sx={{ my: 1 }} /><Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify(base, null, 2)}</Box></CardContent></Card><Stack direction="row" spacing={1}><Button color="warning" disabled={busy || base?.status === 'INACTIVE'} onClick={() => void command('deactivateKnowledgeBase', { aggregateVersion: base?.version })}>Deactivate</Button><Button color="error" disabled={busy} onClick={() => void command('requestKnowledgeBasePurge', { aggregateVersion: base?.version })}>Request purge</Button></Stack></Stack>}
+        {tab === 5 && <Stack spacing={2}><Alert severity="info">Phase 1b diagnostics show upload scanning, classified changes, stable anchors, compaction, and anti-entropy without exposing source text.</Alert><JsonRows rows={incremental} empty="No Phase 1b incremental diagnostics have been recorded." /></Stack>}
+        {tab === 6 && <Box><Button variant="contained" sx={{ mb: 2 }} onClick={() => setBindingOpen(true)}>Bind Agent</Button><JsonRows rows={bindings} empty="No Agent in this tenant is bound to this Knowledge Base." /></Box>}
+        {tab === 7 && <Stack spacing={2}><Alert severity={base?.projectionState === 'ACTIVE' ? 'success' : 'warning'}>Desired state: {base?.status || '—'}; effective state: {base?.projectionState || 'pending'}. Mirrored source access fails closed when reconciliation is incomplete, stale, ambiguous, or contains an unresolved principal.</Alert><Stack direction={{ xs: 'column', md: 'row' }} spacing={1}><TextField label="Normalized subject type" value={simulationSubjectType} onChange={event => setSimulationSubjectType(event.target.value.toUpperCase())} helperText="USER, GROUP, or ORGANIZATION" /><TextField fullWidth label="Normalized subject ID" value={simulationSubjectId} onChange={event => setSimulationSubjectId(event.target.value)} /><Button disabled={busy || !simulationSubjectId} onClick={() => { setBusy(true); void knowledgeQuery<{ knowledgeAuthorizationSimulation?: Row[] }>('simulateKnowledgeAuthorization', { ...context, subjectType: simulationSubjectType, subjectId: simulationSubjectId }).then(result => setAccessDiagnostics(current => [...(result.knowledgeAuthorizationSimulation || []).map(row => ({ diagnosticType: 'AUTHORIZATION_SIMULATION', ...row })), ...current])).catch(error => setMessage(knowledgeError(error))).finally(() => setBusy(false)); }}>Simulate access</Button></Stack><JsonRows rows={[...sources.map(source => ({ diagnosticType: 'SOURCE_POLICY', sourceId: source.sourceId, aclMode: source.aclMode, sourceTrustTier: source.sourceTrustTier, approvalPolicy: source.approvalPolicy })), ...accessDiagnostics]} empty="Source trust and permission coverage evidence appears after source configuration." /></Stack>}
+        {tab === 8 && <Stack spacing={2}><Alert severity="info">The playground uses the separately authorized and quota-accounted test command; it never accepts owner, profile, engine, or provider overrides.</Alert><TextField label="Question" multiline minRows={3} value={query} onChange={event => setQuery(event.target.value)} /><Button variant="contained" disabled={busy || !query.trim()} onClick={() => void command('testKnowledgeRetrieval', { query, topK: 5, tokenBudget: 2000 })}>Run authorized retrieval test</Button></Stack>}
+        {tab === 9 && <Stack spacing={2}><Alert severity="info">Phase 1b adds segmented equivalence, local-rank-only multi-KB fusion, upload, anchor, compaction, and REST/MCP parity evidence.</Alert><JsonRows rows={generations.map(row => ({ indexGenerationId: row.indexGenerationId, state: row.state, evidence: row.evidence }))} empty="Quality evidence appears on candidate generations." /></Stack>}
+        {tab === 10 && <Stack spacing={2}><Card variant="outlined"><CardContent><Typography variant="h6">Lifecycle and retention</Typography><Divider sx={{ my: 1 }} /><Box component="pre" sx={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify(base, null, 2)}</Box></CardContent></Card><Stack direction="row" spacing={1}><Button color="warning" disabled={busy || base?.status === 'INACTIVE'} onClick={() => void command('deactivateKnowledgeBase', { aggregateVersion: base?.version })}>Deactivate</Button><Button color="error" disabled={busy} onClick={() => void command('requestKnowledgeBasePurge', { aggregateVersion: base?.version })}>Request purge</Button></Stack></Stack>}
         <Dialog open={sourceOpen} onClose={() => setSourceOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Add bounded Git/Markdown source</DialogTitle><DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
             <TextField required label="Display name" value={sourceName} onChange={event => setSourceName(event.target.value)} />
             <TextField required label="Approved repository URI" value={repositoryUri} onChange={event => setRepositoryUri(event.target.value)} />
@@ -125,7 +152,7 @@ export default function KnowledgeBaseWorkspace() {
             <TextField required label="Retrieval profile UUID" value={retrievalProfileId} onChange={event => setRetrievalProfileId(event.target.value)} />
             <TextField type="number" label="Priority" defaultValue={50} inputProps={{ min: 1, max: 100 }} disabled />
             <FormControlLabel control={<Checkbox checked={evidenceRequired} onChange={event => setEvidenceRequired(event.target.checked)} />} label="Fail the turn when Knowledge evidence is unavailable" />
-            <Alert severity="warning">Phase 1a permits one active Knowledge Base per Agent. The runtime re-authorizes this binding from a fresh local projection.</Alert>
+            <Alert severity="warning">Phase 1b permits up to four active Knowledge Bases per Agent. The runtime re-authorizes every binding and fuses local ranks without comparing raw cross-space scores.</Alert>
         </Stack></DialogContent><DialogActions><Button onClick={() => setBindingOpen(false)}>Cancel</Button><Button variant="contained" disabled={!agentId || !retrievalProfileId} onClick={() => { setBindingOpen(false); void command('bindAgentKnowledgeBase', { agentId, retrievalProfileId, priority: 50, evidenceRequired, allowedSourceTrustTiers: [] }); }}>Bind Agent</Button></DialogActions></Dialog>
     </Box>;
 }
