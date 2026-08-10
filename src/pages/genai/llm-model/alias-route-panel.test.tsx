@@ -22,7 +22,8 @@ describe('Routes resource form navigation', () => {
     mocks.listLlm.mockReset();
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a',aliasRouteId:'route-a',publicAliasId:'alias-a',
-      providerDeploymentId:'deployment-a',routePriority:0,routeWeight:1,
+      environment:'prod',aliasName:'governed-chat',providerDeploymentId:'deployment-a',
+      deploymentName:'openai-gpt4o-ca-prod',routePriority:0,routeWeight:1,
       fallbackEnabled:false,canaryPercent:0,residencyConditions:{regions:['ca-central-1']},
       aggregateVersion:4,active:true,updateUser:'system',updateTs:'2026-08-01T12:00:00Z',
     }]);
@@ -51,5 +52,32 @@ describe('Routes resource form navigation', () => {
     expect(navigationData).not.toHaveProperty('active');
     expect(navigationData).not.toHaveProperty('updateUser');
     expect(navigationData).not.toHaveProperty('updateTs');
+    expect(navigationData).not.toHaveProperty('aliasName');
+    expect(navigationData).not.toHaveProperty('deploymentName');
+  });
+
+  it('identifies route rows by alias and deployment names', async () => {
+    const user = userEvent.setup();
+    const route = llmAdminResources.find(resource => resource.key === 'routes')!;
+    render(<ResourcePanel hostId="host-a" resource={route}/>);
+
+    expect(await screen.findByRole('columnheader',{name:'Environment'})).toBeInTheDocument();
+    expect(await screen.findByRole('columnheader',{name:'Alias'})).toBeInTheDocument();
+    expect(screen.getByRole('columnheader',{name:'Deployment'})).toBeInTheDocument();
+    expect(screen.getByText('prod')).toBeInTheDocument();
+    const aliasName = screen.getByText('governed-chat');
+    const deploymentName = screen.getByText('openai-gpt4o-ca-prod');
+    expect(screen.getByRole('cell',{name:'governed-chat'})).toBeInTheDocument();
+    expect(screen.getByRole('cell',{name:'openai-gpt4o-ca-prod'})).toBeInTheDocument();
+    await user.hover(aliasName);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('publicAliasId: alias-a');
+    await user.unhover(aliasName);
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+    await user.hover(deploymentName);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'providerDeploymentId: deployment-a',
+    );
+    expect(screen.queryByRole('columnheader',{name:'publicAliasId'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader',{name:'providerDeploymentId'})).not.toBeInTheDocument();
   });
 });

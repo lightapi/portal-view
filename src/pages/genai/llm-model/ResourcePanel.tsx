@@ -37,12 +37,18 @@ function resolvedLabels(value: unknown, labels: Map<string, string>) {
   return value.map(id => labels.get(String(id)) ?? String(id));
 }
 
-function columnValue(row: LlmRecord, column: string) {
+function columnValue(row: LlmRecord, column: string, tooltipField?: string) {
   const value = row[column];
+  let content: string;
   if ((column === 'categories' || column === 'tags') && Array.isArray(value)) {
-    return value.length ? value.map(display).join(', ') : '—';
+    content = value.length ? value.map(display).join(', ') : '—';
+  } else {
+    content = display(value);
   }
-  return display(value);
+  const tooltipValue = tooltipField ? row[tooltipField] : undefined;
+  return tooltipValue == null || tooltipValue === ''
+    ? content
+    : <Tooltip describeChild title={`${tooltipField}: ${display(tooltipValue)}`}><span>{content}</span></Tooltip>;
 }
 
 function resourceLoadError(label: string, reason: unknown) {
@@ -166,7 +172,7 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
             {resource.key === 'aliases' && <Button size="small" onClick={() => void previewRoutes(row)}>Preview routes</Button>}
           </TableCell>
           <TableCell>{display(row[resource.idField])}</TableCell>
-          {resource.columns.map(column => <TableCell key={column} sx={{maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}>{columnValue(row,column)}</TableCell>)}
+          {resource.columns.map(column => <TableCell key={column} sx={{maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}>{columnValue(row,column,resource.columnTooltipFields?.[column])}</TableCell>)}
           <TableCell>{display(row.aggregateVersion)}</TableCell>
         </TableRow>)}
         {!rows.length && <TableRow><TableCell colSpan={resource.columns.length + 3}>No active records.</TableCell></TableRow>}
