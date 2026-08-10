@@ -63,7 +63,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
   const [create, setCreate] = useState(false);
   const [json, setJson] = useState('');
   const [preview, setPreview] = useState<unknown>(null);
-  const [qualificationStatus, setQualificationStatus] = useState<unknown>(null);
   const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
@@ -144,13 +143,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
       environment: row.environment, dataClassification: row.dataClassification})); }
     catch (reason) { setError(llmErrorMessage(reason)); }
   };
-  const showQualification = async (row: LlmRecord) => {
-    try {
-      setQualificationStatus(await queryLlm('getLlmDeploymentConformance', {
-        hostId, providerDeploymentId: row.providerDeploymentId,
-      }));
-    } catch (reason) { setError(llmErrorMessage(reason)); }
-  };
 
   if (resource.scope === 'host' && !hostId) return <Alert severity="info">Select a host to administer {resource.label}.</Alert>;
   return <Box>
@@ -172,7 +164,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
             {canMutate && <><Tooltip title="Edit"><IconButton size="small" onClick={() => open(row)}><EditIcon/></IconButton></Tooltip>
             <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => void remove(row)}><DeleteIcon/></IconButton></Tooltip></>}
             {resource.key === 'aliases' && <Button size="small" onClick={() => void previewRoutes(row)}>Preview routes</Button>}
-            {resource.key === 'deployments' && <Button size="small" onClick={() => void showQualification(row)}>Qualification</Button>}
           </TableCell>
           <TableCell>{display(row[resource.idField])}</TableCell>
           {resource.columns.map(column => <TableCell key={column} sx={{maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}>{columnValue(row,column)}</TableCell>)}
@@ -192,12 +183,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
         <Alert severity="info" sx={{mb:1}}>This preview exposes eligibility reasons only; credential references and provider errors are excluded.</Alert>
         <pre>{JSON.stringify(preview,null,2)}</pre>
       </DialogContent><DialogActions><Button onClick={() => setPreview(null)}>Close</Button></DialogActions>
-    </Dialog>
-    <Dialog open={qualificationStatus !== null} onClose={() => setQualificationStatus(null)} fullWidth maxWidth="md">
-      <DialogTitle>Live qualification status</DialogTitle><DialogContent>
-        <Alert severity="info" sx={{mb:1}}>Read-only status contains signed evidence metadata and sanitized failure categories. Probe payloads, raw targets, credential references, PEM, and signatures are excluded.</Alert>
-        <pre>{JSON.stringify(qualificationStatus,null,2)}</pre>
-      </DialogContent><DialogActions><Button onClick={() => setQualificationStatus(null)}>Close</Button></DialogActions>
     </Dialog>
   </Box>;
 }

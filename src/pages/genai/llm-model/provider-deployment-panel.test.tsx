@@ -26,7 +26,7 @@ describe('Deployments resource form navigation', () => {
       providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
       physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
       transportBounds:{requestTimeoutMs:60000}, quotaGroupId:'openai-production-capacity',
-      conformanceState:'PENDING', lifecycleStatus:'DRAFT', aggregateVersion:5, active:true,
+      conformanceState:'PENDING', aggregateVersion:5, active:true,
       updateUser:'system', updateTs:'2026-08-01T00:00:00Z',
     }]);
   });
@@ -47,7 +47,7 @@ describe('Deployments resource form navigation', () => {
         hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
         providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
         physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
-        transportBounds:{requestTimeoutMs:60000}, lifecycleStatus:'DRAFT', aggregateVersion:5,
+        transportBounds:{requestTimeoutMs:60000}, aggregateVersion:5,
       })},
     }));
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;

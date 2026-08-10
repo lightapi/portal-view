@@ -19,7 +19,7 @@ describe('LLM provider credential forms', () => {
     });
     expect(credential?.formFields).toEqual([
       'hostId','providerCredentialId','providerDeploymentId','providerEndpointId','credentialPurpose','credentialVersion',
-      'secretReference','effectiveTs','expiresTs','lifecycleStatus','aggregateVersion',
+      'secretReference','effectiveTs','expiresTs','aggregateVersion',
     ]);
     expect(credential?.formFields).not.toContain('active');
   });
@@ -64,9 +64,6 @@ describe('LLM provider credential forms', () => {
     expect(forms.createProviderCredential.schema.required).toEqual([
       'hostId','credentialPurpose','credentialVersion','secretReference','effectiveTs',
     ]);
-    expect(forms.createProviderCredential.schema.properties.lifecycleStatus.enum).toEqual(['PENDING']);
-    expect(forms.updateProviderCredential.schema.properties.lifecycleStatus.enum)
-      .toEqual(['PENDING','ACTIVE','ROTATING','REVOKED','EXPIRED']);
     expect(forms.updateProviderCredential.schema.required).toEqual([
       'hostId','providerCredentialId','credentialPurpose','credentialVersion',
       'secretReference','effectiveTs','aggregateVersion',

@@ -19,7 +19,7 @@ describe('LLM model policy forms', () => {
     expect(policies).toMatchObject({createForm:'createModelPolicy',updateForm:'updateModelPolicy'});
     expect(policies?.formFields).toEqual([
       'hostId','modelPolicyId','policyName','accessPolicy','budgetPolicy','contentPolicy',
-      'cachePolicy','piiPolicy','nativeExtensionPolicy','lifecycleStatus','aggregateVersion',
+      'cachePolicy','piiPolicy','nativeExtensionPolicy','aggregateVersion',
     ]);
     expect(policies?.formFields).not.toContain('active');
   });
@@ -46,13 +46,11 @@ describe('LLM model policy forms', () => {
         type:'structured',tabs:['form','json','yaml'],defaultTab:'json',
       });
     }
-    expect(definition.schema.properties.lifecycleStatus.enum)
-      .toEqual(['DRAFT','ACTIVE','SUSPENDED','RETIRED']);
+    expect(definition.schema.properties).not.toHaveProperty('lifecycleStatus');
   });
 
   it('applies create defaults and requires optimistic concurrency on update', () => {
     expect(forms.createModelPolicy.schema.required).toEqual(['hostId','policyName']);
-    expect(forms.createModelPolicy.schema.properties.lifecycleStatus.default).toBe('DRAFT');
     for (const field of policyObjectFields) {
       expect(forms.createModelPolicy.schema.properties[field].default).toEqual({});
     }

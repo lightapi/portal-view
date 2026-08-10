@@ -18,7 +18,7 @@ describe('LLM public alias forms', () => {
       'hostId','publicAliasId','environment','aliasName','operations','requiredCapabilities',
       'requireExpectedEmbeddingSpace','embeddingWorkloadLane',
       'maxInputTokens','maxOutputTokens','maxRequestBytes','dataClassification','loggingMode',
-      'piiMode','lifecycleStatus','replacementAliasId','aliasVisibility','boundAgentDefId',
+      'piiMode','replacementAliasId','aliasVisibility','boundAgentDefId',
       'boundWorkloadPrincipal','aggregateVersion',
     ]);
     expect(alias?.formFields).not.toContain('active');
@@ -67,7 +67,7 @@ describe('LLM public alias forms', () => {
     expect(forms.createPublicAlias.schema.required).toEqual(['hostId','environment','aliasName']);
     expect(forms.createPublicAlias.schema.properties).toMatchObject({
       loggingMode:{default:'METADATA'},piiMode:{default:'DENY'},
-      lifecycleStatus:{default:'DRAFT'},aliasVisibility:{default:'PUBLIC'},
+      aliasVisibility:{default:'PUBLIC'},
     });
     expect(forms.updatePublicAlias.schema.required).toEqual(['hostId','publicAliasId','aggregateVersion']);
     expect(forms.updatePublicAlias.schema.properties.publicAliasId.readonly).toBe(true);

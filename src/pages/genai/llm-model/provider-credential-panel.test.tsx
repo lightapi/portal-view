@@ -24,7 +24,7 @@ describe('Credentials resource form navigation', () => {
       hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
       credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
       effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
-      lifecycleStatus:'ACTIVE',aggregateVersion:4,active:true,
+      aggregateVersion:4,active:true,
       updateUser:'system',updateTs:'2026-08-01T12:00:00Z',
     }]);
   });
@@ -45,7 +45,7 @@ describe('Credentials resource form navigation', () => {
         hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
         credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
         effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
-        lifecycleStatus:'ACTIVE',aggregateVersion:4,
+        aggregateVersion:4,
       })},
     }));
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;

@@ -18,8 +18,7 @@ describe('LLM provider account forms', () => {
     });
     expect(account?.formFields).toEqual(expect.arrayContaining([
       'hostId', 'providerAccountId', 'accountName', 'providerType',
-      'billingPrincipal', 'quotaGroupId', 'capacityMetadata',
-      'lifecycleStatus', 'aggregateVersion',
+      'billingPrincipal', 'quotaGroupId', 'capacityMetadata', 'aggregateVersion',
     ]));
     expect(account?.formFields).not.toContain('active');
   });
@@ -35,8 +34,7 @@ describe('LLM provider account forms', () => {
     expect(definition.schema.additionalProperties).toBe(false);
     expect(definition.schema.properties).not.toHaveProperty('active');
     expect(definition.form).not.toContain('active');
-    expect(definition.schema.properties.lifecycleStatus.enum)
-      .toEqual(['DRAFT','ACTIVE','SUSPENDED','RETIRED']);
+    expect(definition.schema.properties).not.toHaveProperty('lifecycleStatus');
 
     const items = definition.form as FormItem[];
     const provider = items.find(item => typeof item === 'object' && item.key === 'providerType');

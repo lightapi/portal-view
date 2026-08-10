@@ -18503,17 +18503,6 @@
           "type": "string",
           "maxLength": 64
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "DEPRECATED",
-            "RETIRED"
-          ],
-          "default": "DRAFT"
-        },
         "contextTokenLimit": {
           "title": "Context Token Limit",
           "type": "integer",
@@ -18545,6 +18534,7 @@
         },
         "declaredCapabilities": {
           "title": "Declared Capabilities",
+          "description": "Static gateway contract. Embedding models must declare operations, bounds, supported dimensions/encodings, and an immutable embedding space.",
           "type": "object",
           "additionalProperties": true,
           "default": {}
@@ -18608,7 +18598,6 @@
         }
       },
       "modelVersion",
-      "lifecycleStatus",
       "contextTokenLimit",
       "outputTokenLimit",
       {
@@ -18711,16 +18700,6 @@
           "type": "string",
           "maxLength": 64
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "DEPRECATED",
-            "RETIRED"
-          ]
-        },
         "contextTokenLimit": {
           "title": "Context Token Limit",
           "type": "integer",
@@ -18815,7 +18794,6 @@
         }
       },
       "modelVersion",
-      "lifecycleStatus",
       "contextTokenLimit",
       "outputTokenLimit",
       {
@@ -18929,17 +18907,6 @@
           "type": "object",
           "additionalProperties": true,
           "default": {}
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "SUSPENDED",
-            "RETIRED"
-          ],
-          "default": "DRAFT"
         }
       },
       "required": [
@@ -19002,9 +18969,7 @@
         ],
         "defaultTab": "json",
         "editorRows": 10
-      },
-      "lifecycleStatus"
-    ]
+      }]
   },
   "updateLlmRegistration": {
     "formId": "updateLlmRegistration",
@@ -19065,16 +19030,6 @@
           "type": "object",
           "additionalProperties": true,
           "default": {}
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "SUSPENDED",
-            "RETIRED"
-          ]
         },
         "aggregateVersion": {
           "title": "Aggregate Version",
@@ -19145,7 +19100,6 @@
         "defaultTab": "json",
         "editorRows": 10
       },
-      "lifecycleStatus",
       "aggregateVersion"
     ]
   },
@@ -19198,17 +19152,6 @@
           "type": "object",
           "additionalProperties": true,
           "default": {}
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "SUSPENDED",
-            "RETIRED"
-          ],
-          "default": "DRAFT"
         }
       },
       "required": [
@@ -19242,9 +19185,7 @@
         ],
         "defaultTab": "json",
         "editorRows": 10
-      },
-      "lifecycleStatus"
-    ]
+      }]
   },
   "updateProviderAccount": {
     "formId": "updateProviderAccount",
@@ -19301,16 +19242,6 @@
           "additionalProperties": true,
           "default": {}
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "SUSPENDED",
-            "RETIRED"
-          ]
-        },
         "aggregateVersion": {
           "title": "Aggregate Version",
           "type": "integer",
@@ -19349,7 +19280,6 @@
         "defaultTab": "json",
         "editorRows": 10
       },
-      "lifecycleStatus",
       "aggregateVersion"
     ]
   },
@@ -19366,12 +19296,11 @@
         "cidrs": {"title":"Allowed CIDRs","type":"array","items":{"type":"string"},"default":[]},
         "allowedPorts": {"title":"Allowed Ports","type":"array","items":{"type":"integer","minimum":1,"maximum":65535},"default":[]},
         "allowPrivateTls": {"title":"Allow Private TLS","type":"boolean","default":true},
-        "allowPrivatePlaintext": {"title":"Allow Private Plaintext","description":"Requires explicit endpoint risk acknowledgement.","type":"boolean","default":false},
-        "lifecycleStatus": {"title":"Lifecycle Status","type":"string","enum":["DRAFT"],"default":"DRAFT"}
+        "allowPrivatePlaintext": {"title":"Allow Private Plaintext","description":"Requires explicit endpoint risk acknowledgement.","type":"boolean","default":false}
       },
       "required": ["hostId","zoneName","dnsNames","cidrs","allowedPorts","allowPrivateTls","allowPrivatePlaintext"]
     },
-    "form": ["hostId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext","lifecycleStatus"]
+    "form": ["hostId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext"]
   },
   "updateLlmNetworkZone": {
     "formId": "updateLlmNetworkZone",
@@ -19388,12 +19317,11 @@
         "allowedPorts":{"title":"Allowed Ports","type":"array","items":{"type":"integer","minimum":1,"maximum":65535}},
         "allowPrivateTls":{"title":"Allow Private TLS","type":"boolean"},
         "allowPrivatePlaintext":{"title":"Allow Private Plaintext","type":"boolean"},
-        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT","ACTIVE","RETIRED"]},
         "aggregateVersion":{"title":"Aggregate Version","type":"integer","readonly":true,"minimum":1}
       },
       "required":["hostId","networkZoneId","aggregateVersion"]
     },
-    "form":["hostId","networkZoneId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext","lifecycleStatus","aggregateVersion"]
+    "form":["hostId","networkZoneId","zoneName",{"key":"dnsNames","type":"structured","defaultTab":"json"},{"key":"cidrs","type":"structured","defaultTab":"json"},{"key":"allowedPorts","type":"structured","defaultTab":"json"},"allowPrivateTls","allowPrivatePlaintext","aggregateVersion"]
   },
   "createLlmProviderEndpoint": {
     "formId":"createLlmProviderEndpoint",
@@ -19417,12 +19345,11 @@
         "trustBundleSha256":{"title":"Resolved Trust SHA-256","type":["string","null"],"pattern":"^[0-9a-f]{64}$","readonly":true},
         "poolIdleTimeoutMs":{"title":"Pool Idle Timeout (ms)","type":"integer","minimum":1,"default":30000},
         "clientRefreshIntervalMs":{"title":"Client Refresh Interval (ms)","type":"integer","minimum":1,"default":300000},
-        "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean","default":false},
-        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT"],"default":"DRAFT"}
+        "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean","default":false}
       },
       "required":["hostId","providerAccountId","endpointName","providerProtocol","baseUrl","endpointAuthMode","networkProfileMode","networkTermination","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
     },
-    "form":["hostId",{"key":"providerAccountId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination",{"key":"networkZoneId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmNetworkZoneLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","lifecycleStatus"]
+    "form":["hostId",{"key":"providerAccountId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination",{"key":"networkZoneId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmNetworkZoneLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
   },
   "updateLlmProviderEndpoint": {
     "formId":"updateLlmProviderEndpoint",
@@ -19448,12 +19375,11 @@
         "poolIdleTimeoutMs":{"title":"Pool Idle Timeout (ms)","type":"integer","minimum":1},
         "clientRefreshIntervalMs":{"title":"Client Refresh Interval (ms)","type":"integer","minimum":1},
         "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean"},
-        "lifecycleStatus":{"title":"Lifecycle Status","type":"string","enum":["DRAFT","ACTIVE","SUSPENDED","RETIRED"]},
         "aggregateVersion":{"title":"Aggregate Version","type":"integer","readonly":true,"minimum":1}
       },
       "required":["hostId","providerEndpointId","aggregateVersion"]
     },
-    "form":["hostId","providerEndpointId","providerAccountId","endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination","networkZoneId","trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","lifecycleStatus","aggregateVersion"]
+    "form":["hostId","providerEndpointId","providerAccountId","endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination","networkZoneId","trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","aggregateVersion"]
   },
   "createProviderDeployment": {
     "formId": "createProviderDeployment",
@@ -19573,19 +19499,6 @@
           "title": "Expected Sidecar Identity",
           "description": "Profile version and generated config digest only; never include runtime credentials.",
           "type": ["object", "null"]
-        },
-        "refreshBeforeSeconds": {
-          "title": "Refresh Before Seconds",
-          "type": "integer",
-          "minimum": 1
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT"
-          ],
-          "default": "DRAFT"
         }
       },
       "required": [
@@ -19690,10 +19603,7 @@
         ],
         "defaultTab": "json",
         "editorRows": 10
-      },
-      "refreshBeforeSeconds",
-      "lifecycleStatus"
-    ]
+      }]
   },
   "updateProviderDevelopment": {
     "formId": "updateProviderDevelopment",
@@ -19784,22 +19694,6 @@
         "runtimeCapacity":{"title":"Runtime Capacity","type":"object","additionalProperties":true},
         "readinessPolicy":{"title":"Readiness Policy","type":"string","enum":["IMMEDIATE","WARM_BEFORE_ELIGIBLE"]},
         "expectedSidecar":{"title":"Expected Sidecar Identity","type":["object","null"]},
-        "refreshBeforeSeconds": {
-          "title": "Refresh Before Seconds",
-          "type": "integer",
-          "minimum": 1
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "VALIDATING",
-            "ACTIVE",
-            "SUSPENDED",
-            "RETIRED"
-          ]
-        },
         "aggregateVersion": {
           "title": "Aggregate Version",
           "type": "integer",
@@ -19891,8 +19785,6 @@
         "defaultTab": "json",
         "editorRows": 10
       },
-      "refreshBeforeSeconds",
-      "lifecycleStatus",
       "aggregateVersion"
     ]
   },
@@ -19950,14 +19842,6 @@
             "null"
           ],
           "format": "date-time"
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "PENDING"
-          ],
-          "default": "PENDING"
         }
       },
       "required": [
@@ -19993,9 +19877,7 @@
       {
         "key": "expiresTs",
         "type": "timestamp"
-      },
-      "lifecycleStatus"
-    ]
+      }]
   },
   "updateProviderCredential": {
     "formId": "updateProviderCredential",
@@ -20056,17 +19938,6 @@
           ],
           "format": "date-time"
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "PENDING",
-            "ACTIVE",
-            "ROTATING",
-            "REVOKED",
-            "EXPIRED"
-          ]
-        },
         "aggregateVersion": {
           "title": "Aggregate Version",
           "type": "integer",
@@ -20111,7 +19982,6 @@
         "key": "expiresTs",
         "type": "timestamp"
       },
-      "lifecycleStatus",
       "aggregateVersion"
     ]
   },
@@ -20237,17 +20107,6 @@
           ],
           "default": "DENY"
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "DEPRECATED",
-            "RETIRED"
-          ],
-          "default": "DRAFT"
-        },
         "replacementAliasId": {
           "title": "Replacement Alias",
           "type": [
@@ -20328,7 +20187,6 @@
       "dataClassification",
       "loggingMode",
       "piiMode",
-      "lifecycleStatus",
       {
         "key": "replacementAliasId",
         "type": "dynaselect",
@@ -20486,16 +20344,6 @@
             "ALLOW"
           ]
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": [
-            "DRAFT",
-            "ACTIVE",
-            "DEPRECATED",
-            "RETIRED"
-          ]
-        },
         "replacementAliasId": {
           "title": "Replacement Alias",
           "type": [
@@ -20582,7 +20430,6 @@
       "dataClassification",
       "loggingMode",
       "piiMode",
-      "lifecycleStatus",
       {
         "key": "replacementAliasId",
         "type": "dynaselect",
@@ -21182,12 +21029,6 @@
           "type": "object",
           "additionalProperties": true,
           "default": {}
-        },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "RETIRED"],
-          "default": "DRAFT"
         }
       },
       "required": ["hostId", "policyName"]
@@ -21200,9 +21041,7 @@
       {"key": "contentPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
       {"key": "cachePolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
       {"key": "piiPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
-      {"key": "nativeExtensionPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
-      "lifecycleStatus"
-    ]
+      {"key": "nativeExtensionPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10}]
   },
   "updateModelPolicy": {
     "formId": "updateModelPolicy",
@@ -21268,11 +21107,6 @@
           "type": "object",
           "additionalProperties": true
         },
-        "lifecycleStatus": {
-          "title": "Lifecycle Status",
-          "type": "string",
-          "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "RETIRED"]
-        },
         "aggregateVersion": {
           "title": "Aggregate Version",
           "type": "integer",
@@ -21292,7 +21126,6 @@
       {"key": "cachePolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
       {"key": "piiPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
       {"key": "nativeExtensionPolicy", "type": "structured", "tabs": ["form", "json", "yaml"], "defaultTab": "json", "editorRows": 10},
-      "lifecycleStatus",
       "aggregateVersion"
     ]
   },

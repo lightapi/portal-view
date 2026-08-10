@@ -94,8 +94,7 @@ describe('LLM control-plane wiring', () => {
     mocks.host = 'host-a';
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a', modelId:'model-a', providerType:'openai', physicalModelId:'gpt-a',
-      modelFamily:'gpt', categoryIds:['category-a'], tagIds:['tag-a'], lifecycleStatus:'ACTIVE',
-    }]);
+      modelFamily:'gpt', categoryIds:['category-a'], tagIds:['tag-a'],     }]);
     mocks.fetchClient.mockImplementation(async (url:string) => {
       const command = JSON.parse(new URLSearchParams(url.split('?')[1]).get('cmd')!);
       return command.service === 'category'
@@ -117,7 +116,7 @@ describe('LLM control-plane wiring', () => {
     mocks.listLlm.mockImplementation(async (action:string) => {
       if (action === 'getLlmProviderAccount') return [{
         hostId:'host-a', providerAccountId:'account-a', accountName:'NVIDIA Demo',
-        providerType:'nvidia', lifecycleStatus:'ACTIVE', aggregateVersion:1,
+        providerType:'nvidia', aggregateVersion:1,
       }];
       if (action === 'getLlmNetworkZone') return Promise.reject(undefined);
       return [];
@@ -141,7 +140,7 @@ describe('LLM control-plane wiring', () => {
       hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', providerType:'nvidia',
       physicalModelId:'nvidia/nemotron-3-embed-1b', environment:'prod',
       regions:['ca-central-1'], dataClassifications:['confidential'],
-      capabilityRestrictions:{tools:false}, lifecycleStatus:'ACTIVE', aggregateVersion:4, active:true,
+      capabilityRestrictions:{tools:false}, aggregateVersion:4, active:true,
       updateUser:'system', updateTs:'2026-07-31T00:00:00Z',
     }] : []);
 
@@ -176,7 +175,7 @@ describe('LLM control-plane wiring', () => {
   it('opens typed model data for update without read-only audit fields', async () => {
     const model = {
       hostId:'host-a', modelId:'model-a', providerType:'openai', physicalModelId:'gpt-a',
-      modelFamily:'gpt', lifecycleStatus:'ACTIVE', contextTokenLimit:128000,
+      modelFamily:'gpt', contextTokenLimit:128000,
       outputTokenLimit:4096, modalities:['text'], operations:['chat'],
       declaredCapabilities:{tools:true}, categoryIds:['category-a'], tagIds:['tag-a'],
       aggregateVersion:3, active:true, updateUser:'system', updateTs:'2026-07-21T00:00:00Z',
@@ -298,7 +297,7 @@ describe('LLM control-plane wiring', () => {
   it('previews governed alias eligibility without exposing provider material', async () => {
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a', publicAliasId:'alias-a', aliasName:'governed-chat',
-      environment:'prod', lifecycleStatus:'ACTIVE', aggregateVersion:1,
+      environment:'prod', aggregateVersion:1,
     }]);
     mocks.queryLlm.mockResolvedValue([{deploymentId:'deployment-a',eligible:true}]);
     const aliases = llmResources.find(resource => resource.key === 'aliases')!;

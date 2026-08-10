@@ -21,8 +21,7 @@ describe('LLM provider deployment forms', () => {
       'hostId', 'providerDeploymentId', 'modelRegistrationId', 'providerAccountId',
       'deploymentName', 'providerType', 'providerProtocol', 'physicalModelId', 'baseUrl', 'region',
       'transportBounds', 'providerEndpointId', 'deploymentRevisionId', 'physicalRuntimeId',
-      'capacityDomainId', 'runtimeCapacity', 'readinessPolicy', 'expectedSidecar', 'refreshBeforeSeconds',
-      'lifecycleStatus', 'aggregateVersion',
+      'capacityDomainId', 'runtimeCapacity', 'readinessPolicy', 'expectedSidecar', 'aggregateVersion',
     ]));
     expect(deployment?.formFields).not.toContain('active');
   });
@@ -39,7 +38,8 @@ describe('LLM provider deployment forms', () => {
     expect(definition.schema.additionalProperties).toBe(false);
     expect(definition.schema.properties).not.toHaveProperty('active');
     expect(definition.form).not.toContain('active');
-    for (const field of ['quotaGroupId','conformanceState','conformanceDigest','conformanceValidUntil','conformanceResult']) {
+    for (const field of ['quotaGroupId','conformanceState','conformanceDigest','conformanceValidUntil',
+      'conformanceResult','refreshBeforeSeconds','qualificationContract','lifecycleStatus']) {
       expect(definition.schema.properties).not.toHaveProperty(field);
       expect(definition.form).not.toContain(field);
     }
@@ -75,9 +75,6 @@ describe('LLM provider deployment forms', () => {
       'providerEndpointId','deploymentRevisionId','physicalRuntimeId','capacityDomainId',
       'runtimeCapacity','readinessPolicy',
     ]);
-    expect(forms.createProviderDeployment.schema.properties.lifecycleStatus.enum).toEqual(['DRAFT']);
-    expect(forms.updateProviderDevelopment.schema.properties.lifecycleStatus.enum)
-      .toEqual(['DRAFT','VALIDATING','ACTIVE','SUSPENDED','RETIRED']);
     expect(forms.updateProviderDevelopment.schema.required)
       .toEqual(['hostId','providerDeploymentId','aggregateVersion']);
     expect(forms.updateProviderDevelopment.schema.properties.providerDeploymentId.readonly).toBe(true);

@@ -25,7 +25,7 @@ describe('Policies resource form navigation', () => {
       accessPolicy:{allowedSubjectTypes:['AGENT']},budgetPolicy:{monthlyCostMicros:50000000},
       contentPolicy:{loggingMode:'METADATA'},cachePolicy:{enabled:false},
       piiPolicy:{mode:'REDACT'},nativeExtensionPolicy:{openai:{allowedRequestFields:['service_tier']}},
-      lifecycleStatus:'ACTIVE',aggregateVersion:4,active:true,
+      aggregateVersion:4,active:true,
       updateUser:'system',updateTs:'2026-08-01T12:00:00Z',
     }]);
   });
@@ -47,7 +47,7 @@ describe('Policies resource form navigation', () => {
         accessPolicy:{allowedSubjectTypes:['AGENT']},budgetPolicy:{monthlyCostMicros:50000000},
         contentPolicy:{loggingMode:'METADATA'},cachePolicy:{enabled:false},
         piiPolicy:{mode:'REDACT'},nativeExtensionPolicy:{openai:{allowedRequestFields:['service_tier']}},
-        lifecycleStatus:'ACTIVE',aggregateVersion:4,
+        aggregateVersion:4,
       })},
     }));
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;

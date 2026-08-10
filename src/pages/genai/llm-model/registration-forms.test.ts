@@ -34,8 +34,7 @@ describe('LLM registration forms', () => {
     expect(definition.schema.additionalProperties).toBe(false);
     expect(definition.schema.properties).not.toHaveProperty('active');
     expect(definition.form).not.toContain('active');
-    expect(definition.schema.properties.lifecycleStatus.enum)
-      .toEqual(['DRAFT','ACTIVE','SUSPENDED','RETIRED']);
+    expect(definition.schema.properties).not.toHaveProperty('lifecycleStatus');
 
     const items = definition.form as FormItem[];
     const model = items.find(item => typeof item === 'object' && item.key === 'modelId');

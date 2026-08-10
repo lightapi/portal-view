@@ -24,7 +24,7 @@ describe('Accounts resource form navigation', () => {
       hostId:'host-a', providerAccountId:'account-a', accountName:'OpenAI Production',
       providerType:'openai', billingPrincipal:'genai-cost-center',
       quotaGroupId:'openai-production', capacityMetadata:{serviceTier:'production'},
-      lifecycleStatus:'ACTIVE', aggregateVersion:3, active:true,
+      aggregateVersion:3, active:true,
       updateUser:'system', updateTs:'2026-07-31T00:00:00Z',
     }]);
   });
@@ -45,7 +45,7 @@ describe('Accounts resource form navigation', () => {
         hostId:'host-a', providerAccountId:'account-a', accountName:'OpenAI Production',
         providerType:'openai', billingPrincipal:'genai-cost-center',
         quotaGroupId:'openai-production', capacityMetadata:{serviceTier:'production'},
-        lifecycleStatus:'ACTIVE', aggregateVersion:3,
+        aggregateVersion:3,
       })},
     }));
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;

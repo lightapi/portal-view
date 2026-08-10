@@ -25,7 +25,7 @@ describe('Aliases resource form navigation', () => {
       operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
       maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
       dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
-      lifecycleStatus:'ACTIVE',aliasVisibility:'PUBLIC',aggregateVersion:5,active:true,
+      aliasVisibility:'PUBLIC',aggregateVersion:5,active:true,
       updateUser:'system',updateTs:'2026-08-01T12:00:00Z',
     }]);
   });
@@ -47,7 +47,7 @@ describe('Aliases resource form navigation', () => {
         operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
         maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
         dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
-        lifecycleStatus:'ACTIVE',aliasVisibility:'PUBLIC',aggregateVersion:5,
+        aliasVisibility:'PUBLIC',aggregateVersion:5,
       })},
     }));
     const navigationData = mocks.navigate.mock.calls[0][1].state.data;
