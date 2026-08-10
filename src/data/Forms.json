@@ -20195,17 +20195,17 @@
         },
         "maxInputTokens": {
           "title": "Maximum Input Tokens",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "maxOutputTokens": {
           "title": "Maximum Output Tokens",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "maxRequestBytes": {
           "title": "Maximum Request Bytes",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "dataClassification": {
@@ -20446,17 +20446,17 @@
         },
         "maxInputTokens": {
           "title": "Maximum Input Tokens",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "maxOutputTokens": {
           "title": "Maximum Output Tokens",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "maxRequestBytes": {
           "title": "Maximum Request Bytes",
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1
         },
         "dataClassification": {

@@ -116,6 +116,7 @@ describe('LLM public alias form routes', () => {
     const user = userEvent.setup();
     renderAliasForm('updatePublicAlias',{
       hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'governed-chat',
+      maxInputTokens:null,maxOutputTokens:null,maxRequestBytes:null,
       replacementAliasId:null,aliasVisibility:'PUBLIC',boundAgentDefId:null,aggregateVersion:5,
     });
     expect(await screen.findByRole('heading',{name:'Update Public Alias'})).toBeInTheDocument();
@@ -124,6 +125,7 @@ describe('LLM public alias form routes', () => {
     await waitFor(() => expect(mocks.fetchClient).toHaveBeenCalledTimes(1));
     expect(mocks.fetchClient.mock.calls[0][1].body.data).toMatchObject({
       hostId:'host-a',publicAliasId:'alias-a',aliasVisibility:'PUBLIC',
+      maxInputTokens:null,maxOutputTokens:null,maxRequestBytes:null,
       replacementAliasId:null,boundAgentDefId:null,aggregateVersion:5,
     });
   });
