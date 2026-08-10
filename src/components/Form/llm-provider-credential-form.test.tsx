@@ -39,7 +39,7 @@ describe('LLM provider credential form routes', () => {
   it('submits an external reference and activation window on create', async () => {
     const user = userEvent.setup();
     renderCredentialForm('createProviderCredential',{
-      hostId:'host-a',providerDeploymentId:'deployment-a',credentialVersion:2,
+      hostId:'host-a',providerDeploymentId:'deployment-a',credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,
       secretReference:'vault://llm/openai-production/api-key',
       effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
     });
@@ -49,7 +49,7 @@ describe('LLM provider credential form routes', () => {
     await waitFor(() => expect(mocks.fetchClient).toHaveBeenCalledTimes(1));
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'createLlmProviderCredential',data:{
-        hostId:'host-a',providerDeploymentId:'deployment-a',credentialVersion:2,
+        hostId:'host-a',providerDeploymentId:'deployment-a',credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,
         secretReference:'vault://llm/openai-production/api-key',
         effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
         lifecycleStatus:'PENDING',
@@ -63,7 +63,7 @@ describe('LLM provider credential form routes', () => {
     const user = userEvent.setup();
     renderCredentialForm('updateProviderCredential',{
       hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
-      credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
+      credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
       effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
       lifecycleStatus:'ACTIVE',aggregateVersion:4,
     });
@@ -76,7 +76,7 @@ describe('LLM provider credential form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'updateLlmProviderCredential',data:{
         hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
-        credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
+        credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
         effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
         lifecycleStatus:'ACTIVE',aggregateVersion:4,
       },

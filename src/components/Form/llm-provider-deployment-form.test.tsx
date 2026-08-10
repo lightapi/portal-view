@@ -46,9 +46,11 @@ describe('LLM provider deployment form routes', () => {
         ? [{id:'registration-a',label:'Production / GPT-4o'}]
         : url.includes('getLlmProviderAccountLabel')
           ? [{id:'account-a',label:'OpenAI Production'}]
-          : url.includes('name=model_provider') ? ['openai']
-            : url.includes('name=model_name') ? ['gpt-4o']
-              : url.includes('name=region') ? ['ca-central-1'] : [];
+          : url.includes('getLlmProviderEndpointLabel')
+            ? [{id:'endpoint-a',label:'Groq Production'}]
+            : url.includes('name=model_provider') ? ['openai']
+              : url.includes('name=model_name') ? ['gpt-4o']
+                : url.includes('name=region') ? ['ca-central-1'] : [];
       return {json:async () => values,ok:true,status:200};
     }));
   });
@@ -58,7 +60,11 @@ describe('LLM provider deployment form routes', () => {
     renderDeploymentForm('createProviderDeployment',{
       hostId:'host-a', modelRegistrationId:'registration-a', providerAccountId:'account-a',
       deploymentName:'groq-llama-dev', providerType:'groq', providerProtocol:'openai_chat', physicalModelId:'llama-3.3-70b-versatile',
-      baseUrl:'https://api.groq.com/openai/v1', region:'ca-central-1',
+      baseUrl:'https://api.groq.com/openai/v1', providerEndpointId:'endpoint-a',
+      deploymentRevisionId:'groq-llama-dev/r1', physicalRuntimeId:'groq/llama-3.3-70b-versatile',
+      capacityDomainId:'groq-production',
+      runtimeCapacity:{maxParallelRequests:32,maxQueuedRequests:32,requestTimeoutMs:60000},
+      readinessPolicy:'IMMEDIATE', region:'ca-central-1',
     });
     expect(await screen.findByRole('heading',{name:'Create Provider Deployment'})).toBeInTheDocument();
 
@@ -70,7 +76,11 @@ describe('LLM provider deployment form routes', () => {
       service:'genai', action:'createLlmProviderDeployment', data:{
         hostId:'host-a', modelRegistrationId:'registration-a', providerAccountId:'account-a',
         deploymentName:'groq-llama-dev', providerType:'groq', providerProtocol:'openai_chat', physicalModelId:'llama-3.3-70b-versatile',
-        baseUrl:'https://api.groq.com/openai/v1', region:'ca-central-1',
+        baseUrl:'https://api.groq.com/openai/v1', providerEndpointId:'endpoint-a',
+        deploymentRevisionId:'groq-llama-dev/r1', physicalRuntimeId:'groq/llama-3.3-70b-versatile',
+        capacityDomainId:'groq-production',
+        runtimeCapacity:{maxParallelRequests:32,maxQueuedRequests:32,requestTimeoutMs:60000},
+        readinessPolicy:'IMMEDIATE', region:'ca-central-1',
         transportBounds:{connectTimeoutMs:5000,requestTimeoutMs:60000},
         lifecycleStatus:'DRAFT',
       },
