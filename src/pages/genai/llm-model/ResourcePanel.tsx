@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
@@ -45,6 +45,13 @@ function columnValue(row: LlmRecord, column: string) {
   return display(value);
 }
 
+function resourceLoadError(label: string, reason: unknown) {
+  const detail = llmErrorMessage(reason);
+  return detail.startsWith('The LLM operation failed without')
+    ? `Unable to load ${label}. The server returned no error details.`
+    : `Unable to load ${label}. ${detail}`;
+}
+
 export default function ResourcePanel({hostId, resource, canMutate = true}: Props) {
   const navigate = useNavigate();
   const queryHost = resource.scope === 'host' ? hostId : undefined;
@@ -57,11 +64,14 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
   const [json, setJson] = useState('');
   const [preview, setPreview] = useState<unknown>(null);
   const [qualificationStatus, setQualificationStatus] = useState<unknown>(null);
+  const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
-    setLoading(true); setError('');
+    const sequence = ++loadSequence.current;
+    setLoading(true); setError(''); setRows([]);
     try {
       const records = await listLlm(resource.listAction, queryHost);
+      if (sequence !== loadSequence.current) return;
       if (!resource.taxonomyEntityType) {
         setRows(records);
       } else {
@@ -69,6 +79,7 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
           taxonomyLabels('category', taxonomyHost, resource.taxonomyEntityType).catch(() => new Map<string, string>()),
           taxonomyLabels('tag', taxonomyHost, resource.taxonomyEntityType).catch(() => new Map<string, string>()),
         ]);
+        if (sequence !== loadSequence.current) return;
         setRows(records.map(row => ({
           ...row,
           categories: resolvedLabels(row.categoryIds, categoryLabels),
@@ -76,10 +87,19 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
         })));
       }
     }
-    catch (reason) { setError(llmErrorMessage(reason)); }
-    finally { setLoading(false); }
-  }, [queryHost, resource.listAction, resource.taxonomyEntityType, taxonomyHost]);
-  useEffect(() => { void load(); }, [load]);
+    catch (reason) {
+      if (sequence !== loadSequence.current) return;
+      setRows([]);
+      setError(resourceLoadError(resource.label, reason));
+    }
+    finally {
+      if (sequence === loadSequence.current) setLoading(false);
+    }
+  }, [queryHost, resource.label, resource.listAction, resource.taxonomyEntityType, taxonomyHost]);
+  useEffect(() => {
+    void load();
+    return () => { loadSequence.current += 1; };
+  }, [load]);
 
   const open = (row?: LlmRecord) => {
     const sanitized = (row

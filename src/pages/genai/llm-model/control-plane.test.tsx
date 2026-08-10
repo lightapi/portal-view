@@ -112,6 +112,29 @@ describe('LLM control-plane wiring', () => {
     expect(screen.queryByText('tag-a')).not.toBeInTheDocument();
   });
 
+  it('clears account rows and identifies the resource when the next tab fails to load', async () => {
+    mocks.host = 'host-a';
+    mocks.listLlm.mockImplementation(async (action:string) => {
+      if (action === 'getLlmProviderAccount') return [{
+        hostId:'host-a', providerAccountId:'account-a', accountName:'NVIDIA Demo',
+        providerType:'nvidia', lifecycleStatus:'ACTIVE', aggregateVersion:1,
+      }];
+      if (action === 'getLlmNetworkZone') return Promise.reject(undefined);
+      return [];
+    });
+
+    render(<LlmModelControlPlane/>);
+    await userEvent.click(screen.getByRole('tab',{name:'Accounts'}));
+    expect(await screen.findByText('NVIDIA Demo')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab',{name:'Network Zones'}));
+    expect(await screen.findByText(
+      'Unable to load Network Zones. The server returned no error details.',
+    )).toBeInTheDocument();
+    expect(screen.queryByText('NVIDIA Demo')).not.toBeInTheDocument();
+    expect(screen.getByText('No active records.')).toBeInTheDocument();
+  });
+
   it('opens typed create and update forms from the Registrations tab', async () => {
     mocks.host = 'host-a';
     mocks.listLlm.mockImplementation(async (action:string) => action === 'getLlmModelRegistration' ? [{
