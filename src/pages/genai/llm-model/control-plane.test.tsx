@@ -115,7 +115,8 @@ describe('LLM control-plane wiring', () => {
   it('opens typed create and update forms from the Registrations tab', async () => {
     mocks.host = 'host-a';
     mocks.listLlm.mockImplementation(async (action:string) => action === 'getLlmModelRegistration' ? [{
-      hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
+      hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', providerType:'nvidia',
+      physicalModelId:'nvidia/nemotron-3-embed-1b', environment:'prod',
       regions:['ca-central-1'], dataClassifications:['confidential'],
       capabilityRestrictions:{tools:false}, lifecycleStatus:'ACTIVE', aggregateVersion:4, active:true,
       updateUser:'system', updateTs:'2026-07-31T00:00:00Z',
@@ -123,6 +124,10 @@ describe('LLM control-plane wiring', () => {
 
     render(<LlmModelControlPlane/>);
     await userEvent.click(screen.getByRole('tab',{name:'Registrations'}));
+    expect(await screen.findByRole('columnheader',{name:'Provider'})).toBeInTheDocument();
+    expect(screen.getByRole('columnheader',{name:'Physical Model'})).toBeInTheDocument();
+    expect(await screen.findByText('nvidia')).toBeInTheDocument();
+    expect(screen.getByText('nvidia/nemotron-3-embed-1b')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button',{name:'Create registration'}));
     expect(mocks.navigate).toHaveBeenCalledWith('/app/form/createLlmRegistration', {
       state:{data:{hostId:'host-a'}},
@@ -141,6 +146,8 @@ describe('LLM control-plane wiring', () => {
     expect(navigationData).not.toHaveProperty('updateUser');
     expect(navigationData).not.toHaveProperty('updateTs');
     expect(navigationData).not.toHaveProperty('active');
+    expect(navigationData).not.toHaveProperty('providerType');
+    expect(navigationData).not.toHaveProperty('physicalModelId');
   });
 
   it('opens typed model data for update without read-only audit fields', async () => {
