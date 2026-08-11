@@ -34,10 +34,12 @@ export type KnowledgeBaseRow = {
     description?: string;
     environment: string;
     status: string;
+    desiredEmbeddingProfileId?: string;
+    desiredEmbeddingProfileRevision?: number;
+    retentionPolicy?: Record<string, unknown>;
     version: number;
     activeGenerationId?: string;
     pointerVersion?: number;
     projectionState?: string;
     updateTs?: string;
 };
-

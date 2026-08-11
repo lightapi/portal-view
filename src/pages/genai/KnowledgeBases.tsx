@@ -10,6 +10,10 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { MaterialReactTable, type MRT_ColumnDef, useMaterialReactTable } from 'material-react-table';
 import { useUserState } from '../../contexts/UserContext';
 import { KnowledgeBaseRow, knowledgeCommand, knowledgeError, knowledgeQuery } from './knowledgeApi';
+import {
+    normalizeQualifiedEmbeddingAliases, qualifiedAliasKey,
+    type QualifiedEmbeddingAliasRow,
+} from './knowledgeEmbeddingAliases';
 import HelpLink from '../../components/HelpLink';
 
 type UserState = { host?: string; roles?: string | null };
@@ -19,6 +23,13 @@ type PolicyRow = {
     maxStoredBytes: number; maxEmbeddingTokens: number; maxSpendMicros: number;
     maxWallTimeSeconds: number; maxConcurrency: number; version: number;
     active: boolean;
+};
+type EmbeddingProfileRow = {
+    profileId: string; profileRevision: number; aliasOwnerHostId: string;
+    publicAliasId: string; aliasName: string; expectedSpaceId: string;
+    expectedSpaceRevision: number; dimension: number; normalization: string;
+    distanceMetric: string; documentInputTransformVersion: string;
+    queryInputTransformVersion: string; qualificationDigest: string; active: boolean;
 };
 const HELP_PATH = '/help/portal-view/pages/knowledge-bases';
 
@@ -34,6 +45,11 @@ export default function KnowledgeBases() {
     const [createOpen, setCreateOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [embeddingProfileId, setEmbeddingProfileId] = useState('');
+    const [embeddingProfiles, setEmbeddingProfiles] = useState<EmbeddingProfileRow[]>([]);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const [qualifiedAliases, setQualifiedAliases] = useState<QualifiedEmbeddingAliasRow[]>([]);
+    const [selectedAliasKey, setSelectedAliasKey] = useState('');
     const [policies, setPolicies] = useState<PolicyRow[]>([]);
     const [policyOpen, setPolicyOpen] = useState(false);
     const [editingPolicy, setEditingPolicy] = useState<PolicyRow | null>(null);
@@ -44,7 +60,7 @@ export default function KnowledgeBases() {
         maxStoredBytes: '2147483648', maxEmbeddingTokens: '50000000',
         maxSpendMicros: '0', maxWallTimeSeconds: '3600', maxConcurrency: '4',
     });
-    const platformAdmin = Boolean(roles?.replace(/[\[\]"]/g, '').split(/[\s,]+/).some(role =>
+    const platformAdmin = Boolean(roles?.replace(/[[\]"]/g, '').split(/[\s,]+/).some(role =>
         role === 'admin' || role === 'platformKnowledgeBaseAdmin'));
 
     const load = useCallback(async () => {
@@ -52,15 +68,28 @@ export default function KnowledgeBases() {
         setLoading(true);
         setMessage('');
         try {
-            const [response, policyResponse] = await Promise.all([
+            const [response, policyResponse, profileResponse, aliasResponse] = await Promise.all([
                 knowledgeQuery<{ knowledgeBases?: KnowledgeBaseRow[] }>(
                     'getKnowledgeBases', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeIngestionPolicies?: PolicyRow[] }>(
                     'getKnowledgeIngestionPolicies', { hostId: host, environment }),
+                knowledgeQuery<{ knowledgeEmbeddingProfiles?: EmbeddingProfileRow[] }>(
+                    'getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
+                knowledgeQuery<unknown>(
+                    'getQualifiedKnowledgeEmbeddingAlias', { hostId: host, active: true, limit: 200 }),
             ]);
             setRows(Array.isArray(response.knowledgeBases) ? response.knowledgeBases : []);
             setPolicies(Array.isArray(policyResponse.knowledgeIngestionPolicies)
                 ? policyResponse.knowledgeIngestionPolicies : []);
+            setEmbeddingProfiles(Array.isArray(profileResponse.knowledgeEmbeddingProfiles)
+                ? profileResponse.knowledgeEmbeddingProfiles : []);
+            const aliases = normalizeQualifiedEmbeddingAliases(aliasResponse);
+            setQualifiedAliases(aliases);
+            setSelectedAliasKey(current => {
+                if (aliases.some(alias => qualifiedAliasKey(alias) === current)) return current;
+                const preferred = aliases.find(alias => alias.aliasName === 'kb-index') ?? aliases[0];
+                return preferred ? qualifiedAliasKey(preferred) : '';
+            });
         } catch (error) {
             setMessage(knowledgeError(error));
         } finally {
@@ -70,6 +99,9 @@ export default function KnowledgeBases() {
 
     useEffect(() => { void load(); }, [load]);
 
+    const selectedAlias = useMemo(() => qualifiedAliases.find(
+        alias => qualifiedAliasKey(alias) === selectedAliasKey), [qualifiedAliases, selectedAliasKey]);
+
     const create = useCallback(async () => {
         if (!host || !name.trim()) return;
         setMessage('');
@@ -77,6 +109,11 @@ export default function KnowledgeBases() {
             await knowledgeCommand('createKnowledgeBase', {
                 scope: 'TENANT', environment, name: name.trim(), description: description.trim(),
                 status: 'DRAFT', retentionPolicy: {},
+                ...(embeddingProfileId ? {
+                    desiredEmbeddingProfileId: embeddingProfileId,
+                    desiredEmbeddingProfileRevision: embeddingProfiles.find(
+                        profile => profile.profileId === embeddingProfileId)?.profileRevision || 1,
+                } : {}),
             });
             setCreateOpen(false);
             setName('');
@@ -85,7 +122,45 @@ export default function KnowledgeBases() {
         } catch (error) {
             setMessage(knowledgeError(error));
         }
-    }, [description, environment, host, load, name]);
+    }, [description, embeddingProfileId, embeddingProfiles, environment, host, load, name]);
+
+    const createEmbeddingProfile = useCallback(async () => {
+        if (!selectedAlias) return;
+        const space = selectedAlias.embeddingSpace;
+        setMessage('');
+        try {
+            await knowledgeCommand('createKnowledgeEmbeddingProfile', {
+                scope: 'GLOBAL', environment,
+                aliasOwnerHostId: selectedAlias.aliasOwnerHostId,
+                publicAliasId: selectedAlias.publicAliasId,
+                expectedSpaceId: space.spaceId,
+                expectedSpaceRevision: space.revision,
+                dimension: space.dimension,
+                normalization: space.normalization,
+                distanceMetric: space.distanceMetric,
+                documentInputTransformVersion: space.documentInputTransformVersion,
+                queryInputTransformVersion: 'query-v1',
+            });
+            setProfileOpen(false);
+            await load();
+        } catch (error) {
+            setMessage(knowledgeError(error));
+        }
+    }, [environment, load, selectedAlias]);
+
+    const deactivateEmbeddingProfile = useCallback(async (profile: EmbeddingProfileRow) => {
+        setMessage('');
+        try {
+            await knowledgeCommand('deactivateKnowledgeEmbeddingProfile', {
+                scope: 'GLOBAL', environment,
+                profileId: profile.profileId,
+                profileRevision: profile.profileRevision,
+            });
+            await load();
+        } catch (error) {
+            setMessage(knowledgeError(error));
+        }
+    }, [environment, load]);
 
     const createPolicy = useCallback(async () => {
         if (!policyName.trim()) return;
@@ -200,14 +275,57 @@ export default function KnowledgeBases() {
             </Stack>
         </CardContent></Card>)}</Stack>
         {!policies.length && <Alert severity="warning">No ingestion policy is available. Create a tenant policy, or ask a platform Knowledge Base administrator to publish a reusable global policy.</Alert>}
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} sx={{ mt: 3, mb: 1 }}>
+            <Box><Typography variant="h5">Embedding profiles</Typography><Typography color="text.secondary">Immutable, qualified embedding-space contracts used by Knowledge Base builds.</Typography></Box>
+            {platformAdmin && <Button startIcon={<AddIcon />} onClick={() => setProfileOpen(true)}>Create embedding profile</Button>}
+        </Stack>
+        <Stack spacing={1}>{embeddingProfiles.map(profile => <Card variant="outlined" key={`${profile.profileId}:${profile.profileRevision}`}><CardContent>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+                <Box><Stack direction="row" spacing={1} alignItems="center"><Typography variant="h6">{profile.aliasName}</Typography><Chip size="small" color={profile.active ? 'success' : 'default'} label={profile.active ? 'ACTIVE' : 'INACTIVE'} /></Stack>
+                    <Typography variant="body2" color="text.secondary">{profile.profileId} · revision {profile.profileRevision}</Typography>
+                    <Typography variant="body2">{profile.expectedSpaceId} r{profile.expectedSpaceRevision} · {profile.dimension} dimensions · {profile.normalization}/{profile.distanceMetric}</Typography></Box>
+                {platformAdmin && profile.active && <Button color="warning" onClick={() => void deactivateEmbeddingProfile(profile)}>Deactivate</Button>}
+            </Stack>
+        </CardContent></Card>)}</Stack>
+        {!embeddingProfiles.length && <Alert severity="warning">No compatible embedding profile exists. A platform administrator must publish an eligible protected kb-index Alias and create the corresponding immutable profile before a production build.</Alert>}
         <Dialog open={createOpen} onClose={() => setCreateOpen(false)} fullWidth maxWidth="sm">
             <DialogTitle>Create tenant Knowledge Base</DialogTitle>
             <DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
                 <TextField required label="Name" value={name} onChange={event => setName(event.target.value)} />
                 <TextField label="Description" multiline minRows={3} value={description} onChange={event => setDescription(event.target.value)} />
+                <FormControl><InputLabel>Embedding profile</InputLabel><Select label="Embedding profile" value={embeddingProfileId} onChange={event => setEmbeddingProfileId(event.target.value)}>
+                    <MenuItem value="">Assign later</MenuItem>{embeddingProfiles.filter(profile => profile.active).map(profile => <MenuItem key={`${profile.profileId}:${profile.profileRevision}`} value={profile.profileId}>{profile.aliasName} · {profile.expectedSpaceId} r{profile.expectedSpaceRevision}</MenuItem>)}
+                </Select></FormControl>
                 <Alert severity="info">The new Knowledge Base remains DRAFT with no active generation until a bounded source build is evaluated and promoted.</Alert>
             </Stack></DialogContent>
             <DialogActions><Button onClick={() => setCreateOpen(false)}>Cancel</Button><Button variant="contained" disabled={!name.trim()} onClick={() => void create()}>Create</Button></DialogActions>
+        </Dialog>
+        <Dialog open={profileOpen} onClose={() => setProfileOpen(false)} fullWidth maxWidth="sm">
+            <DialogTitle>Create global embedding profile</DialogTitle>
+            <DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
+                <Alert severity="info">Select an eligible protected embedding Alias. The Alias owner and complete embedding-space contract are derived from the control plane and become immutable profile fields. Runtime validation remains separate.</Alert>
+                {!qualifiedAliases.length && <Alert severity="warning">No eligible embedding Alias is available for the current host. Publish an active embedding Alias with an immutable expected space and at least one compatible route first.</Alert>}
+                <FormControl required disabled={!qualifiedAliases.length}>
+                    <InputLabel>Public Alias</InputLabel>
+                    <Select label="Public Alias" value={selectedAliasKey} onChange={event => setSelectedAliasKey(event.target.value)}>
+                        {qualifiedAliases.map(alias => <MenuItem key={qualifiedAliasKey(alias)} value={qualifiedAliasKey(alias)}>
+                            {alias.aliasName} · {alias.embeddingSpace.spaceId} r{alias.embeddingSpace.revision}
+                        </MenuItem>)}
+                    </Select>
+                </FormControl>
+                <TextField label="Alias owner host ID" value={selectedAlias?.aliasOwnerHostId ?? ''} InputProps={{ readOnly: true }} />
+                <TextField label="Public Alias ID" value={selectedAlias?.publicAliasId ?? ''} InputProps={{ readOnly: true }} />
+                <TextField label="Expected space ID" value={selectedAlias?.embeddingSpace.spaceId ?? ''} InputProps={{ readOnly: true }} />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                    <TextField fullWidth label="Space revision" value={selectedAlias?.embeddingSpace.revision ?? ''} InputProps={{ readOnly: true }} />
+                    <TextField fullWidth label="Dimension" value={selectedAlias?.embeddingSpace.dimension ?? ''} InputProps={{ readOnly: true }} />
+                </Stack>
+                <TextField label="Vector contract" value={selectedAlias ? `${selectedAlias.embeddingSpace.normalization} / ${selectedAlias.embeddingSpace.distanceMetric}` : ''} InputProps={{ readOnly: true }} />
+                <TextField label="Document input transform" value={selectedAlias?.embeddingSpace.documentInputTransformVersion ?? ''} InputProps={{ readOnly: true }} />
+                <TextField label="Query input transform" value="query-v1" InputProps={{ readOnly: true }} />
+                <Alert severity="info">The service generates the qualification digest from this immutable contract; no digest input is required.</Alert>
+            </Stack></DialogContent>
+            <DialogActions><Button onClick={() => setProfileOpen(false)}>Cancel</Button><Button variant="contained" disabled={!selectedAlias} onClick={() => void createEmbeddingProfile()}>Create immutable profile</Button></DialogActions>
         </Dialog>
         <Dialog open={policyOpen} onClose={() => setPolicyOpen(false)} fullWidth maxWidth="sm">
             <DialogTitle>{editingPolicy ? 'Edit ingestion policy' : 'Create ingestion policy'}</DialogTitle>
