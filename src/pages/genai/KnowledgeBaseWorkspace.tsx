@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Alert, Box, Button, Card, CardContent, Checkbox, Chip, Dialog,
-    DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel,
-    Grid, Stack, Tab, Tabs, TextField, Typography,
+    DialogActions, DialogContent, DialogTitle, Divider, FormControl,
+    FormControlLabel, Grid, InputLabel, MenuItem, Select, Stack, Tab, Tabs,
+    TextField, Typography,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -51,6 +52,7 @@ export default function KnowledgeBaseWorkspace() {
     const [repositoryUri, setRepositoryUri] = useState('');
     const [commit, setCommit] = useState('');
     const [ingestionPolicyId, setIngestionPolicyId] = useState('');
+    const [ingestionPolicies, setIngestionPolicies] = useState<Row[]>([]);
     const [bindingOpen, setBindingOpen] = useState(false);
     const [agentId, setAgentId] = useState('');
     const [retrievalProfileId, setRetrievalProfileId] = useState('');
@@ -62,6 +64,8 @@ export default function KnowledgeBaseWorkspace() {
         setBusy(true);
         setMessage('');
         try {
+            const policyResponse = await knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>(
+                'getKnowledgeIngestionPolicies', { hostId: host, environment });
             const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows, uploadRows, changeRows, anchorRows, compactionRows, antiEntropyRows, aclFreshnessRows, aclReconciliationRows, aclTransitionRows, connectorObjectRows, migrationRows, migrationEvaluationRows, retentionRows, checkpointRows, purgeRows] = await Promise.all([
                 knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context),
                 knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
@@ -85,6 +89,12 @@ export default function KnowledgeBaseWorkspace() {
                 knowledgeQuery<{ knowledgePurgeEvidence?: Row[] }>('getKnowledgePurgeEvidence', context),
             ]);
             setBase(fresh);
+            const activePolicies = (policyResponse.knowledgeIngestionPolicies || [])
+                .filter(policy => policy.active !== false);
+            setIngestionPolicies(activePolicies);
+            setIngestionPolicyId(current => activePolicies.some(
+                policy => policy.ingestionPolicyId === current)
+                ? current : activePolicies[0]?.ingestionPolicyId || '');
             setSources(sourceRows.knowledgeSources || []);
             setDocuments(documentRows.knowledgeDocuments || []);
             setRuns(syncRows.knowledgeSyncRuns || []);
@@ -161,9 +171,12 @@ export default function KnowledgeBaseWorkspace() {
         <Dialog open={sourceOpen} onClose={() => setSourceOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Add bounded Git/Markdown source</DialogTitle><DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
             <TextField required label="Display name" value={sourceName} onChange={event => setSourceName(event.target.value)} />
             <TextField required label="Approved repository URI" value={repositoryUri} onChange={event => setRepositoryUri(event.target.value)} />
-            <TextField required label="Immutable commit" value={commit} onChange={event => setCommit(event.target.value)} helperText="Branch-only sources are rejected in the Phase 1a pilot." />
-            <TextField required label="Ingestion policy UUID" value={ingestionPolicyId} onChange={event => setIngestionPolicyId(event.target.value)} />
-            <Alert severity="info">The connector ignores symlinks and executable hooks and enforces the approved path, file, byte, chunk, token, and time ceilings.</Alert>
+            <TextField required label="Immutable commit" value={commit} onChange={event => setCommit(event.target.value)} helperText="Enter the full 40- or 64-character commit SHA. A branch can move after approval, so branch-only sources are rejected." />
+            <FormControl required><InputLabel>Ingestion policy</InputLabel><Select label="Ingestion policy" value={ingestionPolicyId} onChange={event => setIngestionPolicyId(event.target.value)}>
+                {ingestionPolicies.map(policy => <MenuItem key={policy.ingestionPolicyId} value={policy.ingestionPolicyId}>{policy.policyName} ({policy.hostId ? 'tenant' : 'global'})</MenuItem>)}
+            </Select></FormControl>
+            {!ingestionPolicies.length && <Alert severity="warning">No active ingestion policy is available. Create one from the Knowledge Bases page before adding a source.</Alert>}
+            <Alert severity="info">Use an HTTPS Git repository URI. A repository may contain source code and documentation; the Phase 1a connector ingests Markdown files only. Current runtime builds scan all Markdown in the checkout, so path include/exclude controls are not yet enforced.</Alert>
         </Stack></DialogContent><DialogActions><Button onClick={() => setSourceOpen(false)}>Cancel</Button><Button variant="contained" disabled={!sourceName || !repositoryUri || !commit || !ingestionPolicyId} onClick={() => { setSourceOpen(false); void command('createKnowledgeSource', { displayName: sourceName, sourceType: 'GIT_MARKDOWN', configJson: { repositoryUri, commit, include: ['**/*.md'], exclude: [] }, ingestionPolicyId, aclMode: 'UNIFORM_SCOPE', sourceTrustTier: 'UNREVIEWED', approvalPolicy: {}, schedule: {}, aclReconciliationPolicy: {} }); }}>Create source</Button></DialogActions></Dialog>
         <Dialog open={bindingOpen} onClose={() => setBindingOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Bind Agent to Knowledge Base</DialogTitle><DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
             <TextField required label="Agent UUID" value={agentId} onChange={event => setAgentId(event.target.value)} />
