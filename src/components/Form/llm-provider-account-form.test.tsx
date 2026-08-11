@@ -61,10 +61,11 @@ describe('LLM provider account form routes', () => {
       service:'genai', action:'createLlmProviderAccount', data:{
         hostId:'host-a', accountName:'OpenAI Production', providerType:'openai',
         billingPrincipal:'genai-cost-center', quotaGroupId:'openai-production',
-        capacityMetadata:{serviceTier:'production',rpm:1000}, lifecycleStatus:'DRAFT',
+        capacityMetadata:{serviceTier:'production',rpm:1000},
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
@@ -74,7 +75,7 @@ describe('LLM provider account form routes', () => {
       hostId:'host-a', providerAccountId:'account-a', accountName:'OpenAI Production',
       providerType:'openai', billingPrincipal:'genai-cost-center',
       quotaGroupId:'openai-production', capacityMetadata:{serviceTier:'production'},
-      lifecycleStatus:'ACTIVE', aggregateVersion:3,
+      aggregateVersion:3,
     });
     expect(await screen.findByRole('heading',{name:'Update Provider Account'})).toBeInTheDocument();
     expect(screen.getByDisplayValue('account-a')).toBeDisabled();
@@ -87,7 +88,7 @@ describe('LLM provider account form routes', () => {
         hostId:'host-a', providerAccountId:'account-a', accountName:'OpenAI Production',
         providerType:'openai', billingPrincipal:'genai-cost-center',
         quotaGroupId:'openai-production', capacityMetadata:{serviceTier:'production'},
-        lifecycleStatus:'ACTIVE', aggregateVersion:3,
+        aggregateVersion:3,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');

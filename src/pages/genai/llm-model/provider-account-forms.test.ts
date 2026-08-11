@@ -16,10 +16,10 @@ describe('LLM provider account forms', () => {
       createForm:'createProviderAccount',
       updateForm:'updateProviderAccount',
     });
-    expect(account?.formFields).toEqual(expect.arrayContaining([
+    expect(account?.formFields).toEqual([
       'hostId', 'providerAccountId', 'accountName', 'providerType',
       'billingPrincipal', 'quotaGroupId', 'capacityMetadata', 'aggregateVersion',
-    ]));
+    ]);
     expect(account?.formFields).not.toContain('active');
   });
 

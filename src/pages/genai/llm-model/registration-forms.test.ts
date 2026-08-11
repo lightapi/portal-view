@@ -17,10 +17,10 @@ describe('LLM registration forms', () => {
       createForm:'createLlmRegistration',
       updateForm:'updateLlmRegistration',
     });
-    expect(registration?.formFields).toEqual(expect.arrayContaining([
-      'modelRegistrationId', 'modelId', 'environment', 'regions',
+    expect(registration?.formFields).toEqual([
+      'hostId', 'modelRegistrationId', 'modelId', 'environment', 'regions',
       'dataClassifications', 'capabilityRestrictions', 'aggregateVersion',
-    ]));
+    ]);
   });
 
   it.each([

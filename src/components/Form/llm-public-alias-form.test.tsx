@@ -67,10 +67,11 @@ describe('LLM public alias form routes', () => {
         operations:['generate'],requiredCapabilities:{tools:true,streaming:true},
         maxInputTokens:128000,maxOutputTokens:8192,maxRequestBytes:1048576,
         dataClassification:'internal',loggingMode:'METADATA',piiMode:'REDACT',
-        lifecycleStatus:'DRAFT',aliasVisibility:'PUBLIC',
+        aliasVisibility:'PUBLIC',
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('boundAgentDefId');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
@@ -85,7 +86,7 @@ describe('LLM public alias form routes', () => {
           distanceMetric:'cosine',documentInputTransformVersion:'document-v1'},
       },maxInputTokens:64000,
       maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
-      loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
+      loggingMode:'REDACTED',piiMode:'TOKENIZE',
       replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
       boundAgentDefId:'10000000-0000-4000-8000-000000000099',aggregateVersion:6,
     });
@@ -100,7 +101,7 @@ describe('LLM public alias form routes', () => {
         hostId:'host-a',publicAliasId:'alias-a',environment:'prod',aliasName:'legacy-agent-chat',
         requiredCapabilities:{tools:true},maxInputTokens:64000,
         maxOutputTokens:4096,maxRequestBytes:524288,dataClassification:null,
-        loggingMode:'REDACTED',piiMode:'TOKENIZE',lifecycleStatus:'ACTIVE',
+        loggingMode:'REDACTED',piiMode:'TOKENIZE',
         replacementAliasId:'alias-b',aliasVisibility:'INTERNAL_LEGACY',
         boundAgentDefId:'10000000-0000-4000-8000-000000000099',aggregateVersion:6,
       },

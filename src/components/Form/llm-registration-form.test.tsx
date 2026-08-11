@@ -80,6 +80,7 @@ describe('LLM registration form routes', () => {
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
@@ -88,7 +89,7 @@ describe('LLM registration form routes', () => {
     const existing = {
       hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
       regions:['ca-central-1'], dataClassifications:['confidential'],
-      capabilityRestrictions:{tools:false}, lifecycleStatus:'ACTIVE', aggregateVersion:4,
+      capabilityRestrictions:{tools:false}, aggregateVersion:4,
     };
     renderRegistrationForm('updateLlmRegistration',existing);
     expect(await screen.findByRole('heading',{name:'Update LLM Registration'})).toBeInTheDocument();
@@ -101,7 +102,7 @@ describe('LLM registration form routes', () => {
       service:'genai', action:'updateLlmModelRegistration', data:{
         hostId:'host-a', modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
         regions:['ca-central-1'], dataClassifications:['confidential'],
-        capabilityRestrictions:{tools:false}, lifecycleStatus:'ACTIVE', aggregateVersion:4,
+        capabilityRestrictions:{tools:false}, aggregateVersion:4,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');

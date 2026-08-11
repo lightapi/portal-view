@@ -52,10 +52,10 @@ describe('LLM provider credential form routes', () => {
         hostId:'host-a',providerDeploymentId:'deployment-a',credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,
         secretReference:'vault://llm/openai-production/api-key',
         effectiveTs:'2026-08-01T12:00:00Z',expiresTs:'2026-11-01T12:00:00Z',
-        lifecycleStatus:'PENDING',
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
@@ -65,7 +65,7 @@ describe('LLM provider credential form routes', () => {
       hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
       credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
       effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
-      lifecycleStatus:'ACTIVE',aggregateVersion:4,
+      aggregateVersion:4,
     });
     expect(await screen.findByRole('heading',{name:'Update Provider Credential'})).toBeInTheDocument();
     expect(screen.getByDisplayValue('credential-a')).toBeDisabled();
@@ -78,7 +78,7 @@ describe('LLM provider credential form routes', () => {
         hostId:'host-a',providerCredentialId:'credential-a',providerDeploymentId:'deployment-a',
         credentialPurpose:'SIDECAR_RUNTIME',credentialVersion:2,secretReference:'vault://llm/openai-production/api-key',
         effectiveTs:'2026-08-01T12:00:00Z',expiresTs:null,
-        lifecycleStatus:'ACTIVE',aggregateVersion:4,
+        aggregateVersion:4,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');

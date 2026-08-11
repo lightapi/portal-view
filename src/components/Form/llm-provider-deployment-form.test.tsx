@@ -82,10 +82,10 @@ describe('LLM provider deployment form routes', () => {
         runtimeCapacity:{maxParallelRequests:32,maxQueuedRequests:32,requestTimeoutMs:60000},
         readinessPolicy:'IMMEDIATE', region:'ca-central-1',
         transportBounds:{connectTimeoutMs:5000,requestTimeoutMs:60000},
-        lifecycleStatus:'DRAFT',
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('conformanceResult');
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('quotaGroupId');
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('conformanceState');
@@ -99,7 +99,7 @@ describe('LLM provider deployment form routes', () => {
       providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
       providerProtocol:'openai_chat', physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:null,
       transportBounds:{requestTimeoutMs:60000},
-      lifecycleStatus:'DRAFT', aggregateVersion:5,
+      aggregateVersion:5,
     });
     expect(await screen.findByRole('heading',{name:'Update Provider Deployment'})).toBeInTheDocument();
     expect(screen.getByDisplayValue('deployment-a')).toBeDisabled();
@@ -112,7 +112,7 @@ describe('LLM provider deployment form routes', () => {
         hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
         providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
         providerProtocol:'openai_chat', physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:null,
-        transportBounds:{requestTimeoutMs:60000}, lifecycleStatus:'DRAFT', aggregateVersion:5,
+        transportBounds:{requestTimeoutMs:60000}, aggregateVersion:5,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');

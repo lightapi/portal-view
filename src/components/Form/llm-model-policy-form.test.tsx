@@ -63,10 +63,11 @@ describe('LLM model policy form routes', () => {
     await waitFor(() => expect(mocks.fetchClient).toHaveBeenCalledTimes(1));
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'createLlmModelPolicy',data:{
-        hostId:'host-a',policyName:'governed-chat',...policies,lifecycleStatus:'DRAFT',
+        hostId:'host-a',policyName:'governed-chat',...policies,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
+    expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('lifecycleStatus');
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
   });
 
@@ -74,7 +75,7 @@ describe('LLM model policy form routes', () => {
     const user = userEvent.setup();
     renderPolicyForm('updateModelPolicy',{
       hostId:'host-a',modelPolicyId:'policy-a',policyName:'governed-chat',...policies,
-      lifecycleStatus:'ACTIVE',aggregateVersion:4,
+      aggregateVersion:4,
     });
     expect(await screen.findByRole('heading',{name:'Update Model Policy'})).toBeInTheDocument();
     expect(screen.getByDisplayValue('policy-a')).toBeDisabled();
@@ -85,7 +86,7 @@ describe('LLM model policy form routes', () => {
     expect(mocks.fetchClient.mock.calls[0][1].body).toMatchObject({
       service:'genai',action:'updateLlmModelPolicy',data:{
         hostId:'host-a',modelPolicyId:'policy-a',policyName:'governed-chat',...policies,
-        lifecycleStatus:'ACTIVE',aggregateVersion:4,
+        aggregateVersion:4,
       },
     });
     expect(mocks.fetchClient.mock.calls[0][1].body.data).not.toHaveProperty('active');
