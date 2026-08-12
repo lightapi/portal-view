@@ -85,6 +85,7 @@ export default function KnowledgeBaseWorkspace() {
     const [ingestionPolicyId, setIngestionPolicyId] = useState('');
     const [ingestionPolicies, setIngestionPolicies] = useState<Row[]>([]);
     const [embeddingProfiles, setEmbeddingProfiles] = useState<Row[]>([]);
+    const [retrievalProfiles, setRetrievalProfiles] = useState<Row[]>([]);
     const [desiredEmbeddingProfile, setDesiredEmbeddingProfile] = useState('');
     const [bindingOpen, setBindingOpen] = useState(false);
     const [agentId, setAgentId] = useState('');
@@ -97,11 +98,13 @@ export default function KnowledgeBaseWorkspace() {
         if (showBusy) setBusy(true);
         if (!preserveMessage) setMessage('');
         try {
-            const [policyResponse, profileResponse] = await Promise.all([
+            const [policyResponse, profileResponse, retrievalResponse] = await Promise.all([
                 knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>(
                     'getKnowledgeIngestionPolicies', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>(
                     'getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
+                knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>(
+                    'getKnowledgeRetrievalProfiles', { hostId: host, environment }),
             ]);
             const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows, uploadRows, changeRows, anchorRows, compactionRows, antiEntropyRows, aclFreshnessRows, aclReconciliationRows, aclTransitionRows, connectorObjectRows, migrationRows, migrationEvaluationRows, retentionRows, checkpointRows, purgeRows] = await Promise.all([
                 knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context),
@@ -129,6 +132,12 @@ export default function KnowledgeBaseWorkspace() {
             const activeProfiles = (profileResponse.knowledgeEmbeddingProfiles || [])
                 .filter(profile => profile.active !== false);
             setEmbeddingProfiles(activeProfiles);
+            const activeRetrievalProfiles = (retrievalResponse.knowledgeRetrievalProfiles || [])
+                .filter(profile => profile.active !== false);
+            setRetrievalProfiles(activeRetrievalProfiles);
+            setRetrievalProfileId(current => activeRetrievalProfiles.some(
+                profile => profile.profileId === current)
+                ? current : activeRetrievalProfiles[0]?.profileId || '');
             setDesiredEmbeddingProfile(fresh.desiredEmbeddingProfileId
                 ? `${fresh.desiredEmbeddingProfileId}:${fresh.desiredEmbeddingProfileRevision || 1}`
                 : '');
@@ -248,7 +257,10 @@ export default function KnowledgeBaseWorkspace() {
         </Stack></DialogContent><DialogActions><Button onClick={() => setSourceOpen(false)}>Cancel</Button><Button variant="contained" disabled={!sourceName || !repositoryUri || !commit || !ingestionPolicyId} onClick={() => { setSourceOpen(false); void command('createKnowledgeSource', { displayName: sourceName, sourceType: 'GIT_MARKDOWN', configJson: { repositoryUri, commit, include: ['**/*.md'], exclude: [] }, ingestionPolicyId, aclMode: 'UNIFORM_SCOPE', sourceTrustTier: 'UNREVIEWED', approvalPolicy: {}, schedule: {}, aclReconciliationPolicy: {} }); }}>Create source</Button></DialogActions></Dialog>
         <Dialog open={bindingOpen} onClose={() => setBindingOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Bind Agent to Knowledge Base</DialogTitle><DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
             <TextField required label="Agent UUID" value={agentId} onChange={event => setAgentId(event.target.value)} />
-            <TextField required label="Retrieval profile UUID" value={retrievalProfileId} onChange={event => setRetrievalProfileId(event.target.value)} />
+            <FormControl required><InputLabel>Retrieval profile</InputLabel><Select label="Retrieval profile" value={retrievalProfileId} onChange={event => setRetrievalProfileId(event.target.value)}>
+                {retrievalProfiles.map(profile => <MenuItem key={profile.profileId} value={profile.profileId}>{profile.profileName} ({profile.hostId ? 'tenant' : 'global'}) · {profile.strategy}</MenuItem>)}
+            </Select></FormControl>
+            {!retrievalProfiles.length && <Alert severity="warning">No active retrieval profile is available. Create one from the Knowledge Bases page before binding an Agent.</Alert>}
             <TextField type="number" label="Priority" defaultValue={50} inputProps={{ min: 1, max: 100 }} disabled />
             <FormControlLabel control={<Checkbox checked={evidenceRequired} onChange={event => setEvidenceRequired(event.target.checked)} />} label="Fail the turn when Knowledge evidence is unavailable" />
             <Alert severity="warning">Phase 1b permits up to four active Knowledge Bases per Agent. The runtime re-authorizes every binding and fuses local ranks without comparing raw cross-space scores.</Alert>

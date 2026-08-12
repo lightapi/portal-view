@@ -43,10 +43,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SaveIcon from '@mui/icons-material/Save';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
 import WorkflowGraph from './WorkflowGraph';
+import WorkflowAiAuthoringDialog, { type WorkflowAuthoringTool } from './WorkflowAiAuthoringDialog';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -70,6 +72,7 @@ type WfDefinitionType = {
 
 type UserState = {
     host?: string;
+    userId?: string;
 };
 
 type ValidationProblem = {
@@ -114,6 +117,10 @@ type CatalogReference = {
     label: string;
     secondary?: string;
     description?: string;
+    inputSchema?: Record<string, unknown>;
+    outputSchema?: Record<string, unknown>;
+    readOnly?: boolean;
+    contractDigest?: string;
 };
 
 type CatalogState = Record<CatalogKind, CatalogReference[]>;
@@ -870,6 +877,8 @@ function toolReferences(value: unknown): CatalogReference[] {
     return asRecords(value, 'tools').map(tool => {
         const name = textValue(tool.name || tool.toolName || tool.tool_name || tool.toolId);
         const id = textValue(tool.toolId || name);
+        const metadata = toRecord(tool.metadata);
+        const contractDigest = textValue(tool.contractDigest || tool.schemaDigest);
         return {
             kind: 'tools' as const,
             id,
@@ -877,6 +886,10 @@ function toolReferences(value: unknown): CatalogReference[] {
             label: name,
             secondary: compactText([tool.implementationType, tool.sensitivityTier, tool.sourceProtocol]),
             description: textValue(tool.description),
+            inputSchema: toRecord(tool.inputSchema),
+            outputSchema: toRecord(tool.outputSchema),
+            readOnly: typeof tool.readOnly === 'boolean' ? tool.readOnly : typeof metadata.readOnly === 'boolean' ? metadata.readOnly : undefined,
+            contractDigest: /^sha256:[0-9a-f]{64}$/.test(contractDigest) ? contractDigest : undefined,
         };
     }).filter(ref => ref.id && ref.value);
 }
@@ -1167,7 +1180,7 @@ export default function WorkflowEditor() {
     const location = useLocation();
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    const { host } = useUserState() as UserState;
+    const { host, userId } = useUserState() as UserState;
     const state = (location.state || {}) as WorkflowEditorState;
     const initial = state.data || {};
     const source = state.source || '/app/workflow/WfDefinition';
@@ -1216,8 +1229,14 @@ export default function WorkflowEditor() {
     const [categoryOptions, setCategoryOptions] = useState<TaxonomyOption[]>([]);
     const [tagOptions, setTagOptions] = useState<TagOption[]>([]);
     const [isTaxonomyLoading, setIsTaxonomyLoading] = useState(false);
+    const [isAiAuthoringOpen, setIsAiAuthoringOpen] = useState(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
+    const aiAuthored = useMemo(() => {
+        const parsedDefinition = toRecord(analysis.parsed);
+        const documentMetadata = toRecord(toRecord(parsedDefinition.document).metadata);
+        return Object.prototype.hasOwnProperty.call(documentMetadata, 'aiAuthoring');
+    }, [analysis.parsed]);
     const selectedCategories = useMemo(
         () => categoryOptions.filter(option => categoryIds.includes(option.id)),
         [categoryIds, categoryOptions],
@@ -1257,6 +1276,15 @@ export default function WorkflowEditor() {
         () => selectedReferences.find(reference => reference.id === selectedReferenceId),
         [selectedReferenceId, selectedReferences],
     );
+    const authoringTools = useMemo<WorkflowAuthoringTool[]>(() => catalog.tools.map(tool => ({
+        id: tool.id,
+        name: tool.value,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+        outputSchema: tool.outputSchema,
+        readOnly: tool.readOnly,
+        contractDigest: tool.contractDigest,
+    })), [catalog.tools]);
     const waitingHumanTasks = useMemo(() => testSnapshot.tasks.filter(isWaitingHumanTask), [testSnapshot.tasks]);
     const assertionTasks = useMemo(() => testSnapshot.tasks.filter(isAssertionTask), [testSnapshot.tasks]);
     const failedProcesses = useMemo(() => testSnapshot.processes.filter(process => isFailedStatus(process.statusCode)), [testSnapshot.processes]);
@@ -1428,12 +1456,25 @@ export default function WorkflowEditor() {
             return { ok: false, problems: [{ severity: 'error', message: 'Host and definition are required for server validation.' }] };
         }
         setIsServerValidating(true);
+        if (aiAuthored && !catalogLoaded) {
+            const problem = { severity: 'error' as const, message: 'The authorization-filtered tool catalog must be loaded before an AI-authored workflow can be validated.' };
+            setServerProblems([problem]);
+            setIsServerValidating(false);
+            return { ok: false, problems: [problem], blockingProblem: problem };
+        }
         const cmd = {
             host: 'lightapi.net',
             service: 'workflow',
             action: 'validateWfDefinition',
             version: '0.1.0',
-            data: { hostId, definition },
+            data: {
+                hostId,
+                definition,
+                ...(aiAuthored ? {
+                    profile: 'workflow-mcp-phase3',
+                    allowedToolRefs: Array.from(catalogToolNames),
+                } : {}),
+            },
         };
         try {
             const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
@@ -1442,13 +1483,25 @@ export default function WorkflowEditor() {
             const blocking = problems.find(problem => problem.severity === 'error');
             return { ok: !blocking, problems, blockingProblem: blocking };
         } catch (error) {
-            const problem = { severity: 'warning' as const, message: `Server validation unavailable: ${errorText(error)}` };
+            const problem = {
+                severity: aiAuthored ? 'error' as const : 'warning' as const,
+                message: `Server validation unavailable: ${errorText(error)}`,
+            };
             setServerProblems([problem]);
-            return { ok: true, unavailable: true, problems: [problem] };
+            return aiAuthored
+                ? { ok: false, unavailable: true, problems: [problem], blockingProblem: problem }
+                : { ok: true, unavailable: true, problems: [problem] };
         } finally {
             setIsServerValidating(false);
         }
-    }, [definition, hostId]);
+    }, [aiAuthored, catalogLoaded, catalogToolNames, definition, hostId]);
+
+    const handleApproveAiDraft = useCallback((approvedDefinition: string) => {
+        handleDefinitionChange(approvedDefinition);
+        setCatalogVisible(false);
+        setServerProblems([]);
+        setMessage('AI draft approved and applied as a private workflow. Validate and save it when ready.');
+    }, [handleDefinitionChange]);
 
     const handleValidate = useCallback(async () => {
         if (clientBlockingProblem) {
@@ -1738,6 +1791,10 @@ export default function WorkflowEditor() {
             setMessage(`Fix workflow definition before saving: ${clientBlockingProblem.message}`);
             return;
         }
+        if (aiAuthored && catalogVisible) {
+            setMessage('AI-authored drafts must be saved privately. Publish them later through a separate reviewed promotion.');
+            return;
+        }
         const serverResult = await runServerValidation();
         if (!serverResult.ok) {
             setMessage(`Fix workflow definition before saving: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
@@ -1784,7 +1841,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, catalogVisible, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
+    }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -1800,6 +1857,9 @@ export default function WorkflowEditor() {
                 <Button startIcon={<IosShareIcon />} onClick={handleExport}>
                     Export
                 </Button>
+                <Button startIcon={<AutoAwesomeIcon />} onClick={() => setIsAiAuthoringOpen(true)} disabled={!hostId || !catalogLoaded || !authoringTools.length}>
+                    Ask AI
+                </Button>
                 <Button startIcon={isServerValidating ? <CircularProgress size={18} color="inherit" /> : <VerifiedIcon />} onClick={handleValidate} disabled={isServerValidating}>
                     Validate
                 </Button>
@@ -1812,6 +1872,15 @@ export default function WorkflowEditor() {
             </Stack>
 
             {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
+            <WorkflowAiAuthoringDialog
+                open={isAiAuthoringOpen}
+                hostId={hostId}
+                reviewerUserId={userId || ''}
+                currentDefinition={definition}
+                tools={authoringTools}
+                onClose={() => setIsAiAuthoringOpen(false)}
+                onApprove={handleApproveAiDraft}
+            />
             {allProblems.length ? (
                 <Alert severity={blockingProblem ? 'error' : 'warning'} sx={{ mb: 2 }}>
                     {blockingProblem ? blockingProblem.message : `${warningCount} validation warning${warningCount === 1 ? '' : 's'} found.`}
@@ -1870,8 +1939,8 @@ export default function WorkflowEditor() {
                         <TextField label="Version" value={version} onChange={e => setVersion(e.target.value)} size="small" />
                         <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" />
                         <FormControlLabel
-                            control={<Switch checked={catalogVisible} onChange={event => setCatalogVisible(event.target.checked)} />}
-                            label="Publish in Workflow Catalog"
+                            control={<Switch checked={catalogVisible} disabled={aiAuthored} onChange={event => setCatalogVisible(event.target.checked)} />}
+                            label={aiAuthored ? 'AI draft must remain private until separately promoted' : 'Publish in Workflow Catalog'}
                         />
                         <Autocomplete
                             multiple

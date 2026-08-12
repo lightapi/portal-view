@@ -43,6 +43,12 @@ type NotificationApiResponse = {
   total?: number;
 };
 
+type NotificationQueryError = {
+  code?: string;
+  message?: string;
+  description?: string;
+};
+
 type DlqRepeatGroup = {
   key: string;
   count: number;
@@ -55,16 +61,25 @@ type DlqRepeatGroup = {
 const NOTIFICATION_FAILURES_READ_EVENT = 'portal:notification-failures-read';
 const REPEATED_DLQ_SAMPLE_LIMIT = 200;
 
-const buildQueryUrl = (action: string, data: Record<string, unknown>) => {
-  const cmd = {
+const queryRequest = (action: string, data: Record<string, unknown>) => ({
     host: 'lightapi.net',
     service: 'user',
     action,
     version: '0.1.0',
     data,
-  };
+});
 
-  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+const buildQueryUrl = (action: string, data: Record<string, unknown>) =>
+  '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(queryRequest(action, data)));
+
+const notificationErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object') {
+    const value = error as NotificationQueryError;
+    return [value.code, value.message, value.description].filter(Boolean).join(': ');
+  }
+  return '';
 };
 
 const statusOptions = [
@@ -291,6 +306,31 @@ function NotificationDetailPanel({ notification }: { notification: NotificationD
         <Typography variant="body2">Aggregate Type: {notification.aggregateType || ''}</Typography>
       </Box>
       <Box sx={{ minWidth: 0 }}>
+        {notification.error ? (
+          <>
+            <Typography color="error" variant="subtitle2" sx={{ mb: 1 }}>
+              Failure Details
+            </Typography>
+            <Box
+              component="pre"
+              sx={{
+                bgcolor: 'error.50',
+                borderRadius: 1,
+                fontFamily: 'monospace',
+                fontSize: '0.75rem',
+                m: 0,
+                mb: 2,
+                maxHeight: 320,
+                overflow: 'auto',
+                p: 1.5,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {notification.error}
+            </Box>
+          </>
+        ) : null}
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
           Event JSON
         </Typography>
@@ -323,6 +363,7 @@ export default function Notification() {
   const isAdmin = hasAnyRole(roles, ['admin', 'host-admin']);
   const [data, setData] = useState<NotificationData[]>([]);
   const [isError, setIsError] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [dlqRepeatGroups, setDlqRepeatGroups] = useState<DlqRepeatGroup[]>([]);
@@ -404,7 +445,7 @@ export default function Notification() {
       error: getFilterValue(columnFilters, 'error'),
     };
 
-    const url = buildQueryUrl('getNotification', {
+    const request = queryRequest('getNotification', {
       hostId: host,
       offset: pagination.pageIndex * pagination.pageSize,
       limit: pagination.pageSize,
@@ -415,12 +456,14 @@ export default function Notification() {
     });
 
     try {
-      const json = await fetchClient(url) as NotificationApiResponse;
+      const json = await fetchClient('/portal/query', { method: 'POST', body: request }) as NotificationApiResponse;
       setData(json.notifications || []);
       setRowCount(json.total || 0);
       setIsError(false);
+      setLoadError('');
     } catch (error) {
       setIsError(true);
+      setLoadError(notificationErrorMessage(error));
       setData([]);
       setRowCount(0);
       console.error(error);
@@ -447,7 +490,7 @@ export default function Notification() {
     setIsDlqSummaryError(false);
 
     const requestedUserId = getFilterValue(columnFilters, 'userId');
-    const url = buildQueryUrl('getNotification', {
+    const request = queryRequest('getNotification', {
       hostId: host,
       offset: 0,
       limit: REPEATED_DLQ_SAMPLE_LIMIT,
@@ -458,7 +501,7 @@ export default function Notification() {
     });
 
     try {
-      const json = await fetchClient(url) as NotificationApiResponse;
+      const json = await fetchClient('/portal/query', { method: 'POST', body: request }) as NotificationApiResponse;
       setDlqRepeatGroups(repeatedDlqGroups(json.notifications || []));
     } catch (error) {
       setDlqRepeatGroups([]);
@@ -599,7 +642,10 @@ export default function Notification() {
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.id || `${row.hostId || ''}-${row.userId || ''}-${row.nonce || ''}-${row.eventClass || ''}-${row.processTs || ''}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading notifications' } : undefined,
+    muiToolbarAlertBannerProps: isError ? {
+      color: 'error',
+      children: `Error loading notifications${loadError ? `: ${loadError}` : ''}`,
+    } : undefined,
     enableExpanding: true,
     positionExpandColumn: 'first',
     renderDetailPanel: ({ row }) => <NotificationDetailPanel notification={row.original} />,
@@ -631,7 +677,10 @@ export default function Notification() {
         <EventReplayAdmin
           hostId={host}
           currentUserId={userId}
-          notificationTransactionIds={data.map((notification) => notification.transactionId).filter((id): id is string => !!id)}
+          notificationIdentities={data.flatMap((notification) => notification.transactionId ? [{
+            transactionId: notification.transactionId,
+            userId: notification.userId || null,
+          }] : [])}
           onProjectionRefresh={async () => { await Promise.all([fetchData(), fetchDlqSummary()]); }}
         />
       ) : null}

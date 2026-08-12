@@ -46,9 +46,9 @@ const resultCode = (value: unknown) => {
 const invoke = async <T>(service: ReplayService, action: string, data: Record<string, unknown>): Promise<T> => {
   const request = replayRequest(action, data);
   try {
-    return await (service === 'command'
-      ? fetchClient('/portal/command', { method: 'POST', body: request })
-      : fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(request)))) as T;
+    return await fetchClient(service === 'command' ? '/portal/command' : '/portal/query', {
+      method: 'POST', body: request,
+    }) as T;
   } catch (cause) {
     const code = resultCode(cause);
     // Server detail is intentionally not copied into the browser: a legacy

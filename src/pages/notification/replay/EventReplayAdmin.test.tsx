@@ -34,7 +34,7 @@ describe('EventReplayAdmin committed refresh', () => {
     const listener = (event: Event) => observed.push((event as CustomEvent).detail);
     window.addEventListener('portal:event-replay-applied', listener);
     render(<EventReplayAdmin hostId="host-1" currentUserId="approver"
-      notificationTransactionIds={[]} onProjectionRefresh={onProjectionRefresh} />);
+      notificationIdentities={[]} onProjectionRefresh={onProjectionRefresh} />);
     await waitFor(() => expect(onProjectionRefresh).toHaveBeenCalledOnce());
     expect(observed).toEqual([{ hostId: 'host-1', replayRequestId: 'replay-1', repairId: null }]);
     expect(replayApi.listCandidates).toHaveBeenCalled();

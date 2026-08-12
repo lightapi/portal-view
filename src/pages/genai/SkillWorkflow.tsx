@@ -35,6 +35,13 @@ export type SkillWorkflowType = {
     skillName?: string;
     workflowName?: string;
     workflowVersion?: string;
+    workflowBindingId?: string;
+    workflowToolId?: string;
+    workflowToolName?: string;
+    bindingWorkflowVersion?: string;
+    definitionDigest?: string;
+    schemaDigest?: string;
+    bindingActive?: boolean;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -112,7 +119,7 @@ export default function SkillWorkflow() {
         } finally {
             setIsLoading(false); setIsRefetching(false);
         }
-    }, [host, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [host, data.length, columnFilters, globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
 
     useEffect(() => {
         fetchData();
@@ -226,6 +233,10 @@ export default function SkillWorkflow() {
             { accessorKey: 'wfDefId', header: 'Workflow Definition Id' },
             { accessorKey: 'workflowName', header: 'Workflow' },
             { accessorKey: 'workflowVersion', header: 'Workflow Version' },
+            { accessorKey: 'workflowToolName', header: 'MCP Tool' },
+            { accessorKey: 'bindingWorkflowVersion', header: 'Bound Version' },
+            { accessorKey: 'definitionDigest', header: 'Definition Digest' },
+            { accessorKey: 'schemaDigest', header: 'Schema Digest' },
             { accessorKey: 'workflowRole', header: 'Role' },
             { accessorKey: 'startMode', header: 'Start Mode' },
             { accessorKey: 'config', header: 'Config' },

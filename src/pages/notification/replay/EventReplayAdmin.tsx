@@ -15,8 +15,10 @@ const PAGE_SIZE = 25;
 const storageKey = (hostId: string) => `event-replay:last-request:${hostId}`;
 const repairStorageKey = (hostId: string) => `event-replay:last-repair:${hostId}`;
 
-export function EventReplayAdmin({ hostId, currentUserId, notificationTransactionIds, onProjectionRefresh }:
-  { hostId: string; currentUserId?: string | null; notificationTransactionIds: string[]; onProjectionRefresh?: () => void | Promise<void> }) {
+export function EventReplayAdmin({ hostId, currentUserId, notificationIdentities, onProjectionRefresh }:
+  { hostId: string; currentUserId?: string | null;
+    notificationIdentities: Array<{ transactionId: string; userId: string | null }>;
+    onProjectionRefresh?: () => void | Promise<void> }) {
   const [projectionName, setProjectionName] = useState('portal-query');
   const [consumerGroup, setConsumerGroup] = useState('user-query-group');
   const [candidates, setCandidates] = useState<ReplayCandidate[]>([]);
@@ -146,7 +148,7 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationTransactio
     </Stack>
     {error ? <Alert severity="error">{error}</Alert> : null}
     <ReplayCandidateTable candidates={candidates} details={details} selected={selected}
-      notificationTransactionIds={notificationTransactionIds} onToggle={(failureId) => setSelected((current) => {
+      notificationIdentities={notificationIdentities} onToggle={(failureId) => setSelected((current) => {
         const next = new Set(current); if (next.has(failureId)) next.delete(failureId); else next.add(failureId); return next;
       })} />
     <Stack direction="row" spacing={1} alignItems="center">

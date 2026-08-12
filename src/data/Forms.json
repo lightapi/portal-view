@@ -18004,6 +18004,25 @@
           "title": "Version",
           "type": "string",
           "default": "1.0.0"
+        },
+        "executionPlacement": {
+          "title": "Execution Placement",
+          "type": "string",
+          "enum": ["gateway", "workflow"],
+          "default": "gateway"
+        },
+        "schemaDigest": {
+          "title": "Schema Digest",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "dispatchPolicyRef": {
+          "title": "Dispatch Policy Reference",
+          "type": "string"
+        },
+        "workflowBinding": {
+          "title": "Workflow Binding",
+          "type": "object"
         }
       },
       "required": [
@@ -18144,7 +18163,22 @@
         "type": "textarea",
         "rows": 3
       },
-      "version"
+      "version",
+      "executionPlacement",
+      {
+        "key": "schemaDigest",
+        "condition": "model.executionPlacement === 'workflow'"
+      },
+      {
+        "key": "dispatchPolicyRef",
+        "condition": "model.executionPlacement === 'workflow'"
+      },
+      {
+        "key": "workflowBinding",
+        "type": "textarea",
+        "rows": 16,
+        "condition": "model.executionPlacement === 'workflow'"
+      }
     ]
   },
   "updateTool": {
@@ -18308,6 +18342,30 @@
           "type": "string",
           "default": "1.0.0"
         },
+        "stableToolRef": {
+          "title": "Stable Tool Reference",
+          "type": "string",
+          "readonly": true
+        },
+        "executionPlacement": {
+          "title": "Execution Placement",
+          "type": "string",
+          "enum": ["gateway", "workflow"],
+          "default": "gateway"
+        },
+        "schemaDigest": {
+          "title": "Schema Digest",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "dispatchPolicyRef": {
+          "title": "Dispatch Policy Reference",
+          "type": "string"
+        },
+        "workflowBinding": {
+          "title": "Workflow Binding",
+          "type": "object"
+        },
         "active": {
           "title": "Active",
           "type": "boolean"
@@ -18455,6 +18513,22 @@
         "rows": 3
       },
       "version",
+      "stableToolRef",
+      "executionPlacement",
+      {
+        "key": "schemaDigest",
+        "condition": "model.executionPlacement === 'workflow'"
+      },
+      {
+        "key": "dispatchPolicyRef",
+        "condition": "model.executionPlacement === 'workflow'"
+      },
+      {
+        "key": "workflowBinding",
+        "type": "textarea",
+        "rows": 16,
+        "condition": "model.executionPlacement === 'workflow'"
+      },
       "active"
     ]
   },
@@ -22050,6 +22124,11 @@
           "title": "Workflow Definition",
           "type": "string"
         },
+        "workflowBindingId": {
+          "title": "Workflow-Backed MCP Tool (Optional)",
+          "description": "Pins this skill guidance to the exact published workflow tool contract.",
+          "type": "string"
+        },
         "workflowRole": {
           "title": "Workflow Role",
           "type": "string",
@@ -22109,6 +22188,18 @@
           ]
         }
       },
+      {
+        "key": "workflowBindingId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getWorkflowToolBindingLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22wfDefId%22%3A%22{1}%22%7D%7D",
+          "params": [
+            "hostId",
+            "wfDefId"
+          ]
+        }
+      },
       "workflowRole",
       "startMode",
       {
@@ -22150,6 +22241,11 @@
           "type": "string",
           "readonly": true
         },
+        "workflowBindingId": {
+          "title": "Workflow-Backed MCP Tool (Optional)",
+          "description": "Pins this skill guidance to the exact published workflow tool contract.",
+          "type": "string"
+        },
         "workflowRole": {
           "title": "Workflow Role",
           "type": "string",
@@ -22186,6 +22282,18 @@
       "hostId",
       "skillId",
       "wfDefId",
+      {
+        "key": "workflowBindingId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getWorkflowToolBindingLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22wfDefId%22%3A%22{1}%22%7D%7D",
+          "params": [
+            "hostId",
+            "wfDefId"
+          ]
+        }
+      },
       "workflowRole",
       "startMode",
       {

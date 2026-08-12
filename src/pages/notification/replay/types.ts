@@ -38,6 +38,7 @@ export type ReplayFailure = ReplayCandidate & {
   projectionName: string;
   consumerGroup: string;
   originalTransactionId?: string | null;
+  userIds?: string[];
   contentFingerprint: string;
   dependencyScopes: Array<Record<string, unknown>>;
   errorType?: string | null;

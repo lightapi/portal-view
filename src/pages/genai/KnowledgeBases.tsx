@@ -31,6 +31,17 @@ type EmbeddingProfileRow = {
     distanceMetric: string; documentInputTransformVersion: string;
     queryInputTransformVersion: string; qualificationDigest: string; active: boolean;
 };
+export type RetrievalProfileRow = {
+    profileId: string; hostId?: string | null; profileName: string;
+    strategy: 'LEXICAL' | 'VECTOR' | 'HYBRID' | 'GRAPH_ASSISTED';
+    lexicalCandidates: number; vectorCandidates: number; topK: number;
+    tokenBudget: number; fusionMethod: 'RRF';
+    operationalFailurePolicy: 'FAIL_REQUEST' | 'RETURN_PARTIAL';
+    graphPolicy?: Record<string, unknown>; maximumKnowledgeBases: number;
+    lexicalEvidenceRequired: boolean; segmentCandidateMultiplier: number;
+    contextExpansionBefore: number; contextExpansionAfter: number;
+    version: number; active: boolean;
+};
 const HELP_PATH = '/help/portal-view/pages/knowledge-bases';
 
 export default function KnowledgeBases() {
@@ -51,6 +62,17 @@ export default function KnowledgeBases() {
     const [qualifiedAliases, setQualifiedAliases] = useState<QualifiedEmbeddingAliasRow[]>([]);
     const [selectedAliasKey, setSelectedAliasKey] = useState('');
     const [policies, setPolicies] = useState<PolicyRow[]>([]);
+    const [retrievalProfiles, setRetrievalProfiles] = useState<RetrievalProfileRow[]>([]);
+    const [retrievalOpen, setRetrievalOpen] = useState(false);
+    const [editingRetrieval, setEditingRetrieval] = useState<RetrievalProfileRow | null>(null);
+    const [retrievalScope, setRetrievalScope] = useState<'GLOBAL' | 'TENANT'>('TENANT');
+    const [retrievalName, setRetrievalName] = useState('Balanced hybrid');
+    const [retrievalValues, setRetrievalValues] = useState({
+        strategy: 'HYBRID', lexicalCandidates: '20', vectorCandidates: '20',
+        topK: '10', tokenBudget: '2000', operationalFailurePolicy: 'FAIL_REQUEST',
+        maximumKnowledgeBases: '1', lexicalEvidenceRequired: true,
+        segmentCandidateMultiplier: '4', contextExpansionBefore: '0', contextExpansionAfter: '0',
+    });
     const [policyOpen, setPolicyOpen] = useState(false);
     const [editingPolicy, setEditingPolicy] = useState<PolicyRow | null>(null);
     const [policyScope, setPolicyScope] = useState<'GLOBAL' | 'TENANT'>('TENANT');
@@ -68,11 +90,13 @@ export default function KnowledgeBases() {
         setLoading(true);
         setMessage('');
         try {
-            const [response, policyResponse, profileResponse, aliasResponse] = await Promise.all([
+            const [response, policyResponse, retrievalResponse, profileResponse, aliasResponse] = await Promise.all([
                 knowledgeQuery<{ knowledgeBases?: KnowledgeBaseRow[] }>(
                     'getKnowledgeBases', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeIngestionPolicies?: PolicyRow[] }>(
                     'getKnowledgeIngestionPolicies', { hostId: host, environment }),
+                knowledgeQuery<{ knowledgeRetrievalProfiles?: RetrievalProfileRow[] }>(
+                    'getKnowledgeRetrievalProfiles', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeEmbeddingProfiles?: EmbeddingProfileRow[] }>(
                     'getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
                 knowledgeQuery<unknown>(
@@ -81,6 +105,8 @@ export default function KnowledgeBases() {
             setRows(Array.isArray(response.knowledgeBases) ? response.knowledgeBases : []);
             setPolicies(Array.isArray(policyResponse.knowledgeIngestionPolicies)
                 ? policyResponse.knowledgeIngestionPolicies : []);
+            setRetrievalProfiles(Array.isArray(retrievalResponse.knowledgeRetrievalProfiles)
+                ? retrievalResponse.knowledgeRetrievalProfiles : []);
             setEmbeddingProfiles(Array.isArray(profileResponse.knowledgeEmbeddingProfiles)
                 ? profileResponse.knowledgeEmbeddingProfiles : []);
             const aliases = normalizeQualifiedEmbeddingAliases(aliasResponse);
@@ -221,6 +247,62 @@ export default function KnowledgeBases() {
         }
     }, [environment, load]);
 
+    const openCreateRetrieval = useCallback(() => {
+        setEditingRetrieval(null); setRetrievalScope('TENANT'); setRetrievalName('Balanced hybrid');
+        setRetrievalValues({ strategy: 'HYBRID', lexicalCandidates: '20', vectorCandidates: '20',
+            topK: '10', tokenBudget: '2000', operationalFailurePolicy: 'FAIL_REQUEST',
+            maximumKnowledgeBases: '1', lexicalEvidenceRequired: true,
+            segmentCandidateMultiplier: '4', contextExpansionBefore: '0', contextExpansionAfter: '0' });
+        setRetrievalOpen(true);
+    }, []);
+
+    const openEditRetrieval = useCallback((profile: RetrievalProfileRow) => {
+        setEditingRetrieval(profile); setRetrievalScope(profile.hostId ? 'TENANT' : 'GLOBAL');
+        setRetrievalName(profile.profileName);
+        setRetrievalValues({ strategy: profile.strategy,
+            lexicalCandidates: String(profile.lexicalCandidates), vectorCandidates: String(profile.vectorCandidates),
+            topK: String(profile.topK), tokenBudget: String(profile.tokenBudget),
+            operationalFailurePolicy: profile.operationalFailurePolicy,
+            maximumKnowledgeBases: String(profile.maximumKnowledgeBases),
+            lexicalEvidenceRequired: profile.lexicalEvidenceRequired,
+            segmentCandidateMultiplier: String(profile.segmentCandidateMultiplier),
+            contextExpansionBefore: String(profile.contextExpansionBefore),
+            contextExpansionAfter: String(profile.contextExpansionAfter) });
+        setRetrievalOpen(true);
+    }, []);
+
+    const saveRetrieval = useCallback(async () => {
+        if (!retrievalName.trim()) return;
+        setMessage('');
+        try {
+            await knowledgeCommand(editingRetrieval ? 'updateKnowledgeRetrievalProfile' : 'createKnowledgeRetrievalProfile', {
+                scope: retrievalScope, environment, profileName: retrievalName.trim(),
+                ...(editingRetrieval ? { retrievalProfileId: editingRetrieval.profileId, aggregateVersion: editingRetrieval.version } : {}),
+                strategy: retrievalValues.strategy,
+                lexicalCandidates: Number(retrievalValues.lexicalCandidates), vectorCandidates: Number(retrievalValues.vectorCandidates),
+                topK: Number(retrievalValues.topK), tokenBudget: Number(retrievalValues.tokenBudget), fusionMethod: 'RRF',
+                operationalFailurePolicy: retrievalValues.operationalFailurePolicy, graphPolicy: {},
+                maximumKnowledgeBases: Number(retrievalValues.maximumKnowledgeBases),
+                lexicalEvidenceRequired: retrievalValues.lexicalEvidenceRequired,
+                segmentCandidateMultiplier: Number(retrievalValues.segmentCandidateMultiplier),
+                contextExpansionBefore: Number(retrievalValues.contextExpansionBefore),
+                contextExpansionAfter: Number(retrievalValues.contextExpansionAfter),
+            });
+            setRetrievalOpen(false); await load();
+        } catch (error) { setMessage(knowledgeError(error)); }
+    }, [editingRetrieval, environment, load, retrievalName, retrievalScope, retrievalValues]);
+
+    const deactivateRetrieval = useCallback(async (profile: RetrievalProfileRow) => {
+        setMessage('');
+        try {
+            await knowledgeCommand('deactivateKnowledgeRetrievalProfile', {
+                scope: profile.hostId ? 'TENANT' : 'GLOBAL', environment,
+                retrievalProfileId: profile.profileId, aggregateVersion: profile.version,
+            });
+            await load();
+        } catch (error) { setMessage(knowledgeError(error)); }
+    }, [environment, load]);
+
     const columns = useMemo<MRT_ColumnDef<KnowledgeBaseRow>[]>(() => [
         {
             accessorKey: 'name', header: 'Knowledge Base',
@@ -276,6 +358,19 @@ export default function KnowledgeBases() {
         </CardContent></Card>)}</Stack>
         {!policies.length && <Alert severity="warning">No ingestion policy is available. Create a tenant policy, or ask a platform Knowledge Base administrator to publish a reusable global policy.</Alert>}
         <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} sx={{ mt: 3, mb: 1 }}>
+            <Box><Typography variant="h5">Retrieval profiles</Typography><Typography color="text.secondary">Reusable, bounded search behavior selected when an Agent is bound to a Knowledge Base.</Typography></Box>
+            <Button startIcon={<AddIcon />} onClick={openCreateRetrieval}>Create retrieval profile</Button>
+        </Stack>
+        <Stack spacing={1}>{retrievalProfiles.map(profile => <Card variant="outlined" key={profile.profileId}><CardContent>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+                <Box><Stack direction="row" spacing={1} alignItems="center"><Typography variant="h6">{profile.profileName}</Typography><Chip size="small" color={profile.hostId ? 'primary' : 'secondary'} label={profile.hostId ? 'TENANT' : 'GLOBAL'} /><Chip size="small" color={profile.active ? 'success' : 'default'} label={profile.active ? 'ACTIVE' : 'INACTIVE'} /></Stack>
+                    <Typography variant="body2" color="text.secondary">{profile.profileId}</Typography>
+                    <Typography variant="body2">{profile.strategy} · top {profile.topK} from {profile.lexicalCandidates} lexical + {profile.vectorCandidates} vector candidates · {profile.tokenBudget.toLocaleString()} token budget</Typography></Box>
+                {(profile.hostId || platformAdmin) && <Stack direction="row" spacing={1}><Button onClick={() => openEditRetrieval(profile)}>{profile.active ? 'Edit' : 'Review and reactivate'}</Button>{profile.active && <Button color="warning" onClick={() => void deactivateRetrieval(profile)}>Deactivate</Button>}</Stack>}
+            </Stack>
+        </CardContent></Card>)}</Stack>
+        {!retrievalProfiles.length && <Alert severity="warning">No retrieval profile is available. Create a tenant profile, or ask a platform Knowledge Base administrator to publish a reusable global profile.</Alert>}
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} sx={{ mt: 3, mb: 1 }}>
             <Box><Typography variant="h5">Embedding profiles</Typography><Typography color="text.secondary">Immutable, qualified embedding-space contracts used by Knowledge Base builds.</Typography></Box>
             {platformAdmin && <Button startIcon={<AddIcon />} onClick={() => setProfileOpen(true)}>Create embedding profile</Button>}
         </Stack>
@@ -326,6 +421,27 @@ export default function KnowledgeBases() {
                 <Alert severity="info">The service generates the qualification digest from this immutable contract; no digest input is required.</Alert>
             </Stack></DialogContent>
             <DialogActions><Button onClick={() => setProfileOpen(false)}>Cancel</Button><Button variant="contained" disabled={!selectedAlias} onClick={() => void createEmbeddingProfile()}>Create immutable profile</Button></DialogActions>
+        </Dialog>
+        <Dialog open={retrievalOpen} onClose={() => setRetrievalOpen(false)} fullWidth maxWidth="sm">
+            <DialogTitle>{editingRetrieval ? 'Edit retrieval profile' : 'Create retrieval profile'}</DialogTitle>
+            <DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
+                <FormControl><InputLabel>Ownership</InputLabel><Select disabled={Boolean(editingRetrieval)} label="Ownership" value={retrievalScope} onChange={event => setRetrievalScope(event.target.value as 'GLOBAL' | 'TENANT')}>
+                    <MenuItem value="TENANT">Current tenant</MenuItem>{platformAdmin && <MenuItem value="GLOBAL">All tenants (global)</MenuItem>}
+                </Select></FormControl>
+                <TextField required label="Profile name" value={retrievalName} onChange={event => setRetrievalName(event.target.value)} />
+                <FormControl><InputLabel>Strategy</InputLabel><Select label="Strategy" value={retrievalValues.strategy} onChange={event => setRetrievalValues(current => ({ ...current, strategy: event.target.value }))}>
+                    {['LEXICAL', 'VECTOR', 'HYBRID', 'GRAPH_ASSISTED'].map(value => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                </Select></FormControl>
+                {(['lexicalCandidates', 'vectorCandidates', 'topK', 'tokenBudget', 'maximumKnowledgeBases', 'segmentCandidateMultiplier', 'contextExpansionBefore', 'contextExpansionAfter'] as const).map(key => <TextField key={key} required type="number" label={key.replace(/([A-Z])/g, ' $1').replace(/^./, letter => letter.toUpperCase())} value={retrievalValues[key]} inputProps={{ min: key.startsWith('context') ? 0 : 1, max: key === 'maximumKnowledgeBases' ? 4 : key === 'segmentCandidateMultiplier' ? 16 : key.startsWith('context') ? 4 : undefined }} onChange={event => setRetrievalValues(current => ({ ...current, [key]: event.target.value }))} />)}
+                <FormControl><InputLabel>Failure policy</InputLabel><Select label="Failure policy" value={retrievalValues.operationalFailurePolicy} onChange={event => setRetrievalValues(current => ({ ...current, operationalFailurePolicy: event.target.value }))}>
+                    <MenuItem value="FAIL_REQUEST">Fail request</MenuItem><MenuItem value="RETURN_PARTIAL">Return partial results</MenuItem>
+                </Select></FormControl>
+                <FormControl><InputLabel>Lexical evidence</InputLabel><Select label="Lexical evidence" value={retrievalValues.lexicalEvidenceRequired ? 'required' : 'optional'} onChange={event => setRetrievalValues(current => ({ ...current, lexicalEvidenceRequired: event.target.value === 'required' }))}>
+                    <MenuItem value="required">Required</MenuItem><MenuItem value="optional">Optional</MenuItem>
+                </Select></FormControl>
+                <Alert severity="info">The service generates the UUID. RRF fusion is fixed. Agent bindings select active profiles by name.</Alert>
+            </Stack></DialogContent>
+            <DialogActions><Button onClick={() => setRetrievalOpen(false)}>Cancel</Button><Button variant="contained" disabled={!retrievalName.trim()} onClick={() => void saveRetrieval()}>{editingRetrieval ? 'Save' : 'Create'}</Button></DialogActions>
         </Dialog>
         <Dialog open={policyOpen} onClose={() => setPolicyOpen(false)} fullWidth maxWidth="sm">
             <DialogTitle>{editingPolicy ? 'Edit ingestion policy' : 'Create ingestion policy'}</DialogTitle>

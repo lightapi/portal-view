@@ -13,7 +13,8 @@ const request = () => {
 const requestPath = () => requestUrl().pathname;
 const expectQueryRequest = () => {
   expect(requestPath()).toBe('/portal/query');
-  expect(requestOptions()).toBeUndefined();
+  expect(requestUrl().search).toBe('');
+  expect(requestOptions()).toEqual(expect.objectContaining({ method: 'POST' }));
 };
 const expectCommandRequest = () => {
   expect(requestPath()).toBe('/portal/command');
@@ -61,7 +62,7 @@ describe('replay repair API', () => {
     expectCommandRequest();
   });
 
-  it('keeps replay reads on query and routes every mutation to command', async () => {
+  it('keeps replay reads on POST query and routes every mutation to command', async () => {
     await replayApi.listCandidates('host-1', 'portal-query', 'user-query-group', 0, 25);
     expectQueryRequest();
     await replayApi.getFailure('host-1', 'failure-1');

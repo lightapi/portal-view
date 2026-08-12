@@ -28,6 +28,8 @@ assert.match(admin, /replayRequestId/);
 assert.match(admin, /setInterval\([^,]+, 3000\)/s);
 assert.doesNotMatch(admin, /Replay All/i);
 assert.doesNotMatch(admin, /console\.(log|error|warn)/);
+const notifications = read('../Notification.tsx');
+assert.match(notifications, /fetchClient\('\/portal\/query', \{ method: 'POST', body: request \}\)/);
 
 const quarantine = read('ReplayQuarantinePanel.tsx');
 assert.match(quarantine, /RELEASE_WITH_GAP/);

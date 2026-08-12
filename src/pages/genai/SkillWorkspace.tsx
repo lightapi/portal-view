@@ -239,11 +239,15 @@ export default function SkillWorkspace() {
                 hostId: workflow.hostId,
                 skillId: workflow.skillId,
                 wfDefId: workflow.wfDefId,
+                workflowBindingId: workflow.workflowBindingId,
             },
         };
         try {
-            await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
-            setMessage('Skill workflow validated.');
+            const validation = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            const toolName = validation.workflowBinding?.toolName;
+            setMessage(toolName
+                ? `Skill workflow validated: MCP tool ${toolName} resolves to the same pinned contract.`
+                : 'Skill workflow validated. Direct MCP exposure is not linked to this skill.');
         } catch (error) {
             console.error('Failed to validate skill workflow:', error);
             setMessage('Skill workflow validation failed.');
@@ -357,6 +361,8 @@ export default function SkillWorkspace() {
                                 <TableRow>
                                     <TableCell>Workflow</TableCell>
                                     <TableCell>Version</TableCell>
+                                    <TableCell>MCP Tool</TableCell>
+                                    <TableCell>Contract</TableCell>
                                     <TableCell>Role</TableCell>
                                     <TableCell>Start Mode</TableCell>
                                     <TableCell align="right">Actions</TableCell>
@@ -369,6 +375,12 @@ export default function SkillWorkspace() {
                                         <TableRow key={key}>
                                             <TableCell>{workflow.workflowName || workflow.wfDefId}</TableCell>
                                             <TableCell>{workflow.workflowVersion || '-'}</TableCell>
+                                            <TableCell>{workflow.workflowToolName || 'Direct MCP only / not linked'}</TableCell>
+                                            <TableCell sx={{ maxWidth: 240 }}>
+                                                <Typography variant="caption" display="block">{workflow.bindingWorkflowVersion || '-'}</Typography>
+                                                <Typography variant="caption" display="block" noWrap title={workflow.definitionDigest}>{workflow.definitionDigest || '-'}</Typography>
+                                                <Typography variant="caption" display="block" noWrap title={workflow.schemaDigest}>{workflow.schemaDigest || '-'}</Typography>
+                                            </TableCell>
                                             <TableCell>{workflow.workflowRole}</TableCell>
                                             <TableCell>{workflow.startMode || 'manual'}</TableCell>
                                             <TableCell align="right">
@@ -390,7 +402,7 @@ export default function SkillWorkspace() {
                                             </TableCell>
                                         </TableRow>
                                     );
-                                }) : <EmptyRow colSpan={5} label="No workflows linked to this skill." />}
+                                }) : <EmptyRow colSpan={7} label="No workflows linked to this skill." />}
                             </TableBody>
                         </Table>
                     </Box>
