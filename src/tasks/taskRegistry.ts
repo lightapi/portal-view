@@ -165,7 +165,7 @@ export const taskRegistry: TaskDefinition[] = [
         id: "api",
         title: "Create or select API",
         description: "Create or select the API catalog entry that represents the agent.",
-        route: "/app/form/createApi",
+        route: "/app/tasks/register-ai-agent/api",
         required: true,
         keywords: ["api", "agent", "create"],
       },

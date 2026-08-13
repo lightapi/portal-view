@@ -16557,6 +16557,9 @@
   },
   "createAgentDefinition": {
     "formId": "createAgentDefinition",
+    "submitOmitFields": [
+      "modelSelectionType"
+    ],
     "actions": [
       {
         "host": "lightapi.net",
@@ -16586,15 +16589,27 @@
           "type": "string",
           "readonly": true
         },
+        "modelSelectionType": {
+          "title": "Model Selection",
+          "description": "Choose one model source for this agent.",
+          "type": "string",
+          "enum": [
+            "alias",
+            "policy"
+          ],
+          "default": "alias"
+        },
         "modelAliasId": {
           "title": "Model Alias",
           "description": "Select either a model alias or a model policy. Do not combine either with legacy provider/model fields.",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "modelPolicyId": {
           "title": "Model Policy",
           "description": "Policy-only agents require exactly one default alias binding.",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "modelProvider": {
           "title": "Legacy Model Provider",
@@ -16637,7 +16652,30 @@
       },
       "required": [
         "hostId",
-        "agentDefId"
+        "agentDefId",
+        "modelSelectionType"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "modelAliasId"
+          ],
+          "not": {
+            "required": [
+              "modelPolicyId"
+            ]
+          }
+        },
+        {
+          "required": [
+            "modelPolicyId"
+          ],
+          "not": {
+            "required": [
+              "modelAliasId"
+            ]
+          }
+        }
       ]
     },
     "form": [
@@ -16654,7 +16692,22 @@
         }
       },
       {
+        "key": "modelSelectionType",
+        "type": "radios",
+        "titleMap": [
+          {
+            "value": "alias",
+            "name": "Model Alias"
+          },
+          {
+            "value": "policy",
+            "name": "Model Policy"
+          }
+        ]
+      },
+      {
         "key": "modelAliasId",
+        "condition": "model.modelSelectionType === 'alias'",
         "type": "dynaselect",
         "multiple": false,
         "optionValueKey": "id",
@@ -16667,6 +16720,7 @@
       },
       {
         "key": "modelPolicyId",
+        "condition": "model.modelSelectionType === 'policy'",
         "type": "dynaselect",
         "multiple": false,
         "optionValueKey": "id",
@@ -18175,8 +18229,10 @@
       },
       {
         "key": "workflowBinding",
-        "type": "textarea",
-        "rows": 16,
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "json",
+        "editorRows": 16,
         "condition": "model.executionPlacement === 'workflow'"
       }
     ]
@@ -18525,8 +18581,10 @@
       },
       {
         "key": "workflowBinding",
-        "type": "textarea",
-        "rows": 16,
+        "type": "structured",
+        "tabs": ["form", "json", "yaml"],
+        "defaultTab": "json",
+        "editorRows": 16,
         "condition": "model.executionPlacement === 'workflow'"
       },
       "active"

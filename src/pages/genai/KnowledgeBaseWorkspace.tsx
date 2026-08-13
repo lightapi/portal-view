@@ -13,6 +13,7 @@ import { KnowledgeBaseRow, knowledgeCommand, knowledgeError, knowledgeQuery } fr
 
 type UserState = { host?: string };
 type Row = Record<string, any>;
+type AgentOption = { id: string; label: string };
 const TABS = ['Overview', 'Sources', 'Documents', 'Sync Runs', 'Index Generations', 'Incremental', 'Agent Bindings', 'Access Policy', 'Retrieval Playground', 'Quality', 'Settings'];
 
 function JsonRows({ rows, empty }: { rows: Row[]; empty: string }) {
@@ -86,6 +87,7 @@ export default function KnowledgeBaseWorkspace() {
     const [ingestionPolicies, setIngestionPolicies] = useState<Row[]>([]);
     const [embeddingProfiles, setEmbeddingProfiles] = useState<Row[]>([]);
     const [retrievalProfiles, setRetrievalProfiles] = useState<Row[]>([]);
+    const [agents, setAgents] = useState<AgentOption[]>([]);
     const [desiredEmbeddingProfile, setDesiredEmbeddingProfile] = useState('');
     const [bindingOpen, setBindingOpen] = useState(false);
     const [agentId, setAgentId] = useState('');
@@ -98,13 +100,14 @@ export default function KnowledgeBaseWorkspace() {
         if (showBusy) setBusy(true);
         if (!preserveMessage) setMessage('');
         try {
-            const [policyResponse, profileResponse, retrievalResponse] = await Promise.all([
+            const [policyResponse, profileResponse, retrievalResponse, agentOptions] = await Promise.all([
                 knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>(
                     'getKnowledgeIngestionPolicies', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>(
                     'getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
                 knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>(
                     'getKnowledgeRetrievalProfiles', { hostId: host, environment }),
+                knowledgeQuery<AgentOption[]>('getAgentDefinitionLabel', { hostId: host }),
             ]);
             const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows, uploadRows, changeRows, anchorRows, compactionRows, antiEntropyRows, aclFreshnessRows, aclReconciliationRows, aclTransitionRows, connectorObjectRows, migrationRows, migrationEvaluationRows, retentionRows, checkpointRows, purgeRows] = await Promise.all([
                 knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context),
@@ -135,6 +138,9 @@ export default function KnowledgeBaseWorkspace() {
             const activeRetrievalProfiles = (retrievalResponse.knowledgeRetrievalProfiles || [])
                 .filter(profile => profile.active !== false);
             setRetrievalProfiles(activeRetrievalProfiles);
+            setAgents(agentOptions || []);
+            setAgentId(current => (agentOptions || []).some(agent => agent.id === current)
+                ? current : '');
             setRetrievalProfileId(current => activeRetrievalProfiles.some(
                 profile => profile.profileId === current)
                 ? current : activeRetrievalProfiles[0]?.profileId || '');
@@ -256,7 +262,10 @@ export default function KnowledgeBaseWorkspace() {
             <Alert severity="info">Use an HTTPS Git repository URI. A repository may contain source code and documentation; the Phase 1a connector enforces the configured Markdown include/exclude policy and builds one complete BASE across all active sources.</Alert>
         </Stack></DialogContent><DialogActions><Button onClick={() => setSourceOpen(false)}>Cancel</Button><Button variant="contained" disabled={!sourceName || !repositoryUri || !commit || !ingestionPolicyId} onClick={() => { setSourceOpen(false); void command('createKnowledgeSource', { displayName: sourceName, sourceType: 'GIT_MARKDOWN', configJson: { repositoryUri, commit, include: ['**/*.md'], exclude: [] }, ingestionPolicyId, aclMode: 'UNIFORM_SCOPE', sourceTrustTier: 'UNREVIEWED', approvalPolicy: {}, schedule: {}, aclReconciliationPolicy: {} }); }}>Create source</Button></DialogActions></Dialog>
         <Dialog open={bindingOpen} onClose={() => setBindingOpen(false)} fullWidth maxWidth="sm"><DialogTitle>Bind Agent to Knowledge Base</DialogTitle><DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField required label="Agent UUID" value={agentId} onChange={event => setAgentId(event.target.value)} />
+            <FormControl required><InputLabel id="knowledge-agent-label">Agent</InputLabel><Select labelId="knowledge-agent-label" label="Agent" value={agentId} onChange={event => setAgentId(event.target.value)}>
+                {agents.map(agent => <MenuItem key={agent.id} value={agent.id}>{agent.label} ({agent.id})</MenuItem>)}
+            </Select></FormControl>
+            {!agents.length && <Alert severity="warning">No active Agent is available for this tenant. Create and activate an Agent before binding it to this Knowledge Base.</Alert>}
             <FormControl required><InputLabel>Retrieval profile</InputLabel><Select label="Retrieval profile" value={retrievalProfileId} onChange={event => setRetrievalProfileId(event.target.value)}>
                 {retrievalProfiles.map(profile => <MenuItem key={profile.profileId} value={profile.profileId}>{profile.profileName} ({profile.hostId ? 'tenant' : 'global'}) · {profile.strategy}</MenuItem>)}
             </Select></FormControl>
