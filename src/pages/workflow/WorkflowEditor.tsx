@@ -68,6 +68,17 @@ type WfDefinitionType = {
     tagIds?: string[];
     aggregateVersion?: number;
     active?: boolean;
+    lifecycleStatus?: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
+    versions?: WorkflowVersion[];
+};
+
+type WorkflowVersion = {
+    version: string;
+    definition: string;
+    lifecycleStatus: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
+    publishedBy?: string;
+    publishedTs?: string;
+    aggregateVersion?: number;
 };
 
 type UserState = {
@@ -655,7 +666,9 @@ function formatProblemLocation(problem: ValidationProblem) {
 }
 
 function messageSeverity(message: string) {
-    return message === 'Workflow definition saved.' || message.startsWith('Workflow definition is valid') ? 'success' : 'warning';
+    return message === 'Workflow definition saved.'
+        || message.startsWith('Workflow definition is valid')
+        || message.includes('published and frozen') ? 'success' : 'warning';
 }
 
 const workflowDefinitionLinter = linter(view => {
@@ -730,6 +743,27 @@ function buildReferenceSnippet(reference: CatalogReference) {
 
 function formatYaml(parsed: unknown) {
     return `${YAML.stringify(parsed).trimEnd()}\n`;
+}
+
+function definitionWithVersion(definition: string, version: string) {
+    const parsed = YAML.parse(definition);
+    const root = toRecord(parsed);
+    const document = toRecord(root.document);
+    if (Object.keys(document).length) {
+        document.version = version;
+        root.document = document;
+    } else {
+        root.version = version;
+    }
+    return formatYaml(root);
+}
+
+function canonicalDefinition(definition: string) {
+    try {
+        return formatYaml(YAML.parse(definition));
+    } catch {
+        return definition;
+    }
 }
 
 function findStepRecord(container: unknown, stepId: string): Record<string, unknown> | null {
@@ -1198,6 +1232,10 @@ export default function WorkflowEditor() {
     const [tagIds, setTagIds] = useState<string[]>(initial.tagIds || []);
     const [aggregateVersion, setAggregateVersion] = useState(initial.aggregateVersion);
     const [active, setActive] = useState(initial.active ?? true);
+    const [lifecycleStatus, setLifecycleStatus] = useState<WorkflowVersion['lifecycleStatus']>(initial.lifecycleStatus || 'DRAFT');
+    const [versions, setVersions] = useState<WorkflowVersion[]>(initial.versions || []);
+    const [compareLeft, setCompareLeft] = useState('');
+    const [compareRight, setCompareRight] = useState('');
     const [catalogVisible, setCatalogVisible] = useState(initial.catalogVisible ?? false);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1305,6 +1343,15 @@ export default function WorkflowEditor() {
         return completedTask?.resultCode || '';
     }, [testSnapshot.processes, testSnapshot.tasks]);
     const isUpdate = Boolean(wfDefId && aggregateVersion);
+    const isPublished = lifecycleStatus === 'PUBLISHED';
+    const availableVersions = useMemo<WorkflowVersion[]>(() => {
+        const current = { version, definition, lifecycleStatus, aggregateVersion };
+        return [current, ...versions.filter(item => item.version !== version)];
+    }, [aggregateVersion, definition, lifecycleStatus, version, versions]);
+    const comparisonLeft = availableVersions.find(item => item.version === compareLeft);
+    const comparisonRight = availableVersions.find(item => item.version === compareRight);
+    const comparisonLeftYaml = compareLeft === version ? canonicalDefinition(definition) : canonicalDefinition(comparisonLeft?.definition || '');
+    const comparisonRightYaml = compareRight === version ? canonicalDefinition(definition) : canonicalDefinition(comparisonRight?.definition || '');
 
     const applyDefinitionMetadata = useCallback((nextDefinition: string) => {
         const metadata = extractDefinitionMetadata(nextDefinition);
@@ -1319,16 +1366,16 @@ export default function WorkflowEditor() {
     }, [applyDefinitionMetadata]);
 
     useEffect(() => {
-        if (!initial.wfDefId || initial.definition) return;
+        if (!initial.wfDefId) return;
         const cmd = {
-            host: 'lightapi.net', service: 'workflow', action: 'getWfDefinition', version: '0.1.0',
-            data: { hostId: initial.hostId || host, filters: JSON.stringify([{ id: 'wfDefId', value: initial.wfDefId }]), active: true, limit: 1, offset: 0 },
+            host: 'lightapi.net', service: 'workflow', action: 'getWfDefinitionById', version: '0.1.0',
+            data: { hostId: initial.hostId || host, wfDefId: initial.wfDefId },
         };
         const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
         setIsLoading(true);
         fetchClient(url)
             .then(json => {
-                const row = json.workflows?.[0];
+                const row = json;
                 if (!row) return;
                 setHostId(row.hostId || '');
                 setWfDefId(row.wfDefId || '');
@@ -1342,6 +1389,12 @@ export default function WorkflowEditor() {
                 setTagIds(Array.isArray(row.tagIds) ? row.tagIds : []);
                 setAggregateVersion(row.aggregateVersion);
                 setActive(row.active ?? true);
+                setLifecycleStatus(row.lifecycleStatus || 'DRAFT');
+                const loadedVersions = Array.isArray(row.versions) ? row.versions : [];
+                setVersions(loadedVersions);
+                const publishedVersions = loadedVersions.filter((item: WorkflowVersion) => item.lifecycleStatus === 'PUBLISHED');
+                setCompareLeft(publishedVersions[1]?.version || publishedVersions[0]?.version || '');
+                setCompareRight(row.version || publishedVersions[0]?.version || '');
             })
             .catch(error => {
                 console.error('Failed to load workflow definition:', error);
@@ -1760,6 +1813,7 @@ export default function WorkflowEditor() {
     }, [failedProcesses, failedTasks, hostId, location.pathname, name, navigate, testRun, testSnapshot.processes]);
 
     const handleGraphConnect = useCallback((sourceStepId: string, targetStepId: string) => {
+        if (isPublished) return;
         const updated = updateDefinitionTransition(definition, sourceStepId, targetStepId);
         if (updated === definition) {
             setMessage(`Unable to update transition from ${sourceStepId} to ${targetStepId}.`);
@@ -1768,9 +1822,10 @@ export default function WorkflowEditor() {
         setDefinition(updated);
         setSelectedGraphStepId(sourceStepId);
         setMessage(`Transition updated: ${sourceStepId} -> ${targetStepId}.`);
-    }, [definition]);
+    }, [definition, isPublished]);
 
     const handleGraphDisconnect = useCallback((sourceStepId: string, targetStepId: string) => {
+        if (isPublished) return;
         const updated = removeDefinitionTransition(definition, sourceStepId, targetStepId);
         if (updated === definition) {
             setMessage(`Unable to remove transition from ${sourceStepId} to ${targetStepId}.`);
@@ -1779,7 +1834,7 @@ export default function WorkflowEditor() {
         setDefinition(updated);
         setSelectedGraphStepId(sourceStepId);
         setMessage(`Transition removed: ${sourceStepId} -> ${targetStepId}.`);
-    }, [definition]);
+    }, [definition, isPublished]);
 
     const handleSave = useCallback(async () => {
         setMessage('');
@@ -1833,7 +1888,13 @@ export default function WorkflowEditor() {
             }
             const response = result.data || {};
             setWfDefId(response.wfDefId || wfDefId);
-            setAggregateVersion(response.newAggregateVersion || response.aggregateVersion || aggregateVersion);
+            const nextAggregateVersion = response.newAggregateVersion || response.aggregateVersion || aggregateVersion;
+            setAggregateVersion(nextAggregateVersion);
+            setLifecycleStatus('DRAFT');
+            setVersions(current => [
+                {version, definition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregateVersion},
+                ...current.filter(item => item.version !== version),
+            ]);
             setMessage('Workflow definition saved.');
         } catch (error) {
             console.error('Failed to save workflow definition:', error);
@@ -1843,6 +1904,76 @@ export default function WorkflowEditor() {
         }
     }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
+    const handlePublish = useCallback(async () => {
+        if (!wfDefId || lifecycleStatus !== 'DRAFT' || !aggregateVersion) return;
+        const savedDraft = versions.find(item => item.version === version && item.lifecycleStatus === 'DRAFT');
+        if (!savedDraft || savedDraft.definition !== definition) {
+            setMessage('Save the current draft before publishing this workflow version.');
+            return;
+        }
+        const serverResult = await runServerValidation();
+        if (!serverResult.ok) {
+            setMessage(`Fix workflow definition before publishing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
+            return;
+        }
+        if (!window.confirm(`Publish ${namespace}/${name} @ ${version}? This version will become immutable.`)) return;
+        setIsSubmitting(true);
+        const cmd = {
+            host: 'lightapi.net', service: 'workflow', action: 'publishWfDefinition', version: '0.1.0',
+            data: {hostId, wfDefId, namespace, name, version, definition, catalogVisible,
+                ownerPositionId: ownerPositionId || undefined, categoryIds, tagIds, aggregateVersion, active},
+        };
+        try {
+            const result = await apiPost({url: '/portal/command', headers: {}, body: cmd});
+            if (result.error) {
+                setMessage(result.error.description || 'Failed to publish workflow version.');
+                return;
+            }
+            const response = result.data || {};
+            const nextAggregateVersion = response.newAggregateVersion || response.aggregateVersion || aggregateVersion;
+            setAggregateVersion(nextAggregateVersion);
+            setLifecycleStatus('PUBLISHED');
+            setVersions(current => current.map(item => item.version === version
+                ? {...item, lifecycleStatus: 'PUBLISHED', aggregateVersion: nextAggregateVersion}
+                : item));
+            setMessage(`Workflow version ${version} published and frozen.`);
+        } catch (error) {
+            console.error('Failed to publish workflow version:', error);
+            setMessage('Failed to publish workflow version due to a network error.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [active, aggregateVersion, catalogVisible, categoryIds, definition, hostId, lifecycleStatus, name, namespace, ownerPositionId, runServerValidation, tagIds, version, versions, wfDefId]);
+
+    const handleCreateVersion = useCallback(() => {
+        const nextVersion = window.prompt('New workflow version', version);
+        if (!nextVersion?.trim() || nextVersion.trim() === version) return;
+        if (versions.some(item => item.version === nextVersion.trim())) {
+            setMessage(`Workflow version ${nextVersion.trim()} already exists.`);
+            return;
+        }
+        try {
+            const nextDefinition = definitionWithVersion(definition, nextVersion.trim());
+            setVersion(nextVersion.trim());
+            setDefinition(nextDefinition);
+            setLifecycleStatus('DRAFT');
+            setCompareLeft(version);
+            setCompareRight(nextVersion.trim());
+            setMessage(`Draft ${nextVersion.trim()} created from published version ${version}. Save it to retain the draft.`);
+        } catch {
+            setMessage('The workflow YAML must be valid before creating a new version.');
+        }
+    }, [definition, version, versions]);
+
+    const handleVersionChange = useCallback((nextVersion: string) => {
+        setVersion(nextVersion);
+        try {
+            setDefinition(current => definitionWithVersion(current, nextVersion));
+        } catch {
+            // Preserve the user's draft while YAML diagnostics describe the parse error.
+        }
+    }, []);
+
     return (
         <Box sx={{ p: 2 }}>
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
@@ -1851,13 +1982,13 @@ export default function WorkflowEditor() {
                 </Button>
                 <Typography variant="h5" sx={{ flex: 1 }}>Workflow Editor</Typography>
                 <input ref={fileInputRef} type="file" hidden accept=".yaml,.yml,.json" onChange={handleFile} />
-                <Button startIcon={<FileUploadIcon />} onClick={() => fileInputRef.current?.click()}>
+                <Button startIcon={<FileUploadIcon />} onClick={() => fileInputRef.current?.click()} disabled={isPublished}>
                     Import
                 </Button>
                 <Button startIcon={<IosShareIcon />} onClick={handleExport}>
                     Export
                 </Button>
-                <Button startIcon={<AutoAwesomeIcon />} onClick={() => setIsAiAuthoringOpen(true)} disabled={!hostId || !catalogLoaded || !authoringTools.length}>
+                <Button startIcon={<AutoAwesomeIcon />} onClick={() => setIsAiAuthoringOpen(true)} disabled={isPublished || !hostId || !catalogLoaded || !authoringTools.length}>
                     Ask AI
                 </Button>
                 <Button startIcon={isServerValidating ? <CircularProgress size={18} color="inherit" /> : <VerifiedIcon />} onClick={handleValidate} disabled={isServerValidating}>
@@ -1866,7 +1997,16 @@ export default function WorkflowEditor() {
                 <Button startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />} onClick={handleStartTest} disabled={!wfDefId || isServerValidating || isTestStarting}>
                     Test
                 </Button>
-                <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isSubmitting || isLoading || isServerValidating}>
+                {isPublished ? (
+                    <Button variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleCreateVersion} disabled={isSubmitting || isLoading}>
+                        Create New Version
+                    </Button>
+                ) : (
+                    <Button color="success" variant="outlined" startIcon={<VerifiedIcon />} onClick={handlePublish} disabled={!wfDefId || isSubmitting || isLoading || isServerValidating}>
+                        Publish Version
+                    </Button>
+                )}
+                <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isPublished || isSubmitting || isLoading || isServerValidating}>
                     Save
                 </Button>
             </Stack>
@@ -1932,18 +2072,19 @@ export default function WorkflowEditor() {
 
                 <Box sx={{ minWidth: 0 }}>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
-                        <TextField label="Host Id" value={hostId} onChange={e => setHostId(e.target.value)} size="small" />
+                        <TextField label="Host Id" value={hostId} onChange={e => setHostId(e.target.value)} size="small" disabled={isUpdate} />
                         <TextField label="Workflow Definition Id" value={wfDefId} size="small" slotProps={{ input: { readOnly: true } }} />
-                        <TextField label="Namespace" value={namespace} onChange={e => setNamespace(e.target.value)} size="small" />
-                        <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" />
-                        <TextField label="Version" value={version} onChange={e => setVersion(e.target.value)} size="small" />
-                        <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" />
+                        <TextField label="Namespace" value={namespace} onChange={e => setNamespace(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField label="Version" value={version} onChange={e => handleVersionChange(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" disabled={isPublished} />
                         <FormControlLabel
-                            control={<Switch checked={catalogVisible} disabled={aiAuthored} onChange={event => setCatalogVisible(event.target.checked)} />}
+                            control={<Switch checked={catalogVisible} disabled={isPublished || aiAuthored} onChange={event => setCatalogVisible(event.target.checked)} />}
                             label={aiAuthored ? 'AI draft must remain private until separately promoted' : 'Publish in Workflow Catalog'}
                         />
                         <Autocomplete
                             multiple
+                            disabled={isPublished}
                             options={categoryOptions}
                             value={selectedCategories}
                             loading={isTaxonomyLoading}
@@ -1954,6 +2095,7 @@ export default function WorkflowEditor() {
                         />
                         <Autocomplete
                             multiple
+                            disabled={isPublished}
                             options={tagOptions}
                             value={selectedTags}
                             loading={isTaxonomyLoading}
@@ -1970,6 +2112,7 @@ export default function WorkflowEditor() {
                         theme={githubLight}
                         extensions={workflowEditorExtensions}
                         onChange={handleDefinitionChange}
+                        editable={!isPublished}
                     />
                 </Box>
 
@@ -1977,6 +2120,7 @@ export default function WorkflowEditor() {
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Definition</Typography>
                     <Stack spacing={1}>
                         <Typography variant="body2">Mode: {isUpdate ? 'Update' : 'Create'}</Typography>
+                        <Typography variant="body2">Lifecycle: {lifecycleStatus}</Typography>
                         <Typography variant="body2">Active: {active ? 'true' : 'false'}</Typography>
                         <Typography variant="body2">Catalog: {catalogVisible ? 'published' : 'private'}</Typography>
                         <Typography variant="body2">Aggregate Version: {aggregateVersion ?? 'new'}</Typography>
@@ -1987,6 +2131,7 @@ export default function WorkflowEditor() {
                     <Stack spacing={1}>
                         <TextField
                             select
+                            disabled={isPublished}
                             label="Step Type"
                             value={selectedTemplateId}
                             onChange={event => handleTemplateChange(event.target.value)}
@@ -1997,13 +2142,14 @@ export default function WorkflowEditor() {
                             ))}
                         </TextField>
                         <TextField
+                            disabled={isPublished}
                             label="Step Id"
                             value={stepIdInput}
                             onChange={event => setStepIdInput(event.target.value)}
                             size="small"
                         />
                         <Typography variant="body2">{selectedTemplate.detail}</Typography>
-                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertTemplate}>
+                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertTemplate} disabled={isPublished}>
                             Insert Step
                         </Button>
                     </Stack>
@@ -2056,7 +2202,7 @@ export default function WorkflowEditor() {
                                 {selectedReference.description && <Typography variant="caption" color="text.secondary">{selectedReference.description}</Typography>}
                             </Box>
                         )}
-                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertReference} disabled={!selectedReference}>
+                        <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertReference} disabled={isPublished || !selectedReference}>
                             Insert Reference
                         </Button>
                     </Stack>
@@ -2093,6 +2239,44 @@ export default function WorkflowEditor() {
                 </Box>
             </Box>
 
+            {availableVersions.length > 1 && (
+                <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 0.5 }}>Compare Workflow Versions</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Definitions are normalized to YAML so formatting differences do not obscure workflow changes.
+                    </Typography>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
+                        {[
+                            { label: 'Base Version', value: compareLeft, onChange: setCompareLeft, yaml: comparisonLeftYaml },
+                            { label: 'Compared Version', value: compareRight, onChange: setCompareRight, yaml: comparisonRightYaml },
+                        ].map(column => (
+                            <Stack key={column.label} spacing={1} sx={{ minWidth: 0 }}>
+                                <TextField
+                                    select
+                                    label={column.label}
+                                    value={column.value}
+                                    onChange={event => column.onChange(event.target.value)}
+                                    size="small"
+                                >
+                                    {availableVersions.map(item => (
+                                        <MenuItem key={item.version} value={item.version}>
+                                            {item.version} ({item.lifecycleStatus.toLowerCase()})
+                                        </MenuItem>
+                                    ))}
+                                </TextField>
+                                <CodeMirror
+                                    value={column.yaml}
+                                    height="360px"
+                                    theme={githubLight}
+                                    extensions={[yaml(), foldGutter()]}
+                                    editable={false}
+                                />
+                            </Stack>
+                        ))}
+                    </Box>
+                </Box>
+            )}
+
             <Box sx={{ mt: 2, border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
                 <Stack direction={{ xs: 'column', md: 'row' }} alignItems={{ xs: 'stretch', md: 'center' }} spacing={1} sx={{ mb: 2 }}>
                     <Typography variant="h6" sx={{ flex: 1 }}>Visual Graph</Typography>
@@ -2103,8 +2287,8 @@ export default function WorkflowEditor() {
                     statusByStep={graphStatusByStep}
                     selectedStepId={selectedGraphStepId}
                     onSelectStep={setSelectedGraphStepId}
-                    onConnectSteps={handleGraphConnect}
-                    onDisconnectSteps={handleGraphDisconnect}
+                    onConnectSteps={isPublished ? undefined : handleGraphConnect}
+                    onDisconnectSteps={isPublished ? undefined : handleGraphDisconnect}
                 />
             </Box>
 

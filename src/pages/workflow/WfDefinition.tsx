@@ -33,6 +33,7 @@ type WfDefinitionType = {
     name: string;
     version: string;
     definition: string;
+    lifecycleStatus?: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -224,6 +225,12 @@ export default function WfDefinition() {
                 { accessorKey: 'namespace', header: 'Namespace' },
                 { accessorKey: 'name', header: 'Name' },
                 { accessorKey: 'version', header: 'Version' },
+                {
+                    accessorKey: 'lifecycleStatus',
+                    header: 'Lifecycle',
+                    filterVariant: 'select',
+                    filterSelectOptions: ['DRAFT', 'PUBLISHED', 'DEPRECATED'],
+                },
                 {
                     accessorKey: 'definition', header: 'Definition',
                     Cell: ({ cell }) => (
