@@ -120,13 +120,13 @@ export const pageRegistry: PageDefinition[] = [
   },
   {
     id: "instance-api-mcp-tool",
-    title: "Instance API MCP Tools",
-    description: "Configure MCP tools exposed for an instance API.",
-    route: "/app/instance/InstanceApiMcpTool",
+    title: "Gateway Tool Publication",
+    description: "Select API endpoint or workflow Tools and stage them for a Gateway instance.",
+    route: "/app/genai/Tool",
     category: "Platform Operations",
     roles: ["admin"],
     keywords: ["instance", "mcp", "tool", "configuration"],
-    entities: ["instanceApi", "apiVersion"],
+    entities: ["tool", "instanceApi", "apiVersion"],
   },
   {
     id: "instance-api",

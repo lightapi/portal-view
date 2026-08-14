@@ -156,7 +156,7 @@ function stepActions(
     }
     if (step.id === "tools") {
       return [
-        routeAction("Configure Tools", task, step, "/app/instance/InstanceApiMcpTool", searchParams, context, !context.instanceApiId),
+        routeAction("Configure Tools", task, step, "/app/genai/Tool", searchParams, context, !context.instanceApiId),
       ];
     }
     if (step.id === "access") {
@@ -191,7 +191,7 @@ function stepActions(
     }
     if (step.id === "tools") {
       return [
-        routeAction("Review Tools", task, step, "/app/instance/InstanceApiMcpTool", searchParams, context, !context.instanceApiId),
+        routeAction("Review Tools", task, step, "/app/genai/Tool", searchParams, context, !context.instanceApiId),
       ];
     }
   }

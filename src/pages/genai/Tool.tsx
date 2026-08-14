@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     MaterialReactTable,
@@ -8,16 +8,20 @@ import {
     type MRT_PaginationState,
     type MRT_SortingState,
     type MRT_Row,
+    type MRT_RowSelectionState,
 } from 'material-react-table';
 import { Box, Button, Chip, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
+import PublishIcon from '@mui/icons-material/Publish';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
+import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
+import type {PublishableTool} from './gatewayToolPublicationScope';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -36,6 +40,10 @@ type ToolType = {
     apiEndpoint?: string;
     apiMethod?: string;
     endpointId?: string;
+    apiVersionId?: string;
+    apiId?: string;
+    apiName?: string;
+    apiVersion?: string;
     scriptContent?: string;
     responseSchema?: string;
     routingDomain?: string;
@@ -58,6 +66,8 @@ type ToolType = {
     descriptionEmbeddingError?: string;
     descriptionEmbeddingPresent?: boolean;
     version?: string;
+    stableToolRef?: string;
+    executionPlacement?: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -101,9 +111,17 @@ export default function Tool() {
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
     const [isEmbeddingRefreshLoading, setIsEmbeddingRefreshLoading] = useState<string | null>(null);
+    const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
+    const [publicationOpen, setPublicationOpen] = useState(false);
+    const selectedToolCache = useRef(new Map<string, ToolType>());
+    const initialApiVersionId = (location.state as {data?: {apiVersionId?: string}} | null)?.data?.apiVersionId
+        ?? searchParams.get('apiVersionId')
+        ?? undefined;
+    const preferredInstanceId = (location.state as {data?: {instanceId?: string}} | null)?.data?.instanceId;
 
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([
-        { id: 'active', value: 'true' }
+        { id: 'active', value: 'true' },
+        ...(initialApiVersionId ? [{id: 'apiVersionId', value: initialApiVersionId}] : []),
     ]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -157,6 +175,19 @@ export default function Tool() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        data.forEach(tool => {
+            if (rowSelection[tool.toolId]) selectedToolCache.current.set(tool.toolId, tool);
+        });
+    }, [data, rowSelection]);
+
+    const selectedTools = useMemo<PublishableTool[]>(() => {
+        const current = new Map(data.map(tool => [tool.toolId, tool]));
+        return Object.keys(rowSelection)
+            .map(toolId => current.get(toolId) ?? selectedToolCache.current.get(toolId))
+            .filter((tool): tool is ToolType => Boolean(tool));
+    }, [data, rowSelection]);
 
     // Delete handler with optimistic update
     const handleDelete = useCallback(async (row: MRT_Row<ToolType>) => {
@@ -256,7 +287,12 @@ export default function Tool() {
             { accessorKey: 'name', header: 'Name' },
             { accessorKey: 'description', header: 'Description' },
             { accessorKey: 'implementationType', header: 'Implementation Type' },
+            { accessorKey: 'executionPlacement', header: 'Execution Placement' },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
+            { accessorKey: 'apiVersionId', header: 'API Version Id' },
+            { accessorKey: 'apiId', header: 'API Id' },
+            { accessorKey: 'apiName', header: 'API Name' },
+            { accessorKey: 'apiVersion', header: 'API Version' },
             { accessorKey: 'apiEndpoint', header: 'API Endpoint' },
             { accessorKey: 'apiMethod', header: 'API Method' },
             { accessorKey: 'routingDomain', header: 'Routing Domain' },
@@ -374,14 +410,16 @@ export default function Tool() {
         manualSorting: true,
         manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
+        onRowSelectionChange: setRowSelection,
         getRowId: (row) => row.toolId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
         enableRowActions: true,
+        enableRowSelection: (row) => row.original.active,
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => (
             <Box sx={{ display: 'flex', gap: '1rem' }}>
@@ -416,16 +454,27 @@ export default function Tool() {
                 </Tooltip>
             </Box>
         ),
-        renderTopToolbarCustomActions: () => (
+        renderTopToolbarCustomActions: () => <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createTool', searchParams, taskContext))}>
                 Create New Tool
             </Button>
-        ),
+            <Button variant="outlined" startIcon={<PublishIcon />} disabled={!selectedTools.length}
+                onClick={() => setPublicationOpen(true)}>
+                Publish Selected ({selectedTools.length})
+            </Button>
+        </Box>,
     });
 
     return (
         <GenAiTaskLayout context={taskContext}>
             <MaterialReactTable table={table} />
+            {host && <GatewayToolPublicationDialog
+                open={publicationOpen}
+                hostId={host}
+                preferredInstanceId={preferredInstanceId}
+                tools={selectedTools}
+                onClose={() => setPublicationOpen(false)}
+            />}
         </GenAiTaskLayout>
     );
 }

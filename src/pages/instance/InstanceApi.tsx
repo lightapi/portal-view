@@ -14,7 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
 import RouteIcon from "@mui/icons-material/Route";
-import CodeOffIcon from '@mui/icons-material/CodeOff';
+import PublishIcon from '@mui/icons-material/Publish';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -274,9 +274,9 @@ export default function InstanceApi() {
             <RouteIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Instance Api MCP Tool">
-          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApiMcpTool', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
-            <CodeOffIcon />
+        <Tooltip title="Select API Tools for Gateway publication">
+          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/genai/Tool', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
+            <PublishIcon />
           </IconButton>
         </Tooltip>
       </Box>
