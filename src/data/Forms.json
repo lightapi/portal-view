@@ -18125,7 +18125,7 @@
       {
         "key": "responseSchema",
         "type": "textarea",
-        "condition": "model.implementationType === 'lightapi_endpoint'"
+        "condition": "model.implementationType === 'lightapi_endpoint' || model.executionPlacement === 'workflow'"
       },
       {
         "type": "help",
@@ -18483,7 +18483,7 @@
       {
         "key": "responseSchema",
         "type": "textarea",
-        "condition": "model.implementationType === 'lightapi_endpoint'"
+        "condition": "model.implementationType === 'lightapi_endpoint' || model.executionPlacement === 'workflow'"
       },
       {
         "type": "help",
@@ -21782,7 +21782,17 @@
     },
     "form": [
       "hostId",
-      "toolId",
+      {
+        "key": "toolId",
+        "type": "dynaselect",
+        "multiple": false,
+        "action": {
+          "url": "/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getToolLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%7D%7D",
+          "params": [
+            "hostId"
+          ]
+        }
+      },
       "name",
       "paramType",
       "required",
