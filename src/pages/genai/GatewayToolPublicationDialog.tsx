@@ -7,6 +7,7 @@ import {
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import {publicationScope, type PublishableTool} from './gatewayToolPublicationScope';
+import {gatewayToolQueryUrl, gatewayToolRpc} from './gatewayToolPublicationRpc';
 
 type GatewayInstance = {
   instanceId: string;
@@ -31,14 +32,6 @@ type Candidate = {
   publicationVersion: number;
   changeSummary: ChangeSummary;
 };
-
-const rpc = (action: string, data: Record<string, unknown>) => ({
-  host: 'lightapi.net', service: 'genai', action, version: '0.1.0', data,
-});
-
-function queryUrl(action: string, data: Record<string, unknown>) {
-  return '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(rpc(action, data)));
-}
 
 function errorMessage(reason: unknown) {
   if (reason instanceof Error) return reason.message;
@@ -71,7 +64,7 @@ export default function GatewayToolPublicationDialog({
     if (!open || !hostId) return;
     setLoading(true);
     try {
-      const value = await fetchClient(queryUrl('getInstance', {
+      const value = await fetchClient(gatewayToolQueryUrl('instance', 'getInstance', {
         hostId, offset: 0, limit: 1000, active: true,
         sorting: JSON.stringify([{id: 'instanceName', desc: false}]),
         filters: JSON.stringify([{id: 'productId', value: 'gtw'}]),
@@ -106,7 +99,7 @@ export default function GatewayToolPublicationDialog({
     setCandidate(null);
     setMessage(null);
     try {
-      const value = await fetchClient(queryUrl('getGatewayToolPublicationCandidate', {
+      const value = await fetchClient(gatewayToolQueryUrl('genai', 'getGatewayToolPublicationCandidate', {
         hostId, instanceId, mode: scope.mode, toolIds: tools.map(tool => tool.toolId),
         ...(scope.apiVersionId ? {apiVersionId: scope.apiVersionId} : {}),
       }));
@@ -127,7 +120,7 @@ export default function GatewayToolPublicationDialog({
     setLoading(true);
     setMessage(null);
     const result = await apiPost({
-      url: '/portal/command', headers: {}, body: rpc('publishGatewayTools', {
+      url: '/portal/command', headers: {}, body: gatewayToolRpc('genai', 'publishGatewayTools', {
         hostId, instanceId, mode: scope.mode, toolIds: tools.map(tool => tool.toolId),
         ...(scope.apiVersionId ? {apiVersionId: scope.apiVersionId} : {}),
         expectedCandidateDigest: candidate.candidateDigest,

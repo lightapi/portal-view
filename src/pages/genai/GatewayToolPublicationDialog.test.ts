@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {publicationScope, type PublishableTool} from './gatewayToolPublicationScope';
+import {gatewayToolQueryUrl} from './gatewayToolPublicationRpc';
 
 const endpoint = (toolId: string, apiVersionId: string): PublishableTool => ({
   toolId,
@@ -9,6 +10,33 @@ const endpoint = (toolId: string, apiVersionId: string): PublishableTool => ({
 });
 
 describe('Gateway Tool publication scope', () => {
+  it('routes instance discovery through the instance service', () => {
+    const url = gatewayToolQueryUrl('instance', 'getInstance', {hostId: 'host-a'});
+    const command = JSON.parse(new URLSearchParams(url.split('?')[1]).get('cmd')!);
+
+    expect(command).toMatchObject({
+      host: 'lightapi.net',
+      service: 'instance',
+      action: 'getInstance',
+      version: '0.1.0',
+      data: {hostId: 'host-a'},
+    });
+  });
+
+  it('keeps publication preview queries on the genai service', () => {
+    const url = gatewayToolQueryUrl(
+      'genai',
+      'getGatewayToolPublicationCandidate',
+      {hostId: 'host-a'},
+    );
+    const command = JSON.parse(new URLSearchParams(url.split('?')[1]).get('cmd')!);
+
+    expect(command).toMatchObject({
+      service: 'genai',
+      action: 'getGatewayToolPublicationCandidate',
+    });
+  });
+
   it('replaces only the selected API scope when every Tool belongs to one API version', () => {
     expect(publicationScope([
       endpoint('one', 'api-version-a'),

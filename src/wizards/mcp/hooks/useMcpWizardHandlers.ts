@@ -17,7 +17,6 @@ import {
 import type { McpWizardState } from './useMcpWizardState';
 import type { CreateApiForm, CreateApiVersionForm } from '../types';
 import {
-  buildToolMetadata,
   validateTargetHost,
   validateToolMetadataInputs,
 } from '../../../utils/toolMetadata';
@@ -451,10 +450,6 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       setSubmitError(toolErrors.join(' '));
       return false;
     }
-    if (!mcpMeta.propertyId) {
-      setSubmitError('Missing configuration metadata. Please skip this step and configure MCP tools from the Instance admin.');
-      return false;
-    }
     setSubmitting(true);
     setSubmitError(null);
 
@@ -466,64 +461,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to sync tools to external registry. Please try again.');
       return false;
     }
-
-    const propertyValue = JSON.stringify(
-      selectedMcpTools.map((t) => {
-        const obj: any = {
-          endpointId: t.endpointId,
-          endpointName: t.endpointName,
-          name: t.name, endpoint: t.endpoint, method: t.method, path: t.path,
-          description: t.description,
-          inputSchema: t.inputSchema ? (() => { try { return JSON.parse(t.inputSchema!); } catch { return t.inputSchema; } })() : undefined,
-          toolSchema: t.inputSchema ? (() => { try { return JSON.parse(t.inputSchema!); } catch { return t.inputSchema; } })() : undefined,
-          toolMetadata: buildToolMetadata(t),
-          routingDomain: t.routingDomain,
-          semanticNamespace: t.semanticNamespace,
-          sensitivityTier: t.sensitivityTier,
-          semanticWeight: t.semanticWeight,
-          sourceProtocol: t.sourceProtocol,
-          lifecycleStatus: t.lifecycleStatus,
-          costTier: t.costTier,
-          readOnly: t.readOnly,
-          idempotent: t.idempotent,
-          destructive: t.destructive,
-          humanApprovalRequired: t.humanApprovalRequired,
-          estimatedLatencyMs: t.estimatedLatencyMs,
-          cacheTtlSeconds: t.cacheTtlSeconds,
-          semanticDescription: t.semanticDescription,
-          semanticKeywords: t.semanticKeywords,
-          targetPersonas: t.targetPersonas,
-        };
-        return Object.fromEntries(Object.entries(obj).filter(([, v]) => v != null));
-      }),
-    );
-
-    let body: any;
-    if (mcpMeta.exists) {
-      body = {
-        host: 'lightapi.net', service: 'config', action: 'updateConfigInstanceApi', version: '0.1.0',
-        data: { hostId: host, instanceApiId: committedInstanceApiId, propertyId: mcpMeta.propertyId, propertyValue },
-      };
-    } else {
-      if (!mcpMeta.configId) {
-        setSubmitError('Missing configuration metadata. Please skip this step and configure MCP tools from the Instance admin.');
-        setSubmitting(false);
-        return false;
-      }
-      body = {
-        host: 'lightapi.net', service: 'config', action: 'createConfigInstanceApi', version: '0.1.0',
-        data: { hostId: host, instanceApiId: committedInstanceApiId, configId: mcpMeta.configId, propertyId: mcpMeta.propertyId, propertyValue },
-      };
-    }
-
-    const result = await apiPost({ url: '/portal/command', headers: {}, body });
     setSubmitting(false);
-    if (result.error || result.aborted) {
-      setSubmitError(result.error
-        ? (typeof result.error === 'string' ? result.error : 'Failed to save MCP tool configuration. Please try again.')
-        : 'Request was cancelled. Please try again.');
-      return false;
-    }
     return true;
   };
 
