@@ -59,7 +59,7 @@ describe('LLM provider deployment forms', () => {
       .toContain('getLlmProviderAccountLabel');
     expect(provider).toMatchObject({type:'dynaselect',multiple:false});
     expect(definition.schema.properties.providerProtocol.enum).toEqual([
-      'openai_chat','openai_responses','openai_embeddings','anthropic_messages',
+      'openai_chat','openai_responses','openai_embeddings','anthropic_messages','bedrock_converse',
     ]);
     expect(definition.schema.properties.region.type).toEqual(['string','null']);
     expect(definition.form).toContain('providerProtocol');

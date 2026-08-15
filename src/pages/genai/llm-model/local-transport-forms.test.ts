@@ -21,7 +21,12 @@ describe('LLM local transport forms', () => {
       expect(properties).not.toHaveProperty('signature');
       expect(properties.trustBundleReference.type).toEqual(['string','null']);
       expect(properties.trustBundleSha256.readonly).toBe(true);
-      expect(properties.endpointAuthMode.enum).toEqual(['NONE','BEARER','API_KEY']);
+      expect(properties.endpointAuthMode.enum).toEqual([
+        'NONE','BEARER','API_KEY','BEDROCK_API_KEY','AWS_SIGV4',
+      ]);
+      expect(properties.providerProtocol.enum).toContain('bedrock_converse');
+      expect(properties.providerType.enum).toContain('aws_bedrock');
+      expect(properties.awsRegion.type).toEqual(['string','null']);
     }
   });
 

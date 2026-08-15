@@ -18,7 +18,9 @@ describe('LLM provider credential forms', () => {
       updateForm:'updateProviderCredential',
     });
     expect(credential?.formFields).toEqual([
-      'hostId','providerCredentialId','providerDeploymentId','providerEndpointId','credentialPurpose','credentialVersion',
+      'hostId','providerCredentialId','providerDeploymentId','providerEndpointId','credentialPurpose',
+      'environment','reasoningKeyId','reasoningKeyRole','reasoningKeySetGeneration',
+      'reasoningKeySetState','reasoningStateLimits','credentialVersion',
       'secretReference','effectiveTs','expiresTs','aggregateVersion',
     ]);
     expect(credential?.formFields).not.toContain('active');

@@ -19479,10 +19479,12 @@
         "hostId":{"title":"Host Id","type":"string","readonly":true},
         "providerAccountId":{"title":"Provider Account","type":"string"},
         "endpointName":{"title":"Endpoint Name","type":"string","minLength":1,"maxLength":126},
-        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages"]},
+        "providerType":{"title":"Provider Type","type":"string","enum":["open_ai","anthropic","aws_bedrock","xai","google_gemini","google_vertex","compatible"]},
+        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages","bedrock_converse"]},
+        "awsRegion":{"title":"AWS Region","type":["string","null"],"pattern":"^[a-z0-9]+(-[a-z0-9]+)+-[0-9]+$","default":null},
         "baseUrl":{"title":"Base URL","description":"Use an HTTPS URL except for an explicitly approved private-plaintext endpoint.","type":"string"},
         "headers":{"title":"Safe Non-secret Headers","description":"Authorization, cookies, proxy headers, and secret-looking values are rejected.","type":"object","additionalProperties":{"type":"string"},"default":{}},
-        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY"],"default":"NONE"},
+        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY","BEDROCK_API_KEY","AWS_SIGV4"],"default":"NONE"},
         "apiKeyHeader":{"title":"API Key Header","type":["string","null"],"enum":["authorization","x-api-key",null],"default":null},
         "networkProfileMode":{"title":"Network Profile","type":"string","enum":["PUBLIC_TLS","PRIVATE_TLS","PRIVATE_PLAINTEXT"],"default":"PUBLIC_TLS"},
         "networkTermination":{"title":"Termination","type":"string","enum":["NATIVE","LIGHT_GATEWAY_SIDECAR"],"default":"NATIVE"},
@@ -19493,9 +19495,9 @@
         "clientRefreshIntervalMs":{"title":"Client Refresh Interval (ms)","type":"integer","minimum":1,"default":300000},
         "plaintextRiskAcknowledged":{"title":"Acknowledge Private Plaintext Risk","type":"boolean","default":false}
       },
-      "required":["hostId","providerAccountId","endpointName","providerProtocol","baseUrl","endpointAuthMode","networkProfileMode","networkTermination","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
+      "required":["hostId","providerAccountId","endpointName","providerType","providerProtocol","baseUrl","endpointAuthMode","networkProfileMode","networkTermination","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
     },
-    "form":["hostId",{"key":"providerAccountId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination",{"key":"networkZoneId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmNetworkZoneLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
+    "form":["hostId",{"key":"providerAccountId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderAccountLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"endpointName","providerType","providerProtocol","awsRegion","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination",{"key":"networkZoneId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmNetworkZoneLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},"trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged"]
   },
   "updateLlmProviderEndpoint": {
     "formId":"updateLlmProviderEndpoint",
@@ -19508,10 +19510,12 @@
         "providerEndpointId":{"title":"Provider Endpoint Id","type":"string","readonly":true},
         "providerAccountId":{"title":"Provider Account","type":"string"},
         "endpointName":{"title":"Endpoint Name","type":"string"},
-        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages"]},
+        "providerType":{"title":"Provider Type","type":"string","enum":["open_ai","anthropic","aws_bedrock","xai","google_gemini","google_vertex","compatible"]},
+        "providerProtocol":{"title":"Provider Protocol","type":"string","enum":["openai_chat","openai_responses","openai_embeddings","anthropic_messages","bedrock_converse"]},
+        "awsRegion":{"title":"AWS Region","type":["string","null"],"pattern":"^[a-z0-9]+(-[a-z0-9]+)+-[0-9]+$"},
         "baseUrl":{"title":"Base URL","type":"string"},
         "headers":{"title":"Safe Non-secret Headers","type":"object","additionalProperties":{"type":"string"}},
-        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY"]},
+        "endpointAuthMode":{"title":"Endpoint Authentication","type":"string","enum":["NONE","BEARER","API_KEY","BEDROCK_API_KEY","AWS_SIGV4"]},
         "apiKeyHeader":{"title":"API Key Header","type":["string","null"],"enum":["authorization","x-api-key",null]},
         "networkProfileMode":{"title":"Network Profile","type":"string","enum":["PUBLIC_TLS","PRIVATE_TLS","PRIVATE_PLAINTEXT"]},
         "networkTermination":{"title":"Termination","type":"string","enum":["NATIVE","LIGHT_GATEWAY_SIDECAR"]},
@@ -19525,7 +19529,7 @@
       },
       "required":["hostId","providerEndpointId","aggregateVersion"]
     },
-    "form":["hostId","providerEndpointId","providerAccountId","endpointName","providerProtocol","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination","networkZoneId","trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","aggregateVersion"]
+    "form":["hostId","providerEndpointId","providerAccountId","endpointName","providerType","providerProtocol","awsRegion","baseUrl",{"key":"headers","type":"structured","defaultTab":"json"},"endpointAuthMode","apiKeyHeader","networkProfileMode","networkTermination","networkZoneId","trustBundleReference","trustBundleSha256","poolIdleTimeoutMs","clientRefreshIntervalMs","plaintextRiskAcknowledged","aggregateVersion"]
   },
   "createProviderDeployment": {
     "formId": "createProviderDeployment",
@@ -19577,7 +19581,8 @@
             "openai_chat",
             "openai_responses",
             "openai_embeddings",
-            "anthropic_messages"
+            "anthropic_messages",
+            "bedrock_converse"
           ],
           "default": "openai_chat"
         },
@@ -19644,6 +19649,11 @@
         "expectedSidecar": {
           "title": "Expected Sidecar Identity",
           "description": "Profile version and generated config digest only; never include runtime credentials.",
+          "type": ["object", "null"]
+        },
+        "bedrockPolicy": {
+          "title": "Bedrock Deployment Policy",
+          "description": "Typed sampling and adaptive-reasoning capabilities for this physical model.",
           "type": ["object", "null"]
         }
       },
@@ -19728,6 +19738,7 @@
       {"key":"runtimeCapacity","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
       "readinessPolicy",
       {"key":"expectedSidecar","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
+      {"key":"bedrockPolicy","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
       {
         "key": "region",
         "type": "dynaselect",
@@ -19806,7 +19817,8 @@
             "openai_chat",
             "openai_responses",
             "openai_embeddings",
-            "anthropic_messages"
+            "anthropic_messages",
+            "bedrock_converse"
           ]
         },
         "physicalModelId": {
@@ -19840,6 +19852,7 @@
         "runtimeCapacity":{"title":"Runtime Capacity","type":"object","additionalProperties":true},
         "readinessPolicy":{"title":"Readiness Policy","type":"string","enum":["IMMEDIATE","WARM_BEFORE_ELIGIBLE"]},
         "expectedSidecar":{"title":"Expected Sidecar Identity","type":["object","null"]},
+        "bedrockPolicy":{"title":"Bedrock Deployment Policy","type":["object","null"]},
         "aggregateVersion": {
           "title": "Aggregate Version",
           "type": "integer",
@@ -19909,6 +19922,7 @@
       {"key":"runtimeCapacity","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
       "readinessPolicy",
       {"key":"expectedSidecar","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
+      {"key":"bedrockPolicy","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":10},
       {
         "key": "region",
         "type": "dynaselect",
@@ -19963,7 +19977,13 @@
           "type": "string"
         },
         "providerEndpointId":{"title":"Provider Endpoint","type":"string"},
-        "credentialPurpose":{"title":"Credential Purpose","description":"ENDPOINT is resolved only by the central gateway; SIDECAR_RUNTIME is resolved only inside the sidecar.","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME"]},
+        "credentialPurpose":{"title":"Credential Purpose","description":"REASONING_SEAL is gateway-wide and never belongs to a provider endpoint.","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME","REASONING_SEAL"]},
+        "environment":{"title":"Environment","type":["string","null"],"maxLength":32},
+        "reasoningKeyId":{"title":"Reasoning Key Id","type":["string","null"],"maxLength":255},
+        "reasoningKeyRole":{"title":"Reasoning Key Role","type":["string","null"],"enum":["CURRENT","PREVIOUS",null]},
+        "reasoningKeySetGeneration":{"title":"Reasoning Key-set Generation","type":["integer","null"],"minimum":1},
+        "reasoningKeySetState":{"title":"Reasoning Key-set State","type":["string","null"],"enum":["PREPARED","ACTIVE",null]},
+        "reasoningStateLimits":{"title":"Reasoning State Limits","type":["object","null"]},
         "credentialVersion": {
           "title": "Credential Version",
           "type": "integer",
@@ -20001,6 +20021,8 @@
     "form": [
       "hostId",
       "credentialPurpose",
+      "environment","reasoningKeyId","reasoningKeyRole","reasoningKeySetGeneration","reasoningKeySetState",
+      {"key":"reasoningStateLimits","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
       {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
       {
         "key": "providerDeploymentId",
@@ -20059,7 +20081,13 @@
           "type": "string"
         },
         "providerEndpointId":{"title":"Provider Endpoint","type":"string"},
-        "credentialPurpose":{"title":"Credential Purpose","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME"]},
+        "credentialPurpose":{"title":"Credential Purpose","type":"string","enum":["ENDPOINT","SIDECAR_RUNTIME","REASONING_SEAL"]},
+        "environment":{"title":"Environment","type":["string","null"],"maxLength":32},
+        "reasoningKeyId":{"title":"Reasoning Key Id","type":["string","null"],"maxLength":255},
+        "reasoningKeyRole":{"title":"Reasoning Key Role","type":["string","null"],"enum":["CURRENT","PREVIOUS",null]},
+        "reasoningKeySetGeneration":{"title":"Reasoning Key-set Generation","type":["integer","null"],"minimum":1},
+        "reasoningKeySetState":{"title":"Reasoning Key-set State","type":["string","null"],"enum":["PREPARED","ACTIVE",null]},
+        "reasoningStateLimits":{"title":"Reasoning State Limits","type":["object","null"]},
         "credentialVersion": {
           "title": "Credential Version",
           "type": "integer",
@@ -20105,6 +20133,8 @@
       "hostId",
       "providerCredentialId",
       "credentialPurpose",
+      "environment","reasoningKeyId","reasoningKeyRole","reasoningKeySetGeneration","reasoningKeySetState",
+      {"key":"reasoningStateLimits","type":"structured","tabs":["form","json","yaml"],"defaultTab":"json","editorRows":8},
       {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
       {
         "key": "providerDeploymentId",

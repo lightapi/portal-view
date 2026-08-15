@@ -35,10 +35,11 @@ vi.mock('../../../utils/fetchClient', () => ({
 
 const publication = (environment = 'dev') => ({
   environment, instanceId:'instance-a',gatewayPublicationId:'revision-a',
-  publicationVersion:2,projectionSchemaVersion:3,
-  sourceDigest:`sha256:${'a'.repeat(64)}`,
-  manifest:{schemaVersion:'3',publicationId:'revision-a',environment,resources:[]},
-  resources:[{resourceType:'llm-provider-endpoint',resourceId:'endpoint-a',payload:{providerProtocol:'openai'}}],
+  instancePublicationId:'application-a',publicationVersion:2,
+  sourceDigest:`sha256:${'a'.repeat(64)}`,propertySetDigest:`sha256:${'b'.repeat(64)}`,
+  configPropertiesDigest:`sha256:${'b'.repeat(64)}`,
+  configProperties:[{propertyId:'property-a',propertyName:'providers',valueType:'map',propertyValue:{}}],
+  differences:[], validationResult:{valid:true}, deliveryMode:'INSTANCE_PROPERTIES',
   validationResult:{valid:true}, deliveryMode:'IMMUTABLE_PROJECTION',
 });
 
@@ -198,24 +199,27 @@ describe('LLM control-plane wiring', () => {
     expect(navigationData).not.toHaveProperty('active');
   });
 
-  it('publishes a server-generated V3 projection using its source digest', async () => {
+  it('publishes a server-generated property set and can reapply an exact revision', async () => {
     const user = userEvent.setup();
     mocks.fetchClient.mockImplementation(async (url:string) => url.startsWith('/r/data?') ? [] : {
       instances:[{instanceId:'instance-a',instanceName:'Gateway A',productId:'gtw',environment:'dev',envTag:'dev'}],
     });
     mocks.queryLlm.mockImplementation((action: string) => {
       if (action === 'getLlmGatewayPublicationCandidate') return Promise.resolve(publication());
-      if (action === 'getLlmGatewayPublicationHistory') return Promise.resolve([publication()]);
+      if (action === 'getLlmGatewayInstancePublicationHistory') return Promise.resolve([publication()]);
       return Promise.resolve(null);
     });
     render(<PublicationPanel hostId="host-a"/>);
     await screen.findByText('Gateway A');
     await user.click(screen.getByRole('button',{name:'Generate from active records'}));
-    await screen.findByLabelText('Generated V3 projection');
+    await screen.findByLabelText('Generated llm-router properties');
     await user.click(screen.getByRole('button',{name:'Publish to instance'}));
     await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
-      'publishLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',instanceId:'instance-a',expectedPropertySetDigest:`sha256:${'a'.repeat(64)}`})));
-    expect(screen.queryByRole('button',{name:'Apply exact revision'})).not.toBeInTheDocument();
+      'publishLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',instanceId:'instance-a',expectedPropertySetDigest:`sha256:${'b'.repeat(64)}`})));
+    await user.click(await screen.findByRole('button',{name:'Apply exact revision'}));
+    await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
+      'rollbackLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',gatewayPublicationId:'revision-a',rollbackOfInstancePublicationId:'application-a'})));
+    expect(screen.getByRole('button',{name:'Apply exact revision'})).toBeInTheDocument();
   });
 
   it('uses the selected instance logical environment rather than its env tag for generation', async () => {
@@ -227,7 +231,7 @@ describe('LLM control-plane wiring', () => {
       if (action === 'getLlmGatewayPublicationCandidate') {
         return Promise.resolve(publication('dev'));
       }
-      if (action === 'getLlmGatewayPublicationHistory') {
+      if (action === 'getLlmGatewayInstancePublicationHistory') {
         return Promise.resolve([{...publication('dev'),updateTs:'2026-08-01T00:00:00Z',updateUser:'operator'}]);
       }
       return Promise.resolve(null);
@@ -239,7 +243,8 @@ describe('LLM control-plane wiring', () => {
     await user.click(screen.getByRole('button',{name:'Generate from active records'}));
     await waitFor(() => expect(mocks.queryLlm).toHaveBeenCalledWith(
       'getLlmGatewayPublicationCandidate',{hostId:'host-a',environment:'dev',instanceId:'instance-a'}));
-    expect((screen.getByLabelText('Generated V3 projection') as HTMLTextAreaElement).value).toContain('"resourceType": "llm-provider-endpoint"');
+    expect((screen.getByLabelText('Generated llm-router properties') as HTMLTextAreaElement).value).toContain('"propertyName": "providers"');
+    expect(await screen.findByRole('button',{name:'Apply exact revision'})).toBeInTheDocument();
   });
 
   it('loads every gtw instance for the selected env tag into the publication dropdown', async () => {

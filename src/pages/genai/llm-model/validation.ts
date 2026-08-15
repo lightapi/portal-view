@@ -10,16 +10,37 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
     if (typeof value.secretReference !== 'string' || !/^(?:env:[A-Za-z_][A-Za-z0-9_]*$|[A-Za-z][A-Za-z0-9+.-]*:\/\/)/.test(value.secretReference)) {
       errors.push('secretReference must be env:VARIABLE_NAME or an external URI.');
     }
-    if (value.credentialPurpose === 'ENDPOINT' && !value.providerEndpointId) {
-      errors.push('ENDPOINT credentials require providerEndpointId.');
+    if (!['ENDPOINT','SIDECAR_RUNTIME','REASONING_SEAL'].includes(String(value.credentialPurpose))) {
+      errors.push('credentialPurpose is required.');
     }
-    if (value.credentialPurpose === 'SIDECAR_RUNTIME' && !value.providerDeploymentId) {
-      errors.push('SIDECAR_RUNTIME credentials require providerDeploymentId.');
+    if (value.credentialPurpose === 'ENDPOINT'
+      && (!value.providerEndpointId || value.providerDeploymentId || value.environment)) {
+      errors.push('ENDPOINT credentials require only providerEndpointId.');
+    }
+    if (value.credentialPurpose === 'SIDECAR_RUNTIME'
+      && (!value.providerDeploymentId || value.providerEndpointId || value.environment)) {
+      errors.push('SIDECAR_RUNTIME credentials require only providerDeploymentId.');
+    }
+    if (value.credentialPurpose === 'REASONING_SEAL') {
+      const limits = value.reasoningStateLimits as Record<string, unknown> | undefined;
+      if (value.providerEndpointId || value.providerDeploymentId || !value.environment
+        || !value.reasoningKeyId || !['CURRENT','PREVIOUS'].includes(String(value.reasoningKeyRole))
+        || !['PREPARED','ACTIVE'].includes(String(value.reasoningKeySetState))
+        || Number(value.reasoningKeySetGeneration ?? 0) < 1
+        || !limits || ['maxEncodedItemBytes','maxDecodedProviderStateBytes','maxItemsPerRequest',
+          'maxCumulativeEncodedBytes','maxCumulativeDecodedBytes']
+          .some(key => Number(limits[key] ?? 0) < 1)) {
+        errors.push('REASONING_SEAL credentials require gateway-scoped key-set identity and finite limits.');
+      }
     }
   }
-  if (resource.key === 'deployments' && !value.providerEndpointId
-    && typeof value.baseUrl === 'string' && !value.baseUrl.startsWith('https://')) {
-    errors.push('baseUrl must use HTTPS.');
+  if (resource.key === 'deployments') {
+    if (!value.providerEndpointId && typeof value.baseUrl === 'string' && !value.baseUrl.startsWith('https://')) {
+      errors.push('baseUrl must use HTTPS.');
+    }
+    if ((value.providerProtocol === 'bedrock_converse') !== Boolean(value.bedrockPolicy)) {
+      errors.push('bedrockPolicy is required exactly for Bedrock Converse deployments.');
+    }
   }
   if (resource.key === 'providerEndpoints') {
     const mode = value.networkProfileMode;
@@ -30,6 +51,14 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
     }
     if ((mode === 'PRIVATE_TLS' || mode === 'PRIVATE_PLAINTEXT') && !value.networkZoneId) {
       errors.push('Private endpoints require a Network Zone.');
+    }
+    const bedrock = value.providerType === 'aws_bedrock' && value.providerProtocol === 'bedrock_converse';
+    const bedrockAuth = value.endpointAuthMode === 'BEDROCK_API_KEY' || value.endpointAuthMode === 'AWS_SIGV4';
+    if (bedrock !== (value.providerType === 'aws_bedrock' || value.providerProtocol === 'bedrock_converse')
+      || (bedrock && (!value.awsRegion || !bedrockAuth
+        || value.baseUrl !== `https://bedrock-runtime.${String(value.awsRegion)}.amazonaws.com`))
+      || (!bedrock && (value.awsRegion != null || bedrockAuth))) {
+      errors.push('Bedrock provider type, protocol, AWS region, URL, and authentication must be configured together.');
     }
   }
   if (resource.key === 'pricing' && value.pricingBasis === 'ZERO_MARGINAL'

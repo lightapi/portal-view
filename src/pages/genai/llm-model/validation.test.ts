@@ -10,8 +10,24 @@ describe('LLM model control-plane validation', () => {
     const credential = llmResources.find(resource => resource.key === 'credentials')!;
     expect(validateMutation(credential,{hostId:'h',secret:'sk-secret',secretReference:'vault://x'}).join(' ')).toContain('Raw secrets');
     expect(validateMutation(credential,{hostId:'h',api_key:'sk-secret',secretReference:'vault://x'}).join(' ')).toContain('Raw secrets');
-    expect(validateMutation(credential,{hostId:'h',secretReference:'env:OPENAI_API_KEY'})).toHaveLength(0);
+    expect(validateMutation(credential,{hostId:'h',credentialPurpose:'ENDPOINT',providerEndpointId:'e',secretReference:'env:OPENAI_API_KEY'})).toHaveLength(0);
     expect(validateMutation(credential,{hostId:'h',secretReference:'env:invalid-name'})).not.toHaveLength(0);
+  });
+  it('validates Bedrock endpoint and reasoning-seal ownership as one typed contract', () => {
+    const endpoint = llmResources.find(resource => resource.key === 'providerEndpoints')!;
+    expect(validateMutation(endpoint,{hostId:'h',providerType:'aws_bedrock',providerProtocol:'bedrock_converse',
+      awsRegion:'us-east-1',baseUrl:'https://bedrock-runtime.us-east-1.amazonaws.com',
+      endpointAuthMode:'BEDROCK_API_KEY',networkProfileMode:'PUBLIC_TLS'})).toHaveLength(0);
+    expect(validateMutation(endpoint,{hostId:'h',providerType:'aws_bedrock',providerProtocol:'openai_chat',
+      awsRegion:'us-east-1',baseUrl:'https://bedrock-runtime.us-east-1.amazonaws.com',
+      endpointAuthMode:'BEDROCK_API_KEY',networkProfileMode:'PUBLIC_TLS'})).not.toHaveLength(0);
+    const credential = llmResources.find(resource => resource.key === 'credentials')!;
+    expect(validateMutation(credential,{hostId:'h',credentialPurpose:'REASONING_SEAL',environment:'dev',
+      reasoningKeyId:'reasoning-v1',reasoningKeyRole:'CURRENT',reasoningKeySetGeneration:1,
+      reasoningKeySetState:'ACTIVE',secretReference:'env:LLM_REASONING_SEAL_KEY',
+      reasoningStateLimits:{maxEncodedItemBytes:131072,maxDecodedProviderStateBytes:98304,
+        maxItemsPerRequest:8,maxCumulativeEncodedBytes:262144,maxCumulativeDecodedBytes:196608}}))
+      .toHaveLength(0);
   });
   it('fails closed for unsupported route semantics and publication schemas', () => {
     const route = llmResources.find(resource => resource.key === 'routes')!;
