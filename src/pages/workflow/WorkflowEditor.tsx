@@ -52,6 +52,13 @@ import WorkflowGraph from './WorkflowGraph';
 import WorkflowAiAuthoringDialog, { type WorkflowAuthoringTool } from './WorkflowAiAuthoringDialog';
 import { normalizeWorkflowStepId, workflowStepTemplates } from './workflowStepTemplates';
 import {
+    formatProblemLocation,
+    interpretServerValidationResponse,
+    type ServerValidationResult,
+    type ValidationProblem,
+    type WorkflowSchemaIdentity,
+} from './workflowValidation';
+import {
     addWorkflowForkBranch,
     appendWorkflowStepSnippet,
     collectWorkflowStepLabels,
@@ -109,15 +116,6 @@ type UserState = {
     userId?: string;
 };
 
-type ValidationProblem = {
-    severity: 'error' | 'warning';
-    message: string;
-    from?: number;
-    to?: number;
-    line?: number;
-    column?: number;
-};
-
 type DefinitionAnalysis = {
     parsed: unknown;
     error: string;
@@ -169,13 +167,6 @@ type TagOption = TaxonomyOption & {
     groupLabel?: string | null;
     groupSortOrder?: number | null;
     tagSortOrder?: number | null;
-};
-
-type ServerValidationResult = {
-    ok: boolean;
-    unavailable?: boolean;
-    problems: ValidationProblem[];
-    blockingProblem?: ValidationProblem;
 };
 
 type RuntimeDiagnosticState = {
@@ -540,14 +531,6 @@ function toCodeMirrorDiagnostic(problem: ValidationProblem, docLength: number): 
     };
 }
 
-function formatProblemLocation(problem: ValidationProblem) {
-    const prefix = problem.severity === 'error' ? 'Error' : 'Warning';
-    if (problem.line && problem.column) {
-        return `${prefix} at line ${problem.line}, column ${problem.column}`;
-    }
-    return prefix;
-}
-
 function messageSeverity(message: string) {
     return message === 'Workflow definition saved.'
         || message.startsWith('Workflow definition is valid')
@@ -723,15 +706,6 @@ function removeDefinitionTransition(definition: string, sourceStepId: string, ta
         return definition;
     }
     return definition;
-}
-
-function normalizeServerProblems(value: unknown): ValidationProblem[] {
-    return Array.isArray(value)
-        ? value.map(toRecord).map(problem => ({
-            severity: problem.severity === 'error' ? 'error' : 'warning',
-            message: textValue(problem.message) || 'Server validation problem.',
-        }))
-        : [];
 }
 
 function errorText(error: unknown) {
@@ -1216,6 +1190,7 @@ export default function WorkflowEditor() {
     const [paletteInsertionTarget, setPaletteInsertionTarget] = useState<PaletteInsertionTarget>(null);
     const [workflowEnvironment, setWorkflowEnvironment] = useState('local');
     const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
+    const [serverSchema, setServerSchema] = useState<WorkflowSchemaIdentity | null>(null);
     const [isServerValidating, setIsServerValidating] = useState(false);
     const [runtimeDiagnosticsUrl, setRuntimeDiagnosticsUrl] = useState('/diagnostics/tools');
     const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnosticState | null>(null);
@@ -1337,6 +1312,11 @@ export default function WorkflowEditor() {
         setDefinition(nextDefinition);
         applyDefinitionMetadata(nextDefinition);
     }, [applyDefinitionMetadata]);
+
+    useEffect(() => {
+        setServerProblems([]);
+        setServerSchema(null);
+    }, [definition]);
 
     const handleNamespaceChange = useCallback((nextNamespace: string) => {
         setNamespace(nextNamespace);
@@ -1539,19 +1519,18 @@ export default function WorkflowEditor() {
         };
         try {
             const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
-            const problems = normalizeServerProblems(toRecord(json).problems);
-            setServerProblems(problems);
-            const blocking = problems.find(problem => problem.severity === 'error');
-            return { ok: !blocking, problems, blockingProblem: blocking };
+            const result = interpretServerValidationResponse(json);
+            setServerProblems(result.problems);
+            setServerSchema(result.schema || null);
+            return result;
         } catch (error) {
             const problem = {
-                severity: aiAuthored ? 'error' as const : 'warning' as const,
+                severity: 'error' as const,
                 message: `Server validation unavailable: ${errorText(error)}`,
             };
             setServerProblems([problem]);
-            return aiAuthored
-                ? { ok: false, unavailable: true, problems: [problem], blockingProblem: problem }
-                : { ok: true, unavailable: true, problems: [problem] };
+            setServerSchema(null);
+            return { ok: false, unavailable: true, problems: [problem], blockingProblem: problem };
         } finally {
             setIsServerValidating(false);
         }
@@ -1581,7 +1560,7 @@ export default function WorkflowEditor() {
             setMessage(`Workflow definition parsed with ${totalWarnings} warning${totalWarnings === 1 ? '' : 's'}.`);
             return;
         }
-        setMessage(serverResult.unavailable ? 'Workflow definition is valid. Server validation was unavailable.' : 'Workflow definition is valid.');
+        setMessage('Workflow definition is valid.');
     }, [analysis.problems, catalogProblems.length, clientBlockingProblem, runServerValidation]);
 
     const insertStep = useCallback((snippet: string) => {
@@ -2089,6 +2068,11 @@ export default function WorkflowEditor() {
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '300px minmax(0, 1fr) 380px' }, gap: 2 }}>
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2, minHeight: 420 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Problems</Typography>
+                    {serverSchema ? (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, overflowWrap: 'anywhere' }}>
+                            Workflow schema {serverSchema.version} · sha256:{serverSchema.digest.slice(0, 12)}
+                        </Typography>
+                    ) : null}
                     <List dense>
                         {allProblems.length ? allProblems.map((problem, index) => (
                             <ListItemButton key={`${problem.severity}-${problem.message}-${index}`}>

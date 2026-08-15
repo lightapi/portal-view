@@ -186,6 +186,8 @@ export default function WorkflowAiAuthoringDialog({
                                 <Typography variant="subtitle2">Provenance</Typography>
                                 <Typography variant="body2">Model: {draft.provenance.generatorModel}</Typography>
                                 <Typography variant="body2">Template: {draft.provenance.promptTemplateVersion}</Typography>
+                                <Typography variant="body2">Workflow schema: {draft.provenance.workflowSchemaVersion}</Typography>
+                                <Typography variant="caption" sx={{ overflowWrap: 'anywhere' }}>Schema: sha256:{draft.provenance.workflowSchemaDigest}</Typography>
                                 <Typography variant="caption" sx={{ overflowWrap: 'anywhere' }}>Request: {draft.provenance.requestDigest}</Typography>
                                 <Typography variant="caption">{Object.keys(draft.provenance.sourceSchemaDigests).length} source schema digests pinned</Typography>
                             </>

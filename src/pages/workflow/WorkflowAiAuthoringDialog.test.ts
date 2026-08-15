@@ -14,7 +14,11 @@ evaluate:
 do: []
 `, {
             generatorModel: 'authoring-model',
-            promptTemplateVersion: 'workflow-mcp-authoring-v1',
+            promptTemplateVersion: 'workflow-mcp-authoring-v2',
+            workflowSchemaId: 'https://agentic-workflow.org/schemas/1.0.3/workflow.yaml',
+            workflowSchemaVersion: '1.0.3',
+            workflowSchemaDigest: 'd'.repeat(64),
+            workflowSchemaSourceCommit: 'e'.repeat(40),
             sourceSchemaDigests: { getCustomerProfile: `sha256:${'a'.repeat(64)}` },
             requestDigest: `sha256:${'b'.repeat(64)}`,
             generatedDefinitionDigest: `sha256:${'c'.repeat(64)}`,
@@ -23,6 +27,7 @@ do: []
 
         const parsed = YAML.parse(approved);
         expect(parsed.document.metadata.aiAuthoring.generatorModel).toBe('authoring-model');
+        expect(parsed.document.metadata.aiAuthoring.workflowSchemaVersion).toBe('1.0.3');
         expect(parsed.document.metadata.aiAuthoring.reviewerApproval).toMatchObject({
             approved: true,
             reviewerUserId: 'reviewer-1',

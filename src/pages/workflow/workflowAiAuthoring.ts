@@ -3,6 +3,10 @@ import YAML from 'yaml';
 export type AuthoringProvenance = {
     generatorModel: string;
     promptTemplateVersion: string;
+    workflowSchemaId: string;
+    workflowSchemaVersion: string;
+    workflowSchemaDigest: string;
+    workflowSchemaSourceCommit: string;
     sourceSchemaDigests: Record<string, string>;
     requestDigest: string;
     generatedDefinitionDigest: string;
