@@ -47,8 +47,31 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { useUserState } from '../../contexts/UserContext';
+import HelpLink from '../../components/HelpLink';
 import WorkflowGraph from './WorkflowGraph';
 import WorkflowAiAuthoringDialog, { type WorkflowAuthoringTool } from './WorkflowAiAuthoringDialog';
+import { normalizeWorkflowStepId, workflowStepTemplates } from './workflowStepTemplates';
+import {
+    addWorkflowForkBranch,
+    appendWorkflowStepSnippet,
+    collectWorkflowStepLabels,
+    DEFAULT_WORKFLOW_DEFINITION,
+    extractWorkflowDefinitionMetadata,
+    extractWorkflowEvaluationLanguage,
+    extractWorkflowInlineSchema,
+    getWorkflowForkBranches,
+    removeWorkflowForkBranch,
+    renameWorkflowForkBranch,
+    setWorkflowForkBranchTask,
+    updateWorkflowDocumentMetadata,
+    updateWorkflowEvaluationLanguage,
+    updateWorkflowInlineSchema,
+    WORKFLOW_EXPRESSION_LANGUAGES,
+    WORKFLOW_SCHEMA_FORMATS,
+    type WorkflowDefinitionMetadata,
+    type WorkflowInlineSchema,
+    type WorkflowSchemaSection,
+} from './workflowEditorModel';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -103,12 +126,6 @@ type DefinitionAnalysis = {
     problems: ValidationProblem[];
 };
 
-type WorkflowDefinitionMetadata = {
-    namespace?: string;
-    name?: string;
-    version?: string;
-};
-
 type YamlDiagnostic = {
     message?: string;
     pos?: [number, number] | null;
@@ -132,7 +149,14 @@ type CatalogReference = {
     outputSchema?: Record<string, unknown>;
     readOnly?: boolean;
     contractDigest?: string;
+    capabilityRef?: string;
+    toolVersion?: string;
+    lightapiDigest?: string;
+    httpMethod?: string;
+    parameterLocations?: Record<string, unknown>;
 };
+
+type PaletteInsertionTarget = { forkStepId: string; branchName: string } | null;
 
 type CatalogState = Record<CatalogKind, CatalogReference[]>;
 
@@ -145,14 +169,6 @@ type TagOption = TaxonomyOption & {
     groupLabel?: string | null;
     groupSortOrder?: number | null;
     tagSortOrder?: number | null;
-};
-
-type StepTemplate = {
-    id: string;
-    label: string;
-    detail: string;
-    defaultStepId: string;
-    build: (stepId: string) => string;
 };
 
 type ServerValidationResult = {
@@ -254,15 +270,7 @@ type WorkflowTestSnapshot = {
     errors: string[];
 };
 
-const emptyDefinition = `steps:
-  - ask-input:
-      ask:
-        prompt: Provide workflow input.
-        mode: text
-      export:
-        as:
-          answer: \${ .result }
-`;
+const emptyDefinition = DEFAULT_WORKFLOW_DEFINITION;
 
 const taskTypeHelp: Record<string, WorkflowHelp> = {
     ask: { detail: 'Human task', info: 'Pause for human input, approval, or missing values.' },
@@ -276,6 +284,7 @@ const taskTypeHelp: Record<string, WorkflowHelp> = {
     rule: { detail: 'Rule check', info: 'Delegate a complex check to Light-Rule.' },
     agent: { detail: 'Agent task', info: 'Delegate a bounded task to an agent worker.' },
     workflow: { detail: 'Child workflow', info: 'Start or call another workflow definition.' },
+    fork: { detail: 'Parallel branches', info: 'Run workflow branches concurrently and join their results.' },
     switch: { detail: 'Branch', info: 'Branch based on workflow context or task output.' },
     condition: { detail: 'Guard', info: 'Evaluate a conditional branch or step guard.' },
     set: { detail: 'Context update', info: 'Move values into workflow context.' },
@@ -284,6 +293,8 @@ const taskTypeHelp: Record<string, WorkflowHelp> = {
 };
 
 const rootKeyHelp: Record<string, WorkflowHelp> = {
+    document: { detail: 'Workflow document', info: 'DSL version, namespace, name, version, title, summary, and workflow metadata.' },
+    evaluate: { detail: 'Expression language', info: 'Expression language used by workflow conditions and mappings.' },
     steps: { detail: 'Step list', info: 'Ordered Light-Fabric workflow steps.' },
     tasks: { detail: 'Task list', info: 'Alternative task collection for workflow definitions.' },
     states: { detail: 'State list', info: 'Serverless Workflow style state collection.' },
@@ -297,36 +308,6 @@ const rootKeyHelp: Record<string, WorkflowHelp> = {
 
 const taskTypeKeys = Object.keys(taskTypeHelp);
 const workflowContainerKeys = new Set(['steps', 'tasks', 'states', 'do']);
-const knownPropertyKeys = new Set([
-    ...taskTypeKeys,
-    ...Object.keys(rootKeyHelp),
-    'arguments',
-    'as',
-    'description',
-    'else',
-    'equals',
-    'export',
-    'from',
-    'id',
-    'input',
-    'label',
-    'mode',
-    'name',
-    'next',
-    'options',
-    'output',
-    'path',
-    'prompt',
-    'then',
-    'to',
-    'tool',
-    'value',
-    'when',
-    'endpointId',
-    'ruleId',
-    'agentDefId',
-    'wfDefId',
-]);
 
 const catalogKindOptions: Array<{ value: CatalogKind; label: string }> = [
     { value: 'tools', label: 'Tools' },
@@ -352,72 +333,6 @@ const emptyTestSnapshot: WorkflowTestSnapshot = {
     auditLogs: [],
     errors: [],
 };
-
-const stepTemplates: StepTemplate[] = [
-    {
-        id: 'ask',
-        label: 'Ask',
-        detail: taskTypeHelp.ask.detail,
-        defaultStepId: 'ask-input',
-        build: stepId => `  - ${stepId}:\n      ask:\n        prompt: Provide workflow input.\n        mode: text\n`,
-    },
-    {
-        id: 'assert',
-        label: 'Assert',
-        detail: taskTypeHelp.assert.detail,
-        defaultStepId: 'assert-output',
-        build: stepId => `  - ${stepId}:\n      assert:\n        path: $.status\n        equals: ok\n`,
-    },
-    {
-        id: 'mcp',
-        label: 'MCP Tool',
-        detail: taskTypeHelp.mcp.detail,
-        defaultStepId: 'call-tool',
-        build: stepId => `  - ${stepId}:\n      mcp:\n        tool: tool_name\n        arguments: {}\n`,
-    },
-    {
-        id: 'openapi',
-        label: 'Endpoint',
-        detail: taskTypeHelp.openapi.detail,
-        defaultStepId: 'call-endpoint',
-        build: stepId => `  - ${stepId}:\n      openapi:\n        endpointId: endpoint_id\n        arguments: {}\n`,
-    },
-    {
-        id: 'rule',
-        label: 'Rule',
-        detail: taskTypeHelp.rule.detail,
-        defaultStepId: 'check-rule',
-        build: stepId => `  - ${stepId}:\n      rule:\n        ruleId: rule_id\n        input: {}\n`,
-    },
-    {
-        id: 'agent',
-        label: 'Agent',
-        detail: taskTypeHelp.agent.detail,
-        defaultStepId: 'delegate-agent',
-        build: stepId => `  - ${stepId}:\n      agent:\n        agentDefId: agent_def_id\n        input: {}\n`,
-    },
-    {
-        id: 'workflow',
-        label: 'Workflow',
-        detail: taskTypeHelp.workflow.detail,
-        defaultStepId: 'call-workflow',
-        build: stepId => `  - ${stepId}:\n      workflow:\n        wfDefId: workflow_definition_id\n        input: {}\n`,
-    },
-    {
-        id: 'switch',
-        label: 'Switch',
-        detail: taskTypeHelp.switch.detail,
-        defaultStepId: 'branch',
-        build: stepId => `  - ${stepId}:\n      switch:\n        - when: \${ .status == "ok" }\n          then: next-step\n        - else: fallback-step\n`,
-    },
-    {
-        id: 'wait',
-        label: 'Wait',
-        detail: taskTypeHelp.wait.detail,
-        defaultStepId: 'wait-for-event',
-        build: stepId => `  - ${stepId}:\n      wait:\n        duration: PT5M\n`,
-    },
-];
 
 const rootCompletions: Completion[] = Object.entries(rootKeyHelp).map(([label, help]) => ({
     label,
@@ -553,27 +468,7 @@ function validateWorkflowShape(parsed: unknown): ValidationProblem[] {
 }
 
 function collectStepLabels(value: unknown): string[] {
-    const labels: string[] = [];
-    const visit = (node: unknown) => {
-        if (Array.isArray(node)) {
-            node.forEach(visit);
-            return;
-        }
-        if (!node || typeof node !== 'object') {
-            return;
-        }
-        const record = node as Record<string, unknown>;
-        for (const [key, child] of Object.entries(record)) {
-            if (Array.isArray(child) || (child && typeof child === 'object')) {
-                if (!knownPropertyKeys.has(key)) {
-                    labels.push(key);
-                }
-                visit(child);
-            }
-        }
-    };
-    visit(value);
-    return Array.from(new Set(labels)).slice(0, 80);
+    return collectWorkflowStepLabels(value).slice(0, 80);
 }
 
 function extractToolRefs(definition: string): string[] {
@@ -630,19 +525,7 @@ function parseDefinition(definition: string): DefinitionAnalysis {
 }
 
 function extractDefinitionMetadata(definition: string): WorkflowDefinitionMetadata {
-    if (!definition.trim()) return {};
-    try {
-        const parsed = YAML.parse(definition);
-        const root = toRecord(parsed);
-        const document = toRecord(root.document);
-        return {
-            namespace: textValue(document.namespace || root.namespace),
-            name: textValue(document.name || root.name),
-            version: textValue(document.version || root.version),
-        };
-    } catch {
-        return {};
-    }
+    return extractWorkflowDefinitionMetadata(definition);
 }
 
 function toCodeMirrorDiagnostic(problem: ValidationProblem, docLength: number): Diagnostic {
@@ -712,24 +595,27 @@ function yamlScalar(value: string) {
 }
 
 function appendStepSnippet(definition: string, snippet: string) {
-    const trimmed = definition.trimEnd();
-    const normalized = trimmed.replace(/^steps:\s*\[\]\s*$/m, 'steps:');
-    if (!normalized) {
-        return `steps:\n${snippet.trimEnd()}\n`;
-    }
-    if (/^steps:\s*(?:#.*)?$/m.test(normalized)) {
-        return `${normalized}\n${snippet.trimEnd()}\n`;
-    }
-    return `${normalized}\n\nsteps:\n${snippet.trimEnd()}\n`;
+    return appendWorkflowStepSnippet(definition, snippet);
 }
 
-function buildReferenceSnippet(reference: CatalogReference) {
+export function buildReferenceSnippet(reference: CatalogReference) {
     const stepId = slug(reference.label, reference.kind.slice(0, -1) || 'step');
     switch (reference.kind) {
         case 'tools':
             return `  - call-${stepId}:\n      mcp:\n        tool: ${yamlScalar(reference.value)}\n        arguments: {}\n`;
         case 'endpoints':
-            return `  - call-${stepId}:\n      openapi:\n        endpointId: ${yamlScalar(reference.id)}\n        arguments: {}\n`;
+            {
+                const locations = reference.parameterLocations || {};
+                const queryEntries = Object.entries(locations).filter(([, location]) => location === 'query');
+                const bodyEntries = Object.entries(locations).filter(([, location]) => location === 'body');
+                const query = queryEntries.length
+                    ? `\n${queryEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
+                    : ' {}';
+                const body = bodyEntries.length
+                    ? `\n        body:\n${bodyEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
+                    : '';
+                return `  - call-${stepId}:\n      call: http\n      with:\n        method: ${yamlScalar((reference.httpMethod || 'POST').toUpperCase())}\n        endpoint:\n          uri: ${yamlScalar(`lightapi://${reference.capabilityRef || reference.value}`)}\n        query:${query}${body}\n        output: content\n      metadata:\n        workflowTool:\n          capabilityRef: ${yamlScalar(reference.capabilityRef || reference.value)}\n          version: ${yamlScalar(reference.toolVersion || '1.0.0')}\n          lightapiDigest: ${yamlScalar(reference.lightapiDigest || '')}\n`;
+            }
         case 'rules':
             return `  - check-${stepId}:\n      rule:\n        ruleId: ${yamlScalar(reference.id)}\n        input: {}\n`;
         case 'agents':
@@ -746,16 +632,7 @@ function formatYaml(parsed: unknown) {
 }
 
 function definitionWithVersion(definition: string, version: string) {
-    const parsed = YAML.parse(definition);
-    const root = toRecord(parsed);
-    const document = toRecord(root.document);
-    if (Object.keys(document).length) {
-        document.version = version;
-        root.document = document;
-    } else {
-        root.version = version;
-    }
-    return formatYaml(root);
+    return updateWorkflowDocumentMetadata(definition, { version });
 }
 
 function canonicalDefinition(definition: string) {
@@ -883,13 +760,13 @@ function extractRuntimeToolNames(value: unknown): string[] {
     }).filter(Boolean))).sort();
 }
 
-async function queryPortal(service: string, action: string, hostId: string, data: Record<string, unknown> = {}) {
+async function queryPortal(service: string, action: string, hostId: string, data: Record<string, unknown> = {}, includeGridFields = true) {
     const cmd = {
         host: 'lightapi.net',
         service,
         action,
         version: '0.1.0',
-        data: {
+        data: includeGridFields ? {
             hostId,
             active: true,
             offset: 0,
@@ -898,7 +775,7 @@ async function queryPortal(service: string, action: string, hostId: string, data
             sorting: JSON.stringify([]),
             globalFilter: '',
             ...data,
-        },
+        } : { hostId, ...data },
     };
     return fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
 }
@@ -929,19 +806,26 @@ function toolReferences(value: unknown): CatalogReference[] {
 }
 
 function endpointReferences(value: unknown): CatalogReference[] {
-    return asRecords(value, 'endpoints').map(endpoint => {
-        const id = textValue(endpoint.endpointId);
+    return asRecords(value, 'tools').map(endpoint => {
+        const id = textValue(endpoint.toolId || endpoint.endpointId);
         const method = textValue(endpoint.httpMethod || endpoint.apiMethod);
         const path = textValue(endpoint.endpointPath || endpoint.endpoint);
+        const capabilityRef = textValue(endpoint.capabilityRef);
         return {
             kind: 'endpoints' as const,
             id,
-            value: id,
-            label: compactText([method, path]) || id,
-            secondary: compactText([endpoint.routingDomain, endpoint.sensitivityTier]),
+            value: capabilityRef,
+            label: compactText([endpoint.apiName, endpoint.apiVersion, endpoint.name || endpoint.endpointName, method, path]) || id,
+            secondary: compactText([endpoint.apiName, endpoint.apiVersion, method, path]),
             description: textValue(endpoint.endpointDesc || endpoint.description),
+            capabilityRef,
+            toolVersion: textValue(endpoint.toolVersion),
+            lightapiDigest: textValue(endpoint.lightapiDigest),
+            httpMethod: method,
+            inputSchema: toRecord(endpoint.inputSchema),
+            parameterLocations: toRecord(endpoint.parameterLocations),
         };
-    }).filter(ref => ref.id);
+    }).filter(ref => ref.id && ref.capabilityRef && ref.lightapiDigest);
 }
 
 function ruleReferences(value: unknown): CatalogReference[] {
@@ -1210,6 +1094,83 @@ function idsFromOptions(options: TaxonomyOption[]) {
     return options.map(option => option.id);
 }
 
+type WorkflowInlineSchemaEditorProps = {
+    label: string;
+    schema: WorkflowInlineSchema;
+    disabled: boolean;
+    onChange: (schema: WorkflowInlineSchema) => void;
+};
+
+function WorkflowInlineSchemaEditor({ label, schema, disabled, onChange }: WorkflowInlineSchemaEditorProps) {
+    const serializedDocument = useMemo(
+        () => `${YAML.stringify(schema.document).trimEnd()}\n`,
+        [schema.document],
+    );
+    const [draft, setDraft] = useState(serializedDocument);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        setDraft(serializedDocument);
+        setError('');
+    }, [serializedDocument]);
+
+    const handleDocumentChange = useCallback((nextDraft: string) => {
+        setDraft(nextDraft);
+        try {
+            const document = YAML.parse(nextDraft);
+            if (document === undefined) {
+                setError('Schema document is required when the schema is enabled.');
+                return;
+            }
+            setError('');
+            onChange({ ...schema, document });
+        } catch (schemaError) {
+            setError(schemaError instanceof Error ? schemaError.message : 'Schema document is invalid.');
+        }
+    }, [onChange, schema]);
+
+    return (
+        <Stack spacing={1}>
+            <FormControlLabel
+                control={(
+                    <Switch
+                        checked={schema.enabled}
+                        disabled={disabled}
+                        onChange={event => onChange({ ...schema, enabled: event.target.checked })}
+                    />
+                )}
+                label={label}
+            />
+            {schema.enabled ? (
+                <>
+                    <TextField
+                        select
+                        label="Schema Format"
+                        value={schema.format}
+                        disabled={disabled}
+                        onChange={event => onChange({ ...schema, format: event.target.value })}
+                        size="small"
+                    >
+                        {WORKFLOW_SCHEMA_FORMATS.map(format => (
+                            <MenuItem key={format} value={format}>{format}</MenuItem>
+                        ))}
+                    </TextField>
+                    <Typography variant="caption" color="text.secondary">Inline schema document (YAML or JSON)</Typography>
+                    <CodeMirror
+                        value={draft}
+                        height="220px"
+                        theme={githubLight}
+                        extensions={[yaml(), foldGutter()]}
+                        onChange={handleDocumentChange}
+                        editable={!disabled}
+                    />
+                    {error ? <Alert severity="error">{error}</Alert> : null}
+                </>
+            ) : null}
+        </Stack>
+    );
+}
+
 export default function WorkflowEditor() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -1247,9 +1208,13 @@ export default function WorkflowEditor() {
     const [catalogKind, setCatalogKind] = useState<CatalogKind>('tools');
     const [referenceSearch, setReferenceSearch] = useState('');
     const [selectedReferenceId, setSelectedReferenceId] = useState('');
-    const [selectedTemplateId, setSelectedTemplateId] = useState(stepTemplates[0].id);
-    const [stepIdInput, setStepIdInput] = useState(stepTemplates[0].defaultStepId);
+    const [selectedTemplateId, setSelectedTemplateId] = useState(workflowStepTemplates[0].id);
+    const [stepIdInput, setStepIdInput] = useState(workflowStepTemplates[0].defaultStepId);
     const [selectedGraphStepId, setSelectedGraphStepId] = useState('');
+    const [newForkBranchName, setNewForkBranchName] = useState('');
+    const [forkBranchMessage, setForkBranchMessage] = useState('');
+    const [paletteInsertionTarget, setPaletteInsertionTarget] = useState<PaletteInsertionTarget>(null);
+    const [workflowEnvironment, setWorkflowEnvironment] = useState('local');
     const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
     const [isServerValidating, setIsServerValidating] = useState(false);
     const [runtimeDiagnosticsUrl, setRuntimeDiagnosticsUrl] = useState('/diagnostics/tools');
@@ -1284,9 +1249,17 @@ export default function WorkflowEditor() {
         [tagIds, tagOptions],
     );
     const selectedTemplate = useMemo(
-        () => stepTemplates.find(template => template.id === selectedTemplateId) || stepTemplates[0],
+        () => workflowStepTemplates.find(template => template.id === selectedTemplateId) || workflowStepTemplates[0],
         [selectedTemplateId],
     );
+    const selectedForkBranches = useMemo(
+        () => getWorkflowForkBranches(definition, selectedGraphStepId),
+        [definition, selectedGraphStepId],
+    );
+    const definitionMetadata = useMemo(() => extractDefinitionMetadata(definition), [definition]);
+    const evaluationLanguage = useMemo(() => extractWorkflowEvaluationLanguage(definition), [definition]);
+    const inputSchema = useMemo(() => extractWorkflowInlineSchema(definition, 'input'), [definition]);
+    const outputSchema = useMemo(() => extractWorkflowInlineSchema(definition, 'output'), [definition]);
     const catalogToolNames = useMemo(() => new Set(catalog.tools.flatMap(tool => [tool.value, tool.id])), [catalog.tools]);
     const catalogProblems = useMemo<ValidationProblem[]>(() => {
         if (!catalogLoaded || !catalog.tools.length) return [];
@@ -1306,7 +1279,7 @@ export default function WorkflowEditor() {
         const query = referenceSearch.trim().toLowerCase();
         if (!query) return selectedReferences;
         return selectedReferences.filter(reference =>
-            [reference.label, reference.id, reference.secondary, reference.description]
+            [reference.label, reference.id, reference.value, reference.secondary, reference.description]
                 .some(value => textValue(value).toLowerCase().includes(query)),
         );
     }, [referenceSearch, selectedReferences]);
@@ -1364,6 +1337,28 @@ export default function WorkflowEditor() {
         setDefinition(nextDefinition);
         applyDefinitionMetadata(nextDefinition);
     }, [applyDefinitionMetadata]);
+
+    const handleNamespaceChange = useCallback((nextNamespace: string) => {
+        setNamespace(nextNamespace);
+        setDefinition(current => updateWorkflowDocumentMetadata(current, { namespace: nextNamespace }));
+    }, []);
+
+    const handleNameChange = useCallback((nextName: string) => {
+        setName(nextName);
+        setDefinition(current => updateWorkflowDocumentMetadata(current, { name: nextName }));
+    }, []);
+
+    const handleDocumentMetadataChange = useCallback((patch: WorkflowDefinitionMetadata) => {
+        setDefinition(current => updateWorkflowDocumentMetadata(current, patch));
+    }, []);
+
+    const handleEvaluationLanguageChange = useCallback((language: string) => {
+        setDefinition(current => updateWorkflowEvaluationLanguage(current, language));
+    }, []);
+
+    const handleInlineSchemaChange = useCallback((section: WorkflowSchemaSection, schema: WorkflowInlineSchema) => {
+        setDefinition(current => updateWorkflowInlineSchema(current, section, schema));
+    }, []);
 
     useEffect(() => {
         if (!initial.wfDefId) return;
@@ -1439,6 +1434,12 @@ export default function WorkflowEditor() {
     }, [definition]);
 
     useEffect(() => {
+        setForkBranchMessage('');
+        setNewForkBranchName('');
+        setPaletteInsertionTarget(null);
+    }, [selectedGraphStepId]);
+
+    useEffect(() => {
         if (!waitingHumanTasks.length) {
             setSelectedAskTaskId('');
             return;
@@ -1459,7 +1460,12 @@ export default function WorkflowEditor() {
         setCatalogError('');
         const results = await Promise.allSettled([
             queryPortal('genai', 'getTool', hostId),
-            queryPortal('service', 'getApiEndpoint', hostId),
+            wfDefId ? queryPortal('genai', 'getWorkflowCallableTool', hostId, {
+                wfDefId,
+                workflowVersion: version || undefined,
+                environment: workflowEnvironment,
+                limit: 500,
+            }, false) : Promise.resolve({ tools: [] }),
             queryPortal('rule', 'getRule', hostId),
             queryPortal('genai', 'getAgentDefinition', hostId),
             queryPortal('workflow', 'getWfDefinition', hostId),
@@ -1475,7 +1481,7 @@ export default function WorkflowEditor() {
         setCatalogError(failed.length ? 'Some catalog references could not be loaded.' : '');
         setCatalogLoaded(true);
         setIsCatalogLoading(false);
-    }, [hostId]);
+    }, [hostId, version, wfDefId, workflowEnvironment]);
 
     useEffect(() => {
         loadCatalog();
@@ -1522,6 +1528,8 @@ export default function WorkflowEditor() {
             version: '0.1.0',
             data: {
                 hostId,
+                wfDefId,
+                version,
                 definition,
                 ...(aiAuthored ? {
                     profile: 'workflow-mcp-phase3',
@@ -1547,7 +1555,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsServerValidating(false);
         }
-    }, [aiAuthored, catalogLoaded, catalogToolNames, definition, hostId]);
+    }, [aiAuthored, catalogLoaded, catalogToolNames, definition, hostId, version, wfDefId]);
 
     const handleApproveAiDraft = useCallback((approvedDefinition: string) => {
         handleDefinitionChange(approvedDefinition);
@@ -1581,19 +1589,64 @@ export default function WorkflowEditor() {
     }, []);
 
     const handleTemplateChange = useCallback((templateId: string) => {
-        const template = stepTemplates.find(item => item.id === templateId) || stepTemplates[0];
+        const template = workflowStepTemplates.find(item => item.id === templateId) || workflowStepTemplates[0];
         setSelectedTemplateId(template.id);
         setStepIdInput(template.defaultStepId);
     }, []);
 
     const handleInsertTemplate = useCallback(() => {
-        insertStep(selectedTemplate.build(slug(stepIdInput, selectedTemplate.defaultStepId)));
+        const insertedStepId = normalizeWorkflowStepId(stepIdInput, selectedTemplate.defaultStepId);
+        insertStep(selectedTemplate.build(insertedStepId));
+        setSelectedGraphStepId(insertedStepId);
     }, [insertStep, selectedTemplate, stepIdInput]);
+
+    const handleRenameForkBranch = useCallback((currentName: string, nextName: string) => {
+        try {
+            setDefinition(renameWorkflowForkBranch(definition, selectedGraphStepId, currentName, nextName));
+            setForkBranchMessage('');
+        } catch (error) {
+            setForkBranchMessage(errorText(error));
+        }
+    }, [definition, selectedGraphStepId]);
+
+    const handleAddForkBranch = useCallback(() => {
+        try {
+            setDefinition(addWorkflowForkBranch(definition, selectedGraphStepId, newForkBranchName));
+            setNewForkBranchName('');
+            setForkBranchMessage('');
+        } catch (error) {
+            setForkBranchMessage(errorText(error));
+        }
+    }, [definition, newForkBranchName, selectedGraphStepId]);
+
+    const handleRemoveForkBranch = useCallback((branchName: string) => {
+        try {
+            setDefinition(removeWorkflowForkBranch(definition, selectedGraphStepId, branchName));
+            setForkBranchMessage('');
+        } catch (error) {
+            setForkBranchMessage(errorText(error));
+        }
+    }, [definition, selectedGraphStepId]);
 
     const handleInsertReference = useCallback(() => {
         if (!selectedReference) return;
-        insertStep(buildReferenceSnippet(selectedReference));
-    }, [insertStep, selectedReference]);
+        const snippet = buildReferenceSnippet(selectedReference);
+        if (paletteInsertionTarget) {
+            try {
+                setDefinition(current => setWorkflowForkBranchTask(
+                    current,
+                    paletteInsertionTarget.forkStepId,
+                    paletteInsertionTarget.branchName,
+                    snippet,
+                ));
+                setForkBranchMessage('');
+            } catch (error) {
+                setForkBranchMessage(errorText(error));
+            }
+            return;
+        }
+        insertStep(snippet);
+    }, [insertStep, paletteInsertionTarget, selectedReference]);
 
     const handleRuntimeDiagnostics = useCallback(async () => {
         setRuntimeDiagnostics(null);
@@ -1981,6 +2034,10 @@ export default function WorkflowEditor() {
                     Back
                 </Button>
                 <Typography variant="h5" sx={{ flex: 1 }}>Workflow Editor</Typography>
+                <HelpLink
+                    helpPath="/help/portal-view/pages/workflow-editor"
+                    tooltip="Help: Workflow Editor"
+                />
                 <input ref={fileInputRef} type="file" hidden accept=".yaml,.yml,.json" onChange={handleFile} />
                 <Button startIcon={<FileUploadIcon />} onClick={() => fileInputRef.current?.click()} disabled={isPublished}>
                     Import
@@ -2074,9 +2131,35 @@ export default function WorkflowEditor() {
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
                         <TextField label="Host Id" value={hostId} onChange={e => setHostId(e.target.value)} size="small" disabled={isUpdate} />
                         <TextField label="Workflow Definition Id" value={wfDefId} size="small" slotProps={{ input: { readOnly: true } }} />
-                        <TextField label="Namespace" value={namespace} onChange={e => setNamespace(e.target.value)} size="small" disabled={isPublished} />
-                        <TextField label="Name" value={name} onChange={e => setName(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField label="Namespace" value={namespace} onChange={e => handleNamespaceChange(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField label="Name" value={name} onChange={e => handleNameChange(e.target.value)} size="small" disabled={isPublished} />
                         <TextField label="Version" value={version} onChange={e => handleVersionChange(e.target.value)} size="small" disabled={isPublished} />
+                        <TextField
+                            select
+                            label="DSL Version"
+                            value={definitionMetadata.dsl || '1.0.3'}
+                            onChange={e => handleDocumentMetadataChange({ dsl: e.target.value })}
+                            size="small"
+                            disabled={isPublished}
+                        >
+                            <MenuItem value="1.0.3">1.0.3</MenuItem>
+                        </TextField>
+                        <TextField
+                            label="Title"
+                            value={definitionMetadata.title || ''}
+                            onChange={e => handleDocumentMetadataChange({ title: e.target.value })}
+                            size="small"
+                            disabled={isPublished}
+                        />
+                        <TextField
+                            label="Summary"
+                            value={definitionMetadata.summary || ''}
+                            onChange={e => handleDocumentMetadataChange({ summary: e.target.value })}
+                            size="small"
+                            disabled={isPublished}
+                            multiline
+                            minRows={2}
+                        />
                         <TextField label="Owner Position Id" value={ownerPositionId} onChange={e => setOwnerPositionId(e.target.value)} size="small" disabled={isPublished} />
                         <FormControlLabel
                             control={<Switch checked={catalogVisible} disabled={isPublished || aiAuthored} onChange={event => setCatalogVisible(event.target.checked)} />}
@@ -2127,6 +2210,37 @@ export default function WorkflowEditor() {
                         <Typography variant="body2">Top-level Type: {analysis.parsed === null ? 'none' : Array.isArray(analysis.parsed) ? 'array' : typeof analysis.parsed}</Typography>
                     </Stack>
                     <Divider sx={{ my: 2 }} />
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Workflow Contract</Typography>
+                    <Stack spacing={1}>
+                        <TextField
+                            select
+                            disabled={isPublished}
+                            label="Evaluation Language"
+                            value={evaluationLanguage || 'cel'}
+                            onChange={event => handleEvaluationLanguageChange(event.target.value)}
+                            size="small"
+                        >
+                            {WORKFLOW_EXPRESSION_LANGUAGES.map(language => (
+                                <MenuItem key={language} value={language}>{language}</MenuItem>
+                            ))}
+                        </TextField>
+                        {evaluationLanguage !== 'cel' ? (
+                            <Alert severity="warning">Workflow-backed MCP tools currently require CEL.</Alert>
+                        ) : null}
+                        <WorkflowInlineSchemaEditor
+                            label="Input Schema"
+                            schema={inputSchema}
+                            disabled={isPublished}
+                            onChange={schema => handleInlineSchemaChange('input', schema)}
+                        />
+                        <WorkflowInlineSchemaEditor
+                            label="Output Schema"
+                            schema={outputSchema}
+                            disabled={isPublished}
+                            onChange={schema => handleInlineSchemaChange('output', schema)}
+                        />
+                    </Stack>
+                    <Divider sx={{ my: 2 }} />
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Step Palette</Typography>
                     <Stack spacing={1}>
                         <TextField
@@ -2137,7 +2251,7 @@ export default function WorkflowEditor() {
                             onChange={event => handleTemplateChange(event.target.value)}
                             size="small"
                         >
-                            {stepTemplates.map(template => (
+                            {workflowStepTemplates.map(template => (
                                 <MenuItem key={template.id} value={template.id}>{template.label}</MenuItem>
                             ))}
                         </TextField>
@@ -2152,7 +2266,79 @@ export default function WorkflowEditor() {
                         <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertTemplate} disabled={isPublished}>
                             Insert Step
                         </Button>
+                        <Typography variant="caption" color="text.secondary">
+                            Select a fork in Steps or the Visual Graph to manage its branches.
+                        </Typography>
                     </Stack>
+                    {selectedForkBranches !== null ? (
+                        <>
+                            <Divider sx={{ my: 2 }} />
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Fork Branches · {selectedGraphStepId}</Typography>
+                            <Stack spacing={1}>
+                                {selectedForkBranches.map(branch => (
+                                    <Stack key={branch.name} direction="row" spacing={1} alignItems="center">
+                                        <TextField
+                                            key={branch.name}
+                                            defaultValue={branch.name}
+                                            label="Branch Name"
+                                            size="small"
+                                            disabled={isPublished}
+                                            onBlur={event => handleRenameForkBranch(branch.name, event.target.value)}
+                                            onKeyDown={event => {
+                                                if (event.key === 'Enter') event.currentTarget.blur();
+                                            }}
+                                            sx={{ flex: 1 }}
+                                        />
+                                        <Button
+                                            size="small"
+                                            variant={paletteInsertionTarget?.branchName === branch.name ? 'contained' : 'outlined'}
+                                            onClick={() => {
+                                                setPaletteInsertionTarget({ forkStepId: selectedGraphStepId, branchName: branch.name });
+                                                setCatalogKind('endpoints');
+                                            }}
+                                            disabled={isPublished}
+                                        >
+                                            Add Step
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            onClick={() => handleRemoveForkBranch(branch.name)}
+                                            disabled={isPublished || selectedForkBranches.length <= 2}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </Stack>
+                                ))}
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <TextField
+                                        label="New Branch Name"
+                                        value={newForkBranchName}
+                                        onChange={event => setNewForkBranchName(event.target.value)}
+                                        onKeyDown={event => {
+                                            if (event.key === 'Enter' && newForkBranchName.trim()) handleAddForkBranch();
+                                        }}
+                                        size="small"
+                                        disabled={isPublished}
+                                        sx={{ flex: 1 }}
+                                    />
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<PlaylistAddIcon />}
+                                        onClick={handleAddForkBranch}
+                                        disabled={isPublished || !newForkBranchName.trim()}
+                                    >
+                                        Add Branch
+                                    </Button>
+                                </Stack>
+                                {selectedForkBranches.length <= 2 ? (
+                                    <Typography variant="caption" color="text.secondary">A fork must retain at least two branches.</Typography>
+                                ) : null}
+                                {forkBranchMessage ? <Alert severity="error">{forkBranchMessage}</Alert> : null}
+                            </Stack>
+                        </>
+                    ) : null}
                     <Divider sx={{ my: 2 }} />
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
                         <Typography variant="subtitle2" sx={{ flex: 1 }}>References</Typography>
@@ -2163,6 +2349,18 @@ export default function WorkflowEditor() {
                     {isCatalogLoading && <LinearProgress sx={{ mb: 1 }} />}
                     {catalogError && <Alert severity="warning" sx={{ mb: 1 }}>{catalogError}</Alert>}
                     <Stack spacing={1}>
+                        <TextField
+                            label="Environment"
+                            value={workflowEnvironment}
+                            onChange={event => setWorkflowEnvironment(event.target.value)}
+                            size="small"
+                            helperText="Only Tools granted for this workflow and environment are listed under Endpoints."
+                        />
+                        {paletteInsertionTarget ? (
+                            <Alert severity="info" action={<Button size="small" onClick={() => setPaletteInsertionTarget(null)}>Top level</Button>}>
+                                Insert into {paletteInsertionTarget.forkStepId} / {paletteInsertionTarget.branchName}
+                            </Alert>
+                        ) : null}
                         <TextField
                             select
                             label="Reference Type"
@@ -2203,7 +2401,7 @@ export default function WorkflowEditor() {
                             </Box>
                         )}
                         <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertReference} disabled={isPublished || !selectedReference}>
-                            Insert Reference
+                            {paletteInsertionTarget ? 'Add to Branch' : 'Insert Reference'}
                         </Button>
                     </Stack>
                     <Divider sx={{ my: 2 }} />

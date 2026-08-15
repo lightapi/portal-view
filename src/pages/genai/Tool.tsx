@@ -16,12 +16,14 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import PublishIcon from '@mui/icons-material/Publish';
+import SecurityIcon from '@mui/icons-material/Security';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
 import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
 import type {PublishableTool} from './gatewayToolPublicationScope';
+import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -68,6 +70,10 @@ type ToolType = {
     version?: string;
     stableToolRef?: string;
     executionPlacement?: string;
+    capabilityRef?: string;
+    lightapiDocument?: string;
+    lightapiDigest?: string;
+    lightapiValidationStatus?: string;
     aggregateVersion: number;
     active: boolean;
     updateUser?: string;
@@ -113,6 +119,7 @@ export default function Tool() {
     const [isEmbeddingRefreshLoading, setIsEmbeddingRefreshLoading] = useState<string | null>(null);
     const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
     const [publicationOpen, setPublicationOpen] = useState(false);
+    const [workflowAccessTool, setWorkflowAccessTool] = useState<ToolType | null>(null);
     const selectedToolCache = useRef(new Map<string, ToolType>());
     const initialApiVersionId = (location.state as {data?: {apiVersionId?: string}} | null)?.data?.apiVersionId
         ?? searchParams.get('apiVersionId')
@@ -289,6 +296,8 @@ export default function Tool() {
             { accessorKey: 'implementationType', header: 'Implementation Type' },
             { accessorKey: 'executionPlacement', header: 'Execution Placement' },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
+            { accessorKey: 'capabilityRef', header: 'Capability Ref' },
+            { accessorKey: 'lightapiValidationStatus', header: 'LightAPI Status' },
             { accessorKey: 'apiVersionId', header: 'API Version Id' },
             { accessorKey: 'apiId', header: 'API Id' },
             { accessorKey: 'apiName', header: 'API Name' },
@@ -452,6 +461,13 @@ export default function Tool() {
                         <DeleteForeverIcon />
                     </IconButton>
                 </Tooltip>
+                {row.original.endpointId ? <Tooltip title="Workflow Access">
+                    <span><IconButton
+                        color="primary"
+                        onClick={() => setWorkflowAccessTool(row.original)}
+                        disabled={row.original.lightapiValidationStatus !== 'VALID'}
+                    ><SecurityIcon /></IconButton></span>
+                </Tooltip> : null}
             </Box>
         ),
         renderTopToolbarCustomActions: () => <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
@@ -475,6 +491,11 @@ export default function Tool() {
                 tools={selectedTools}
                 onClose={() => setPublicationOpen(false)}
             />}
+            <WorkflowToolAccessDialog
+                open={Boolean(workflowAccessTool)}
+                tool={workflowAccessTool}
+                onClose={() => setWorkflowAccessTool(null)}
+            />
         </GenAiTaskLayout>
     );
 }

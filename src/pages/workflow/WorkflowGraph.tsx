@@ -72,6 +72,7 @@ const taskTypeKeys = new Set([
     'rule',
     'agent',
     'workflow',
+    'fork',
     'switch',
     'condition',
     'set',
@@ -90,6 +91,7 @@ const typeColors: Record<string, string> = {
     rule: '#be123c',
     agent: '#7c3aed',
     workflow: '#047857',
+    fork: '#0e7490',
     switch: '#a16207',
     wait: '#475569',
 };
