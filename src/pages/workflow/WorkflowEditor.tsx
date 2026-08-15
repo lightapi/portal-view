@@ -2127,7 +2127,7 @@ export default function WorkflowEditor() {
                     </Stack>
                 </Box>
 
-                <Box sx={{ minWidth: 0 }}>
+                <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
                         <TextField label="Host Id" value={hostId} onChange={e => setHostId(e.target.value)} size="small" disabled={isUpdate} />
                         <TextField label="Workflow Definition Id" value={wfDefId} size="small" slotProps={{ input: { readOnly: true } }} />
@@ -2191,7 +2191,9 @@ export default function WorkflowEditor() {
                     </Box>
                     <CodeMirror
                         value={definition}
-                        height="560px"
+                        height="100%"
+                        minHeight="560px"
+                        style={{ flex: 1 }}
                         theme={githubLight}
                         extensions={workflowEditorExtensions}
                         onChange={handleDefinitionChange}
