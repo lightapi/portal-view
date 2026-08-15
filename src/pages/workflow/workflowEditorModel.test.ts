@@ -9,12 +9,15 @@ import {
     extractWorkflowDefinitionMetadata,
     extractWorkflowInlineSchema,
     getWorkflowForkBranches,
+    insertWorkflowStepSnippet,
     removeWorkflowForkBranch,
     renameWorkflowForkBranch,
     setWorkflowForkBranchTask,
     updateWorkflowEvaluationLanguage,
     updateWorkflowDocumentMetadata,
     updateWorkflowInlineSchema,
+    workflowStepIdAtOffset,
+    workflowStepLocations,
     WORKFLOW_SCHEMA_FORMATS,
 } from './workflowEditorModel';
 
@@ -152,6 +155,101 @@ do:
 
         expect(parsed.steps).toHaveLength(2);
         expect(parsed).not.toHaveProperty('do');
+    });
+
+    it('finds the top-level workflow step containing the YAML cursor', () => {
+        const definition = `document:\n  name: cursor-selection\ndo:\n  - first:\n      set:\n        value: 1\n  - second:\n      wait:\n        duration: PT5M\n  - third:\n      set:\n        value: 3\n`;
+        const locations = workflowStepLocations(definition);
+
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('first:'))).toBe('first');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('value: 1'))).toBe('first');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('  - second:'))).toBe('second');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('duration:'))).toBe('second');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('  - third:'))).toBe('third');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('document:'))).toBe('');
+        expect(workflowStepLocations('do: [')).toEqual([]);
+    });
+
+    it('uses name and id values consistently for cursor selection and insertion', () => {
+        const definition = `do:\n  - name: alpha\n    set:\n      value: 1\n  - name: beta\n    wait:\n      duration: PT5M\n  - id: gamma\n    set:\n      value: 3\n`;
+        const locations = workflowStepLocations(definition);
+
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('name: beta'))).toBe('beta');
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('id: gamma'))).toBe('gamma');
+        const updated = insertWorkflowStepSnippet(
+            definition,
+            '  - inserted:\n      set:\n        value: 2\n',
+            'beta',
+            'after',
+        );
+        expect(collectWorkflowStepLabels(YAML.parse(updated))).toEqual(['alpha', 'beta', 'inserted', 'gamma']);
+    });
+
+    it('uses graph-compatible synthetic ids for anonymous task-shaped items', () => {
+        const definition = `do:\n  - wait:\n      duration: PT5M\n  - set:\n      value: ready\n`;
+        const locations = workflowStepLocations(definition);
+
+        expect(locations.map(location => location.stepId)).toEqual(['do-1', 'do-2']);
+        const updated = insertWorkflowStepSnippet(
+            definition,
+            '  - named:\n      set:\n        value: inserted\n',
+            'do-1',
+            'after',
+        );
+        expect(collectWorkflowStepLabels(YAML.parse(updated))).toEqual(['do-1', 'named', 'do-3']);
+    });
+
+    it('uses the same priority container for locations, labels, and insertion', () => {
+        const definition = `states:\n  oldState:\n    type: operation\ndo:\n  - first:\n      set:\n        value: 1\n`;
+        const locations = workflowStepLocations(definition);
+
+        expect(locations.map(location => location.stepId)).toEqual(['first']);
+        expect(collectWorkflowStepLabels(YAML.parse(definition))).toEqual(['first']);
+        const updated = insertWorkflowStepSnippet(
+            definition,
+            '  - second:\n      wait:\n        duration: PT5M\n',
+            'first',
+            'after',
+        );
+        expect(collectWorkflowStepLabels(YAML.parse(updated))).toEqual(['first', 'second']);
+    });
+
+    it('supports cursor selection and relative insertion in map-shaped containers', () => {
+        const definition = `states:\n  first:\n    type: operation\n  third:\n    type: operation\n`;
+        const locations = workflowStepLocations(definition);
+
+        expect(workflowStepIdAtOffset(locations, definition.indexOf('  third:'))).toBe('third');
+        const updated = insertWorkflowStepSnippet(
+            definition,
+            '  - second:\n      set:\n        value: 2\n',
+            'third',
+            'before',
+        );
+        expect(Object.keys(record(YAML.parse(updated)).states as Record<string, unknown>))
+            .toEqual(['first', 'second', 'third']);
+    });
+
+    it('inserts palette steps before or after the selected top-level step', () => {
+        const definition = `document:\n  name: relative-insertion\ndo:\n  - first:\n      set:\n        value: 1\n  - third:\n      wait:\n        duration: PT5M\n`;
+        const snippet = '  - second:\n      set:\n        value: 2\n';
+
+        const beforeThird = insertWorkflowStepSnippet(definition, snippet, 'third', 'before');
+        const afterFirst = insertWorkflowStepSnippet(definition, snippet, 'first', 'after');
+
+        expect((record(YAML.parse(beforeThird)).do as Array<Record<string, unknown>>)
+            .map(step => Object.keys(step)[0])).toEqual(['first', 'second', 'third']);
+        expect((record(YAML.parse(afterFirst)).do as Array<Record<string, unknown>>)
+            .map(step => Object.keys(step)[0])).toEqual(['first', 'second', 'third']);
+    });
+
+    it('rejects insertion when the selected step no longer exists', () => {
+        const definition = `do:\n  - first:\n      set:\n        value: 1\n`;
+        expect(() => insertWorkflowStepSnippet(
+            definition,
+            '  - second:\n      wait:\n        duration: PT5M\n',
+            'missing-step',
+            'before',
+        )).toThrow('is no longer available');
     });
 
     it('lists and renames fork branches without changing their task bodies', () => {

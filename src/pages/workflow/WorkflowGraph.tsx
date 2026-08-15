@@ -21,6 +21,11 @@ import {
     type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import {
+    WORKFLOW_CONTAINER_KEYS,
+    WORKFLOW_TASK_TYPE_KEYS,
+    workflowArrayStepId,
+} from './workflowEditorModel';
 
 type WorkflowGraphStep = {
     id: string;
@@ -60,25 +65,7 @@ type WorkflowGraphProps = {
     onDisconnectSteps?: (sourceStepId: string, targetStepId: string) => void;
 };
 
-const taskTypeKeys = new Set([
-    'ask',
-    'assert',
-    'http',
-    'openapi',
-    'jsonrpc',
-    'openrpc',
-    'grpc',
-    'mcp',
-    'rule',
-    'agent',
-    'workflow',
-    'fork',
-    'switch',
-    'condition',
-    'set',
-    'export',
-    'wait',
-]);
+const taskTypeKeys = WORKFLOW_TASK_TYPE_KEYS;
 
 const transitionKeys = new Set(['next', 'then', 'to', 'transition']);
 const referenceKeys = new Set(['tool', 'toolName', 'tool_name', 'endpointId', 'ruleId', 'agentDefId', 'wfDefId']);
@@ -110,10 +97,6 @@ function isObjectLike(value: unknown) {
 
 function compactText(values: unknown[]) {
     return values.map(textValue).filter(Boolean).join(' · ');
-}
-
-function isWorkflowContainerKey(key: string) {
-    return key === 'steps' || key === 'tasks' || key === 'states' || key === 'do';
 }
 
 function detectTaskType(value: unknown): string {
@@ -167,17 +150,9 @@ function normalizeStep(id: string, body: unknown, fallbackType = 'task'): Workfl
 function collectArraySteps(items: unknown[], containerKey: string): WorkflowGraphStep[] {
     return items.map((item, index) => {
         const record = toRecord(item);
-        const entries = Object.entries(record);
-        if (typeof record.name === 'string') {
-            return normalizeStep(record.name, record, textValue(record.type || containerKey));
-        }
-        if (typeof record.id === 'string') {
-            return normalizeStep(record.id, record, textValue(record.type || containerKey));
-        }
-        if (entries.length === 1 && !taskTypeKeys.has(entries[0][0])) {
-            return normalizeStep(entries[0][0], entries[0][1], containerKey);
-        }
-        return normalizeStep(`${containerKey}-${index + 1}`, record, containerKey);
+        const id = workflowArrayStepId(item, index, containerKey);
+        const body = Object.prototype.hasOwnProperty.call(record, id) ? record[id] : record;
+        return normalizeStep(id, body, textValue(record.type || containerKey));
     });
 }
 
@@ -189,8 +164,9 @@ function collectRecordSteps(record: Record<string, unknown>, containerKey: strin
 
 function collectSteps(parsedDefinition: unknown): WorkflowGraphStep[] {
     const root = toRecord(parsedDefinition);
-    for (const [key, value] of Object.entries(root)) {
-        if (!isWorkflowContainerKey(key)) continue;
+    for (const key of WORKFLOW_CONTAINER_KEYS) {
+        const value = root[key];
+        if (value === undefined) continue;
         if (Array.isArray(value)) return collectArraySteps(value, key);
         if (isObjectLike(value)) return collectRecordSteps(toRecord(value), key);
     }

@@ -5,7 +5,7 @@ import { autocompletion, snippetCompletion, type Completion, type CompletionCont
 import { yaml } from '@codemirror/lang-yaml';
 import { foldGutter } from '@codemirror/language';
 import { linter, lintGutter, type Diagnostic } from '@codemirror/lint';
-import { hoverTooltip } from '@codemirror/view';
+import { hoverTooltip, type ViewUpdate } from '@codemirror/view';
 import { githubLight } from '@uiw/codemirror-theme-github';
 import YAML from 'yaml';
 import {
@@ -60,24 +60,27 @@ import {
 } from './workflowValidation';
 import {
     addWorkflowForkBranch,
-    appendWorkflowStepSnippet,
     collectWorkflowStepLabels,
     DEFAULT_WORKFLOW_DEFINITION,
     extractWorkflowDefinitionMetadata,
     extractWorkflowEvaluationLanguage,
     extractWorkflowInlineSchema,
     getWorkflowForkBranches,
+    insertWorkflowStepSnippet,
     removeWorkflowForkBranch,
     renameWorkflowForkBranch,
     setWorkflowForkBranchTask,
     updateWorkflowDocumentMetadata,
     updateWorkflowEvaluationLanguage,
     updateWorkflowInlineSchema,
+    workflowStepIdAtOffset,
+    workflowStepLocations,
     WORKFLOW_EXPRESSION_LANGUAGES,
     WORKFLOW_SCHEMA_FORMATS,
     type WorkflowDefinitionMetadata,
     type WorkflowInlineSchema,
     type WorkflowSchemaSection,
+    type WorkflowStepInsertionPosition,
 } from './workflowEditorModel';
 
 type WorkflowEditorState = {
@@ -575,10 +578,6 @@ function slug(value: string, fallback: string) {
 
 function yamlScalar(value: string) {
     return /^[A-Za-z0-9_.:/@-]+$/.test(value) ? value : JSON.stringify(value);
-}
-
-function appendStepSnippet(definition: string, snippet: string) {
-    return appendWorkflowStepSnippet(definition, snippet);
 }
 
 export function buildReferenceSnippet(reference: CatalogReference) {
@@ -1185,8 +1184,10 @@ export default function WorkflowEditor() {
     const [selectedTemplateId, setSelectedTemplateId] = useState(workflowStepTemplates[0].id);
     const [stepIdInput, setStepIdInput] = useState(workflowStepTemplates[0].defaultStepId);
     const [selectedGraphStepId, setSelectedGraphStepId] = useState('');
+    const [stepInsertionPosition, setStepInsertionPosition] = useState<WorkflowStepInsertionPosition>('after');
     const [newForkBranchName, setNewForkBranchName] = useState('');
     const [forkBranchMessage, setForkBranchMessage] = useState('');
+    const [paletteMessage, setPaletteMessage] = useState('');
     const [paletteInsertionTarget, setPaletteInsertionTarget] = useState<PaletteInsertionTarget>(null);
     const [workflowEnvironment, setWorkflowEnvironment] = useState('local');
     const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
@@ -1210,6 +1211,9 @@ export default function WorkflowEditor() {
     const [isAiAuthoringOpen, setIsAiAuthoringOpen] = useState(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
+    const stepLocations = useMemo(() => workflowStepLocations(definition), [definition]);
+    const stepLocationsRef = useRef(stepLocations);
+    stepLocationsRef.current = stepLocations;
     const aiAuthored = useMemo(() => {
         const parsedDefinition = toRecord(analysis.parsed);
         const documentMetadata = toRecord(toRecord(parsedDefinition.document).metadata);
@@ -1312,6 +1316,22 @@ export default function WorkflowEditor() {
         setDefinition(nextDefinition);
         applyDefinitionMetadata(nextDefinition);
     }, [applyDefinitionMetadata]);
+
+    const handleDefinitionEditorUpdate = useCallback((viewUpdate: ViewUpdate) => {
+        if (!viewUpdate.selectionSet || viewUpdate.docChanged) return;
+        const stepId = workflowStepIdAtOffset(
+            stepLocationsRef.current,
+            viewUpdate.state.selection.main.head,
+        );
+        setSelectedGraphStepId(current => current === stepId ? current : stepId);
+    }, []);
+
+    const handleSelectWorkflowStep = useCallback((stepId: string) => {
+        setSelectedGraphStepId(stepId);
+        setPaletteInsertionTarget(current => (
+            current && current.forkStepId !== stepId ? null : current
+        ));
+    }, []);
 
     useEffect(() => {
         setServerProblems([]);
@@ -1416,7 +1436,6 @@ export default function WorkflowEditor() {
     useEffect(() => {
         setForkBranchMessage('');
         setNewForkBranchName('');
-        setPaletteInsertionTarget(null);
     }, [selectedGraphStepId]);
 
     useEffect(() => {
@@ -1563,9 +1582,26 @@ export default function WorkflowEditor() {
         setMessage('Workflow definition is valid.');
     }, [analysis.problems, catalogProblems.length, clientBlockingProblem, runServerValidation]);
 
-    const insertStep = useCallback((snippet: string) => {
-        setDefinition(value => appendStepSnippet(value, snippet));
-    }, []);
+    const insertStep = useCallback((snippet: string): boolean => {
+        try {
+            const updated = insertWorkflowStepSnippet(
+                definition,
+                snippet,
+                selectedGraphStepId,
+                stepInsertionPosition,
+            );
+            if (updated === definition) {
+                setPaletteMessage('Unable to insert the step while the workflow YAML is invalid.');
+                return false;
+            }
+            setDefinition(updated);
+            setPaletteMessage('');
+            return true;
+        } catch (error) {
+            setPaletteMessage(errorText(error));
+            return false;
+        }
+    }, [definition, selectedGraphStepId, stepInsertionPosition]);
 
     const handleTemplateChange = useCallback((templateId: string) => {
         const template = workflowStepTemplates.find(item => item.id === templateId) || workflowStepTemplates[0];
@@ -1575,9 +1611,10 @@ export default function WorkflowEditor() {
 
     const handleInsertTemplate = useCallback(() => {
         const insertedStepId = normalizeWorkflowStepId(stepIdInput, selectedTemplate.defaultStepId);
-        insertStep(selectedTemplate.build(insertedStepId));
-        setSelectedGraphStepId(insertedStepId);
-    }, [insertStep, selectedTemplate, stepIdInput]);
+        if (insertStep(selectedTemplate.build(insertedStepId))) {
+            handleSelectWorkflowStep(insertedStepId);
+        }
+    }, [handleSelectWorkflowStep, insertStep, selectedTemplate, stepIdInput]);
 
     const handleRenameForkBranch = useCallback((currentName: string, nextName: string) => {
         try {
@@ -1612,20 +1649,21 @@ export default function WorkflowEditor() {
         const snippet = buildReferenceSnippet(selectedReference);
         if (paletteInsertionTarget) {
             try {
-                setDefinition(current => setWorkflowForkBranchTask(
-                    current,
+                setDefinition(setWorkflowForkBranchTask(
+                    definition,
                     paletteInsertionTarget.forkStepId,
                     paletteInsertionTarget.branchName,
                     snippet,
                 ));
                 setForkBranchMessage('');
+                setPaletteInsertionTarget(null);
             } catch (error) {
                 setForkBranchMessage(errorText(error));
             }
             return;
         }
         insertStep(snippet);
-    }, [insertStep, paletteInsertionTarget, selectedReference]);
+    }, [definition, insertStep, paletteInsertionTarget, selectedReference]);
 
     const handleRuntimeDiagnostics = useCallback(async () => {
         setRuntimeDiagnostics(null);
@@ -1852,9 +1890,9 @@ export default function WorkflowEditor() {
             return;
         }
         setDefinition(updated);
-        setSelectedGraphStepId(sourceStepId);
+        handleSelectWorkflowStep(sourceStepId);
         setMessage(`Transition updated: ${sourceStepId} -> ${targetStepId}.`);
-    }, [definition, isPublished]);
+    }, [definition, handleSelectWorkflowStep, isPublished]);
 
     const handleGraphDisconnect = useCallback((sourceStepId: string, targetStepId: string) => {
         if (isPublished) return;
@@ -1864,9 +1902,9 @@ export default function WorkflowEditor() {
             return;
         }
         setDefinition(updated);
-        setSelectedGraphStepId(sourceStepId);
+        handleSelectWorkflowStep(sourceStepId);
         setMessage(`Transition removed: ${sourceStepId} -> ${targetStepId}.`);
-    }, [definition, isPublished]);
+    }, [definition, handleSelectWorkflowStep, isPublished]);
 
     const handleSave = useCallback(async () => {
         setMessage('');
@@ -2090,7 +2128,7 @@ export default function WorkflowEditor() {
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Steps</Typography>
                     <List dense>
                         {analysis.steps.length ? analysis.steps.map(step => (
-                            <ListItemButton key={step} selected={selectedGraphStepId === step} onClick={() => setSelectedGraphStepId(step)}>
+                            <ListItemButton key={step} selected={selectedGraphStepId === step} onClick={() => handleSelectWorkflowStep(step)}>
                                 <ListItemText primary={step} />
                             </ListItemButton>
                         )) : (
@@ -2181,6 +2219,7 @@ export default function WorkflowEditor() {
                         theme={githubLight}
                         extensions={workflowEditorExtensions}
                         onChange={handleDefinitionChange}
+                        onUpdate={handleDefinitionEditorUpdate}
                         editable={!isPublished}
                     />
                 </Box>
@@ -2249,9 +2288,29 @@ export default function WorkflowEditor() {
                             size="small"
                         />
                         <Typography variant="body2">{selectedTemplate.detail}</Typography>
+                        {selectedGraphStepId ? (
+                            <TextField
+                                select
+                                disabled={isPublished}
+                                label={`Relative to ${selectedGraphStepId}`}
+                                value={stepInsertionPosition}
+                                onChange={event => setStepInsertionPosition(event.target.value as WorkflowStepInsertionPosition)}
+                                size="small"
+                            >
+                                <MenuItem value="before">Before selected step</MenuItem>
+                                <MenuItem value="after">After selected step</MenuItem>
+                            </TextField>
+                        ) : (
+                            <Typography variant="caption" color="text.secondary">
+                                Place the YAML cursor inside a step to insert relative to it. Otherwise, the new step is appended.
+                            </Typography>
+                        )}
                         <Button size="small" variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleInsertTemplate} disabled={isPublished}>
-                            Insert Step
+                            {selectedGraphStepId
+                                ? `Insert ${stepInsertionPosition} ${selectedGraphStepId}`
+                                : 'Append Step'}
                         </Button>
+                        {paletteMessage ? <Alert severity="error">{paletteMessage}</Alert> : null}
                         <Typography variant="caption" color="text.secondary">
                             Select a fork in Steps or the Visual Graph to manage its branches.
                         </Typography>
@@ -2470,7 +2529,7 @@ export default function WorkflowEditor() {
                     parsedDefinition={analysis.parsed}
                     statusByStep={graphStatusByStep}
                     selectedStepId={selectedGraphStepId}
-                    onSelectStep={setSelectedGraphStepId}
+                    onSelectStep={handleSelectWorkflowStep}
                     onConnectSteps={isPublished ? undefined : handleGraphConnect}
                     onDisconnectSteps={isPublished ? undefined : handleGraphDisconnect}
                 />

@@ -1,4 +1,4 @@
-import YAML from 'yaml';
+import YAML, { isMap, isSeq, isScalar } from 'yaml';
 
 export type WorkflowDefinitionMetadata = {
     dsl?: string;
@@ -24,6 +24,11 @@ export const WORKFLOW_EXPRESSION_LANGUAGES = ['cel', 'jq', 'js'] as const;
 // JSON Schema validator. Do not advertise model constants that are not
 // executable schema formats in this editor.
 export const WORKFLOW_SCHEMA_FORMATS = ['json'] as const;
+export const WORKFLOW_CONTAINER_KEYS = ['do', 'steps', 'tasks', 'states'] as const;
+export const WORKFLOW_TASK_TYPE_KEYS = new Set([
+    'ask', 'assert', 'http', 'openapi', 'jsonrpc', 'openrpc', 'grpc', 'mcp',
+    'rule', 'agent', 'workflow', 'fork', 'switch', 'condition', 'set', 'export', 'wait',
+]);
 export type WorkflowSchemaSection = 'input' | 'output';
 
 export type WorkflowInlineSchema = {
@@ -48,19 +53,35 @@ function formatYaml(value: unknown) {
     return `${YAML.stringify(value).trimEnd()}\n`;
 }
 
-function findWorkflowStep(root: Record<string, unknown>, stepId: string): Record<string, unknown> | null {
-    const containerKey = ['do', 'steps', 'tasks', 'states']
+function workflowContainerKey(root: Record<string, unknown>): string | undefined {
+    return WORKFLOW_CONTAINER_KEYS
         .find(key => Object.prototype.hasOwnProperty.call(root, key));
+}
+
+export function workflowArrayStepId(item: unknown, index: number, containerKey: string): string {
+    const itemRecord = toRecord(item);
+    if (typeof itemRecord.name === 'string' && itemRecord.name.trim()) return itemRecord.name;
+    if (typeof itemRecord.id === 'string' && itemRecord.id.trim()) return itemRecord.id;
+    const keys = Object.keys(itemRecord);
+    if (keys.length === 1 && !WORKFLOW_TASK_TYPE_KEYS.has(keys[0])) return keys[0];
+    return `${containerKey}-${index + 1}`;
+}
+
+function findWorkflowStep(root: Record<string, unknown>, stepId: string): Record<string, unknown> | null {
+    const containerKey = workflowContainerKey(root);
     if (!containerKey) return null;
     const container = root[containerKey];
 
     if (Array.isArray(container)) {
-        for (const item of container) {
+        for (let index = 0; index < container.length; index += 1) {
+            const item = container[index];
             const itemRecord = toRecord(item);
-            if (Object.prototype.hasOwnProperty.call(itemRecord, stepId)) {
-                return toRecord(itemRecord[stepId]);
+            const candidateId = workflowArrayStepId(item, index, containerKey);
+            if (candidateId !== stepId) continue;
+            if (Object.prototype.hasOwnProperty.call(itemRecord, candidateId)) {
+                return toRecord(itemRecord[candidateId]);
             }
-            if (itemRecord.name === stepId || itemRecord.id === stepId) return itemRecord;
+            return itemRecord;
         }
         return null;
     }
@@ -250,19 +271,12 @@ export function updateWorkflowInlineSchema(
 
 export function collectWorkflowStepLabels(parsed: unknown): string[] {
     const root = toRecord(parsed);
-    const containerKey = ['do', 'steps', 'tasks', 'states']
-        .find(key => Object.prototype.hasOwnProperty.call(root, key));
+    const containerKey = workflowContainerKey(root);
     if (!containerKey) return [];
     const container = root[containerKey];
 
     if (Array.isArray(container)) {
-        return container.flatMap((item, index) => {
-            const itemRecord = toRecord(item);
-            if (typeof itemRecord.name === 'string') return [itemRecord.name];
-            if (typeof itemRecord.id === 'string') return [itemRecord.id];
-            const keys = Object.keys(itemRecord);
-            return keys.length ? [keys[0]] : [`${containerKey}-${index + 1}`];
-        });
+        return container.map((item, index) => workflowArrayStepId(item, index, containerKey));
     }
     return Object.entries(toRecord(container))
         .filter(([, value]) => value && typeof value === 'object')
@@ -301,27 +315,124 @@ function parseStepSnippet(snippet: string): unknown | undefined {
     return Array.isArray(steps) ? steps[0] : undefined;
 }
 
-export function appendWorkflowStepSnippet(definition: string, snippet: string): string {
+export type WorkflowStepInsertionPosition = 'before' | 'after';
+export type WorkflowStepLocation = { stepId: string; from: number; to: number };
+
+class WorkflowStepPlacementError extends Error {}
+
+function nodeText(value: unknown): string {
+    return isScalar(value) && value.value !== null && value.value !== undefined
+        ? String(value.value)
+        : '';
+}
+
+export function workflowStepLocations(definition: string): WorkflowStepLocation[] {
+    try {
+        const document = YAML.parseDocument(definition);
+        if (document.errors.length || !isMap(document.contents)) return [];
+        const root = document.contents;
+        const containerKey = WORKFLOW_CONTAINER_KEYS.find(key => root.items.some(
+            pair => nodeText(pair.key) === key,
+        ));
+        const containerPair = containerKey
+            ? root.items.find(pair => nodeText(pair.key) === containerKey)
+            : undefined;
+        if (!containerKey || !containerPair) return [];
+
+        const locations: WorkflowStepLocation[] = [];
+        if (isSeq(containerPair.value)) {
+            for (let index = 0; index < containerPair.value.items.length; index += 1) {
+                const item = containerPair.value.items[index];
+                if (!isMap(item) || !item.range || !item.items.length) continue;
+                const rawItem = item.toJSON();
+                const stepId = workflowArrayStepId(rawItem, index, containerKey);
+                const lineStart = definition.lastIndexOf('\n', Math.max(0, item.range[0] - 1)) + 1;
+                locations.push({ stepId, from: lineStart, to: item.range[2] });
+            }
+        } else if (isMap(containerPair.value)) {
+            for (const pair of containerPair.value.items) {
+                const stepId = nodeText(pair.key);
+                const pairRange = pair.value?.range || pair.key?.range;
+                const keyRange = pair.key?.range;
+                if (!stepId || !pairRange || !keyRange) continue;
+                const lineStart = definition.lastIndexOf('\n', Math.max(0, keyRange[0] - 1)) + 1;
+                locations.push({ stepId, from: lineStart, to: pairRange[2] });
+            }
+        }
+        return locations;
+    } catch {
+        return [];
+    }
+}
+
+export function workflowStepIdAtOffset(locations: WorkflowStepLocation[], offset: number): string {
+    const boundedOffset = Math.max(0, offset);
+    return locations.find(location => boundedOffset >= location.from && boundedOffset < location.to)?.stepId || '';
+}
+
+export function insertWorkflowStepSnippet(
+    definition: string,
+    snippet: string,
+    anchorStepId = '',
+    position: WorkflowStepInsertionPosition = 'after',
+): string {
     try {
         const parsed = YAML.parse(definition);
         const root = toRecord(parsed);
         const item = parseStepSnippet(snippet);
         if (!item) return definition;
 
-        const containerKey = ['do', 'steps', 'tasks', 'states']
-            .find(key => Object.prototype.hasOwnProperty.call(root, key)) || 'do';
+        const containerKey = workflowContainerKey(root) || 'do';
         const container = root[containerKey];
 
         if (Array.isArray(container)) {
-            container.push(item);
+            const anchorIndex = anchorStepId
+                ? container.findIndex((value, index) => workflowArrayStepId(value, index, containerKey) === anchorStepId)
+                : -1;
+            if (anchorStepId && anchorIndex < 0) {
+                throw new WorkflowStepPlacementError(
+                    `Selected step "${anchorStepId}" is no longer available. Select another step or append explicitly.`,
+                );
+            } else if (anchorIndex < 0) {
+                container.push(item);
+            } else {
+                container.splice(anchorIndex + (position === 'after' ? 1 : 0), 0, item);
+            }
         } else if (container && typeof container === 'object') {
             const itemRecord = toRecord(item);
-            Object.assign(container, itemRecord);
+            const containerRecord = toRecord(container);
+            if (anchorStepId) {
+                const entries = Object.entries(containerRecord);
+                const anchorIndex = entries.findIndex(([key]) => key === anchorStepId);
+                if (anchorIndex < 0) {
+                    throw new WorkflowStepPlacementError(
+                        `Selected step "${anchorStepId}" is no longer available. Select another step or append explicitly.`,
+                    );
+                }
+                const insertionIndex = anchorIndex + (position === 'after' ? 1 : 0);
+                root[containerKey] = Object.fromEntries([
+                    ...entries.slice(0, insertionIndex),
+                    ...Object.entries(itemRecord),
+                    ...entries.slice(insertionIndex),
+                ]);
+            } else {
+                Object.assign(containerRecord, itemRecord);
+            }
         } else {
+            if (anchorStepId) {
+                throw new WorkflowStepPlacementError(
+                    `Selected step "${anchorStepId}" is no longer available. Select another step or append explicitly.`,
+                );
+            }
             root[containerKey] = [item];
         }
         return formatYaml(root);
-    } catch {
+    } catch (error) {
+        if (error instanceof WorkflowStepPlacementError) throw error;
         return definition;
     }
+}
+
+export function appendWorkflowStepSnippet(definition: string, snippet: string): string {
+    return insertWorkflowStepSnippet(definition, snippet);
 }
