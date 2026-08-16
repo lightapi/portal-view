@@ -34,6 +34,8 @@ type WorkflowGraphStep = {
     detail: string;
     references: string[];
     raw: Record<string, unknown>;
+    selectionId?: string;
+    role?: 'step' | 'forkBranch' | 'forkJoin';
 };
 
 type WorkflowGraphNodeData = Record<string, unknown> & {
@@ -45,6 +47,8 @@ type WorkflowGraphNodeData = Record<string, unknown> & {
 type WorkflowGraphEdgeData = Record<string, unknown> & {
     explicit: boolean;
     label: string;
+    kind: 'explicit' | 'order' | 'fork' | 'join';
+    semanticSourceId?: string;
 };
 
 type WorkflowGraphNode = Node<WorkflowGraphNodeData, 'workflowStep'>;
@@ -68,7 +72,9 @@ type WorkflowGraphProps = {
 const taskTypeKeys = WORKFLOW_TASK_TYPE_KEYS;
 
 const transitionKeys = new Set(['next', 'then', 'to', 'transition']);
-const referenceKeys = new Set(['tool', 'toolName', 'tool_name', 'endpointId', 'ruleId', 'agentDefId', 'wfDefId']);
+const referenceKeys = new Set([
+    'tool', 'toolName', 'tool_name', 'endpointId', 'capabilityRef', 'ruleId', 'agentDefId', 'wfDefId',
+]);
 
 const typeColors: Record<string, string> = {
     ask: '#0f766e',
@@ -79,6 +85,7 @@ const typeColors: Record<string, string> = {
     agent: '#7c3aed',
     workflow: '#047857',
     fork: '#0e7490',
+    join: '#64748b',
     switch: '#a16207',
     wait: '#475569',
 };
@@ -206,26 +213,173 @@ function edgeColor(explicit: boolean) {
     return explicit ? '#2563eb' : '#94a3b8';
 }
 
-function buildGraphModel(parsedDefinition: unknown, statusByStep: Record<string, string>, selectedStepId?: string): WorkflowGraphModel {
+function forkBranches(step: WorkflowGraphStep) {
+    const fork = toRecord(step.raw.fork);
+    if (!Array.isArray(fork.branches)) return [];
+    return fork.branches.flatMap(entry => {
+        const branch = toRecord(entry);
+        const name = Object.keys(branch)[0];
+        if (!name) return [];
+        const id = `${step.id}::${name}`;
+        return [{
+            ...normalizeStep(id, branch[name]),
+            title: name,
+            selectionId: step.id,
+            role: 'forkBranch' as const,
+        }];
+    });
+}
+
+function forkCompetes(step: WorkflowGraphStep) {
+    return toRecord(step.raw.fork).compete === true;
+}
+
+function normalizedStatus(status = '') {
+    return status.trim().toUpperCase();
+}
+
+function forkJoinStatus(branches: WorkflowGraphStep[], statusByStep: Record<string, string>, compete: boolean) {
+    const statuses = branches.map(branch => normalizedStatus(statusByStep[branch.id])).filter(Boolean);
+    if (!statuses.length) return undefined;
+    const completed = (status: string) => ['C', 'COMPLETED', 'DONE', 'SUCCESS', 'SUCCEEDED'].includes(status);
+    const failed = (status: string) => ['F', 'FAILED', 'ERROR', 'ERR', 'REJECTED'].includes(status);
+    if (compete && statuses.some(completed)) return 'C';
+    if (!compete && statuses.length === branches.length && statuses.every(completed)) return 'C';
+    if (statuses.length === branches.length && statuses.every(status => completed(status) || failed(status))) return 'F';
+    return 'A';
+}
+
+// Exported for focused graph-model regression tests; this is not a React component.
+// eslint-disable-next-line react-refresh/only-export-components
+export function workflowForkJoinNodeId(forkStepId: string) {
+    return `__workflow_graph_join__:${forkStepId}`;
+}
+
+function parentTransitions(step: WorkflowGraphStep) {
+    if (step.taskType !== 'fork') return collectTransitions(step.raw);
+    const fork = { ...toRecord(step.raw.fork), branches: [] };
+    return collectTransitions({ ...step.raw, fork });
+}
+
+// Exported for focused graph-model regression tests; this is not a React component.
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildGraphModel(parsedDefinition: unknown, statusByStep: Record<string, string>, selectedStepId?: string): WorkflowGraphModel {
     const steps = collectSteps(parsedDefinition);
     const stepIds = new Set(steps.map(step => step.id));
     const warnings: string[] = [];
     const edges: WorkflowGraphEdge[] = [];
+    const expandedForks = new Map(steps
+        .filter(step => step.taskType === 'fork')
+        .map(step => [step.id, forkBranches(step)]));
+    const maxBranchCount = Math.max(1, ...Array.from(expandedForks.values()).map(branches => branches.length));
+    const centerY = (maxBranchCount - 1) * 85;
+    const expanded = Array.from(expandedForks.values()).some(branches => branches.length > 0);
+    const nodes: WorkflowGraphNode[] = [];
+    const visualExitByStep = new Map<string, string>();
+    let stage = 0;
 
     steps.forEach((step, index) => {
-        const transitions = collectTransitions(step.raw);
+        const branches = expandedForks.get(step.id) || [];
+        const x = expanded ? stage * 340 : (index % 2) * 360;
+        const y = expanded ? centerY : Math.floor(index / 2) * 170;
+        nodes.push({
+            id: step.id,
+            type: 'workflowStep',
+            position: { x, y },
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            data: {
+                step: { ...step, role: 'step' },
+                status: statusByStep[step.id],
+                selected: selectedStepId === step.id,
+            },
+        });
+
+        if (!branches.length) {
+            visualExitByStep.set(step.id, step.id);
+            stage += 1;
+            return;
+        }
+
+        const branchX = (stage + 1) * 340;
+        branches.forEach((branch, branchIndex) => {
+            nodes.push({
+                id: branch.id,
+                type: 'workflowStep',
+                position: { x: branchX, y: centerY + (branchIndex - (branches.length - 1) / 2) * 170 },
+                sourcePosition: Position.Right,
+                targetPosition: Position.Left,
+                connectable: false,
+                deletable: false,
+                data: { step: branch, status: statusByStep[branch.id] },
+            });
+            edges.push({
+                id: `${step.id}-fork-${branch.id}`,
+                source: step.id,
+                target: branch.id,
+                label: 'branch',
+                type: 'smoothstep',
+                deletable: false,
+                markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(false) },
+                style: { stroke: edgeColor(false), strokeWidth: 2 },
+                data: { explicit: false, label: 'branch', kind: 'fork' },
+            });
+        });
+
+        const compete = forkCompetes(step);
+        const joinId = workflowForkJoinNodeId(step.id);
+        const joinStep: WorkflowGraphStep = {
+            id: joinId,
+            taskType: 'join',
+            title: compete ? 'Join first' : 'Join all',
+            detail: compete ? 'Continue after the competing branch completes' : 'Continue after every branch completes',
+            references: [],
+            raw: {},
+            selectionId: step.id,
+            role: 'forkJoin',
+        };
+        nodes.push({
+            id: joinId,
+            type: 'workflowStep',
+            position: { x: (stage + 2) * 340, y: centerY },
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            connectable: false,
+            deletable: false,
+            data: { step: joinStep, status: forkJoinStatus(branches, statusByStep, compete) },
+        });
+        branches.forEach(branch => {
+            edges.push({
+                id: `${branch.id}-join-${joinId}`,
+                source: branch.id,
+                target: joinId,
+                label: compete ? 'compete' : 'join',
+                type: 'smoothstep',
+                deletable: false,
+                markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(false) },
+                style: { stroke: edgeColor(false), strokeWidth: 2 },
+                data: { explicit: false, label: compete ? 'compete' : 'join', kind: 'join' },
+            });
+        });
+        visualExitByStep.set(step.id, joinId);
+        stage += 3;
+    });
+
+    steps.forEach((step, index) => {
+        const transitions = parentTransitions(step);
         const explicitTargets = new Set<string>();
+        const visualSource = visualExitByStep.get(step.id) || step.id;
         transitions.forEach(transition => {
             if (!stepIds.has(transition.target)) {
                 warnings.push(`Transition from ${step.id} references missing step ${transition.target}.`);
                 return;
             }
-            const edgeId = `${step.id}-${transition.key}-${transition.target}`;
+            const edgeId = `${visualSource}-${transition.key}-${transition.target}`;
             if (edges.some(edge => edge.id === edgeId)) return;
             explicitTargets.add(transition.target);
             edges.push({
                 id: edgeId,
-                source: step.id,
+                source: visualSource,
                 target: transition.target,
                 label: transition.key,
                 type: 'smoothstep',
@@ -233,38 +387,25 @@ function buildGraphModel(parsedDefinition: unknown, statusByStep: Record<string,
                 deletable: true,
                 markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(true) },
                 style: { stroke: edgeColor(true), strokeWidth: 2 },
-                data: { explicit: true, label: transition.key },
+                data: { explicit: true, label: transition.key, kind: 'explicit', semanticSourceId: step.id },
             });
         });
 
         const nextStep = steps[index + 1];
         if (!transitions.length && nextStep && !explicitTargets.has(nextStep.id)) {
             edges.push({
-                id: `${step.id}-implicit-${nextStep.id}`,
-                source: step.id,
+                id: `${visualSource}-implicit-${nextStep.id}`,
+                source: visualSource,
                 target: nextStep.id,
                 label: 'order',
                 type: 'smoothstep',
                 deletable: false,
                 markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor(false) },
                 style: { stroke: edgeColor(false), strokeDasharray: '6 4' },
-                data: { explicit: false, label: 'order' },
+                data: { explicit: false, label: 'order', kind: 'order' },
             });
         }
     });
-
-    const nodes = steps.map((step, index) => ({
-        id: step.id,
-        type: 'workflowStep' as const,
-        position: { x: (index % 2) * 360, y: Math.floor(index / 2) * 170 },
-        sourcePosition: Position.Right,
-        targetPosition: Position.Left,
-        data: {
-            step,
-            status: statusByStep[step.id],
-            selected: selectedStepId === step.id,
-        },
-    }));
 
     return { nodes, edges, warnings };
 }
@@ -346,11 +487,11 @@ function WorkflowGraphCanvas({
     const handleEdgesDelete = useCallback((deletedEdges: WorkflowGraphEdge[]) => {
         deletedEdges
             .filter(edge => edge.data?.explicit)
-            .forEach(edge => onDisconnectSteps?.(edge.source, edge.target));
+            .forEach(edge => onDisconnectSteps?.(edge.data?.semanticSourceId || edge.source, edge.target));
     }, [onDisconnectSteps]);
 
     const handleNodeClick = useCallback<NodeMouseHandler<WorkflowGraphNode>>((_, node) => {
-        onSelectStep?.(node.id);
+        onSelectStep?.(node.data.step.selectionId || node.id);
     }, [onSelectStep]);
 
     if (!model.nodes.length) {
@@ -381,9 +522,10 @@ function WorkflowGraphCanvas({
                 <MiniMap pannable zoomable />
                 <Panel position="top-left">
                     <Stack direction="row" spacing={1}>
-                        <Chip size="small" label={`${model.nodes.length} steps`} />
+                        <Chip size="small" label={`${model.nodes.length} graph nodes`} />
                         <Chip size="small" label={`${model.edges.filter(edge => edge.data?.explicit).length} explicit edges`} />
-                        <Chip size="small" label={`${model.edges.filter(edge => !edge.data?.explicit).length} order edges`} />
+                        <Chip size="small" label={`${model.nodes.filter(node => node.data.step.role === 'forkBranch').length} fork branches`} />
+                        <Chip size="small" label={`${model.edges.filter(edge => edge.data?.kind === 'order').length} order edges`} />
                     </Stack>
                 </Panel>
                 {model.warnings.length ? (
