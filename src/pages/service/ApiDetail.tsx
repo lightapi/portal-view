@@ -29,12 +29,14 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from "@mui/icons-material/Settings";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import ApiIcon from "@mui/icons-material/Api";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
 import { apiPost } from '../../api/apiPost';
-import { applyOwnershipColumns, applyOwnershipFilter, ownershipScope } from '../../utils/ownershipScope';
+import { applyOwnershipColumns, applyOwnershipFilter, hasAnyRole, ownershipScope } from '../../utils/ownershipScope';
+import ApiGatewayPublicationDialog from './ApiGatewayPublicationDialog';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import { useUserState } from '../../contexts/UserContext';
@@ -120,6 +122,8 @@ export default function ApiDetail() {
   );
   const { hostId, apiId } = service;
   const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null); // Will store the appId being fetched
+  const [publicationVersion, setPublicationVersion] = useState<ServiceVersionType | null>(null);
+  const canPublishToGateway = hasAnyRole(roles, ['admin', 'host-admin', 'api-admin']);
   const taskContext = useMemo(
     () => mergeTaskContext(searchContext, { hostId, apiId }),
     [apiId, hostId, searchContext],
@@ -315,6 +319,13 @@ export default function ApiDetail() {
             <ApiIcon />
           </IconButton>
         </Tooltip>
+        {canPublishToGateway && (
+          <Tooltip title="Publish to Gateway">
+            <IconButton onClick={() => setPublicationVersion(row.original)}>
+              <CloudUploadIcon />
+            </IconButton>
+          </Tooltip>
+        )}
         <Tooltip title="Create OAuth Client">
           <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
             <VpnKeyIcon />
@@ -361,6 +372,7 @@ export default function ApiDetail() {
   });
 
   return (
+    <>
     <Box>
       <Widget
         title="Service Detail"
@@ -399,5 +411,15 @@ export default function ApiDetail() {
         <MaterialReactTable table={table} />
       </Box>
     </Box>
+      {publicationVersion && (
+        <ApiGatewayPublicationDialog
+          open
+          hostId={publicationVersion.hostId}
+          apiVersionId={publicationVersion.apiVersionId}
+          apiVersion={publicationVersion.apiVersion}
+          onClose={() => setPublicationVersion(null)}
+        />
+      )}
+    </>
   );
 }
