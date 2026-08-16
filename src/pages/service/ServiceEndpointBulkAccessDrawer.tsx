@@ -29,6 +29,7 @@ type Props = {
 type OperationConfig = {
   value: string;
   label: string;
+  removable?: boolean;
   principalKey?: string;
   principalLabel?: string;
   lookupType?: LookupType;
@@ -39,6 +40,7 @@ type OperationConfig = {
 };
 
 type LookupType = 'rule' | 'role' | 'group' | 'position' | 'attribute';
+type AccessAction = 'add' | 'remove';
 
 type LookupConfig = {
   service: string;
@@ -54,11 +56,11 @@ type LookupOption = {
 };
 
 const OPERATIONS: OperationConfig[] = [
-  { value: 'endpointRule', label: 'Endpoint Rule', lookupType: 'rule', needsRule: true },
-  { value: 'rolePermission', label: 'Role Permission', principalKey: 'roleId', principalLabel: 'Role ID', lookupType: 'role' },
-  { value: 'groupPermission', label: 'Group Permission', principalKey: 'groupId', principalLabel: 'Group ID', lookupType: 'group' },
-  { value: 'positionPermission', label: 'Position Permission', principalKey: 'positionId', principalLabel: 'Position ID', lookupType: 'position' },
-  { value: 'attributePermission', label: 'Attribute Permission', principalKey: 'attributeId', principalLabel: 'Attribute ID', lookupType: 'attribute', needsAttributeValue: true },
+  { value: 'endpointRule', label: 'Endpoint Rule', removable: true, lookupType: 'rule', needsRule: true },
+  { value: 'rolePermission', label: 'Role Permission', removable: true, principalKey: 'roleId', principalLabel: 'Role ID', lookupType: 'role' },
+  { value: 'groupPermission', label: 'Group Permission', removable: true, principalKey: 'groupId', principalLabel: 'Group ID', lookupType: 'group' },
+  { value: 'positionPermission', label: 'Position Permission', removable: true, principalKey: 'positionId', principalLabel: 'Position ID', lookupType: 'position' },
+  { value: 'attributePermission', label: 'Attribute Permission', removable: true, principalKey: 'attributeId', principalLabel: 'Attribute ID', lookupType: 'attribute', needsAttributeValue: true },
   { value: 'roleRowFilter', label: 'Role Row Filter', principalKey: 'roleId', principalLabel: 'Role ID', lookupType: 'role', needsRowFilter: true },
   { value: 'groupRowFilter', label: 'Group Row Filter', principalKey: 'groupId', principalLabel: 'Group ID', lookupType: 'group', needsRowFilter: true },
   { value: 'positionRowFilter', label: 'Position Row Filter', principalKey: 'positionId', principalLabel: 'Position ID', lookupType: 'position', needsRowFilter: true },
@@ -95,6 +97,7 @@ export default function ServiceEndpointBulkAccessDrawer({
   onClose,
   onSuccess,
 }: Props) {
+  const [accessAction, setAccessAction] = useState<AccessAction>('add');
   const [operation, setOperation] = useState('endpointRule');
   const [conflictMode, setConflictMode] = useState('skipExisting');
   const [ruleId, setRuleId] = useState('');
@@ -111,10 +114,21 @@ export default function ServiceEndpointBulkAccessDrawer({
   const [error, setError] = useState('');
   const [resultText, setResultText] = useState('');
 
-  const config = useMemo(
-    () => OPERATIONS.find((item) => item.value === operation) ?? OPERATIONS[0],
-    [operation],
+  const availableOperations = useMemo(
+    () => accessAction === 'remove' ? OPERATIONS.filter((item) => item.removable) : OPERATIONS,
+    [accessAction],
   );
+
+  const config = useMemo(
+    () => availableOperations.find((item) => item.value === operation) ?? availableOperations[0],
+    [availableOperations, operation],
+  );
+
+  useEffect(() => {
+    if (!availableOperations.some((item) => item.value === operation)) {
+      setOperation(availableOperations[0].value);
+    }
+  }, [availableOperations, operation]);
 
   useEffect(() => {
     setRuleId('');
@@ -181,7 +195,7 @@ export default function ServiceEndpointBulkAccessDrawer({
     const next: Record<string, string> = {};
     if (config.needsRule) next.ruleId = ruleId.trim();
     if (config.principalKey) next[config.principalKey] = principalId.trim();
-    if (config.needsAttributeValue) next.attributeValue = attributeValue.trim();
+    if (config.needsAttributeValue && accessAction === 'add') next.attributeValue = attributeValue.trim();
     if (config.needsRowFilter) {
       next.colName = colName.trim();
       next.operator = operator;
@@ -189,7 +203,7 @@ export default function ServiceEndpointBulkAccessDrawer({
     }
     if (config.needsColumns) next.columns = columns.trim();
     return next;
-  }, [attributeValue, colName, colValue, columns, config, operator, principalId, ruleId]);
+  }, [accessAction, attributeValue, colName, colValue, columns, config, operator, principalId, ruleId]);
 
   const validate = () => {
     if (!hostId || !apiVersionId) return 'Host and API version are required.';
@@ -205,7 +219,10 @@ export default function ServiceEndpointBulkAccessDrawer({
       setError(validationError);
       return;
     }
-    if (conflictMode === 'overwriteExisting' && !window.confirm(`Overwrite matching access records for ${endpoints.length} endpoints?`)) {
+    if (accessAction === 'remove' && !window.confirm(`Remove the selected ${config.label.toLowerCase()} from ${endpoints.length} endpoints?`)) {
+      return;
+    }
+    if (accessAction === 'add' && conflictMode === 'overwriteExisting' && !window.confirm(`Overwrite matching access records for ${endpoints.length} endpoints?`)) {
       return;
     }
     setSubmitting(true);
@@ -221,6 +238,7 @@ export default function ServiceEndpointBulkAccessDrawer({
         apiVersionId,
         endpointIds: endpoints.map((endpoint) => endpoint.endpointId),
         operation,
+        accessAction,
         conflictMode,
         payload,
       },
@@ -233,7 +251,8 @@ export default function ServiceEndpointBulkAccessDrawer({
         return;
       }
       const data = result.data ?? result;
-      setResultText(`Submitted ${data.submitted ?? endpoints.length} endpoint updates. Failed: ${data.failed ?? 0}.`);
+      const resultLabel = accessAction === 'remove' ? 'removals' : 'updates';
+      setResultText(`Submitted ${data.submitted ?? endpoints.length} endpoint ${resultLabel}. Skipped: ${data.skipped ?? 0}. Failed: ${data.failed ?? 0}.`);
       onSuccess();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Bulk access update failed.');
@@ -249,12 +268,26 @@ export default function ServiceEndpointBulkAccessDrawer({
           <Box>
             <Typography variant="h6">Bulk Access</Typography>
             <Typography variant="body2" color="text.secondary">
-              Apply endpoint-level access configuration to {endpoints.length} selected endpoints.
+              Add or remove endpoint-level access configuration for {endpoints.length} selected endpoints.
             </Typography>
           </Box>
 
           {error && <Alert severity="error">{error}</Alert>}
           {resultText && <Alert severity="success">{resultText}</Alert>}
+
+          <FormControl fullWidth size="small">
+            <InputLabel id="bulk-action-label">Action</InputLabel>
+            <Select
+              labelId="bulk-action-label"
+              label="Action"
+              value={accessAction}
+              onChange={(event) => setAccessAction(event.target.value as AccessAction)}
+              inputProps={{ name: 'bulkAccessAction', id: 'bulk-action-select' }}
+            >
+              <MenuItem value="add">Add</MenuItem>
+              <MenuItem value="remove">Remove</MenuItem>
+            </Select>
+          </FormControl>
 
           <FormControl fullWidth size="small">
             <InputLabel id="bulk-operation-label">Operation</InputLabel>
@@ -265,25 +298,27 @@ export default function ServiceEndpointBulkAccessDrawer({
               onChange={(event) => setOperation(event.target.value)}
               inputProps={{ name: 'bulkOperation', id: 'bulk-operation-select' }}
             >
-              {OPERATIONS.map((item) => (
+              {availableOperations.map((item) => (
                 <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>
               ))}
             </Select>
           </FormControl>
 
-          <FormControl fullWidth size="small">
-            <InputLabel id="bulk-conflict-label">Conflict Mode</InputLabel>
-            <Select
-              labelId="bulk-conflict-label"
-              label="Conflict Mode"
-              value={conflictMode}
-              onChange={(event) => setConflictMode(event.target.value)}
-              inputProps={{ name: 'bulkConflictMode', id: 'bulk-conflict-select' }}
-            >
-              <MenuItem value="skipExisting">Skip Existing</MenuItem>
-              <MenuItem value="overwriteExisting">Overwrite Existing</MenuItem>
-            </Select>
-          </FormControl>
+          {accessAction === 'add' && (
+            <FormControl fullWidth size="small">
+              <InputLabel id="bulk-conflict-label">Conflict Mode</InputLabel>
+              <Select
+                labelId="bulk-conflict-label"
+                label="Conflict Mode"
+                value={conflictMode}
+                onChange={(event) => setConflictMode(event.target.value)}
+                inputProps={{ name: 'bulkConflictMode', id: 'bulk-conflict-select' }}
+              >
+                <MenuItem value="skipExisting">Skip Existing</MenuItem>
+                <MenuItem value="overwriteExisting">Overwrite Existing</MenuItem>
+              </Select>
+            </FormControl>
+          )}
 
           {lookupError && <Alert severity="warning">{lookupError}</Alert>}
 
@@ -325,7 +360,7 @@ export default function ServiceEndpointBulkAccessDrawer({
             </FormControl>
           )}
 
-          {config.needsAttributeValue && (
+          {config.needsAttributeValue && accessAction === 'add' && (
             <TextField size="small" label="Attribute Value" value={attributeValue} onChange={(event) => setAttributeValue(event.target.value)} />
           )}
 
@@ -374,8 +409,13 @@ export default function ServiceEndpointBulkAccessDrawer({
 
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Button onClick={onClose} disabled={submitting}>Cancel</Button>
-            <Button variant="contained" onClick={handleSubmit} disabled={submitting || endpoints.length === 0}>
-              Apply
+            <Button
+              variant="contained"
+              color={accessAction === 'remove' ? 'error' : 'primary'}
+              onClick={handleSubmit}
+              disabled={submitting || endpoints.length === 0}
+            >
+              {accessAction === 'remove' ? 'Remove' : 'Apply'}
             </Button>
           </Stack>
         </Stack>
