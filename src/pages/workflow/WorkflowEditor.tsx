@@ -83,6 +83,7 @@ import {
     type WorkflowSchemaSection,
     type WorkflowStepInsertionPosition,
 } from './workflowEditorModel';
+import { workflowEventFailureRows } from './workflowRuntimeState';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -1788,6 +1789,7 @@ export default function WorkflowEditor() {
             queryPortal('workflow', 'getTaskAsst', hostId, { limit: 200 }),
             queryPortal('workflow', 'getWorklist', hostId, { limit: 200 }),
             queryPortal('workflow', 'getAuditLog', hostId, { globalFilter: runInstanceId, limit: 50 }),
+            queryPortal('workflow', 'getWorkflowEventFailure', hostId, { wfInstanceId: runInstanceId }, false),
         ]);
         const processes = processInfoRows(resultValue(results[0]));
         const tasks = taskInfoRows(resultValue(results[1]));
@@ -1796,9 +1798,14 @@ export default function WorkflowEditor() {
         const assignmentWorklistKeys = new Set(assignments.map(assignment => `${assignment.assigneeId}|${assignment.categoryCode}`));
         const worklists = worklistRows(resultValue(results[3])).filter(worklist => assignmentWorklistKeys.has(`${worklist.assigneeId}|${worklist.categoryId}`));
         const auditLogs = auditLogRows(resultValue(results[4]));
-        const errors = results
+        const eventFailures = workflowEventFailureRows(resultValue(results[5]));
+        const queryErrors = results
             .filter(result => result.status === 'rejected')
             .map(result => errorText((result as PromiseRejectedResult).reason));
+        const runtimeErrors = eventFailures
+            .filter(failure => failure.replayState === 'BLOCKED')
+            .map(failure => `${failure.failureCode}: ${failure.failureDetail}`);
+        const errors = [...runtimeErrors, ...queryErrors];
 
         setTestSnapshot({
             processes,
@@ -1809,8 +1816,13 @@ export default function WorkflowEditor() {
             refreshedAt: new Date().toISOString(),
             errors,
         });
-        setTestMessage(errors.length ? 'Runtime state refreshed with partial query errors.' : 'Runtime state refreshed.');
+        setTestMessage(runtimeErrors.length
+            ? 'Workflow start failed before task creation.'
+            : queryErrors.length
+                ? 'Runtime state refreshed with partial query errors.'
+                : 'Runtime state refreshed.');
         setIsTestRefreshing(false);
+        return processes.length > 0 || tasks.length > 0 || eventFailures.length > 0;
     }, [hostId, testRun?.wfInstanceId]);
 
     const handleStartTest = useCallback(async () => {
@@ -1862,7 +1874,12 @@ export default function WorkflowEditor() {
             };
             setTestRun(run);
             setTestMessage(`Workflow test started for instance ${wfInstanceId}.`);
-            await loadTestSnapshot(wfInstanceId);
+            for (let attempt = 0; attempt < 4; attempt += 1) {
+                if (attempt > 0) {
+                    await new Promise(resolve => window.setTimeout(resolve, attempt * 250));
+                }
+                if (await loadTestSnapshot(wfInstanceId)) break;
+            }
         } catch (error) {
             setTestMessage(`Failed to start workflow test: ${errorText(error)}`);
         } finally {
@@ -2656,7 +2673,7 @@ export default function WorkflowEditor() {
                     </Button>
                 </Stack>
 
-                {testMessage && <Alert severity={testMessage.includes('Failed') || testMessage.includes('Fix') ? 'warning' : 'info'} sx={{ mb: 2 }}>{testMessage}</Alert>}
+                {testMessage && <Alert severity={/failed|fix/i.test(testMessage) ? 'warning' : 'info'} sx={{ mb: 2 }}>{testMessage}</Alert>}
                 {testSnapshot.errors.length ? (
                     <Alert severity="warning" sx={{ mb: 2 }}>
                         {testSnapshot.errors.slice(0, 2).join(' ')}
