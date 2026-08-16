@@ -46,6 +46,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { environmentOptions, selectEnvironmentId, type EnvironmentOption } from '../../utils/environmentOptions';
 import { useUserState } from '../../contexts/UserContext';
 import HelpLink from '../../components/HelpLink';
 import WorkflowGraph from './WorkflowGraph';
@@ -158,6 +159,8 @@ type CatalogReference = {
 };
 
 type PaletteInsertionTarget = { forkStepId: string; branchName: string } | null;
+
+const fallbackWorkflowEnvironments: EnvironmentOption[] = [{ id: 'local', label: 'local' }];
 
 type CatalogState = Record<CatalogKind, CatalogReference[]>;
 
@@ -304,8 +307,8 @@ const taskTypeKeys = Object.keys(taskTypeHelp);
 const workflowContainerKeys = new Set(['steps', 'tasks', 'states', 'do']);
 
 const catalogKindOptions: Array<{ value: CatalogKind; label: string }> = [
-    { value: 'tools', label: 'Tools' },
-    { value: 'endpoints', label: 'Endpoints' },
+    { value: 'tools', label: 'MCP Tools' },
+    { value: 'endpoints', label: 'API Endpoints' },
     { value: 'rules', label: 'Rules' },
     { value: 'agents', label: 'Agents' },
     { value: 'workflows', label: 'Workflows' },
@@ -581,7 +584,7 @@ function yamlScalar(value: string) {
 }
 
 export function buildReferenceSnippet(reference: CatalogReference) {
-    const stepId = slug(reference.label, reference.kind.slice(0, -1) || 'step');
+    const stepId = slug(reference.kind === 'tools' ? reference.value : reference.label, reference.kind.slice(0, -1) || 'step');
     switch (reference.kind) {
         case 'tools':
             return `  - call-${stepId}:\n      mcp:\n        tool: ${yamlScalar(reference.value)}\n        arguments: {}\n`;
@@ -757,6 +760,30 @@ async function queryPortal(service: string, action: string, hostId: string, data
     return fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
 }
 
+async function queryAllTools(hostId: string) {
+    const pageSize = 500;
+    const sorting = JSON.stringify([
+        { id: 'name', desc: false },
+        { id: 'toolId', desc: false },
+    ]);
+    const first = await queryPortal('genai', 'getTool', hostId, { offset: 0, limit: pageSize, sorting });
+    const firstRecord = toRecord(first);
+    const firstTools = asRecords(first, 'tools');
+    const total = Number(firstRecord.total);
+    if (!Number.isFinite(total) || firstTools.length >= total) return first;
+
+    const offsets: number[] = [];
+    for (let offset = pageSize; offset < total; offset += pageSize) offsets.push(offset);
+    const pages = await Promise.all(offsets.map(offset => queryPortal(
+        'genai', 'getTool', hostId, { offset, limit: pageSize, sorting },
+    )));
+    return {
+        ...firstRecord,
+        total,
+        tools: [firstTools, ...pages.map(page => asRecords(page, 'tools'))].flat(),
+    };
+}
+
 function resultValue(result: PromiseSettledResult<unknown>) {
     return result.status === 'fulfilled' ? result.value : {};
 }
@@ -765,14 +792,16 @@ function toolReferences(value: unknown): CatalogReference[] {
     return asRecords(value, 'tools').map(tool => {
         const name = textValue(tool.name || tool.toolName || tool.tool_name || tool.toolId);
         const id = textValue(tool.toolId || name);
+        const method = textValue(tool.apiMethod || tool.httpMethod).toUpperCase();
+        const endpoint = textValue(tool.apiEndpoint || tool.endpointPath || tool.endpoint);
         const metadata = toRecord(tool.metadata);
         const contractDigest = textValue(tool.contractDigest || tool.schemaDigest);
         return {
             kind: 'tools' as const,
             id,
             value: name,
-            label: name,
-            secondary: compactText([tool.implementationType, tool.sensitivityTier, tool.sourceProtocol]),
+            label: compactText([tool.apiName, tool.apiVersion, name, method, endpoint]) || name,
+            secondary: compactText([method, endpoint, tool.implementationType, tool.sensitivityTier, tool.sourceProtocol]),
             description: textValue(tool.description),
             inputSchema: toRecord(tool.inputSchema),
             outputSchema: toRecord(tool.outputSchema),
@@ -1194,6 +1223,9 @@ export default function WorkflowEditor() {
     const [paletteMessage, setPaletteMessage] = useState('');
     const [paletteInsertionTarget, setPaletteInsertionTarget] = useState<PaletteInsertionTarget>(null);
     const [workflowEnvironment, setWorkflowEnvironment] = useState('local');
+    const [workflowEnvironments, setWorkflowEnvironments] = useState<EnvironmentOption[]>(fallbackWorkflowEnvironments);
+    const [isEnvironmentLoading, setIsEnvironmentLoading] = useState(false);
+    const [environmentError, setEnvironmentError] = useState('');
     const [serverProblems, setServerProblems] = useState<ValidationProblem[]>([]);
     const [serverSchema, setServerSchema] = useState<WorkflowSchemaIdentity | null>(null);
     const [isServerValidating, setIsServerValidating] = useState(false);
@@ -1258,14 +1290,6 @@ export default function WorkflowEditor() {
     const blockingProblem = allProblems.find(problem => problem.severity === 'error');
     const warningCount = allProblems.filter(problem => problem.severity === 'warning').length;
     const selectedReferences = useMemo(() => catalog[catalogKind], [catalog, catalogKind]);
-    const filteredReferences = useMemo(() => {
-        const query = referenceSearch.trim().toLowerCase();
-        if (!query) return selectedReferences;
-        return selectedReferences.filter(reference =>
-            [reference.label, reference.id, reference.value, reference.secondary, reference.description]
-                .some(value => textValue(value).toLowerCase().includes(query)),
-        );
-    }, [referenceSearch, selectedReferences]);
     const selectedReference = useMemo(
         () => selectedReferences.find(reference => reference.id === selectedReferenceId),
         [selectedReferenceId, selectedReferences],
@@ -1404,6 +1428,43 @@ export default function WorkflowEditor() {
 
     useEffect(() => {
         if (!hostId) {
+            setWorkflowEnvironments(fallbackWorkflowEnvironments);
+            setWorkflowEnvironment('local');
+            setEnvironmentError('');
+            setIsEnvironmentLoading(false);
+            return;
+        }
+        let active = true;
+        setWorkflowEnvironments(fallbackWorkflowEnvironments);
+        setWorkflowEnvironment('local');
+        setEnvironmentError('');
+        setIsEnvironmentLoading(true);
+        void fetchClient(`/r/data?name=environment&host=${encodeURIComponent(hostId)}`)
+            .then(value => {
+                if (!active) return;
+                const options = environmentOptions(value);
+                if (!options.length) {
+                    setEnvironmentError('No environments are available for this host.');
+                    return;
+                }
+                setWorkflowEnvironments(options);
+                setWorkflowEnvironment(current => selectEnvironmentId(options, current || 'local'));
+            })
+            .catch(error => {
+                if (!active) return;
+                console.error('Failed to load workflow environments:', error);
+                setEnvironmentError('Unable to load environments; using the local fallback.');
+            })
+            .finally(() => {
+                if (active) setIsEnvironmentLoading(false);
+            });
+        return () => {
+            active = false;
+        };
+    }, [hostId]);
+
+    useEffect(() => {
+        if (!hostId) {
             setCategoryOptions([]);
             setTagOptions([]);
             return;
@@ -1462,7 +1523,7 @@ export default function WorkflowEditor() {
         setIsCatalogLoading(true);
         setCatalogError('');
         const results = await Promise.allSettled([
-            queryPortal('genai', 'getTool', hostId),
+            queryAllTools(hostId),
             wfDefId ? queryPortal('genai', 'getWorkflowCallableTool', hostId, {
                 wfDefId,
                 workflowVersion: version || undefined,
@@ -1492,6 +1553,7 @@ export default function WorkflowEditor() {
 
     useEffect(() => {
         setSelectedReferenceId('');
+        setReferenceSearch('');
     }, [catalogKind]);
 
     const handleFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -2399,12 +2461,19 @@ export default function WorkflowEditor() {
                     {catalogError && <Alert severity="warning" sx={{ mb: 1 }}>{catalogError}</Alert>}
                     <Stack spacing={1}>
                         <TextField
+                            select
                             label="Environment"
                             value={workflowEnvironment}
                             onChange={event => setWorkflowEnvironment(event.target.value)}
                             size="small"
-                            helperText="Only Tools granted for this workflow and environment are listed under Endpoints."
-                        />
+                            disabled={isEnvironmentLoading}
+                            error={Boolean(environmentError)}
+                            helperText={environmentError || 'Only Tools granted for this workflow and environment are listed under Endpoints.'}
+                        >
+                            {workflowEnvironments.map(option => (
+                                <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
+                            ))}
+                        </TextField>
                         {paletteInsertionTarget ? (
                             <Alert severity="info" action={<Button size="small" onClick={() => setPaletteInsertionTarget(null)}>Top level</Button>}>
                                 Insert into {paletteInsertionTarget.forkStepId} / {paletteInsertionTarget.branchName}
@@ -2421,28 +2490,30 @@ export default function WorkflowEditor() {
                                 <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
                             ))}
                         </TextField>
-                        <TextField
-                            label="Search"
-                            value={referenceSearch}
-                            onChange={event => setReferenceSearch(event.target.value)}
-                            size="small"
+                        <Autocomplete
+                            options={selectedReferences}
+                            value={selectedReference || null}
+                            inputValue={referenceSearch}
+                            onInputChange={(_event, value) => setReferenceSearch(value)}
+                            onChange={(_event, value) => setSelectedReferenceId(value?.id || '')}
+                            getOptionLabel={option => option.label}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            disabled={isCatalogLoading}
+                            loading={isCatalogLoading}
+                            noOptionsText={catalogKind === 'endpoints'
+                                ? wfDefId
+                                    ? `No API endpoints are granted for this workflow, version, and ${workflowEnvironment} environment.`
+                                    : 'Save the workflow before loading granted API endpoints.'
+                                : 'No matching references'}
+                            renderInput={params => <TextField
+                                {...params}
+                                label="Reference"
+                                size="small"
+                                helperText={catalogKind === 'endpoints'
+                                    ? `${selectedReferences.length} granted API endpoints available for ${workflowEnvironment}. Type to filter.`
+                                    : `${selectedReferences.length} available. Type to filter.`}
+                            />}
                         />
-                        <TextField
-                            select
-                            label="Reference"
-                            value={selectedReferenceId}
-                            onChange={event => setSelectedReferenceId(event.target.value)}
-                            size="small"
-                            disabled={!filteredReferences.length && !selectedReference}
-                        >
-                            <MenuItem value="">None</MenuItem>
-                            {selectedReference && !filteredReferences.some(reference => reference.id === selectedReference.id) && (
-                                <MenuItem value={selectedReference.id}>{selectedReference.label}</MenuItem>
-                            )}
-                            {filteredReferences.slice(0, 100).map(reference => (
-                                <MenuItem key={reference.id} value={reference.id}>{reference.label}</MenuItem>
-                            ))}
-                        </TextField>
                         {selectedReference && (
                             <Box>
                                 <Typography variant="body2">{selectedReference.secondary || selectedReference.id}</Typography>

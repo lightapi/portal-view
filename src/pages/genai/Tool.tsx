@@ -289,23 +289,23 @@ export default function Tool() {
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ToolType>[]>(
         () => [
-            { accessorKey: 'hostId', header: 'Host Id' },
-            { accessorKey: 'toolId', header: 'Tool Id' },
+            { accessorKey: 'apiName', header: 'API Name' },
+            { accessorKey: 'apiVersion', header: 'API Version' },
             { accessorKey: 'name', header: 'Name' },
             { accessorKey: 'description', header: 'Description' },
+            { accessorKey: 'apiId', header: 'API Id' },
             { accessorKey: 'implementationType', header: 'Implementation Type' },
             { accessorKey: 'executionPlacement', header: 'Execution Placement' },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'capabilityRef', header: 'Capability Ref' },
             { accessorKey: 'lightapiValidationStatus', header: 'LightAPI Status' },
             { accessorKey: 'apiVersionId', header: 'API Version Id' },
-            { accessorKey: 'apiId', header: 'API Id' },
-            { accessorKey: 'apiName', header: 'API Name' },
-            { accessorKey: 'apiVersion', header: 'API Version' },
             { accessorKey: 'apiEndpoint', header: 'API Endpoint' },
             { accessorKey: 'apiMethod', header: 'API Method' },
             { accessorKey: 'routingDomain', header: 'Routing Domain' },
             { accessorKey: 'semanticNamespace', header: 'Semantic Namespace' },
+            { accessorKey: 'hostId', header: 'Host Id' },
+            { accessorKey: 'toolId', header: 'Tool Id' },
             {
                 accessorKey: 'sensitivityTier',
                 header: 'Sensitivity Tier',
