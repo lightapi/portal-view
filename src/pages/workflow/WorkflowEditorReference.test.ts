@@ -13,7 +13,7 @@ describe('workflow callable Tool snippets', () => {
             toolVersion: '1.0.0',
             lightapiDigest: `sha256:${'a'.repeat(64)}`,
             httpMethod: 'get',
-            parameterLocations: { customerId: 'path', channel: 'query' },
+            parameterLocations: { customerId: 'path', channel: 'query', requestId: 'header' },
         });
         const task = YAML.parse(`do:\n${snippet}`)?.do?.[0];
 
@@ -23,6 +23,7 @@ describe('workflow callable Tool snippets', () => {
                 method: 'GET',
                 endpoint: { uri: 'lightapi://customer-api/preferences.get' },
                 query: { channel: '${{ channel }}' },
+                headers: { requestId: '${{ requestId }}' },
                 output: 'content',
             },
             metadata: {

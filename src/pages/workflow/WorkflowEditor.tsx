@@ -589,14 +589,18 @@ export function buildReferenceSnippet(reference: CatalogReference) {
             {
                 const locations = reference.parameterLocations || {};
                 const queryEntries = Object.entries(locations).filter(([, location]) => location === 'query');
+                const headerEntries = Object.entries(locations).filter(([, location]) => location === 'header');
                 const bodyEntries = Object.entries(locations).filter(([, location]) => location === 'body');
                 const query = queryEntries.length
                     ? `\n${queryEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
                     : ' {}';
+                const headers = headerEntries.length
+                    ? `\n        headers:\n${headerEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
+                    : '';
                 const body = bodyEntries.length
                     ? `\n        body:\n${bodyEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
                     : '';
-                return `  - call-${stepId}:\n      call: http\n      with:\n        method: ${yamlScalar((reference.httpMethod || 'POST').toUpperCase())}\n        endpoint:\n          uri: ${yamlScalar(`lightapi://${reference.capabilityRef || reference.value}`)}\n        query:${query}${body}\n        output: content\n      metadata:\n        workflowTool:\n          capabilityRef: ${yamlScalar(reference.capabilityRef || reference.value)}\n          version: ${yamlScalar(reference.toolVersion || '1.0.0')}\n          lightapiDigest: ${yamlScalar(reference.lightapiDigest || '')}\n`;
+                return `  - call-${stepId}:\n      call: http\n      with:\n        method: ${yamlScalar((reference.httpMethod || 'POST').toUpperCase())}\n        endpoint:\n          uri: ${yamlScalar(`lightapi://${reference.capabilityRef || reference.value}`)}\n        query:${query}${headers}${body}\n        output: content\n      metadata:\n        workflowTool:\n          capabilityRef: ${yamlScalar(reference.capabilityRef || reference.value)}\n          version: ${yamlScalar(reference.toolVersion || '1.0.0')}\n          lightapiDigest: ${yamlScalar(reference.lightapiDigest || '')}\n`;
             }
         case 'rules':
             return `  - check-${stepId}:\n      rule:\n        ruleId: ${yamlScalar(reference.id)}\n        input: {}\n`;
