@@ -89,7 +89,7 @@ export const workflowStepTemplates: WorkflowStepTemplate[] = [
         label: 'Fork',
         detail: 'Parallel branches',
         defaultStepId: 'parallel-work',
-        build: stepId => `  - ${stepId}:\n      fork:\n        branches:\n          - branchOne:\n              set:\n                value: "\${ .value }"\n          - branchTwo:\n              set:\n                value: "\${ .value }"\n        compete: false\n      export:\n        as:\n          results: .output\n`,
+        build: stepId => `  - ${stepId}:\n      fork:\n        branches:\n          - branchOne:\n              set:\n                value: "\${ .value }"\n          - branchTwo:\n              set:\n                value: "\${ .value }"\n        compete: false\n      export:\n        as:\n          responses: .output\n`,
     },
     {
         id: 'switch',

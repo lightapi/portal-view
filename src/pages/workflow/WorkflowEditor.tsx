@@ -83,7 +83,7 @@ import {
     type WorkflowSchemaSection,
     type WorkflowStepInsertionPosition,
 } from './workflowEditorModel';
-import { workflowEventFailureRows } from './workflowRuntimeState';
+import { workflowEventFailureRows, workflowFinalOutput, workflowRuntimeSettled } from './workflowRuntimeState';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -209,6 +209,7 @@ type WorkflowTaskInfo = {
     locked?: string;
     priority?: number;
     resultCode?: string;
+    taskOutput?: unknown;
     completedTs?: string;
     updateTs?: string;
     aggregateVersion?: number;
@@ -924,6 +925,7 @@ function taskInfoRows(value: unknown): WorkflowTaskInfo[] {
         locked: textValue(row.locked),
         priority: typeof row.priority === 'number' ? row.priority : undefined,
         resultCode: textValue(row.resultCode),
+        taskOutput: row.taskOutput ?? undefined,
         completedTs: textValue(row.completedTs),
         updateTs: textValue(row.updateTs),
         aggregateVersion: typeof row.aggregateVersion === 'number' ? row.aggregateVersion : undefined,
@@ -1317,12 +1319,10 @@ export default function WorkflowEditor() {
         () => waitingHumanTasks.find(task => task.taskId === selectedAskTaskId) || waitingHumanTasks[0],
         [selectedAskTaskId, waitingHumanTasks],
     );
-    const finalOutput = useMemo(() => {
-        const completedProcess = [...testSnapshot.processes].reverse().find(process => isCompletedStatus(process.statusCode) && process.resultCode);
-        if (completedProcess?.resultCode) return completedProcess.resultCode;
-        const completedTask = [...testSnapshot.tasks].reverse().find(task => isCompletedStatus(task.statusCode) && task.resultCode);
-        return completedTask?.resultCode || '';
-    }, [testSnapshot.processes, testSnapshot.tasks]);
+    const finalOutput = useMemo(
+        () => workflowFinalOutput(testSnapshot.processes, testSnapshot.tasks),
+        [testSnapshot.processes, testSnapshot.tasks],
+    );
     const isUpdate = Boolean(wfDefId && aggregateVersion);
     const isPublished = lifecycleStatus === 'PUBLISHED';
     const availableVersions = useMemo<WorkflowVersion[]>(() => {
@@ -1822,7 +1822,10 @@ export default function WorkflowEditor() {
                 ? 'Runtime state refreshed with partial query errors.'
                 : 'Runtime state refreshed.');
         setIsTestRefreshing(false);
-        return processes.length > 0 || tasks.length > 0 || eventFailures.length > 0;
+        return workflowRuntimeSettled(
+            processes.map(process => process.statusCode),
+            eventFailures,
+        );
     }, [hostId, testRun?.wfInstanceId]);
 
     const handleStartTest = useCallback(async () => {
@@ -1874,9 +1877,10 @@ export default function WorkflowEditor() {
             };
             setTestRun(run);
             setTestMessage(`Workflow test started for instance ${wfInstanceId}.`);
-            for (let attempt = 0; attempt < 4; attempt += 1) {
-                if (attempt > 0) {
-                    await new Promise(resolve => window.setTimeout(resolve, attempt * 250));
+            const pollDelaysMs = [0, 250, 500, 1000, 2000];
+            for (const delayMs of pollDelaysMs) {
+                if (delayMs > 0) {
+                    await new Promise(resolve => window.setTimeout(resolve, delayMs));
                 }
                 if (await loadTestSnapshot(wfInstanceId)) break;
             }

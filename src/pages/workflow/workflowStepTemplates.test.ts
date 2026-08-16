@@ -41,4 +41,11 @@ describe('workflow step templates', () => {
         expect(normalizeWorkflowStepId('loadCustomerContext', 'parallel-work')).toBe('loadCustomerContext');
         expect(normalizeWorkflowStepId('  load customer context  ', 'parallel-work')).toBe('load-customer-context');
     });
+
+    it('exports fork branch outputs as responses for downstream aggregation', () => {
+        const fork = workflowStepTemplates.find(template => template.id === 'fork');
+        const parsed = YAML.parse(`do:\n${fork?.build('loadCustomerContext')}`);
+
+        expect(parsed.do[0].loadCustomerContext.export.as).toEqual({ responses: '.output' });
+    });
 });
