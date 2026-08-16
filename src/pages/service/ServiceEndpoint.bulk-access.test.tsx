@@ -15,20 +15,11 @@ vi.mock('../../contexts/UserContext', () => ({
 
 vi.mock('../../tasks/TaskActionPanel', () => ({ default: () => null }));
 vi.mock('../../components/HelpLink', () => ({ default: () => null }));
-vi.mock('./ServiceEndpointAccessOverviewDrawer', () => ({ default: () => null }));
-
-vi.mock('./ServiceEndpointBulkAccessDrawer', () => ({
-  default: ({ open, endpoints, onSuccess, onClose }: {
+vi.mock('./ServiceEndpointAccessOverviewDrawer', () => ({
+  default: ({ open }: {
     open: boolean;
-    endpoints: Array<{ endpointId: string }>;
-    onSuccess: () => void;
-    onClose: () => void;
   }) => open ? (
-    <div role="dialog" aria-label="Bulk Access">
-      <span>{`Bulk editor endpoints: ${endpoints.length}`}</span>
-      <button onClick={onSuccess}>Simulate successful update</button>
-      <button onClick={onClose}>Close bulk access</button>
-    </div>
+    <div role="dialog" aria-label="Access Overview" />
   ) : null,
 }));
 
@@ -36,18 +27,18 @@ vi.mock('material-react-table', () => ({
   useMaterialReactTable: (config: Record<string, unknown>) => config,
   MaterialReactTable: ({ table }: { table: {
     data: Array<{ endpointId: string }>;
-    onRowSelectionChange: (selection: Record<string, boolean>) => void;
+    enableRowSelection?: boolean;
     renderTopToolbarCustomActions: () => React.ReactNode;
   } }) => (
     <div>
       <span>{`Rows: ${table.data.length}`}</span>
-      <button onClick={() => table.onRowSelectionChange({ 'endpoint-1': true })}>Select endpoint</button>
+      <span>{`Row selection: ${table.enableRowSelection ? 'enabled' : 'disabled'}`}</span>
       {table.renderTopToolbarCustomActions()}
     </div>
   ),
 }));
 
-describe('ServiceEndpoint bulk access', () => {
+describe('ServiceEndpoint access overview entry point', () => {
   beforeEach(() => {
     vi.mocked(fetchClient).mockReset();
     vi.mocked(fetchClient).mockResolvedValue({
@@ -67,7 +58,7 @@ describe('ServiceEndpoint bulk access', () => {
     });
   });
 
-  it('keeps the editor open and the endpoints selected after a successful update', async () => {
+  it('removes page-level selection and opens bulk access only through Access Overview', async () => {
     render(
       <MemoryRouter initialEntries={[{
         pathname: '/app/serviceEndpoint',
@@ -79,12 +70,10 @@ describe('ServiceEndpoint bulk access', () => {
 
     const user = userEvent.setup();
     await screen.findByText('Rows: 1');
-    await user.click(screen.getByRole('button', { name: 'Select endpoint' }));
-    await user.click(screen.getByRole('button', { name: 'Bulk Access' }));
-    expect(await screen.findByText('Bulk editor endpoints: 1')).toBeInTheDocument();
+    expect(screen.getByText('Row selection: disabled')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Bulk Access' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Simulate successful update' }));
-    expect(screen.getByRole('dialog', { name: 'Bulk Access' })).toBeInTheDocument();
-    expect(screen.getByText('Bulk editor endpoints: 1')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Access Overview' }));
+    expect(await screen.findByRole('dialog', { name: 'Access Overview' })).toBeInTheDocument();
   });
 });

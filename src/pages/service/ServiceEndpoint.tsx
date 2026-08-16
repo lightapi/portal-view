@@ -7,7 +7,6 @@ import {
   type MRT_ColumnFiltersState,
   type MRT_PaginationState,
   type MRT_SortingState,
-  type MRT_RowSelectionState,
 } from 'material-react-table';
 import { Box, Button, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import FilterListIcon from "@mui/icons-material/FilterList";
@@ -16,14 +15,12 @@ import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import AccessibilityIcon from "@mui/icons-material/Accessibility";
-import BatchPredictionIcon from "@mui/icons-material/BatchPrediction";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import HelpLink from '../../components/HelpLink';
-import ServiceEndpointBulkAccessDrawer from './ServiceEndpointBulkAccessDrawer';
 import ServiceEndpointAccessOverviewDrawer from './ServiceEndpointAccessOverviewDrawer';
 
 // --- Type Definitions ---
@@ -107,10 +104,7 @@ export default function ServiceEndpoint() {
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
-  const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
-  const [bulkAccessOpen, setBulkAccessOpen] = useState(false);
   const [overviewOpen, setOverviewOpen] = useState(false);
-  const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -198,21 +192,11 @@ export default function ServiceEndpoint() {
     endpointId: row.endpointId,
   }), [taskContext]);
 
-  const selectedEndpoints = useMemo(
-    () => data.filter((row) => rowSelection[row.endpointId]),
-    [data, rowSelection],
-  );
-
-  const handleBulkSuccess = useCallback(() => {
-    setOverviewRefreshKey((value) => value + 1);
-    fetchData();
-  }, [fetchData]);
-
   // Table instance configuration
   const table = useMaterialReactTable({
     columns,
     data,
-    enableRowSelection: true,
+    enableRowSelection: false,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => {
@@ -303,25 +287,15 @@ export default function ServiceEndpoint() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
+    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    onRowSelectionChange: setRowSelection,
     getRowId: (row) => row.endpointId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading endpoints' } : undefined,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<BatchPredictionIcon />}
-          disabled={selectedEndpoints.length === 0}
-          onClick={() => setBulkAccessOpen(true)}
-        >
-          Bulk Access
-        </Button>
         <Button
           variant="outlined"
           size="small"
@@ -358,20 +332,12 @@ export default function ServiceEndpoint() {
       <Box mt={2}>
         <MaterialReactTable table={table} />
       </Box>
-      <ServiceEndpointBulkAccessDrawer
-        open={bulkAccessOpen}
-        hostId={host ?? ''}
-        apiVersionId={initialApiVersionId ?? ''}
-        endpoints={selectedEndpoints}
-        onClose={() => setBulkAccessOpen(false)}
-        onSuccess={handleBulkSuccess}
-      />
       <ServiceEndpointAccessOverviewDrawer
         open={overviewOpen}
         hostId={host ?? ''}
         apiVersionId={initialApiVersionId ?? ''}
-        refreshKey={overviewRefreshKey}
-        highlightedEndpointIds={selectedEndpoints.map((endpoint) => endpoint.endpointId)}
+        refreshKey={0}
+        highlightedEndpointIds={[]}
         onClose={() => setOverviewOpen(false)}
       />
     </Box>
