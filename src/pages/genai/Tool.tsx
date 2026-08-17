@@ -17,6 +17,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import PublishIcon from '@mui/icons-material/Publish';
 import SecurityIcon from '@mui/icons-material/Security';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -24,6 +25,7 @@ import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './g
 import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
 import type {PublishableTool} from './gatewayToolPublicationScope';
 import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
+import ToolInvokeDialog from './ToolInvokeDialog';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -120,6 +122,7 @@ export default function Tool() {
     const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
     const [publicationOpen, setPublicationOpen] = useState(false);
     const [workflowAccessTool, setWorkflowAccessTool] = useState<ToolType | null>(null);
+    const [invokeTool, setInvokeTool] = useState<ToolType | null>(null);
     const selectedToolCache = useRef(new Map<string, ToolType>());
     const initialApiVersionId = (location.state as {data?: {apiVersionId?: string}} | null)?.data?.apiVersionId
         ?? searchParams.get('apiVersionId')
@@ -468,6 +471,15 @@ export default function Tool() {
                         disabled={row.original.lightapiValidationStatus !== 'VALID'}
                     ><SecurityIcon /></IconButton></span>
                 </Tooltip> : null}
+                {row.original.endpointId ? <Tooltip title="Invoke API Endpoint">
+                    <span><IconButton
+                        color="success"
+                        onClick={() => setInvokeTool(row.original)}
+                        disabled={!row.original.active
+                            || row.original.lifecycleStatus !== 'active'
+                            || row.original.lightapiValidationStatus !== 'VALID'}
+                    ><PlayArrowIcon /></IconButton></span>
+                </Tooltip> : null}
             </Box>
         ),
         renderTopToolbarCustomActions: () => <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
@@ -495,6 +507,11 @@ export default function Tool() {
                 open={Boolean(workflowAccessTool)}
                 tool={workflowAccessTool}
                 onClose={() => setWorkflowAccessTool(null)}
+            />
+            <ToolInvokeDialog
+                open={Boolean(invokeTool)}
+                tool={invokeTool}
+                onClose={() => setInvokeTool(null)}
             />
         </GenAiTaskLayout>
     );
