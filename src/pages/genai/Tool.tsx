@@ -26,6 +26,7 @@ import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
 import type {PublishableTool} from './gatewayToolPublicationScope';
 import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
 import ToolInvokeDialog from './ToolInvokeDialog';
+import {freshToolForUpdate} from './toolUpdateModel';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -239,7 +240,7 @@ export default function Tool() {
         try {
             const freshData = await fetchClient(url);
             console.log("freshData", freshData);
-      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion ? row.original : freshData;
+            const dataForForm = freshToolForUpdate(freshData);
 
             // Navigate with the fresh data
             navigate(buildGenAiTaskRoute('/app/form/updateTool', searchParams, contextForRow(row.original)), {
