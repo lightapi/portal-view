@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
-import { buildReferenceSnippet } from './WorkflowEditor';
+import { buildReferenceSnippet, workflowToolAccessItems } from './WorkflowEditor';
 
 describe('workflow callable Tool snippets', () => {
     it('generates canonical HTTP YAML with a logical URI and immutable Tool pin', () => {
@@ -28,11 +28,40 @@ describe('workflow callable Tool snippets', () => {
             },
             metadata: {
                 workflowTool: {
+                    toolId: '019c0000-0000-7000-8000-000000000001',
                     capabilityRef: 'customer-api/preferences.get',
                     version: '1.0.0',
                     lightapiDigest: `sha256:${'a'.repeat(64)}`,
+                    allowedEnvironments: ['local'],
                 },
             },
         });
+    });
+
+    it('groups repeated uses into one exact access item with all usage locations', () => {
+        const pin = `
+        workflowTool:
+          toolId: 019c0000-0000-7000-8000-000000000001
+          capabilityRef: customer-api/preferences.get
+          version: 1.0.0
+          lightapiDigest: sha256:${'a'.repeat(64)}
+          allowedEnvironments: [dev, loc]`;
+        const definition = `document: { dsl: 1.0.3, namespace: test, name: access, version: 1.0.0 }
+do:
+  - first:
+      call: http
+      with: { method: GET, endpoint: { uri: lightapi://customer-api/preferences.get } }
+      metadata:${pin}
+  - second:
+      call: http
+      with: { method: GET, endpoint: { uri: lightapi://customer-api/preferences.get } }
+      metadata:${pin}
+`;
+
+        expect(workflowToolAccessItems(definition)).toEqual([expect.objectContaining({
+            toolId: '019c0000-0000-7000-8000-000000000001',
+            allowedEnvironments: ['dev', 'loc'],
+            usageLocations: expect.arrayContaining(['do[0].first.metadata', 'do[1].second.metadata']),
+        })]);
     });
 });

@@ -16,6 +16,10 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     FormControlLabel,
     LinearProgress,
     List,
@@ -157,9 +161,23 @@ type CatalogReference = {
     lightapiDigest?: string;
     httpMethod?: string;
     parameterLocations?: Record<string, unknown>;
+    accessStatus?: 'GRANTED' | 'REQUESTABLE' | 'REQUEST_REQUIRED' | 'PENDING_APPROVAL' | 'REJECTED' | 'STALE' | 'INELIGIBLE';
+    requestId?: string;
+    requestStatus?: string;
+    requestWorkflowInstanceId?: string;
+    allowedEnvironments?: string[];
 };
 
 type PaletteInsertionTarget = { forkStepId: string; branchName: string } | null;
+
+type WorkflowToolAccessItem = {
+    toolId: string;
+    capabilityRef: string;
+    toolVersion: string;
+    lightapiDigest: string;
+    allowedEnvironments: string[];
+    usageLocations: string[];
+};
 
 const fallbackWorkflowEnvironments: EnvironmentOption[] = [{ id: 'local', label: 'local' }];
 
@@ -585,6 +603,19 @@ function yamlScalar(value: string) {
     return /^[A-Za-z0-9_.:/@-]+$/.test(value) ? value : JSON.stringify(value);
 }
 
+function uuidV7() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    let timestamp = BigInt(Date.now());
+    for (let index = 5; index >= 0; index -= 1) {
+        bytes[index] = Number(timestamp & 0xffn);
+        timestamp >>= 8n;
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x70;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export function buildReferenceSnippet(reference: CatalogReference) {
     const stepId = slug(reference.kind === 'tools' ? reference.value : reference.label, reference.kind.slice(0, -1) || 'step');
     switch (reference.kind) {
@@ -605,7 +636,7 @@ export function buildReferenceSnippet(reference: CatalogReference) {
                 const body = bodyEntries.length
                     ? `\n        body:\n${bodyEntries.map(([name]) => `          ${name}: "\${{ ${name} }}"`).join('\n')}`
                     : '';
-                return `  - call-${stepId}:\n      call: http\n      with:\n        method: ${yamlScalar((reference.httpMethod || 'POST').toUpperCase())}\n        endpoint:\n          uri: ${yamlScalar(`lightapi://${reference.capabilityRef || reference.value}`)}\n        query:${query}${headers}${body}\n        output: content\n      metadata:\n        workflowTool:\n          capabilityRef: ${yamlScalar(reference.capabilityRef || reference.value)}\n          version: ${yamlScalar(reference.toolVersion || '1.0.0')}\n          lightapiDigest: ${yamlScalar(reference.lightapiDigest || '')}\n`;
+                return `  - call-${stepId}:\n      call: http\n      with:\n        method: ${yamlScalar((reference.httpMethod || 'POST').toUpperCase())}\n        endpoint:\n          uri: ${yamlScalar(`lightapi://${reference.capabilityRef || reference.value}`)}\n        query:${query}${headers}${body}\n        output: content\n      metadata:\n        workflowTool:\n          toolId: ${yamlScalar(reference.id)}\n          capabilityRef: ${yamlScalar(reference.capabilityRef || reference.value)}\n          version: ${yamlScalar(reference.toolVersion || '1.0.0')}\n          lightapiDigest: ${yamlScalar(reference.lightapiDigest || '')}\n          allowedEnvironments:\n            - ${yamlScalar(reference.allowedEnvironments?.[0] || 'local')}\n`;
             }
         case 'rules':
             return `  - check-${stepId}:\n      rule:\n        ruleId: ${yamlScalar(reference.id)}\n        input: {}\n`;
@@ -620,6 +651,36 @@ export function buildReferenceSnippet(reference: CatalogReference) {
 
 function formatYaml(parsed: unknown) {
     return `${YAML.stringify(parsed).trimEnd()}\n`;
+}
+
+export function workflowToolAccessItems(definition: string): WorkflowToolAccessItem[] {
+    const byTool = new Map<string, WorkflowToolAccessItem>();
+    const walk = (value: unknown, path: string) => {
+        if (Array.isArray(value)) {
+            value.forEach((item, index) => walk(item, `${path}[${index}]`));
+            return;
+        }
+        const record = toRecord(value);
+        if (!Object.keys(record).length) return;
+        const pin = toRecord(record.workflowTool);
+        const toolId = textValue(pin.toolId);
+        const capabilityRef = textValue(pin.capabilityRef);
+        const toolVersion = textValue(pin.version);
+        const lightapiDigest = textValue(pin.lightapiDigest);
+        const allowedEnvironments = Array.isArray(pin.allowedEnvironments)
+            ? pin.allowedEnvironments.map(textValue).filter(Boolean) : [];
+        if (toolId && capabilityRef && toolVersion && lightapiDigest && allowedEnvironments.length) {
+            const existing = byTool.get(toolId);
+            if (existing) existing.usageLocations.push(path);
+            else byTool.set(toolId, { toolId, capabilityRef, toolVersion, lightapiDigest,
+                allowedEnvironments: Array.from(new Set(allowedEnvironments)), usageLocations: [path] });
+        }
+        Object.entries(record).forEach(([key, child]) => {
+            if (key !== 'workflowTool') walk(child, path ? `${path}.${key}` : key);
+        });
+    };
+    try { walk(YAML.parse(definition), ''); } catch { return []; }
+    return Array.from(byTool.values());
 }
 
 function definitionWithVersion(definition: string, version: string) {
@@ -832,6 +893,13 @@ function endpointReferences(value: unknown): CatalogReference[] {
             httpMethod: method,
             inputSchema: toRecord(endpoint.inputSchema),
             parameterLocations: toRecord(endpoint.parameterLocations),
+            accessStatus: textValue(endpoint.accessStatus) as CatalogReference['accessStatus'],
+            requestId: textValue(endpoint.requestId) || undefined,
+            requestStatus: textValue(endpoint.requestStatus) || undefined,
+            requestWorkflowInstanceId: textValue(endpoint.requestWorkflowInstanceId) || undefined,
+            allowedEnvironments: Array.isArray(endpoint.allowedEnvironments)
+                ? endpoint.allowedEnvironments.map(textValue).filter(Boolean)
+                : [],
         };
     }).filter(ref => ref.id && ref.capabilityRef && ref.lightapiDigest);
 }
@@ -1248,6 +1316,11 @@ export default function WorkflowEditor() {
     const [tagOptions, setTagOptions] = useState<TagOption[]>([]);
     const [isTaxonomyLoading, setIsTaxonomyLoading] = useState(false);
     const [isAiAuthoringOpen, setIsAiAuthoringOpen] = useState(false);
+    const [isDraftBootstrapping, setIsDraftBootstrapping] = useState(false);
+    const [isAccessRequesting, setIsAccessRequesting] = useState(false);
+    const [isAccessRequestOpen, setIsAccessRequestOpen] = useState(false);
+    const [accessJustification, setAccessJustification] = useState('');
+    const draftBootstrapStarted = useRef(false);
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
     const stepLocations = useMemo(() => workflowStepLocations(definition), [definition]);
@@ -1345,6 +1418,45 @@ export default function WorkflowEditor() {
         setDefinition(nextDefinition);
         applyDefinitionMetadata(nextDefinition);
     }, [applyDefinitionMetadata]);
+
+    useEffect(() => {
+        if (initial.wfDefId || wfDefId || !hostId || draftBootstrapStarted.current) return;
+        draftBootstrapStarted.current = true;
+        const bootstrap = async () => {
+            const nextWfDefId = uuidV7();
+            const nextName = `new-workflow-${nextWfDefId.replaceAll('-', '').slice(0, 12)}`;
+            const nextDefinition = updateWorkflowDocumentMetadata(DEFAULT_WORKFLOW_DEFINITION, { name: nextName });
+            setIsDraftBootstrapping(true);
+            setWfDefId(nextWfDefId);
+            setNamespace('default');
+            setName(nextName);
+            setVersion('1.0.0');
+            setDefinition(nextDefinition);
+            try {
+                const result = await apiPost({ url: '/portal/command', headers: {}, body: {
+                    host: 'lightapi.net', service: 'workflow', action: 'createWfDefinition', version: '0.1.0',
+                    data: { hostId, wfDefId: nextWfDefId, namespace: 'default', name: nextName,
+                        version: '1.0.0', definition: nextDefinition, catalogVisible: false },
+                } });
+                if (result.error) throw new Error(result.error.description || 'Draft creation failed.');
+                const nextAggregate = result.data?.newAggregateVersion || result.data?.aggregateVersion || 1;
+                setAggregateVersion(nextAggregate);
+                setVersions([{ version: '1.0.0', definition: nextDefinition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregate }]);
+                navigate(location.pathname, { replace: true, state: { source, data: {
+                    hostId, wfDefId: nextWfDefId, namespace: 'default', name: nextName, version: '1.0.0',
+                    definition: nextDefinition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregate,
+                } } });
+                setMessage('Workflow draft created.');
+            } catch (error) {
+                setWfDefId('');
+                draftBootstrapStarted.current = false;
+                setMessage(`Unable to create workflow draft: ${errorText(error)}`);
+            } finally {
+                setIsDraftBootstrapping(false);
+            }
+        };
+        void bootstrap();
+    }, [hostId, initial.wfDefId, location.pathname, navigate, source, wfDefId]);
 
     const handleDefinitionEditorUpdate = useCallback((viewUpdate: ViewUpdate) => {
         if (!viewUpdate.selectionSet || viewUpdate.docChanged) return;
@@ -1525,10 +1637,9 @@ export default function WorkflowEditor() {
         setCatalogError('');
         const results = await Promise.allSettled([
             queryAllTools(hostId),
-            wfDefId ? queryPortal('genai', 'getWorkflowCallableTool', hostId, {
+            wfDefId ? queryPortal('genai', 'getWorkflowReferenceTool', hostId, {
                 wfDefId,
-                workflowVersion: version || undefined,
-                environment: workflowEnvironment,
+                selectedEnvironment: workflowEnvironment,
                 limit: 500,
             }, false) : Promise.resolve({ tools: [] }),
             queryPortal('rule', 'getRule', hostId),
@@ -1537,7 +1648,11 @@ export default function WorkflowEditor() {
         ]);
         setCatalog({
             tools: toolReferences(resultValue(results[0])),
-            endpoints: endpointReferences(resultValue(results[1])),
+            endpoints: endpointReferences(resultValue(results[1])).map(reference => ({
+                ...reference,
+                allowedEnvironments: reference.allowedEnvironments?.length
+                    ? reference.allowedEnvironments : [workflowEnvironment],
+            })),
             rules: ruleReferences(resultValue(results[2])),
             agents: agentReferences(resultValue(results[3])),
             workflows: workflowReferences(resultValue(results[4])),
@@ -1546,11 +1661,59 @@ export default function WorkflowEditor() {
         setCatalogError(failed.length ? 'Some catalog references could not be loaded.' : '');
         setCatalogLoaded(true);
         setIsCatalogLoading(false);
-    }, [hostId, version, wfDefId, workflowEnvironment]);
+    }, [hostId, wfDefId, workflowEnvironment]);
 
     useEffect(() => {
         loadCatalog();
     }, [loadCatalog]);
+
+    const pendingAccessCount = useMemo(
+        () => catalog.endpoints.filter(reference => reference.accessStatus === 'PENDING_APPROVAL').length,
+        [catalog.endpoints],
+    );
+    const accessRequestItems = useMemo(() => {
+        const byTool = new Map(catalog.endpoints.map(reference => [reference.id, reference]));
+        return workflowToolAccessItems(definition).filter(pin => byTool.get(pin.toolId)?.accessStatus !== 'GRANTED'
+            && byTool.get(pin.toolId)?.accessStatus !== 'PENDING_APPROVAL');
+    }, [catalog.endpoints, definition]);
+    const pendingAccessRequests = useMemo(() => Array.from(new Map(
+        catalog.endpoints.filter(reference => reference.accessStatus === 'PENDING_APPROVAL' && reference.requestId)
+            .map(reference => [reference.requestId, reference]),
+    ).values()), [catalog.endpoints]);
+
+    useEffect(() => {
+        if (!pendingAccessCount) return undefined;
+        const timer = window.setInterval(() => { void loadCatalog(); }, 15_000);
+        return () => window.clearInterval(timer);
+    }, [loadCatalog, pendingAccessCount]);
+
+    const handleRequestToolAccess = useCallback(async () => {
+        if (!wfDefId) {
+            setMessage('Create or save the workflow draft before requesting Tool access.');
+            return;
+        }
+        if (!accessRequestItems.length) {
+            setMessage(workflowToolAccessItems(definition).length ? 'All referenced Tools are granted or already pending approval.' : 'Add endpoint Tool references before requesting access.');
+            return;
+        }
+        if (!accessJustification.trim()) return;
+        setIsAccessRequesting(true);
+        try {
+            const result = await apiPost({ url: '/portal/command', headers: {}, body: {
+                host: 'lightapi.net', service: 'workflow', action: 'requestWorkflowToolAccess', version: '0.1.0',
+                data: { hostId, requestId: uuidV7(), wfDefId, justification: accessJustification.trim(), items: accessRequestItems },
+            } });
+            if (result.error) throw new Error(result.error.description || 'Tool access request failed.');
+            setMessage(`Tool access request ${result.data?.requestId || ''} submitted for approval.`);
+            setIsAccessRequestOpen(false);
+            setAccessJustification('');
+            await loadCatalog();
+        } catch (error) {
+            setMessage(`Unable to request Tool access: ${errorText(error)}`);
+        } finally {
+            setIsAccessRequesting(false);
+        }
+    }, [accessJustification, accessRequestItems, definition, hostId, loadCatalog, wfDefId]);
 
     useEffect(() => {
         setSelectedReferenceId('');
@@ -1576,7 +1739,7 @@ export default function WorkflowEditor() {
         URL.revokeObjectURL(url);
     }, [definition, name]);
 
-    const runServerValidation = useCallback(async (): Promise<ServerValidationResult> => {
+    const runServerValidation = useCallback(async (validationMode: 'DRAFT' | 'EXECUTION' = 'DRAFT'): Promise<ServerValidationResult> => {
         if (!hostId || !definition.trim()) {
             return { ok: false, problems: [{ severity: 'error', message: 'Host and definition are required for server validation.' }] };
         }
@@ -1597,6 +1760,8 @@ export default function WorkflowEditor() {
                 wfDefId,
                 version,
                 definition,
+                validationMode,
+                selectedEnvironment: workflowEnvironment,
                 ...(aiAuthored ? {
                     profile: 'workflow-mcp-phase3',
                     allowedToolRefs: Array.from(catalogToolNames),
@@ -1620,7 +1785,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsServerValidating(false);
         }
-    }, [aiAuthored, catalogLoaded, catalogToolNames, definition, hostId, version, wfDefId]);
+    }, [aiAuthored, catalogLoaded, catalogToolNames, definition, hostId, version, wfDefId, workflowEnvironment]);
 
     const handleApproveAiDraft = useCallback((approvedDefinition: string) => {
         handleDefinitionChange(approvedDefinition);
@@ -1634,7 +1799,7 @@ export default function WorkflowEditor() {
             setMessage(`Fix workflow definition: ${clientBlockingProblem.message}`);
             return;
         }
-        const serverResult = await runServerValidation();
+        const serverResult = await runServerValidation('DRAFT');
         if (!serverResult.ok) {
             setMessage(`Fix workflow definition: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
@@ -1843,7 +2008,7 @@ export default function WorkflowEditor() {
             setTestMessage(`Fix test input: ${parsedInput.error}`);
             return;
         }
-        const serverResult = await runServerValidation();
+        const serverResult = await runServerValidation('EXECUTION');
         if (!serverResult.ok) {
             setTestMessage(`Fix workflow definition before testing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
@@ -2068,7 +2233,7 @@ export default function WorkflowEditor() {
             setMessage('Save the current draft before publishing this workflow version.');
             return;
         }
-        const serverResult = await runServerValidation();
+        const serverResult = await runServerValidation('EXECUTION');
         if (!serverResult.ok) {
             setMessage(`Fix workflow definition before publishing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
@@ -2155,6 +2320,13 @@ export default function WorkflowEditor() {
                 <Button startIcon={isServerValidating ? <CircularProgress size={18} color="inherit" /> : <VerifiedIcon />} onClick={handleValidate} disabled={isServerValidating}>
                     Validate
                 </Button>
+                <Button startIcon={isAccessRequesting ? <CircularProgress size={18} color="inherit" /> : <AssignmentTurnedInIcon />}
+                    onClick={() => {
+                        if (!workflowToolAccessItems(definition).length) setMessage('Add endpoint Tool references before requesting access.');
+                        else setIsAccessRequestOpen(true);
+                    }} disabled={!wfDefId || isAccessRequesting || isDraftBootstrapping || isPublished}>
+                    Request Tool Access{pendingAccessCount ? ` (${pendingAccessCount} pending)` : ''}
+                </Button>
                 <Button startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />} onClick={handleStartTest} disabled={!wfDefId || isServerValidating || isTestStarting}>
                     Test
                 </Button>
@@ -2173,6 +2345,40 @@ export default function WorkflowEditor() {
             </Stack>
 
             {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
+            {pendingAccessRequests.length ? <Alert severity="info" sx={{ mb: 2 }}>
+                {pendingAccessRequests.length} Tool access request{pendingAccessRequests.length === 1 ? '' : 's'} awaiting approval.
+                {' '}{pendingAccessRequests.map(request => `${request.requestId}${request.requestWorkflowInstanceId ? ` (workflow ${request.requestWorkflowInstanceId})` : ''}`).join(', ')}
+            </Alert> : null}
+            <Dialog open={isAccessRequestOpen} onClose={() => !isAccessRequesting && setIsAccessRequestOpen(false)} fullWidth maxWidth="md">
+                <DialogTitle>Request Workflow Tool Access</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <Alert severity="info">One approval covers the exact Tool pins and environments below. You may continue editing, but testing and publishing remain blocked until approval.</Alert>
+                        {accessRequestItems.map(item => {
+                            const reference = catalog.endpoints.find(candidate => candidate.id === item.toolId);
+                            return <Box key={item.toolId} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
+                                <Typography fontWeight={600}>{reference?.label || item.capabilityRef}</Typography>
+                                <Typography variant="body2">{item.capabilityRef} · {item.toolVersion}</Typography>
+                                <Typography variant="caption" display="block">{item.lightapiDigest}</Typography>
+                                <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 1 }}>
+                                    {item.allowedEnvironments.map(environment => <Chip key={environment} size="small" label={environment} />)}
+                                    {item.usageLocations.map(location => <Chip key={location} size="small" variant="outlined" label={location || 'workflow'} />)}
+                                </Stack>
+                            </Box>;
+                        })}
+                        {!accessRequestItems.length ? <Alert severity="success">All referenced Tools are granted or already pending approval.</Alert> : null}
+                        <TextField label="Justification" required multiline minRows={3} value={accessJustification}
+                            onChange={event => setAccessJustification(event.target.value)} inputProps={{ maxLength: 2000 }} />
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setIsAccessRequestOpen(false)} disabled={isAccessRequesting}>Cancel</Button>
+                    <Button variant="contained" onClick={handleRequestToolAccess}
+                        disabled={isAccessRequesting || !accessJustification.trim() || !accessRequestItems.length}>
+                        {isAccessRequesting ? 'Submitting…' : 'Submit for Approval'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <WorkflowAiAuthoringDialog
                 open={isAiAuthoringOpen}
                 hostId={hostId}
@@ -2307,7 +2513,7 @@ export default function WorkflowEditor() {
                         extensions={workflowEditorExtensions}
                         onChange={handleDefinitionChange}
                         onUpdate={handleDefinitionEditorUpdate}
-                        editable={!isPublished}
+                        editable={!isPublished && !isDraftBootstrapping}
                     />
                 </Box>
 
@@ -2489,7 +2695,7 @@ export default function WorkflowEditor() {
                             size="small"
                             disabled={isEnvironmentLoading}
                             error={Boolean(environmentError)}
-                            helperText={environmentError || 'Only Tools granted for this workflow and environment are listed under Endpoints.'}
+                            helperText={environmentError || 'Eligible endpoints are shown with workflow access status; only granted pins can be tested or published.'}
                         >
                             {workflowEnvironments.map(option => (
                                 <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>
@@ -2523,21 +2729,25 @@ export default function WorkflowEditor() {
                             loading={isCatalogLoading}
                             noOptionsText={catalogKind === 'endpoints'
                                 ? wfDefId
-                                    ? `No API endpoints are granted for this workflow, version, and ${workflowEnvironment} environment.`
-                                    : 'Save the workflow before loading granted API endpoints.'
+                                    ? `No eligible API endpoints are available for ${workflowEnvironment}.`
+                                    : 'The workflow draft is being created.'
                                 : 'No matching references'}
                             renderInput={params => <TextField
                                 {...params}
                                 label="Reference"
                                 size="small"
                                 helperText={catalogKind === 'endpoints'
-                                    ? `${selectedReferences.length} granted API endpoints available for ${workflowEnvironment}. Type to filter.`
+                                    ? `${selectedReferences.length} eligible API endpoints available for ${workflowEnvironment}. Type to filter.`
                                     : `${selectedReferences.length} available. Type to filter.`}
                             />}
                         />
                         {selectedReference && (
                             <Box>
                                 <Typography variant="body2">{selectedReference.secondary || selectedReference.id}</Typography>
+                                {selectedReference.accessStatus ? <Chip size="small" sx={{ mt: 0.5 }}
+                                    color={selectedReference.accessStatus === 'GRANTED' ? 'success'
+                                        : selectedReference.accessStatus === 'PENDING_APPROVAL' ? 'warning' : 'default'}
+                                    label={selectedReference.accessStatus.replaceAll('_', ' ')} /> : null}
                                 {selectedReference.description && <Typography variant="caption" color="text.secondary">{selectedReference.description}</Typography>}
                             </Box>
                         )}

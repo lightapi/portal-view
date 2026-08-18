@@ -38,6 +38,7 @@ type AskOption = {
 };
 
 type AskDefinition = {
+    action?: string;
     prompt?: string;
     mode?: 'approval' | 'confirm' | 'choice' | 'multiChoice' | 'text' | 'object' | string;
     options?: AskOption[];
@@ -157,6 +158,10 @@ function modeForAsk(ask?: AskDefinition) {
     return ask?.schema ? 'object' : 'text';
 }
 
+function recordValue(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 export default function HumanTask() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -271,12 +276,22 @@ export default function HumanTask() {
         setIsSubmitting(true);
         setError(null);
         const submittedAt = new Date().toISOString();
+        const workflowToolDecision = task.ask?.action === 'workflow-tool-access-decision';
         const cmd = {
             host: 'lightapi.net',
             service: 'workflow',
-            action: 'completeTask',
+            action: workflowToolDecision ? 'decideWorkflowToolAccess' : 'completeTask',
             version: '0.1.0',
-            data: {
+            data: workflowToolDecision ? {
+                hostId: host,
+                requestId: String(task.context?.requestId || ''),
+                workflowInstanceId: task.wfInstanceId,
+                taskId: task.taskId,
+                taskAsstId: task.taskAsstId,
+                requestDigest: String(task.context?.requestDigest || ''),
+                decision: String(submittedValue),
+                comment: comment.trim() || undefined,
+            } : {
                 hostId: host,
                 taskId: task.taskId,
                 taskAsstId: task.taskAsstId,
@@ -333,6 +348,9 @@ export default function HumanTask() {
     );
     const submitDisabled = isSubmitting || isMutatingClaim || !canSubmit || valueMissing || Boolean(commentMissing);
     const approvalSubmitDisabled = isSubmitting || isMutatingClaim || !canSubmit || Boolean(commentMissing);
+    const workflowToolDecisionContext = ask?.action === 'workflow-tool-access-decision' ? recordValue(task?.context) : null;
+    const workflowToolDecisionItems = Array.isArray(workflowToolDecisionContext?.items)
+        ? workflowToolDecisionContext.items.map(recordValue) : [];
 
     const onObjectModelChange = (key: string | string[], val: unknown, type?: string) => {
         utils.selectOrSet(key, objectValue, val, type);
@@ -353,8 +371,8 @@ export default function HumanTask() {
                         <Button
                             key={option.value}
                             variant="contained"
-                            color={option.value === 'REJECTED' ? 'error' : 'primary'}
-                            startIcon={option.value === 'REJECTED' ? <CancelIcon /> : <CheckCircleIcon />}
+                            color={option.value.startsWith('REJECT') ? 'error' : 'primary'}
+                            startIcon={option.value.startsWith('REJECT') ? <CancelIcon /> : <CheckCircleIcon />}
                             disabled={approvalSubmitDisabled}
                             onClick={() => submit(option.value)}
                         >
@@ -550,6 +568,23 @@ export default function HumanTask() {
                             <Paper variant="outlined" sx={{ p: 2 }}>
                                 <Stack spacing={2}>
                                     <Typography variant="h6">{ask?.prompt || task.wfTaskId}</Typography>
+                                    {workflowToolDecisionContext ? <Stack spacing={1.5}>
+                                        <Alert severity="warning">Approval applies all exact Tool pins atomically. If any pin changed, the request is marked stale and no grant is created.</Alert>
+                                        <Typography><strong>Requester:</strong> {String(workflowToolDecisionContext.requesterUserId || '')}</Typography>
+                                        <Typography><strong>Target workflow:</strong> {String(workflowToolDecisionContext.targetWfDefId || '')}</Typography>
+                                        <Typography><strong>Justification:</strong> {String(workflowToolDecisionContext.justification || '')}</Typography>
+                                        {workflowToolDecisionItems.map(item => <Box key={String(item.toolId)} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
+                                            <Typography fontWeight={600}>{String(item.capabilityRef || item.toolId || '')}</Typography>
+                                            <Typography variant="body2">Tool {String(item.toolId || '')} · {String(item.toolVersion || '')}</Typography>
+                                            <Typography variant="caption" display="block">{String(item.lightapiDigest || '')}</Typography>
+                                            <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mt: 1 }}>
+                                                {(Array.isArray(item.allowedEnvironments) ? item.allowedEnvironments : []).map(environment =>
+                                                    <Chip key={String(environment)} size="small" label={String(environment)} />)}
+                                                {(Array.isArray(item.usageLocations) ? item.usageLocations : []).map(location =>
+                                                    <Chip key={String(location)} size="small" variant="outlined" label={String(location)} />)}
+                                            </Stack>
+                                        </Box>)}
+                                    </Stack> : null}
                                     {renderInput()}
                                     {allowComment ? (
                                         <TextField

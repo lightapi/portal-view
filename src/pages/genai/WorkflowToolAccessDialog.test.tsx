@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
 
@@ -48,8 +47,7 @@ describe('WorkflowToolAccessDialog', () => {
         vi.stubGlobal('crypto', { randomUUID: () => 'grant-a' });
     });
 
-    it('loads labeled environment options and submits their ids as a multi-select value', async () => {
-        const user = userEvent.setup();
+    it('keeps new grant creation in the Workflow Editor approval flow', async () => {
         render(<WorkflowToolAccessDialog
             open
             tool={{
@@ -59,20 +57,10 @@ describe('WorkflowToolAccessDialog', () => {
             onClose={vi.fn()}
         />);
 
-        await user.click(await screen.findByLabelText('Workflow'));
-        await user.click(await screen.findByRole('option', { name: 'sales · Order flow' }));
-
-        await user.click(screen.getByLabelText('Allowed Environments'));
-        await user.click(await screen.findByRole('option', { name: 'Development' }));
-        await user.click(await screen.findByRole('option', { name: 'Testing' }));
-        await user.click(screen.getByRole('button', { name: 'Grant Access' }));
-
-        await waitFor(() => expect(mocks.apiPost).toHaveBeenCalledTimes(1));
-        expect(mocks.fetchClient).toHaveBeenCalledWith('/r/data?name=environment&host=host-a');
-        expect(mocks.apiPost.mock.calls[0][0].body.data).toMatchObject({
-            hostId: 'host-a', grantId: 'grant-a', toolId: 'tool-a', wfDefId: 'workflow-a',
-            allowedEnvironments: ['dev', 'test'],
-        });
+        expect(await screen.findByText(/New access is requested from the Workflow Editor/)).toBeInTheDocument();
+        expect(screen.queryByLabelText('Workflow')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Grant Access' })).not.toBeInTheDocument();
+        expect(mocks.apiPost).not.toHaveBeenCalled();
     });
 
     it('lists every grant for the Tool with its workflow identity', async () => {
@@ -83,7 +71,7 @@ describe('WorkflowToolAccessDialog', () => {
             },
             {
                 grantId: 'grant-b', toolId: 'tool-a', wfDefId: 'workflow-b', workflowNamespace: 'support',
-                workflowName: 'Return flow', workflowVersion: '2.0.0', allowedEnvironments: ['test'], aggregateVersion: 1,
+                workflowName: 'Return flow', allowedEnvironments: ['test'], aggregateVersion: 1,
             },
         ];
 
@@ -95,8 +83,7 @@ describe('WorkflowToolAccessDialog', () => {
 
         expect(await screen.findByText('sales · Order flow')).toBeInTheDocument();
         expect(screen.getByText('support · Return flow')).toBeInTheDocument();
-        expect(screen.getByText('All versions')).toBeInTheDocument();
-        expect(screen.getByText('Version 2.0.0')).toBeInTheDocument();
+        expect(screen.getAllByText('Definition-wide')).toHaveLength(2);
 
         const grantQuery = mocks.fetchClient.mock.calls
             .map(call => call[0] as string)

@@ -49,7 +49,7 @@ describe('WorkflowEditor environment selector', () => {
         });
     });
 
-    it('loads a single-select list, maps local to loc, and refreshes callable Tools with the selected id', async () => {
+    it('loads a single-select list, maps local to loc, and refreshes reference Tools with the selected id', async () => {
         const user = userEvent.setup();
         render(
             <MemoryRouter initialEntries={[{
@@ -76,7 +76,7 @@ describe('WorkflowEditor environment selector', () => {
         await waitFor(() => expect(mocks.fetchClient.mock.calls.some(([url]) => {
             if (typeof url !== 'string' || !url.startsWith('/portal/query')) return false;
             const command = queryCommand(url);
-            return command.action === 'getWorkflowCallableTool' && command.data?.environment === 'demo';
+            return command.action === 'getWorkflowReferenceTool' && command.data?.selectedEnvironment === 'demo';
         })).toBe(true));
 
         await user.click(screen.getByRole('combobox', { name: 'Reference Type' }));
@@ -84,7 +84,7 @@ describe('WorkflowEditor environment selector', () => {
         const reference = screen.getByRole('combobox', { name: 'Reference' });
         expect(reference).toBeEnabled();
         await user.click(reference);
-        expect(await screen.findByText('No API endpoints are granted for this workflow, version, and demo environment.')).toBeInTheDocument();
+        expect(await screen.findByText('No eligible API endpoints are available for demo.')).toBeInTheDocument();
     });
 
     it('loads every Tool page and filters identifiable API labels from the Reference dropdown', async () => {
