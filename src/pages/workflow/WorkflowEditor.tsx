@@ -580,9 +580,14 @@ function toCodeMirrorDiagnostic(problem: ValidationProblem, docLength: number): 
 }
 
 function messageSeverity(message: string) {
-    return message === 'Workflow definition saved.'
+    if (message === 'Workflow definition saved.'
         || message.startsWith('Workflow definition is valid')
-        || message.includes('published and frozen') ? 'success' : 'warning';
+        || message.includes('published and frozen')) return 'success';
+    if (message.startsWith('Failed to save workflow definition.')
+        || message.startsWith('Failed to load workflow definition.')
+        || message.startsWith('Unable to request Tool access:')
+        || message.startsWith('Fix workflow definition')) return 'error';
+    return 'warning';
 }
 
 const workflowDefinitionLinter = linter(view => {
@@ -801,7 +806,15 @@ function removeDefinitionTransition(definition: string, sourceStepId: string, ta
 
 function errorText(error: unknown) {
     const record = toRecord(error);
-    return textValue(record.description || record.message || error) || 'Unexpected error.';
+    const data = toRecord(record.data);
+    const nestedError = toRecord(record.error);
+    return textValue(record.description
+        || data.description
+        || nestedError.description
+        || record.message
+        || data.message
+        || nestedError.message
+        || error) || 'Unexpected error.';
 }
 
 function extractRuntimeToolNames(value: unknown): string[] {
@@ -1734,7 +1747,7 @@ export default function WorkflowEditor() {
                 host: 'lightapi.net', service: 'workflow', action: 'requestWorkflowToolAccess', version: '0.1.0',
                 data: { hostId, requestId: uuidV7(), wfDefId, justification: accessJustification.trim(), items: accessRequestItems },
             } });
-            if (result.error) throw new Error(result.error.description || 'Tool access request failed.');
+            if (result.error) throw new Error(errorText(result.error));
             setMessage(`Tool access request ${result.data?.requestId || ''} submitted for approval.`);
             setIsAccessRequestOpen(false);
             setAccessJustification('');
@@ -2236,7 +2249,7 @@ export default function WorkflowEditor() {
         try {
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
             if (result.error) {
-                setMessage(result.error.description || 'Failed to save workflow definition.');
+                setMessage(`Failed to save workflow definition. ${errorText(result.error)}`);
                 return;
             }
             const response = result.data || {};

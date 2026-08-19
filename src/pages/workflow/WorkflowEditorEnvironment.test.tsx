@@ -143,6 +143,52 @@ describe('WorkflowEditor environment selector', () => {
         expect(command.data).not.toHaveProperty('wfDefId');
     });
 
+    it('shows a nested workflow identity conflict as a red save error', async () => {
+        mocks.apiPost.mockResolvedValue({ error: {
+            code: -32603,
+            message: 'Internal error',
+            data: {
+                statusCode: 409,
+                code: 'WORKFLOW_DEFINITION_IDENTITY_CONFLICT',
+                description: 'Workflow "default/demo2-workflow" version "1.0.0" already exists.',
+            },
+        } });
+        mocks.fetchClient.mockImplementation((url: string) => {
+            if (url === '/r/data?name=environment&host=host-a') {
+                return Promise.resolve([{ id: 'loc', label: 'Local' }]);
+            }
+            const command = queryCommand(url);
+            if (command.action === 'validateWfDefinition') {
+                return Promise.resolve({
+                    valid: true,
+                    problems: [{ severity: 'warning', message: 'Tool access required: API0004/getCustomerProfile (version 1.0.0).' }],
+                    schemaId: 'https://agentic-workflow.org/schemas/1.0.3/workflow.yaml',
+                    schemaVersion: '1.0.3',
+                    schemaDigest: 'a'.repeat(64),
+                });
+            }
+            return Promise.resolve({});
+        });
+
+        const user = userEvent.setup();
+        render(
+            <MemoryRouter initialEntries={['/app/workflow/editor']}>
+                <Routes>
+                    <Route path="/app/workflow/editor" element={<WorkflowEditor />} />
+                </Routes>
+            </MemoryRouter>,
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Save' }));
+
+        const saveError = await screen.findByText(
+            'Failed to save workflow definition. Workflow "default/demo2-workflow" version "1.0.0" already exists.',
+        );
+        expect(saveError.closest('.MuiAlert-root')).toHaveClass('MuiAlert-standardError');
+        expect(screen.getByText('1 validation warning found')).toBeInTheDocument();
+        expect(screen.getByText('Tool access required: API0004/getCustomerProfile (version 1.0.0).')).toBeInTheDocument();
+    });
+
     it('keeps Tool access disabled until newly inserted endpoint references are saved', async () => {
         const savedDefinition = `document:
   dsl: "1.0.3"
@@ -223,6 +269,23 @@ do: []
             body: expect.objectContaining({ action: 'updateWfDefinition' }),
         })));
         await waitFor(() => expect(requestAccess).toBeEnabled());
+
+        mocks.apiPost.mockResolvedValueOnce({ error: {
+            code: -32602,
+            message: 'Invalid params',
+            data: {
+                code: 'ERR11000',
+                description: 'Configured approval workflow is unavailable.',
+            },
+        } });
+        await user.click(requestAccess);
+        await user.type(screen.getByRole('textbox', { name: 'Justification' }), 'Required for customer lookup.');
+        await user.click(screen.getByRole('button', { name: 'Submit for Approval' }));
+
+        const requestError = await screen.findByText(
+            'Unable to request Tool access: Configured approval workflow is unavailable.',
+        );
+        expect(requestError.closest('.MuiAlert-root')).toHaveClass('MuiAlert-standardError');
     });
 
     it('loads a single-select list, maps local to loc, and refreshes reference Tools with the selected id', async () => {
