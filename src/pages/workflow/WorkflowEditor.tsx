@@ -58,6 +58,7 @@ import WorkflowAiAuthoringDialog, { type WorkflowAuthoringTool } from './Workflo
 import { normalizeWorkflowStepId, workflowStepTemplates } from './workflowStepTemplates';
 import {
     formatProblemLocation,
+    formatProblemMessage,
     interpretServerValidationResponse,
     type ServerValidationResult,
     type ValidationProblem,
@@ -286,6 +287,27 @@ type WorkflowTestSnapshot = {
     refreshedAt?: string;
     errors: string[];
 };
+
+type WorkflowDraftFingerprintInput = {
+    hostId: string;
+    namespace: string;
+    name: string;
+    version: string;
+    definition: string;
+    catalogVisible: boolean;
+    ownerPositionId: string;
+    categoryIds: string[];
+    tagIds: string[];
+    active: boolean;
+};
+
+function workflowDraftFingerprint(value: WorkflowDraftFingerprintInput) {
+    return JSON.stringify({
+        ...value,
+        categoryIds: [...value.categoryIds].sort(),
+        tagIds: [...value.tagIds].sort(),
+    });
+}
 
 const emptyDefinition = DEFAULT_WORKFLOW_DEFINITION;
 
@@ -1316,11 +1338,22 @@ export default function WorkflowEditor() {
     const [tagOptions, setTagOptions] = useState<TagOption[]>([]);
     const [isTaxonomyLoading, setIsTaxonomyLoading] = useState(false);
     const [isAiAuthoringOpen, setIsAiAuthoringOpen] = useState(false);
-    const [isDraftBootstrapping, setIsDraftBootstrapping] = useState(false);
     const [isAccessRequesting, setIsAccessRequesting] = useState(false);
     const [isAccessRequestOpen, setIsAccessRequestOpen] = useState(false);
     const [accessJustification, setAccessJustification] = useState('');
-    const draftBootstrapStarted = useRef(false);
+    const [savedDraftFingerprint, setSavedDraftFingerprint] = useState(() => initial.wfDefId && initial.aggregateVersion
+        ? workflowDraftFingerprint({
+            hostId: initial.hostId || host || '',
+            namespace: initial.namespace || initialMetadata.namespace || '',
+            name: initial.name || initialMetadata.name || '',
+            version: initial.version || initialMetadata.version || '1.0.0',
+            definition: initialDefinition,
+            catalogVisible: initial.catalogVisible ?? false,
+            ownerPositionId: initial.ownerPositionId || '',
+            categoryIds: initial.categoryIds || [],
+            tagIds: initial.tagIds || [],
+            active: initial.active ?? true,
+        }) : '');
 
     const analysis = useMemo(() => parseDefinition(definition), [definition]);
     const stepLocations = useMemo(() => workflowStepLocations(definition), [definition]);
@@ -1363,8 +1396,16 @@ export default function WorkflowEditor() {
         [analysis.problems, catalogProblems, serverProblems],
     );
     const clientBlockingProblem = analysis.problems.find(problem => problem.severity === 'error');
-    const blockingProblem = allProblems.find(problem => problem.severity === 'error');
-    const warningCount = allProblems.filter(problem => problem.severity === 'warning').length;
+    const errorProblems = useMemo(
+        () => allProblems.filter(problem => problem.severity === 'error'),
+        [allProblems],
+    );
+    const warningProblems = useMemo(
+        () => allProblems.filter(problem => problem.severity === 'warning'),
+        [allProblems],
+    );
+    const blockingProblem = errorProblems[0];
+    const warningCount = warningProblems.length;
     const selectedReferences = useMemo(() => catalog[catalogKind], [catalog, catalogKind]);
     const selectedReference = useMemo(
         () => selectedReferences.find(reference => reference.id === selectedReferenceId),
@@ -1398,6 +1439,19 @@ export default function WorkflowEditor() {
     );
     const isUpdate = Boolean(wfDefId && aggregateVersion);
     const isPublished = lifecycleStatus === 'PUBLISHED';
+    const currentDraftFingerprint = useMemo(() => workflowDraftFingerprint({
+        hostId,
+        namespace,
+        name,
+        version,
+        definition,
+        catalogVisible,
+        ownerPositionId,
+        categoryIds,
+        tagIds,
+        active,
+    }), [active, catalogVisible, categoryIds, definition, hostId, name, namespace, ownerPositionId, tagIds, version]);
+    const hasUnsavedChanges = !isUpdate || currentDraftFingerprint !== savedDraftFingerprint;
     const availableVersions = useMemo<WorkflowVersion[]>(() => {
         const current = { version, definition, lifecycleStatus, aggregateVersion };
         return [current, ...versions.filter(item => item.version !== version)];
@@ -1418,45 +1472,6 @@ export default function WorkflowEditor() {
         setDefinition(nextDefinition);
         applyDefinitionMetadata(nextDefinition);
     }, [applyDefinitionMetadata]);
-
-    useEffect(() => {
-        if (initial.wfDefId || wfDefId || !hostId || draftBootstrapStarted.current) return;
-        draftBootstrapStarted.current = true;
-        const bootstrap = async () => {
-            const nextWfDefId = uuidV7();
-            const nextName = `new-workflow-${nextWfDefId.replaceAll('-', '').slice(0, 12)}`;
-            const nextDefinition = updateWorkflowDocumentMetadata(DEFAULT_WORKFLOW_DEFINITION, { name: nextName });
-            setIsDraftBootstrapping(true);
-            setWfDefId(nextWfDefId);
-            setNamespace('default');
-            setName(nextName);
-            setVersion('1.0.0');
-            setDefinition(nextDefinition);
-            try {
-                const result = await apiPost({ url: '/portal/command', headers: {}, body: {
-                    host: 'lightapi.net', service: 'workflow', action: 'createWfDefinition', version: '0.1.0',
-                    data: { hostId, wfDefId: nextWfDefId, namespace: 'default', name: nextName,
-                        version: '1.0.0', definition: nextDefinition, catalogVisible: false },
-                } });
-                if (result.error) throw new Error(result.error.description || 'Draft creation failed.');
-                const nextAggregate = result.data?.newAggregateVersion || result.data?.aggregateVersion || 1;
-                setAggregateVersion(nextAggregate);
-                setVersions([{ version: '1.0.0', definition: nextDefinition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregate }]);
-                navigate(location.pathname, { replace: true, state: { source, data: {
-                    hostId, wfDefId: nextWfDefId, namespace: 'default', name: nextName, version: '1.0.0',
-                    definition: nextDefinition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregate,
-                } } });
-                setMessage('Workflow draft created.');
-            } catch (error) {
-                setWfDefId('');
-                draftBootstrapStarted.current = false;
-                setMessage(`Unable to create workflow draft: ${errorText(error)}`);
-            } finally {
-                setIsDraftBootstrapping(false);
-            }
-        };
-        void bootstrap();
-    }, [hostId, initial.wfDefId, location.pathname, navigate, source, wfDefId]);
 
     const handleDefinitionEditorUpdate = useCallback((viewUpdate: ViewUpdate) => {
         if (!viewUpdate.selectionSet || viewUpdate.docChanged) return;
@@ -1526,6 +1541,18 @@ export default function WorkflowEditor() {
                 setAggregateVersion(row.aggregateVersion);
                 setActive(row.active ?? true);
                 setLifecycleStatus(row.lifecycleStatus || 'DRAFT');
+                setSavedDraftFingerprint(workflowDraftFingerprint({
+                    hostId: row.hostId || '',
+                    namespace: row.namespace || '',
+                    name: row.name || '',
+                    version: row.version || '1.0.0',
+                    definition: row.definition || '',
+                    catalogVisible: row.catalogVisible ?? false,
+                    ownerPositionId: row.ownerPositionId || '',
+                    categoryIds: Array.isArray(row.categoryIds) ? row.categoryIds : [],
+                    tagIds: Array.isArray(row.tagIds) ? row.tagIds : [],
+                    active: row.active ?? true,
+                }));
                 const loadedVersions = Array.isArray(row.versions) ? row.versions : [];
                 setVersions(loadedVersions);
                 const publishedVersions = loadedVersions.filter((item: WorkflowVersion) => item.lifecycleStatus === 'PUBLISHED');
@@ -1637,11 +1664,11 @@ export default function WorkflowEditor() {
         setCatalogError('');
         const results = await Promise.allSettled([
             queryAllTools(hostId),
-            wfDefId ? queryPortal('genai', 'getWorkflowReferenceTool', hostId, {
-                wfDefId,
+            queryPortal('genai', 'getWorkflowReferenceTool', hostId, {
+                ...(wfDefId ? { wfDefId } : {}),
                 selectedEnvironment: workflowEnvironment,
                 limit: 500,
-            }, false) : Promise.resolve({ tools: [] }),
+            }, false),
             queryPortal('rule', 'getRule', hostId),
             queryPortal('genai', 'getAgentDefinition', hostId),
             queryPortal('workflow', 'getWfDefinition', hostId),
@@ -1671,6 +1698,10 @@ export default function WorkflowEditor() {
         () => catalog.endpoints.filter(reference => reference.accessStatus === 'PENDING_APPROVAL').length,
         [catalog.endpoints],
     );
+    const hasWorkflowToolReferences = useMemo(
+        () => workflowToolAccessItems(definition).length > 0,
+        [definition],
+    );
     const accessRequestItems = useMemo(() => {
         const byTool = new Map(catalog.endpoints.map(reference => [reference.id, reference]));
         return workflowToolAccessItems(definition).filter(pin => byTool.get(pin.toolId)?.accessStatus !== 'GRANTED'
@@ -1688,8 +1719,8 @@ export default function WorkflowEditor() {
     }, [loadCatalog, pendingAccessCount]);
 
     const handleRequestToolAccess = useCallback(async () => {
-        if (!wfDefId) {
-            setMessage('Create or save the workflow draft before requesting Tool access.');
+        if (!wfDefId || !aggregateVersion || hasUnsavedChanges) {
+            setMessage('Save the workflow and its endpoint references before requesting Tool access.');
             return;
         }
         if (!accessRequestItems.length) {
@@ -1713,7 +1744,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsAccessRequesting(false);
         }
-    }, [accessJustification, accessRequestItems, definition, hostId, loadCatalog, wfDefId]);
+    }, [accessJustification, accessRequestItems, aggregateVersion, definition, hasUnsavedChanges, hostId, loadCatalog, wfDefId]);
 
     useEffect(() => {
         setSelectedReferenceId('');
@@ -2212,6 +2243,7 @@ export default function WorkflowEditor() {
             setWfDefId(response.wfDefId || wfDefId);
             const nextAggregateVersion = response.newAggregateVersion || response.aggregateVersion || aggregateVersion;
             setAggregateVersion(nextAggregateVersion);
+            setSavedDraftFingerprint(currentDraftFingerprint);
             setLifecycleStatus('DRAFT');
             setVersions(current => [
                 {version, definition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregateVersion},
@@ -2224,7 +2256,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
+    }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, currentDraftFingerprint, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
     const handlePublish = useCallback(async () => {
         if (!wfDefId || lifecycleStatus !== 'DRAFT' || !aggregateVersion) return;
@@ -2321,10 +2353,12 @@ export default function WorkflowEditor() {
                     Validate
                 </Button>
                 <Button startIcon={isAccessRequesting ? <CircularProgress size={18} color="inherit" /> : <AssignmentTurnedInIcon />}
+                    title={!hasWorkflowToolReferences ? 'Add endpoint Tool references before requesting access.'
+                        : !isUpdate || hasUnsavedChanges ? 'Save the workflow and its endpoint references before requesting Tool access.' : undefined}
                     onClick={() => {
                         if (!workflowToolAccessItems(definition).length) setMessage('Add endpoint Tool references before requesting access.');
                         else setIsAccessRequestOpen(true);
-                    }} disabled={!wfDefId || isAccessRequesting || isDraftBootstrapping || isPublished}>
+                    }} disabled={!hasWorkflowToolReferences || !isUpdate || hasUnsavedChanges || isAccessRequesting || isPublished}>
                     Request Tool Access{pendingAccessCount ? ` (${pendingAccessCount} pending)` : ''}
                 </Button>
                 <Button startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />} onClick={handleStartTest} disabled={!wfDefId || isServerValidating || isTestStarting}>
@@ -2388,13 +2422,36 @@ export default function WorkflowEditor() {
                 onClose={() => setIsAiAuthoringOpen(false)}
                 onApprove={handleApproveAiDraft}
             />
-            {allProblems.length ? (
-                <Alert severity={blockingProblem ? 'error' : 'warning'} sx={{ mb: 2 }}>
-                    {blockingProblem ? blockingProblem.message : `${warningCount} validation warning${warningCount === 1 ? '' : 's'} found.`}
+            {errorProblems.length ? (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                        {errorProblems.map((problem, index) => (
+                            <Typography component="li" variant="body2" sx={{ overflowWrap: 'anywhere' }}
+                                key={`${problem.message}-${index}`}>
+                                {formatProblemMessage(problem)}
+                            </Typography>
+                        ))}
+                    </Box>
                 </Alert>
-            ) : (
+            ) : null}
+            {warningProblems.length ? (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                        {warningCount} validation warning{warningCount === 1 ? '' : 's'} found
+                    </Typography>
+                    <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+                        {warningProblems.map((problem, index) => (
+                            <Typography component="li" variant="body2" sx={{ overflowWrap: 'anywhere' }}
+                                key={`${problem.message}-${index}`}>
+                                {formatProblemMessage(problem)}
+                            </Typography>
+                        ))}
+                    </Box>
+                </Alert>
+            ) : null}
+            {!allProblems.length ? (
                 <Alert icon={<VerifiedIcon />} severity="success" sx={{ mb: 2 }}>YAML parsed successfully.</Alert>
-            )}
+            ) : null}
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '300px minmax(0, 1fr) 380px' }, gap: 2 }}>
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2, minHeight: 420 }}>
@@ -2405,16 +2462,16 @@ export default function WorkflowEditor() {
                         </Typography>
                     ) : null}
                     <List dense>
-                        {allProblems.length ? allProblems.map((problem, index) => (
+                        {errorProblems.length ? errorProblems.map((problem, index) => (
                             <ListItemButton key={`${problem.severity}-${problem.message}-${index}`}>
                                 <ListItemText
-                                    primary={problem.message}
+                                    primary={formatProblemMessage(problem)}
                                     secondary={formatProblemLocation(problem)}
-                                    primaryTypographyProps={{ color: problem.severity === 'error' ? 'error.main' : 'warning.main' }}
+                                    primaryTypographyProps={{ color: 'error.main' }}
                                 />
                             </ListItemButton>
                         )) : (
-                            <ListItemText primary="No problems detected." />
+                            <ListItemText primary="No blocking problems detected." />
                         )}
                     </List>
                     <Divider sx={{ my: 2 }} />
@@ -2513,7 +2570,7 @@ export default function WorkflowEditor() {
                         extensions={workflowEditorExtensions}
                         onChange={handleDefinitionChange}
                         onUpdate={handleDefinitionEditorUpdate}
-                        editable={!isPublished && !isDraftBootstrapping}
+                        editable={!isPublished}
                     />
                 </Box>
 
@@ -2728,9 +2785,7 @@ export default function WorkflowEditor() {
                             disabled={isCatalogLoading}
                             loading={isCatalogLoading}
                             noOptionsText={catalogKind === 'endpoints'
-                                ? wfDefId
-                                    ? `No eligible API endpoints are available for ${workflowEnvironment}.`
-                                    : 'The workflow draft is being created.'
+                                ? `No eligible API endpoints are available for ${workflowEnvironment}.`
                                 : 'No matching references'}
                             renderInput={params => <TextField
                                 {...params}

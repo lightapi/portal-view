@@ -43,6 +43,22 @@ export function formatProblemLocation(problem: ValidationProblem) {
     return prefix;
 }
 
+export function formatProblemMessage(problem: ValidationProblem) {
+    const match = problem.message.match(
+        /^WORKFLOW_TOOL_ACCESS_(REQUIRED|PENDING|REJECTED|STALE):\s*([^|]+)\|([^|]+)\|([^|]+)(?:\|sha256:[0-9a-f]{64})?$/i,
+    );
+    if (!match) return problem.message.replace(/\|sha256:[0-9a-f]{64}\b/gi, '');
+
+    const status = match[1].toUpperCase();
+    const capabilityRef = match[3];
+    const version = match[4];
+    const label = status === 'REQUIRED' ? 'Tool access required'
+        : status === 'PENDING' ? 'Tool access pending approval'
+            : status === 'REJECTED' ? 'Tool access rejected'
+                : 'Tool access is stale';
+    return `${label}: ${capabilityRef} (version ${version}).`;
+}
+
 export function normalizeServerProblems(value: unknown): ValidationProblem[] {
     return Array.isArray(value)
         ? value.map(toRecord).map(problem => ({
