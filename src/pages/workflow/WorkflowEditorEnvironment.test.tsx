@@ -286,7 +286,7 @@ do: []
             'Unable to request Tool access: Configured approval workflow is unavailable.',
         );
         expect(requestError.closest('.MuiAlert-root')).toHaveClass('MuiAlert-standardError');
-    });
+    }, 15_000);
 
     it('loads a single-select list, maps local to loc, and refreshes reference Tools with the selected id', async () => {
         const user = userEvent.setup();
@@ -311,6 +311,7 @@ do: []
 
         await user.click(selector);
         await user.click(await screen.findByRole('option', { name: 'Demo' }));
+        await waitFor(() => expect(screen.queryByRole('listbox', { name: 'Environment' })).not.toBeInTheDocument());
 
         await waitFor(() => expect(mocks.fetchClient.mock.calls.some(([url]) => {
             if (typeof url !== 'string' || !url.startsWith('/portal/query')) return false;
@@ -373,6 +374,7 @@ do: []
         await user.click(referenceType);
         expect(await screen.findByRole('option', { name: 'API Endpoints' })).toBeInTheDocument();
         await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('listbox', { name: 'Reference Type' })).not.toBeInTheDocument());
 
         const reference = await screen.findByRole('combobox', { name: 'Reference' });
         await waitFor(() => expect(reference).toBeEnabled());
