@@ -29,6 +29,7 @@
     {"operation":"getEventReplay","serviceId":"lightapi.net/user/getEventReplay/0.1.0"},
     {"operation":"approveEventReplay","serviceId":"lightapi.net/user/approveEventReplay/0.1.0"},
     {"operation":"executeEventReplay","serviceId":"lightapi.net/user/executeEventReplay/0.1.0"},
+    {"operation":"processEventReplay","serviceId":"lightapi.net/user/processEventReplay/0.1.0"},
     {"operation":"cancelEventReplay","serviceId":"lightapi.net/user/cancelEventReplay/0.1.0"},
     {"operation":"waiveEventReplayFailure","serviceId":"lightapi.net/user/waiveEventReplayFailure/0.1.0"},
     {"operation":"releaseEventReplayBarrier","serviceId":"lightapi.net/user/releaseEventReplayBarrier/0.1.0"},
@@ -44,6 +45,7 @@
     {"id":"independent-repair-approver-allowed","operation":"approveEventReplayRepair","auditInfo":{"user_id":"user-b","host_id":"host-a"},"requestedHostId":"host-a","reason":"review","approval":{"requesterUserId":"user-a","approverUserId":"user-b"},"expected":"ALLOW"},
     {"id":"repair-approval-does-not-satisfy-plan-approval","operation":"executeEventReplay","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","reason":"execute","repairApproval":{"requesterUserId":"user-a","approverUserId":"user-b"},"replayPlanApproval":null,"expected":"DENY","denialCode":"AUTHORIZATION_DENIED"},
     {"id":"independent-plan-approval-allows-execute","operation":"executeEventReplay","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","reason":"execute","repairApproval":{"requesterUserId":"user-a","approverUserId":"user-b"},"replayPlanApproval":{"requesterUserId":"user-a","approverUserId":"user-c"},"expected":"ALLOW"},
+    {"id":"human-token-processes-existing-intent","operation":"processEventReplay","auditInfo":{"user_id":"user-a","host_id":"host-a"},"requestedHostId":"host-a","expected":"ALLOW"},
     {"id":"role-name-never-interpreted-by-backend","operation":"createEventReplayPlan","auditInfo":{"user_id":"user-a","host_id":"host-a","roles":"one-of-a-thousand-custom-roles"},"requestedHostId":"host-a","reason":"plan","expected":"ALLOW"}
   ]
 }

@@ -9,11 +9,11 @@ const api = fixture('event-replay-api-v2.json');
 const authorization = fixture('event-replay-authorization-v2.json');
 const policy = fixture('event-replay-policy-v2.json');
 
-test('R0 freezes twelve gateway-authorized replay endpoints', () => {
+test('R0 freezes thirteen gateway-authorized replay endpoints', () => {
   assert.equal(contract.contractVersion, 'event-replay-v2');
   assert.equal(contract.compatibleContractVersion, 'event-replay-v1');
-  assert.equal(contract.operations.length, 12);
-  assert.equal(authorization.endpointPermissionHooks.length, 12);
+  assert.equal(contract.operations.length, 13);
+  assert.equal(authorization.endpointPermissionHooks.length, 13);
   assert.equal(authorization.endpointAuthorization.authority, 'light-gateway');
   assert.equal(authorization.endpointAuthorization.roleNamesAreDeploymentDefined, true);
   assert.equal(authorization.rules.backendHardcodedRoleCheck, false);
@@ -82,16 +82,16 @@ test('R0 explicitly inherits v1 state machines and retains error metadata', () =
   assert.equal(typeof errors.get('REPAIR_FINGERPRINT_MISMATCH').retryable, 'boolean');
 });
 
-test('R0 freezes execution-only pause and event-driven wakeup semantics', () => {
+test('R0 freezes execution-only pause and direct execution semantics', () => {
   assert.equal(contract.activation.enabledDefault, true);
   assert.deepEqual(contract.activation.enabledControls, ['EXECUTE_TRANSITION', 'WORKER_CLAIM']);
   assert.ok(contract.activation.enabledDoesNotControl.includes('CAPTURE'));
   assert.ok(contract.activation.enabledDoesNotControl.includes('REPAIR'));
-  assert.equal(contract.notification.channel, 'event_replay_ready');
-  assert.equal(contract.notification.notificationIsWakeupHintOnly, true);
-  assert.equal(contract.notification.durableWorkRecord, 'event_replay_request_t');
-  assert.equal(contract.notification.connectionRequirement, 'DIRECT_OR_SESSION_POOLING');
-  assert.equal(contract.notification.transactionPoolingSupported, false);
+  assert.equal(contract.directExecution.processor, 'processEventReplay');
+  assert.equal(contract.directExecution.durableWorkRecord, 'event_replay_request_t');
+  assert.equal(contract.directExecution.backgroundWorker, false);
+  assert.equal(contract.directExecution.postgresListener, false);
+  assert.equal(contract.directExecution.outerGatewayTimeoutIsAmbiguous, true);
   assert.equal(contract.activation.missingOrStaleReplicaConfirmsPause, false);
 });
 

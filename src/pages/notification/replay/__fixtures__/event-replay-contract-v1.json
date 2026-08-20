@@ -51,6 +51,12 @@
       "baseScope": "portal.w"
     },
     {
+      "name": "processEventReplay",
+      "kind": "QUERY_COMMAND",
+      "serviceId": "lightapi.net/user/processEventReplay/0.1.0",
+      "baseScope": "portal.w"
+    },
+    {
       "name": "cancelEventReplay",
       "kind": "COMMAND",
       "serviceId": "lightapi.net/user/cancelEventReplay/0.1.0",
@@ -329,6 +335,16 @@
       "code": "AUTHORIZATION_DENIED",
       "httpStatus": 403,
       "retryable": false
+    },
+    {
+      "code": "REPLAY_EXECUTION_IN_PROGRESS",
+      "httpStatus": 409,
+      "retryable": false
+    },
+    {
+      "code": "REPLAY_EXECUTION_UNAVAILABLE",
+      "httpStatus": 503,
+      "retryable": true
     }
   ],
   "limits": {
@@ -421,6 +437,7 @@
     "EVENT_REPLAY_PLAN_APPROVAL_REQUESTED",
     "EVENT_REPLAY_PLAN_APPROVED",
     "EVENT_REPLAY_EXECUTION_REQUESTED",
+    "EVENT_REPLAY_EXECUTION_RETRIED",
     "EVENT_REPLAY_ATTEMPT_STARTED",
     "EVENT_REPLAY_ATTEMPT_SUCCEEDED",
     "EVENT_REPLAY_ATTEMPT_FAILED",

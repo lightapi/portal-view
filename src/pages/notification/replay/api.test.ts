@@ -108,5 +108,11 @@ describe('replay repair API', () => {
       'EXACT', 'EXECUTE', 'retry')).rejects.toThrow(/EVENT_REPAIR_REQUIRED.*Create and approve a repair/);
     vi.mocked(fetchClient).mockRejectedValueOnce({ description: 'database host secret' });
     await expect(replayApi.getRepair('host-1', 'repair-1')).rejects.not.toThrow(/database host secret/);
+    vi.mocked(fetchClient).mockRejectedValueOnce({ description: 'REPLAY_EXECUTION_UNAVAILABLE' });
+    await expect(replayApi.execute('host-1', 'replay-1', `sha256:${'5'.repeat(64)}`, 'retry'))
+      .rejects.toThrow(/REPLAY_EXECUTION_UNAVAILABLE.*may still be running/);
+    vi.mocked(fetchClient).mockRejectedValueOnce({ description: 'REPLAY_EXECUTION_IN_PROGRESS' });
+    await expect(replayApi.execute('host-1', 'replay-1', `sha256:${'5'.repeat(64)}`, 'retry'))
+      .rejects.toThrow(/REPLAY_EXECUTION_IN_PROGRESS.*already owns/);
   });
 });

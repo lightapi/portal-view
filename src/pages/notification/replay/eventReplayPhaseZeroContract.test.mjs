@@ -11,7 +11,7 @@ const authorization = fixture('event-replay-authorization-v1.json');
 test('Phase 0 keeps replay operations in the user namespace and all gates disabled', () => {
   assert.equal(contract.contractVersion, 'event-replay-v1');
   assert.equal(contract.apiNamespace, 'lightapi.net/user');
-  assert.equal(contract.operations.length, 9);
+  assert.equal(contract.operations.length, 10);
   assert.ok(contract.operations.every(({ serviceId }) => serviceId.startsWith('lightapi.net/user/') && serviceId.endsWith('/0.1.0')));
   assert.ok(contract.operations.some(({ name }) => name === 'waiveEventReplayFailure'));
   assert.ok(Object.values(contract.featureGates).every((enabled) => enabled === false));
@@ -40,7 +40,7 @@ test('Phase 0 delegates endpoint roles while retaining host and approval invaria
   assert.equal(decision('cross-host-denied').expected, 'DENY');
   assert.equal(decision('self-approval-denied').expected, 'DENY');
   assert.equal(decision('client-credentials-human-command-denied').expected, 'DENY');
-  assert.equal(decision('trusted-worker-may-run-worker-only').expected, 'ALLOW');
+  assert.equal(decision('authorized-user-may-process-committed-intent').expected, 'ALLOW');
   assert.equal(authorization.rules.backendHardcodedRoleCheck, false);
   assert.equal(authorization.rules.backendDedicatedPermissionClaimRequired, false);
   assert.equal(authorization.rules.uiRoleCheckIsSecurityBoundary, false);

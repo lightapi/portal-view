@@ -11,8 +11,9 @@ export function canApprove(status, stale, requester, currentUser) {
   return status === 'AWAITING_APPROVAL' && !stale && !!currentUser && requester !== currentUser;
 }
 
-export function canExecute(status, stale, validationMode, approvedBy, planHash, confirmedHash) {
-  return status === 'APPROVED' && !stale && validationMode !== 'VALIDATE_ONLY'
+export function canExecute(status, stale, validationMode, approvedBy, planHash, confirmedHash, retryable = false) {
+  return (status === 'APPROVED' || (['INSTALLING_BARRIER', 'RUNNING'].includes(status) && retryable))
+    && !stale && validationMode !== 'VALIDATE_ONLY'
     && !!approvedBy && planHash === confirmedHash;
 }
 

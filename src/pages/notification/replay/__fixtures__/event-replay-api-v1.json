@@ -147,8 +147,25 @@
       },
       "response": {
         "replayRequestId": "019f6001-0000-7000-8000-000000000001",
-        "status": "INSTALLING_BARRIER",
-        "scheduled": true
+        "status": "SUCCEEDED",
+        "retryable": false,
+        "failureCode": null
+      }
+    },
+    {
+      "operation": "processEventReplay",
+      "serviceId": "lightapi.net/user/processEventReplay/0.1.0",
+      "request": {
+        "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "planHash": "sha256:6a713ca18dfb4658947b72a3fd49f4bf6ed7f0b66f06f4de02577dcb1216b63a"
+      },
+      "response": {
+        "replayRequestId": "019f6001-0000-7000-8000-000000000001",
+        "status": "SUCCEEDED",
+        "retryable": false,
+        "failureCode": null,
+        "leaseExpiresAt": null
       }
     },
     {

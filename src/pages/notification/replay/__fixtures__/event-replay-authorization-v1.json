@@ -8,12 +8,6 @@
     "endpointRoleConfiguration": "rule.endpointRules.<serviceId>.permission.roles",
     "roleNamesAreDeploymentDefined": true
   },
-  "trustedWorkerIdentity": {
-    "type": "CLIENT_CREDENTIALS",
-    "clientIdConfigKey": "eventReplay.workerClientId",
-    "allowedOperation": "runReplayWorker",
-    "humanCommandsAllowed": false
-  },
   "rules": {
     "gatewayEndpointAuthorizationRequired": true,
     "backendHardcodedRoleCheck": false,
@@ -183,13 +177,14 @@
       "denialCode": "AUTHORIZATION_DENIED"
     },
     {
-      "id": "trusted-worker-may-run-worker-only",
-      "operation": "runReplayWorker",
+      "id": "authorized-user-may-process-committed-intent",
+      "operation": "processEventReplay",
       "auditInfo": {
-        "client_id": "event-replay-worker",
-        "host_id": "host-a"
+        "user_id": "user-admin-r",
+        "host_id": "host-a",
+        "roles": "deployment-defined-replay-executor",
+        "scopes": ["portal.w"]
       },
-      "configuredWorkerClientId": "event-replay-worker",
       "requestedHostId": "host-a",
       "expected": "ALLOW"
     }

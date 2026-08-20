@@ -33,6 +33,7 @@
     {"name":"getEventReplay","kind":"QUERY","serviceId":"lightapi.net/user/getEventReplay/0.1.0","compatibility":"ADDITIVE_REPAIR_STATUS"},
     {"name":"approveEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/approveEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
     {"name":"executeEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/executeEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
+    {"name":"processEventReplay","kind":"QUERY_COMMAND","serviceId":"lightapi.net/user/processEventReplay/0.1.0","compatibility":"DIRECT_EXECUTION"},
     {"name":"cancelEventReplay","kind":"COMMAND","serviceId":"lightapi.net/user/cancelEventReplay/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
     {"name":"waiveEventReplayFailure","kind":"COMMAND","serviceId":"lightapi.net/user/waiveEventReplayFailure/0.1.0","compatibility":"RESTRICTED_TO_UNORDERED_FAILURES"},
     {"name":"releaseEventReplayBarrier","kind":"COMMAND","serviceId":"lightapi.net/user/releaseEventReplayBarrier/0.1.0","compatibility":"UNCHANGED_FROM_V1"},
@@ -157,18 +158,14 @@
     "jsonbReserializationAllowed": false,
     "eventStoreJsonbMayBeSoleReplayPayload": false
   },
-  "notification": {
-    "channel": "event_replay_ready",
-    "producer": "executeEventReplay",
-    "payload": "replayRequestId UUID text",
-    "deliveredAfterCommit": true,
+  "directExecution": {
+    "command": "executeEventReplay",
+    "processor": "processEventReplay",
     "durableWorkRecord": "event_replay_request_t",
-    "notificationIsWakeupHintOnly": true,
-    "recoveryScans": ["STARTUP_AFTER_LISTEN", "RECONNECT_AFTER_LISTEN", "EVERY_60_SECONDS_WHILE_ENABLED"],
-    "connectionRequirement": "DIRECT_OR_SESSION_POOLING",
-    "transactionPoolingSupported": false,
-    "startupSelfTestRequired": true,
-    "recoveryScanDoesNotProveListenerHealthy": true
+    "backgroundWorker": false,
+    "postgresListener": false,
+    "automaticRetry": false,
+    "outerGatewayTimeoutIsAmbiguous": true
   },
   "orderedScopeGuard": {
     "effectiveAfter": "CANONICAL_FAILURE_CAPTURE_COMMIT",
@@ -209,6 +206,8 @@
     {"code":"PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
     {"code":"DEFERRED_PROJECTION_FAILED","httpStatus":500,"retryable":false,"origin":"V1"},
     {"code":"AUTHORIZATION_DENIED","httpStatus":403,"retryable":false,"origin":"V1"},
+    {"code":"REPLAY_EXECUTION_UNAVAILABLE","httpStatus":503,"retryable":true,"origin":"V2"},
+    {"code":"REPLAY_EXECUTION_IN_PROGRESS","httpStatus":409,"retryable":false,"origin":"V2"},
     {"code":"INVALID_REPLAY_STATE","httpStatus":409,"retryable":false,"origin":"V2"},
     {"code":"INVALID_REQUEST","httpStatus":400,"retryable":false,"origin":"V2"},
     {"code":"FAILURE_NOT_FOUND","httpStatus":404,"retryable":false,"origin":"V2"},

@@ -21,6 +21,8 @@ const publicCodes = [
   'REPLAY_EXECUTION_PAUSED', 'REPAIR_SCHEMA_VALIDATION_FAILED', 'REPAIR_APPROVER_MUST_DIFFER',
   'REPAIR_NOT_APPROVED', 'REPAIR_FINGERPRINT_MISMATCH', 'STALE_PLAN', 'EVENT_NOT_REPLAYABLE',
   'INVALID_REPLAY_STATE',
+  'REPLAY_EXECUTION_IN_PROGRESS',
+  'REPLAY_EXECUTION_UNAVAILABLE',
 ] as const;
 
 const publicMessage: Partial<Record<(typeof publicCodes)[number], string>> = {
@@ -34,6 +36,8 @@ const publicMessage: Partial<Record<(typeof publicCodes)[number], string>> = {
   REPAIR_FINGERPRINT_MISMATCH: 'The immutable repair fingerprint changed. Review the audit trail and re-plan.',
   STALE_PLAN: 'The immutable plan is stale. Refresh the failure and create a new plan.',
   INVALID_REPLAY_STATE: 'This operation is incompatible with the current failure state. Ordered failures must be repaired or replayed.',
+  REPLAY_EXECUTION_IN_PROGRESS: 'Another request already owns this replay execution. Refresh its durable status before trying again.',
+  REPLAY_EXECUTION_UNAVAILABLE: 'Execution may still be running. The current durable replay status will be refreshed.',
 };
 
 const resultCode = (value: unknown) => {

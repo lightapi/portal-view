@@ -21,6 +21,8 @@ assert.equal(canApprove('AWAITING_APPROVAL', true, 'requester', 'approver'), fal
 assert.equal(canExecute('APPROVED', false, 'EXECUTE', 'approver', 'sha256:abc', 'sha256:abc'), true);
 assert.equal(canExecute('APPROVED', false, 'EXECUTE', 'approver', 'sha256:abc', 'sha256:different'), false);
 assert.equal(canExecute('APPROVED', false, 'VALIDATE_ONLY', 'approver', 'sha256:abc', 'sha256:abc'), false);
+assert.equal(canExecute('RUNNING', false, 'EXECUTE', 'approver', 'sha256:abc', 'sha256:abc', true), true);
+assert.equal(canExecute('RUNNING', false, 'EXECUTE', 'approver', 'sha256:abc', 'sha256:abc', false), false);
 assert.equal(isNotificationMatch({ originalTransactionId: 'tx-18' }, ['tx-18']), true);
 
 const admin = read('EventReplayAdmin.tsx');

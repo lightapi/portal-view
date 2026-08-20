@@ -119,6 +119,29 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationIdentities
     catch (failure) { setError(failure instanceof Error ? failure.message : 'The replay operation failed.'); }
     finally { setBusy(false); }
   };
+  const executeReplay = async (reason: string) => {
+    if (!replay) return;
+    setBusy(true); setError(null);
+    try {
+      await replayApi.execute(hostId, replay.replayRequestId, replay.planHash, reason);
+      await loadReplay(replay.replayRequestId);
+    } catch (failure) {
+      const message = failure instanceof Error ? failure.message : 'Replay execution did not start.';
+      try {
+        const durable = await replayApi.getReplay(hostId, replay.replayRequestId);
+        setReplay(durable);
+        const transportAmbiguous = message.includes('REPLAY_EXECUTION_UNAVAILABLE')
+          || message.includes('REQUEST_FAILED');
+        if (!transportAmbiguous || durable.status === 'APPROVED') {
+          setError(message);
+        }
+      } catch {
+        setError(failure instanceof Error ? failure.message : 'Replay execution status is unavailable.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
   const createPlan = (input: ReplayPlanInput) => run(async () => {
     const failureIds = planningRepairId && repair ? [repair.failureId] : Array.from(selected);
     const plan = await replayApi.createPlan(hostId, projectionName, consumerGroup, failureIds,
@@ -175,7 +198,7 @@ export function EventReplayAdmin({ hostId, currentUserId, notificationIdentities
     {replay ? <><Divider /><ReplayStatusPanel replay={replay} />
       <ReplayApprovalPanel replay={replay} currentUserId={currentUserId} busy={busy} error={error}
         onApprove={(reason) => run(() => replayApi.approve(hostId, replay.replayRequestId, replay.planHash, reason))}
-        onExecute={(reason) => run(() => replayApi.execute(hostId, replay.replayRequestId, replay.planHash, reason))}
+        onExecute={executeReplay}
         onCancel={(reason) => run(() => replayApi.cancel(hostId, replay.replayRequestId, replay.planHash, reason))} />
       <ReplayQuarantinePanel replay={replay} currentUserId={currentUserId} busy={busy} error={error}
         onFollowUp={(failureId) => { setReplay(null); rememberReplay(null); setSelected(new Set([failureId])); }}

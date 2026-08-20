@@ -173,6 +173,9 @@ export type ReplayStatus = {
   expiresAt: string;
   failureCode?: string | null;
   failureMessage?: string | null;
+  retryable?: boolean;
+  leaseOwner?: string | null;
+  leaseExpiresAt?: string | null;
   isolationMode?: string | null;
   projectionCommitted: boolean;
   repairStatus?: string | null;

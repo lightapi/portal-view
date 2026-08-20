@@ -11,14 +11,16 @@ export function ReplayApprovalPanel({ replay, currentUserId, busy, error, onAppr
   const [confirmed, setConfirmed] = useState(false);
   useEffect(() => { setConfirmed(false); setConfirmedHash(''); setReason(''); }, [replay.replayRequestId, replay.status]);
   const approvable = canApprove(replay.status, replay.stale, replay.requestedBy, currentUserId);
-  const executable = canExecute(replay.status, replay.stale, replay.validationMode, replay.approvedBy, replay.planHash, confirmedHash);
+  const executable = canExecute(replay.status, replay.stale, replay.validationMode, replay.approvedBy,
+    replay.planHash, confirmedHash, replay.retryable);
+  const resumable = ['INSTALLING_BARRIER', 'RUNNING'].includes(replay.status) && replay.retryable;
   const cancellable = ['READY', 'AWAITING_APPROVAL', 'APPROVED'].includes(replay.status) && !replay.stale;
   return <Paper variant="outlined" sx={{ p: 2 }}><Stack spacing={1.5}>
     <Typography variant="h6">Approval and execution</Typography>
     <Alert severity="warning">Approval and execution are separate server-authorized actions. The requester cannot approve their own plan.</Alert>
     <TextField label="Action reason" value={reason} multiline minRows={2} onChange={(event) => setReason(event.target.value)} inputProps={{ maxLength: 2048 }} />
     <TextField label="Confirm exact plan hash before execution" value={confirmedHash} onChange={(event) => setConfirmedHash(event.target.value)}
-      placeholder={replay.planHash} disabled={replay.status !== 'APPROVED'} />
+      placeholder={replay.planHash} disabled={replay.status !== 'APPROVED' && !resumable} />
     <FormControlLabel control={<Checkbox checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />}
       label="I reviewed the immutable plan, dependency-added transactions, isolation scope, and blast radius." />
     {replay.requestedBy === currentUserId && replay.status === 'AWAITING_APPROVAL'
@@ -27,9 +29,8 @@ export function ReplayApprovalPanel({ replay, currentUserId, busy, error, onAppr
     {error ? <Alert severity="error">{error}</Alert> : null}
     <Stack direction="row" spacing={1} flexWrap="wrap">
       <Button variant="contained" disabled={busy || !confirmed || !reason.trim() || !approvable} onClick={() => onApprove(reason.trim())}>Approve exact hash</Button>
-      <Button color="warning" variant="contained" disabled={busy || !confirmed || !reason.trim() || !executable} onClick={() => onExecute(reason.trim())}>Execute approved plan</Button>
+      <Button color="warning" variant="contained" disabled={busy || !confirmed || !reason.trim() || !executable} onClick={() => onExecute(reason.trim())}>{resumable ? 'Retry execution' : 'Execute approved plan'}</Button>
       <Button color="error" variant="outlined" disabled={busy || !reason.trim() || !cancellable} onClick={() => onCancel(reason.trim())}>Cancel plan</Button>
     </Stack>
   </Stack></Paper>;
 }
-
