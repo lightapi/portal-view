@@ -15,6 +15,15 @@ type UserState = { host?: string };
 type Row = Record<string, any>;
 type AgentOption = { id: string; label: string };
 const TABS = ['Overview', 'Sources', 'Documents', 'Sync Runs', 'Index Generations', 'Incremental', 'Agent Bindings', 'Access Policy', 'Retrieval Playground', 'Quality', 'Settings'];
+const COMMAND_INVALIDATION: Record<string, number[]> = {
+    createKnowledgeSource: [1], requestKnowledgeSourceSync: [3, 5],
+    requestKnowledgeBaseReindex: [3, 4], requestKnowledgeBaseCompaction: [4, 5],
+    bindAgentKnowledgeBase: [6, 7], updateKnowledgeBase: [10],
+    deactivateKnowledgeBase: [7, 10], requestKnowledgeBaseEmbeddingMigration: [4, 9],
+    pauseKnowledgeBaseEmbeddingMigration: [4, 9], resumeKnowledgeBaseEmbeddingMigration: [4, 9],
+    cancelKnowledgeBaseEmbeddingMigration: [4, 9], promoteKnowledgeBaseIndexGeneration: [4, 9],
+    rollbackKnowledgeBaseIndexGeneration: [4, 9],
+};
 
 function JsonRows({ rows, empty }: { rows: Row[]; empty: string }) {
     if (!rows.length) return <Alert severity="info">{empty}</Alert>;
@@ -22,8 +31,6 @@ function JsonRows({ rows, empty }: { rows: Row[]; empty: string }) {
         <CardContent><Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 12 }}>{JSON.stringify(row, null, 2)}</Box></CardContent>
     </Card>)}</Stack>;
 }
-
-const TERMINAL_SYNC_STATES = new Set(['SUCCEEDED', 'FAILED', 'PAUSED_BUDGET', 'CANCELLED']);
 
 function SyncRuns({ rows }: { rows: Row[] }) {
     if (!rows.length) return <Alert severity="info">No sync run has been recorded.</Alert>;
@@ -95,89 +102,96 @@ export default function KnowledgeBaseWorkspace() {
     const [evidenceRequired, setEvidenceRequired] = useState(false);
 
     const context = useMemo(() => ({ hostId: host, environment, knowledgeBaseId }), [environment, host, knowledgeBaseId]);
-    const load = useCallback(async (showBusy = true, preserveMessage = false) => {
+    const loadOverview = useCallback(async (showBusy = true, preserveMessage = false) => {
         if (!host || !knowledgeBaseId) return;
         if (showBusy) setBusy(true);
         if (!preserveMessage) setMessage('');
         try {
-            const [policyResponse, profileResponse, retrievalResponse, agentOptions] = await Promise.all([
-                knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>(
-                    'getKnowledgeIngestionPolicies', { hostId: host, environment }),
-                knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>(
-                    'getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
-                knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>(
-                    'getKnowledgeRetrievalProfiles', { hostId: host, environment }),
-                knowledgeQuery<AgentOption[]>('getAgentDefinitionLabel', { hostId: host }),
-            ]);
-            const [fresh, sourceRows, documentRows, syncRows, generationRows, bindingRows, uploadRows, changeRows, anchorRows, compactionRows, antiEntropyRows, aclFreshnessRows, aclReconciliationRows, aclTransitionRows, connectorObjectRows, migrationRows, migrationEvaluationRows, retentionRows, checkpointRows, purgeRows] = await Promise.all([
-                knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context),
-                knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
-                knowledgeQuery<{ knowledgeDocuments?: Row[] }>('getKnowledgeDocuments', context),
-                knowledgeQuery<{ knowledgeSyncRuns?: Row[] }>('getKnowledgeSyncRuns', context),
-                knowledgeQuery<{ knowledgeIndexGenerations?: Row[] }>('getKnowledgeIndexGenerations', context),
-                knowledgeQuery<{ agentKnowledgeBaseBindings?: Row[] }>('getAgentKnowledgeBaseBindings', { hostId: host, environment }),
-                knowledgeQuery<{ knowledgeUploads?: Row[] }>('getKnowledgeUploads', context),
-                knowledgeQuery<{ knowledgeIncrementalChanges?: Row[] }>('getKnowledgeIncrementalChanges', context),
-                knowledgeQuery<{ knowledgePassageAnchors?: Row[] }>('getKnowledgePassageAnchors', context),
-                knowledgeQuery<{ knowledgeCompactionRuns?: Row[] }>('getKnowledgeCompactionRuns', context),
-                knowledgeQuery<{ knowledgeAntiEntropyRuns?: Row[] }>('getKnowledgeAntiEntropyRuns', context),
-                knowledgeQuery<{ knowledgeAclFreshness?: Row[] }>('getKnowledgeAclFreshness', context),
-                knowledgeQuery<{ knowledgeAclReconciliations?: Row[] }>('getKnowledgeAclReconciliations', context),
-                knowledgeQuery<{ knowledgeAclTransitions?: Row[] }>('getKnowledgeAclTransitions', context),
-                knowledgeQuery<{ knowledgeConnectorObjects?: Row[] }>('getKnowledgeConnectorObjects', context),
-                knowledgeQuery<{ knowledgeBaseEmbeddingMigrations?: Row[] }>('getKnowledgeBaseEmbeddingMigrations', context),
-                knowledgeQuery<{ knowledgeMigrationEvaluations?: Row[] }>('getKnowledgeMigrationEvaluations', context),
-                knowledgeQuery<{ knowledgeGenerationRetention?: Row[] }>('getKnowledgeGenerationRetention', context),
-                knowledgeQuery<{ knowledgeBackupCheckpoints?: Row[] }>('getKnowledgeBackupCheckpoints', context),
-                knowledgeQuery<{ knowledgePurgeEvidence?: Row[] }>('getKnowledgePurgeEvidence', context),
-            ]);
+            const fresh = await knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context);
             setBase(fresh);
-            const activeProfiles = (profileResponse.knowledgeEmbeddingProfiles || [])
-                .filter(profile => profile.active !== false);
-            setEmbeddingProfiles(activeProfiles);
-            const activeRetrievalProfiles = (retrievalResponse.knowledgeRetrievalProfiles || [])
-                .filter(profile => profile.active !== false);
-            setRetrievalProfiles(activeRetrievalProfiles);
-            setAgents(agentOptions || []);
-            setAgentId(current => (agentOptions || []).some(agent => agent.id === current)
-                ? current : '');
-            setRetrievalProfileId(current => activeRetrievalProfiles.some(
-                profile => profile.profileId === current)
-                ? current : activeRetrievalProfiles[0]?.profileId || '');
             setDesiredEmbeddingProfile(fresh.desiredEmbeddingProfileId
                 ? `${fresh.desiredEmbeddingProfileId}:${fresh.desiredEmbeddingProfileRevision || 1}`
                 : '');
-            const activePolicies = (policyResponse.knowledgeIngestionPolicies || [])
-                .filter(policy => policy.active !== false);
-            setIngestionPolicies(activePolicies);
-            setIngestionPolicyId(current => activePolicies.some(
-                policy => policy.ingestionPolicyId === current)
-                ? current : activePolicies[0]?.ingestionPolicyId || '');
-            setSources(sourceRows.knowledgeSources || []);
-            setDocuments(documentRows.knowledgeDocuments || []);
-            setRuns(syncRows.knowledgeSyncRuns || []);
-            setGenerations(generationRows.knowledgeIndexGenerations || []);
-            setBindings((bindingRows.agentKnowledgeBaseBindings || []).filter(row => row.knowledgeBaseId === knowledgeBaseId));
+        } catch (error) {
+            setMessageSeverity('error');
+            setMessage(knowledgeError(error));
+        } finally {
+            if (showBusy) setBusy(false);
+        }
+    }, [context, host, knowledgeBaseId]);
+
+    const loadTab = useCallback(async (selected: number, showBusy = true, preserveMessage = false) => {
+        if (!host || !knowledgeBaseId || selected === 0 || selected === 8) return;
+        if (showBusy) setBusy(true);
+        if (!preserveMessage) setMessage('');
+        try {
+            if (selected === 1) {
+                const [sourceRows, policyResponse] = await Promise.all([
+                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
+                    knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>('getKnowledgeIngestionPolicies', { hostId: host, environment }),
+                ]);
+                setSources(sourceRows.knowledgeSources || []);
+                const activePolicies = (policyResponse.knowledgeIngestionPolicies || []).filter(policy => policy.active !== false);
+                setIngestionPolicies(activePolicies);
+                setIngestionPolicyId(current => activePolicies.some(policy => policy.ingestionPolicyId === current) ? current : activePolicies[0]?.ingestionPolicyId || '');
+            } else if (selected === 2) {
+                const rows = await knowledgeQuery<{ knowledgeDocuments?: Row[] }>('getKnowledgeDocuments', context);
+                setDocuments(rows.knowledgeDocuments || []);
+            } else if (selected === 3) {
+                const rows = await knowledgeQuery<{ knowledgeSyncRuns?: Row[] }>('getKnowledgeSyncRuns', context);
+                setRuns(rows.knowledgeSyncRuns || []);
+            } else if (selected === 4 || selected === 9) {
+                const [generationRows, operations, profiles] = await Promise.all([
+                    knowledgeQuery<{ knowledgeIndexGenerations?: Row[] }>('getKnowledgeIndexGenerations', context),
+                    knowledgeQuery<Row>('getKnowledgeProductionOperations', context),
+                    knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
+                ]);
+                setGenerations(generationRows.knowledgeIndexGenerations || []);
+                setEmbeddingProfiles((profiles.knowledgeEmbeddingProfiles || []).filter(profile => profile.active !== false));
+                setProductionOperations([
+                    ...(operations.knowledgeBaseEmbeddingMigrations || []).map((row: Row) => ({ diagnosticType: 'EMBEDDING_MIGRATION', ...row })),
+                    ...(operations.knowledgeMigrationEvaluations || []).map((row: Row) => ({ diagnosticType: 'MIGRATION_EVALUATION', ...row })),
+                    ...(operations.knowledgeGenerationRetention || []).map((row: Row) => ({ diagnosticType: 'GENERATION_RETENTION', ...row })),
+                    ...(operations.knowledgeBackupCheckpoints || []).map((row: Row) => ({ diagnosticType: 'BACKUP_CHECKPOINT', ...row })),
+                    ...(operations.knowledgePurgeEvidence || []).map((row: Row) => ({ diagnosticType: 'PURGE_EVIDENCE', ...row })),
+                ]);
+            } else if (selected === 5) {
+                const rows = await knowledgeQuery<Row>('getKnowledgeIncrementalOperations', context);
             setIncremental([
-                ...(uploadRows.knowledgeUploads || []).map(row => ({ diagnosticType: 'UPLOAD', ...row })),
-                ...(changeRows.knowledgeIncrementalChanges || []).map(row => ({ diagnosticType: 'CHANGE', ...row })),
-                ...(anchorRows.knowledgePassageAnchors || []).map(row => ({ diagnosticType: 'PASSAGE_ANCHOR', ...row })),
-                ...(compactionRows.knowledgeCompactionRuns || []).map(row => ({ diagnosticType: 'COMPACTION', ...row })),
-                ...(antiEntropyRows.knowledgeAntiEntropyRuns || []).map(row => ({ diagnosticType: 'ANTI_ENTROPY', ...row })),
+                    ...(rows.knowledgeUploads || []).map((row: Row) => ({ diagnosticType: 'UPLOAD', ...row })),
+                    ...(rows.knowledgeIncrementalChanges || []).map((row: Row) => ({ diagnosticType: 'CHANGE', ...row })),
+                    ...(rows.knowledgePassageAnchors || []).map((row: Row) => ({ diagnosticType: 'PASSAGE_ANCHOR', ...row })),
+                    ...(rows.knowledgeCompactionRuns || []).map((row: Row) => ({ diagnosticType: 'COMPACTION', ...row })),
+                    ...(rows.knowledgeAntiEntropyRuns || []).map((row: Row) => ({ diagnosticType: 'ANTI_ENTROPY', ...row })),
             ]);
+            } else if (selected === 6) {
+                const [bindingRows, retrievalResponse, agentOptions] = await Promise.all([
+                    knowledgeQuery<{ agentKnowledgeBaseBindings?: Row[] }>('getAgentKnowledgeBaseBindings', { hostId: host, environment }),
+                    knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>('getKnowledgeRetrievalProfiles', { hostId: host, environment }),
+                    knowledgeQuery<AgentOption[]>('getAgentDefinitionLabel', { hostId: host }),
+                ]);
+                const activeProfiles = (retrievalResponse.knowledgeRetrievalProfiles || []).filter(profile => profile.active !== false);
+                setBindings((bindingRows.agentKnowledgeBaseBindings || []).filter(row => row.knowledgeBaseId === knowledgeBaseId));
+                setRetrievalProfiles(activeProfiles);
+                setAgents(agentOptions || []);
+                setAgentId(current => (agentOptions || []).some(agent => agent.id === current) ? current : '');
+                setRetrievalProfileId(current => activeProfiles.some(profile => profile.profileId === current) ? current : activeProfiles[0]?.profileId || '');
+            } else if (selected === 7) {
+                const [sourceRows, rows] = await Promise.all([
+                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
+                    knowledgeQuery<Row>('getKnowledgeAclStatus', context),
+                ]);
+                setSources(sourceRows.knowledgeSources || []);
             setAccessDiagnostics([
-                ...(aclFreshnessRows.knowledgeAclFreshness || []).map(row => ({ diagnosticType: 'ACL_FRESHNESS', ...row })),
-                ...(aclReconciliationRows.knowledgeAclReconciliations || []).map(row => ({ diagnosticType: 'ACL_RECONCILIATION', ...row })),
-                ...(aclTransitionRows.knowledgeAclTransitions || []).map(row => ({ diagnosticType: 'ACL_TRANSITION', ...row })),
-                ...(connectorObjectRows.knowledgeConnectorObjects || []).map(row => ({ diagnosticType: 'CONNECTOR_OBJECT', ...row })),
+                    ...(rows.knowledgeAclFreshness || []).map((row: Row) => ({ diagnosticType: 'ACL_FRESHNESS', ...row })),
+                    ...(rows.knowledgeAclReconciliations || []).map((row: Row) => ({ diagnosticType: 'ACL_RECONCILIATION', ...row })),
+                    ...(rows.knowledgeAclTransitions || []).map((row: Row) => ({ diagnosticType: 'ACL_TRANSITION', ...row })),
+                    ...(rows.knowledgeConnectorObjects || []).map((row: Row) => ({ diagnosticType: 'CONNECTOR_OBJECT', ...row })),
             ]);
-            setProductionOperations([
-                ...(migrationRows.knowledgeBaseEmbeddingMigrations || []).map(row => ({ diagnosticType: 'EMBEDDING_MIGRATION', ...row })),
-                ...(migrationEvaluationRows.knowledgeMigrationEvaluations || []).map(row => ({ diagnosticType: 'MIGRATION_EVALUATION', ...row })),
-                ...(retentionRows.knowledgeGenerationRetention || []).map(row => ({ diagnosticType: 'GENERATION_RETENTION', ...row })),
-                ...(checkpointRows.knowledgeBackupCheckpoints || []).map(row => ({ diagnosticType: 'BACKUP_CHECKPOINT', ...row })),
-                ...(purgeRows.knowledgePurgeEvidence || []).map(row => ({ diagnosticType: 'PURGE_EVIDENCE', ...row })),
-            ]);
+            } else if (selected === 10) {
+                const profiles = await knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment });
+                setEmbeddingProfiles((profiles.knowledgeEmbeddingProfiles || []).filter(profile => profile.active !== false));
+            }
         } catch (error) {
             setMessageSeverity('error');
             setMessage(knowledgeError(error));
@@ -186,21 +200,41 @@ export default function KnowledgeBaseWorkspace() {
         }
     }, [context, environment, host, knowledgeBaseId]);
 
-    useEffect(() => { void load(); }, [load]);
+    useEffect(() => { void loadOverview(); }, [loadOverview]);
+    useEffect(() => { void loadTab(tab); }, [loadTab, tab]);
 
-    const syncInProgress = runs.some(run => !TERMINAL_SYNC_STATES.has(String(run.state)));
+    const syncInProgress = Boolean(base?.hasActiveSync || (base?.activeJobCount || 0) > 0);
     useEffect(() => {
         if (!syncInProgress) return undefined;
-        const timer = window.setInterval(() => void load(false, true), 3000);
+        const timer = window.setInterval(() => {
+            void knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context)
+                .then(fresh => {
+                    setBase(fresh);
+                    if (!fresh.hasActiveSync && (fresh.activeJobCount || 0) === 0) {
+                        void loadTab(tab, false, true);
+                    }
+                }).catch(error => {
+                    setMessageSeverity('error');
+                    setMessage(knowledgeError(error));
+                });
+        }, 3000);
         return () => window.clearInterval(timer);
-    }, [load, syncInProgress]);
+    }, [context, loadTab, syncInProgress, tab]);
+
+    const refresh = useCallback(async (showBusy = true) => {
+        await loadOverview(showBusy);
+        await loadTab(tab, false, true);
+    }, [loadOverview, loadTab, tab]);
 
     const command = useCallback(async (action: string, data: Row = {}) => {
         setBusy(true);
         setMessage('');
         try {
             await knowledgeCommand(action, { scope: base?.hostId ? 'TENANT' : 'GLOBAL', environment, knowledgeBaseId, ...data });
-            await load(false, true);
+            await loadOverview(false, true);
+            if ((COMMAND_INVALIDATION[action] || []).includes(tab)) {
+                await loadTab(tab, false, true);
+            }
             setMessageSeverity('success');
             setMessage(action === 'requestKnowledgeSourceSync'
                 ? 'Sync request accepted. This page will refresh while the worker processes it.'
@@ -211,7 +245,7 @@ export default function KnowledgeBaseWorkspace() {
         } finally {
             setBusy(false);
         }
-    }, [base?.hostId, environment, knowledgeBaseId, load]);
+    }, [base?.hostId, environment, knowledgeBaseId, loadOverview, loadTab, tab]);
 
     const active = generations.find(row => row.state === 'PROMOTED' || row.indexGenerationId === base?.activeGenerationId);
     const migration = productionOperations.find(row => row.diagnosticType === 'EMBEDDING_MIGRATION' && !['CANCELLED', 'FAILED', 'RETIRED', 'ROLLED_BACK'].includes(row.state));
@@ -232,14 +266,14 @@ export default function KnowledgeBaseWorkspace() {
         <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" sx={{ my: 2 }}>
             <Box><Stack direction="row" spacing={1} alignItems="center"><Typography variant="h4">{base?.name || knowledgeBaseId}</Typography><Chip size="small" label={base?.hostId ? 'TENANT' : 'GLOBAL'} color={base?.hostId ? 'primary' : 'secondary'} /><Chip size="small" label={base?.status || 'Loading'} /></Stack>
                 <Typography color="text.secondary">{knowledgeBaseId} · {environment}</Typography></Box>
-            <Stack direction="row" spacing={1}><Button startIcon={<RefreshIcon />} disabled={busy} onClick={() => void load()}>Refresh</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseReindex')}>Rebuild full BASE</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseCompaction')}>Compact DELTAs</Button></Stack>
+            <Stack direction="row" spacing={1}><Button startIcon={<RefreshIcon />} disabled={busy} onClick={() => void refresh()}>Refresh</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseReindex')}>Rebuild full BASE</Button><Button disabled={busy} onClick={() => void command('requestKnowledgeBaseCompaction')}>Compact DELTAs</Button></Stack>
         </Stack>
         {message && <Alert severity={messageSeverity} sx={{ mb: 2 }}>{message}</Alert>}
         <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>{TABS.map(label => <Tab key={label} label={label} />)}</Tabs>
         {tab === 0 && <Grid container spacing={2}>{[
-            ['Desired state', base?.status || '—'], ['Effective projection', base?.projectionState || 'Pending'],
+            ['Desired state', base?.status || '—'], ['Effective projection', base?.effectiveState || base?.projectionState || 'Pending'],
             ['Active BASE', base?.activeGenerationId || 'None'], ['Pointer version', String(base?.pointerVersion ?? '—')],
-            ['Sources', String(sources.length)], ['Documents', String(documents.length)],
+            ['Active sync', base?.hasActiveSync ? 'Yes' : 'No'], ['Active jobs', String(base?.activeJobCount ?? 0)],
         ].map(([label, value]) => <Grid key={label} size={{ xs: 12, md: 4 }}><Card variant="outlined"><CardContent><Typography color="text.secondary">{label}</Typography><Typography sx={{ overflowWrap: 'anywhere' }}>{value}</Typography></CardContent></Card></Grid>)}</Grid>}
         {tab === 1 && <Box><Stack direction="row" spacing={1} sx={{ mb: 2 }}><Button variant="contained" onClick={() => setSourceOpen(true)}>Add Git/Markdown source</Button>{sources.map(source => <Button key={source.sourceId} disabled={busy} onClick={() => void command('requestKnowledgeSourceSync', { sourceId: source.sourceId })}>Sync {source.displayName}</Button>)}</Stack><JsonRows rows={sources} empty="No bounded Git/Markdown source has been configured." /></Box>}
         {tab === 2 && <JsonRows rows={documents} empty="No immutable document versions exist before the first completed build." />}

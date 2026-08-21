@@ -41,5 +41,9 @@ export type KnowledgeBaseRow = {
     activeGenerationId?: string;
     pointerVersion?: number;
     projectionState?: string;
+    effectiveState?: string;
+    hasActiveSync?: boolean;
+    activeJobCount?: number;
+    latestJobState?: string;
     updateTs?: string;
 };
