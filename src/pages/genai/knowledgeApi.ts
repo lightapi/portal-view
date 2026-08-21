@@ -12,8 +12,12 @@ export async function knowledgeQuery<T>(action: string, data: Record<string, unk
 }
 
 export async function knowledgeCommand(action: string, data: Record<string, unknown>) {
+    const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     return fetchClient('/portal/command', {
         method: 'POST',
+        headers: { 'Idempotency-Key': idempotencyKey },
         body: request(action, data),
     });
 }
