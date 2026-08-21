@@ -6,9 +6,10 @@ function request(action: string, data: Record<string, unknown>) {
     return { ...API, action, data };
 }
 
-export async function knowledgeQuery<T>(action: string, data: Record<string, unknown>): Promise<T> {
+export async function knowledgeQuery<T>(action: string, data: Record<string, unknown>,
+    options: { signal?: AbortSignal } = {}): Promise<T> {
     const cmd = encodeURIComponent(JSON.stringify(request(action, data)));
-    return fetchClient(`/portal/query?cmd=${cmd}`) as Promise<T>;
+    return fetchClient(`/portal/query?cmd=${cmd}`, { signal: options.signal }) as Promise<T>;
 }
 
 export async function knowledgeCommand(action: string, data: Record<string, unknown>) {

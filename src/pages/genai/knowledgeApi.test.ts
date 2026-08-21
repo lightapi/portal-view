@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fetchClient from '../../utils/fetchClient';
-import { knowledgeCommand } from './knowledgeApi';
+import { knowledgeCommand, knowledgeQuery } from './knowledgeApi';
 
 vi.mock('../../utils/fetchClient', () => ({ default: vi.fn() }));
 
@@ -30,6 +30,18 @@ describe('Knowledge command API', () => {
                 action: 'requestKnowledgeBaseReindex',
                 data,
             },
+        });
+    });
+
+    it('forwards cancellation to the query transport', async () => {
+        const controller = new AbortController();
+
+        await knowledgeQuery('getKnowledgeDocuments', {
+            hostId: 'host-a', environment: 'dev', knowledgeBaseId: 'kb-a',
+        }, { signal: controller.signal });
+
+        expect(mockedFetchClient).toHaveBeenCalledWith(expect.stringContaining('/portal/query?cmd='), {
+            signal: controller.signal,
         });
     });
 });

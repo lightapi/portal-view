@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
     Alert, Box, Button, Card, CardContent, Checkbox, Chip, Dialog,
@@ -10,20 +10,57 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
 import { KnowledgeBaseRow, knowledgeCommand, knowledgeError, knowledgeQuery } from './knowledgeApi';
+import {
+    availableContinuations, isAbortError, KNOWLEDGE_COLLECTION_ACTIONS,
+    KNOWLEDGE_COMMAND_INVALIDATION, type PaginationState,
+} from './knowledgeWorkspaceModel';
 
 type UserState = { host?: string };
 type Row = Record<string, any>;
 type AgentOption = { id: string; label: string };
 const TABS = ['Overview', 'Sources', 'Documents', 'Sync Runs', 'Index Generations', 'Incremental', 'Agent Bindings', 'Access Policy', 'Retrieval Playground', 'Quality', 'Settings'];
-const COMMAND_INVALIDATION: Record<string, number[]> = {
-    createKnowledgeSource: [1], requestKnowledgeSourceSync: [3, 5],
-    requestKnowledgeBaseReindex: [3, 4], requestKnowledgeBaseCompaction: [4, 5],
-    bindAgentKnowledgeBase: [6, 7], updateKnowledgeBase: [10],
-    deactivateKnowledgeBase: [7, 10], requestKnowledgeBaseEmbeddingMigration: [4, 9],
-    pauseKnowledgeBaseEmbeddingMigration: [4, 9], resumeKnowledgeBaseEmbeddingMigration: [4, 9],
-    cancelKnowledgeBaseEmbeddingMigration: [4, 9], promoteKnowledgeBaseIndexGeneration: [4, 9],
-    rollbackKnowledgeBaseIndexGeneration: [4, 9],
+type LoadState = {
+    loading: boolean; stale: boolean; error?: string; lastUpdated?: number;
+    pagination: PaginationState;
 };
+
+const ID_FIELDS = [
+    'documentId', 'syncRunId', 'indexGenerationId', 'uploadId', 'sourceChangeId',
+    'passageAnchorId', 'compactionRunId', 'antiEntropyRunId', 'sourceId',
+    'reconciliationId', 'aclTransitionId', 'connectorObjectId', 'migrationId',
+    'evaluationEvidenceId', 'checkpointId', 'purgeEvidenceId', 'agentId',
+];
+
+function mergeRows(current: Row[], additions: Row[]) {
+    const values = new Map<string, Row>();
+    [...current, ...additions].forEach((row, index) => {
+        const identity = ID_FIELDS.map(field => row[field]).filter(Boolean).join('|')
+            || JSON.stringify(row) || String(index);
+        values.set(identity, row);
+    });
+    return [...values.values()];
+}
+
+function paginationOf(...responses: Row[]): PaginationState {
+    return Object.assign({}, ...responses.map(response => response?.pagination || {}));
+}
+
+function LoadStatus({ state, onRefresh, onMore }: {
+    state?: LoadState; onRefresh: () => void; onMore: () => void;
+}) {
+    if (!state) return null;
+    const more = availableContinuations(state.pagination);
+    return <Stack spacing={1} sx={{ mb: 2 }}>
+        {state.error && <Alert severity="error" action={<Button onClick={onRefresh}>Retry</Button>}>{state.error}</Alert>}
+        {state.stale && !state.error && <Alert severity="warning" action={<Button onClick={onRefresh}>Refresh</Button>}>This tab is stale because related operational state changed.</Alert>}
+        {more.length > 0 && <Alert severity="info" action={<Button disabled={state.loading} onClick={onMore}>Load more</Button>}>
+            More rows are available for {more.map(([collection]) => collection).join(', ')}.
+        </Alert>}
+        {state.lastUpdated && <Typography variant="caption" color="text.secondary">
+            {state.loading ? 'Refreshing… · ' : ''}Last updated {new Date(state.lastUpdated).toLocaleTimeString()}
+        </Typography>}
+    </Stack>;
+}
 
 function JsonRows({ rows, empty }: { rows: Row[]; empty: string }) {
     if (!rows.length) return <Alert severity="info">{empty}</Alert>;
@@ -100,51 +137,99 @@ export default function KnowledgeBaseWorkspace() {
     const [agentId, setAgentId] = useState('');
     const [retrievalProfileId, setRetrievalProfileId] = useState('');
     const [evidenceRequired, setEvidenceRequired] = useState(false);
+    const [loadStates, setLoadStates] = useState<Record<number, LoadState>>({});
+    const [pollRequested, setPollRequested] = useState(false);
+    const requestControllers = useRef(new Map<number, AbortController>());
+    const loadedTabs = useRef(new Set<number>());
+    const staleTabs = useRef(new Set<number>());
+    const pendingTerminalTabs = useRef(new Set<number>());
+    const observedActive = useRef(false);
+    const tabRef = useRef(tab);
+
+    useEffect(() => { tabRef.current = tab; }, [tab]);
+
+    const updateLoadState = useCallback((selected: number, update: Partial<LoadState>) => {
+        setLoadStates(current => ({
+            ...current,
+            [selected]: {
+                loading: false, stale: false, pagination: {},
+                ...current[selected], ...update,
+            },
+        }));
+    }, []);
+
+    const beginRequest = useCallback((selected: number) => {
+        requestControllers.current.get(selected)?.abort();
+        const controller = new AbortController();
+        requestControllers.current.set(selected, controller);
+        updateLoadState(selected, { loading: true, error: undefined });
+        return controller;
+    }, [updateLoadState]);
 
     const context = useMemo(() => ({ hostId: host, environment, knowledgeBaseId }), [environment, host, knowledgeBaseId]);
-    const loadOverview = useCallback(async (showBusy = true, preserveMessage = false) => {
-        if (!host || !knowledgeBaseId) return;
+    const loadOverview = useCallback(async (showBusy = false) => {
+        if (!host || !knowledgeBaseId) return undefined;
         if (showBusy) setBusy(true);
-        if (!preserveMessage) setMessage('');
+        const controller = beginRequest(0);
         try {
-            const fresh = await knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context);
+            const fresh = await knowledgeQuery<KnowledgeBaseRow>(
+                'getFreshKnowledgeBase', context, { signal: controller.signal });
+            if (controller.signal.aborted) return undefined;
             setBase(fresh);
             setDesiredEmbeddingProfile(fresh.desiredEmbeddingProfileId
                 ? `${fresh.desiredEmbeddingProfileId}:${fresh.desiredEmbeddingProfileRevision || 1}`
                 : '');
+            loadedTabs.current.add(0);
+            staleTabs.current.delete(0);
+            updateLoadState(0, {
+                loading: false, stale: false, error: undefined,
+                lastUpdated: Date.now(), pagination: {},
+            });
+            return fresh;
         } catch (error) {
-            setMessageSeverity('error');
-            setMessage(knowledgeError(error));
+            if (!isAbortError(error)) updateLoadState(0, {
+                loading: false, stale: true, error: knowledgeError(error),
+            });
+            return undefined;
         } finally {
-            if (showBusy) setBusy(false);
+            if (requestControllers.current.get(0) === controller) {
+                requestControllers.current.delete(0);
+                if (showBusy) setBusy(false);
+            }
         }
-    }, [context, host, knowledgeBaseId]);
+    }, [beginRequest, context, host, knowledgeBaseId, updateLoadState]);
 
-    const loadTab = useCallback(async (selected: number, showBusy = true, preserveMessage = false) => {
+    const loadTab = useCallback(async (selected: number, showBusy = false,
+        force = false) => {
         if (!host || !knowledgeBaseId || selected === 0 || selected === 8) return;
+        if (!force && loadedTabs.current.has(selected) && !staleTabs.current.has(selected)) return;
         if (showBusy) setBusy(true);
-        if (!preserveMessage) setMessage('');
+        const controller = beginRequest(selected);
+        const options = { signal: controller.signal };
+        let pagination: PaginationState = {};
         try {
             if (selected === 1) {
                 const [sourceRows, policyResponse] = await Promise.all([
-                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
-                    knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>('getKnowledgeIngestionPolicies', { hostId: host, environment }),
+                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context, options),
+                    knowledgeQuery<{ knowledgeIngestionPolicies?: Row[] }>('getKnowledgeIngestionPolicies', { hostId: host, environment }, options),
                 ]);
                 setSources(sourceRows.knowledgeSources || []);
                 const activePolicies = (policyResponse.knowledgeIngestionPolicies || []).filter(policy => policy.active !== false);
                 setIngestionPolicies(activePolicies);
                 setIngestionPolicyId(current => activePolicies.some(policy => policy.ingestionPolicyId === current) ? current : activePolicies[0]?.ingestionPolicyId || '');
             } else if (selected === 2) {
-                const rows = await knowledgeQuery<{ knowledgeDocuments?: Row[] }>('getKnowledgeDocuments', context);
+                const rows = await knowledgeQuery<Row>('getKnowledgeDocuments', { ...context, pageSize: 200 }, options);
                 setDocuments(rows.knowledgeDocuments || []);
+                pagination = paginationOf(rows);
             } else if (selected === 3) {
-                const rows = await knowledgeQuery<{ knowledgeSyncRuns?: Row[] }>('getKnowledgeSyncRuns', context);
+                const rows = await knowledgeQuery<Row>('getKnowledgeSyncRuns', { ...context, pageSize: 200 }, options);
                 setRuns(rows.knowledgeSyncRuns || []);
+                pagination = paginationOf(rows);
             } else if (selected === 4 || selected === 9) {
                 const [generationRows, operations, profiles] = await Promise.all([
-                    knowledgeQuery<{ knowledgeIndexGenerations?: Row[] }>('getKnowledgeIndexGenerations', context),
-                    knowledgeQuery<Row>('getKnowledgeProductionOperations', context),
-                    knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment }),
+                    knowledgeQuery<Row>('getKnowledgeIndexGenerations', { ...context, pageSize: 200 }, options),
+                    knowledgeQuery<Row>('getKnowledgeProductionOperations', { ...context, pageSize: 200 }, options),
+                    knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment }, options),
                 ]);
                 setGenerations(generationRows.knowledgeIndexGenerations || []);
                 setEmbeddingProfiles((profiles.knowledgeEmbeddingProfiles || []).filter(profile => profile.active !== false));
@@ -155,20 +240,22 @@ export default function KnowledgeBaseWorkspace() {
                     ...(operations.knowledgeBackupCheckpoints || []).map((row: Row) => ({ diagnosticType: 'BACKUP_CHECKPOINT', ...row })),
                     ...(operations.knowledgePurgeEvidence || []).map((row: Row) => ({ diagnosticType: 'PURGE_EVIDENCE', ...row })),
                 ]);
+                pagination = paginationOf(generationRows, operations);
             } else if (selected === 5) {
-                const rows = await knowledgeQuery<Row>('getKnowledgeIncrementalOperations', context);
-            setIncremental([
+                const rows = await knowledgeQuery<Row>('getKnowledgeIncrementalOperations', { ...context, pageSize: 200 }, options);
+                setIncremental([
                     ...(rows.knowledgeUploads || []).map((row: Row) => ({ diagnosticType: 'UPLOAD', ...row })),
                     ...(rows.knowledgeIncrementalChanges || []).map((row: Row) => ({ diagnosticType: 'CHANGE', ...row })),
                     ...(rows.knowledgePassageAnchors || []).map((row: Row) => ({ diagnosticType: 'PASSAGE_ANCHOR', ...row })),
                     ...(rows.knowledgeCompactionRuns || []).map((row: Row) => ({ diagnosticType: 'COMPACTION', ...row })),
                     ...(rows.knowledgeAntiEntropyRuns || []).map((row: Row) => ({ diagnosticType: 'ANTI_ENTROPY', ...row })),
-            ]);
+                ]);
+                pagination = paginationOf(rows);
             } else if (selected === 6) {
                 const [bindingRows, retrievalResponse, agentOptions] = await Promise.all([
-                    knowledgeQuery<{ agentKnowledgeBaseBindings?: Row[] }>('getAgentKnowledgeBaseBindings', { hostId: host, environment }),
-                    knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>('getKnowledgeRetrievalProfiles', { hostId: host, environment }),
-                    knowledgeQuery<AgentOption[]>('getAgentDefinitionLabel', { hostId: host }),
+                    knowledgeQuery<{ agentKnowledgeBaseBindings?: Row[] }>('getAgentKnowledgeBaseBindings', { hostId: host, environment }, options),
+                    knowledgeQuery<{ knowledgeRetrievalProfiles?: Row[] }>('getKnowledgeRetrievalProfiles', { hostId: host, environment }, options),
+                    knowledgeQuery<AgentOption[]>('getAgentDefinitionLabel', { hostId: host }, options),
                 ]);
                 const activeProfiles = (retrievalResponse.knowledgeRetrievalProfiles || []).filter(profile => profile.active !== false);
                 setBindings((bindingRows.agentKnowledgeBaseBindings || []).filter(row => row.knowledgeBaseId === knowledgeBaseId));
@@ -178,52 +265,194 @@ export default function KnowledgeBaseWorkspace() {
                 setRetrievalProfileId(current => activeProfiles.some(profile => profile.profileId === current) ? current : activeProfiles[0]?.profileId || '');
             } else if (selected === 7) {
                 const [sourceRows, rows] = await Promise.all([
-                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context),
-                    knowledgeQuery<Row>('getKnowledgeAclStatus', context),
+                    knowledgeQuery<{ knowledgeSources?: Row[] }>('getKnowledgeSources', context, options),
+                    knowledgeQuery<Row>('getKnowledgeAclStatus', { ...context, pageSize: 200 }, options),
                 ]);
                 setSources(sourceRows.knowledgeSources || []);
-            setAccessDiagnostics([
+                setAccessDiagnostics([
                     ...(rows.knowledgeAclFreshness || []).map((row: Row) => ({ diagnosticType: 'ACL_FRESHNESS', ...row })),
                     ...(rows.knowledgeAclReconciliations || []).map((row: Row) => ({ diagnosticType: 'ACL_RECONCILIATION', ...row })),
                     ...(rows.knowledgeAclTransitions || []).map((row: Row) => ({ diagnosticType: 'ACL_TRANSITION', ...row })),
                     ...(rows.knowledgeConnectorObjects || []).map((row: Row) => ({ diagnosticType: 'CONNECTOR_OBJECT', ...row })),
-            ]);
+                ]);
+                pagination = paginationOf(rows);
             } else if (selected === 10) {
-                const profiles = await knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment });
+                const profiles = await knowledgeQuery<{ knowledgeEmbeddingProfiles?: Row[] }>('getKnowledgeEmbeddingProfiles', { hostId: host, environment }, options);
                 setEmbeddingProfiles((profiles.knowledgeEmbeddingProfiles || []).filter(profile => profile.active !== false));
             }
+            if (controller.signal.aborted) return;
+            loadedTabs.current.add(selected);
+            staleTabs.current.delete(selected);
+            updateLoadState(selected, {
+                loading: false, stale: false, error: undefined,
+                lastUpdated: Date.now(), pagination,
+            });
         } catch (error) {
-            setMessageSeverity('error');
-            setMessage(knowledgeError(error));
+            if (!isAbortError(error)) updateLoadState(selected, {
+                loading: false, stale: true, error: knowledgeError(error),
+            });
         } finally {
-            if (showBusy) setBusy(false);
+            if (requestControllers.current.get(selected) === controller) {
+                requestControllers.current.delete(selected);
+                if (showBusy) setBusy(false);
+            }
         }
-    }, [context, environment, host, knowledgeBaseId]);
+    }, [beginRequest, context, environment, host, knowledgeBaseId, updateLoadState]);
+
+    const appendCollection = useCallback((collection: string, additions: Row[]) => {
+        const diagnosticType: Record<string, string> = {
+            knowledgeUploads: 'UPLOAD', knowledgeIncrementalChanges: 'CHANGE',
+            knowledgePassageAnchors: 'PASSAGE_ANCHOR', knowledgeCompactionRuns: 'COMPACTION',
+            knowledgeAntiEntropyRuns: 'ANTI_ENTROPY', knowledgeAclFreshness: 'ACL_FRESHNESS',
+            knowledgeAclReconciliations: 'ACL_RECONCILIATION', knowledgeAclTransitions: 'ACL_TRANSITION',
+            knowledgeConnectorObjects: 'CONNECTOR_OBJECT', knowledgeBaseEmbeddingMigrations: 'EMBEDDING_MIGRATION',
+            knowledgeMigrationEvaluations: 'MIGRATION_EVALUATION', knowledgeGenerationRetention: 'GENERATION_RETENTION',
+            knowledgeBackupCheckpoints: 'BACKUP_CHECKPOINT', knowledgePurgeEvidence: 'PURGE_EVIDENCE',
+        };
+        const decorated = diagnosticType[collection]
+            ? additions.map(row => ({ diagnosticType: diagnosticType[collection], ...row }))
+            : additions;
+        if (collection === 'knowledgeDocuments') setDocuments(current => mergeRows(current, decorated));
+        else if (collection === 'knowledgeSyncRuns') setRuns(current => mergeRows(current, decorated));
+        else if (collection === 'knowledgeIndexGenerations') setGenerations(current => mergeRows(current, decorated));
+        else if (collection.startsWith('knowledgeAcl') || collection === 'knowledgeConnectorObjects') {
+            setAccessDiagnostics(current => mergeRows(current, decorated));
+        } else if (['knowledgeUploads', 'knowledgeIncrementalChanges', 'knowledgePassageAnchors',
+            'knowledgeCompactionRuns', 'knowledgeAntiEntropyRuns'].includes(collection)) {
+            setIncremental(current => mergeRows(current, decorated));
+        } else {
+            setProductionOperations(current => mergeRows(current, decorated));
+        }
+    }, []);
+
+    const loadMore = useCallback(async (selected: number) => {
+        const continuations = availableContinuations(loadStates[selected]?.pagination || {});
+        if (!continuations.length) return;
+        const controller = beginRequest(selected);
+        try {
+            const pages = await Promise.all(continuations.map(async ([collection, page]) => {
+                const action = KNOWLEDGE_COLLECTION_ACTIONS[collection];
+                if (!action || !page.nextCursor) throw new Error(`Unsupported continuation for ${collection}`);
+                const response = await knowledgeQuery<Row>(action, {
+                    ...context, cursor: page.nextCursor, pageSize: 200,
+                }, { signal: controller.signal });
+                return { collection, response };
+            }));
+            if (controller.signal.aborted) return;
+            const pagination = { ...(loadStates[selected]?.pagination || {}) };
+            pages.forEach(({ collection, response }) => {
+                appendCollection(collection, response[collection] || []);
+                pagination[collection] = response.pagination?.[collection]
+                    || { hasMore: false, nextCursor: null };
+            });
+            loadedTabs.current.add(selected);
+            staleTabs.current.delete(selected);
+            updateLoadState(selected, {
+                loading: false, stale: false, error: undefined,
+                lastUpdated: Date.now(), pagination,
+            });
+        } catch (error) {
+            if (!isAbortError(error)) updateLoadState(selected, {
+                loading: false, stale: true, error: knowledgeError(error),
+            });
+        } finally {
+            if (requestControllers.current.get(selected) === controller) {
+                requestControllers.current.delete(selected);
+            }
+        }
+    }, [appendCollection, beginRequest, context, loadStates, updateLoadState]);
+
+    const invalidateTabs = useCallback((targets: number[]) => {
+        targets.forEach(selected => {
+            staleTabs.current.add(selected);
+            updateLoadState(selected, { stale: true });
+        });
+    }, [updateLoadState]);
 
     useEffect(() => { void loadOverview(); }, [loadOverview]);
-    useEffect(() => { void loadTab(tab); }, [loadTab, tab]);
+    useEffect(() => {
+        const controllers = requestControllers.current;
+        void loadTab(tab);
+        return () => {
+            if (tab === 0) return;
+            const controller = controllers.get(tab);
+            if (!controller) return;
+            controller.abort();
+            controllers.delete(tab);
+            updateLoadState(tab, { loading: false, stale: true });
+        };
+    }, [loadTab, tab, updateLoadState]);
+    useEffect(() => {
+        const controllers = requestControllers.current;
+        return () => {
+            controllers.forEach(controller => controller.abort());
+            controllers.clear();
+        };
+    }, []);
 
-    const syncInProgress = Boolean(base?.hasActiveSync || (base?.activeJobCount || 0) > 0);
+    const overviewActive = Boolean(base?.hasActiveSync || (base?.activeJobCount || 0) > 0);
+    useEffect(() => {
+        if (overviewActive) observedActive.current = true;
+    }, [overviewActive]);
+    const syncInProgress = overviewActive || pollRequested;
+    const pollAttempts = useRef(0);
     useEffect(() => {
         if (!syncInProgress) return undefined;
-        const timer = window.setInterval(() => {
-            void knowledgeQuery<KnowledgeBaseRow>('getFreshKnowledgeBase', context)
-                .then(fresh => {
-                    setBase(fresh);
-                    if (!fresh.hasActiveSync && (fresh.activeJobCount || 0) === 0) {
-                        void loadTab(tab, false, true);
-                    }
-                }).catch(error => {
-                    setMessageSeverity('error');
-                    setMessage(knowledgeError(error));
-                });
-        }, 3000);
-        return () => window.clearInterval(timer);
-    }, [context, loadTab, syncInProgress, tab]);
+        let stopped = false;
+        let timer: number | undefined;
+        const schedule = (delay: number) => {
+            if (!stopped) timer = window.setTimeout(() => void poll(), delay);
+        };
+        const complete = async () => {
+            const targets = pendingTerminalTabs.current.size
+                ? [...pendingTerminalTabs.current] : [tabRef.current];
+            pendingTerminalTabs.current.clear();
+            observedActive.current = false;
+            pollAttempts.current = 0;
+            setPollRequested(false);
+            invalidateTabs(targets.filter(selected => selected !== 0));
+            const selected = tabRef.current;
+            if (selected !== 0 && targets.includes(selected)) await loadTab(selected, false, true);
+        };
+        const poll = async () => {
+            if (stopped) return;
+            if (document.visibilityState === 'hidden') {
+                schedule(15000);
+                return;
+            }
+            pollAttempts.current += 1;
+            const fresh = await loadOverview(false);
+            if (stopped || !fresh) {
+                schedule(6000);
+                return;
+            }
+            const active = Boolean(fresh.hasActiveSync || (fresh.activeJobCount || 0) > 0);
+            if (active) observedActive.current = true;
+            if (!active && (observedActive.current || pollAttempts.current >= 20)) {
+                await complete();
+                return;
+            }
+            schedule(3000);
+        };
+        const visibility = () => {
+            if (document.visibilityState !== 'hidden') {
+                if (timer !== undefined) window.clearTimeout(timer);
+                schedule(0);
+            }
+        };
+        document.addEventListener('visibilitychange', visibility);
+        schedule(3000);
+        return () => {
+            stopped = true;
+            if (timer !== undefined) window.clearTimeout(timer);
+            document.removeEventListener('visibilitychange', visibility);
+        };
+    }, [invalidateTabs, loadOverview, loadTab, syncInProgress]);
 
-    const refresh = useCallback(async (showBusy = true) => {
-        await loadOverview(showBusy);
-        await loadTab(tab, false, true);
+    const refresh = useCallback(async () => {
+        setBusy(true);
+        await Promise.all([loadOverview(false), tab === 0 ? Promise.resolve() : loadTab(tab, false, true)]);
+        setBusy(false);
     }, [loadOverview, loadTab, tab]);
 
     const command = useCallback(async (action: string, data: Row = {}) => {
@@ -231,10 +460,16 @@ export default function KnowledgeBaseWorkspace() {
         setMessage('');
         try {
             await knowledgeCommand(action, { scope: base?.hostId ? 'TENANT' : 'GLOBAL', environment, knowledgeBaseId, ...data });
-            await loadOverview(false, true);
-            if ((COMMAND_INVALIDATION[action] || []).includes(tab)) {
-                await loadTab(tab, false, true);
+            const invalidation = KNOWLEDGE_COMMAND_INVALIDATION[action]
+                || { immediate: [0], terminal: [] };
+            invalidateTabs(invalidation.immediate);
+            invalidation.terminal.forEach(selected => pendingTerminalTabs.current.add(selected));
+            if (invalidation.terminal.length) {
+                pollAttempts.current = 0;
+                setPollRequested(true);
             }
+            await loadOverview(false);
+            if (tab !== 0 && invalidation.immediate.includes(tab)) await loadTab(tab, false, true);
             setMessageSeverity('success');
             setMessage(action === 'requestKnowledgeSourceSync'
                 ? 'Sync request accepted. This page will refresh while the worker processes it.'
@@ -245,7 +480,7 @@ export default function KnowledgeBaseWorkspace() {
         } finally {
             setBusy(false);
         }
-    }, [base?.hostId, environment, knowledgeBaseId, loadOverview, loadTab, tab]);
+    }, [base?.hostId, environment, invalidateTabs, knowledgeBaseId, loadOverview, loadTab, tab]);
 
     const active = generations.find(row => row.state === 'PROMOTED' || row.indexGenerationId === base?.activeGenerationId);
     const migration = productionOperations.find(row => row.diagnosticType === 'EMBEDDING_MIGRATION' && !['CANCELLED', 'FAILED', 'RETIRED', 'ROLLED_BACK'].includes(row.state));
@@ -270,6 +505,11 @@ export default function KnowledgeBaseWorkspace() {
         </Stack>
         {message && <Alert severity={messageSeverity} sx={{ mb: 2 }}>{message}</Alert>}
         <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="scrollable" scrollButtons="auto" sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>{TABS.map(label => <Tab key={label} label={label} />)}</Tabs>
+        {tab !== 8 && <LoadStatus
+            state={loadStates[tab]}
+            onRefresh={() => void (tab === 0 ? loadOverview(true) : loadTab(tab, true, true))}
+            onMore={() => void loadMore(tab)}
+        />}
         {tab === 0 && <Grid container spacing={2}>{[
             ['Desired state', base?.status || '—'], ['Effective projection', base?.effectiveState || base?.projectionState || 'Pending'],
             ['Active BASE', base?.activeGenerationId || 'None'], ['Pointer version', String(base?.pointerVersion ?? '—')],
