@@ -33,6 +33,26 @@ describe('Knowledge command API', () => {
         });
     });
 
+    it('does not send an idempotency key for ordinary aggregate updates', async () => {
+        const data = {
+            knowledgeBaseId: '018f0000-0000-7000-8000-000000000002',
+            environment: 'dev', aggregateVersion: 1,
+        };
+
+        await knowledgeCommand('updateKnowledgeBase', data);
+
+        expect(mockedFetchClient).toHaveBeenCalledWith('/portal/command', {
+            method: 'POST',
+            body: {
+                host: 'lightapi.net',
+                service: 'genai',
+                version: '0.1.0',
+                action: 'updateKnowledgeBase',
+                data,
+            },
+        });
+    });
+
     it('forwards cancellation to the query transport', async () => {
         const controller = new AbortController();
 

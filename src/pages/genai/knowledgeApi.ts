@@ -2,6 +2,31 @@ import fetchClient from '../../utils/fetchClient';
 
 const API = { host: 'lightapi.net', service: 'genai', version: '0.1.0' } as const;
 
+const IDEMPOTENT_KNOWLEDGE_COMMANDS = new Set([
+    'createKnowledgeBase',
+    'createKnowledgeIngestionPolicy',
+    'createKnowledgeRetrievalProfile',
+    'createKnowledgeEmbeddingProfile',
+    'createKnowledgeSource',
+    'testKnowledgeSource',
+    'requestKnowledgeSourceSync',
+    'requestKnowledgeSourceAclReconciliation',
+    'receiveKnowledgeSourceProviderNotification',
+    'requestKnowledgeBaseReindex',
+    'requestKnowledgeBaseCompaction',
+    'promoteKnowledgeBaseIndexGeneration',
+    'requestKnowledgeBasePurge',
+    'testKnowledgeRetrieval',
+    'requestKnowledgeBaseEmbeddingMigration',
+    'pauseKnowledgeBaseEmbeddingMigration',
+    'resumeKnowledgeBaseEmbeddingMigration',
+    'cancelKnowledgeBaseEmbeddingMigration',
+    'rollbackKnowledgeBaseIndexGeneration',
+    'retireKnowledgeBaseIndexGeneration',
+    'requestKnowledgeBaseBackupCheckpoint',
+    'verifyKnowledgeBasePhysicalRestore',
+]);
+
 function request(action: string, data: Record<string, unknown>) {
     return { ...API, action, data };
 }
@@ -13,12 +38,15 @@ export async function knowledgeQuery<T>(action: string, data: Record<string, unk
 }
 
 export async function knowledgeCommand(action: string, data: Record<string, unknown>) {
-    const idempotencyKey = typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const idempotent = IDEMPOTENT_KNOWLEDGE_COMMANDS.has(action);
+    const idempotencyKey = idempotent
+        ? (typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+        : undefined;
     return fetchClient('/portal/command', {
         method: 'POST',
-        headers: { 'Idempotency-Key': idempotencyKey },
+        ...(idempotencyKey ? { headers: { 'Idempotency-Key': idempotencyKey } } : {}),
         body: request(action, data),
     });
 }
