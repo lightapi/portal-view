@@ -51,13 +51,37 @@ export async function knowledgeCommand(action: string, data: Record<string, unkn
     });
 }
 
-export function knowledgeError(error: unknown) {
-    if (error instanceof Error && error.message) return error.message;
-    if (error && typeof error === 'object') {
-        const value = error as Record<string, any>;
-        return String(value.message ?? value.description ?? value.code ?? 'Knowledge Base operation failed');
+const KNOWLEDGE_ERROR_FALLBACK = 'Knowledge Base operation failed without an error message.';
+const MAXIMUM_ERROR_MESSAGE_LENGTH = 1000;
+
+function errorText(value: unknown, depth = 0): string | undefined {
+    if (depth > 3 || value == null) return undefined;
+    if (typeof value === 'string' || typeof value === 'number') {
+        const text = String(value).trim();
+        return text || undefined;
     }
-    return 'Knowledge Base operation failed';
+    if (value instanceof Error) return errorText(value.message, depth + 1);
+    if (typeof value !== 'object') return undefined;
+
+    const record = value as Record<string, unknown>;
+    const nestedError = errorText(record.error, depth + 1);
+    if (nestedError) return nestedError;
+
+    const code = errorText(record.code, depth + 1);
+    const detail = errorText(record.description, depth + 1)
+        ?? errorText(record.message, depth + 1)
+        ?? errorText(record.detail, depth + 1)
+        ?? errorText(record.data, depth + 1);
+    if (code && detail && detail !== code && !detail.includes(code)) return `${code}: ${detail}`;
+    return detail ?? code;
+}
+
+export function knowledgeError(error: unknown) {
+    const detail = errorText(error);
+    if (!detail) return KNOWLEDGE_ERROR_FALLBACK;
+    return detail.length <= MAXIMUM_ERROR_MESSAGE_LENGTH
+        ? detail
+        : `${detail.slice(0, MAXIMUM_ERROR_MESSAGE_LENGTH - 1)}…`;
 }
 
 export type KnowledgeBaseRow = {

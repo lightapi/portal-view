@@ -78,15 +78,34 @@ async function fetchClient(endpoint: string, options: any = {}) {
     const response = await fetch(url, requestConfig);
 
     if (!response.ok) {
-        let error;
+        let error: unknown;
+        let responseText = '';
         try {
-            error = await response.json();
-            // Unwrap JSON-RPC error if formatted
-            if (isJsonRpc && error && error.jsonrpc === "2.0" && error.error) {
-                error = error.error;
+            responseText = await response.text();
+        } catch (_ignored) {
+            // Some response mocks expose only json(); retain compatibility with them.
+        }
+        if (responseText) {
+            try {
+                error = JSON.parse(responseText);
+            } catch (_ignored) {
+                error = responseText;
             }
-        } catch (e) {
-            error = response.statusText;
+        } else {
+            try {
+                error = await response.json();
+            } catch (_ignored) {
+                error = response.statusText;
+            }
+        }
+        // Unwrap JSON-RPC error if formatted.
+        if (isJsonRpc && error && typeof error === 'object'
+            && 'jsonrpc' in error && error.jsonrpc === "2.0" && 'error' in error) {
+            error = error.error;
+        }
+        if (typeof error === 'string') {
+            const status = `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`;
+            error = error.trim() ? `${status}: ${error.trim()}` : status;
         }
         throw error;
     }

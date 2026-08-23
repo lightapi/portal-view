@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fetchClient from '../../utils/fetchClient';
-import { knowledgeCommand, knowledgeQuery } from './knowledgeApi';
+import { knowledgeCommand, knowledgeError, knowledgeQuery } from './knowledgeApi';
 
 vi.mock('../../utils/fetchClient', () => ({ default: vi.fn() }));
 
@@ -63,5 +63,31 @@ describe('Knowledge command API', () => {
         expect(mockedFetchClient).toHaveBeenCalledWith(expect.stringContaining('/portal/query?cmd='), {
             signal: controller.signal,
         });
+    });
+});
+
+describe('Knowledge error messages', () => {
+    it('shows a plain-text gateway denial', () => {
+        expect(knowledgeError(
+            'HTTP 403 Forbidden: Access denied: no access control rule defined for getKnowledgeBases',
+        )).toBe('HTTP 403 Forbidden: Access denied: no access control rule defined for getKnowledgeBases');
+    });
+
+    it('shows the backend code and description', () => {
+        expect(knowledgeError({
+            code: 'AUTH_TOKEN_SCOPE_MISMATCH',
+            description: 'portal.knowledge.r is required',
+        })).toBe('AUTH_TOKEN_SCOPE_MISMATCH: portal.knowledge.r is required');
+    });
+
+    it('unwraps a JSON-RPC error returned by the query transport', () => {
+        expect(knowledgeError({
+            jsonrpc: '2.0',
+            error: { code: -32603, message: 'Knowledge configuration is unavailable' },
+        })).toBe('-32603: Knowledge configuration is unavailable');
+    });
+
+    it('uses a specific fallback only when the response has no usable detail', () => {
+        expect(knowledgeError({})).toBe('Knowledge Base operation failed without an error message.');
     });
 });

@@ -51,4 +51,25 @@ describe("fetchClient", () => {
 
     expect(responseJson).toHaveBeenCalledOnce();
   });
+
+  it("preserves a plain-text error response with its HTTP status", async () => {
+    fetchMock.mockResolvedValue(new Response(
+      "Access denied: no access control rule defined for lightapi.net/genai/getKnowledgeBases/0.1.0",
+      { status: 403, statusText: "Forbidden" },
+    ));
+
+    await expect(fetchClient("/portal/query?cmd=test")).rejects.toBe(
+      "HTTP 403 Forbidden: Access denied: no access control rule defined for lightapi.net/genai/getKnowledgeBases/0.1.0",
+    );
+  });
+
+  it("preserves a structured JSON error response", async () => {
+    const error = { code: "AUTH_TOKEN_SCOPE_MISMATCH", description: "portal.knowledge.r is required" };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(error), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    }));
+
+    await expect(fetchClient("/portal/query?cmd=test")).rejects.toEqual(error);
+  });
 });
