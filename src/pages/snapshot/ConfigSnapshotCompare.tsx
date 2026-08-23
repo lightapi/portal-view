@@ -37,6 +37,8 @@ import { getConfigSnapshotValues } from './configSnapshotValuesApi';
 import type { SnapshotValues } from './configSnapshotValues.types';
 import {
   reorderSnapshotIds,
+  type SnapshotComparisonDetailCell,
+  type SnapshotComparisonDetailRow,
   type SnapshotComparisonModel,
   type SnapshotComparisonRow,
   type SnapshotComparisonStatus,
@@ -75,7 +77,9 @@ export default function ConfigSnapshotCompare() {
   const [error, setError] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<SnapshotComparisonStatus[]>(['valueChanged', 'missing']);
   const [keySearch, setKeySearch] = useState('');
-  const [tab, setTab] = useState<'matrix' | 'yaml'>('matrix');
+  const [detailKeySearch, setDetailKeySearch] = useState('');
+  const [detailParentKey, setDetailParentKey] = useState<string | null>(null);
+  const [tab, setTab] = useState<'matrix' | 'detail' | 'yaml'>('matrix');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
@@ -90,6 +94,8 @@ export default function ConfigSnapshotCompare() {
     setRefreshError(null);
     setRefreshMessage(null);
     setTab('matrix');
+    setDetailKeySearch('');
+    setDetailParentKey(null);
     if (!snapshotIds || !host) {
       setError(!snapshotIds
         ? 'The comparison URL must contain two to four unique snapshot UUIDs.'
@@ -151,8 +157,36 @@ export default function ConfigSnapshotCompare() {
       && (!normalizedSearch || row.key.toLowerCase().includes(normalizedSearch)));
   }, [keySearch, model, statuses]);
 
+  const filteredDetailRows = useMemo(() => {
+    if (!model) return [];
+    const normalizedSearch = detailKeySearch.trim().toLowerCase();
+    return model.detailRows.filter(row => statuses.includes(row.status)
+      && (!detailParentKey || row.parentKey === detailParentKey)
+      && (!normalizedSearch || row.key.toLowerCase().includes(normalizedSearch)));
+  }, [detailKeySearch, detailParentKey, model, statuses]);
+
+  const compareNestedKeys = useCallback((key: string) => {
+    setDetailParentKey(key);
+    setDetailKeySearch('');
+    setTab('detail');
+  }, []);
+
   const columns = useMemo<MRT_ColumnDef<SnapshotComparisonRow>[]>(() => [
-    { accessorKey: 'key', header: 'Configuration key', size: 280 },
+    {
+      accessorKey: 'key',
+      header: 'Configuration key',
+      size: 280,
+      Cell: ({ row }) => (
+        <Stack alignItems="flex-start" spacing={0.5}>
+          <Typography sx={{ overflowWrap: 'anywhere' }}>{row.original.key}</Typography>
+          {hasStructuredValue(row.original) && (
+            <Button size="small" variant="text" onClick={() => compareNestedKeys(row.original.key)}>
+              Compare nested keys
+            </Button>
+          )}
+        </Stack>
+      ),
+    },
     {
       accessorKey: 'status',
       header: 'Status',
@@ -174,6 +208,40 @@ export default function ConfigSnapshotCompare() {
         Cell: ({ row }: { row: { original: SnapshotComparisonRow } }) => renderCell(row.original.cells[snapshotId]),
       } satisfies MRT_ColumnDef<SnapshotComparisonRow>;
     }),
+  ], [columnOrder, compareNestedKeys, snapshotsById]);
+
+  const detailColumns = useMemo<MRT_ColumnDef<SnapshotComparisonDetailRow>[]>(() => [
+    {
+      accessorKey: 'key',
+      header: 'Configuration path',
+      size: 420,
+      Cell: ({ cell }) => (
+        <Box component="code" sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere', fontSize: 12 }}>
+          {cell.getValue<string>()}
+        </Box>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      size: 130,
+      Cell: ({ cell }) => <Chip size="small" label={STATUS_LABELS[cell.getValue<SnapshotComparisonStatus>()]} />,
+    },
+    ...columnOrder.map(snapshotId => {
+      const snapshot = snapshotsById.get(snapshotId);
+      return {
+        id: snapshotId,
+        header: snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId,
+        Header: () => (
+          <Tooltip title={snapshot ? `${snapshot.snapshotId} · ${snapshot.serviceId} · ${snapshot.environment ?? 'No environment'}` : snapshotId}>
+            <span>{snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId}</span>
+          </Tooltip>
+        ),
+        size: 320,
+        accessorFn: (row: SnapshotComparisonDetailRow) => row.cells[snapshotId],
+        Cell: ({ row }: { row: { original: SnapshotComparisonDetailRow } }) => renderDetailCell(row.original.cells[snapshotId]),
+      } satisfies MRT_ColumnDef<SnapshotComparisonDetailRow>;
+    }),
   ], [columnOrder, snapshotsById]);
 
   const table = useMaterialReactTable({
@@ -185,6 +253,20 @@ export default function ConfigSnapshotCompare() {
     initialState: {
       density: 'compact',
       pagination: { pageIndex: 0, pageSize: 25 },
+      columnPinning: { left: ['key', 'status'] },
+    },
+    muiTableContainerProps: { sx: { maxHeight: '65vh' } },
+  });
+
+  const detailTable = useMaterialReactTable({
+    columns: detailColumns,
+    data: filteredDetailRows,
+    enableColumnPinning: true,
+    enableGlobalFilter: false,
+    enableColumnFilters: false,
+    initialState: {
+      density: 'compact',
+      pagination: { pageIndex: 0, pageSize: 50 },
       columnPinning: { left: ['key', 'status'] },
     },
     muiTableContainerProps: { sx: { maxHeight: '65vh' } },
@@ -308,9 +390,10 @@ export default function ConfigSnapshotCompare() {
                 })}
               </Select>
             </FormControl>
-            <Tabs value={tab} onChange={(_, value: 'matrix' | 'yaml') => setTab(value)}>
+            <Tabs value={tab} onChange={(_, value: 'matrix' | 'detail' | 'yaml') => setTab(value)}>
               <Tab value="matrix" label="Semantic matrix" />
-              {canShowYamlDiff(columnOrder.length) && <Tab value="yaml" label="YAML diff" />}
+              <Tab value="detail" label="Key-by-key diff" />
+              {canShowYamlDiff(columnOrder.length) && <Tab value="yaml" label="YAML text diff" />}
             </Tabs>
             {tab === 'matrix' && (
               <Stack spacing={1}>
@@ -329,10 +412,45 @@ export default function ConfigSnapshotCompare() {
                 <MaterialReactTable table={table} />
               </Stack>
             )}
+            {tab === 'detail' && (
+              <Stack spacing={1}>
+                {detailParentKey && (
+                  <Alert
+                    severity="info"
+                    action={<Button color="inherit" size="small" onClick={() => setDetailParentKey(null)}>Show all keys</Button>}
+                  >
+                    Comparing nested keys under <Box component="code">{detailParentKey}</Box>.
+                  </Alert>
+                )}
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+                  <Button size="small" variant="outlined" onClick={() => setStatuses(ALL_STATUSES)}>All</Button>
+                  <ToggleButtonGroup
+                    value={statuses}
+                    onChange={(_, next: SnapshotComparisonStatus[]) => setStatuses(next.length ? next : ALL_STATUSES)}
+                    size="small"
+                    aria-label="Key-by-key comparison status filters"
+                  >
+                    {ALL_STATUSES.map(status => <ToggleButton key={status} value={status}>{STATUS_LABELS[status]}</ToggleButton>)}
+                  </ToggleButtonGroup>
+                  <TextField
+                    size="small"
+                    label="Search configuration paths"
+                    value={detailKeySearch}
+                    onChange={event => setDetailKeySearch(event.target.value)}
+                  />
+                </Stack>
+                <MaterialReactTable table={detailTable} />
+              </Stack>
+            )}
             {tab === 'yaml' && canShowYamlDiff(columnOrder.length) && host && (
-              <Suspense fallback={<CircularProgress size={22} />}>
-                <SnapshotYamlDiff hostId={host} snapshotIds={columnOrder as [string, string]} />
-              </Suspense>
+              <Stack spacing={1}>
+                <Alert severity="info">
+                  This view compares the exact canonical YAML text. Use Key-by-key diff for maps and lists with different row counts.
+                </Alert>
+                <Suspense fallback={<CircularProgress size={22} />}>
+                  <SnapshotYamlDiff hostId={host} snapshotIds={columnOrder as [string, string]} />
+                </Suspense>
+              </Stack>
             )}
           </>
         )}
@@ -347,16 +465,33 @@ function renderCell(entry: SnapshotComparisonRow['cells'][string]) {
   return (
     <Box>
       {structured ? (
-        <details>
-          <summary>{Array.isArray(entry.value) ? `List (${entry.value.length})` : 'Map'}</summary>
-          <Box component="pre" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 12 }}>
-            {JSON.stringify(entry.value, null, 2)}
-          </Box>
-        </details>
+        <Typography>{structuredValueSummary(entry.value)}</Typography>
       ) : (
         <Typography sx={{ overflowWrap: 'anywhere' }}>{String(entry.value)}</Typography>
       )}
       <Typography variant="caption" color="text.secondary">{entry.valueType} · {entry.sourceLevel}</Typography>
     </Box>
   );
+}
+
+function renderDetailCell(entry: SnapshotComparisonDetailCell | null) {
+  if (!entry) return <Typography color="text.secondary">Missing</Typography>;
+  const value = entry.valueType === 'map' || entry.valueType === 'list'
+    ? JSON.stringify(entry.value)
+    : String(entry.value);
+  return (
+    <Box>
+      <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value}</Typography>
+      <Typography variant="caption" color="text.secondary">{entry.valueType} · {entry.sourceLevel}</Typography>
+    </Box>
+  );
+}
+
+function hasStructuredValue(row: SnapshotComparisonRow) {
+  return Object.values(row.cells).some(entry => entry?.value !== null && typeof entry?.value === 'object');
+}
+
+function structuredValueSummary(value: unknown) {
+  if (Array.isArray(value)) return `List (${value.length} items)`;
+  return value !== null && typeof value === 'object' ? `Map (${Object.keys(value).length} keys)` : String(value);
 }

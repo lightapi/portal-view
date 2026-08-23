@@ -20,6 +20,44 @@ describe('snapshot comparison', () => {
     expect(status(model, 'source')).toBe('sourceChanged');
   });
 
+  it('aligns nested map keys and list indexes without shifting later values', () => {
+    const model = buildSnapshotComparison([
+      snapshot(0, [entry('rule.endpointRules', {
+        '/pets@get': { roles: ['pet-user', 'pet-admin'] },
+        stable: true,
+      }, 'map')]),
+      snapshot(1, [entry('rule.endpointRules', {
+        '/orders@get': { roles: ['order-user'] },
+        '/pets@get': { roles: ['pet-user'] },
+        stable: true,
+      }, 'map')]),
+    ]);
+
+    expect(model.detailRows.map(row => row.key)).toEqual([
+      'rule.endpointRules.stable',
+      'rule.endpointRules["/orders@get"].roles[0]',
+      'rule.endpointRules["/pets@get"].roles[0]',
+      'rule.endpointRules["/pets@get"].roles[1]',
+    ]);
+    expect(detailStatus(model, 'rule.endpointRules["/orders@get"].roles[0]')).toBe('missing');
+    expect(detailStatus(model, 'rule.endpointRules["/pets@get"].roles[0]')).toBe('same');
+    expect(detailStatus(model, 'rule.endpointRules["/pets@get"].roles[1]')).toBe('missing');
+    expect(detailStatus(model, 'rule.endpointRules.stable')).toBe('same');
+    expect(model.detailRows.every(row => row.parentKey === 'rule.endpointRules')).toBe(true);
+  });
+
+  it('keeps empty maps, empty lists, nulls, and scalar types visible in the detail comparison', () => {
+    const model = buildSnapshotComparison([
+      snapshot(0, [entry('value', { emptyMap: {}, emptyList: [], nullable: null, count: 1 }, 'map')]),
+      snapshot(1, [entry('value', { emptyMap: {}, emptyList: [], nullable: null, count: 1.5 }, 'map')]),
+    ]);
+
+    expect(detailValueType(model, 'value.emptyMap')).toBe('map');
+    expect(detailValueType(model, 'value.emptyList')).toBe('list');
+    expect(detailValueType(model, 'value.nullable')).toBe('null');
+    expect(detailStatus(model, 'value.count')).toBe('valueChanged');
+  });
+
   it('treats equal-looking cross-types as changed and missing has precedence', () => {
     const model = buildSnapshotComparison([
       snapshot(0, [entry('number', 1, 'integer'), entry('truth', 'true', 'string'), entry('missing', 1, 'integer')]),
@@ -29,6 +67,8 @@ describe('snapshot comparison', () => {
     expect(status(model, 'number')).toBe('valueChanged');
     expect(status(model, 'truth')).toBe('valueChanged');
     expect(status(model, 'missing')).toBe('missing');
+    expect(detailStatus(model, 'number')).toBe('valueChanged');
+    expect(detailStatus(model, 'truth')).toBe('valueChanged');
   });
 
   it('builds sorted unions for two through four snapshots and chooses the oldest baseline', () => {
@@ -75,3 +115,10 @@ function status(model: ReturnType<typeof buildSnapshotComparison>, key: string) 
   return model.rows.find(row => row.key === key)?.status;
 }
 
+function detailStatus(model: ReturnType<typeof buildSnapshotComparison>, key: string) {
+  return model.detailRows.find(row => row.key === key)?.status;
+}
+
+function detailValueType(model: ReturnType<typeof buildSnapshotComparison>, key: string) {
+  return model.detailRows.find(row => row.key === key)?.cells[IDS[0]]?.valueType;
+}

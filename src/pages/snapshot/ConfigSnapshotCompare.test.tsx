@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ConfigSnapshotCompare from './ConfigSnapshotCompare';
 import { getConfigSnapshotValues } from './configSnapshotValuesApi';
 import { getCurrentConfigSnapshotsByInstances } from '../instance/instanceCurrentSnapshotsApi';
+import type { SnapshotComparisonModel } from './snapshotComparison';
+
+const comparisonWorker = vi.hoisted(() => ({ model: null as SnapshotComparisonModel | null }));
 
 vi.mock('../../contexts/UserContext', () => ({
   useUserState: () => ({ host: '00000000-0000-4000-8000-000000000099' }),
@@ -12,10 +15,11 @@ vi.mock('./configSnapshotValuesApi', () => ({ getConfigSnapshotValues: vi.fn() }
 vi.mock('../instance/instanceCurrentSnapshotsApi', () => ({ getCurrentConfigSnapshotsByInstances: vi.fn() }));
 vi.mock('./snapshotComparisonWorkerClient', () => ({
   createSnapshotComparisonWorkerClient: () => ({
-    calculate: (snapshots: Array<{ snapshotId: string }>) => Promise.resolve({
+    calculate: (snapshots: Array<{ snapshotId: string }>) => Promise.resolve(comparisonWorker.model ?? {
       snapshotIds: snapshots.map(snapshot => snapshot.snapshotId),
       baselineSnapshotId: snapshots[0].snapshotId,
       rows: [],
+      detailRows: [],
     }),
     dispose: vi.fn(),
   }),
@@ -33,6 +37,7 @@ const instanceIds = [
 describe('ConfigSnapshotCompare current-instances source', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    comparisonWorker.model = null;
     vi.mocked(getConfigSnapshotValues).mockResolvedValue({
       configPhase: 'R',
       snapshots: snapshotIds.map((snapshotId, index) => ({
@@ -57,6 +62,7 @@ describe('ConfigSnapshotCompare current-instances source', () => {
     vi.mocked(getCurrentConfigSnapshotsByInstances).mockResolvedValue(resolverResponse(snapshotIds));
     renderPage();
     expect(await screen.findByText('Current snapshots across instances')).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: 'Key-by-key diff' })).toBeInTheDocument();
     expect(screen.getByText(/at least one resolved snapshot is no longer current/i)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh current snapshots' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Refresh current snapshots' }));
@@ -91,6 +97,37 @@ describe('ConfigSnapshotCompare current-instances source', () => {
     await waitFor(() => expect(getCurrentConfigSnapshotsByInstances).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(refreshed.join(',')));
     expect(screen.getByTestId('location')).toHaveTextContent('source=current-instances');
+  });
+
+  it('opens an aligned nested-key comparison from a structured matrix row', async () => {
+    comparisonWorker.model = {
+      snapshotIds,
+      baselineSnapshotId: snapshotIds[0],
+      rows: [{
+        key: 'rule.endpointRules',
+        status: 'valueChanged',
+        cells: {
+          [snapshotIds[0]]: { key: 'rule.endpointRules', value: { '/pets@get': true }, valueType: 'map', sourceLevel: 'instance' },
+          [snapshotIds[1]]: { key: 'rule.endpointRules', value: { '/orders@get': true }, valueType: 'map', sourceLevel: 'instance' },
+        },
+      }],
+      detailRows: [{
+        key: 'rule.endpointRules["/orders@get"]',
+        parentKey: 'rule.endpointRules',
+        status: 'missing',
+        cells: {
+          [snapshotIds[0]]: null,
+          [snapshotIds[1]]: { value: true, valueType: 'boolean', sourceLevel: 'instance' },
+        },
+      }],
+    };
+
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Compare nested keys' }));
+
+    expect(await screen.findByRole('tab', { name: 'Key-by-key diff' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('rule.endpointRules["/orders@get"]')).toBeInTheDocument();
+    expect(screen.getByText('Comparing nested keys under', { exact: false })).toBeInTheDocument();
   });
 });
 

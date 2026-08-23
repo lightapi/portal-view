@@ -1,4 +1,4 @@
-import type { SnapshotValueEntry, SnapshotValues } from './configSnapshotValues.types';
+import type { SnapshotValueEntry, SnapshotValues, SnapshotValueType } from './configSnapshotValues.types';
 
 export type SnapshotComparisonStatus = 'same' | 'valueChanged' | 'missing' | 'sourceChanged';
 
@@ -10,10 +10,24 @@ export type SnapshotComparisonRow = {
   cells: Record<string, SnapshotComparisonCell>;
 };
 
+export type SnapshotComparisonDetailCell = {
+  value: unknown;
+  valueType: SnapshotValueType | 'null';
+  sourceLevel: string;
+};
+
+export type SnapshotComparisonDetailRow = {
+  key: string;
+  parentKey: string;
+  status: SnapshotComparisonStatus;
+  cells: Record<string, SnapshotComparisonDetailCell | null>;
+};
+
 export type SnapshotComparisonModel = {
   baselineSnapshotId: string;
   snapshotIds: string[];
   rows: SnapshotComparisonRow[];
+  detailRows: SnapshotComparisonDetailRow[];
 };
 
 export function buildSnapshotComparison(snapshots: SnapshotValues[]): SnapshotComparisonModel {
@@ -32,10 +46,29 @@ export function buildSnapshotComparison(snapshots: SnapshotValues[]): SnapshotCo
     return { key, cells, status: classify(values) };
   });
 
+  const detailEntryMaps = snapshots.map(snapshot => flattenEntries(snapshot.entries ?? []));
+  const detailKeys = new Set<string>();
+  for (const entries of detailEntryMaps) for (const key of Array.from(entries.keys())) detailKeys.add(key);
+  const detailRows = Array.from(detailKeys).sort(compareDetailKeys).map(key => {
+    const cells: Record<string, SnapshotComparisonDetailCell | null> = {};
+    const values = snapshots.map((snapshot, index) => {
+      const entry = detailEntryMaps[index].get(key) ?? null;
+      cells[snapshot.snapshotId] = entry;
+      return entry;
+    });
+    return {
+      key,
+      parentKey: values.find(value => value !== null)?.parentKey ?? key,
+      cells,
+      status: classifyDetail(values),
+    };
+  });
+
   return {
     baselineSnapshotId: oldestSnapshotId(snapshots),
     snapshotIds: snapshots.map(snapshot => snapshot.snapshotId),
     rows,
+    detailRows,
   };
 }
 
@@ -58,6 +91,71 @@ function classify(values: SnapshotComparisonCell[]): SnapshotComparisonStatus {
   if (present.slice(1).some(value => !typedValuesEqual(present[0], value))) return 'valueChanged';
   if (present.slice(1).some(value => value.sourceLevel !== present[0].sourceLevel)) return 'sourceChanged';
   return 'same';
+}
+
+type FlattenedDetailCell = SnapshotComparisonDetailCell & { parentKey: string };
+
+function flattenEntries(entries: SnapshotValueEntry[]) {
+  const flattened = new Map<string, FlattenedDetailCell>();
+  for (const entry of entries) {
+    flattenValue(flattened, entry.key, entry.key, entry.value, entry.sourceLevel, entry.valueType);
+  }
+  return flattened;
+}
+
+function flattenValue(
+  flattened: Map<string, FlattenedDetailCell>,
+  parentKey: string,
+  path: string,
+  value: unknown,
+  sourceLevel: string,
+  declaredValueType?: SnapshotValueType,
+) {
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      flattened.set(path, { parentKey, value, valueType: 'list', sourceLevel });
+      return;
+    }
+    value.forEach((item, index) => flattenValue(flattened, parentKey, `${path}[${index}]`, item, sourceLevel));
+    return;
+  }
+  if (isRecord(value)) {
+    const keys = Object.keys(value).sort();
+    if (keys.length === 0) {
+      flattened.set(path, { parentKey, value, valueType: 'map', sourceLevel });
+      return;
+    }
+    for (const key of keys) {
+      flattenValue(flattened, parentKey, `${path}${mapKeySegment(key)}`, value[key], sourceLevel);
+    }
+    return;
+  }
+  flattened.set(path, { parentKey, value, valueType: declaredValueType ?? detailValueType(value), sourceLevel });
+}
+
+function mapKeySegment(key: string) {
+  return /^[A-Za-z_][A-Za-z0-9_-]*$/.test(key) ? `.${key}` : `[${JSON.stringify(key)}]`;
+}
+
+function detailValueType(value: unknown): SnapshotComparisonDetailCell['valueType'] {
+  if (value === null) return 'null';
+  if (typeof value === 'boolean') return 'boolean';
+  if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'float';
+  return 'string';
+}
+
+function classifyDetail(values: Array<FlattenedDetailCell | null>): SnapshotComparisonStatus {
+  if (values.some(value => value === null)) return 'missing';
+  const present = values as FlattenedDetailCell[];
+  if (present.slice(1).some(value => value.valueType !== present[0].valueType || !deepEqual(value.value, present[0].value))) {
+    return 'valueChanged';
+  }
+  if (present.slice(1).some(value => value.sourceLevel !== present[0].sourceLevel)) return 'sourceChanged';
+  return 'same';
+}
+
+function compareDetailKeys(left: string, right: string) {
+  return left.localeCompare(right, undefined, { numeric: true });
 }
 
 function deepEqual(left: unknown, right: unknown): boolean {

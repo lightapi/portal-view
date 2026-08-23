@@ -9,8 +9,8 @@ describe('snapshot comparison worker client', () => {
     const second = client.calculate([]);
     await expect(first).rejects.toMatchObject({ name: 'AbortError' });
     const onMessage = worker.onmessage as ((event: MessageEvent) => void) | null;
-    onMessage?.({ data: { generation: 1, model: { baselineSnapshotId: 'stale', snapshotIds: [], rows: [] } } } as MessageEvent);
-    onMessage?.({ data: { generation: 2, model: { baselineSnapshotId: 'current', snapshotIds: [], rows: [] } } } as MessageEvent);
+    onMessage?.({ data: { generation: 1, model: { baselineSnapshotId: 'stale', snapshotIds: [], rows: [], detailRows: [] } } } as MessageEvent);
+    onMessage?.({ data: { generation: 2, model: { baselineSnapshotId: 'current', snapshotIds: [], rows: [], detailRows: [] } } } as MessageEvent);
     await expect(second).resolves.toMatchObject({ baselineSnapshotId: 'current' });
     client.dispose();
     expect(worker.terminate).toHaveBeenCalledOnce();
