@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Stack,
   Switch,
+  TextField,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -80,6 +81,7 @@ export default function ServiceEndpointAccessOverviewDrawer({
   const [overview, setOverview] = useState<OverviewResponse>(emptyOverview);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [missingOnly, setMissingOnly] = useState(false);
   const [highlightOnly, setHighlightOnly] = useState(false);
   const [selectedEndpointIds, setSelectedEndpointIds] = useState<Set<string>>(new Set());
@@ -124,12 +126,14 @@ export default function ServiceEndpointAccessOverviewDrawer({
 
   const highlighted = useMemo(() => new Set(highlightedEndpointIds), [highlightedEndpointIds]);
   const endpoints = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
     return (overview.endpoints ?? []).filter((endpoint) => {
       if (missingOnly && endpoint.status !== 'No access configured') return false;
       if (highlightOnly && !highlighted.has(endpoint.endpointId)) return false;
+      if (normalizedSearch && !endpointSearchText(endpoint).includes(normalizedSearch)) return false;
       return true;
     });
-  }, [highlightOnly, highlighted, missingOnly, overview.endpoints]);
+  }, [highlightOnly, highlighted, missingOnly, overview.endpoints, searchText]);
 
   const allVisibleSelected = endpoints.length > 0 && endpoints.every((endpoint) => selectedEndpointIds.has(endpoint.endpointId));
   const someVisibleSelected = endpoints.some((endpoint) => selectedEndpointIds.has(endpoint.endpointId));
@@ -197,6 +201,16 @@ export default function ServiceEndpointAccessOverviewDrawer({
             <Chip variant="outlined" label={`Row Filters: ${overview.summary?.withRowFilters ?? 0}`} />
             <Chip variant="outlined" label={`Column Filters: ${overview.summary?.withColumnFilters ?? 0}`} />
           </Stack>
+
+          <TextField
+            fullWidth
+            size="small"
+            type="search"
+            label="Search endpoints"
+            placeholder="Name, identifier, method, path, or status"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+          />
 
           <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <FormControlLabel
@@ -289,6 +303,17 @@ function OverviewSection({ title, value }: { title: string; value: string }) {
       </Typography>
     </Box>
   );
+}
+
+function endpointSearchText(endpoint: EndpointOverview) {
+  return [
+    endpoint.endpointId,
+    endpoint.endpointName,
+    endpoint.endpoint,
+    endpoint.httpMethod,
+    endpoint.endpointPath,
+    endpoint.status,
+  ].filter(Boolean).join(' ').toLowerCase();
 }
 
 function formatRules(rules: Record<string, string[]>) {

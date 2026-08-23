@@ -151,4 +151,61 @@ describe('ServiceEndpointAccessOverviewDrawer', () => {
     expect(screen.getByRole('dialog', { name: 'Bulk Access' })).toBeInTheDocument();
     expect(screen.getByText('Bulk editor endpoints: 1')).toBeInTheDocument();
   });
+
+  it('keeps earlier selections while repeated searches collect endpoints for bulk access', async () => {
+    vi.mocked(fetchClient).mockResolvedValue({
+      total: 2,
+      summary: { withoutAccess: 2 },
+      endpoints: [
+        {
+          endpointId: 'orders-endpoint',
+          endpoint: 'lightapi.net/order/getOrders/0.1.0',
+          endpointName: 'getOrders',
+          httpMethod: 'get',
+          endpointPath: '/orders',
+          rules: {}, permissions: {}, rowFilters: {}, columnFilters: {},
+          status: 'No access configured',
+        },
+        {
+          endpointId: 'customers-endpoint',
+          endpoint: 'lightapi.net/customer/getCustomers/0.1.0',
+          endpointName: 'getCustomers',
+          httpMethod: 'get',
+          endpointPath: '/customers',
+          rules: {}, permissions: {}, rowFilters: {}, columnFilters: {},
+          status: 'No access configured',
+        },
+      ],
+    });
+
+    render(
+      <ServiceEndpointAccessOverviewDrawer
+        open
+        hostId="host-1"
+        apiVersionId="version-1"
+        refreshKey={0}
+        highlightedEndpointIds={[]}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const search = await screen.findByRole('searchbox', { name: 'Search endpoints' });
+    await user.type(search, 'orders');
+    expect(screen.getByText('getOrders')).toBeInTheDocument();
+    expect(screen.queryByText('getCustomers')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Select all visible endpoints' }));
+    expect(screen.getByRole('button', { name: 'Bulk Access (1)' })).toBeEnabled();
+
+    await user.clear(search);
+    await user.type(search, 'customers-endpoint');
+    expect(screen.queryByText('getOrders')).not.toBeInTheDocument();
+    expect(screen.getByText('getCustomers')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Select all visible endpoints' }));
+
+    const bulkButton = screen.getByRole('button', { name: 'Bulk Access (2)' });
+    expect(bulkButton).toBeEnabled();
+    await user.click(bulkButton);
+    expect(await screen.findByText('Bulk editor endpoints: 2')).toBeInTheDocument();
+  });
 });
