@@ -122,6 +122,7 @@ export default function Tool() {
     const [isEmbeddingRefreshLoading, setIsEmbeddingRefreshLoading] = useState<string | null>(null);
     const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
     const [publicationOpen, setPublicationOpen] = useState(false);
+    const [accessControlTool, setAccessControlTool] = useState<ToolType | null>(null);
     const [workflowAccessTool, setWorkflowAccessTool] = useState<ToolType | null>(null);
     const [invokeTool, setInvokeTool] = useState<ToolType | null>(null);
     const selectedToolCache = useRef(new Map<string, ToolType>());
@@ -472,6 +473,13 @@ export default function Tool() {
                         disabled={row.original.lightapiValidationStatus !== 'VALID'}
                     ><SecurityIcon /></IconButton></span>
                 </Tooltip> : null}
+                <Tooltip title="Gateway Access Control">
+                    <span><IconButton color="secondary"
+                        onClick={() => setAccessControlTool(row.original)}
+                        disabled={!row.original.active}>
+                        <SecurityIcon />
+                    </IconButton></span>
+                </Tooltip>
                 {row.original.endpointId ? <Tooltip title="Invoke API Endpoint">
                     <span><IconButton
                         color="success"
@@ -498,11 +506,11 @@ export default function Tool() {
         <GenAiTaskLayout context={taskContext}>
             <MaterialReactTable table={table} />
             {host && <GatewayToolPublicationDialog
-                open={publicationOpen}
+                open={publicationOpen || Boolean(accessControlTool)}
                 hostId={host}
                 preferredInstanceId={preferredInstanceId}
-                tools={selectedTools}
-                onClose={() => setPublicationOpen(false)}
+                tools={accessControlTool ? [accessControlTool] : selectedTools}
+                onClose={() => { setPublicationOpen(false); setAccessControlTool(null); }}
             />}
             <WorkflowToolAccessDialog
                 open={Boolean(workflowAccessTool)}

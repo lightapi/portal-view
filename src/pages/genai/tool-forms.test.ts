@@ -37,20 +37,24 @@ describe('GenAI tool forms', () => {
     },
   );
 
-  it('selects the owning Tool when creating a Tool Parameter', () => {
-    const toolId = forms.createToolParam.form.find(
-      item => typeof item === 'object' && item.key === 'toolId',
-    );
+  it.each(['createToolParam', 'createSkillTool'] as const)(
+    'selects the owning Tool by id in %s',
+    formId => {
+      const toolId = forms[formId].form.find(
+        item => typeof item === 'object' && item.key === 'toolId',
+      );
 
-    expect(toolId).toMatchObject({
-      type: 'dynaselect',
-      multiple: false,
-      action: {
-        params: ['hostId'],
-      },
-    });
-    expect(toolId && typeof toolId === 'object' && 'action' in toolId
-      ? toolId.action.url
-      : '').toContain('getToolLabel');
-  });
+      expect(toolId).toMatchObject({
+        type: 'dynaselect',
+        multiple: false,
+        optionValueKey: 'id',
+        action: {
+          params: ['hostId'],
+        },
+      });
+      expect(toolId && typeof toolId === 'object' && 'action' in toolId
+        ? toolId.action.url
+        : '').toContain('getToolLabel');
+    },
+  );
 });
