@@ -35,6 +35,8 @@ export interface RuntimeInstanceType {
   ipAddress: string;
   portNumber: number;
   instanceStatus: string;
+  serviceVersion?: string;
+  operationalMetadata?: Record<string, string>;
   aggregateVersion?: number;
   active: boolean;
   updateUser?: string;

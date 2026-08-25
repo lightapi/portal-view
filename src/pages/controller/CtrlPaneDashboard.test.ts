@@ -5,9 +5,34 @@ import {
   fetchRuntimeInstanceBaseline,
   instancesForCurrentHost,
   MAX_BUFFERED_NOTIFICATIONS,
+  mapDbToRuntimeInstance,
   reconcileInstances,
   RuntimeInstanceView,
 } from './CtrlPaneDashboard';
+
+describe('persisted runtime operational metadata', () => {
+  it('hydrates build and operational tags from the Portal baseline', () => {
+    const runtime = mapDbToRuntimeInstance({
+      hostId: 'host-1',
+      runtimeInstanceId: 'runtime-1',
+      serviceId: 'com.networknt.workflow-1.0.0',
+      protocol: 'http',
+      ipAddress: 'light-workflow',
+      portNumber: 8436,
+      instanceStatus: 'Running',
+      serviceVersion: '0.2.1',
+      operationalMetadata: {
+        'light.workflow.readiness.state': 'ready',
+        'light.workflow.lifecycle.drainState': 'accepting',
+      },
+      active: true,
+    });
+
+    expect(runtime.metadata.version).toBe('0.2.1');
+    expect(runtime.metadata.tags['light.workflow.readiness.state']).toBe('ready');
+    expect(runtime.metadata.tags['light.workflow.lifecycle.drainState']).toBe('accepting');
+  });
+});
 
 const baseline = (id: string): RuntimeInstanceView => ({
   runtimeInstanceId: id,

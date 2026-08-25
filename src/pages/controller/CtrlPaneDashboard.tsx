@@ -53,6 +53,9 @@ type RuntimeInstanceRow = {
   protocol: string;
   ipAddress: string;
   portNumber: number;
+  serviceVersion: string;
+  readiness: string;
+  drainState: string;
   liveStatus: LiveStatus;
   active: boolean;
 };
@@ -145,7 +148,7 @@ function debugCtrlPane(message: string, details?: unknown) {
   console.log(`[CtrlPaneDashboard] ${message}`, details);
 }
 
-const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstanceView => ({
+export const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstanceView => ({
   runtimeInstanceId: db.runtimeInstanceId,
   serviceId: db.serviceId,
   productId: db.productId,
@@ -160,8 +163,8 @@ const mapDbToRuntimeInstance = (db: RuntimeInstanceType): RuntimeInstanceView =>
     port: db.portNumber,
     protocol: db.protocol,
     environment: db.envTag || '',
-    version: '0.1.0',
-    tags: {},
+    version: db.serviceVersion || '',
+    tags: db.operationalMetadata || {},
   },
 });
 
@@ -705,6 +708,9 @@ function CtrlPaneDashboard() {
         protocol: instance.metadata.protocol,
         ipAddress: instance.metadata.address,
         portNumber: instance.metadata.port,
+        serviceVersion: instance.metadata.version,
+        readiness: instance.metadata.tags['light.workflow.readiness.state'] || '',
+        drainState: instance.metadata.tags['light.workflow.lifecycle.drainState'] || '',
         liveStatus: instance.liveStatus ?? 'unknown',
         active: instance.liveStatus === 'active',
       });
@@ -962,6 +968,9 @@ function CtrlPaneDashboard() {
                 <TableCell>Protocol</TableCell>
                 <TableCell>Host</TableCell>
                 <TableCell align="right">Port</TableCell>
+                <TableCell>Build</TableCell>
+                <TableCell>Readiness</TableCell>
+                <TableCell>Drain</TableCell>
                 <TableCell align="center">Live Status</TableCell>
                 <TableCell align="right">Check</TableCell>
                 <TableCell align="right">Info</TableCell>
@@ -980,6 +989,9 @@ function CtrlPaneDashboard() {
                     <TableCell>{node.protocol}</TableCell>
                     <TableCell>{node.ipAddress}</TableCell>
                     <TableCell align="right">{node.portNumber}</TableCell>
+                    <TableCell>{node.serviceVersion || '—'}</TableCell>
+                    <TableCell>{node.readiness || '—'}</TableCell>
+                    <TableCell>{node.drainState || '—'}</TableCell>
                     <TableCell align="center">
                       <Chip label={chip.label} size="small" color={chip.color} variant="outlined" />
                     </TableCell>
