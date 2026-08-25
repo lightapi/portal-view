@@ -56,7 +56,7 @@ function response() {
       instanceId,
       instanceName: `instance-${index + 1}`,
       serviceId: 'service-1',
-      environment: index ? 'qa' : 'dev',
+      envTag: index ? 'qa' : 'dev',
       snapshotId: `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
       snapshotTs: '2026-07-14T12:00:00Z',
       propertyCount: 5,

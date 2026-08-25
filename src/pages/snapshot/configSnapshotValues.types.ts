@@ -11,7 +11,7 @@ export type ConfigSnapshotSummary = {
   description: string | null;
   userId?: string;
   deploymentId?: string;
-  environment?: string;
+  envTag: string;
   productId?: string;
   productVersion?: string;
   serviceId: string;
@@ -51,4 +51,3 @@ export type ConfigSnapshotListResponse = {
 };
 
 export type SnapshotValuesInclude = 'entries' | 'yaml';
-

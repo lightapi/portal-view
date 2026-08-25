@@ -23,6 +23,7 @@ const summary: ConfigSnapshotSummary = {
   instanceName: 'Gateway / Dev',
   current: false,
   description: null,
+  envTag: 'dev',
   serviceId: 'service',
   propertyCount: 1,
 };

@@ -100,6 +100,7 @@ function snapshot(index: number, entries: SnapshotValueEntry[]): SnapshotValues 
     instanceName: `instance-${index}`,
     current: index === 0,
     description: null,
+    envTag: 'dev',
     serviceId: 'service-1',
     propertyCount: entries.length,
     sha256: 'sha256:test',

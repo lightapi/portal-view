@@ -199,7 +199,7 @@ export default function ConfigSnapshotCompare() {
         id: snapshotId,
         header: snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId,
         Header: () => (
-          <Tooltip title={snapshot ? `${snapshot.snapshotId} · ${snapshot.serviceId} · ${snapshot.environment ?? 'No environment'}` : snapshotId}>
+          <Tooltip title={snapshot ? `${snapshot.snapshotId} · ${snapshot.serviceId} · ${snapshot.envTag}` : snapshotId}>
             <span>{snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId}</span>
           </Tooltip>
         ),
@@ -233,7 +233,7 @@ export default function ConfigSnapshotCompare() {
         id: snapshotId,
         header: snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId,
         Header: () => (
-          <Tooltip title={snapshot ? `${snapshot.snapshotId} · ${snapshot.serviceId} · ${snapshot.environment ?? 'No environment'}` : snapshotId}>
+          <Tooltip title={snapshot ? `${snapshot.snapshotId} · ${snapshot.serviceId} · ${snapshot.envTag}` : snapshotId}>
             <span>{snapshot ? `${snapshot.instanceName} · ${snapshot.snapshotTs}` : snapshotId}</span>
           </Tooltip>
         ),
@@ -346,7 +346,7 @@ export default function ConfigSnapshotCompare() {
             At least one resolved snapshot is no longer current. This page continues to show the exact snapshots identified in the URL; refresh explicitly to resolve newer snapshots.
           </Alert>
         )}
-        {crossInstance && <Alert severity="info">This comparison spans multiple instances or environments.</Alert>}
+        {crossInstance && <Alert severity="info">This comparison spans multiple instances or env tags.</Alert>}
         {(loading || preparing) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CircularProgress size={22} />
@@ -364,7 +364,7 @@ export default function ConfigSnapshotCompare() {
                     <CardContent>
                       <Typography variant="subtitle1">{snapshot.instanceName}</Typography>
                       <Typography variant="body2">{snapshot.snapshotTs}</Typography>
-                      <Typography variant="caption" display="block">{snapshot.environment} · {snapshot.serviceId}</Typography>
+                      <Typography variant="caption" display="block">{snapshot.envTag} · {snapshot.serviceId}</Typography>
                       <Typography variant="caption" display="block">{snapshot.propertyCount} properties · {snapshot.sha256}</Typography>
                       <Chip
                         size="small"

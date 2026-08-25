@@ -50,6 +50,7 @@ function snapshot(snapshotId: string) {
     instanceName: snapshotId,
     current: false,
     description: null,
+    envTag: 'dev',
     serviceId: 'service',
     propertyCount: 1,
     sha256: 'sha256:test',

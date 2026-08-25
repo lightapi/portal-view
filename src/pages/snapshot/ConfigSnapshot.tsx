@@ -262,7 +262,7 @@ export default function ConfigSnapshot() {
             { accessorKey: 'userId', header: 'User Id' },
             { accessorKey: 'productId', header: 'Product Id' },
             { accessorKey: 'productVersion', header: 'Product Version' },
-            { accessorKey: 'environment', header: 'Environment' },
+            { accessorKey: 'envTag', header: 'Env Tag' },
             { accessorKey: 'serviceId', header: 'Service Id' },
             { accessorKey: 'apiId', header: 'Api Id' },
             { accessorKey: 'apiVersion', header: 'Api Version' },

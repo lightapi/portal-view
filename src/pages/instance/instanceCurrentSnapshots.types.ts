@@ -14,7 +14,7 @@ export type CurrentConfigSnapshot = {
   instanceId: string;
   instanceName: string;
   serviceId: string;
-  environment?: string | null;
+  envTag: string;
   snapshotId: string;
   snapshotTs: string;
   propertyCount: number;

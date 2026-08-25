@@ -58,6 +58,7 @@ function summary(index: number): ConfigSnapshotSummary {
     instanceName: `instance-${index}`,
     current: false,
     description: null,
+    envTag: 'dev',
     serviceId: 'service-1',
     propertyCount: 1,
   };
