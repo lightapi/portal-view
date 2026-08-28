@@ -16,6 +16,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { apiPost } from '../../api/apiPost';
 import { signOut, useUserDispatch, useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import {
   CopyableTruncatedText,
   DateTimeCell,
@@ -73,7 +74,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
   const initialData = location.state?.data || {};
 
   const [data, setData] = useState<AuthSessionType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -125,7 +126,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
       setData(json.sessions || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true);
+      setIsError(loadErrorMessage(error));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -246,7 +247,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError) || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -255,7 +256,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
     muiToolbarAlertBannerProps: missingSelfContext
       ? { color: 'warning', children: 'User context is required to load your sessions.' }
       : isError
-        ? { color: 'error', children: 'Error loading sessions' }
+        ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading sessions' }
         : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (

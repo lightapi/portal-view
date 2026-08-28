@@ -14,6 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from "../../utils/fetchClient";
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -50,7 +51,7 @@ export default function HostUser() {
   );
   // Data and fetching state
   const [data, setData] = useState<UserHostType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -78,7 +79,7 @@ export default function HostUser() {
     // Use initialHostId for the query. Do not proceed if it's missing.
     if (!initialHostId) {
       console.error("No hostId provided to HostUser page.");
-      setIsError(true);
+      setIsError('Unable to load host users because no host was selected.');
       return;
     }
     setIsError(false);
@@ -119,7 +120,7 @@ export default function HostUser() {
       setData(json.userHosts || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setIsError(loadErrorMessage(error)); console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -195,13 +196,13 @@ export default function HostUser() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.hostId}-${row.userId}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (

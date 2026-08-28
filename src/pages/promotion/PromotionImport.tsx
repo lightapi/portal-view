@@ -24,6 +24,7 @@ import {
     Radio,
     RadioGroup,
     FormLabel,
+    Checkbox,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -63,6 +64,7 @@ type ActionConfig = {
 };
 
 type DiffItem = {
+    itemId: string;
     entityType: string;
     entityId: string;
     entityName?: string;
@@ -72,9 +74,20 @@ type DiffItem = {
 };
 
 type DiffPlan = {
-    promotionId?: string;
+    promotionId: string;
+    entityType: string;
+    promotionStatus: 'PLANNED' | 'BLOCKED' | string;
+    executable: boolean;
     summary: { create: number; update: number; noop: number; orphan: number };
     items: DiffItem[];
+    missingDependencies?: Array<{
+        code?: string;
+        type?: string;
+        id?: string;
+        name?: string;
+        message?: string;
+        reason?: string;
+    }>;
 };
 
 type ApiPostResult<T> = {
@@ -92,6 +105,9 @@ type CommandError = {
 type GlobalImportResult = {
     imported?: number;
     total?: number;
+    promotionStatus?: string;
+    appended?: number;
+    transactionId?: string;
 };
 
 const actionConfig: Record<KnownAction, ActionConfig> = {
@@ -154,6 +170,7 @@ export default function PromotionImport() {
 
     // Execute
     const [orphanAction, setOrphanAction] = useState('keep');
+    const [selectedOrphanItemIds, setSelectedOrphanItemIds] = useState<string[]>([]);
     const [isExecuting, setIsExecuting] = useState(false);
     const [executeResult, setExecuteResult] = useState<{ success: boolean; message: string } | null>(null);
     const autoDryRunStarted = useRef(false);
@@ -239,6 +256,7 @@ export default function PromotionImport() {
 
         setIsDryRunning(true);
         setDiffPlan(null);
+        setSelectedOrphanItemIds([]);
         setDryRunError(null);
         try {
             const cmd = {
@@ -287,7 +305,8 @@ export default function PromotionImport() {
     const handleExecute = useCallback(async () => {
         if (!snapshot || !targetHostId) return;
         const globalSnapshot = isGlobalSnapshot(snapshot);
-        if (!globalSnapshot && !diffPlan) return;
+        if (!globalSnapshot && (!diffPlan?.executable || !diffPlan.promotionId)) return;
+        if (!globalSnapshot && orphanAction === 'delete' && selectedOrphanItemIds.length === 0) return;
         if (!window.confirm('Are you sure you want to execute this promotion? This will modify the target environment.')) return;
 
         setIsExecuting(true);
@@ -301,9 +320,9 @@ export default function PromotionImport() {
                     ? { targetHostId, snapshot }
                     : {
                         targetHostId,
-                        promotionId: diffPlan?.promotionId,
-                        snapshot,
+                        promotionId: diffPlan.promotionId,
                         orphanAction,
+                        orphanItemIds: orphanAction === 'delete' ? selectedOrphanItemIds : [],
                     },
             };
             const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd }) as ApiPostResult<GlobalImportResult | CommandError>;
@@ -315,7 +334,7 @@ export default function PromotionImport() {
                 const importResult = result.data as GlobalImportResult | undefined;
                 const message = globalSnapshot && importResult?.imported !== undefined
                     ? `Global snapshot imported successfully (${importResult.imported}/${importResult.total ?? importResult.imported} events).`
-                    : 'Promotion executed successfully!';
+                    : `Promotion event transaction accepted (${importResult?.appended ?? 0} events). Projection updates continue asynchronously${importResult?.transactionId ? `; transaction ${importResult.transactionId}` : ''}.`;
                 setExecuteResult({ success: true, message });
                 if (taskContextState) {
                     saveStoredTaskContext(
@@ -335,7 +354,7 @@ export default function PromotionImport() {
         } finally {
             setIsExecuting(false);
         }
-    }, [buildPromotionTaskContext, snapshot, targetHostId, diffPlan, orphanAction, taskContextState]);
+    }, [buildPromotionTaskContext, snapshot, targetHostId, diffPlan, orphanAction, selectedOrphanItemIds, taskContextState]);
 
     // Auto dry run if coming from export page
     useEffect(() => {
@@ -347,6 +366,12 @@ export default function PromotionImport() {
 
     const toggleRow = (key: string) => {
         setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const toggleOrphan = (itemId: string) => {
+        setSelectedOrphanItemIds((current) => current.includes(itemId)
+            ? current.filter((id) => id !== itemId)
+            : [...current, itemId]);
     };
 
     const historyStep = taskContextState
@@ -502,12 +527,22 @@ export default function PromotionImport() {
                                                         {item.entityName || item.entityId}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Chip
-                                                            icon={config.icon}
-                                                            label={config.label}
-                                                            color={config.color}
-                                                            size="small"
-                                                        />
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            {item.action === 'DELETE' && orphanAction === 'delete' && (
+                                                                <Checkbox
+                                                                    size="small"
+                                                                    checked={selectedOrphanItemIds.includes(item.itemId)}
+                                                                    onChange={() => toggleOrphan(item.itemId)}
+                                                                    inputProps={{ 'aria-label': `Select orphan ${item.entityId}` }}
+                                                                />
+                                                            )}
+                                                            <Chip
+                                                                icon={config.icon}
+                                                                label={config.label}
+                                                                color={config.color}
+                                                                size="small"
+                                                            />
+                                                        </Box>
                                                     </TableCell>
                                                 </TableRow>
                                                 {hasDiff && (
@@ -519,8 +554,8 @@ export default function PromotionImport() {
                                                                         <TableHead>
                                                                             <TableRow>
                                                                                 <TableCell>Field</TableCell>
-                                                                                <TableCell>From (Source)</TableCell>
-                                                                                <TableCell>To (Target)</TableCell>
+                                                                                <TableCell>Current Target</TableCell>
+                                                                                <TableCell>Desired Source</TableCell>
                                                                             </TableRow>
                                                                         </TableHead>
                                                                         <TableBody>
@@ -554,9 +589,57 @@ export default function PromotionImport() {
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom>Step 3: Execute Promotion</Typography>
 
-                        <Alert severity="info" sx={{ mb: 3 }}>
-                            Selective entity execution is currently disabled. You can review the diff plan, but applying changes requires Phase 3 event materialization.
-                        </Alert>
+                        {diffPlan.executable ? (
+                            <Alert severity="info" sx={{ mb: 3 }}>
+                                Selective execution is enabled for {diffPlan.entityType.replaceAll('_', ' ')}. Success confirms atomic event append; target projections update asynchronously.
+                            </Alert>
+                        ) : (
+                            <Alert severity="warning" sx={{ mb: 3 }}>
+                                This plan is review-only and cannot be executed.
+                                {diffPlan.missingDependencies?.length
+                                    ? ` Resolve ${diffPlan.missingDependencies.length} missing or incompatible dependencies and run the dry run again.`
+                                    : ' Selective execution is currently available only for Platform, Pipeline, and Product Version exports.'}
+                                {diffPlan.missingDependencies?.length ? (
+                                    <TableContainer sx={{ mt: 2 }}>
+                                        <Table size="small" aria-label="Promotion blockers">
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell>Code</TableCell>
+                                                    <TableCell>Type</TableCell>
+                                                    <TableCell>Dependency</TableCell>
+                                                    <TableCell>Details</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {diffPlan.missingDependencies.map((dependency, index) => (
+                                                    <TableRow key={`${dependency.code ?? 'blocker'}-${dependency.type ?? 'unknown'}-${dependency.id ?? index}`}>
+                                                        <TableCell>{dependency.code ?? 'DEPENDENCY_BLOCKED'}</TableCell>
+                                                        <TableCell>{dependency.type ?? 'Unknown'}</TableCell>
+                                                        <TableCell>
+                                                            {dependency.name ? (
+                                                                <>
+                                                                    <Typography variant="body2">{dependency.name}</Typography>
+                                                                    {dependency.id ? (
+                                                                        <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                                                                            {dependency.id}
+                                                                        </Typography>
+                                                                    ) : null}
+                                                                </>
+                                                            ) : (
+                                                                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                                                    {dependency.id ?? 'Unknown'}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>{dependency.message ?? dependency.reason ?? 'No additional details provided.'}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                ) : null}
+                            </Alert>
+                        )}
 
                         {(diffPlan.summary?.orphan ?? 0) > 0 && (
                             <Box sx={{ mb: 3 }}>
@@ -564,7 +647,7 @@ export default function PromotionImport() {
                                     <FormLabel>Orphaned Items Action</FormLabel>
                                     <RadioGroup row value={orphanAction} onChange={(e) => setOrphanAction(e.target.value)}>
                                         <FormControlLabel value="keep" control={<Radio />} label="Keep (Safe Mode)" />
-                                        <FormControlLabel value="delete" control={<Radio />} label="Delete Orphans" />
+                                        <FormControlLabel value="delete" control={<Radio />} label="Delete Selected Orphans" />
                                         <FormControlLabel value="sync" control={<Radio />} label="Strict Sync" />
                                     </RadioGroup>
                                 </FormControl>
@@ -574,7 +657,7 @@ export default function PromotionImport() {
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
                                 variant="outlined"
-                                onClick={() => { setDiffPlan(null); setExecuteResult(null); }}
+                                onClick={() => { setDiffPlan(null); setExecuteResult(null); setSelectedOrphanItemIds([]); }}
                             >
                                 Back to Import
                             </Button>
@@ -583,7 +666,8 @@ export default function PromotionImport() {
                                 color="primary"
                                 startIcon={isExecuting ? <CircularProgress size={20} /> : <PlayArrowIcon />}
                                 onClick={handleExecute}
-                                disabled
+                                disabled={!diffPlan.executable || !diffPlan.promotionId || isExecuting ||
+                                    (orphanAction === 'delete' && selectedOrphanItemIds.length === 0)}
                             >
                                 Execute Promotion
                             </Button>

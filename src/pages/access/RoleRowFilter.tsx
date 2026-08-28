@@ -16,6 +16,7 @@ import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -67,7 +68,7 @@ export default function RoleRowFilter() {
 
   // Data and fetching state
   const [data, setData] = useState<RoleRowFilterType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -123,7 +124,7 @@ export default function RoleRowFilter() {
       setData(json.roleRowFilters || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setIsError(loadErrorMessage(error)); console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -234,13 +235,13 @@ export default function RoleRowFilter() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.roleId}-${row.endpointId}-${row.colName}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (

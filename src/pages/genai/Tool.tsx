@@ -21,6 +21,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { buildGenAiTaskContext, buildGenAiTaskRoute, GenAiTaskLayout } from './genAiTaskUtils';
 import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
 import type {PublishableTool} from './gatewayToolPublicationScope';
@@ -114,7 +115,7 @@ export default function Tool() {
 
     // Data and fetching state
     const [data, setData] = useState<ToolType[]>([]);
-    const [isError, setIsError] = useState(false);
+    const [isError, setIsError] = useState<string | false>(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
@@ -177,7 +178,7 @@ export default function Tool() {
             setData(json.tools || []);
             setRowCount(json.total || 0);
         } catch (error) {
-            setIsError(true); console.error(error);
+            setIsError(loadErrorMessage(error)); console.error(error);
         } finally {
             setIsLoading(false); setIsRefetching(false);
         }
@@ -424,14 +425,14 @@ export default function Tool() {
         manualSorting: true,
         manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
+        state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onRowSelectionChange: setRowSelection,
         getRowId: (row) => row.toolId,
-        muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+        muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         enableRowSelection: (row) => row.original.active,
         positionActionsColumn: 'first',

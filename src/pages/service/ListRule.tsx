@@ -10,6 +10,7 @@ import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import fetchClient from "../../utils/fetchClient";
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { apiPost } from "../../api/apiPost";
 import { useUserState } from "../../contexts/UserContext";
 import TaskActionPanel from '../../tasks/TaskActionPanel';
@@ -50,7 +51,7 @@ export default function ListRule() {
   );
 
   const [data, setData] = useState<RuleType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
@@ -81,7 +82,7 @@ export default function ListRule() {
       const json = await fetchClient(url);
       setData(json || []);
     } catch (error) {
-      setIsError(true);
+      setIsError(loadErrorMessage(error));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -179,8 +180,8 @@ export default function ListRule() {
     ),
     initialState: { density: 'compact', showColumnFilters: true },
     onColumnFiltersChange: setColumnFilters,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading rules' } : undefined,
-    state: { isLoading, showAlertBanner: isError, columnFilters },
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading rules' } : undefined,
+    state: { isLoading, showAlertBanner: Boolean(isError), columnFilters },
   });
 
   return (

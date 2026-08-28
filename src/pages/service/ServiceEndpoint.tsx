@@ -18,6 +18,7 @@ import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import { useUserState } from "../../contexts/UserContext";
 import fetchClient from "../../utils/fetchClient";
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import HelpLink from '../../components/HelpLink';
@@ -88,7 +89,7 @@ export default function ServiceEndpoint() {
 
   // Data and fetching state (unchanged)
   const [data, setData] = useState<EndpointType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -147,7 +148,7 @@ export default function ServiceEndpoint() {
       setData(json.endpoints || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setIsError(loadErrorMessage(error)); console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -287,13 +288,13 @@ export default function ServiceEndpoint() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.endpointId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading endpoints' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading endpoints' } : undefined,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Button

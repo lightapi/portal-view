@@ -17,6 +17,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PersonIcon from '@mui/icons-material/Person';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { useUserState } from '../../contexts/UserContext';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute } from '../../tasks/taskUtils';
@@ -49,7 +50,7 @@ export default function HostAdmin() {
 
   // Data and fetching state
   const [data, setData] = useState<HostType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -110,7 +111,7 @@ export default function HostAdmin() {
       setData(json.hosts);
       setRowCount(json.total);
     } catch (error) {
-      setIsError(true);
+      setIsError(loadErrorMessage(error));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -240,7 +241,7 @@ export default function HostAdmin() {
     rowCount,
     state: {
       isLoading,
-      showAlertBanner: isError,
+      showAlertBanner: Boolean(isError),
       showProgressBars: isRefetching,
       pagination,
       sorting,
@@ -253,7 +254,7 @@ export default function HostAdmin() {
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.hostId,
     muiToolbarAlertBannerProps: isError
-      ? { color: 'error', children: 'Error loading data' }
+      ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' }
       : undefined,
 
     enableRowActions: true,

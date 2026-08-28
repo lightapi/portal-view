@@ -7,6 +7,7 @@ import {
 } from 'material-react-table';
 import { Box, Tooltip, Typography } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -42,14 +43,14 @@ export default function ProviderKey() {
   );
   // Data and fetching state
   const [data, setData] = useState<ProviderKeyType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Data fetching logic (fetches all keys for the provider)
   useEffect(() => {
     if (!providerId || !hostId) {
       console.error("ProviderKey page loaded without providerId or hostId.");
-      setIsError(true);
+      setIsError('Unable to load provider keys because the provider or host context is missing.');
       setIsLoading(false);
       return;
     }
@@ -68,7 +69,7 @@ export default function ProviderKey() {
         setData(jsonData || []);
       } catch (error) {
         console.error(error);
-        setIsError(true);
+        setIsError(loadErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
@@ -135,10 +136,10 @@ export default function ProviderKey() {
     // No manual props needed for client-side operations
     state: {
       isLoading,
-      showAlertBanner: isError,
+      showAlertBanner: Boolean(isError),
     },
     getRowId: (row) => `${row.providerId}-${row.kid}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading keys' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading keys' } : undefined,
     renderTopToolbarCustomActions: () => (
       <Typography variant="h6">
         Keys for Provider: <strong>{providerId}</strong>

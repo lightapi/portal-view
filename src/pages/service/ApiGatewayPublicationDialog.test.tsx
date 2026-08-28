@@ -109,4 +109,33 @@ describe('ApiGatewayPublicationDialog', () => {
     expect(screen.getByText(/Transaction: transaction-1/)).toBeInTheDocument();
     expect(screen.getByText(/Projection is asynchronous/)).toBeInTheDocument();
   });
+
+  it('shows the structured publication preview failure', async () => {
+    vi.mocked(fetchClient).mockReset();
+    vi.mocked(fetchClient)
+      .mockResolvedValueOnce({ candidates: [candidate] })
+      .mockRejectedValueOnce({
+        statusCode: 'ACCESS_KEY_CONFLICT',
+        message: 'Endpoint access key already has another owner: GET /pets',
+      });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ApiGatewayPublicationDialog
+          open
+          hostId={HOST_ID}
+          apiVersionId={API_VERSION_ID}
+          apiVersion="2.0.0"
+          onClose={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText(/Projection revision 12 of 12/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    expect(await screen.findByText(
+      'Endpoint access key already has another owner: GET /pets',
+    )).toBeInTheDocument();
+  });
 });

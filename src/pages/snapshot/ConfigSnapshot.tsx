@@ -30,6 +30,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromObject, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 import SnapshotValuesDialog from './SnapshotValuesDialog';
@@ -67,7 +68,7 @@ export default function ConfigSnapshot() {
 
     // Data and fetching state
     const [data, setData] = useState<ConfigSnapshotType[]>([]);
-    const [isError, setIsError] = useState(false);
+    const [isError, setIsError] = useState<string | false>(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
@@ -135,7 +136,7 @@ export default function ConfigSnapshot() {
                 setComparisonLimits(json.comparisonLimits);
             }
         } catch (error) {
-            setIsError(true); console.error(error);
+            setIsError(loadErrorMessage(error)); console.error(error);
         } finally {
             setIsLoading(false); setIsRefetching(false);
         }
@@ -283,7 +284,7 @@ export default function ConfigSnapshot() {
         manualSorting: true,
         manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
+        state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter, rowSelection },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -291,7 +292,7 @@ export default function ConfigSnapshot() {
         getRowId: snapshotSelectionKey,
         enableRowSelection: row => selectedSnapshots.has(snapshotSelectionKey(row.original)) || selectedCount < MAX_COMPARE_SNAPSHOTS,
         onRowSelectionChange: handleRowSelectionChange,
-        muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+        muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
         displayColumnDefOptions: {

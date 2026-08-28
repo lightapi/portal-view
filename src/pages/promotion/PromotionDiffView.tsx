@@ -67,9 +67,11 @@ function getActionConfig(action: string) {
 }
 
 const statusConfig: Record<string, { icon: React.ReactElement; color: 'success' | 'error' | 'warning' | 'info' }> = {
-    Success: { icon: <CheckCircleIcon />, color: 'success' },
-    Failed: { icon: <ErrorIcon />, color: 'error' },
-    Pending: { icon: <CircularProgress size={16} />, color: 'info' },
+    APPEND_ACCEPTED: { icon: <CheckCircleIcon />, color: 'success' },
+    FAILED: { icon: <ErrorIcon />, color: 'error' },
+    PENDING: { icon: <CircularProgress size={16} />, color: 'info' },
+    NOOP: { icon: <CheckCircleIcon />, color: 'success' },
+    SKIPPED: { icon: <SkipNextIcon />, color: 'info' },
 };
 
 export default function PromotionDiffView() {
@@ -232,8 +234,8 @@ export default function PromotionDiffView() {
                                                                     <TableHead>
                                                                         <TableRow>
                                                                             <TableCell>Field</TableCell>
-                                                                            <TableCell>Source Value</TableCell>
-                                                                            <TableCell>Target Value</TableCell>
+                                                                            <TableCell>Current Target</TableCell>
+                                                                            <TableCell>Desired Source</TableCell>
                                                                         </TableRow>
                                                                     </TableHead>
                                                                     <TableBody>

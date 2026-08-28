@@ -19,6 +19,7 @@ import fetchClient from '../../utils/fetchClient';
 import type { MRT_Cell, MRT_RowData } from 'material-react-table';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
+import { pipelineLoadErrorMessage } from './deploymentLoadErrorMessage';
 
 // --- Type Definitions ---
 type PipelineApiResponse = {
@@ -79,7 +80,7 @@ export default function PipelineAdmin() {
 
   // Data and fetching state
   const [data, setData] = useState<PipelineType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -105,7 +106,7 @@ export default function PipelineAdmin() {
   // Data fetching logic
   const fetchData = useCallback(async () => {
     if (!host) return;
-    setIsError(false);
+    setLoadError(null);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
     let activeStatus = true; // Default to true if not present
@@ -142,7 +143,8 @@ export default function PipelineAdmin() {
       setData(json.pipelines || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setLoadError(pipelineLoadErrorMessage(error));
+      console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -275,13 +277,13 @@ export default function PipelineAdmin() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(loadError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => row.pipelineId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    muiToolbarAlertBannerProps: loadError ? { color: 'error', children: loadError } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (

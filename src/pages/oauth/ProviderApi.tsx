@@ -15,6 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from "../../contexts/UserContext.tsx";
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
 
@@ -60,7 +61,7 @@ export default function ProviderApi() {
 
   // Data and fetching state
   const [data, setData] = useState<ProviderApiType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -121,7 +122,7 @@ export default function ProviderApi() {
       setData(json.authProviderApis || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setIsError(loadErrorMessage(error)); console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -187,13 +188,13 @@ export default function ProviderApi() {
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getRowId: (row) => `${row.hostId}-${row.apiId}-${row.providerId}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Tooltip title="Remove API from Provider">

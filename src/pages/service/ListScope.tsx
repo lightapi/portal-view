@@ -8,6 +8,7 @@ import {
 } from 'material-react-table';
 import { Box, Tooltip } from '@mui/material';
 import fetchClient from "../../utils/fetchClient";
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { useUserState } from "../../contexts/UserContext";
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -53,7 +54,7 @@ export default function ListScope() {
   );
 
   const [data, setData] = useState<ScopeType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -74,7 +75,7 @@ export default function ListScope() {
       const json = await fetchClient(url);
       setData(json || []);
     } catch (error) {
-      setIsError(true);
+      setIsError(loadErrorMessage(error));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -111,8 +112,8 @@ export default function ListScope() {
     enableGlobalFilter: true,
     enableColumnFilters: true,
     initialState: { density: 'compact', showColumnFilters: true },
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading scopes' } : undefined,
-    state: { isLoading, showAlertBanner: isError },
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading scopes' } : undefined,
+    state: { isLoading, showAlertBanner: Boolean(isError) },
   });
 
   return (

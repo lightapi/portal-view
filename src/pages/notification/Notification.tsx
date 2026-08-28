@@ -12,6 +12,7 @@ import { useLocation } from 'react-router-dom';
 import type { ChipProps } from '@mui/material';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { hasAnyRole } from '../../utils/ownershipScope';
 import { EventReplayAdmin } from './replay/EventReplayAdmin';
 
@@ -362,7 +363,7 @@ export default function Notification() {
   const isAdminView = location.pathname.endsWith('/event/notifications');
   const isAdmin = hasAnyRole(roles, ['admin', 'host-admin']);
   const [data, setData] = useState<NotificationData[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [loadError, setLoadError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -462,7 +463,7 @@ export default function Notification() {
       setIsError(false);
       setLoadError('');
     } catch (error) {
-      setIsError(true);
+      setIsError(loadErrorMessage(error));
       setLoadError(notificationErrorMessage(error));
       setData([]);
       setRowCount(0);
@@ -630,7 +631,7 @@ export default function Notification() {
     rowCount,
     state: {
       isLoading,
-      showAlertBanner: isError,
+      showAlertBanner: Boolean(isError),
       showProgressBars: isRefetching,
       pagination,
       sorting,

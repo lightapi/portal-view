@@ -10,6 +10,7 @@ import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { useUserState } from '../../contexts/UserContext';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 
@@ -46,14 +47,14 @@ export default function UserHost() {
 
   // Data and fetching state
   const [data, setData] = useState<UserHostType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Data fetching logic (fetches all hosts for the user)
   useEffect(() => {
     if (!initialUserId) {
       console.error("UserHost page loaded without a userId.");
-      setIsError(true);
+      setIsError('Unable to load user hosts because no user was selected.');
       setIsLoading(false);
       return;
     }
@@ -74,7 +75,7 @@ export default function UserHost() {
         setData(jsonData || []);
       } catch (error) {
         console.error(error);
-        setIsError(true);
+        setIsError(loadErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
@@ -127,10 +128,10 @@ export default function UserHost() {
     // No manual props needed for client-side operations
     state: {
       isLoading,
-      showAlertBanner: isError,
+      showAlertBanner: Boolean(isError),
     },
     getRowId: (row) => `${row.hostId}-${row.userId}`,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading hosts for user' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading hosts for user' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (

@@ -11,6 +11,7 @@ import {
 } from 'material-react-table';
 import { Box, Typography } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 
 // --- Type Definitions ---
 type SnapshotInstanceFileType = {
@@ -32,7 +33,7 @@ export default function ConfigSnapshotFile() {
 
     // Data and fetching state
     const [data, setData] = useState<SnapshotInstanceFileType[]>([]);
-    const [isError, setIsError] = useState(false);
+    const [isError, setIsError] = useState<string | false>(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
@@ -69,7 +70,7 @@ export default function ConfigSnapshotFile() {
             setData(json.data || []);
             setRowCount(json.totalCount || 0);
         } catch (error) {
-            setIsError(true); console.error(error);
+            setIsError(loadErrorMessage(error)); console.error(error);
         } finally {
             setIsLoading(false); setIsRefetching(false);
         }
@@ -104,13 +105,13 @@ export default function ConfigSnapshotFile() {
         manualSorting: true,
         manualFiltering: true,
         rowCount,
-        state: { isLoading, showAlertBanner: isError, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+        state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
         onPaginationChange: setPagination,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         getRowId: (row) => row.instanceFileId,
-        muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading data' } : undefined,
+        muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: false,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

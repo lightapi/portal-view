@@ -21,6 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { apiPost } from '../../api/apiPost';
 
 type PublicationVersion = {
@@ -121,7 +122,7 @@ export default function ApiGatewayPublicationDialog({
       setCandidates(values);
       if (values.length === 1) setInstanceId(values[0].instanceId);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to load eligible Gateways.');
+      setError(loadErrorMessage(reason));
     } finally {
       setLoading(false);
     }
@@ -164,7 +165,7 @@ export default function ApiGatewayPublicationDialog({
       setPreview(response as PublicationPreview);
       setAcknowledged([]);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to preview publication.');
+      setError(loadErrorMessage(reason));
     } finally {
       setLoading(false);
     }
@@ -200,7 +201,7 @@ export default function ApiGatewayPublicationDialog({
       }
       setResult(response.data as PublicationResult);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Publication command failed.');
+      setError(loadErrorMessage(reason));
     } finally {
       setLoading(false);
     }

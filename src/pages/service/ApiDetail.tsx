@@ -34,6 +34,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import Widget from "../../components/Widget/Widget";
 import fetchClient from "../../utils/fetchClient";
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import { apiPost } from '../../api/apiPost';
 import { applyOwnershipColumns, applyOwnershipFilter, hasAnyRole, ownershipScope } from '../../utils/ownershipScope';
 import ApiGatewayPublicationDialog from './ApiGatewayPublicationDialog';
@@ -131,7 +132,7 @@ export default function ApiDetail() {
 
   // State for service versions data
   const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
 
   // Data fetching for service versions
   useEffect(() => {
@@ -153,7 +154,7 @@ export default function ApiDetail() {
         setData(data || []);
       } catch (error) {
         console.error("Failed to fetch service versions:", error);
-        setIsError(true);
+        setIsError(loadErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
@@ -277,10 +278,10 @@ export default function ApiDetail() {
     initialState: { showColumnFilters: true, density: 'compact' },
     state: {
       isLoading,
-      showAlertBanner: isError,
+      showAlertBanner: Boolean(isError),
     },
     getRowId: (row) => row.apiVersionId,
-    muiToolbarAlertBannerProps: isError ? { color: 'error', children: 'Error loading api versions' } : undefined,
+    muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading api versions' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
     renderRowActions: ({ row }) => (

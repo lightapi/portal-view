@@ -15,6 +15,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { signOut, useUserDispatch, useUserState } from '../../contexts/UserContext.jsx';
 import { apiPost } from '../../api/apiPost.js';
 import fetchClient from '../../utils/fetchClient';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 import {
   CopyableTruncatedText,
   DateTimeCell,
@@ -76,7 +77,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
 
   // Data and fetching state
   const [data, setData] = useState<RefreshTokenType[]>([]);
-  const [isError, setIsError] = useState(false);
+  const [isError, setIsError] = useState<string | false>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const [rowCount, setRowCount] = useState(0);
@@ -141,7 +142,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
       setData(json.tokens || []);
       setRowCount(json.total || 0);
     } catch (error) {
-      setIsError(true); console.error(error);
+      setIsError(loadErrorMessage(error)); console.error(error);
     } finally {
       setIsLoading(false); setIsRefetching(false);
     }
@@ -256,7 +257,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
     manualSorting: true,
     manualFiltering: true,
     rowCount,
-    state: { isLoading, showAlertBanner: isError || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
+    state: { isLoading, showAlertBanner: Boolean(isError) || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -265,7 +266,7 @@ export default function RefreshTokenAdmin({ viewMode = 'admin' }: OAuthSessionPa
     muiToolbarAlertBannerProps: missingSelfContext
       ? { color: 'warning', children: 'User context is required to load your refresh tokens.' }
       : isError
-        ? { color: 'error', children: 'Error loading refresh tokens' }
+        ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading refresh tokens' }
         : undefined,
     enableRowActions: true,
     renderRowActions: ({ row }) => (
