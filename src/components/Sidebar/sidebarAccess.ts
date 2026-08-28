@@ -1,5 +1,10 @@
 export const ORG_ADMIN_ACCESS = {
-  role: 'org-admin org-viewer',
+  role: 'admin org-admin org-viewer',
+  requireExplicitRole: true,
+} as const;
+
+export const HOST_ADMIN_ACCESS = {
+  role: 'admin host-admin host-viewer',
   requireExplicitRole: true,
 } as const;
 

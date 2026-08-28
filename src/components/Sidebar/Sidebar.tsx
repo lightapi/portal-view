@@ -70,7 +70,7 @@ import MailMenu from "../Header/MailMenu";
 import NotificationMenu from "../Header/NotificationMenu";
 import ProfileMenu from "../Header/ProfileMenu";
 import TaskCommandPalette from "../../tasks/TaskCommandPalette";
-import { filterSidebarItems, ORG_ADMIN_ACCESS } from "./sidebarAccess";
+import { filterSidebarItems, HOST_ADMIN_ACCESS, ORG_ADMIN_ACCESS } from "./sidebarAccess";
 // components
 import SidebarLink from "./components/SidebarLink/SidebarLink";
 // styles
@@ -194,7 +194,7 @@ const structure = [
     id: 9000, type: "group", label: "Administration",
     children: [
       { id: 90, label: "Org Admin", ...ORG_ADMIN_ACCESS, link: "/app/org/OrgAdmin", icon: <CorporateFareIcon /> },
-      { id: 91, label: "Host Admin", link: "/app/host/HostAdmin", icon: <GiteIcon /> },
+      { id: 91, label: "Host Admin", ...HOST_ADMIN_ACCESS, link: "/app/host/HostAdmin", icon: <GiteIcon /> },
       { id: 92, label: "Ref Admin", link: "/app/ref/TableAdmin", icon: <TableIcon />, children: [{ label: "Ref Table", link: "/app/ref/TableAdmin" }, { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" }] },
       { id: 93, label: "User Admin", link: "/app/user", icon: <PeopleAltIcon /> },
       { id: 94, label: "Event Admin", link: "/app/event/notifications", icon: <EventIcon />, children: [{ label: "Notifications", link: "/app/event/notifications" }, { label: "Export", link: "/app/form/exportPortalEvent" }, { label: "Import", link: "/app/form/importPortalEvent" }, { label: "Global Export", link: "/app/migration/export" }, { label: "Convert Snapshot", link: "/app/migration/convert" }] },
