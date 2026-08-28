@@ -11,7 +11,8 @@ import {
     type MRT_Cell,
     type MRT_RowData
 } from 'material-react-table';
-import { Box, Typography, Tooltip } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { Box, IconButton, Typography, Tooltip } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
 
 // --- Type Definitions ---
@@ -31,14 +32,48 @@ type ConfigSnapshotPropertyType = {
 
 const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unknown> }) => {
     const value = cell.getValue<string>() ?? '';
+    return <CopyablePropertyValue value={value} />;
+};
+
+export function CopyablePropertyValue({ value }: { value: string }) {
+    const copyValue = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        void navigator.clipboard?.writeText(value);
+    };
+
     return (
-        <Tooltip title={value} placement="top-start">
+        <Tooltip
+            describeChild
+            placement="top-start"
+            slotProps={{
+                tooltip: { sx: { maxWidth: 600, maxHeight: 400, overflow: 'auto' } },
+            }}
+            title={(
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Typography
+                        component="span"
+                        sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', userSelect: 'text', flex: 1 }}
+                    >
+                        {value}
+                    </Typography>
+                    <IconButton
+                        aria-label="Copy property value"
+                        color="inherit"
+                        size="small"
+                        onClick={copyValue}
+                        sx={{ mt: -0.5, mr: -0.5 }}
+                    >
+                        <ContentCopyIcon fontSize="inherit" />
+                    </IconButton>
+                </Box>
+            )}
+        >
             <Box component="span" sx={{ display: 'block', maxWidth: '200px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {value}
             </Box>
         </Tooltip>
     );
-};
+}
 
 export default function ConfigSnapshotProperty() {
     const location = useLocation();
