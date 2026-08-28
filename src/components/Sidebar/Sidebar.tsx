@@ -70,6 +70,7 @@ import MailMenu from "../Header/MailMenu";
 import NotificationMenu from "../Header/NotificationMenu";
 import ProfileMenu from "../Header/ProfileMenu";
 import TaskCommandPalette from "../../tasks/TaskCommandPalette";
+import { filterSidebarItems, ORG_ADMIN_ACCESS } from "./sidebarAccess";
 // components
 import SidebarLink from "./components/SidebarLink/SidebarLink";
 // styles
@@ -192,7 +193,7 @@ const structure = [
   {
     id: 9000, type: "group", label: "Administration",
     children: [
-      { id: 90, label: "Org Admin", link: "/app/org/OrgAdmin", icon: <CorporateFareIcon /> },
+      { id: 90, label: "Org Admin", ...ORG_ADMIN_ACCESS, link: "/app/org/OrgAdmin", icon: <CorporateFareIcon /> },
       { id: 91, label: "Host Admin", link: "/app/host/HostAdmin", icon: <GiteIcon /> },
       { id: 92, label: "Ref Admin", link: "/app/ref/TableAdmin", icon: <TableIcon />, children: [{ label: "Ref Table", link: "/app/ref/TableAdmin" }, { label: "Relation Type", link: "/app/ref/RelationTypeAdmin" }] },
       { id: 93, label: "User Admin", link: "/app/user", icon: <PeopleAltIcon /> },
@@ -391,49 +392,6 @@ function Sidebar() {
       setPermanent(true);
     }
   }
-}
-
-function filterSidebarItems(items: any[], userRoles: string | null, insideAdminSection = false): any[] {
-  const isAdmin = hasSidebarRole(userRoles, "admin host-admin");
-
-  return items.reduce<any[]>((visibleItems, item) => {
-    const inAdminSection = insideAdminSection || item.id === 9000;
-    const children = item.children ? filterSidebarItems(item.children, userRoles, inAdminSection) : undefined;
-    const visibleChildren = children?.length ? children : undefined;
-
-    if (item.type === "group") {
-      if (visibleChildren) {
-        visibleItems.push({ ...item, children: visibleChildren });
-      }
-      return visibleItems;
-    }
-
-    if (canShowSidebarItem(item, userRoles, inAdminSection, isAdmin)) {
-      visibleItems.push(visibleChildren ? { ...item, children: visibleChildren } : { ...item, children: undefined });
-    }
-
-    return visibleItems;
-  }, []);
-}
-
-function canShowSidebarItem(item: any, userRoles: string | null, insideAdminSection: boolean, isAdmin: boolean) {
-  if (item.role != null && hasSidebarRole(item.role, "access-admin")) {
-    return hasSidebarRole(userRoles, "admin access-admin");
-  }
-  if (isAdmin) return true;
-  if (insideAdminSection && item.role == null) return false;
-  if (item.role == null) return true;
-  return hasSidebarRole(userRoles, item.role);
-}
-
-function hasSidebarRole(userRoles: string | null, requiredRoles: string) {
-  if (!userRoles) return false;
-
-  const userRoleSet = new Set(userRoles.split(/[\s,]+/).filter(Boolean));
-  return requiredRoles
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .some((role) => userRoleSet.has(role));
 }
 
 export default Sidebar;
