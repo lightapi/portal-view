@@ -26,7 +26,10 @@ import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import fetchClient from '../../utils/fetchClient';
+import { apiPost } from '../../api/apiPost';
+import { loadErrorMessage } from '../../utils/loadErrorMessage';
 
 // --- Type Definitions ---
 type PromotionItemType = {
@@ -40,6 +43,9 @@ type PromotionItemType = {
     diffSummary?: Record<string, { from: string; to: string }>;
     executionStatus: string;
     errorMessage?: string;
+    failureCode?: string;
+    expectedProjectionVersion?: number;
+    observedProjectionVersion?: number;
 };
 
 type PromotionDetailType = {
@@ -50,6 +56,11 @@ type PromotionDetailType = {
     targetHostName?: string;
     entityType: string;
     promotionStatus: string;
+    projectionStatus?: string;
+    projectionCheckedTs?: string;
+    projectionCompletedTs?: string;
+    failureCode?: string;
+    failureMessage?: string;
     createdBy: string;
     updateTs: string;
     items: PromotionItemType[];
@@ -68,6 +79,9 @@ function getActionConfig(action: string) {
 
 const statusConfig: Record<string, { icon: React.ReactElement; color: 'success' | 'error' | 'warning' | 'info' }> = {
     APPEND_ACCEPTED: { icon: <CheckCircleIcon />, color: 'success' },
+    PROJECTION_PENDING: { icon: <CircularProgress size={16} />, color: 'info' },
+    COMPLETED: { icon: <CheckCircleIcon />, color: 'success' },
+    TIMED_OUT: { icon: <ErrorIcon />, color: 'warning' },
     FAILED: { icon: <ErrorIcon />, color: 'error' },
     PENDING: { icon: <CircularProgress size={16} />, color: 'info' },
     NOOP: { icon: <CheckCircleIcon />, color: 'success' },
@@ -81,6 +95,8 @@ export default function PromotionDiffView() {
 
     const [detail, setDetail] = useState<PromotionDetailType | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [recoveryError, setRecoveryError] = useState<string | null>(null);
+    const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null);
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
     // Fetch promotion details
@@ -96,7 +112,7 @@ export default function PromotionDiffView() {
             const json = await fetchClient(url) as PromotionDetailType;
             setDetail(json);
         } catch (error) {
-            console.error('Failed to load promotion detail:', error);
+            setRecoveryError(loadErrorMessage(error));
         } finally {
             setIsLoading(false);
         }
@@ -105,6 +121,40 @@ export default function PromotionDiffView() {
     useEffect(() => {
         fetchDetail();
     }, [fetchDetail]);
+
+    const recover = useCallback(async (recoveryAction: 'RECHECK' | 'RECONCILE' | 'REPLAN') => {
+        if (!promotionData?.promotionId) return;
+        setIsLoading(true);
+        setRecoveryError(null);
+        setRecoveryMessage(null);
+        const cmd = {
+            host: 'lightapi.net', service: 'user', action: 'promotionRecovery', version: '0.1.0',
+            data: { promotionId: promotionData.promotionId, recoveryAction },
+        };
+        const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
+        if (result.error) {
+            setRecoveryError(loadErrorMessage(result.error));
+        } else {
+            const payload = result.data as Record<string, unknown>;
+            if (payload && (payload.statusCode || payload.code)
+                && !payload.promotionStatus && !payload.projectionStatus) {
+                setRecoveryError(String(payload.message || payload.description || payload.code));
+            } else if (recoveryAction === 'REPLAN' && payload?.promotionId) {
+                setRecoveryMessage(`New plan ${payload.promotionId} created. No events were appended.`);
+            } else {
+                setRecoveryMessage(String(payload?.recoveryGuidance ||
+                    `Projection status: ${payload?.projectionStatus || 'unknown'}. No events were appended.`));
+            }
+            await fetchDetail();
+        }
+        setIsLoading(false);
+    }, [fetchDetail, promotionData?.promotionId]);
+
+    useEffect(() => {
+        if (detail?.projectionStatus !== 'PENDING') return;
+        const timer = window.setInterval(() => recover('RECHECK'), 5000);
+        return () => window.clearInterval(timer);
+    }, [detail?.projectionStatus, recover]);
 
     const toggleRow = (key: string) => {
         setExpandedRows(prev => ({ ...prev, [key]: !prev[key] }));
@@ -121,6 +171,8 @@ export default function PromotionDiffView() {
         );
     }
 
+    const displayData = detail || promotionData;
+
     return (
         <Box sx={{ p: 2 }}>
             {/* Header */}
@@ -135,38 +187,59 @@ export default function PromotionDiffView() {
                 <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                     Promotion Details
                 </Typography>
+                <Button startIcon={<RefreshIcon />} onClick={() => recover('RECHECK')} disabled={isLoading}>
+                    Recheck
+                </Button>
+                <Button onClick={() => recover('RECONCILE')} disabled={isLoading}>
+                    Reconcile
+                </Button>
+                <Button onClick={() => recover('REPLAN')} disabled={isLoading}>
+                    Create New Plan
+                </Button>
             </Box>
+
+            {recoveryError && <Alert severity="error" sx={{ mb: 2 }}>{recoveryError}</Alert>}
+            {recoveryMessage && <Alert severity="info" sx={{ mb: 2 }}>{recoveryMessage}</Alert>}
+            {displayData.failureMessage && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {displayData.failureCode ? `${displayData.failureCode}: ` : ''}{displayData.failureMessage}
+                </Alert>
+            )}
 
             {/* Promotion Metadata */}
             <Paper sx={{ p: 3, mb: 3 }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Promotion ID</Typography>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{promotionData.promotionId}</Typography>
+                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{displayData.promotionId}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Source Host</Typography>
-                        <Typography variant="body2">{promotionData.sourceHostName || promotionData.sourceHostId}</Typography>
+                        <Typography variant="body2">{displayData.sourceHostName || displayData.sourceHostId}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Target Host</Typography>
-                        <Typography variant="body2">{promotionData.targetHostName || promotionData.targetHostId}</Typography>
+                        <Typography variant="body2">{displayData.targetHostName || displayData.targetHostId}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Entity Type</Typography>
-                        <Typography variant="body2">{promotionData.entityType}</Typography>
+                        <Typography variant="body2">{displayData.entityType}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Status</Typography>
-                        <Chip label={promotionData.promotionStatus} size="small" />
+                        <Chip label={displayData.promotionStatus} size="small" />
+                    </Box>
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">Projection</Typography>
+                        <Typography variant="body2">{displayData.projectionStatus || 'NOT_STARTED'}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Created By</Typography>
-                        <Typography variant="body2">{promotionData.createdBy}</Typography>
+                        <Typography variant="body2">{displayData.createdBy}</Typography>
                     </Box>
                     <Box>
                         <Typography variant="caption" color="text.secondary">Timestamp</Typography>
-                        <Typography variant="body2">{promotionData.updateTs ? new Date(promotionData.updateTs).toLocaleString() : ''}</Typography>
+                        <Typography variant="body2">{displayData.updateTs ? new Date(displayData.updateTs).toLocaleString() : ''}</Typography>
                     </Box>
                 </Box>
             </Paper>
@@ -220,7 +293,12 @@ export default function PromotionDiffView() {
                                                     )}
                                                     {item.errorMessage && (
                                                         <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
-                                                            {item.errorMessage}
+                                                            {item.failureCode ? `${item.failureCode}: ` : ''}{item.errorMessage}
+                                                        </Typography>
+                                                    )}
+                                                    {item.expectedProjectionVersion !== undefined && (
+                                                        <Typography variant="caption" sx={{ display: 'block' }}>
+                                                            projection version {item.observedProjectionVersion ?? 'pending'} / {item.expectedProjectionVersion}
                                                         </Typography>
                                                     )}
                                                 </TableCell>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     MaterialReactTable,
@@ -8,16 +8,26 @@ import {
     type MRT_PaginationState,
     type MRT_SortingState,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Chip } from '@mui/material';
+import { Alert, Box, Button, IconButton, Tooltip, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
 import fetchClient from '../../utils/fetchClient';
 import { loadErrorMessage } from '../../utils/loadErrorMessage';
+import { apiPost } from '../../api/apiPost';
 
 // --- Type Definitions ---
 type PromotionApiResponse = {
     promotions: Array<PromotionType>;
     total: number;
+    alerts?: PromotionAlerts;
+};
+
+type PromotionAlerts = {
+    pendingOverTwoMinutes: number;
+    failuresLast15Minutes: number;
+    failureRateLast15Minutes: number;
+    releaseRollbackRecommended: boolean;
 };
 
 type PromotionType = {
@@ -28,6 +38,7 @@ type PromotionType = {
     targetHostName?: string;
     entityType: string;
     promotionStatus: string;
+    projectionStatus?: string;
     createdBy: string;
     updateUser: string;
     updateTs: string;
@@ -41,6 +52,8 @@ const statusColors: Record<string, 'success' | 'warning' | 'error' | 'info' | 'd
     PLANNED: 'info',
     BLOCKED: 'warning',
     APPEND_ACCEPTED: 'success',
+    COMPLETED: 'success',
+    TIMED_OUT: 'warning',
     FAILED: 'error',
 };
 
@@ -54,6 +67,8 @@ export default function PromotionHistory() {
     const [isLoading, setIsLoading] = useState(false);
     const [isRefetching, setIsRefetching] = useState(false);
     const [rowCount, setRowCount] = useState(0);
+    const [alerts, setAlerts] = useState<PromotionAlerts | null>(null);
+    const hasLoaded = useRef(false);
 
     // Table state
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
@@ -68,7 +83,7 @@ export default function PromotionHistory() {
     const fetchData = useCallback(async () => {
         if (!host) return;
         setIsError(false);
-        if (!data.length) setIsLoading(true); else setIsRefetching(true);
+        if (!hasLoaded.current) setIsLoading(true); else setIsRefetching(true);
 
         const cmd = {
             host: 'lightapi.net', service: 'user', action: 'getPromotionHistory', version: '0.1.0',
@@ -88,6 +103,8 @@ export default function PromotionHistory() {
             const json = await fetchClient(url) as PromotionApiResponse;
             setData(json.promotions || []);
             setRowCount(json.total || 0);
+            setAlerts(json.alerts || null);
+            hasLoaded.current = true;
             setIsError(false);
         } catch (error) {
             setIsError(loadErrorMessage(error));
@@ -101,6 +118,27 @@ export default function PromotionHistory() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    const hasPendingProjection = data.some((row) =>
+        row.projectionStatus === 'PENDING' || row.promotionStatus === 'APPEND_ACCEPTED');
+    const refreshProjectionStatus = useCallback(async () => {
+        const pending = data.filter((row) =>
+            row.projectionStatus === 'PENDING' || row.promotionStatus === 'APPEND_ACCEPTED');
+        await Promise.all(pending.map((row) => apiPost({
+            url: '/portal/command',
+            headers: {},
+            body: {
+                host: 'lightapi.net', service: 'user', action: 'promotionRecovery', version: '0.1.0',
+                data: { promotionId: row.promotionId, recoveryAction: 'RECHECK' },
+            },
+        })));
+        await fetchData();
+    }, [data, fetchData]);
+    useEffect(() => {
+        if (!hasPendingProjection) return;
+        const timer = window.setInterval(refreshProjectionStatus, 5000);
+        return () => window.clearInterval(timer);
+    }, [hasPendingProjection, refreshProjectionStatus]);
 
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<PromotionType>[]>(
@@ -120,6 +158,14 @@ export default function PromotionHistory() {
                             size="small"
                         />
                     );
+                },
+            },
+            {
+                accessorKey: 'projectionStatus',
+                header: 'Projection',
+                Cell: ({ cell }) => {
+                    const status = cell.getValue<string>() || 'NOT_STARTED';
+                    return <Chip label={status} color={statusColors[status] || 'default'} size="small" />;
                 },
             },
             { accessorKey: 'createdBy', header: 'Created By' },
@@ -192,9 +238,24 @@ export default function PromotionHistory() {
                 >
                     New Import
                 </Button>
+                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refreshProjectionStatus}>
+                    Refresh Status
+                </Button>
             </Box>
         ),
     });
 
-    return <MaterialReactTable table={table} />;
+    return (
+        <Box>
+            {alerts && (alerts.pendingOverTwoMinutes > 0 || alerts.failuresLast15Minutes > 0) && (
+                <Alert severity={alerts.releaseRollbackRecommended ? 'error' : 'warning'} sx={{ mb: 2 }}>
+                    {alerts.pendingOverTwoMinutes} promotion(s) pending over two minutes;{' '}
+                    {alerts.failuresLast15Minutes} failure(s) in 15 minutes
+                    ({(alerts.failureRateLast15Minutes * 100).toFixed(1)}%).
+                    {alerts.releaseRollbackRecommended && ' Release rollback threshold exceeded.'}
+                </Alert>
+            )}
+            <MaterialReactTable table={table} />
+        </Box>
+    );
 }

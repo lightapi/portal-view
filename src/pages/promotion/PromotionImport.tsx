@@ -108,6 +108,8 @@ type GlobalImportResult = {
     promotionStatus?: string;
     appended?: number;
     transactionId?: string;
+    idempotentReplay?: boolean;
+    message?: string;
 };
 
 const actionConfig: Record<KnownAction, ActionConfig> = {
@@ -135,12 +137,16 @@ const getCommandErrorMessage = (error: unknown): string => {
     return String(error);
 };
 
-const isCommandError = (payload: unknown): payload is CommandError =>
-    isObjectRecord(payload) && (
-        typeof payload.statusCode === 'number' ||
-        typeof payload.code === 'string' ||
-        typeof payload.message === 'string'
-    );
+const isCommandError = (payload: unknown): payload is CommandError => {
+    if (!isObjectRecord(payload)) return false;
+    if (typeof payload.statusCode === 'number' || typeof payload.code === 'string') return true;
+
+    const hasKnownSuccessShape = Array.isArray(payload.items) ||
+        typeof payload.promotionStatus === 'string' ||
+        typeof payload.appended === 'number' ||
+        typeof payload.imported === 'number';
+    return typeof payload.message === 'string' && !hasKnownSuccessShape;
+};
 
 const isGlobalSnapshot = (value: unknown): value is { tables: unknown } =>
     isObjectRecord(value) && Object.prototype.hasOwnProperty.call(value, 'tables');
@@ -334,6 +340,8 @@ export default function PromotionImport() {
                 const importResult = result.data as GlobalImportResult | undefined;
                 const message = globalSnapshot && importResult?.imported !== undefined
                     ? `Global snapshot imported successfully (${importResult.imported}/${importResult.total ?? importResult.imported} events).`
+                    : importResult?.appended === 0 && importResult.message
+                        ? importResult.message
                     : `Promotion event transaction accepted (${importResult?.appended ?? 0} events). Projection updates continue asynchronously${importResult?.transactionId ? `; transaction ${importResult.transactionId}` : ''}.`;
                 setExecuteResult({ success: true, message });
                 if (taskContextState) {
@@ -435,8 +443,10 @@ export default function PromotionImport() {
 
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 3 }}>
                         <FormControl sx={{ minWidth: 300 }}>
-                            <InputLabel>Target Host</InputLabel>
+                            <InputLabel id="promotion-target-host-label">Target Host</InputLabel>
                             <Select
+                                labelId="promotion-target-host-label"
+                                id="promotion-target-host"
                                 value={targetHostId}
                                 label="Target Host"
                                 onChange={(e) => setTargetHostId(e.target.value)}

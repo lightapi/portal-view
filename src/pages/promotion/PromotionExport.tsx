@@ -1019,8 +1019,10 @@ export default function PromotionExport() {
                     <Typography variant="h6" gutterBottom>Select Source & Entity Type</Typography>
                     <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
                         <FormControl sx={{ minWidth: 300 }}>
-                            <InputLabel>Source Host</InputLabel>
+                            <InputLabel id="promotion-source-host-label">Source Host</InputLabel>
                             <Select
+                                labelId="promotion-source-host-label"
+                                id="promotion-source-host"
                                 value={sourceHostId}
                                 label="Source Host"
                                 onChange={(e) => setSourceHostId(e.target.value)}
@@ -1035,8 +1037,10 @@ export default function PromotionExport() {
                         </FormControl>
 
                         <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Entity Type</InputLabel>
+                            <InputLabel id="promotion-entity-type-label">Entity Type</InputLabel>
                             <Select
+                                labelId="promotion-entity-type-label"
+                                id="promotion-entity-type"
                                 value={entityType}
                                 label="Entity Type"
                                 onChange={(e) => setEntityType(e.target.value)}
@@ -1169,8 +1173,10 @@ export default function PromotionExport() {
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
                             <FormControl sx={{ minWidth: 300 }}>
-                                <InputLabel>Target Host</InputLabel>
+                                <InputLabel id="promotion-target-host-label">Target Host</InputLabel>
                                 <Select
+                                    labelId="promotion-target-host-label"
+                                    id="promotion-target-host"
                                     value={targetHostId}
                                     label="Target Host"
                                     onChange={(e) => setTargetHostId(e.target.value)}

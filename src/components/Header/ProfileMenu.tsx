@@ -83,6 +83,7 @@ function ProfileMenuContent({
   return (
     <>
       <IconButton
+        aria-label="Open profile menu"
         aria-haspopup="true"
         color="inherit"
         aria-controls="profile-menu"
