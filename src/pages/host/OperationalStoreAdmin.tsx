@@ -130,6 +130,8 @@ export default function OperationalStoreAdmin() {
     .filter(binding => binding.lifecycleState !== 'DECOMMISSIONED')
     .map(binding => binding.environment)), [bindings]);
   const environmentAlreadyBound = activeEnvironments.has(environment);
+  const existingEnvironmentBinding = useMemo(() => bindings.find(binding =>
+    binding.environment === environment && binding.lifecycleState !== 'DECOMMISSIONED'), [bindings, environment]);
 
   const command = useCallback(async (action: string, data: Record<string, unknown>, confirmation?: string) => {
     if (confirmation && !window.confirm(confirmation)) return;
@@ -167,10 +169,12 @@ export default function OperationalStoreAdmin() {
             <Typography variant="h6" sx={{ mb: 2 }}>Request storage for an environment</Typography>
             <Stack spacing={2}>
               <TextField label="Environment" value={environment} onChange={event => setEnvironment(event.target.value)}
-                error={environmentAlreadyBound}
-                helperText={environmentAlreadyBound
-                  ? 'This Host already has an active binding for the environment.'
-                  : 'Lowercase Host/environment identifier; provisioning runs asynchronously.'} />
+                helperText="Lowercase Host/environment identifier; provisioning runs asynchronously." />
+              {existingEnvironmentBinding && <Alert severity="info">
+                This Host already has a {environment} binding. Its current status is {existingEnvironmentBinding.lifecycleState}
+                {existingEnvironmentBinding.published ? ' and it is published.' : ' and it is not published yet.'}
+                {' '}Use the binding card below to follow its provisioning status.
+              </Alert>}
               <FormControl>
                 <InputLabel>Storage profile</InputLabel>
                 <Select label="Storage profile" value={profileId} onChange={event => setProfileId(event.target.value)}>

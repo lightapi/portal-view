@@ -13,6 +13,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import TaskCenter from "./pages/tasks/TaskCenter";
 import TaskDetail from "./pages/tasks/TaskDetail";
 import RegisterAiAgentApiStep from "./pages/tasks/RegisterAiAgentApiStep";
+import RegisterAiAgentRuntimeStep from "./pages/tasks/RegisterAiAgentRuntimeStep";
 import BlogList from "./pages/blog/BlogList";
 import Form from "./components/Form/Form";
 import Notification from "./pages/notification/Notification";
@@ -335,6 +336,7 @@ const App = () => {
           <Route path="tasks" element={<TaskCenter />} />
           <Route path="tasks/:taskId" element={<TaskDetail />} />
           <Route path="tasks/register-ai-agent/api" element={<RegisterAiAgentApiStep />} />
+          <Route path="tasks/register-ai-agent/runtime" element={<RegisterAiAgentRuntimeStep />} />
           <Route path="blog/blogList" element={<BlogList />} />
           <Route path="form/:formId" element={<Form />} />
           <Route path="notification" element={<Notification />} />

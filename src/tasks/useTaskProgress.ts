@@ -28,7 +28,11 @@ type UseTaskProgressResult = {
 type InstanceApiRecord = {
   apiId?: string;
   apiVersionId?: string;
+  apiType?: string;
+  instanceApiId?: string;
   instanceId?: string;
+  productId?: string;
+  serviceId?: string;
 };
 
 type McpToolEndpoint = {
@@ -39,6 +43,7 @@ type ApiVersionRecord = {
   apiId?: string;
   apiVersionId?: string;
   apiType?: string;
+  serviceId?: string;
 };
 
 type AgentDefinitionRecord = {
@@ -96,13 +101,14 @@ function publishApiStepProgress(task: TaskDefinition, context: TaskResolvedConte
   return task.steps.map((step) => progressByStep.get(step.id) ?? fallbackStepProgress(step, context));
 }
 
-function registerAiAgentStepProgress(task: TaskDefinition, context: TaskResolvedContext): TaskStepProgress[] {
+export function registerAiAgentStepProgress(task: TaskDefinition, context: TaskResolvedContext): TaskStepProgress[] {
   const apiKnown = context.apiExists || has(context, "apiId") || has(context, "apiVersionId") || has(context, "agentDefId");
   const versionKnown = has(context, "apiVersionId") || has(context, "agentDefId");
   const profileKnown = context.agentProfileExists || (has(context, "agentDefId") && context.agentProfileIncomplete !== true);
   const skillKnown = has(context, "skillId");
   const toolKnown = has(context, "toolId");
-  const runtimeKnown = has(context, "instanceApiId") || has(context, "instanceId") || has(context, "runtimeInstanceId");
+  const definitionOnly = context.deploymentMode === "definition-only";
+  const runtimeKnown = has(context, "instanceApiId");
   const progressByStep = new Map<string, TaskStepProgress>();
 
   progressByStep.set(
@@ -156,9 +162,11 @@ function registerAiAgentStepProgress(task: TaskDefinition, context: TaskResolved
   progressByStep.set(
     "runtime",
     runtimeKnown
-      ? stepProgress("runtime", "complete", "Runtime or instance link context is available.")
+      ? stepProgress("runtime", "complete", "The Agent API version is linked to an agt runtime instance.")
+      : definitionOnly
+        ? stepProgress("runtime", "complete", "The Agent was saved as a definition without a runtime deployment.")
       : profileKnown || versionKnown
-        ? stepProgress("runtime", "optional", "Link this agent version to a runtime instance when deployed.")
+        ? stepProgress("runtime", "ready", "Save this Agent as a definition or deploy it through an agt runtime.")
         : stepProgress("runtime", "blocked", "Create the agent API version first."),
   );
 
@@ -1200,7 +1208,7 @@ async function resolvePublishApiContext(host: string, baseContext: TaskResolvedC
   return nextContext;
 }
 
-async function resolveRegisterAiAgentContext(host: string, baseContext: TaskResolvedContext) {
+export async function resolveRegisterAiAgentContext(host: string, baseContext: TaskResolvedContext) {
   const nextContext = await resolvePublishApiContext(host, baseContext);
 
   if (nextContext.apiId) {
@@ -1233,11 +1241,14 @@ async function resolveRegisterAiAgentContext(host: string, baseContext: TaskReso
       if (agentVersions.length === 1 && agentVersions[0]?.apiVersionId) {
         nextContext.apiVersionId = agentVersions[0].apiVersionId;
         nextContext.agentDefId = agentVersions[0].apiVersionId;
+        if (agentVersions[0].serviceId) nextContext.serviceId = agentVersions[0].serviceId;
       } else {
         delete nextContext.apiVersionId;
         delete nextContext.agentDefId;
       }
     }
+    const selectedAgentVersion = agentVersions.find((version) => version.apiVersionId === nextContext.apiVersionId);
+    if (selectedAgentVersion?.serviceId) nextContext.serviceId = selectedAgentVersion.serviceId;
   }
 
   if (!nextContext.agentDefId && nextContext.apiVersionId) {
@@ -1300,6 +1311,38 @@ async function resolveRegisterAiAgentContext(host: string, baseContext: TaskReso
     };
     const permissionData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(permissionCmd)));
     nextContext.accessConfigured = (permissionData?.rolePermissions ?? []).length > 0;
+
+    const instanceApiCmd = {
+      host: "lightapi.net",
+      service: "instance",
+      action: "getInstanceApi",
+      version: "0.1.0",
+      data: {
+        hostId: host,
+        offset: 0,
+        limit: 10,
+        active: true,
+        filters: JSON.stringify([{ id: "apiVersionId", value: nextContext.apiVersionId }]),
+        sorting: "[]",
+        globalFilter: "",
+      },
+    };
+    const instanceApiData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(instanceApiCmd)));
+    const runtimeLink = ((instanceApiData?.instanceApis ?? []) as InstanceApiRecord[])
+      .find((link) => link.apiVersionId === nextContext.apiVersionId
+        && normalizeApiType(link.apiType) === "agt"
+        && link.productId === "agt");
+    if (runtimeLink?.instanceApiId && runtimeLink.instanceId) {
+      nextContext.instanceApiId = runtimeLink.instanceApiId;
+      nextContext.instanceId = runtimeLink.instanceId;
+      nextContext.runtimeInstanceId = runtimeLink.instanceId;
+      nextContext.productId = "agt";
+      nextContext.deploymentMode = "native";
+      if (runtimeLink.serviceId) nextContext.serviceId = runtimeLink.serviceId;
+    } else {
+      delete nextContext.instanceApiId;
+      delete nextContext.runtimeInstanceId;
+    }
   }
 
   return nextContext;

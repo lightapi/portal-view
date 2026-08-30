@@ -149,6 +149,31 @@ function applyInitialDefaults(formData: any, source: any) {
   return next;
 }
 
+function applyLockedFields(formData: any, fields: unknown) {
+  if (!Array.isArray(fields) || fields.length === 0) return formData;
+  const locked = new Set(fields.filter((field): field is string => typeof field === "string"));
+  const properties = formData?.schema?.properties ?? {};
+  return {
+    ...formData,
+    schema: {
+      ...formData.schema,
+      properties: Object.fromEntries(Object.entries(properties).map(([key, property]) => [
+        key,
+        locked.has(key) ? { ...(property as object), readonly: true } : property,
+      ])),
+    },
+    form: Array.isArray(formData?.form)
+      ? formData.form.map((item: any) => {
+        const key = formItemKey(item);
+        const keyName = Array.isArray(key) ? key.join(".") : key;
+        return item && typeof item === "object" && key && keyName && locked.has(keyName)
+          ? key
+          : item;
+      })
+      : formData?.form,
+  };
+}
+
 function submittedFormModel(formId: string | undefined, source: any) {
   const next = formId === "createTool" || formId === "updateTool"
     ? compactToolMetadataForSubmit(normalizeFormModel(formId, source))
@@ -200,6 +225,7 @@ function Form() {
   useEffect(() => {
     let formData = formId ? forms[formId] : {};
     if (!formData) formData = {};
+    formData = applyLockedFields(formData, location.state?.lockedFields);
     setSkipAuth(formData.skipAuth);
     setSchema(formData.schema);
     setForm(withBaseUrlForDynaSelect(formData.form));
