@@ -15,6 +15,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PersonIcon from '@mui/icons-material/Person';
+import StorageIcon from '@mui/icons-material/Storage';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
 import { loadErrorMessage } from '../../utils/loadErrorMessage';
@@ -134,7 +135,7 @@ export default function HostAdmin() {
 
   // Delete handler
   const handleDelete = useCallback(async (row: MRT_Row<HostType>) => {
-    if (!window.confirm(`Are you sure you want to delete host: ${row.original.subDomain}? Once it is deleted, all entities created in this host will be cascade deleted with no way to recover.`)) {
+    if (!window.confirm(`Are you sure you want to delete host identity: ${row.original.subDomain}? Control-plane entities may be removed. Operational storage is retained and must be decommissioned through its separate storage workflow.`)) {
       return;
     }
 
@@ -296,6 +297,16 @@ export default function HostAdmin() {
             )}
           >
             <PersonIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Operational Storage">
+          <IconButton
+            onClick={() => navigate(
+              buildTaskAwareRoute('/app/host/operationalStore', searchParams, { hostId: row.original.hostId }),
+              { state: { hostId: row.original.hostId, subDomain: row.original.subDomain } },
+            )}
+          >
+            <StorageIcon />
           </IconButton>
         </Tooltip>
       </Box>

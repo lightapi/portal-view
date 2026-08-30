@@ -66,10 +66,12 @@ export type HindsightResourceConfig = {
 
 type Props = {
     hostId: string;
-    bankId: string;
+    bankId?: string;
+    agentDefId?: string;
     config: HindsightResourceConfig;
     searchParams: URLSearchParams;
     taskContext: Record<string, unknown>;
+    createDefaults?: Record<string, unknown>;
     bankReadOnly?: boolean;
 };
 
@@ -111,7 +113,9 @@ function ContentCell({ value, label }: { value: unknown; label: string }) {
     );
 }
 
-export default function HindsightResourceTable({ hostId, bankId, config, searchParams, taskContext, bankReadOnly = false }: Props) {
+export default function HindsightResourceTable({
+    hostId, bankId, agentDefId, config, searchParams, taskContext, createDefaults = {}, bankReadOnly = false,
+}: Props) {
     const navigate = useNavigate();
     const location = useLocation();
     const [rows, setRows] = useState<HindsightRow[]>([]);
@@ -130,7 +134,7 @@ export default function HindsightResourceTable({ hostId, bankId, config, searchP
     const loaded = useRef(false);
 
     const fetchRows = useCallback(async () => {
-        if (!hostId || !bankId) return;
+        if (!hostId || (!bankId && !agentDefId)) return;
         loaded.current ? setRefetching(true) : setLoading(true);
         setMessage('');
         const filters: Array<{ id: string; value: unknown }> = [];
@@ -141,7 +145,8 @@ export default function HindsightResourceTable({ hostId, bankId, config, searchP
         });
         const data: Record<string, unknown> = {
             hostId,
-            bankId,
+            ...(bankId ? { bankId } : {}),
+            ...(agentDefId ? { agentDefId } : {}),
             offset: pagination.pageIndex * pagination.pageSize,
             limit: pagination.pageSize,
             filters,
@@ -160,13 +165,18 @@ export default function HindsightResourceTable({ hostId, bankId, config, searchP
             setLoading(false);
             setRefetching(false);
         }
-    }, [bankId, columnFilters, config.association, config.collectionKey, config.listAction, globalFilter,
-        hostId, pagination.pageIndex, pagination.pageSize, sorting]);
+    }, [agentDefId, bankId, columnFilters, config.association, config.collectionKey, config.listAction,
+        globalFilter, hostId, pagination.pageIndex, pagination.pageSize, sorting]);
 
     useEffect(() => { void fetchRows(); }, [fetchRows]);
 
     const navigateToForm = useCallback((formId: string, data: Record<string, unknown>) => {
-        const context = { ...taskContext, ...keyData(data as HindsightRow, config.rowKeys), bankId };
+        const context = {
+            ...taskContext,
+            ...keyData(data as HindsightRow, config.rowKeys),
+            ...(bankId ? { bankId } : {}),
+            ...(agentDefId ? { agentDefId } : {}),
+        };
         const formData = config.formFields
             ? config.formFields.reduce<Record<string, unknown>>((result, field) => {
                 if (Object.prototype.hasOwnProperty.call(data, field)) result[field] = data[field];
@@ -176,12 +186,18 @@ export default function HindsightResourceTable({ hostId, bankId, config, searchP
         navigate(buildGenAiTaskRoute(`/app/form/${formId}`, searchParams, context), {
             state: { data: formData, source: location.pathname + location.search },
         });
-    }, [bankId, config.formFields, config.rowKeys, location.pathname, location.search, navigate, searchParams, taskContext]);
+    }, [agentDefId, bankId, config.formFields, config.rowKeys, location.pathname, location.search,
+        navigate, searchParams, taskContext]);
 
     const handleCreate = useCallback(() => {
         if (!config.createForm) return;
-        navigateToForm(config.createForm, { hostId, bankId });
-    }, [bankId, config.createForm, hostId, navigateToForm]);
+        navigateToForm(config.createForm, {
+            ...createDefaults,
+            hostId,
+            ...(bankId ? { bankId } : {}),
+            ...(agentDefId ? { agentDefId } : {}),
+        });
+    }, [agentDefId, bankId, config.createForm, createDefaults, hostId, navigateToForm]);
 
     const handleUpdate = useCallback(async (row: MRT_Row<HindsightRow>) => {
         if (!config.updateForm || !config.freshAction) return;

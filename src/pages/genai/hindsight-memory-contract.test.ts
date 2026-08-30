@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import forms from '../../data/Forms.json';
 import { allPageRegistry } from '../../tasks/pageRegistry';
 import { pageDefinitionForRoute } from '../../tasks/taskUtils';
-import { HINDSIGHT_RESOURCES } from './hindsightMemoryResources';
+import { AGENT_DIRECTIVE_RESOURCE, HINDSIGHT_RESOURCES } from './hindsightMemoryResources';
 import {
     hindsightErrorMessage,
     hindsightQueryCommand,
@@ -33,7 +33,7 @@ describe('Hindsight memory Portal contract', () => {
         const byId = Object.fromEntries(HINDSIGHT_RESOURCES.map(resource => [resource.id, resource.config]));
         expect(Object.keys(byId)).toEqual([
             'documents', 'units', 'entities', 'associations', 'cooccurrences',
-            'links', 'directives', 'reflections', 'sessions',
+            'links', 'reflections', 'sessions',
         ]);
         expect(byId.documents).toMatchObject({ listAction: 'getAgentMemoryDocs', freshAction: 'getFreshAgentMemoryDoc', collectionKey: 'agentMemoryDocs' });
         expect(byId.units).toMatchObject({ listAction: 'getAgentMemoryUnits', collectionKey: 'agentMemoryUnits', readOnly: true, deleteAction: 'deleteAgentMemoryUnit' });
@@ -44,7 +44,10 @@ describe('Hindsight memory Portal contract', () => {
         expect(byId.associations).toMatchObject({ listAction: 'getAgentMemoryUnitEntities', collectionKey: 'agentMemoryUnitEntities', createForm: 'linkAgentMemoryUnitEntity', deleteAction: 'unlinkAgentMemoryUnitEntity', association: true });
         expect(byId.cooccurrences).toMatchObject({ listAction: 'getAgentMemoryEntityCooccurrences', collectionKey: 'agentMemoryEntityCooccurrences', readOnly: true });
         expect(byId.links).toMatchObject({ listAction: 'getAgentMemoryLinks', freshAction: 'getFreshAgentMemoryLink', collectionKey: 'agentMemoryLinks' });
-        expect(byId.directives).toMatchObject({ listAction: 'getAgentMemoryDirectives', freshAction: 'getFreshAgentMemoryDirective', collectionKey: 'agentMemoryDirectives' });
+        expect(AGENT_DIRECTIVE_RESOURCE.config).toMatchObject({
+            listAction: 'getAgentMemoryDirectives', freshAction: 'getFreshAgentMemoryDirective',
+            collectionKey: 'agentMemoryDirectives', rowKeys: ['hostId', 'directiveId'],
+        });
         expect(byId.reflections).toMatchObject({ listAction: 'getAgentMemoryReflections', collectionKey: 'agentMemoryReflections', readOnly: true, deleteAction: 'deleteAgentMemoryReflection' });
         expect(byId.sessions).toMatchObject({ listAction: 'getAgentSessionHistories', collectionKey: 'agentSessionHistories', readOnly: true, sessionProjection: true });
         expect(byId.sessions).not.toHaveProperty('createForm');
@@ -64,10 +67,19 @@ describe('Hindsight memory Portal contract', () => {
         for (const [formId, action] of Object.entries(actionByForm)) {
             expect(formDefinitions[formId].actions[0]).toMatchObject({ host: 'lightapi.net', service: 'genai', action, version: '0.1.0' });
             expect(formDefinitions[formId].schema.properties.hostId).toMatchObject({ type: 'string', readonly: true });
-            if (formId !== 'createAgentMemoryBank' && formId !== 'updateAgentMemoryBank') {
+            if (formId !== 'createAgentMemoryBank' && formId !== 'updateAgentMemoryBank'
+                && formId !== 'createAgentMemoryDirective' && formId !== 'updateAgentMemoryDirective') {
                 expect(formDefinitions[formId].schema.properties.bankId).toMatchObject({ type: 'string', readonly: true });
             }
         }
+        expect(formDefinitions.createAgentMemoryDirective.schema).not.toHaveProperty('properties.bankId');
+        expect(formDefinitions.createAgentMemoryDirective.schema.properties.agentDefId).toMatchObject({ readonly: true });
+        expect(formDefinitions.createAgentMemoryDirective.schema.required).toEqual(expect.arrayContaining([
+            'agentDefId', 'agentDefinitionVersion', 'bankProfile', 'scopeSelector', 'policyDigest', 'publicationId',
+        ]));
+        expect(formDefinitions.createAgentMemoryDirective.form.find((item: any) => item.key === 'scopeSelector'))
+            .toMatchObject({ type: 'structured' });
+        expect(formDefinitions.updateAgentMemoryDirective.schema).not.toHaveProperty('properties.bankId');
         expect(formDefinitions.createAgentMemoryBank.schema.properties.disposition.type).toBe('object');
         expect(formDefinitions.createAgentMemoryBank.form.find((item: any) => item.key === 'disposition')).toMatchObject({ type: 'structured' });
         expect(formDefinitions.createAgentMemoryEntity.schema.properties.metadata.type).toBe('object');
@@ -108,6 +120,7 @@ describe('Hindsight memory Portal contract', () => {
         const sidebar = source('src/components/Sidebar/Sidebar.tsx');
         expect(app).toContain('path="genai/MemoryBanks"');
         expect(app).toContain('path="genai/MemoryBanks/:bankId"');
+        expect(app).toContain('path="genai/AgentDefinition/:agentDefId/directives"');
         expect(sidebar).toContain('Hindsight Memory');
         expect(pageDefinitionForRoute(allPageRegistry, '/app/genai/MemoryBanks/bank-a')?.id)
             .toBe('genai-hindsight-memory-bank');

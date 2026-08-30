@@ -80,19 +80,6 @@ export const HINDSIGHT_RESOURCES: Array<{ id: string; label: string; config: Hin
         },
     },
     {
-        id: 'directives', label: 'Directives', config: {
-            label: 'Directive', listAction: 'getAgentMemoryDirectives', collectionKey: 'agentMemoryDirectives',
-            rowKeys: ['hostId', 'bankId', 'directiveId'], freshAction: 'getFreshAgentMemoryDirective',
-            createForm: 'createAgentMemoryDirective', updateForm: 'updateAgentMemoryDirective', deleteAction: 'deleteAgentMemoryDirective',
-            formFields: ['hostId', 'bankId', 'directiveId', 'name', 'content', 'priority', 'aggregateVersion'],
-            columns: [
-                queryable('directiveId', 'Directive Id'), queryable('name', 'Name'),
-                queryable('content', 'Content', { content: true }), queryable('priority', 'Priority'),
-                { key: 'aggregateVersion', label: 'Version' }, queryable('updateTs', 'Updated', { dateTime: true }),
-            ],
-        },
-    },
-    {
         id: 'reflections', label: 'Reflections', config: {
             label: 'Reflection', listAction: 'getAgentMemoryReflections', collectionKey: 'agentMemoryReflections',
             rowKeys: ['hostId', 'bankId', 'reflectionId'], deleteAction: 'deleteAgentMemoryReflection', readOnly: true,
@@ -114,3 +101,23 @@ export const HINDSIGHT_RESOURCES: Array<{ id: string; label: string; config: Hin
         },
     },
 ];
+
+export const AGENT_DIRECTIVE_RESOURCE = {
+    id: 'directives', label: 'Directives', config: {
+        label: 'Directive', listAction: 'getAgentMemoryDirectives', collectionKey: 'agentMemoryDirectives',
+        rowKeys: ['hostId', 'directiveId'], freshAction: 'getFreshAgentMemoryDirective',
+        createForm: 'createAgentMemoryDirective', updateForm: 'updateAgentMemoryDirective', deleteAction: 'deleteAgentMemoryDirective',
+        formFields: [
+            'hostId', 'directiveId', 'agentDefId', 'agentDefinitionVersion', 'bankProfile',
+            'scopeSelector', 'policyDigest', 'publicationId', 'name', 'content', 'priority',
+            'aggregateVersion',
+        ],
+        columns: [
+            queryable('directiveId', 'Directive Id'), queryable('bankProfile', 'Bank Profile'),
+            queryable('scopeSelector', 'Scope Selector', { json: true }), queryable('publicationId', 'Publication Id'),
+            queryable('name', 'Name'), queryable('content', 'Content', { content: true }),
+            queryable('priority', 'Priority'), { key: 'aggregateVersion', label: 'Version' },
+            queryable('updateTs', 'Updated', { dateTime: true }),
+        ],
+    },
+} satisfies { id: string; label: string; config: HindsightResourceConfig };

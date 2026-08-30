@@ -115,6 +115,7 @@ import CacheExplorer from "./pages/controller/CacheExplorer";
 import OrgAdmin from "./pages/org/OrgAdmin";
 import HostAdmin from "./pages/host/HostAdmin";
 import HostUser from "./pages/host/HostUser";
+import OperationalStoreAdmin from "./pages/host/OperationalStoreAdmin";
 import AccessAdmin from "./pages/access/AccessAdmin";
 import RoleAdmin from "./pages/access/RoleAdmin";
 import RoleUser from "./pages/access/RoleUser";
@@ -163,6 +164,7 @@ import WorkflowEditor from "./pages/workflow/WorkflowEditor";
 import Worklist from "./pages/workflow/Worklist";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
+import AgentDirectives from "./pages/genai/AgentDirectives";
 import LlmModelControlPlane from "./pages/genai/llm-model/LlmModelControlPlane";
 import AgentAssignment from "./pages/genai/AgentAssignment";
 import TaskInfo from "./pages/workflow/TaskInfo";
@@ -536,7 +538,8 @@ const App = () => {
             <Route path="controller/cache" element={<CacheExplorer />} />
           </Route>
           <Route path="org/OrgAdmin" element={<OrgAdmin />} />
-          <Route path="host/HostAdmin" element={<HostAdmin />} />
+          <Route path="host/HostAdmin" element={<RoleGate roles={["host-admin", "host-viewer"]}><HostAdmin /></RoleGate>} />
+          <Route path="host/operationalStore" element={<RoleGate roles={["host-admin", "host-viewer"]}><OperationalStoreAdmin /></RoleGate>} />
           <Route path="host/hostUser" element={<HostUser />} />
           <Route path="product/ProductAdmin" element={<ProductAdmin />} />
           <Route path="product/environment" element={<ProductEnvironment />} />
@@ -569,6 +572,7 @@ const App = () => {
           <Route path="workflow/Worklist" element={<Worklist />} />
           <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
+          <Route path="genai/AgentDefinition/:agentDefId/directives" element={<AgentDirectives />} />
           <Route path="genai/LlmModelControlPlane" element={<LlmModelControlPlane />} />
           <Route path="genai/AgentAssignment" element={<AgentAssignment />} />
           <Route path="workflow/TaskInfo" element={<TaskInfo />} />

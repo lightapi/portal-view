@@ -14,6 +14,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import PolicyIcon from '@mui/icons-material/Policy';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -194,6 +195,17 @@ export default function AgentDefinition() {
         });
     }, [navigate, location.pathname, searchParams, contextForRow]);
 
+    const handleDirectives = useCallback((row: MRT_Row<AgentDefinitionType>) => {
+        navigate(
+            buildGenAiTaskRoute(
+                `/app/genai/AgentDefinition/${row.original.agentDefId}/directives`,
+                searchParams,
+                contextForRow(row.original),
+            ),
+            { state: { data: row.original, source: location.pathname } },
+        );
+    }, [contextForRow, location.pathname, navigate, searchParams]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<AgentDefinitionType>[]>(
         () => [
@@ -247,6 +259,11 @@ export default function AgentDefinition() {
                 <Tooltip title="Assign Skills">
                     <IconButton color="primary" onClick={() => handleAssignSkills(row)}>
                         <AssignmentTurnedInIcon />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Manage Agent Directives">
+                    <IconButton color="primary" onClick={() => handleDirectives(row)}>
+                        <PolicyIcon />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Update Agent Definition">
