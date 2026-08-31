@@ -165,6 +165,7 @@ import WorkflowEditor from "./pages/workflow/WorkflowEditor";
 import Worklist from "./pages/workflow/Worklist";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
+import A2aBindings from "./pages/genai/A2aBindings";
 import AgentDirectives from "./pages/genai/AgentDirectives";
 import LlmModelControlPlane from "./pages/genai/llm-model/LlmModelControlPlane";
 import AgentAssignment from "./pages/genai/AgentAssignment";
@@ -574,6 +575,7 @@ const App = () => {
           <Route path="workflow/Worklist" element={<Worklist />} />
           <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
+          <Route path="genai/A2aBindings" element={<A2aBindings />} />
           <Route path="genai/AgentDefinition/:agentDefId/directives" element={<AgentDirectives />} />
           <Route path="genai/LlmModelControlPlane" element={<LlmModelControlPlane />} />
           <Route path="genai/AgentAssignment" element={<AgentAssignment />} />

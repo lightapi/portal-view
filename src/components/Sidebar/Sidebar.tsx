@@ -217,6 +217,7 @@ const structure = [
         id: 115.5, label: "GenAI Admin", link: "/app/genai/chat", icon: <PrecisionManufacturingIcon />,
         children: [
           { label: "Agent Definition", link: "/app/genai/AgentDefinition" },
+          { label: "A2A Bindings", link: "/app/genai/A2aBindings" },
           { label: "LLM Models", link: "/app/genai/LlmModelControlPlane" },
           { label: "Skill", link: "/app/genai/Skill" },
           { label: "Tool", link: "/app/genai/Tool" },
