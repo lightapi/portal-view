@@ -303,7 +303,7 @@ export default function HostAdmin() {
           <IconButton
             onClick={() => navigate(
               buildTaskAwareRoute('/app/host/operationalStore', searchParams, { hostId: row.original.hostId }),
-              { state: { hostId: row.original.hostId, subDomain: row.original.subDomain } },
+              { state: { hostId: row.original.hostId, domain: row.original.domain, subDomain: row.original.subDomain } },
             )}
           >
             <StorageIcon />

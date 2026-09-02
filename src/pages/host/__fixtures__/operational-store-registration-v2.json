@@ -1,0 +1,39 @@
+{
+  "registrationRequest": {
+    "targetHostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+    "engine": "POSTGRESQL",
+    "serverHost": "postgres",
+    "port": 5432,
+    "expectedDatabase": "operations_networknt",
+    "tlsMode": "DISABLE",
+    "credentialSource": "MOUNTED_FILE",
+    "credentialReference": "/run/secrets/operational-database-url",
+    "minimumSchemaGeneration": 2,
+    "credentialGeneration": 1
+  },
+  "registration": {
+    "contractVersion": 2,
+    "bindingId": "01964b05-552a-7c4b-9184-6857e7f3dc60",
+    "bindingDigest": "sha256:8c015df45cc0c244ab24d7ffc7a17aa86d318f1a40186ac4948bedb6d0b61da4",
+    "hostId": "01964b05-552a-7c4b-9184-6857e7f3dc5f",
+    "scopeKind": "HOST",
+    "engine": "POSTGRESQL",
+    "serverHost": "postgres",
+    "port": 5432,
+    "expectedDatabase": "operations_networknt",
+    "tlsMode": "DISABLE",
+    "credentialSource": "MOUNTED_FILE",
+    "credentialReference": "/run/secrets/operational-database-url",
+    "minimumSchemaGeneration": 2,
+    "credentialGeneration": 1,
+    "lifecycleState": "REGISTERED",
+    "aggregateVersion": 1,
+    "active": true,
+    "published": true
+  },
+  "compatibility": {
+    "version1ReplaySideEffects": false,
+    "automaticConversion": false,
+    "conversionRequiresExplicitCommand": true
+  }
+}
