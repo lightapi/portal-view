@@ -14,6 +14,7 @@ import {
     Chip,
     CircularProgress,
     MenuItem,
+    Alert,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
@@ -22,6 +23,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
+import CodingRequestForm from './CodingRequestForm';
+import { clientMessageId, codingPayload, emptyCodingInput } from './codingRequest';
 
 interface Message {
     role: 'User' | 'Assistant' | 'System';
@@ -32,19 +35,25 @@ interface Message {
 const DEFAULT_SERVICE_ID = 'com.networknt.agent.account-1.0.0';
 
 /** Returns the sessionStorage key scoped to a specific user+agent pair. */
-const getSessionKey = (uid: string, sid: string) =>
-    `agentSessionId:${uid}:${sid}`;
+const getSessionKey = (uid: string, sid: string, host: string, env: string) =>
+    `agentSessionId:${host}:${env}:${uid}:${sid}`;
 
 export default function Chat() {
-    const { email, isAuthenticated } = useUserState();
+    const { email, isAuthenticated, host } = useUserState();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
     const [userId, setUserId] = useState(email || 'anonymous');
-    const [serviceId, setServiceId] = useState(DEFAULT_SERVICE_ID);
+    const [serviceId, setServiceId] = useState(() => new URLSearchParams(window.location.search).get('serviceId') || DEFAULT_SERVICE_ID);
+    const [envTag, setEnvTag] = useState(() => new URLSearchParams(window.location.search).get('envTag') || 'dev');
+    const [mode, setMode] = useState('chat');
+    const [coding, setCoding] = useState(emptyCodingInput);
+    const [sendError, setSendError] = useState('');
+    const [sessionReady, setSessionReady] = useState(false);
+    const [acceptedRequest, setAcceptedRequest] = useState<{ sessionId: string; request_id: string } | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(() =>
-        sessionStorage.getItem(getSessionKey(email || 'anonymous', DEFAULT_SERVICE_ID)) || null
+        sessionStorage.getItem(getSessionKey(email || 'anonymous', serviceId, host || '', envTag)) || null
     );
     const ws = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -62,26 +71,26 @@ export default function Chat() {
 
     useEffect(() => {
         if (email) {
-            const nextKey = getSessionKey(email, serviceId);
+            const nextKey = getSessionKey(email, serviceId, host || '', envTag);
             setUserId(email);
             // Load any prior session for this identity+agent.
             // The anonymous session is never resumed because its key differs.
             setSessionId(sessionStorage.getItem(nextKey) || null);
         } else {
             // Sign-out: revert to anonymous identity and load any stored anonymous session.
-            const anonymousKey = getSessionKey('anonymous', serviceId);
+            const anonymousKey = getSessionKey('anonymous', serviceId, host || '', envTag);
             setUserId('anonymous');
             setSessionId(sessionStorage.getItem(anonymousKey) || null);
         }
-    }, [email]); // serviceId intentionally omitted — agent-switch has its own handler
+    }, [email, host, envTag]); // Agent-switch has its own handler
 
     // Sync sessionId from storage whenever userId or serviceId changes while not connected.
     // Covers manual User ID field edits and any other programmatic identity/agent changes.
     useEffect(() => {
         if (!connected && !connecting) {
-            setSessionId(sessionStorage.getItem(getSessionKey(userId, serviceId)) || null);
+            setSessionId(sessionStorage.getItem(getSessionKey(userId, serviceId, host || '', envTag)) || null);
         }
-    }, [userId, serviceId]);
+    }, [userId, serviceId, host, envTag]);
 
     useEffect(() => {
         return () => {
@@ -96,6 +105,17 @@ export default function Chat() {
             }
         };
     }, []);
+
+    useEffect(() => {
+        // Never retain an authenticated connection across a Host or user switch.
+        const socket = ws.current;
+        if (socket) {
+            socket.onopen = null; socket.onmessage = null; socket.onclose = null; socket.onerror = null;
+            socket.close(); ws.current = null;
+        }
+        setConnected(false); setConnecting(false); setSessionReady(false);
+        setMessages([]); setAcceptedRequest(null);
+    }, [email, host, isAuthenticated]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -123,10 +143,12 @@ export default function Chat() {
         }
 
         setConnecting(true);
+        setSessionReady(false);
+        setAcceptedRequest(null);
 
         // Capture the session key at connection time so the onmessage closure
         // always writes to the correct storage slot regardless of later state changes.
-        const connectedKey = getSessionKey(userId, serviceId);
+        const connectedKey = getSessionKey(userId, serviceId, host || '', envTag);
 
         // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
         const csrfToken = cookies.get('csrf');
@@ -136,6 +158,8 @@ export default function Chat() {
         url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         url.searchParams.set('userId', userId);
         url.searchParams.set('serviceId', serviceId);
+        url.searchParams.set('envTag', envTag);
+        url.searchParams.set('protocol', 'http');
         if (sessionId) {
             url.searchParams.set('sessionId', sessionId);
         }
@@ -170,8 +194,14 @@ export default function Chat() {
                     }
 
                     setSessionId(receivedSessionId);
+                    setSessionReady(true);
                     sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
+                } else if (json.type === 'executionAccepted') {
+                    if (json.profile === 'coding' && typeof json.request_id === 'string') {
+                        setAcceptedRequest({ sessionId: sessionStorage.getItem(connectedKey) || '', request_id: json.request_id });
+                        addMessage('System', 'Coding request accepted for scheduling: ' + json.request_id + '. Completion and patch must be verified from the durable execution result.');
+                    }
                 } else if (json.type === 'text') {
                     if (typeof json.text === 'string') {
                         addMessage('Assistant', json.text);
@@ -197,6 +227,7 @@ export default function Chat() {
         socket.onclose = () => {
             setConnecting(false);
             setConnected(false);
+            setSessionReady(false);
             addMessage('System', 'Disconnected from chat server.');
         };
 
@@ -214,12 +245,16 @@ export default function Chat() {
     };
 
     const handleSend = () => {
-        if (input.trim() && ws.current && connected) {
-            addMessage('User', input);
-            const payload = { text: input };
+        if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !connected || !sessionReady) return;
+        setSendError('');
+        try {
+            const payload = mode === 'coding'
+                ? { text: input, clientMessageId: clientMessageId(), profile: 'coding', coding: codingPayload(coding) }
+                : { text: input };
             ws.current.send(JSON.stringify(payload));
+            addMessage('User', input);
             setInput('');
-        }
+        } catch (error) { setSendError((error as Error).message); }
     };
 
     const addMessage = (role: Message['role'], text: string) => {
@@ -251,18 +286,17 @@ export default function Chat() {
                         size="small"
                         label="User ID"
                         value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        disabled={connected || connecting}
+                        helperText="Session label; authentication comes from your Portal login"
+                        disabled
                         sx={{ width: 200 }}
                     />
                     <TextField
                         size="small"
                         label="Agent"
-                        select
                         value={serviceId}
                         onChange={(e) => {
                             const nextServiceId = e.target.value;
-                            const nextKey = getSessionKey(userId, nextServiceId);
+                            const nextKey = getSessionKey(userId, nextServiceId, host || '', envTag);
                             setServiceId(nextServiceId);
                             // Resume any stored session for the newly-selected agent.
                             // The old agent's session is kept in storage for later resume.
@@ -270,10 +304,11 @@ export default function Chat() {
                         }}
                         disabled={connected || connecting}
                         sx={{ width: 250 }}
-                    >
-                        <MenuItem value="com.networknt.agent.account-1.0.0">Account</MenuItem>
-                        <MenuItem value="com.networknt.agent.advisor-1.0.0">Advisor</MenuItem>
-                        <MenuItem value="com.networknt.agent.tech-support-1.0.0">Tech Support</MenuItem>
+                        helperText="Published Agent service ID"
+                    />
+                    <TextField size="small" label="Env Tag" value={envTag} disabled={connected || connecting} onChange={e => setEnvTag(e.target.value)} sx={{ width: 100 }} />
+                    <TextField size="small" select label="Turn type" value={mode} onChange={e => setMode(e.target.value)} sx={{ width: 150 }}>
+                        <MenuItem value="chat">Chat</MenuItem><MenuItem value="coding">Coding implementation</MenuItem>
                     </TextField>
                     {!connected ? (
                         <Button
@@ -281,7 +316,7 @@ export default function Chat() {
                             color="primary"
                             startIcon={connecting ? <CircularProgress size={16} color="inherit" /> : <ConnectWithoutContactIcon />}
                             onClick={handleConnect}
-                            disabled={connecting}
+                            disabled={connecting || !isAuthenticated || !serviceId.trim() || !envTag.trim()}
                         >
                             {connecting ? 'Connecting…' : 'Connect'}
                         </Button>
@@ -298,6 +333,9 @@ export default function Chat() {
                 </Box>
             </Paper>
 
+            {mode === 'coding' && <CodingRequestForm value={coding} onChange={setCoding} onPrompt={setInput} />}
+            {sendError && <Alert severity="error">{sendError}</Alert>}
+            {acceptedRequest && <Alert severity="info" action={<Button component="a" download="accepted.json" href={'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ ...acceptedRequest, profile: 'coding' }, null, 2))}>Download acceptance</Button>}>Accepted request: {acceptedRequest.request_id}. This is not a completed coding turn.</Alert>}
             <Paper elevation={3} sx={{ flexGrow: 1, mb: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: '#f5f7f9' }}>
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
                     <List disablePadding>
@@ -350,14 +388,14 @@ export default function Chat() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyPress}
-                        disabled={!connected}
+                        disabled={!connected || !sessionReady}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton 
                                         color="primary" 
                                         onClick={handleSend} 
-                                        disabled={!connected || !input.trim()}
+                                        disabled={!connected || !sessionReady || !input.trim()}
                                         aria-label="Send message"
                                     >
                                         <SendIcon />

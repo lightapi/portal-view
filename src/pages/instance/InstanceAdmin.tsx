@@ -24,6 +24,9 @@ import AppsIcon from "@mui/icons-material/Apps";
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import PolicyIcon from '@mui/icons-material/Policy';
+import ChatIcon from '@mui/icons-material/Chat';
+import AgentPolicyPublicationDialog from '../genai/AgentPolicyPublicationDialog';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -85,6 +88,7 @@ const TruncatedCell = <T extends MRT_RowData>({ cell }: { cell: MRT_Cell<T, unkn
 };
 
 export default function InstanceAdmin() {
+  const [publishingAgent, setPublishingAgent] = useState<InstanceType | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { host, userId, email, roles, positions } = useUserState() as { host: string; userId?: string; email?: string; roles?: string | null; positions?: string | null };
@@ -461,6 +465,14 @@ export default function InstanceAdmin() {
             </IconButton>
           </span>
         </Tooltip>
+        {row.original.productId === 'agt' && <>
+          <Tooltip title="Publish Agent policy"><span><IconButton
+            aria-label="Publish Agent policy"
+            disabled={!row.original.active || !row.original.current || row.original.readonly || !instanceOwnership.canModifyRecord(row.original)}
+            onClick={() => setPublishingAgent(row.original)}><PolicyIcon /></IconButton></span></Tooltip>
+          <Tooltip title="Open Agent chat"><IconButton aria-label="Open Agent chat"
+            onClick={() => navigate('/app/genai/chat?' + new URLSearchParams({ serviceId: row.original.serviceId || '', envTag: row.original.envTag || 'dev' }))}><ChatIcon /></IconButton></Tooltip>
+        </>}
         <Tooltip title="Snapshot">
           <IconButton
             onClick={() =>
@@ -585,6 +597,10 @@ export default function InstanceAdmin() {
 
   return (
     <Box>
+      {publishingAgent && publishingAgent.hostId === host && <AgentPolicyPublicationDialog
+        key={`${publishingAgent.hostId}:${publishingAgent.instanceId}`}
+        hostId={publishingAgent.hostId} instanceId={publishingAgent.instanceId}
+        serviceId={publishingAgent.serviceId} onClose={() => setPublishingAgent(null)} />}
       <TaskActionPanel
         title="Instance Tasks"
         context={taskContext}
