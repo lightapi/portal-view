@@ -3619,6 +3619,7 @@
   },
   "updateApiVersion": {
     "formId": "updateApiVersion",
+    "prefill": { "service": "service", "action": "getApiVersion", "identity": ["hostId", "apiId", "apiVersionId"], "params": { "hostId": "{hostId}", "apiId": "{apiId}" } },
     "helpPath": "/help/portal-view/forms/update-api-version",
     "actions": [
       {
@@ -16764,6 +16765,7 @@
   },
   "updateAgentDefinition": {
     "formId": "updateAgentDefinition",
+    "prefill": { "service": "genai", "action": "getAgentDefinition", "identity": ["hostId", "agentDefId"], "params": { "hostId": "{hostId}", "offset": 0, "limit": 1, "active": true, "filters": "[{\"id\":\"agentDefId\",\"value\":\"{agentDefId}\"}]", "sorting": "[]", "globalFilter": "" }, "collection": "agentDefinitions" },
     "actions": [
       {
         "host": "lightapi.net",

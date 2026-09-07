@@ -1,3 +1,4 @@
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
@@ -174,6 +175,116 @@ function applyLockedFields(formData: any, fields: unknown) {
   };
 }
 
+export type PrefillConfig = {
+  /** Portal query service, e.g. "service" or "genai". */
+  service: string;
+  /**
+   * Read action. Must be an identity-only read: `getFresh*` actions require an
+   * `aggregateVersion` we do not have (their request schemas mark it required and their
+   * handlers unbox it into an int), so they are not usable here.
+   */
+  action: string;
+  /**
+   * Context keys that must all resolve before the form can be trusted. They identify exactly
+   * one record, are substituted into `params`, and are matched against the returned row.
+   */
+  identity: string[];
+  /** Query payload; string values may reference an identity key as "{key}". */
+  params: Record<string, unknown>;
+  /** Field holding the rows, e.g. "agentDefinitions". Empty string means a bare array. */
+  collection?: string;
+  /** Response fields the form must not carry (denormalized read-only projections). */
+  omit?: string[];
+};
+
+export type PrefillState = {
+  /**
+   * idle       - this form declares no prefill, or a caller already supplied the record.
+   * loading    - the read is in flight.
+   * ready      - a record matching the requested identity is loaded.
+   * error      - the read failed, returned nothing, or returned a mismatched/invalid record.
+   * unavailable- the identity keys do not resolve, so no single record can be addressed.
+   */
+  status: "idle" | "loading" | "ready" | "error" | "unavailable";
+  data: Record<string, unknown> | null;
+};
+
+function prefillConfigFor(formData: any): PrefillConfig | null {
+  const config = formData?.prefill;
+  if (!config || typeof config !== "object") return null;
+  if (typeof config.service !== "string" || typeof config.action !== "string") return null;
+  if (!Array.isArray(config.identity) || config.identity.length === 0) return null;
+  if (!config.params || typeof config.params !== "object") return null;
+  return config as PrefillConfig;
+}
+
+/**
+ * Identity for a prefill read. Returns null when any key is missing: without complete identity
+ * the request cannot address one record, and the form must not present itself as editable.
+ */
+function prefillIdentity(config: PrefillConfig, searchParams: URLSearchParams, host: unknown) {
+  const identity: Record<string, string> = {};
+  for (const key of config.identity) {
+    const value = searchParams.get(key) || (key === "hostId" && typeof host === "string" ? host : "");
+    if (!value) return null;
+    identity[key] = value;
+  }
+  return identity;
+}
+
+function prefillParams(config: PrefillConfig, identity: Record<string, string>) {
+  const substitute = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+    return value.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key) => identity[key] ?? match);
+  };
+  return Object.fromEntries(
+    Object.entries(config.params).map(([key, value]) => [key, substitute(value)]),
+  );
+}
+
+function prefillRows(payload: unknown, config: PrefillConfig): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+  const source = payload as Record<string, unknown>;
+  const collection = config.collection ? source[config.collection] : null;
+  return Array.isArray(collection) ? collection : [];
+}
+
+/**
+ * The row for exactly the requested identity. Every identity field must be present on the row
+ * and must match, so neither a filtered query that ignored an unknown filter nor a projection
+ * that omits an identity column can hand back a record we then treat as the requested one.
+ */
+function matchPrefillRow(rows: unknown[], identity: Record<string, string>) {
+  const matches = rows.filter((row) => {
+    if (!row || typeof row !== "object") return false;
+    const record = row as Record<string, unknown>;
+    return Object.entries(identity).every(([key, value]) => {
+      const actual = record[key];
+      if (actual === undefined || actual === null) return false;
+      return String(actual) === value;
+    });
+  });
+  return matches.length === 1 ? matches[0] as Record<string, unknown> : null;
+}
+
+/**
+ * A record is usable as an update base point only with a concurrency version: submitting
+ * without one either loses the optimistic-concurrency check or is rejected downstream. The
+ * portal read models project aggregate_version as a numeric column, so anything else means we
+ * are not looking at the record we think we are.
+ */
+function hasAggregateVersion(record: Record<string, unknown>) {
+  const value = record.aggregateVersion;
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function prefillModel(record: Record<string, unknown>, config: PrefillConfig) {
+  const data = { ...record };
+  for (const key of config.omit ?? []) delete data[key];
+  return data;
+}
+
 function submittedFormModel(formId: string | undefined, source: any) {
   const next = formId === "createTool" || formId === "updateTool"
     ? compactToolMetadataForSubmit(normalizeFormModel(formId, source))
@@ -217,10 +328,68 @@ function Form() {
   const [actions, setActions] = useState<any[] | null>(null);
   const [helpPath, setHelpPath] = useState<string | null>(null);
   const [model, setModel] = useState<any>({});
+  const [prefill, setPrefill] = useState<PrefillState>({ status: "idle", data: null });
+  const [prefillAttempt, setPrefillAttempt] = useState(0);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
   const submissionPendingRef = useRef(false);
   const { isAuthenticated, host }: any = useUserState();
+
+  // Load the record behind an update form when the caller handed us only identity. List pages
+  // navigate here with the row already in location.state.data; task steps, deep links and
+  // bookmarks have no row, and without this the form renders with just the context keys
+  // populated - saving that would blank every other column.
+  useEffect(() => {
+    const formData = (formId ? forms[formId] : null) ?? {};
+    // Keep the identical state object so React bails out: most forms declare no prefill and
+    // must not pay a re-render for it on every navigation.
+    const clearPrefill = () => setPrefill(
+      (prev) => (prev.status === "idle" && prev.data === null ? prev : { status: "idle", data: null }),
+    );
+
+    const config = prefillConfigFor(formData);
+    if (!config || location.state?.data) {
+      clearPrefill();
+      return;
+    }
+
+    const identity = prefillIdentity(config, new URLSearchParams(location.search), host);
+    if (!identity) {
+      // No single record is addressable. Submission stays blocked rather than offering an
+      // update form populated only with whatever context keys happened to arrive.
+      setPrefill({ status: "unavailable", data: null });
+      return;
+    }
+
+    let active = true;
+    setPrefill({ status: "loading", data: null });
+
+    const cmd = {
+      host: "lightapi.net",
+      service: config.service,
+      action: config.action,
+      version: "0.1.0",
+      data: prefillParams(config, identity),
+    };
+
+    fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(cmd)))
+      .then((payload) => {
+        if (!active) return;
+        const record = matchPrefillRow(prefillRows(payload, config), identity);
+        if (!record || !hasAggregateVersion(record)) {
+          setPrefill({ status: "error", data: null });
+          return;
+        }
+        setPrefill({ status: "ready", data: prefillModel(record, config) });
+      })
+      .catch(() => {
+        if (active) setPrefill({ status: "error", data: null });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [formId, host, location.search, location.state, prefillAttempt]);
 
   useEffect(() => {
     let formData = formId ? forms[formId] : {};
@@ -239,8 +408,12 @@ function Form() {
       return acc;
     }, {});
     const searchContext = contextFromSearchParams(searchParams);
+    // Precedence is unchanged for every pre-existing source; the fetched record slots in just
+    // above the form's static model, so an explicit location.state.data hand-off from a list
+    // page still wins and the identifying context keys stay authoritative.
     const initialModel = {
       ...(formData.model || {}),
+      ...(prefill.data || {}),
       ...(location.state?.data || {}),
       ...searchModel,
       ...searchContext,
@@ -250,7 +423,7 @@ function Form() {
       ? {...initialModel, hostId: initialModel.hostId ?? host}
       : initialModel;
     setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
-  }, [host, formId, location.state, location.search]);
+  }, [host, formId, location.state, location.search, prefill.data]);
 
   useEffect(() => {
     idempotencyKeyRef.current = null;
@@ -367,6 +540,41 @@ function Form() {
         <Button variant="contained" onClick={() => navigate(-1)}>
           Go Back
         </Button>
+      </Box>
+    );
+  }
+
+  // Never render the form while its record is in flight: the fields would be visibly empty and
+  // anything the user typed would be overwritten the moment the record lands.
+  if (schema && prefill.status === "loading") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 3 }}>
+        <CircularProgress size={24} />
+        <Typography variant="body2" color="text.secondary">Loading current values…</Typography>
+      </Box>
+    );
+  }
+
+  // A form that declares a prefill is an update form: without its record there is no safe base
+  // point to edit from, so it is never presented as editable. Showing the fields with a warning
+  // would still let the record be overwritten with blanks.
+  if (schema && (prefill.status === "error" || prefill.status === "unavailable")) {
+    const unavailable = prefill.status === "unavailable";
+    return (
+      <Box sx={{ p: 3, maxWidth: 700 }}>
+        <Alert severity={unavailable ? "info" : "warning"} sx={{ mb: 2 }}>
+          {unavailable
+            ? "This record could not be identified from the current context, so it cannot be edited here. Go back and choose the record you want to change."
+            : "The current values for this record could not be loaded, so it cannot be edited safely. Saving now could overwrite existing data with blanks."}
+        </Alert>
+        <Stack direction="row" spacing={1}>
+          {!unavailable && (
+            <Button variant="contained" onClick={() => setPrefillAttempt((attempt) => attempt + 1)}>
+              Retry
+            </Button>
+          )}
+          <Button variant="outlined" onClick={() => navigate(-1)}>Go Back</Button>
+        </Stack>
       </Box>
     );
   }
