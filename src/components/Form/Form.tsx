@@ -23,6 +23,7 @@ import {
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
 import { compactToolMetadataForSubmit, enrichToolMetadataFields } from "../../utils/toolMetadata";
+import { apiTypeForDisplay, apiTypeForStorage } from "../../utils/apiType";
 import { createIdempotencyKey } from "../../utils/createIdempotency";
 import {
   entityCreationFeedback,
@@ -56,12 +57,29 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
   });
 };
 
+function isApiVersionForm(formId: string | undefined) {
+  return formId === "createApiVersion" || formId === "updateApiVersion";
+}
+
+/**
+ * The model as the form should display it. The Api Type dynaselect shows a value only when it
+ * matches a loaded option id exactly, and the reference list offers "agent", so a stored "agt"
+ * renders as an empty field unless it is translated here.
+ */
+function displayFormModel(formId: string | undefined, source: any) {
+  if (!isApiVersionForm(formId)) return source;
+  const apiType = apiTypeForDisplay(source?.apiType);
+  if (!apiType) return source;
+  return { ...source, apiType };
+}
+
 function normalizeFormModel(formId: string | undefined, source: any) {
   const next = { ...(source ?? {}) };
 
-  if (formId === "createApiVersion" || formId === "updateApiVersion") {
-    const apiType = typeof next.apiType === "string" ? next.apiType.trim().toLowerCase() : "";
-    if (apiType === "agent") next.apiType = "agt";
+  // The backend now accepts both inputs and persists the canonical reference code (#890).
+  if (isApiVersionForm(formId)) {
+    const apiType = apiTypeForStorage(next.apiType);
+    if (apiType) next.apiType = apiType;
   }
 
   if (formId === "createAgentDefinition" || formId === "updateAgentDefinition") {
@@ -422,7 +440,7 @@ function Form() {
     const modelWithHostId = schemaProperties.hostId
       ? {...initialModel, hostId: initialModel.hostId ?? host}
       : initialModel;
-    setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
+    setModel(displayFormModel(formId, normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId))));
   }, [host, formId, location.state, location.search, prefill.data]);
 
   useEffect(() => {

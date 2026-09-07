@@ -47,7 +47,7 @@ describe("Register AI agent task progress", () => {
     });
   });
 
-  it("resolves runtime completion only from a live agt Instance API association", async () => {
+  it("resolves runtime completion from a legacy agt Instance API association", async () => {
     mockedFetchClient.mockImplementation(async (url: string) => {
       if (!url) return {};
       switch (actionFromUrl(url)) {
@@ -64,6 +64,51 @@ describe("Register AI agent task progress", () => {
             instanceApis: [{
               apiVersionId: "agent-version-a",
               apiType: "agt",
+              instanceApiId: "instance-api-a",
+              instanceId: "runtime-a",
+              productId: "agt",
+              serviceId: "agent-service",
+            }],
+          };
+        default:
+          throw new Error(`Unexpected request: ${url}`);
+      }
+    });
+
+    const context = await resolveRegisterAiAgentContext("host-a", {
+      apiId: "agent-api",
+      apiVersionId: "agent-version-a",
+    });
+
+    expect(context).toMatchObject({
+      instanceApiId: "instance-api-a",
+      instanceId: "runtime-a",
+      runtimeInstanceId: "runtime-a",
+      deploymentMode: "native",
+      productId: "agt",
+      serviceId: "agent-service",
+    });
+    expect(registerAiAgentStepProgress(task, context).find((step) => step.stepId === "runtime"))
+      .toMatchObject({ status: "complete" });
+  });
+
+  it("resolves runtime completion from a canonical agent Instance API association", async () => {
+    mockedFetchClient.mockImplementation(async (url: string) => {
+      if (!url) return {};
+      switch (actionFromUrl(url)) {
+        case "getApi":
+          return { services: [{ apiId: "agent-api" }] };
+        case "getApiVersion":
+          return { apiVersions: [{ apiVersionId: "agent-version-a", apiType: "agent", serviceId: "agent-service" }] };
+        case "getAgentDefinition":
+          return { agentDefinitions: [{ agentDefId: "agent-version-a", apiVersionId: "agent-version-a" }] };
+        case "queryRolePermission":
+          return { rolePermissions: [] };
+        case "getInstanceApi":
+          return {
+            instanceApis: [{
+              apiVersionId: "agent-version-a",
+              apiType: "agent",
               instanceApiId: "instance-api-a",
               instanceId: "runtime-a",
               productId: "agt",

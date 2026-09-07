@@ -173,7 +173,7 @@ export const taskRegistry: TaskDefinition[] = [
         id: "version",
         title: "Create agent API version",
         description: "Create the API version with API type agt.",
-        route: "/app/form/createApiVersion?apiType=agt",
+        route: "/app/form/createApiVersion?apiType=agent",
         completedRoute: "/app/form/updateApiVersion",
         completedRequires: ["hostId", "apiId", "apiVersionId"],
         required: true,

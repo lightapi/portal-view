@@ -127,10 +127,89 @@ describe("form prefill from task context", () => {
   });
 
   it("never issues a prefill query for a create form", async () => {
-    renderForm("/app/form/createApiVersion?apiType=agt&hostId=host-a&apiId=api-a&apiVersionId=ver-1");
+    renderForm("/app/form/createApiVersion?apiType=agent&hostId=host-a&apiId=api-a&apiVersionId=ver-1");
 
     await screen.findByRole("textbox", { name: /Api Version Desc/ });
     expect(queryCalls("getApiVersion")).toHaveLength(0);
+  });
+});
+
+describe("apiType dynaselect population", () => {
+  // The real /r/data?name=api_type list: it offers "agent", while api_version_t stores "agt".
+  // A dynaselect shows a value only when it matches an option id exactly.
+  const apiTypeOptions = [
+    { id: "kafka", label: "Kafka" },
+    { id: "openapi", label: "OpenAPI" },
+    { id: "graphql", label: "GraphQL" },
+    { id: "hybrid", label: "Hybrid" },
+    { id: "mcp", label: "MCP" },
+    { id: "agent", label: "Agent" },
+    { id: "openapi-mcp", label: "OpenAPI&MCP" },
+    { id: "workflow", label: "Workflow" },
+  ];
+
+  function mockApiTypeOptions() {
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((url: string) => Promise.resolve({
+      ok: true,
+      status: 200,
+      json: async () => (String(url).includes("api_type") ? apiTypeOptions : []),
+      text: async () => "",
+    })));
+  }
+
+  beforeEach(() => {
+    mocks.fetchClient.mockReset();
+    mockApiTypeOptions();
+  });
+
+  it("shows a stored agt row as the Agent option", async () => {
+    mockApiVersions([{ ...apiVersionRows[0], apiType: "agt" }]);
+    renderForm(versionEntry);
+
+    const apiType = await screen.findByRole("combobox", { name: /Api Type/ });
+    await waitFor(() => expect(apiType).toHaveValue("Agent"));
+  });
+
+  it("shows the create form's agt url parameter as the Agent option", async () => {
+    renderForm("/app/form/createApiVersion?apiType=agt&hostId=host-a&apiId=api-a");
+
+    const apiType = await screen.findByRole("combobox", { name: /Api Type/ });
+    await waitFor(() => expect(apiType).toHaveValue("Agent"));
+  });
+
+  it("tolerates case and spacing in the stored code", async () => {
+    // The backend compares api_type with equalsIgnoreCase, so stored casing varies.
+    mockApiVersions([{ ...apiVersionRows[0], apiType: " AGT " }]);
+    renderForm(versionEntry);
+
+    const apiType = await screen.findByRole("combobox", { name: /Api Type/ });
+    await waitFor(() => expect(apiType).toHaveValue("Agent"));
+  });
+
+  it("passes through a type whose code already matches its option id", async () => {
+    mockApiVersions([{ ...apiVersionRows[0], apiType: "openapi" }]);
+    renderForm(versionEntry);
+
+    const apiType = await screen.findByRole("combobox", { name: /Api Type/ });
+    await waitFor(() => expect(apiType).toHaveValue("OpenAPI"));
+  });
+
+  it("submits the stored code, never the reference option id", async () => {
+    // The display translation must not leak into the write: light-portal's A2A publication
+    // required "agt" and rejected "agent"; the coordinated rollout now enables canonical writes
+    // for the record (#890).
+    mockApiVersions([{ ...apiVersionRows[0], apiType: "agt" }]);
+    renderForm(versionEntry);
+
+    const apiType = await screen.findByRole("combobox", { name: /Api Type/ });
+    await waitFor(() => expect(apiType).toHaveValue("Agent"));
+
+    mocks.fetchClient.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: /Update/i }));
+
+    const submit = mocks.fetchClient.mock.calls.find(([url]) => String(url).includes("/portal/command"));
+    expect(submit).toBeTruthy();
+    expect(submit![1].body.data.apiType).toBe("agent");
   });
 });
 

@@ -1,3 +1,4 @@
+import { fetchAllQueryRows } from "../../utils/fetchAllQueryRows";
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
@@ -5,6 +6,7 @@ import {
 } from '@mui/material';
 import { MaterialReactTable, type MRT_ColumnDef, useMaterialReactTable } from 'material-react-table';
 import { useUserState } from '../../contexts/UserContext';
+import { AGENT_API_TYPE_CODES, isAgentApiType } from '../../utils/apiType';
 import fetchClient from '../../utils/fetchClient';
 import { apiPost } from '../../api/apiPost';
 import { loadErrorMessage } from '../../utils/loadErrorMessage';
@@ -97,19 +99,27 @@ export default function A2aBindings() {
   useEffect(()=>{void loadAuthoring();},[loadAuthoring]);
   const loadRelationships=useCallback(async()=>{
     if(!host)return;
-    const query=(service:string,action:string,data:Record<string,unknown>)=>fetchClient('/portal/query?cmd='+encodeURIComponent(JSON.stringify({host:'lightapi.net',service,action,version:'0.1.0',data})));
     const common={hostId:host,offset:0,limit:1000,active:true,sorting:'[]',globalFilter:''};
     try{
       const [agentData,instanceData,linkData]=await Promise.all([
-        query('genai','getAgentDefinition',common),
-        query('instance','getInstance',{...common,filters:JSON.stringify([{id:'envTag',value:environment}])}),
-        query('instance','getInstanceApi',{...common,filters:JSON.stringify([{id:'apiType',value:'agt'}])}),
+        fetchAllQueryRows('genai','getAgentDefinition',{...common,sorting:JSON.stringify([{id:'agentDefId',desc:false}])},'agentDefinitions'),
+        fetchAllQueryRows('instance','getInstance',{...common,filters:JSON.stringify([{id:'envTag',value:environment}]),sorting:JSON.stringify([{id:'instanceId',desc:false}])},'instances'),
+        // Canonical type filtering is retained on every page.
+        Promise.all(AGENT_API_TYPE_CODES.map(apiType=>
+          fetchAllQueryRows('instance','getInstanceApi',{...common,filters:JSON.stringify([{id:'apiType',value:apiType}]),sorting:JSON.stringify([{id:'instanceApiId',desc:false}])},'instanceApis'))),
       ]);
-      setAgents((agentData.agentDefinitions??agentData.agents??[]) as AgentOption[]);
-      const instances=(instanceData.instances??[]) as RuntimeOption[];
+      setAgents(agentData as unknown as AgentOption[]);
+      const instances=instanceData as unknown as RuntimeOption[];
       setRuntimes(instances.filter(item=>item.productId==='agt'&&(!item.envTag||item.envTag===environment)));
       setWorkflowRuntimes(instances.filter(item=>item.serviceId?.includes('light-workflow')&&(!item.envTag||item.envTag===environment)));
-      setGatewayLinks(((linkData.instanceApis??[]) as InstanceApiOption[]).filter(item=>item.productId==='gtw'&&item.apiType?.toLowerCase()==='agt'));
+      const linksById=new Map<string,InstanceApiOption>();
+      for(const result of linkData){
+        for(const link of (result as unknown as InstanceApiOption[])){
+          const id=link.instanceApiId??`${link.instanceId}:${link.apiVersionId}`;
+          if(!linksById.has(id))linksById.set(id,link);
+        }
+      }
+      setGatewayLinks(Array.from(linksById.values()).filter(item=>item.productId==='gtw'&&isAgentApiType(item.apiType)));
     }catch(reason){setError(loadErrorMessage(reason));}
   },[environment,host]);
   useEffect(()=>{void loadRelationships();},[loadRelationships]);

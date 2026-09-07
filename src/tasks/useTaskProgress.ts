@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { isAgentApiType } from "../utils/apiType";
 import fetchClient from "../utils/fetchClient";
 import type {
   TaskDefinition,
@@ -59,11 +60,6 @@ function stepProgress(stepId: string, status: TaskStepStatus, message?: string):
   return { stepId, status, message };
 }
 
-function normalizeApiType(apiType: string | undefined) {
-  const normalized = apiType?.trim().toLowerCase();
-  return normalized === "agent" ? "agt" : normalized;
-}
-
 function defaultProgress(task: TaskDefinition): TaskStepProgress[] {
   return task.steps.map((step) => (
     step.required
@@ -122,7 +118,7 @@ export function registerAiAgentStepProgress(task: TaskDefinition, context: TaskR
     versionKnown
       ? stepProgress("version", "complete", "Agent API version context is available.")
       : apiKnown
-        ? stepProgress("version", "ready", "Create the API version with API type agt.")
+        ? stepProgress("version", "ready", "Create the API version with API type agent.")
         : stepProgress("version", "blocked", "Create or select an API first."),
   );
   progressByStep.set(
@@ -1234,7 +1230,7 @@ export async function resolveRegisterAiAgentContext(host: string, baseContext: T
       : Array.isArray(versionData?.apiVersions)
         ? versionData.apiVersions as ApiVersionRecord[]
         : [];
-    const agentVersions = versions.filter((version) => normalizeApiType(version.apiType) === "agt");
+    const agentVersions = versions.filter((version) => isAgentApiType(version.apiType));
     nextContext.apiVersionExists = agentVersions.length > 0;
 
     if (!baseContext.apiVersionId && !baseContext.agentDefId) {
@@ -1330,7 +1326,7 @@ export async function resolveRegisterAiAgentContext(host: string, baseContext: T
     const instanceApiData = await fetchClient("/portal/query?cmd=" + encodeURIComponent(JSON.stringify(instanceApiCmd)));
     const runtimeLink = ((instanceApiData?.instanceApis ?? []) as InstanceApiRecord[])
       .find((link) => link.apiVersionId === nextContext.apiVersionId
-        && normalizeApiType(link.apiType) === "agt"
+        && isAgentApiType(link.apiType)
         && link.productId === "agt");
     if (runtimeLink?.instanceApiId && runtimeLink.instanceId) {
       nextContext.instanceApiId = runtimeLink.instanceApiId;

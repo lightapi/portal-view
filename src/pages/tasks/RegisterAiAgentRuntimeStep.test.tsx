@@ -167,4 +167,62 @@ describe("Register AI agent runtime step", () => {
       expect(result).toHaveTextContent('"lockedFields":["productVersionId","serviceId"]');
     });
   });
+
+  it("queries the canonical type and finds an existing link", async () => {
+    // After #890 migration the canonical code is queried. The apiType
+    // filter remains server-side so unrelated API types cannot displace links;
+    // the paginated loader reads every matching page.
+    mocks.fetchClient.mockImplementation(async (url: string) => {
+      const command = commandFromUrl(url);
+      if (command?.action === "getInstance") {
+        return {
+          instances: [{
+            instanceId: "runtime-account",
+            instanceName: "Account Agent Runtime",
+            productId: "agt",
+            serviceId: "com.networknt.agent.account-1.0.0",
+            envTag: "dev",
+          }],
+        };
+      }
+      if (command?.action === "getInstanceApi") {
+        const filters = JSON.parse(command.data.filters ?? "[]");
+        const apiType = filters.find((filter: any) => filter.id === "apiType")?.value;
+        // The existing binding for this version is stored under the reference code.
+        return apiType === "agent"
+          ? {
+            instanceApis: [{
+              apiVersionId: "agent-version-a",
+              apiType: "agent",
+              instanceApiId: "instance-api-a",
+              instanceId: "runtime-account",
+              productId: "agt",
+            }],
+          }
+          : { instanceApis: [] };
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    const user = userEvent.setup();
+    renderStep();
+    await user.click(screen.getByRole("radio", { name: "Use existing Agent runtime" }));
+
+    await waitFor(() => {
+      const queried = mocks.fetchClient.mock.calls
+        .map(([url]) => commandFromUrl(url as string))
+        .filter((command) => command?.action === "getInstanceApi")
+        .map((command) => JSON.parse(command.data.filters ?? "[]")
+          .find((filter: any) => filter.id === "apiType")?.value);
+      expect([...queried].sort()).toEqual(["agent"]);
+    });
+
+    // Every getInstanceApi query stays filtered server-side, so no host-wide page is requested.
+    const unfiltered = mocks.fetchClient.mock.calls
+      .map(([url]) => commandFromUrl(url as string))
+      .filter((command) => command?.action === "getInstanceApi")
+      .filter((command) => !JSON.parse(command.data.filters ?? "[]")
+        .some((filter: any) => filter.id === "apiType"));
+    expect(unfiltered).toEqual([]);
+  });
 });

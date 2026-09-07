@@ -1,3 +1,4 @@
+import { fetchAllQueryRows } from "../../utils/fetchAllQueryRows";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import LinkIcon from "@mui/icons-material/Link";
 import {
@@ -27,6 +28,7 @@ import {
   saveStoredTaskContext,
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
+import { AGENT_API_TYPE_CODES, isAgentApiType } from "../../utils/apiType";
 import fetchClient from "../../utils/fetchClient";
 
 const TASK_ID = "register-ai-agent";
@@ -115,26 +117,36 @@ export default function RegisterAiAgentRuntimeStep() {
     };
 
     Promise.all([
-      fetchClient(queryUrl("instance", "getInstance", {
+      fetchAllQueryRows("instance", "getInstance", {
         ...common,
         filters: JSON.stringify([{ id: "productId", value: "agt" }]),
-      })),
-      fetchClient(queryUrl("instance", "getInstanceApi", {
+        sorting: JSON.stringify([{ id: "instanceId", desc: false }]),
+      }, "instances"),
+      // Keep the canonical type filter on every page; productId remains agt.
+      ...AGENT_API_TYPE_CODES.map((apiType) => fetchAllQueryRows("instance", "getInstanceApi", {
         ...common,
-        filters: JSON.stringify([{ id: "apiType", value: "agt" }]),
-      })),
+        filters: JSON.stringify([{ id: "apiType", value: apiType }]),
+        sorting: JSON.stringify([{ id: "instanceApiId", desc: false }]),
+      }, "instanceApis")),
     ])
-      .then(([instanceData, linkData]) => {
+      .then(([instanceData, ...linkResults]) => {
         if (!active) return;
-        const links = (linkData?.instanceApis ?? []) as InstanceApiLink[];
+        const linksById = new Map<string, InstanceApiLink>();
+        for (const linkData of linkResults) {
+          for (const link of linkData as unknown as InstanceApiLink[]) {
+            const id = link.instanceApiId ?? `${link.instanceId}:${link.apiVersionId}`;
+            if (!linksById.has(id)) linksById.set(id, link);
+          }
+        }
+        const links = Array.from(linksById.values());
         const currentLink = links.find((link) => link.apiVersionId === apiVersionId
-          && link.apiType?.toLowerCase() === "agt"
+          && isAgentApiType(link.apiType)
           && link.productId === "agt") ?? null;
         const boundInstanceIds = new Set(links
-          .filter((link) => link.apiType?.toLowerCase() === "agt" && link.apiVersionId !== apiVersionId)
+          .filter((link) => isAgentApiType(link.apiType) && link.apiVersionId !== apiVersionId)
           .map((link) => link.instanceId)
           .filter(Boolean));
-        const compatible = ((instanceData?.instances ?? []) as RuntimeOption[])
+        const compatible = (instanceData as unknown as RuntimeOption[])
           .filter((runtime) => runtime.productId === "agt")
           .filter((runtime) => !context.serviceId || runtime.serviceId === context.serviceId)
           .filter((runtime) => !boundInstanceIds.has(runtime.instanceId))
@@ -160,7 +172,7 @@ export default function RegisterAiAgentRuntimeStep() {
   const finish = (next: Record<string, string>, clear: string[] = []) => {
     const compactNext = Object.fromEntries(Object.entries(next).filter(([, value]) => value));
     const nextContext = mergeTaskContext(context, compactNext);
-    clear.forEach((key) => delete nextContext[key]);
+    clear.forEach((key) => delete nextContext[key as keyof typeof nextContext]);
     const taskId = taskContext?.taskId || TASK_ID;
     saveStoredTaskContext(taskId, nextContext);
     navigate(buildTaskReturnRoute(taskId, taskContext?.returnTo, searchParams, nextContext));
