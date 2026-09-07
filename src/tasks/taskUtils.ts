@@ -1,4 +1,4 @@
-import type { PageDefinition, TaskContextKey, TaskDefinition, TaskResolvedContext, TaskStep } from "./types";
+import type { PageDefinition, TaskContextKey, TaskDefinition, TaskResolvedContext, TaskStep, TaskStepStatus } from "./types";
 import { hasAnyRole } from "../utils/ownershipScope";
 
 const taskStoragePrefix = "portal-view.taskContext.";
@@ -595,13 +595,37 @@ export function taskContextFromSearch(searchParams: URLSearchParams) {
   };
 }
 
+/**
+ * Destination for a step, given how far along it is and what the task context resolved to.
+ *
+ * A completed step opens its `completedRoute` - the update form for the record that already
+ * exists - but only when `completedRequires` keys are all present. Completion status alone is
+ * not enough: a task can be "complete" because a record exists without having identified
+ * which one (register-ai-agent marks the version step complete when any agent version exists,
+ * yet only selects an apiVersionId when there is exactly one). Routing to an update form
+ * without its identifier yields a form that cannot load or save, so we fall back to the
+ * step's own route instead.
+ */
+export function stepRouteForStatus(
+  step: TaskStep,
+  status?: TaskStepStatus,
+  context: TaskResolvedContext = {},
+) {
+  if (status !== "complete" || !step.completedRoute) return step.route;
+
+  const required = step.completedRequires ?? [];
+  const resolved = required.every((key) => !!context[key]);
+  return resolved ? step.completedRoute : step.route;
+}
+
 export function buildTaskStepRoute(
   taskId: string,
   step: TaskStep,
   searchParams: URLSearchParams,
   context: TaskResolvedContext = {},
+  status?: TaskStepStatus,
 ) {
-  const [path, query = ""] = step.route.split("?");
+  const [path, query = ""] = stepRouteForStatus(step, status, context).split("?");
   const nextParams = new URLSearchParams(query);
 
   nextParams.set("task", taskId);

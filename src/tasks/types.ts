@@ -96,7 +96,24 @@ export type TaskStep = {
   id: string;
   title: string;
   description: string;
+  /** Destination when the step's entity does not exist yet - normally a create form. */
   route: string;
+  /**
+   * Destination when the step is already complete - normally the matching update form.
+   * Re-entering a completed step must not reopen a create form for an entity that already
+   * exists: that form can only be prefilled with the identifying context keys, and
+   * submitting it fails as a duplicate. The update form pairs with a `prefill` block in
+   * Forms.json so the record is loaded from the server. Keep in sync with the
+   * "completedRoute forms exist" test in taskRegistry.completedRoute.test.ts.
+   */
+  completedRoute?: string;
+  /**
+   * Context keys that must resolve before `completedRoute` may be used. These are the keys the
+   * destination form needs to identify its record; without them the update form cannot load.
+   * Must cover the destination form's `prefill.identity` - enforced by
+   * taskRegistry.completedRoute.test.ts.
+   */
+  completedRequires?: TaskContextKey[];
   helpPath?: string;
   required: boolean;
   dependsOn?: string[];

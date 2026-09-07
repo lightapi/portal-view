@@ -352,7 +352,7 @@ export default function TaskDetail() {
                       variant={index === 0 && status !== "complete" && !skipped ? "contained" : "outlined"}
                       endIcon={!blocked ? <ArrowForwardIcon /> : undefined}
                       disabled={blocked}
-                      onClick={() => navigate(buildTaskStepRoute(task.id, step, searchParams, taskProgressState.context))}
+                      onClick={() => navigate(buildTaskStepRoute(task.id, step, searchParams, taskProgressState.context, status))}
                       sx={{ textTransform: "none" }}
                     >
                       {stepButtonLabel(status, index)}
