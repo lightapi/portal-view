@@ -22,7 +22,6 @@ import {
   saveStoredTaskContext,
   taskContextFromSearch,
 } from "../../tasks/taskUtils";
-import { compactToolMetadataForSubmit, enrichToolMetadataFields } from "../../utils/toolMetadata";
 import { createIdempotencyKey } from "../../utils/createIdempotency";
 import {
   entityCreationFeedback,
@@ -55,25 +54,6 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
     };
   });
 };
-
-function normalizeFormModel(formId: string | undefined, source: any) {
-  const next = { ...(source ?? {}) };
-
-  if (formId === "createAgentDefinition" || formId === "updateAgentDefinition") {
-    if (!next.agentDefId && next.apiVersionId) {
-      next.agentDefId = next.apiVersionId;
-    }
-    if (!next.apiVersionId && next.agentDefId) {
-      next.apiVersionId = next.agentDefId;
-    }
-  }
-
-  if (formId === "createTool" || formId === "updateTool") {
-    return enrichToolMetadataFields(next);
-  }
-
-  return next;
-}
 
 function cloneDefaultValue(value: any) {
   if (Array.isArray(value)) return [...value];
@@ -281,9 +261,7 @@ function prefillModel(record: Record<string, unknown>, config: PrefillConfig) {
 }
 
 function submittedFormModel(formId: string | undefined, source: any) {
-  const next = formId === "createTool" || formId === "updateTool"
-    ? compactToolMetadataForSubmit(normalizeFormModel(formId, source))
-    : normalizeFormModel(formId, source);
+  const next = { ...(source ?? {}) };
   const formData = formId ? (forms as any)[formId] : undefined;
   const submitOmitFields = formData?.submitOmitFields;
   if (Array.isArray(submitOmitFields)) {
@@ -417,7 +395,7 @@ function Form() {
     const modelWithHostId = schemaProperties.hostId
       ? {...initialModel, hostId: initialModel.hostId ?? host}
       : initialModel;
-    setModel(normalizeFormModel(formId, applyInitialDefaults(formData, modelWithHostId)));
+    setModel(applyInitialDefaults(formData, modelWithHostId));
   }, [host, formId, location.state, location.search, prefill.data]);
 
   useEffect(() => {
@@ -447,16 +425,14 @@ function Form() {
       return;
     }
 
-    const normalizedModel = normalizeFormModel(formId, model);
-    setModel(normalizedModel);
-    const result = utils.validateBySchema(schema, normalizedModel);
+    const result = utils.validateBySchema(schema, model);
     if (!result.valid) {
       setShowErrors(true);
       setValidationResult(result);
     } else {
       setShowErrors(false);
       setValidationResult(null);
-      const modelToSubmit = submittedFormModel(formId, normalizedModel);
+      const modelToSubmit = submittedFormModel(formId, model);
       const submittedAction = {...action, data: modelToSubmit};
       const url = action.path ? action.path : "/portal/command";
       const headers: Record<string, string> = {

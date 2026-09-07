@@ -1,0 +1,47 @@
+{
+  "hostId": "host-a",
+  "toolId": "tool-a",
+  "name": "customer_360",
+  "aggregateVersion": 5,
+  "executionPlacement": "gateway",
+  "implementationType": "rest",
+  "apiMethod": "get",
+  "apiEndpoint": "/customers",
+  "description": "Customer lookup",
+  "version": "1.0.0",
+  "routingDomain": "finance",
+  "semanticNamespace": "customers",
+  "sensitivityTier": "internal",
+  "semanticWeight": 1.0,
+  "sourceProtocol": "http",
+  "lifecycleStatus": "active",
+  "costTier": "low",
+  "targetPersonas": "agent-a",
+  "readOnly": true,
+  "idempotent": true,
+  "destructive": false,
+  "humanApprovalRequired": true,
+  "estimatedLatencyMs": 120,
+  "cacheTtlSeconds": 30,
+  "semanticDescription": "Customer search",
+  "semanticKeywords": "customer, policy",
+  "toolMetadata": {
+    "safety": {
+      "read_only": true,
+      "idempotent": true,
+      "destructive": false,
+      "humanApprovalRequired": true
+    },
+    "runtime": {
+      "estimatedLatencyMs": 120,
+      "cacheTtlSeconds": 30
+    },
+    "routing": {
+      "semanticDescription": "Customer search",
+      "semanticKeywords": [
+        "customer",
+        "policy"
+      ]
+    }
+  }
+}
