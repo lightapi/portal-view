@@ -25,6 +25,7 @@ import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import CodingRequestForm from './CodingRequestForm';
 import { clientMessageId, codingPayload, emptyCodingInput } from './codingRequest';
+import { useChatAgents } from './useChatAgents';
 
 interface Message {
     role: 'User' | 'Assistant' | 'System';
@@ -32,11 +33,9 @@ interface Message {
     timestamp: Date;
 }
 
-const DEFAULT_SERVICE_ID = 'com.networknt.agent.account-1.0.0';
-
-/** Returns the sessionStorage key scoped to a specific user+agent pair. */
-const getSessionKey = (uid: string, sid: string, host: string, env: string) =>
-    `agentSessionId:${host}:${env}:${uid}:${sid}`;
+/** Returns the sessionStorage key scoped to a specific user and deployed instance. */
+const getSessionKey = (uid: string, sid: string, host: string, env: string, instanceId: string) =>
+    `agentSessionId:${host}:${env}:${uid}:${sid}:${instanceId}`;
 
 export default function Chat() {
     const { email, isAuthenticated, host } = useUserState();
@@ -44,78 +43,39 @@ export default function Chat() {
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [connecting, setConnecting] = useState(false);
-    const [userId, setUserId] = useState(email || 'anonymous');
-    const [serviceId, setServiceId] = useState(() => new URLSearchParams(window.location.search).get('serviceId') || DEFAULT_SERVICE_ID);
-    const [envTag, setEnvTag] = useState(() => new URLSearchParams(window.location.search).get('envTag') || 'dev');
+    const userId = email || 'anonymous';
+    const { agents, selected, selectAgent, loading, loadError, selectionMessage, reload } = useChatAgents(host, email, isAuthenticated);
+    const serviceId = selected?.serviceId || '';
+    const envTag = selected?.envTag || '';
+    const [turnTypes, setTurnTypes] = useState<string[]>([]);
+    const [connectionError, setConnectionError] = useState('');
+    const connectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [mode, setMode] = useState('chat');
     const [coding, setCoding] = useState(emptyCodingInput);
     const [sendError, setSendError] = useState('');
     const [sessionReady, setSessionReady] = useState(false);
     const [acceptedRequest, setAcceptedRequest] = useState<{ sessionId: string; request_id: string } | null>(null);
-    const [sessionId, setSessionId] = useState<string | null>(() =>
-        sessionStorage.getItem(getSessionKey(email || 'anonymous', serviceId, host || '', envTag)) || null
-    );
     const ws = useRef<WebSocket | null>(null);
+    const userDisconnected = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const cookies = new Cookies();
 
-    // Ensure WebSocket connection is cleaned up when the component unmounts
+    // A socket and its callbacks belong to one authenticated deployment selection.
     useEffect(() => {
-        return () => {
-            if (ws.current) {
-                ws.current.close();
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (email) {
-            const nextKey = getSessionKey(email, serviceId, host || '', envTag);
-            setUserId(email);
-            // Load any prior session for this identity+agent.
-            // The anonymous session is never resumed because its key differs.
-            setSessionId(sessionStorage.getItem(nextKey) || null);
-        } else {
-            // Sign-out: revert to anonymous identity and load any stored anonymous session.
-            const anonymousKey = getSessionKey('anonymous', serviceId, host || '', envTag);
-            setUserId('anonymous');
-            setSessionId(sessionStorage.getItem(anonymousKey) || null);
-        }
-    }, [email, host, envTag]); // Agent-switch has its own handler
-
-    // Sync sessionId from storage whenever userId or serviceId changes while not connected.
-    // Covers manual User ID field edits and any other programmatic identity/agent changes.
-    useEffect(() => {
-        if (!connected && !connecting) {
-            setSessionId(sessionStorage.getItem(getSessionKey(userId, serviceId, host || '', envTag)) || null);
-        }
-    }, [userId, serviceId, host, envTag]);
-
-    useEffect(() => {
-        return () => {
-            // Clean up WebSocket connection on unmount
-            if (ws.current) {
-                ws.current.onopen = null;
-                ws.current.onmessage = null;
-                ws.current.onclose = null;
-                ws.current.onerror = null;
-                ws.current.close();
-                ws.current = null;
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        // Never retain an authenticated connection across a Host or user switch.
-        const socket = ws.current;
-        if (socket) {
-            socket.onopen = null; socket.onmessage = null; socket.onclose = null; socket.onerror = null;
-            socket.close(); ws.current = null;
-        }
         setConnected(false); setConnecting(false); setSessionReady(false);
-        setMessages([]); setAcceptedRequest(null);
-    }, [email, host, isAuthenticated]);
+        setMessages([]); setAcceptedRequest(null); setTurnTypes([]); setMode('chat');
+        setConnectionError(''); setSendError(''); setCoding(emptyCodingInput); setInput('');
+        return () => {
+            if (connectionTimer.current) clearTimeout(connectionTimer.current);
+            const socket = ws.current;
+            if (socket) {
+                socket.onopen = null; socket.onmessage = null;
+                socket.onclose = null; socket.onerror = null;
+                socket.close(); ws.current = null;
+            }
+        };
+    }, [email, host, isAuthenticated, selected?.instanceId]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -126,6 +86,13 @@ export default function Chat() {
     }, [messages]);
 
     const handleConnect = () => {
+        if (!selected || loading || !isAuthenticated || !host || !serviceId || !envTag) return;
+        setConnectionError('');
+        const csrfToken = cookies.get('csrf');
+        if (!csrfToken) {
+            setConnectionError('Your login session is missing its CSRF token. Sign in again before connecting.');
+            return;
+        }
         // Prevent duplicate connections: bail out if already connecting or open
         const readyState = ws.current?.readyState;
         if (readyState === WebSocket.CONNECTING || readyState === WebSocket.OPEN) {
@@ -142,16 +109,17 @@ export default function Chat() {
             ws.current = null;
         }
 
+        userDisconnected.current = false;
         setConnecting(true);
         setSessionReady(false);
         setAcceptedRequest(null);
 
         // Capture the session key at connection time so the onmessage closure
         // always writes to the correct storage slot regardless of later state changes.
-        const connectedKey = getSessionKey(userId, serviceId, host || '', envTag);
+        const connectedKey = getSessionKey(userId, serviceId, host || '', envTag, selected.instanceId);
 
         // The accessToken is in cookies and automatically sent with the WebSocket upgrade request.
-        const csrfToken = cookies.get('csrf');
+        const sessionId = sessionStorage.getItem(connectedKey);
 
         // Construct URL using new URL() so IPv6 hosts are correctly bracketed.
         const url = new URL('/chat', window.location.href);
@@ -159,6 +127,7 @@ export default function Chat() {
         url.searchParams.set('userId', userId);
         url.searchParams.set('serviceId', serviceId);
         url.searchParams.set('envTag', envTag);
+        // Agent registrations use HTTP; an explicit serviceId bypasses the path target defaults.
         url.searchParams.set('protocol', 'http');
         if (sessionId) {
             url.searchParams.set('sessionId', sessionId);
@@ -166,8 +135,25 @@ export default function Chat() {
 
         // Use Sec-WebSocket-Protocol header for CSRF to avoid URL logging
         const protocols = csrfToken ? [`csrf.${csrfToken}`] : [];
-        const socket = new WebSocket(url.toString(), protocols);
+        let socket: WebSocket;
+        try {
+            socket = new WebSocket(url.toString(), protocols);
+        } catch {
+            setConnecting(false);
+            setConnectionError('Unable to start the chat connection. Check your login session and try again.');
+            return;
+        }
         ws.current = socket;
+        let initialized = false;
+        const clearDeadline = () => {
+            if (connectionTimer.current) clearTimeout(connectionTimer.current);
+            connectionTimer.current = null;
+        };
+        connectionTimer.current = setTimeout(() => {
+            setConnectionError('The agent did not initialize a session within 30 seconds. Check its availability or try a new session.');
+            socket.close();
+            setConnecting(false); setConnected(false); setSessionReady(false);
+        }, 30000);
 
         socket.onopen = () => {
             setConnecting(false);
@@ -176,6 +162,7 @@ export default function Chat() {
         };
 
         socket.onmessage = (event: MessageEvent) => {
+            if (ws.current !== socket || socket.readyState !== WebSocket.OPEN) return;
             if (typeof event.data !== 'string') {
                 console.warn('Received non-text WebSocket frame, ignoring:', event.data);
                 return;
@@ -193,7 +180,20 @@ export default function Chat() {
                         return;
                     }
 
-                    setSessionId(receivedSessionId);
+                    initialized = true;
+                    clearDeadline();
+                    const types = Array.isArray(json.turnTypes)
+                        ? Array.from(new Set<string>(json.turnTypes.filter((type: unknown) => type === 'chat' || type === 'coding')))
+                        : ['chat']; // Older agents support the ordinary chat contract.
+                    setTurnTypes(types);
+                    setMode(types.includes(json.defaultTurnType) ? json.defaultTurnType : types[0] || '');
+                    if (!types.length) {
+                        setSessionReady(false);
+                        setConnectionError('This agent does not advertise a supported turn type. Select another agent or start a new session.');
+                        socket.close();
+                        setConnected(false); setConnecting(false);
+                        return;
+                    }
                     setSessionReady(true);
                     sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
@@ -224,7 +224,9 @@ export default function Chat() {
             }
         };
 
-        socket.onclose = () => {
+        socket.onclose = (event: CloseEvent) => {
+            clearDeadline();
+            if (!initialized && !userDisconnected.current) setConnectionError(previous => previous || `The connection closed before the agent initialized a session (code ${event.code}). Check the agent and gateway logs, or try a new session.`);
             setConnecting(false);
             setConnected(false);
             setSessionReady(false);
@@ -232,20 +234,27 @@ export default function Chat() {
         };
 
         socket.onerror = (error: Event) => {
-            setConnecting(false);
-            addMessage('System', 'Error: Connection failed.');
+            clearDeadline();
+            if (userDisconnected.current) return;
+            setConnecting(false); setConnected(false); setSessionReady(false);
+            setConnectionError(`Could not connect to ${selected.instanceName || serviceId} (${envTag}). Check your login and agent availability. If it persists, inspect the /chat WebSocket upgrade and gateway logs.`);
+            socket.close();
             console.error('WebSocket error:', error);
         };
     };
 
     const handleDisconnect = () => {
+        userDisconnected.current = true;
+        if (connectionTimer.current) clearTimeout(connectionTimer.current);
+        connectionTimer.current = null;
+        setConnecting(false); setConnected(false); setSessionReady(false);
         if (ws.current) {
             ws.current.close();
         }
     };
 
     const handleSend = () => {
-        if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !connected || !sessionReady) return;
+        if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !connected || !sessionReady || !turnTypes.includes(mode)) return;
         setSendError('');
         try {
             const payload = mode === 'coding'
@@ -269,54 +278,39 @@ export default function Chat() {
     };
 
     return (
-        <Box sx={{ p: 3, maxWidth: 1000, margin: '0 auto', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-            <Paper elevation={3} sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ p: 3, maxWidth: 1000, margin: '0 auto', height: 'calc(100vh - 120px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', '& > *': { flexShrink: 0 } }}>
+            <Paper elevation={3} sx={{ p: 2, mb: 2, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
                     GenAI Chat
                 </Typography>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip 
-                        icon={<PersonIcon />} 
-                        label={isAuthenticated ? `Logged in as: ${email}` : 'Anonymous User'} 
-                        color={isAuthenticated ? "primary" : "default"}
-                        variant="outlined"
-                    />
-                    <TextField
-                        size="small"
-                        label="User ID"
-                        value={userId}
-                        helperText="Session label; authentication comes from your Portal login"
-                        disabled
-                        sx={{ width: 200 }}
-                    />
-                    <TextField
-                        size="small"
-                        label="Agent"
-                        value={serviceId}
-                        onChange={(e) => {
-                            const nextServiceId = e.target.value;
-                            const nextKey = getSessionKey(userId, nextServiceId, host || '', envTag);
-                            setServiceId(nextServiceId);
-                            // Resume any stored session for the newly-selected agent.
-                            // The old agent's session is kept in storage for later resume.
-                            setSessionId(sessionStorage.getItem(nextKey) || null);
-                        }}
-                        disabled={connected || connecting}
-                        sx={{ width: 250 }}
-                        helperText="Published Agent service ID"
-                    />
-                    <TextField size="small" label="Env Tag" value={envTag} disabled={connected || connecting} onChange={e => setEnvTag(e.target.value)} sx={{ width: 100 }} />
-                    <TextField size="small" select label="Turn type" value={mode} onChange={e => setMode(e.target.value)} sx={{ width: 150 }}>
-                        <MenuItem value="chat">Chat</MenuItem><MenuItem value="coding">Coding implementation</MenuItem>
+                <Chip icon={<PersonIcon />} label={isAuthenticated ? `Logged in as: ${email}` : 'Sign in to chat'}
+                    color={isAuthenticated ? 'primary' : 'default'} variant="outlined"
+                    sx={{ maxWidth: '100%', height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', overflowWrap: 'anywhere', py: 0.5 } }} />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, width: '100%', minWidth: 0 }}>
+                    <TextField select size="small" label="Agent" value={selected?.instanceId || ''}
+                        onChange={event => selectAgent(event.target.value)}
+                        disabled={loading || connected || connecting || !agents.length}
+                        sx={{ flex: '1 1 280px', minWidth: 0, '& .MuiSelect-select': { whiteSpace: 'normal', overflowWrap: 'anywhere' }, '& .MuiFormHelperText-root': { overflowWrap: 'anywhere' } }}
+                        helperText={loading ? 'Loading deployed agents…' : selected ? `${serviceId} · ${envTag}` : 'Select a deployed agent'}>
+                        {agents.map(agent => <MenuItem key={agent.instanceId} value={agent.instanceId} disabled={!agent.serviceId || !agent.envTag}
+                            sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}>
+                            {agent.instanceName || agent.serviceId || agent.instanceId} · {agent.envTag || 'environment missing'}
+                        </MenuItem>)}
                     </TextField>
+                    {sessionReady && turnTypes.length > 1 && <TextField size="small" select label="Turn type" value={mode}
+                        onChange={event => setMode(event.target.value)} sx={{ flex: '0 1 240px', minWidth: 0, '& .MuiSelect-select': { whiteSpace: 'normal' } }}>
+                        {turnTypes.map(type => <MenuItem key={type} value={type}>{type === 'coding' ? 'Coding implementation' : 'Chat'}</MenuItem>)}
+                    </TextField>}
+                    {sessionReady && turnTypes.length === 1 && <Chip label={mode === 'coding' ? 'Coding implementation' : 'Chat'} />}
                     {!connected ? (
                         <Button
                             variant="contained"
                             color="primary"
                             startIcon={connecting ? <CircularProgress size={16} color="inherit" /> : <ConnectWithoutContactIcon />}
                             onClick={handleConnect}
-                            disabled={connecting || !isAuthenticated || !serviceId.trim() || !envTag.trim()}
+                            disabled={connecting || loading || !isAuthenticated || !selected || !serviceId || !envTag}
+                            sx={{ flexShrink: 0 }}
                         >
                             {connecting ? 'Connecting…' : 'Connect'}
                         </Button>
@@ -333,11 +327,18 @@ export default function Chat() {
                 </Box>
             </Paper>
 
-            {mode === 'coding' && <CodingRequestForm value={coding} onChange={setCoding} onPrompt={setInput} />}
+            {selectionMessage && <Alert severity="info">{selectionMessage}</Alert>}
+            {loadError && <Alert severity="error" action={<Button onClick={reload}>Retry</Button>}>{loadError}</Alert>}
+            {!loading && !loadError && isAuthenticated && !agents.length && <Alert severity="info">No active agent instances (product agt) are available for this Host.</Alert>}
+            {connectionError && <Alert severity="error" sx={{ mb: 2 }} action={!connected && !connecting && selected ? <Button onClick={() => {
+                sessionStorage.removeItem(getSessionKey(userId, serviceId, host || '', envTag, selected.instanceId));
+                handleConnect();
+            }}>New session</Button> : undefined}>{connectionError}</Alert>}
+            {sessionReady && mode === 'coding' && <CodingRequestForm value={coding} onChange={setCoding} onPrompt={setInput} />}
             {sendError && <Alert severity="error">{sendError}</Alert>}
             {acceptedRequest && <Alert severity="info" action={<Button component="a" download="accepted.json" href={'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ ...acceptedRequest, profile: 'coding' }, null, 2))}>Download acceptance</Button>}>Accepted request: {acceptedRequest.request_id}. This is not a completed coding turn.</Alert>}
-            <Paper elevation={3} sx={{ flexGrow: 1, mb: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: '#f5f7f9' }}>
-                <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
+            <Paper elevation={3} sx={{ flex: '1 0 320px', minHeight: 320, mb: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: '#f5f7f9' }}>
+                <Box sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto', p: 2 }}>
                     <List disablePadding>
                         {messages.length === 0 && (
                             <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
@@ -388,14 +389,14 @@ export default function Chat() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyPress}
-                        disabled={!connected || !sessionReady}
+                        disabled={!connected || !sessionReady || !turnTypes.includes(mode)}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton 
                                         color="primary" 
                                         onClick={handleSend} 
-                                        disabled={!connected || !sessionReady || !input.trim()}
+                                        disabled={!connected || !sessionReady || !turnTypes.includes(mode) || !input.trim()}
                                         aria-label="Send message"
                                     >
                                         <SendIcon />

@@ -471,7 +471,7 @@ export default function InstanceAdmin() {
             disabled={!row.original.active || !row.original.current || row.original.readonly || !instanceOwnership.canModifyRecord(row.original)}
             onClick={() => setPublishingAgent(row.original)}><PolicyIcon /></IconButton></span></Tooltip>
           <Tooltip title="Open Agent chat"><IconButton aria-label="Open Agent chat"
-            onClick={() => navigate('/app/genai/chat?' + new URLSearchParams({ serviceId: row.original.serviceId || '', envTag: row.original.envTag || 'dev' }))}><ChatIcon /></IconButton></Tooltip>
+            onClick={() => navigate('/app/genai/chat?' + new URLSearchParams({ instanceId: row.original.instanceId, serviceId: row.original.serviceId || '', envTag: row.original.envTag || '' }))}><ChatIcon /></IconButton></Tooltip>
         </>}
         <Tooltip title="Snapshot">
           <IconButton
