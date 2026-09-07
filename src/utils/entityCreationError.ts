@@ -9,6 +9,9 @@ const messages: Record<string, string> = {
   ENTITY_ALREADY_EXISTS: "This entity already exists in the selected scope.",
   ENTITY_RETIRED: "This name belongs to a retired entity. Restore it or choose a different name.",
   IDEMPOTENCY_KEY_REUSED: "This retry key was already used for a different request. Submit again to start a new create attempt.",
+  // Sent when a command does not support idempotent create retries. Retrying cannot help: the
+  // handler has to declare support first, so say so rather than invite an endless retry loop.
+  INVALID_IDEMPOTENCY_KEY: "Safe retry is not available for this form yet. Report this to support instead of resubmitting - repeating the request risks creating a duplicate.",
 };
 const terminalCodes = new Set(Object.keys(messages));
 
