@@ -16,7 +16,6 @@ import {
   IconButton,
   Tooltip,
   Button,
-  CircularProgress,
   Box,
   Alert,
   Typography,
@@ -122,7 +121,6 @@ export default function ApiDetail() {
     [host, searchContext.apiId, searchContext.hostId, state?.data, state?.service],
   );
   const { hostId, apiId } = service;
-  const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null); // Will store the appId being fetched
   const [publicationVersion, setPublicationVersion] = useState<ServiceVersionType | null>(null);
   const canPublishToGateway = hasAnyRole(roles, ['admin', 'host-admin', 'api-admin']);
   const taskContext = useMemo(
@@ -189,48 +187,31 @@ export default function ApiDetail() {
     }
   }, [apiVersionOwnership, data]);
 
-  const handleUpdate = useCallback(async (row: MRT_Row<ServiceVersionType>) => {
+  const handleUpdate = useCallback((row: MRT_Row<ServiceVersionType>) => {
     if (!apiVersionOwnership.canModifyRecord(row.original)) {
       alert('You can only update API versions you own.');
       return;
     }
     const apiVersionId = row.original.apiVersionId;
-    setIsUpdateLoading(apiVersionId);
-
-    const cmd = {
-      host: 'lightapi.net', service: 'service', action: 'getFreshApiVersion', version: '0.1.0',
-      data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, aggregateVersion: row.original.aggregateVersion },
-    };
-    const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
-
-    try {
-      const freshData = await fetchClient(url);
-      console.log("freshData", freshData);
-
-      // If the backend echoed our short map, it means the version hasn't changed.
-      // Use row.original which has all the fields.
-      // If the version DID change, the backend fetched and returned the FULL new entity.
-      const dataForForm = freshData.aggregateVersion === row.original.aggregateVersion
-        ? row.original
-        : freshData;
-
-      // Navigate with the fresh data
-      navigate(buildTaskAwareRoute('/app/form/updateApiVersion', searchParams, {
-        ...taskContext,
-        apiVersionId,
-        serviceId: row.original.serviceId ?? '',
-      }), {
-        state: {
-          data: dataForForm,
-          source: location.pathname
-        }
-      });
-    } catch (error) {
-      console.error("Failed to fetch api version for update:", error);
-      alert("Could not load the latest api version data. Please try again.");
-    } finally {
-      setIsUpdateLoading(null);
-    }
+    // updateApiVersion owns the latest-record read through its identity-based prefill.
+    // Do not call getFreshApiVersion here: that endpoint is an aggregate-concurrency
+    // reconciliation check, not a general update-form read, and can reject a valid row
+    // while the projection is catching up.
+    // Record identity is required even when this page was opened outside Task Center.
+    const identityParams = new URLSearchParams({
+      hostId: row.original.hostId,
+      apiId: row.original.apiId,
+      apiVersionId,
+    });
+    navigate(buildTaskAwareRoute(`/app/form/updateApiVersion?${identityParams}`, searchParams, {
+      ...taskContext,
+      hostId: row.original.hostId,
+      apiId: row.original.apiId,
+      apiVersionId,
+      serviceId: row.original.serviceId ?? '',
+    }), {
+      state: { source: location.pathname }
+    });
   }, [apiVersionOwnership, navigate, location.pathname, searchParams, taskContext]);
 
   const contextForRow = useCallback((row: ServiceVersionType) => ({
@@ -290,13 +271,9 @@ export default function ApiDetail() {
           <span>
             <IconButton
               onClick={() => handleUpdate(row)}
-              disabled={!apiVersionOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.apiVersionId}
+              disabled={!apiVersionOwnership.canModifyRecord(row.original)}
             >
-              {isUpdateLoading === row.original.apiVersionId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
+              <SystemUpdateIcon />
             </IconButton>
           </span>
         </Tooltip>

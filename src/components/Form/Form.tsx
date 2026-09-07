@@ -59,11 +59,6 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
 function normalizeFormModel(formId: string | undefined, source: any) {
   const next = { ...(source ?? {}) };
 
-  if (formId === "createApiVersion" || formId === "updateApiVersion") {
-    const apiType = typeof next.apiType === "string" ? next.apiType.trim().toLowerCase() : "";
-    if (apiType === "agent") next.apiType = "agt";
-  }
-
   if (formId === "createAgentDefinition" || formId === "updateAgentDefinition") {
     if (!next.agentDefId && next.apiVersionId) {
       next.agentDefId = next.apiVersionId;

@@ -92,6 +92,17 @@ describe("form prefill from task context", () => {
     });
   });
 
+  it("preserves the agent API type so it matches the reference dropdown", async () => {
+    mockApiVersions([{ ...apiVersionRows[0], apiType: "agent" }]);
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [{ id: "agent", label: "Agent" }],
+    } as Response);
+    renderForm(versionEntry);
+    await waitFor(() => expect(screen.getByRole("combobox", { name: /Api Type/ })).toHaveValue("Agent"));
+  });
+
   it("never sends a getFresh read, which requires an aggregateVersion we do not have", () => {
     renderForm(versionEntry);
     expect(queryCalls("getFresh")).toHaveLength(0);
