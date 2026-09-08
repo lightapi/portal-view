@@ -31,6 +31,8 @@ type ConfigInstanceApiResponse = {
 };
 
 type ConfigInstanceType = {
+  publicationManaged?: boolean;
+  instancePublicationId?: string;
   hostId: string;
   instanceId: string;
   instanceName: string;
@@ -298,6 +300,11 @@ export default function ConfigInstance() {
     enableRowActions: true,
     renderRowActions: ({ row }) => (
       <Box sx={{ display: 'flex', gap: '0.1rem' }}>
+        {row.original.publicationManaged ? <Button size="small"
+          title={`Publication: ${row.original.instancePublicationId}`}
+          onClick={() => navigate('/app/genai/LlmModelControlPlane?tab=agent-delegation&instanceId=' + encodeURIComponent(row.original.instanceId))}>
+          Edit in LLM Model Control Plane
+        </Button> : <>
         <Tooltip title="Update Property">
           <IconButton
             onClick={() => handleUpdate(row)}
@@ -315,6 +322,7 @@ export default function ConfigInstance() {
             <DeleteForeverIcon />
           </IconButton>
         </Tooltip>
+        </>}
       </Box>
     ),
     renderTopToolbarCustomActions: () => (

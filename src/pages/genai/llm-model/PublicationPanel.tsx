@@ -121,6 +121,7 @@ export default function PublicationPanel({hostId}: {hostId: string}) {
     try {
       await commandLlm('publishLlmGatewayConfiguration',{
         hostId,environment:publicationEnvironment,instanceId,expectedPropertySetDigest:digest,
+        expectedSourceDigest:candidate.sourceDigest,
       });
       setMessage({severity:'success',text:'Configuration properties were applied atomically. Create and promote a config snapshot for this instance, then restart or reload llm-router to test it.'});
       setCandidate(null); await loadHistory();
@@ -201,13 +202,17 @@ export default function PublicationPanel({hostId}: {hostId: string}) {
       <Typography variant="subtitle1" sx={{mb:1}}>Instance publication history</Typography>
       {history.length === 0 ? <Typography color="text.secondary">No LLM configuration has been applied to this instance.</Typography>
         : <TableContainer><Table size="small">
-          <TableHead><TableRow><TableCell>Application</TableCell><TableCell>Revision</TableCell><TableCell>Digest</TableCell><TableCell>Applied</TableCell><TableCell>Applied by</TableCell><TableCell/></TableRow></TableHead>
+          <TableHead><TableRow><TableCell>Application</TableCell><TableCell>Revision</TableCell><TableCell>Digest</TableCell><TableCell>Applied</TableCell><TableCell>Applied by</TableCell><TableCell>Current snapshot</TableCell><TableCell/></TableRow></TableHead>
           <TableBody>{history.map(item => <TableRow key={String(item.instancePublicationId)}>
             <TableCell>{String(item.applicationVersion ?? '—')}</TableCell>
             <TableCell>{String(item.publicationVersion ?? '—')}</TableCell>
             <TableCell><code>{String(item.configPropertiesDigest ?? item.propertySetDigest ?? '—')}</code></TableCell>
             <TableCell>{String(item.updateTs ?? '—')}</TableCell>
             <TableCell>{String(item.updateUser ?? '—')}</TableCell>
+            <TableCell>{item.currentSnapshotId ? <>
+              <code>{String(item.currentSnapshotId)}</code><br/>
+              {item.snapshotContainsValues ? 'Contains these values; verify runtime reload' : 'Does not contain these values'}
+            </> : 'No current snapshot'}</TableCell>
             <TableCell><Button size="small" disabled={loading} onClick={() => void applyExactRevision(item)}>Apply exact revision</Button></TableCell>
           </TableRow>)}</TableBody>
         </Table></TableContainer>}
