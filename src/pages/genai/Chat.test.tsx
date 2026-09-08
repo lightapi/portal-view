@@ -256,3 +256,14 @@ it('cancels the admission deadline when a deliberate close handshake is delayed'
     expect(screen.getByRole('button', { name: 'Connect' })).toBeEnabled();
   } finally { vi.useRealTimers(); }
 });
+
+it('preserves the session initialization error in the alert after the close frame', async () => {
+  const user = userEvent.setup(); render(<Chat />);
+  const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); });
+  const message = "The agent's active-session limit has been reached.";
+  act(() => socket.receive({ type: 'error', code: 'SESSION_LIMIT_EXCEEDED', message }));
+  act(() => socket.onclose?.({ code: 1013 } as CloseEvent));
+  expect(screen.getByRole('alert')).toHaveTextContent(message);
+  expect(screen.getByRole('alert')).not.toHaveTextContent('closed before the agent initialized');
+});

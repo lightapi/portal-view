@@ -211,6 +211,7 @@ export default function Chat() {
                     }
                 } else if (json.type === 'error') {
                     if (typeof json.message === 'string') {
+                        if (!initialized) setConnectionError(json.message);
                         addMessage('System', 'Error from agent: ' + json.message);
                     } else {
                         console.warn('Received invalid error message payload:', json);
