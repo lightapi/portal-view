@@ -18,7 +18,7 @@ it('requires review and publishes only the preview digest for the selected insta
   await user.click(screen.getByRole('checkbox'));
   await user.click(screen.getByRole('button', { name: 'Publish and activate' }));
   await screen.findByText(/Active publication publication/);
-  expect(mocks.post.mock.calls[0][0].body.data).toEqual({ hostId: 'host', instanceId: 'instance', leaseProfile: 'BOUNDED', candidateDigest: 'sha256:reviewed' });
+  expect(mocks.post.mock.calls[0][0].body.data).toEqual({ hostId: 'host', instanceId: 'instance', leaseProfile: 'PERSISTENT', candidateDigest: 'sha256:reviewed' });
 });
 it('clears a rejected preview and requires a fresh review before retrying', async () => {
   mocks.post.mockResolvedValue({ error: new Error('Source changed after preview') });

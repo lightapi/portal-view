@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, Typography } from '@mui/material';
 import fetchClient from '../../utils/fetchClient';
 import { apiPost } from '../../api/apiPost';
 import { loadErrorMessage } from '../../utils/loadErrorMessage';
@@ -15,7 +15,7 @@ type Candidate = {
 type Props = { hostId: string; instanceId: string; serviceId?: string; onClose: () => void };
 
 export default function AgentPolicyPublicationDialog({ hostId, instanceId, serviceId, onClose }: Props) {
-  const [leaseProfile, setLeaseProfile] = useState('BOUNDED');
+  const leaseProfile = 'PERSISTENT';
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [reviewed, setReviewed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,10 +61,7 @@ export default function AgentPolicyPublicationDialog({ hostId, instanceId, servi
     <DialogTitle>Publish Agent policy</DialogTitle>
     <DialogContent><Stack spacing={2} sx={{ pt: 1 }}>
       <Typography>{serviceId || instanceId}</Typography>
-      <TextField select label="Lease profile" value={leaseProfile} disabled={busy} onChange={e => setLeaseProfile(e.target.value)}>
-        <MenuItem value="BOUNDED">Bounded</MenuItem><MenuItem value="LOCAL_DEMO">Local demo</MenuItem>
-      </TextField>
-      {leaseProfile === 'LOCAL_DEMO' && <Alert severity="warning">Local demonstration lease; do not use for production.</Alert>}
+      <Alert severity="info">Published policy remains valid until replaced or revoked. No periodic renewal is required.</Alert>
       {busy && <Typography role="status">Working…</Typography>}
       {error && <Alert severity="error">{error}</Alert>}
       {result && <Alert severity="success">{result}</Alert>}

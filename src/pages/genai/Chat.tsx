@@ -26,6 +26,8 @@ import { useUserState } from '../../contexts/UserContext';
 import CodingRequestForm from './CodingRequestForm';
 import { clientMessageId, codingPayload, emptyCodingInput } from './codingRequest';
 import { useChatAgents } from './useChatAgents';
+import { renewChatAuthentication } from './chatAuthentication';
+import { recordedChatTurns, rememberChatTurn } from './chatTurns';
 
 interface Message {
     role: 'User' | 'Assistant' | 'System';
@@ -56,6 +58,11 @@ export default function Chat() {
     const [sessionReady, setSessionReady] = useState(false);
     const [acceptedRequest, setAcceptedRequest] = useState<{ sessionId: string; request_id: string } | null>(null);
     const ws = useRef<WebSocket | null>(null);
+    const authenticationExpiresAt = useRef<number | null>(null);
+    const renewal = useRef<AbortController | null>(null);
+    const contextGeneration = useRef(0);
+    const draftId = useRef<string | null>(null);
+    const lastSubmission = useRef<{ id: string; text: string } | null>(null);
     const userDisconnected = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -63,10 +70,13 @@ export default function Chat() {
 
     // A socket and its callbacks belong to one authenticated deployment selection.
     useEffect(() => {
+        contextGeneration.current += 1;
+        authenticationExpiresAt.current = null; draftId.current = null; lastSubmission.current = null;
         setConnected(false); setConnecting(false); setSessionReady(false);
         setMessages([]); setAcceptedRequest(null); setTurnTypes([]); setMode('chat');
         setConnectionError(''); setSendError(''); setCoding(emptyCodingInput); setInput('');
         return () => {
+            contextGeneration.current += 1; renewal.current?.abort(); renewal.current = null;
             if (connectionTimer.current) clearTimeout(connectionTimer.current);
             const socket = ws.current;
             if (socket) {
@@ -84,6 +94,30 @@ export default function Chat() {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    const reauthenticate = async () => {
+        if (renewal.current) return;
+        const generation = contextGeneration.current;
+        const controller = new AbortController(); renewal.current = controller;
+        const deadline = setTimeout(() => controller.abort(), 15000);
+        if (connectionTimer.current) clearTimeout(connectionTimer.current);
+        connectionTimer.current = null;
+        const socket = ws.current;
+        if (socket) { socket.onclose = null; socket.onmessage = null; socket.onerror = null; socket.onopen = null; socket.close(); ws.current = null; }
+        setConnected(false); setSessionReady(false); setConnecting(true);
+        try {
+            await renewChatAuthentication(controller.signal);
+            if (generation !== contextGeneration.current) return;
+            if (controller.signal.aborted) throw new Error("Authentication renewal timed out");
+            authenticationExpiresAt.current = null;
+            handleConnect();
+        } catch {
+            if (generation === contextGeneration.current && !userDisconnected.current) {
+                setConnecting(false);
+                setConnectionError('Authentication renewal failed. Sign in again, then reconnect to this session.');
+            }
+        } finally { clearTimeout(deadline); if (renewal.current === controller) renewal.current = null; }
+    };
 
     const handleConnect = () => {
         if (!selected || loading || !isAuthenticated || !host || !serviceId || !envTag) return;
@@ -112,7 +146,6 @@ export default function Chat() {
         userDisconnected.current = false;
         setConnecting(true);
         setSessionReady(false);
-        setAcceptedRequest(null);
 
         // Capture the session key at connection time so the onmessage closure
         // always writes to the correct storage slot regardless of later state changes.
@@ -197,6 +230,27 @@ export default function Chat() {
                     setSessionReady(true);
                     sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
+                } else if (json.type === 'authentication_context') {
+                    authenticationExpiresAt.current = typeof json.expiresAt === 'number' ? json.expiresAt : 0;
+                } else if (json.type === 'authentication_required') {
+                    if (json.admitted === false && json.clientMessageId === lastSubmission.current?.id) {
+                        const submission = lastSubmission.current!;
+                        setInput(current => current || submission.text);
+                        draftId.current = submission.id;
+                    }
+                    addMessage('System', 'Authentication expired. Reconnecting; accepted or uncertain turns will not be sent again.');
+                    void reauthenticate();
+                } else if (json.type === 'turnAccepted') {
+                    if (typeof json.clientMessageId === 'string' && typeof json.turnId === 'string') {
+                        rememberChatTurn(connectedKey, { clientMessageId: json.clientMessageId, turnId: json.turnId });
+                    }
+                } else if (json.type === 'turn_status') {
+                    if (Array.isArray(json.turns)) {
+                        for (const recorded of recordedChatTurns(connectedKey)) {
+                            const turn = json.turns.find((turn: { turnId?: string; clientMessageId?: string }) => turn.turnId === recorded.turnId || turn.clientMessageId === recorded.clientMessageId);
+                            addMessage('System', turn ? `Previous turn status: ${turn.state}.` : 'Previous turn status is unresolved; it has not been resubmitted.');
+                        }
+                    }
                 } else if (json.type === 'executionAccepted') {
                     if (json.profile === 'coding' && typeof json.request_id === 'string') {
                         setAcceptedRequest({ sessionId: sessionStorage.getItem(connectedKey) || '', request_id: json.request_id });
@@ -226,7 +280,9 @@ export default function Chat() {
         };
 
         socket.onclose = (event: CloseEvent) => {
+            if (ws.current !== socket) return;
             clearDeadline();
+            if (event.code === 4401 && !userDisconnected.current) { void reauthenticate(); return; }
             if (!initialized && !userDisconnected.current) setConnectionError(previous => previous || `The connection closed before the agent initialized a session (code ${event.code}). Check the agent and gateway logs, or try a new session.`);
             setConnecting(false);
             setConnected(false);
@@ -246,6 +302,7 @@ export default function Chat() {
 
     const handleDisconnect = () => {
         userDisconnected.current = true;
+        contextGeneration.current += 1; renewal.current?.abort(); renewal.current = null;
         if (connectionTimer.current) clearTimeout(connectionTimer.current);
         connectionTimer.current = null;
         setConnecting(false); setConnected(false); setSessionReady(false);
@@ -257,11 +314,19 @@ export default function Chat() {
     const handleSend = () => {
         if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !connected || !sessionReady || !turnTypes.includes(mode)) return;
         setSendError('');
+        if (authenticationExpiresAt.current !== null && Date.now() >= authenticationExpiresAt.current * 1000) {
+            draftId.current ||= clientMessageId();
+            void reauthenticate();
+            return;
+        }
         try {
+            const id = draftId.current || clientMessageId();
             const payload = mode === 'coding'
-                ? { text: input, clientMessageId: clientMessageId(), profile: 'coding', coding: codingPayload(coding) }
-                : { text: input };
+                ? { text: input, clientMessageId: id, profile: 'coding', coding: codingPayload(coding) }
+                : { text: input, clientMessageId: id };
+            if (selected) rememberChatTurn(getSessionKey(userId, serviceId, host || '', envTag, selected.instanceId), { clientMessageId: id });
             ws.current.send(JSON.stringify(payload));
+            lastSubmission.current = { id, text: input }; draftId.current = null;
             addMessage('User', input);
             setInput('');
         } catch (error) { setSendError((error as Error).message); }

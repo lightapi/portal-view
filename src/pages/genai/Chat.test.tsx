@@ -44,7 +44,7 @@ it('uses the authenticated Gateway route and sends a typed coding payload only a
   act(() => socket.receive({ type: 'session', session_id: 'session-a', turnTypes: ['chat', 'coding'], defaultTurnType: 'chat' }));
   fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'hello' } });
   await user.click(screen.getByRole('button', { name: 'Send message' }));
-  expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({ text: 'hello' });
+  expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({ text: 'hello', clientMessageId: expect.any(String) });
   socket.send.mockClear();
   await user.click(screen.getByRole('combobox', { name: 'Turn type' }));
   await user.click(screen.getByRole('option', { name: 'Coding implementation' }));
@@ -76,7 +76,7 @@ it('retains the ordinary chat payload and closes a socket when the Host changes'
   act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' }); });
   fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'Hello' } });
   await user.click(screen.getByRole('button', { name: 'Send message' }));
-  expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({ text: 'Hello' });
+  expect(JSON.parse(socket.send.mock.calls[0][0])).toEqual({ text: 'Hello', clientMessageId: expect.any(String) });
   state.host = 'host-b'; view.rerender(<Chat />);
   expect(socket.close).toHaveBeenCalled();
   expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
@@ -266,4 +266,70 @@ it('preserves the session initialization error in the alert after the close fram
   act(() => socket.onclose?.({ code: 1013 } as CloseEvent));
   expect(screen.getByRole('alert')).toHaveTextContent(message);
   expect(screen.getByRole('alert')).not.toHaveTextContent('closed before the agent initialized');
+});
+
+it('renews expired authentication and reconnects the same session without replaying a draft', async () => {
+  document.cookie = 'userId=owner'; document.cookie = 'host=host-a';
+  const refresh = vi.fn().mockResolvedValue({ ok: true, status: 200 }); vi.stubGlobal('fetch', refresh);
+  const user = userEvent.setup(); render(<Chat />); const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' });
+    socket.receive({ type: 'authentication_context', expiresAt: Math.floor(Date.now()/1000)-1 }); });
+  fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'draft' } });
+  await user.click(screen.getByRole('button', { name: 'Send message' }));
+  await waitFor(() => expect(Socket.instances).toHaveLength(2));
+  expect(refresh).toHaveBeenCalledOnce(); expect(socket.send).not.toHaveBeenCalled();
+  const renewed = Socket.instances[1]; expect(new URL(renewed.url).searchParams.get('sessionId')).toBe('session-a');
+  act(() => { renewed.readyState = 1; renewed.onopen?.(); renewed.receive({ type: 'session', session_id: 'session-a' }); });
+  expect(renewed.send).not.toHaveBeenCalled();
+  expect(screen.getByPlaceholderText('Type your message here...')).toHaveValue('draft');
+  await user.click(screen.getByRole('button', { name: 'Send message' }));
+  expect(renewed.send).toHaveBeenCalledOnce();
+});
+
+it('does not replay an accepted turn on reauthentication and reconciles its status', async () => {
+  document.cookie = 'userId=owner'; document.cookie = 'host=host-a';
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200 }));
+  const user = userEvent.setup(); render(<Chat />); const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' }); });
+  fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'accepted' } });
+  await user.click(screen.getByRole('button', { name: 'Send message' }));
+  const id = JSON.parse(socket.send.mock.calls[0][0]).clientMessageId;
+  act(() => { socket.receive({ type: 'turnAccepted', clientMessageId: id, turnId: 'turn-a' });
+    socket.receive({ type: 'authentication_required', clientMessageId: id, admitted: true }); });
+  await waitFor(() => expect(Socket.instances).toHaveLength(2)); const renewed = Socket.instances[1];
+  act(() => { renewed.readyState = 1; renewed.onopen?.(); renewed.receive({ type: 'session', session_id: 'session-a' });
+    renewed.receive({ type: 'turn_status', turns: [{ turnId: 'turn-a', clientMessageId: id, state: 'FAILED' }] }); });
+  expect(renewed.send).not.toHaveBeenCalled(); expect(screen.getByText('Previous turn status: FAILED.')).toBeInTheDocument();
+});
+
+it('blocks reconnect if cookie renewal changes the owner', async () => {
+  document.cookie = 'userId=owner'; document.cookie = 'host=host-a';
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => { document.cookie = 'userId=other'; return { ok: true, status: 200 }; }));
+  const user = userEvent.setup(); render(<Chat />); const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' }); socket.receive({ type: 'authentication_required', admitted: true }); });
+  expect(await screen.findByText(/Authentication renewal failed/)).toBeInTheDocument(); expect(Socket.instances).toHaveLength(1);
+});
+
+it('cancels a pending renewal when the Host changes', async () => {
+  document.cookie = 'userId=owner'; document.cookie = 'host=host-a';
+  let finish!: (value: unknown) => void;
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise(resolve => { finish = resolve; })));
+  const user = userEvent.setup(); const view = render(<Chat />); const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' }); socket.receive({ type: 'authentication_required', admitted: true }); });
+  state.host = 'host-b'; view.rerender(<Chat />);
+  await act(async () => finish({ ok: true, status: 200 }));
+  expect(Socket.instances).toHaveLength(1);
+});
+
+it('preserves every queued message identifier when acknowledgements arrive out of order', async () => {
+  const user = userEvent.setup(); render(<Chat />); const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a' }); });
+  for (const text of ['first', 'second']) {
+    fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: text } });
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+  }
+  const ids = socket.send.mock.calls.map(([body]) => JSON.parse(body).clientMessageId);
+  act(() => { socket.receive({ type: 'turnAccepted', clientMessageId: ids[1], turnId: 'turn-2' }); socket.receive({ type: 'turnAccepted', clientMessageId: ids[0], turnId: 'turn-1' }); });
+  const key = Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i)!).find(key => key.endsWith(':turns'))!;
+  expect(JSON.parse(sessionStorage.getItem(key)!)).toEqual([{ clientMessageId: ids[0], turnId: 'turn-1' }, { clientMessageId: ids[1], turnId: 'turn-2' }]);
 });
