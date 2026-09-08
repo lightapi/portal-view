@@ -11,16 +11,16 @@ import { llmResources } from './types';
 export default function LlmModelControlPlane() {
   const {host,roles} = useUserState() as {host?: string;roles?: string|null};
   const [search] = useSearchParams();
-  const [tab,setTab] = useState(search.get("tab") === "agent-delegation" ? llmResources.length + 1 : 0);
+  const [tab,setTab] = useState(search.get("tab") === "agent-delegation" ? llmResources.length : 0);
   return <Box sx={{p:2}}>
     <Typography variant="h4" gutterBottom>LLM Model Control Plane</Typography>
     <Typography color="text.secondary" sx={{mb:2}}>Manage model inventory, provider deployments, external credential references, routing policy, and immutable gateway publications.</Typography>
     <Tabs value={tab} onChange={(_,value) => setTab(value)} variant="scrollable" scrollButtons="auto" sx={{mb:2}}>
-      {llmResources.map(resource => <Tab key={resource.key} label={resource.label}/>)}<Tab label="Publication"/><Tab label="Agent Delegation"/>
+      {llmResources.map(resource => <Tab key={resource.key} label={resource.label}/>)}<Tab label="Agent Delegation"/><Tab label="Publication"/>
     </Tabs>
     {tab < llmResources.length ? <ResourcePanel hostId={host ?? ''} resource={llmResources[tab]}
       canMutate={llmResources[tab].scope === 'host' || hasAnyRole(roles, ['admin'])}/>
-      : host ? (tab === llmResources.length ? <PublicationPanel hostId={host}/>
+      : host ? (tab === llmResources.length + 1 ? <PublicationPanel hostId={host}/>
         : <AgentDelegationPanel hostId={host} initialInstanceId={search.get("instanceId") ?? ""}/>)
         : <Alert severity="info">Select a host to administer gateway configuration.</Alert>}
   </Box>;
