@@ -21,11 +21,29 @@ export async function queryLlm(action: string, data: Record<string, unknown>): P
   return normalize(await fetchClient(url));
 }
 
-export async function listLlm(action: string, hostId?: string): Promise<LlmRecord[]> {
-  const data = {offset: 0, limit: 200, active: true, ...(hostId ? {hostId} : {})};
-  const value = await queryLlm(action, data);
-  if (Array.isArray(value)) return value as LlmRecord[];
-  return [];
+export async function listLlm(action: string, hostId?: string, pageIdField?: string): Promise<LlmRecord[]> {
+  const records: LlmRecord[] = [];
+  const limit = 200;
+  const seenIds = new Set<unknown>();
+  for (let offset = 0; ; ) {
+    const value = await queryLlm(action, {offset, limit, active: true, ...(hostId ? {hostId} : {})});
+    if (!Array.isArray(value)) {
+      if (pageIdField) throw new Error('Unable to load the complete route list.');
+      return [];
+    }
+    if (pageIdField) {
+      for (const row of value) {
+        const id = row?.[pageIdField];
+        if (typeof id !== 'string' || seenIds.has(id)) {
+          throw new Error('Route pagination returned missing or repeated IDs. Reload the route list.');
+        }
+        seenIds.add(id);
+      }
+    }
+    records.push(...value as LlmRecord[]);
+    if (!pageIdField || value.length === 0) return records;
+    offset += value.length;
+  }
 }
 
 export async function commandLlm(action: string, data: LlmRecord): Promise<void> {

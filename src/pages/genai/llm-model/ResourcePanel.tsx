@@ -6,13 +6,13 @@ import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogCont
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { commandLlm, listLlm, queryLlm } from './api';
+import { commandLlm, listLlm } from './api';
 import { llmErrorMessage } from './error';
 import fetchClient from '../../../utils/fetchClient';
 import type { LlmRecord, ResourceDefinition } from './types';
 import { display, sanitizeForDisplay, validateMutation } from './validation';
 
-type Props = { hostId: string; resource: ResourceDefinition; canMutate?: boolean };
+type Props = { hostId: string; resource: ResourceDefinition; canMutate?: boolean; onViewRoutes?: (row: LlmRecord) => void; routeAliasId?: string };
 const GLOBAL_TAXONOMY_HOST = '00000000-0000-0000-0000-000000000000';
 
 const taxonomyQueryUrl = (service: 'category' | 'tag', action: string, hostId: string, entityType: string) =>
@@ -58,7 +58,7 @@ function resourceLoadError(label: string, reason: unknown) {
     : `Unable to load ${label}. ${detail}`;
 }
 
-export default function ResourcePanel({hostId, resource, canMutate = true}: Props) {
+export default function ResourcePanel({hostId, resource, canMutate = true, onViewRoutes, routeAliasId}: Props) {
   const navigate = useNavigate();
   const queryHost = resource.scope === 'host' ? hostId : undefined;
   const taxonomyHost = resource.scope === 'global' ? GLOBAL_TAXONOMY_HOST : hostId;
@@ -68,14 +68,15 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
   const [editing, setEditing] = useState<LlmRecord | null>(null);
   const [create, setCreate] = useState(false);
   const [json, setJson] = useState('');
-  const [preview, setPreview] = useState<unknown>(null);
   const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     setLoading(true); setError(''); setRows([]);
     try {
-      const records = await listLlm(resource.listAction, queryHost);
+      const records = resource.key === 'routes'
+        ? await listLlm(resource.listAction, queryHost, resource.idField)
+        : await listLlm(resource.listAction, queryHost);
       if (sequence !== loadSequence.current) return;
       if (!resource.taxonomyEntityType) {
         setRows(records);
@@ -100,7 +101,7 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
     finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
-  }, [queryHost, resource.label, resource.listAction, resource.taxonomyEntityType, taxonomyHost]);
+  }, [queryHost, resource.key, resource.idField, resource.label, resource.listAction, resource.taxonomyEntityType, taxonomyHost]);
   useEffect(() => {
     void load();
     return () => { loadSequence.current += 1; };
@@ -144,11 +145,8 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
       await load();
     } catch (reason) { setError(llmErrorMessage(reason)); }
   };
-  const previewRoutes = async (row: LlmRecord) => {
-    try { setPreview(await queryLlm('previewLlmAliasRoutes', {hostId, publicAliasId: row.publicAliasId,
-      environment: row.environment, dataClassification: row.dataClassification})); }
-    catch (reason) { setError(llmErrorMessage(reason)); }
-  };
+  const visibleRows = resource.key === 'routes' && routeAliasId
+    ? rows.filter(row => row.publicAliasId === routeAliasId) : rows;
 
   if (resource.scope === 'host' && !hostId) return <Alert severity="info">Select a host to administer {resource.label}.</Alert>;
   return <Box>
@@ -165,17 +163,17 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
         {resource.columns.map(column => <TableCell key={column}>{resource.columnLabels?.[column] ?? column}</TableCell>)}
         <TableCell>Version</TableCell>
       </TableRow></TableHead><TableBody>
-        {rows.map((row, index) => <TableRow key={String(row[resource.idField] ?? index)}>
+        {visibleRows.map((row, index) => <TableRow key={String(row[resource.idField] ?? index)}>
           <TableCell sx={{whiteSpace:'nowrap'}}>
             {canMutate && <><Tooltip title="Edit"><IconButton size="small" onClick={() => open(row)}><EditIcon/></IconButton></Tooltip>
             <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => void remove(row)}><DeleteIcon/></IconButton></Tooltip></>}
-            {resource.key === 'aliases' && <Button size="small" onClick={() => void previewRoutes(row)}>Preview routes</Button>}
+            {resource.key === 'aliases' && onViewRoutes && <Button size="small" onClick={() => onViewRoutes(row)}>View routes</Button>}
           </TableCell>
           <TableCell>{display(row[resource.idField])}</TableCell>
           {resource.columns.map(column => <TableCell key={column} sx={{maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}>{columnValue(row,column,resource.columnTooltipFields?.[column])}</TableCell>)}
           <TableCell>{display(row.aggregateVersion)}</TableCell>
         </TableRow>)}
-        {!rows.length && <TableRow><TableCell colSpan={resource.columns.length + 3}>No active records.</TableCell></TableRow>}
+        {!visibleRows.length && <TableRow><TableCell colSpan={resource.columns.length + 3}>No active records.</TableCell></TableRow>}
       </TableBody></Table>
     </TableContainer>}
     <Dialog open={editing !== null} onClose={close} fullWidth maxWidth="md">
@@ -184,11 +182,6 @@ export default function ResourcePanel({hostId, resource, canMutate = true}: Prop
         <TextField multiline minRows={18} fullWidth value={json} onChange={event => setJson(event.target.value)} inputProps={{spellCheck:false}}/>
       </DialogContent><DialogActions><Button onClick={close}>Cancel</Button><Button variant="contained" onClick={() => void save()}>Save</Button></DialogActions>
     </Dialog>
-    <Dialog open={preview !== null} onClose={() => setPreview(null)} fullWidth maxWidth="md">
-      <DialogTitle>Route eligibility preview</DialogTitle><DialogContent>
-        <Alert severity="info" sx={{mb:1}}>This preview exposes eligibility reasons only; credential references and provider errors are excluded.</Alert>
-        <pre>{JSON.stringify(preview,null,2)}</pre>
-      </DialogContent><DialogActions><Button onClick={() => setPreview(null)}>Close</Button></DialogActions>
-    </Dialog>
+
   </Box>;
 }

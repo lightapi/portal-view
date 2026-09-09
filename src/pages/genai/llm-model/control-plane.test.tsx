@@ -296,18 +296,40 @@ describe('LLM control-plane wiring', () => {
     expect(mocks.navigate.mock.calls[0][1].state.data).not.toHaveProperty('apiKey');
   });
 
-  it('previews governed alias eligibility without exposing provider material', async () => {
-    mocks.listLlm.mockResolvedValue([{
-      hostId:'host-a', publicAliasId:'alias-a', aliasName:'governed-chat',
-      environment:'prod', aggregateVersion:1,
-    }]);
-    mocks.queryLlm.mockResolvedValue([{deploymentId:'deployment-a',eligible:true}]);
-    const aliases = llmResources.find(resource => resource.key === 'aliases')!;
-    render(<ResourcePanel hostId="host-a" resource={aliases}/>);
-    await userEvent.click(await screen.findByRole('button',{name:'Preview routes'}));
-    await waitFor(() => expect(mocks.queryLlm).toHaveBeenCalledWith('previewLlmAliasRoutes',
-      expect.objectContaining({hostId:'host-a',publicAliasId:'alias-a'})));
-    expect(await screen.findByText(/deployment-a/)).toBeInTheDocument();
-    expect(screen.queryByText(/baseUrl|credentialRef|secretReference/)).not.toBeInTheDocument();
+  it('opens routes for an alias with null classification and can show all routes', async () => {
+    mocks.host = 'host-a';
+    mocks.queryLlm.mockClear();
+    mocks.listLlm.mockImplementation(async (action: string) => {
+      if (action === 'getLlmPublicAlias') return [{
+        publicAliasId:'alias-a', aliasName:'governed-chat', environment:'prod',
+        dataClassification:null, aggregateVersion:1,
+      }];
+      if (action === 'getLlmAliasRoute') return [
+        {aliasRouteId:'route-a',publicAliasId:'alias-a',deploymentName:'selected-deployment'},
+        {aliasRouteId:'route-b',publicAliasId:'alias-b',deploymentName:'other-deployment'},
+      ];
+      return [];
+    });
+    const view = render(<LlmModelControlPlane/>);
+    await userEvent.click(screen.getByRole('tab', {name:'Aliases'}));
+    await userEvent.click(await screen.findByRole('button', {name:'View routes'}));
+    expect(screen.getByRole('tab', {name:'Routes'})).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('selected-deployment')).toBeInTheDocument();
+    expect(screen.queryByText('other-deployment')).not.toBeInTheDocument();
+    expect(screen.getByText('Routes for governed-chat (prod)')).toBeInTheDocument();
+    expect(mocks.queryLlm).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', {name:'Show all routes'}));
+    expect(await screen.findByText('other-deployment')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', {name:'Aliases'}));
+    await userEvent.click(await screen.findByRole('button', {name:'View routes'}));
+    expect(await screen.findByText('selected-deployment')).toBeInTheDocument();
+    mocks.host = 'host-b';
+    view.rerender(<LlmModelControlPlane/>);
+    expect(screen.queryByText('Routes for governed-chat (prod)')).not.toBeInTheDocument();
+    mocks.host = 'host-a';
+    view.rerender(<LlmModelControlPlane/>);
+    expect(await screen.findByText('other-deployment')).toBeInTheDocument();
+    expect(screen.queryByText('Routes for governed-chat (prod)')).not.toBeInTheDocument();
+
   });
 });
