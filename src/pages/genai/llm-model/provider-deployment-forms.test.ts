@@ -19,7 +19,7 @@ describe('LLM provider deployment forms', () => {
     });
     expect(deployment?.formFields).toEqual(expect.arrayContaining([
       'hostId', 'providerDeploymentId', 'modelRegistrationId', 'providerAccountId',
-      'deploymentName', 'providerType', 'providerProtocol', 'physicalModelId', 'baseUrl', 'region',
+      'deploymentName', 'providerType', 'physicalModelId', 'region',
       'transportBounds', 'providerEndpointId', 'deploymentRevisionId', 'physicalRuntimeId',
       'capacityDomainId', 'runtimeCapacity', 'readinessPolicy', 'expectedSidecar', 'aggregateVersion',
     ]));
@@ -58,11 +58,10 @@ describe('LLM provider deployment forms', () => {
     expect(decodeURIComponent(account && typeof account === 'object' ? account.action?.url ?? '' : ''))
       .toContain('getLlmProviderAccountLabel');
     expect(provider).toMatchObject({type:'dynaselect',multiple:false});
-    expect(definition.schema.properties.providerProtocol.enum).toEqual([
-      'openai_chat','openai_responses','openai_embeddings','anthropic_messages','bedrock_converse',
-    ]);
+    expect(definition.schema.properties).not.toHaveProperty('providerProtocol');
+    expect(definition.schema.properties).not.toHaveProperty('baseUrl');
     expect(definition.schema.properties.region.type).toEqual(['string','null']);
-    expect(definition.form).toContain('providerProtocol');
+    expect(definition.form).not.toContain('providerProtocol');
     expect(model).toMatchObject({type:'dynaselect',multiple:false,action:{params:['providerType']}});
     expect(region).toMatchObject({type:'dynaselect',multiple:false,action:{params:['hostId']}});
     expect(bounds).toMatchObject({type:'structured'});
@@ -71,7 +70,7 @@ describe('LLM provider deployment forms', () => {
   it('requires the callable binding on create and optimistic concurrency on update', () => {
     expect(forms.createProviderDeployment.schema.required).toEqual([
       'hostId','modelRegistrationId','providerAccountId','deploymentName',
-      'providerType','providerProtocol','physicalModelId','baseUrl',
+      'providerType','physicalModelId',
       'providerEndpointId','deploymentRevisionId','physicalRuntimeId','capacityDomainId',
       'runtimeCapacity','readinessPolicy',
     ]);

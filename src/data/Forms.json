@@ -19575,28 +19575,10 @@
           "type": "string",
           "maxLength": 32
         },
-        "providerProtocol": {
-          "title": "Provider Protocol",
-          "description": "Upstream wire protocol. Choose the exact upstream API contract; provider identity is configured separately.",
-          "type": "string",
-          "enum": [
-            "openai_chat",
-            "openai_responses",
-            "openai_embeddings",
-            "anthropic_messages",
-            "bedrock_converse"
-          ],
-          "default": "openai_chat"
-        },
         "physicalModelId": {
           "title": "Physical Model Id",
           "type": "string",
           "maxLength": 255
-        },
-        "baseUrl": {
-          "title": "Base URL",
-          "type": "string",
-          "pattern": "^https://"
         },
         "region": {
           "title": "Region",
@@ -19665,9 +19647,7 @@
         "providerAccountId",
         "deploymentName",
         "providerType",
-        "providerProtocol",
         "physicalModelId",
-        "baseUrl",
         "providerEndpointId",
         "deploymentRevisionId",
         "physicalRuntimeId",
@@ -19711,7 +19691,6 @@
           "url": "/r/data?name=model_provider"
         }
       },
-      "providerProtocol",
       {
         "key": "physicalModelId",
         "type": "dynaselect",
@@ -19723,7 +19702,6 @@
           ]
         }
       },
-      "baseUrl",
       {
         "key": "providerEndpointId",
         "type": "dynaselect",
@@ -19811,27 +19789,10 @@
           "type": "string",
           "maxLength": 32
         },
-        "providerProtocol": {
-          "title": "Provider Protocol",
-          "description": "Upstream wire protocol. Choose the exact upstream API contract; provider identity is configured separately.",
-          "type": "string",
-          "enum": [
-            "openai_chat",
-            "openai_responses",
-            "openai_embeddings",
-            "anthropic_messages",
-            "bedrock_converse"
-          ]
-        },
         "physicalModelId": {
           "title": "Physical Model Id",
           "type": "string",
           "maxLength": 255
-        },
-        "baseUrl": {
-          "title": "Base URL",
-          "type": "string",
-          "pattern": "^https://"
         },
         "region": {
           "title": "Region",
@@ -19904,7 +19865,6 @@
           "url": "/r/data?name=model_provider"
         }
       },
-      "providerProtocol",
       {
         "key": "physicalModelId",
         "type": "dynaselect",
@@ -19916,7 +19876,6 @@
           ]
         }
       },
-      "baseUrl",
       {"key":"providerEndpointId","type":"dynaselect","multiple":false,"optionValueKey":"id","action":{"url":"/portal/query?cmd=%7B%22host%22%3A%22lightapi.net%22%2C%22service%22%3A%22genai%22%2C%22action%22%3A%22getLlmProviderEndpointLabel%22%2C%22version%22%3A%220.1.0%22%2C%22data%22%3A%7B%22hostId%22%3A%22{0}%22%2C%22filter%22%3A%22%22%2C%22limit%22%3A200%7D%7D","params":["hostId"]}},
       "deploymentRevisionId",
       "physicalRuntimeId",

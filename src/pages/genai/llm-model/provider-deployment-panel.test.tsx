@@ -24,7 +24,7 @@ describe('Deployments resource form navigation', () => {
     mocks.listLlm.mockResolvedValue([{
       hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
       providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
-      physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+      physicalModelId:'gpt-4o', region:'ca-central-1',
       transportBounds:{requestTimeoutMs:60000}, quotaGroupId:'openai-production-capacity',
       conformanceState:'PENDING', aggregateVersion:5, active:true,
       updateUser:'system', updateTs:'2026-08-01T00:00:00Z',
@@ -46,7 +46,7 @@ describe('Deployments resource form navigation', () => {
       state:{data:expect.objectContaining({
         hostId:'host-a', providerDeploymentId:'deployment-a', modelRegistrationId:'registration-a',
         providerAccountId:'account-a', deploymentName:'openai-gpt4o-ca-prod', providerType:'openai',
-        physicalModelId:'gpt-4o', baseUrl:'https://api.openai.com/v1', region:'ca-central-1',
+        physicalModelId:'gpt-4o', region:'ca-central-1',
         transportBounds:{requestTimeoutMs:60000}, aggregateVersion:5,
       })},
     }));

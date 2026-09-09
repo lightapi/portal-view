@@ -34,14 +34,6 @@ export function validateMutation(resource: ResourceDefinition, value: LlmRecord)
       }
     }
   }
-  if (resource.key === 'deployments') {
-    if (!value.providerEndpointId && typeof value.baseUrl === 'string' && !value.baseUrl.startsWith('https://')) {
-      errors.push('baseUrl must use HTTPS.');
-    }
-    if ((value.providerProtocol === 'bedrock_converse') !== Boolean(value.bedrockPolicy)) {
-      errors.push('bedrockPolicy is required exactly for Bedrock Converse deployments.');
-    }
-  }
   if (resource.key === 'providerEndpoints') {
     const mode = value.networkProfileMode;
     if (mode === 'PRIVATE_PLAINTEXT'
