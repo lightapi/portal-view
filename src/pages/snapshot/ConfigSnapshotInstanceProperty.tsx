@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,7 +7,6 @@ import {
     useMaterialReactTable,
     type MRT_ColumnDef,
     type MRT_ColumnFiltersState,
-    type MRT_PaginationState,
     type MRT_SortingState,
 } from 'material-react-table';
 import { Box, Typography } from '@mui/material';
@@ -36,10 +36,7 @@ export default function ConfigSnapshotInstanceProperty() {
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({
-        pageIndex: 0,
-        pageSize: 10,
-    });
+    const [pagination, setPagination] = usePersistentPagination();
 
     // Data fetching logic
     const fetchData = useCallback(async () => {
@@ -97,6 +94,7 @@ export default function ConfigSnapshotInstanceProperty() {
         rowCount,
         state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,

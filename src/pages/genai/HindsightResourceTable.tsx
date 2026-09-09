@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
     useMaterialReactTable,
     type MRT_ColumnDef,
     type MRT_ColumnFiltersState,
-    type MRT_PaginationState,
     type MRT_Row,
     type MRT_SortingState,
 } from 'material-react-table';
@@ -120,7 +120,7 @@ export default function HindsightResourceTable({
     const location = useLocation();
     const [rows, setRows] = useState<HindsightRow[]>([]);
     const [rowCount, setRowCount] = useState(0);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [pagination, setPagination] = usePersistentPagination();
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>(
         config.association ? [] : [{ id: 'active', value: 'true' }],
@@ -309,6 +309,7 @@ export default function HindsightResourceTable({
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         onSortingChange: setSorting,
         state: {
             columnFilters,

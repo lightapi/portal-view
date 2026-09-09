@@ -1,3 +1,4 @@
+import { usePersistentTablePagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import SystemUpdateIcon from "@mui/icons-material/SystemUpdate";
@@ -124,8 +125,7 @@ export default function BlogAdmin() {
     ),
     [host, searchParams],
   );
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { page, setPage, rowsPerPage, setRowsPerPage } = usePersistentTablePagination();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>();
   const [count, setCount] = useState(0);
@@ -190,7 +190,7 @@ export default function BlogAdmin() {
       <Box>
         <BlogAdminList blogs={blogs} />
         <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
+          rowsPerPageOptions={PAGE_SIZE_OPTIONS}
           component="div"
           count={count}
           rowsPerPage={rowsPerPage}

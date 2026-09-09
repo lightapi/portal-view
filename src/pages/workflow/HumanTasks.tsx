@@ -1,10 +1,10 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     MaterialReactTable,
     useMaterialReactTable,
     type MRT_ColumnDef,
-    type MRT_PaginationState,
     type MRT_Row,
 } from 'material-react-table';
 import { Alert, Box, Button, Chip, CircularProgress, IconButton, Stack, Tooltip } from '@mui/material';
@@ -79,10 +79,7 @@ export default function HumanTasks() {
     const [isRefetching, setIsRefetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({
-        pageIndex: 0,
-        pageSize: 10,
-    });
+    const [pagination, setPagination] = usePersistentPagination();
 
     const fetchData = useCallback(async (background = false) => {
         if (!host) return;
@@ -209,6 +206,7 @@ export default function HumanTasks() {
         rowCount,
         state: { isLoading, showProgressBars: isRefetching, pagination },
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         getRowId: (row) => row.taskAsstId,
         enableRowActions: true,
         positionActionsColumn: 'first',

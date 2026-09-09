@@ -1,3 +1,4 @@
+import { usePersistentTablePagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
 import Box from '@mui/material/Box';
@@ -9,8 +10,7 @@ import fetchClient from '../../utils/fetchClient';
 export default function UserOrders(props: any) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { page, setPage, rowsPerPage, setRowsPerPage } = usePersistentTablePagination();
   const [count, setCount] = useState(0);
   const [orders, setOrders] = useState<any[]>([]);
   const { email }: any = useUserState();
@@ -74,7 +74,7 @@ export default function UserOrders(props: any) {
     <Box>
       <UserOrderList {...props} orders={orders} />
       <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={PAGE_SIZE_OPTIONS}
         component="div"
         count={count}
         rowsPerPage={rowsPerPage}

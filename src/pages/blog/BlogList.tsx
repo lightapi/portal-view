@@ -1,3 +1,4 @@
+import { usePersistentTablePagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import TablePagination from "@mui/material/TablePagination";
 import React, { useEffect, useState, ReactNode } from "react";
 import Box from "@mui/material/Box";
@@ -18,8 +19,7 @@ interface BlogData {
 
 export default function BlogList() {
   const { host } = useUserState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { page, setPage, rowsPerPage, setRowsPerPage } = usePersistentTablePagination();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>();
   const [count, setCount] = useState(0);
@@ -77,7 +77,7 @@ export default function BlogList() {
     <Box className="App">
       {content}
       <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={PAGE_SIZE_OPTIONS}
         component="div"
         count={count}
         rowsPerPage={rowsPerPage}

@@ -9,6 +9,7 @@ vi.mock('./hindsightMemoryApi', async importOriginal => {
     const actual = await importOriginal<typeof import('./hindsightMemoryApi')>();
     return { ...actual, runHindsightQuery: mocks.query, runHindsightCommand: mocks.command };
 });
+vi.mock('../../contexts/UserContext', () => ({ useUserState: () => ({ userId: 'table-test-user' }) }));
 vi.mock('./genAiTaskUtils', () => ({ buildGenAiTaskRoute: (route: string) => route }));
 
 const baseProps = {
@@ -20,6 +21,8 @@ const baseProps = {
 
 describe('Hindsight resource lifecycle UI', () => {
     beforeEach(() => {
+        localStorage.clear();
+        localStorage.setItem('portal.tablePageSize.v1:table-test-user', '100');
         mocks.query.mockReset();
         mocks.command.mockReset();
         mocks.command.mockResolvedValue({});
@@ -54,7 +57,7 @@ describe('Hindsight resource lifecycle UI', () => {
         fireEvent.click(screen.getByTestId('VisibilityIcon').closest('button')!);
         await waitFor(() => expect(mocks.query).toHaveBeenCalledTimes(2));
         expect(mocks.query.mock.calls[0][0]).toBe('getAgentSessionHistories');
-        expect(mocks.query.mock.calls[0][1]).toMatchObject({ hostId: 'host-a', bankId: 'bank-a', filters: [], sorting: [], active: true });
+        expect(mocks.query.mock.calls[0][1]).toMatchObject({ hostId: 'host-a', bankId: 'bank-a', offset: 0, limit: 100, filters: [], sorting: [], active: true });
         expect(mocks.query.mock.calls[1]).toEqual(['getAgentSessionHistoryProjection', {
             hostId: 'host-a', bankId: 'bank-a', sessionId: 'session-a',
         }]);

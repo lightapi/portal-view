@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
     useMaterialReactTable,
     type MRT_ColumnDef,
     type MRT_ColumnFiltersState,
-    type MRT_PaginationState,
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
@@ -104,10 +104,7 @@ export default function ClientToken() {
     );
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({
-        pageIndex: 0,
-        pageSize: 25,
-    });
+    const [pagination, setPagination] = usePersistentPagination();
 
     // useEffect for data fetching
     useEffect(() => {
@@ -222,6 +219,7 @@ export default function ClientToken() {
         rowCount,
         state: { isLoading, showAlertBanner: Boolean(isError), showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,

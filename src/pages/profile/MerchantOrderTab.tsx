@@ -1,3 +1,4 @@
+import { usePersistentTablePagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import TablePagination from '@mui/material/TablePagination';
 import React, { useEffect, useState } from 'react';
@@ -8,8 +9,7 @@ import fetchClient from '../../utils/fetchClient';
 export default function MerchantOrdersTab(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const { page, setPage, rowsPerPage, setRowsPerPage } = usePersistentTablePagination();
   const [count, setCount] = useState(0);
   const [orders, setOrders] = useState([]);
   const { email } = useUserState();
@@ -72,7 +72,7 @@ export default function MerchantOrdersTab(props) {
       <div>
         <MerchantOrderList {...props} orders={orders} />
         <TablePagination
-          rowsPerPageOptions={[10, 25, 100]}
+          rowsPerPageOptions={PAGE_SIZE_OPTIONS}
           component="div"
           count={count}
           rowsPerPage={rowsPerPage}

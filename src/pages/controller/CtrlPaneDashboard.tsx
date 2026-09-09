@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import HelpIcon from '@mui/icons-material/Help';
@@ -10,7 +11,6 @@ import {
   type MRT_ColumnDef,
   type MRT_ExpandedState,
   type MRT_ColumnFiltersState,
-  type MRT_PaginationState,
   type MRT_SortingState,
 } from 'material-react-table';
 import {
@@ -337,10 +337,7 @@ function CtrlPaneDashboard() {
   const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState(filter);
   const [sorting, setSorting] = useState<MRT_SortingState>([]);
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [pagination, setPagination] = usePersistentPagination();
   const [productIds, setProductIds] = useState<{ text: string; value: string }[]>([]);
   const deferredGlobalFilter = useDeferredValue(globalFilter);
 
@@ -773,7 +770,7 @@ function CtrlPaneDashboard() {
     if (pagination.pageIndex > maxPageIndex) {
       setPagination((current) => ({ ...current, pageIndex: maxPageIndex }));
     }
-  }, [groupedData.length, pagination.pageIndex, pagination.pageSize]);
+  }, [groupedData.length, pagination.pageIndex, pagination.pageSize, setPagination]);
 
   const columns = useMemo<MRT_ColumnDef<ServiceGroup>[]>(
     () => [
@@ -925,6 +922,7 @@ function CtrlPaneDashboard() {
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
     muiToolbarAlertBannerProps: error || liveSyncError
       ? { color: 'error', children: error || liveSyncError }
       : undefined,

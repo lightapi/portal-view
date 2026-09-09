@@ -1,10 +1,10 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
-  type MRT_PaginationState,
   type MRT_SortingState,
 } from 'material-react-table';
 import { Alert, Box, Chip, Tooltip, Typography } from '@mui/material';
@@ -381,10 +381,7 @@ export default function Notification() {
   const [sorting, setSorting] = useState<MRT_SortingState>([
     { id: 'processTs', desc: true },
   ]);
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+  const [pagination, setPagination] = usePersistentPagination();
 
   useEffect(() => {
     if (!isAdminView) return;
@@ -395,7 +392,7 @@ export default function Notification() {
         : [{ id: 'status', value: ['FAILED', 'DLQ'] }, ...withoutUser];
     });
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [isAdminView]);
+  }, [isAdminView, setPagination]);
 
   useEffect(() => {
     if (isAdminView || !userId || seededUserId === userId) return;
@@ -639,6 +636,7 @@ export default function Notification() {
       globalFilter,
     },
     onPaginationChange: setPagination,
+    muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,

@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
   useMaterialReactTable,
   type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
-  type MRT_PaginationState,
   type MRT_SortingState,
 } from 'material-react-table';
 import { Box, Typography } from '@mui/material';
@@ -75,10 +75,7 @@ export default function AuthSessionAudit({ viewMode = 'admin' }: OAuthSessionPag
   );
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState<MRT_SortingState>([{ id: 'eventTs', desc: true }]);
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+  const [pagination, setPagination] = usePersistentPagination();
 
   const fetchData = useCallback(async () => {
     if (!host) return;
@@ -193,6 +190,7 @@ export default function AuthSessionAudit({ viewMode = 'admin' }: OAuthSessionPag
     rowCount,
     state: { isLoading, showAlertBanner: Boolean(isError) || missingSelfContext, showProgressBars: isRefetching, pagination, sorting, columnFilters, globalFilter },
     onPaginationChange: setPagination,
+    muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,

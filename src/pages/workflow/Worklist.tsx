@@ -1,10 +1,10 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     MaterialReactTable,
     useMaterialReactTable,
     type MRT_ColumnDef,
-    type MRT_PaginationState,
     type MRT_Row,
 } from 'material-react-table';
 import {
@@ -110,10 +110,7 @@ export default function Worklist() {
     const [isRefetching, setIsRefetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({
-        pageIndex: 0,
-        pageSize: 10,
-    });
+    const [pagination, setPagination] = usePersistentPagination();
 
     const fetchSummary = useCallback(async (background = false) => {
         if (!host) return;
@@ -201,7 +198,7 @@ export default function Worklist() {
     const handleTabChange = useCallback((_event: SyntheticEvent, value: string) => {
         setActiveTab(value);
         setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }, []);
+    }, [setPagination]);
 
     const openTask = useCallback((row: MRT_Row<HumanTaskRow>) => {
         const context = buildWorkflowTaskContext(host || undefined, searchParams, row.original);
@@ -288,6 +285,7 @@ export default function Worklist() {
         rowCount,
         state: { isLoading, showProgressBars: isRefetching, pagination },
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         getRowId: (row) => row.taskAsstId,
         enableRowActions: true,
         positionActionsColumn: 'first',

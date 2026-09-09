@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
     useMaterialReactTable,
     type MRT_ColumnDef,
     type MRT_ColumnFiltersState,
-    type MRT_PaginationState,
     type MRT_Row,
     type MRT_SortingState,
 } from 'material-react-table';
@@ -61,7 +61,7 @@ export default function MemoryBanks() {
     const [rows, setRows] = useState<MemoryBank[]>([]);
     const [rowCount, setRowCount] = useState(0);
     const [includeRuntimeManaged, setIncludeRuntimeManaged] = useState(false);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({ pageIndex: 0, pageSize: 25 });
+    const [pagination, setPagination] = usePersistentPagination();
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([{ id: 'active', value: 'true' }]);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -214,6 +214,7 @@ export default function MemoryBanks() {
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         onSortingChange: setSorting,
         state: { columnFilters, globalFilter, isLoading: loading, pagination, showAlertBanner: !!message, showProgressBars: refetching, sorting },
         muiToolbarAlertBannerProps: message ? { color: 'error', children: message } : undefined,

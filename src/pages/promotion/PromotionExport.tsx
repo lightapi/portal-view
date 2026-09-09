@@ -1,3 +1,4 @@
+import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -5,7 +6,6 @@ import {
     useMaterialReactTable,
     type MRT_ColumnDef,
     type MRT_ColumnFiltersState,
-    type MRT_PaginationState,
     type MRT_SortingState,
     type MRT_RowSelectionState,
 } from 'material-react-table';
@@ -193,10 +193,7 @@ export default function PromotionExport() {
     ]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [sorting, setSorting] = useState<MRT_SortingState>([]);
-    const [pagination, setPagination] = useState<MRT_PaginationState>({
-        pageIndex: 0,
-        pageSize: 10,
-    });
+    const [pagination, setPagination] = usePersistentPagination();
 
     // Step 3: Export
     const [isExporting, setIsExporting] = useState(false);
@@ -244,7 +241,7 @@ export default function PromotionExport() {
                 ? current
                 : { ...current, pageIndex: 0 }
         ));
-    }, [clearSelection, sourceHostId, entityType, columnFilters, globalFilter, sorting]);
+    }, [clearSelection, sourceHostId, entityType, columnFilters, globalFilter, sorting, setPagination]);
 
     const taskActionContext = useMemo(
         () => mergeTaskContext(
@@ -953,6 +950,7 @@ export default function PromotionExport() {
         manualFiltering: true,
         rowCount,
         onPaginationChange: setPagination,
+        muiPaginationProps: { rowsPerPageOptions: PAGE_SIZE_OPTIONS },
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         onGlobalFilterChange: setGlobalFilter,
