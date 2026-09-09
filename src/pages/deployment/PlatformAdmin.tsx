@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -229,7 +231,7 @@ export default function PlatformAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -247,38 +249,37 @@ export default function PlatformAdmin() {
     muiToolbarAlertBannerProps: loadError ? { color: 'error', children: loadError } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title="Update Platform">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.platformId}
-          >
-            {isUpdateLoading === row.original.platformId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Pipelines">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/deployment/PipelineAdmin', searchParams, { ...taskContext, platformId: row.original.platformId }), { state: { data: { platformId: row.original.platformId } } })}>
-            <GridGoldenratioIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Platform">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-platform",
+        label: "Update Platform",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.platformId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "manage-pipelines",
+        label: "Manage Pipelines",
+        icon: <GridGoldenratioIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/deployment/PipelineAdmin', searchParams, { ...taskContext, platformId: row.original.platformId }), { state: { data: { platformId: row.original.platformId } } })
+      },
+      {
+        id: "delete-platform",
+        label: "Delete Platform",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createPlatform', searchParams, taskContext))}>
         Create New Platform
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -290,7 +291,7 @@ export default function PlatformAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

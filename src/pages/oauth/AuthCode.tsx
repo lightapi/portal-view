@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { useUserState } from '../../contexts/UserContext.tsx';
@@ -212,7 +214,7 @@ export default function AuthCodeAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false } },
@@ -229,30 +231,30 @@ export default function AuthCodeAdmin() {
     getRowId: (row) => row.authCode,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: 0.5 }}>
-        <Tooltip title="Session Audit">
-          <span>
-            <IconButton disabled={!row.original.sessionId} onClick={() => viewAudit(row.original)}>
-              <ManageSearchIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Revoke Code">
-          <IconButton color="error" onClick={() => openRevokeDialog(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "session-audit",
+        label: "Session Audit",
+        icon: <ManageSearchIcon />,
+        disabledReason: () => (!row.original.sessionId) ? ('This record has no session identifier.') : null,
+        onSelect: () => viewAudit(row.original)
+      },
+      {
+        id: "revoke-code",
+        label: "Revoke Code",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => openRevokeDialog(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">Authorization Codes</Typography>
     ),
-  });
+  }));
 
   return (
     <>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       <RevokeDialog target={revokeTarget} onCancel={() => setRevokeTarget(null)} onConfirm={handleRevoke} />
     </>
   );

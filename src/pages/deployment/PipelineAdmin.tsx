@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -266,7 +268,7 @@ export default function PipelineAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -284,27 +286,25 @@ export default function PipelineAdmin() {
     muiToolbarAlertBannerProps: loadError ? { color: 'error', children: loadError } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Update Pipeline">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.pipelineId}
-          >
-            {isUpdateLoading === row.original.pipelineId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Pipeline">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-pipeline",
+        label: "Update Pipeline",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.pipelineId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-pipeline",
+        label: "Delete Pipeline",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -317,7 +317,7 @@ export default function PipelineAdmin() {
         Create New Pipeline
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -329,7 +329,7 @@ export default function PipelineAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

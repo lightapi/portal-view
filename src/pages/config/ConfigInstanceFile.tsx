@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -200,29 +202,26 @@ export default function ConfigInstanceFile() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceFileType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Property">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.instanceId}
-              >
-                {isUpdateLoading === row.original.instanceId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete File">
-              <IconButton color="error" onClick={() => handleDelete(row)}>
-                <DeleteForeverIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
+      { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => <PortalActions row={row} actions={[
+          {
+            id: "update-property",
+            label: "Update Property",
+            icon: (
+              <SystemUpdateIcon />
+            ),
+
+            loading: () => Boolean(isUpdateLoading === row.original.instanceId),
+            onSelect: () => handleUpdate(row)
+          },
+          {
+            id: "delete-file",
+            label: "Delete File",
+            icon: <DeleteForeverIcon />,
+            destructive: true,
+            onSelect: () => handleDelete(row)
+          }
+        ]} />
       },
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceId', header: 'Instance Id' },
@@ -254,7 +253,7 @@ export default function ConfigInstanceFile() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -291,7 +290,7 @@ export default function ConfigInstanceFile() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -303,7 +302,7 @@ export default function ConfigInstanceFile() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

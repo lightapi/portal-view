@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -199,7 +201,7 @@ export default function SkillDependency() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -219,38 +221,36 @@ export default function SkillDependency() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const idKey = `${row.original.skillId}-${row.original.dependsOnSkillId}`;
-            return (
-                <Box sx={{ display: 'flex', gap: '1rem' }}>
-                    <Tooltip title="Update Dependency">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === idKey}
-                        >
-                            {isUpdateLoading === idKey ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Dependency">
-                        <IconButton color="error" onClick={() => handleDelete(row)}>
-                            <DeleteForeverIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "update-dependency",
+              label: "Update Dependency",
+              icon: (
+                <SystemUpdateIcon />
+              ),
+
+              loading: () => Boolean(isUpdateLoading === idKey),
+              onSelect: () => handleUpdate(row)
+            },
+            {
+              id: "delete-dependency",
+              label: "Delete Dependency",
+              icon: <DeleteForeverIcon />,
+              destructive: true,
+              onSelect: () => handleDelete(row)
+            }
+          ]} />;
         },
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createSkillDependency', searchParams, taskContext))}>
                 Create New Dependency
             </Button>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </GenAiTaskLayout>
     );
 }

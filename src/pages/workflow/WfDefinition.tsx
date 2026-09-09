@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -266,7 +268,7 @@ export default function WfDefinition() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -284,36 +286,33 @@ export default function WfDefinition() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title={workflowOwnership.canModifyRecord(row.original) ? 'Update Workflow Definition' : 'You can only update workflow definitions you own.'}>
-                    <span>
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={!workflowOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.wfDefId}
-                        >
-                            {isUpdateLoading === row.original.wfDefId ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </span>
-                </Tooltip>
-                <Tooltip title="Start Workflow">
-                    <IconButton color="primary" onClick={() => handleStart(row)}>
-                        <PlayArrowIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title={workflowOwnership.canModifyRecord(row.original) ? 'Delete Workflow Definition' : 'You can only delete workflow definitions you own.'}>
-                    <span>
-                        <IconButton color="error" onClick={() => handleDelete(row)} disabled={!workflowOwnership.canModifyRecord(row.original)}>
-                            <DeleteForeverIcon />
-                        </IconButton>
-                    </span>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "update-workflow-definition",
+          label: "Update Workflow Definition",
+          icon: (
+            <SystemUpdateIcon />
+          ),
+          disabledReason: () => (!workflowOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.wfDefId) ? ((isUpdateLoading === row.original.wfDefId) ? 'Action in progress.' : ('You can only update workflow definitions you own.')) : null,
+          loading: () => Boolean(isUpdateLoading === row.original.wfDefId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "start-workflow",
+          label: "Start Workflow",
+          description: "Open the workflow start form.",
+          icon: <PlayArrowIcon />,
+          onSelect: () => handleStart(row)
+        },
+        {
+          id: "delete-workflow-definition",
+          label: "Delete Workflow Definition",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          disabledReason: () => (!workflowOwnership.canModifyRecord(row.original)) ? ('You can only delete workflow definitions you own.') : null,
+          onSelect: () => handleDelete(row)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/workflow/editor', searchParams, taskContext), { state: { data: { hostId: host }, source: location.pathname } })}>
@@ -326,7 +325,7 @@ export default function WfDefinition() {
                 )}
             </Box>
         ),
-    });
+    }));
 
     return (
         <WorkflowTaskLayout context={taskContext}>
@@ -335,7 +334,7 @@ export default function WfDefinition() {
                     User context is required before owner-scoped workflow definitions can be loaded.
                 </Alert>
             )}
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </WorkflowTaskLayout>
     );
 }

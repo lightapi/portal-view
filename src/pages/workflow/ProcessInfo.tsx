@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -209,7 +211,7 @@ export default function ProcessInfo() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -227,37 +229,35 @@ export default function ProcessInfo() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Process Info">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.processId}
-                    >
-                        {isUpdateLoading === row.original.processId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Process Info">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "update-process-info",
+          label: "Update Process Info",
+          icon: (
+            <SystemUpdateIcon />
+          ),
+
+          loading: () => Boolean(isUpdateLoading === row.original.processId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "delete-process-info",
+          label: "Delete Process Info",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          onSelect: () => handleDelete(row)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createProcessInfo', searchParams, taskContext))}>
                 Create New Process Info
             </Button>
         ),
-    });
+    }));
 
     return (
         <WorkflowTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </WorkflowTaskLayout>
     );
 }

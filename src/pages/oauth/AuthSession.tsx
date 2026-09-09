@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_Row,
   type MRT_SortingState,
 } from 'material-react-table';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import KeyIcon from '@mui/icons-material/Key';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
@@ -236,7 +238,7 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
     []
   );
 
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact', columnVisibility: { sessionId: false, userId: !selfView, email: !selfView, roles: false } },
@@ -257,39 +259,36 @@ export default function AuthSession({ viewMode = 'admin' }: OAuthSessionPageProp
         ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading sessions' }
         : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: 0.5 }}>
-        <Tooltip title="Session Audit">
-          <IconButton onClick={() => viewAudit(row.original)}>
-            <ManageSearchIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Refresh Tokens">
-          <IconButton onClick={() => viewRefreshToken(row.original)}>
-            <KeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Revoke Session">
-          <span>
-            <IconButton
-              color="error"
-              disabled={computedSessionStatus(row.original.status, row.original.expiresTs) !== 'ACTIVE' || row.original.hasActiveTokens === false}
-              onClick={() => openRevokeDialog(row)}
-            >
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "session-audit",
+        label: "Session Audit",
+        icon: <ManageSearchIcon />,
+        onSelect: () => viewAudit(row.original)
+      },
+      {
+        id: "refresh-tokens",
+        label: "Refresh Tokens",
+        icon: <KeyIcon />,
+        onSelect: () => viewRefreshToken(row.original)
+      },
+      {
+        id: "revoke-session",
+        label: "Revoke Session",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (computedSessionStatus(row.original.status, row.original.expiresTs) !== 'ACTIVE' || row.original.hasActiveTokens === false) ? ('This session is inactive or has no active tokens.') : null,
+        onSelect: () => openRevokeDialog(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Typography variant="h5">{selfView ? 'My Sessions' : 'Sessions'}</Typography>
     ),
-  });
+  }));
 
   return (
     <>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       <RevokeDialog target={revokeTarget} onCancel={() => setRevokeTarget(null)} onConfirm={handleRevoke} />
     </>
   );

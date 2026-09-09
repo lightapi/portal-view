@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -7,7 +9,7 @@ import {
     type MRT_ColumnDef,
     type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, Chip, CircularProgress, IconButton, Stack, Tooltip } from '@mui/material';
+import { Alert, Button, Chip, Stack } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -198,7 +200,7 @@ export default function HumanTasks() {
         [],
     );
 
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { density: 'compact' },
@@ -215,36 +217,33 @@ export default function HumanTasks() {
             const task = row.original;
             const canClaim = Boolean(task.canClaim);
             const canRelease = Boolean(task.canRelease);
-            return (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Open Task">
-                        <IconButton color="primary" onClick={() => openTask(row)}>
-                            <PlayCircleOutlineIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Claim Task">
-                        <span>
-                            <IconButton
-                                color="primary"
-                                disabled={!canClaim || actionLoading === `claimHumanTask:${task.taskAsstId}`}
-                                onClick={() => runTaskAction('claimHumanTask', task)}
-                            >
-                                {actionLoading === `claimHumanTask:${task.taskAsstId}` ? <CircularProgress size={22} /> : <LockIcon />}
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                    <Tooltip title="Release Task">
-                        <span>
-                            <IconButton
-                                disabled={!canRelease || actionLoading === `releaseHumanTask:${task.taskAsstId}`}
-                                onClick={() => runTaskAction('releaseHumanTask', task)}
-                            >
-                                {actionLoading === `releaseHumanTask:${task.taskAsstId}` ? <CircularProgress size={22} /> : <LockOpenIcon />}
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                </Box>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "open-task",
+              label: "Open Task",
+              description: "Open the task workspace.",
+              icon: <PlayCircleOutlineIcon />,
+              onSelect: () => openTask(row)
+            },
+            {
+              id: "claim-task",
+              label: "Claim Task",
+              description: "Assign this task to yourself.",
+              icon: <LockIcon />,
+              disabledReason: () => (!canClaim || actionLoading === `claimHumanTask:${task.taskAsstId}`) ? ('This task is not available to claim.') : null,
+              loading: () => Boolean(actionLoading === `claimHumanTask:${task.taskAsstId}`),
+              onSelect: () => runTaskAction('claimHumanTask', task)
+            },
+            {
+              id: "release-task",
+              label: "Release Task",
+              description: "Return this task to the available work queue.",
+              icon: <LockOpenIcon />,
+              disabledReason: () => (!canRelease || actionLoading === `releaseHumanTask:${task.taskAsstId}`) ? ('This task is not available to release.') : null,
+              loading: () => Boolean(actionLoading === `releaseHumanTask:${task.taskAsstId}`),
+              onSelect: () => runTaskAction('releaseHumanTask', task)
+            }
+          ]} />;
         },
         renderTopToolbarCustomActions: () => (
             <Stack direction="row" spacing={1}>
@@ -253,13 +252,13 @@ export default function HumanTasks() {
                 </Button>
             </Stack>
         ),
-    });
+    }));
 
     return (
         <WorkflowTaskLayout context={taskContext}>
             <Stack spacing={2}>
                 {error ? <Alert severity="error">{error}</Alert> : null}
-                <MaterialReactTable table={table} />
+          <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             </Stack>
         </WorkflowTaskLayout>
     );

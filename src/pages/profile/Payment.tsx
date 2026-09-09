@@ -1,7 +1,9 @@
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+
 import React, { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
@@ -76,9 +78,15 @@ export default function Payment() {
           <Button variant="contained" color="primary" onClick={updatePayment}>
             {error ? 'Create' : 'Update'}
           </Button>
-          <Button variant="contained" color="primary" onClick={deletePayment}>
-            Delete
-          </Button>
+          <PortalActionScope><PortalActions row={null} actions={[
+            {
+              id: "delete",
+              label: "Delete",
+              icon: <PortalActionIcon />,
+              destructive: true,
+              onSelect: deletePayment
+            }
+          ]} /></PortalActionScope>
         </Box>
         <Box
           component="pre"

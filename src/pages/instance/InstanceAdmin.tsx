@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,7 +12,7 @@ import {
   type MRT_Row,
   type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Alert, Box, Button, Chip, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Tooltip, CircularProgress, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -416,7 +418,7 @@ export default function InstanceAdmin() {
   }), [taskContext]);
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -435,129 +437,122 @@ export default function InstanceAdmin() {
     onRowSelectionChange: handleRowSelectionChange,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title={instanceOwnership.canModifyRecord(row.original) ? 'Update Instance' : 'You can only update instances you own.'}>
-          <span>
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={!instanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.instanceId}
-            >
-              {isUpdateLoading === row.original.instanceId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={row.original.readonly ? 'Read-only instances cannot be cloned.' : instanceOwnership.canModifyRecord(row.original) ? 'Clone Instance' : 'You can only clone instances you own.'}>
-          <span>
-            <IconButton
-              onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceClone', searchParams, contextForRow(row.original)), {
-                state: { data: { ...row.original }, source: location.pathname },
-              })}
-              disabled={row.original.readonly || !instanceOwnership.canModifyRecord(row.original)}
-            >
-              <ContentCopyIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        {row.original.productId === 'agt' && <>
-          <Tooltip title="Publish Agent policy"><span><IconButton
-            aria-label="Publish Agent policy"
-            disabled={!row.original.active || !row.original.current || row.original.readonly || !instanceOwnership.canModifyRecord(row.original)}
-            onClick={() => setPublishingAgent(row.original)}><PolicyIcon /></IconButton></span></Tooltip>
-          <Tooltip title="Open Agent chat"><IconButton aria-label="Open Agent chat"
-            onClick={() => navigate('/app/genai/chat?' + new URLSearchParams({ instanceId: row.original.instanceId, serviceId: row.original.serviceId || '', envTag: row.original.envTag || '' }))}><ChatIcon /></IconButton></Tooltip>
-        </>}
-        <Tooltip title="Snapshot">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/config/configSnapshot', searchParams, contextForRow(row.original)), {
-                state: { data: { instanceId: row.original.instanceId } },
-              })
-            }
-          >
-            <CameraIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Config">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, contextForRow(row.original)), {
-                state: { data: { instanceId: row.original.instanceId } },
-              })
-            }
-          >
-            <AddToDriveIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Config File">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/config/configInstanceFile', searchParams, contextForRow(row.original)), {
-                state: { data: { instanceId: row.original.instanceId } },
-              })
-            }
-          >
-            <AttachFileIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Instance APIs">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
-            }
-          >
-            <ApiIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Create OAuth Client">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, instanceId: row.original.instanceId } } })
-            }
-          >
-            <VpnKeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Instance Apps">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/instance/InstanceApp', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
-            }
-          >
-            <AppsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Instance App API">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/instance/InstanceAppApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
-            }
-          >
-            <FormatIndentIncreaseIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Deployment">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/deployment/instance', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
-            }
-          >
-            <InstallDesktopIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={instanceOwnership.canModifyRecord(row.original) ? 'Delete Instance' : 'You can only delete instances you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!instanceOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-instance",
+        label: "Update Instance",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+        disabledReason: () => (!instanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.instanceId) ? ((isUpdateLoading === row.original.instanceId) ? 'Action in progress.' : ('You can only update instances you own.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.instanceId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "clone-instance",
+        label: "Clone Instance",
+        icon: <ContentCopyIcon />,
+        disabledReason: () => (row.original.readonly || !instanceOwnership.canModifyRecord(row.original)) ? (row.original.readonly ? 'Read-only instances cannot be cloned.' : 'You can only clone instances you own.') : null,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/instance/InstanceClone', searchParams, contextForRow(row.original)), {
+          state: { data: { ...row.original }, source: location.pathname },
+        })
+      },
+      {
+        id: "publish-agent-policy",
+        label: "Publish Agent policy",
+        description: "Open the agent policy publication dialog.",
+        icon: <PolicyIcon />,
+        hidden: () => !((row.original.productId === 'agt')),
+        disabledReason: () => (!row.original.active || !row.original.current || row.original.readonly || !instanceOwnership.canModifyRecord(row.original)) ? (!instanceOwnership.canModifyRecord(row.original) ? 'You can only publish policies for instances you own.' : !row.original.active ? 'Activate this instance before publishing.' : !row.original.current ? 'Select a current instance before publishing.' : 'Read-only instances cannot publish policies.') : null,
+        onSelect: () => setPublishingAgent(row.original)
+      },
+      {
+        id: "open-agent-chat",
+        label: "Open Agent chat",
+        description: "Open Chat with this instance selected.",
+        icon: <ChatIcon />,
+        hidden: () => !((row.original.productId === 'agt')),
+        onSelect: () => navigate('/app/genai/chat?' + new URLSearchParams({ instanceId: row.original.instanceId, serviceId: row.original.serviceId || '', envTag: row.original.envTag || '' }))
+      },
+      {
+        id: "snapshot",
+        label: "Snapshot",
+        description: "View configuration snapshots for this instance.",
+        icon: <CameraIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/config/configSnapshot', searchParams, contextForRow(row.original)), {
+            state: { data: { instanceId: row.original.instanceId } },
+          })
+      },
+      {
+        id: "config",
+        label: "Config",
+        description: "Manage instance configuration values.",
+        icon: <AddToDriveIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, contextForRow(row.original)), {
+            state: { data: { instanceId: row.original.instanceId } },
+          })
+      },
+      {
+        id: "config-file",
+        label: "Config File",
+        description: "Manage files attached to this instance.",
+        icon: <AttachFileIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/config/configInstanceFile', searchParams, contextForRow(row.original)), {
+            state: { data: { instanceId: row.original.instanceId } },
+          })
+      },
+      {
+        id: "instance-apis",
+        label: "Instance APIs",
+        description: "Manage APIs associated with this instance.",
+        icon: <ApiIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "create-oauth-client",
+        label: "Create OAuth Client",
+        description: "Create an OAuth client with this record preselected.",
+        icon: <VpnKeyIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, instanceId: row.original.instanceId } } })
+      },
+      {
+        id: "instance-apps",
+        label: "Instance Apps",
+        description: "Manage application associations.",
+        icon: <AppsIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/instance/InstanceApp', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "instance-app-api",
+        label: "Instance App API",
+        description: "Manage application API associations.",
+        icon: <FormatIndentIncreaseIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/instance/InstanceAppApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "deployment",
+        label: "Deployment",
+        description: "View deployments for this instance.",
+        icon: <InstallDesktopIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/deployment/instance', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "delete-instance",
+        label: "Delete Instance",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!instanceOwnership.canModifyRecord(row.original)) ? ('You can only delete instances you own.') : null,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createInstance', searchParams, taskContext))}>
@@ -591,7 +586,7 @@ export default function InstanceAdmin() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -614,7 +609,7 @@ export default function InstanceAdmin() {
         {selectionMessage && <Alert severity="warning" sx={{ mb: 1 }}>{selectionMessage}</Alert>}
         {selectedCount >= 2 && compareIssue && <Alert severity="warning" sx={{ mb: 1 }}>{compareIssue}</Alert>}
         {resolverError && <Alert severity="error" sx={{ mb: 1 }}>{resolverError}</Alert>}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -240,7 +242,7 @@ export default function TaskAsst() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -258,48 +260,43 @@ export default function TaskAsst() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Open Human Task">
-                    <span>
-                        <IconButton
-                            color="primary"
-                            onClick={() => handleOpenTask(row)}
-                            disabled={!row.original.active || !['ASSIGNED', 'CLAIMED'].includes(row.original.statusCode || '')}
-                        >
-                            <PlayCircleOutlineIcon />
-                        </IconButton>
-                    </span>
-                </Tooltip>
-                <Tooltip title="Update Task Asst">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.taskAsstId}
-                    >
-                        {isUpdateLoading === row.original.taskAsstId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Task Asst">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "open-human-task",
+          label: "Open Human Task",
+          description: "Open the task workspace.",
+          icon: <PlayCircleOutlineIcon />,
+          disabledReason: () => (!row.original.active || !['ASSIGNED', 'CLAIMED'].includes(row.original.statusCode || '')) ? ('Only active assigned or claimed tasks can be opened.') : null,
+          onSelect: () => handleOpenTask(row)
+        },
+        {
+          id: "update-task-asst",
+          label: "Update Task Asst",
+          icon: (
+            <SystemUpdateIcon />
+          ),
+
+          loading: () => Boolean(isUpdateLoading === row.original.taskAsstId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "delete-task-asst",
+          label: "Delete Task Asst",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          onSelect: () => handleDelete(row)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildWorkflowTaskRoute('/app/form/createTaskAsst', searchParams, taskContext))}>
                 Create New Task Asst
             </Button>
         ),
-    });
+    }));
 
     return (
         <WorkflowTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </WorkflowTaskLayout>
     );
 }

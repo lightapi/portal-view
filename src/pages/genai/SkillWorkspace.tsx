@@ -1,24 +1,8 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../components/PortalActions/PortalActionTableCell';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-    Alert,
-    Box,
-    Button,
-    Chip,
-    CircularProgress,
-    Divider,
-    IconButton,
-    Stack,
-    Tab,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Tabs,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, CircularProgress, Divider, Stack, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -271,19 +255,21 @@ export default function SkillWorkspace() {
                         <Typography variant="h5" noWrap>{skill?.name || skillId || 'Skill Workspace'}</Typography>
                         <Typography variant="body2" color="text.secondary" noWrap>{skillId}</Typography>
                     </Box>
-                    <Button startIcon={<AddBoxIcon />} onClick={handleAddTool} disabled={!skillId}>
-                        Tool
-                    </Button>
-                    <Button startIcon={<AddBoxIcon />} onClick={handleAddWorkflow} disabled={!skillId}>
-                        Workflow
-                    </Button>
+                    <Button startIcon={<AddBoxIcon />} onClick={handleAddTool} disabled={!skillId}>Tool</Button>
+                    <Button startIcon={<AddBoxIcon />} onClick={handleAddWorkflow} disabled={!skillId}>Workflow</Button>
+            <PortalActionScope><PortalActions row={null} label="Page actions" actions={[
+              {
+                id: 'edit-skill', label: 'Edit Skill', icon: <EditIcon />,
+                disabledReason: () => !skill ? 'Load a skill before editing it.' : null,
+                onSelect: handleEditSkill
+              },
+            ]} /></PortalActionScope>
+
                     <HelpLink
                         helpPath={SKILL_WORKSPACE_HELP_PATH}
                         tooltip="Help: Skill Workspace"
                     />
-                    <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditSkill} disabled={!skill}>
-                        Edit Skill
-                    </Button>
+
                 </Stack>
 
                 {isLoading && (
@@ -356,55 +342,43 @@ export default function SkillWorkspace() {
 
                 {tab === 2 && (
                     <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Workflow</TableCell>
-                                    <TableCell>Version</TableCell>
-                                    <TableCell>MCP Tool</TableCell>
-                                    <TableCell>Contract</TableCell>
-                                    <TableCell>Role</TableCell>
-                                    <TableCell>Start Mode</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {skillWorkflows.length ? skillWorkflows.map(workflow => {
-                                    const key = `${workflow.skillId}:${workflow.wfDefId}:${workflow.workflowRole}`;
-                                    return (
-                                        <TableRow key={key}>
-                                            <TableCell>{workflow.workflowName || workflow.wfDefId}</TableCell>
-                                            <TableCell>{workflow.workflowVersion || '-'}</TableCell>
-                                            <TableCell>{workflow.workflowToolName || 'Direct MCP only / not linked'}</TableCell>
-                                            <TableCell sx={{ maxWidth: 240 }}>
-                                                <Typography variant="caption" display="block">{workflow.bindingWorkflowVersion || '-'}</Typography>
-                                                <Typography variant="caption" display="block" noWrap title={workflow.definitionDigest}>{workflow.definitionDigest || '-'}</Typography>
-                                                <Typography variant="caption" display="block" noWrap title={workflow.schemaDigest}>{workflow.schemaDigest || '-'}</Typography>
-                                            </TableCell>
-                                            <TableCell>{workflow.workflowRole}</TableCell>
-                                            <TableCell>{workflow.startMode || 'manual'}</TableCell>
-                                            <TableCell align="right">
-                                                <Tooltip title="Validate workflow tool links">
-                                                    <IconButton onClick={() => handleValidateWorkflow(workflow)} disabled={validationKey === key}>
-                                                        {validationKey === key ? <CircularProgress size={20} /> : <VerifiedIcon />}
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Open workflow editor">
-                                                    <IconButton onClick={() => handleOpenWorkflow(workflow)}>
-                                                        <SchemaIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Start workflow">
-                                                    <IconButton color="primary" onClick={() => handleStartWorkflow(workflow)}>
-                                                        <PlayArrowIcon />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                }) : <EmptyRow colSpan={7} label="No workflows linked to this skill." />}
-                            </TableBody>
-                        </Table>
+              <PortalActionScope><Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Workflow</TableCell>
+                    <TableCell>Version</TableCell>
+                    <TableCell>MCP Tool</TableCell>
+                    <TableCell>Contract</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Start Mode</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {skillWorkflows.length ? skillWorkflows.map(workflow => {
+                    const key = `${workflow.skillId}:${workflow.wfDefId}:${workflow.workflowRole}`;
+                    return (
+                      <TableRow key={key}>
+                        <TableCell>{workflow.workflowName || workflow.wfDefId}</TableCell>
+                        <TableCell>{workflow.workflowVersion || '-'}</TableCell>
+                        <TableCell>{workflow.workflowToolName || 'Direct MCP only / not linked'}</TableCell>
+                        <TableCell sx={{ maxWidth: 240 }}>
+                          <Typography variant="caption" display="block">{workflow.bindingWorkflowVersion || '-'}</Typography>
+                          <Typography variant="caption" display="block" noWrap title={workflow.definitionDigest}>{workflow.definitionDigest || '-'}</Typography>
+                          <Typography variant="caption" display="block" noWrap title={workflow.schemaDigest}>{workflow.schemaDigest || '-'}</Typography>
+                        </TableCell>
+                        <TableCell>{workflow.workflowRole}</TableCell>
+                        <TableCell>{workflow.startMode || 'manual'}</TableCell>
+                        <PortalActionTableCell row={workflow} actions={[
+                          { id: 'validate', label: 'Validate workflow tool links', description: 'Check the workflow tool associations.', icon: <VerifiedIcon />, loading: () => validationKey === key, onSelect: () => handleValidateWorkflow(workflow) },
+                          { id: 'edit', label: 'Open workflow editor', icon: <SchemaIcon />, onSelect: () => handleOpenWorkflow(workflow) },
+                          { id: 'start', label: 'Start workflow', icon: <PlayArrowIcon />, onSelect: () => handleStartWorkflow(workflow) },
+                        ]} />
+                      </TableRow>
+                    );
+                  }) : <EmptyRow colSpan={7} label="No workflows linked to this skill." />}
+                </TableBody>
+              </Table></PortalActionScope>
                     </Box>
                 )}
 

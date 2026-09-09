@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -231,7 +233,7 @@ export default function AuthProvider() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -248,48 +250,49 @@ export default function AuthProvider() {
     getRowId: (row) => row.providerId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Provider">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.providerId}
-          >
-            {isUpdateLoading === row.original.providerId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Keys">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerKey', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
-            <KeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Apis">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
-            <ApiIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Clients">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/providerClient', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })}>
-            <AppsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Provider">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-provider",
+        label: "Update Provider",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.providerId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "manage-keys",
+        label: "Manage Keys",
+        icon: <KeyIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/oauth/providerKey', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "manage-apis",
+        label: "Manage Apis",
+        icon: <ApiIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/oauth/providerApi', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "manage-clients",
+        label: "Manage Clients",
+        icon: <AppsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/oauth/providerClient', searchParams, contextForRow(row.original)), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "delete-provider",
+        label: "Delete Provider",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createProvider', searchParams, taskContext))}>
         Create New Provider
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -300,7 +303,7 @@ export default function AuthProvider() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

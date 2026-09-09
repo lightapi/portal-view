@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { renderWithActionDisplay as render } from '../../../test/renderWithActionDisplay';
+import { selectPortalAction, openPortalActions } from '../../../test/portalActions';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import LlmModelControlPlane from './LlmModelControlPlane';
@@ -157,7 +159,7 @@ describe('LLM control-plane wiring', () => {
     });
 
     mocks.navigate.mockClear();
-    await userEvent.click(await screen.findByLabelText('Edit'));
+    await selectPortalAction('Edit');
     expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateLlmRegistration', {
       state:{data:expect.objectContaining({
         modelRegistrationId:'registration-a', modelId:'model-a', environment:'prod',
@@ -184,7 +186,7 @@ describe('LLM control-plane wiring', () => {
     mocks.listLlm.mockResolvedValue([model]);
     const models = llmResources.find(resource => resource.key === 'models')!;
     render(<ResourcePanel hostId="host-a" resource={models}/>);
-    await userEvent.click(await screen.findByLabelText('Edit'));
+    await selectPortalAction('Edit');
 
     expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateLlmModel', {
       state: {data: expect.objectContaining({
@@ -216,10 +218,11 @@ describe('LLM control-plane wiring', () => {
     await user.click(screen.getByRole('button',{name:'Publish to instance'}));
     await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
       'publishLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',instanceId:'instance-a',expectedPropertySetDigest:`sha256:${'b'.repeat(64)}`})));
-    await user.click(await screen.findByRole('button',{name:'Apply exact revision'}));
+    await selectPortalAction('Apply exact revision');
     await waitFor(() => expect(mocks.commandLlm).toHaveBeenCalledWith(
       'rollbackLlmGatewayConfiguration', expect.objectContaining({hostId:'host-a',gatewayPublicationId:'revision-a',rollbackOfInstancePublicationId:'application-a'})));
-    expect(screen.getByRole('button',{name:'Apply exact revision'})).toBeInTheDocument();
+    await openPortalActions();
+    expect(screen.getByRole('menuitem',{name:'Apply exact revision'})).toBeInTheDocument();
   });
 
   it('uses the selected instance logical environment rather than its env tag for generation', async () => {
@@ -244,7 +247,8 @@ describe('LLM control-plane wiring', () => {
     await waitFor(() => expect(mocks.queryLlm).toHaveBeenCalledWith(
       'getLlmGatewayPublicationCandidate',{hostId:'host-a',environment:'dev',instanceId:'instance-a'}));
     expect((screen.getByLabelText('Generated llm-router properties') as HTMLTextAreaElement).value).toContain('"propertyName": "providers"');
-    expect(await screen.findByRole('button',{name:'Apply exact revision'})).toBeInTheDocument();
+    await openPortalActions();
+    expect(await screen.findByRole('menuitem',{name:'Apply exact revision'})).toBeInTheDocument();
   });
 
   it('loads every gtw instance for the selected env tag into the publication dropdown', async () => {
@@ -286,7 +290,7 @@ describe('LLM control-plane wiring', () => {
     render(<ResourcePanel hostId="host-a" resource={credentials}/>);
     await screen.findByText('credential-a');
     expect(screen.queryByText(/sk-live-must-not-render/)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByLabelText('Edit'));
+    await selectPortalAction('Edit');
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateProviderCredential',{
       state:{data:expect.objectContaining({
         hostId:'host-a',providerCredentialId:'credential-a',credentialVersion:1,
@@ -312,7 +316,7 @@ describe('LLM control-plane wiring', () => {
     });
     const view = render(<LlmModelControlPlane/>);
     await userEvent.click(screen.getByRole('tab', {name:'Aliases'}));
-    await userEvent.click(await screen.findByRole('button', {name:'View routes'}));
+    await selectPortalAction('View routes');
     expect(screen.getByRole('tab', {name:'Routes'})).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByText('selected-deployment')).toBeInTheDocument();
     expect(screen.queryByText('other-deployment')).not.toBeInTheDocument();
@@ -321,7 +325,7 @@ describe('LLM control-plane wiring', () => {
     await userEvent.click(screen.getByRole('button', {name:'Show all routes'}));
     expect(await screen.findByText('other-deployment')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', {name:'Aliases'}));
-    await userEvent.click(await screen.findByRole('button', {name:'View routes'}));
+    await selectPortalAction('View routes');
     expect(await screen.findByText('selected-deployment')).toBeInTheDocument();
     mocks.host = 'host-b';
     view.rerender(<LlmModelControlPlane/>);

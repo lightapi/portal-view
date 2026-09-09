@@ -1,3 +1,4 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -62,7 +63,14 @@ export default function LlmModelCatalog() {
         <Typography variant="body2" color="text.secondary">{total} {total===1?'model':'models'} found{taxonomyFiltersActive?' for the selected taxonomy filters':''}</Typography>
       </Box>
       {catalogAdmin && <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{xs:'flex-start',md:'flex-end'}}>
-        <Button variant="outlined" startIcon={<AdminPanelSettingsIcon/>} onClick={() => navigate('/app/genai/LlmModelControlPlane')}>LLM Models Admin</Button>
+        <PortalActionScope><PortalActions row={null} actions={[
+          {
+            id: "llm-models-admin",
+            label: "LLM Models Admin",
+            icon: <AdminPanelSettingsIcon />,
+            onSelect: () => navigate('/app/genai/LlmModelControlPlane')
+          }
+        ]} /></PortalActionScope>
         <Button variant="contained" startIcon={<AddBoxIcon/>} onClick={() => navigate('/app/form/createLlmModel',{state:{data:{globalFlag:true},source:location.pathname}})}>Create LLM Model</Button>
       </Stack>}
     </Stack>

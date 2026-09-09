@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useUserState } from '../../contexts/UserContext';
@@ -178,17 +180,23 @@ export default function ProductVersionPipeline() {
         filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
         Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
       },
-      {
-        id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-        muiTableBodyCellProps: { align: 'center' },
-        Cell: ({ row }) => (<Tooltip title="Delete Pipeline"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>),
+      { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => <PortalActions row={row} actions={[
+          {
+            id: "delete-pipeline",
+            label: "Delete Pipeline",
+            icon: <DeleteForeverIcon />,
+            destructive: true,
+            onSelect: () => handleDelete(row)
+          }
+        ]} />
       },
     ],
     [],
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -225,7 +233,7 @@ export default function ProductVersionPipeline() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -237,7 +245,7 @@ export default function ProductVersionPipeline() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

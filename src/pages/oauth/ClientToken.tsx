@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, IconButton, Tooltip, Typography, Button } from '@mui/material';
+import { Alert, Box, Tooltip, Typography, Button } from '@mui/material';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import { useUserState } from '../../contexts/UserContext.tsx';
@@ -209,7 +211,7 @@ export default function ClientToken() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -226,15 +228,16 @@ export default function ClientToken() {
         getRowId: (row) => row.tokenId,
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
-        renderRowActions: ({ row }) => (
-            <Tooltip title={clientTokenOwnership.canModifyRecord(row.original) ? 'Revoke Token' : 'You can only revoke client tokens you own.'}>
-                <span>
-                    <IconButton color="error" onClick={() => handleDelete(row)} disabled={!clientTokenOwnership.canModifyRecord(row.original)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </span>
-            </Tooltip>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "revoke-token",
+          label: "Revoke Token",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          disabledReason: () => (!clientTokenOwnership.canModifyRecord(row.original)) ? ('You can only revoke client tokens you own.') : null,
+          onSelect: () => handleDelete(row)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button
@@ -251,7 +254,7 @@ export default function ClientToken() {
                 )}
             </Box>
         ),
-    });
+    }));
 
     return (
         <Box>
@@ -267,7 +270,7 @@ export default function ClientToken() {
                         User context is required before owner-scoped client tokens can be loaded.
                     </Alert>
                 )}
-                <MaterialReactTable table={table} />
+          <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             </Box>
         </Box>
     );

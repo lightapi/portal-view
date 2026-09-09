@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -285,7 +287,7 @@ export default function Service() {
   }), [taskContext]);
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -303,34 +305,37 @@ export default function Service() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title="Details">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/apiDetail', searchParams, contextForRow(row.original)), { state: { service: row.original } })}>
-            <DetailsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={apiOwnership.canModifyRecord(row.original) ? 'Update Api' : 'You can only update APIs you own.'}>
-          <span>
-            <IconButton onClick={() => handleUpdate(row)} disabled={!apiOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.apiId}>
-              {isUpdateLoading === row.original.apiId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="OAuth Clients">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-            <AirlineSeatReclineNormalIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={apiOwnership.canModifyRecord(row.original) ? 'Delete Api' : 'You can only delete APIs you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!apiOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "details",
+        label: "Details",
+        description: "View the complete record.",
+        icon: <DetailsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/apiDetail', searchParams, contextForRow(row.original)), { state: { service: row.original } })
+      },
+      {
+        id: "update-api",
+        label: "Update Api",
+        icon: <SystemUpdateIcon />,
+        disabledReason: () => (!apiOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.apiId) ? ((isUpdateLoading === row.original.apiId) ? 'Action in progress.' : ('You can only update APIs you own.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.apiId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "oauth-clients",
+        label: "OAuth Clients",
+        icon: <AirlineSeatReclineNormalIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })
+      },
+      {
+        id: "delete-api",
+        label: "Delete Api",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!apiOwnership.canModifyRecord(row.original)) ? ('You can only delete APIs you own.') : null,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createApi', searchParams, taskContext))}>
@@ -343,7 +348,7 @@ export default function Service() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -359,7 +364,7 @@ export default function Service() {
             User context is required before owner-scoped APIs can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

@@ -1,3 +1,4 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   MaterialReactTable,
@@ -314,15 +315,15 @@ export default function AccessAdmin() {
         >
           Bulk Access
         </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<FactCheckIcon />}
-          disabled={!selectedApiVersionId}
-          onClick={() => setOverviewOpen(true)}
-        >
-          Policy Overview
-        </Button>
+        <PortalActions row={null} label="Page actions" actions={[
+          {
+            id: "policy-overview",
+            label: "Policy Overview",
+            icon: <FactCheckIcon />,
+            disabledReason: () => (!selectedApiVersionId) ? ('Select an API version to view its policies.') : null,
+            onSelect: () => setOverviewOpen(true)
+          }
+        ]} />
       </Stack>
     ),
   });
@@ -384,7 +385,7 @@ export default function AccessAdmin() {
             </FormControl>
             <Chip label={`${endpoints.length} handlers`} sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }} />
           </Stack>
-          <MaterialReactTable table={endpointTable} />
+          <PortalActionScope><MaterialReactTable table={endpointTable} /></PortalActionScope>
         </Box>
 
         <Box>
@@ -413,7 +414,7 @@ export default function AccessAdmin() {
               {PRINCIPAL_CONFIG[principalType].helper}
             </Typography>
           </Stack>
-          <MaterialReactTable table={summaryTable} />
+          <PortalActionScope><MaterialReactTable table={summaryTable} /></PortalActionScope>
         </Box>
       </Stack>
 

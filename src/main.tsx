@@ -5,6 +5,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./themes";
 import { LayoutProvider } from "./contexts/LayoutContext.tsx";
 import { UserProvider } from "./contexts/UserContext.tsx";
+import { ActionDisplayProvider } from "./contexts/ActionDisplayContext";
 import { SiteProvider } from "./contexts/SiteContext.tsx";
 import { AppProvider } from "./contexts/AppContext.tsx";
 import { ControllerProvider } from "./contexts/ControllerContext.tsx";
@@ -20,6 +21,7 @@ const instance = isSsoEnabled ? new PublicClientApplication(msalConfig) : null;
 const appTree = (
   <LayoutProvider>
     <ThemeProvider theme={theme}>
+      <ActionDisplayProvider>
       <UserProvider>
         <SiteProvider>
           <AppProvider>
@@ -30,6 +32,7 @@ const appTree = (
           </AppProvider>
         </SiteProvider>
       </UserProvider>
+      </ActionDisplayProvider>
     </ThemeProvider>
   </LayoutProvider>
 );

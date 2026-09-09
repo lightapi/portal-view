@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -6,20 +8,7 @@ import {
   type MRT_ColumnDef,
   MRT_Row,
 } from 'material-react-table';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Paper,
-  IconButton,
-  Tooltip,
-  Button,
-  Box,
-  Alert,
-  Typography,
-} from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableRow, Paper, Button, Box, Alert, Typography } from "@mui/material";
 import ImageAspectRatioIcon from "@mui/icons-material/ImageAspectRatio";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import AddBoxIcon from "@mui/icons-material/AddBox";
@@ -253,7 +242,7 @@ export default function ApiDetail() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data: data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -265,72 +254,82 @@ export default function ApiDetail() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading api versions' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title={apiVersionOwnership.canModifyRecord(row.original) ? 'Update Api Version' : 'You can only update API versions you own.'}>
-          <span>
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={!apiVersionOwnership.canModifyRecord(row.original)}
-            >
-              <SystemUpdateIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Edit Specification">
-          <IconButton onClick={() => {
-            const path = row.original.apiType === 'openapi' ? '/app/openapiEditor' : row.original.apiType === 'hybrid' ? '/app/hybridEditor' : '/app/graphqlEditor';
-            navigate(buildTaskAwareRoute(path, searchParams, contextForRow(row.original)), { state: { data: { serviceVersion: row.original } } });
-          }}>
-            <ImageAspectRatioIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={apiVersionOwnership.canModifyRecord(row.original) ? 'Delete Api Version' : 'You can only delete API versions you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!apiVersionOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Instance API">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, apiId: row.original.apiId, serviceId: row.original.serviceId } } })}>
-            <ApiIcon />
-          </IconButton>
-        </Tooltip>
-        {canPublishToGateway && (
-          <Tooltip title="Publish to Gateway">
-            <IconButton onClick={() => setPublicationVersion(row.original)}>
-              <CloudUploadIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title="Create OAuth Client">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })}>
-            <VpnKeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Endpoint">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceEndpoint', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersionId: row.original.apiVersionId } } })}>
-            <FormatListBulletedIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Codegen">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceCodegen', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-            <InputIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Deploy">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceDeploy', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-            <SettingsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Test">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/serviceTest', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })}>
-            <BugReportIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-api-version",
+        label: "Update Api Version",
+        icon: <SystemUpdateIcon />,
+        disabledReason: () => (!apiVersionOwnership.canModifyRecord(row.original)) ? ('You can only update API versions you own.') : null,
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "edit-specification",
+        label: "Edit Specification",
+        description: "Open the API specification editor.",
+        icon: <ImageAspectRatioIcon />,
+        onSelect: () => {
+          const path = row.original.apiType === 'openapi' ? '/app/openapiEditor' : row.original.apiType === 'hybrid' ? '/app/hybridEditor' : '/app/graphqlEditor';
+          navigate(buildTaskAwareRoute(path, searchParams, contextForRow(row.original)), { state: { data: { serviceVersion: row.original } } });
+        }
+      },
+      {
+        id: "delete-api-version",
+        label: "Delete Api Version",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!apiVersionOwnership.canModifyRecord(row.original)) ? ('You can only delete API versions you own.') : null,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "instance-api",
+        label: "Instance API",
+        icon: <ApiIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/instance/InstanceApi', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, apiId: row.original.apiId, serviceId: row.original.serviceId } } })
+      },
+      {
+        id: "publish-to-gateway",
+        label: "Publish to Gateway",
+        description: "Choose a gateway for this API version.",
+        icon: <CloudUploadIcon />,
+        hidden: () => !((canPublishToGateway)),
+        onSelect: () => setPublicationVersion(row.original)
+      },
+      {
+        id: "create-oauth-client",
+        label: "Create OAuth Client",
+        description: "Create an OAuth client with this record preselected.",
+        icon: <VpnKeyIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId } } })
+      },
+      {
+        id: "endpoint",
+        label: "Endpoint",
+        description: "Manage the API version endpoints.",
+        icon: <FormatListBulletedIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/serviceEndpoint', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersionId: row.original.apiVersionId } } })
+      },
+      {
+        id: "codegen",
+        label: "Codegen",
+        description: "Generate an implementation from this API version.",
+        icon: <InputIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/serviceCodegen', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })
+      },
+      {
+        id: "deploy",
+        label: "Deploy",
+        description: "Open deployment options for this API version.",
+        icon: <SettingsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/serviceDeploy', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })
+      },
+      {
+        id: "test",
+        label: "Test",
+        description: "Open the API test page.",
+        icon: <BugReportIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/serviceTest', searchParams, contextForRow(row.original)), { state: { data: { hostId: row.original.hostId, apiId: row.original.apiId } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -347,7 +346,7 @@ export default function ApiDetail() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <>
@@ -386,7 +385,7 @@ export default function ApiDetail() {
             User context is required before owner-scoped API versions can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+          <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
       {publicationVersion && (

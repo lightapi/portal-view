@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,13 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import {
-  Box,
-  Button,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -233,7 +229,7 @@ export default function User() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -251,50 +247,83 @@ export default function User() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'nowrap' }}>
-        <Tooltip title="Details"><IconButton onClick={() => navigate('/app/userDetail', { state: { user: row.original } })}><DetailsIcon /></IconButton></Tooltip>
-        <Tooltip title="Update">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.userId}
-          >
-            {isUpdateLoading === row.original.userId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Lock User">
-          <span>
-            <IconButton onClick={() => handleStateChange(row, 'lockUser', { locked: true })} disabled={row.original.locked}>
-              <LockIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Unlock User">
-          <span>
-            <IconButton onClick={() => handleStateChange(row, 'unlockUser', { locked: false })} disabled={!row.original.locked}>
-              <LockOpenIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Verify User">
-          <span>
-            <IconButton color="success" onClick={() => handleStateChange(row, 'verifyUser', { verified: true })} disabled={row.original.verified}>
-              <DomainVerificationIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Roles"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><CameraRollIcon /></IconButton></Tooltip>
-        <Tooltip title="Groups"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><GroupsIcon /></IconButton></Tooltip>
-        <Tooltip title="Positions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><RadarIcon /></IconButton></Tooltip>
-        <Tooltip title="Attributes"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><AttributionIcon /></IconButton></Tooltip>
-        <Tooltip title="Permissions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })}><DoNotTouchIcon /></IconButton></Tooltip>
-        <Tooltip title="Delete"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "details",
+        label: "Details",
+        description: "View the complete record.",
+        icon: <DetailsIcon />,
+        onSelect: () => navigate('/app/userDetail', { state: { user: row.original } })
+      },
+      {
+        id: "update",
+        label: "Update",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.userId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "lock-user",
+        label: "Lock User",
+        icon: <LockIcon />,
+        disabledReason: () => (row.original.locked) ? ('This user is already locked.') : null,
+        onSelect: () => handleStateChange(row, 'lockUser', { locked: true })
+      },
+      {
+        id: "unlock-user",
+        label: "Unlock User",
+        icon: <LockOpenIcon />,
+        disabledReason: () => (!row.original.locked) ? ('This user is not locked.') : null,
+        onSelect: () => handleStateChange(row, 'unlockUser', { locked: false })
+      },
+      {
+        id: "verify-user",
+        label: "Verify User",
+        icon: <DomainVerificationIcon />,
+        disabledReason: () => (row.original.verified) ? ('This user is already verified.') : null,
+        onSelect: () => handleStateChange(row, 'verifyUser', { verified: true })
+      },
+      {
+        id: "roles",
+        label: "Roles",
+        icon: <CameraRollIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })
+      },
+      {
+        id: "groups",
+        label: "Groups",
+        icon: <GroupsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })
+      },
+      {
+        id: "positions",
+        label: "Positions",
+        icon: <RadarIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/positionUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })
+      },
+      {
+        id: "attributes",
+        label: "Attributes",
+        icon: <AttributionIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })
+      },
+      {
+        id: "permissions",
+        label: "Permissions",
+        icon: <DoNotTouchIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, { hostId: row.original.hostId, userId: row.original.userId }), { state: { data: { hostId: row.original.hostId, userId: row.original.userId } } })
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -304,7 +333,7 @@ export default function User() {
         Onboard New User
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -316,7 +345,7 @@ export default function User() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

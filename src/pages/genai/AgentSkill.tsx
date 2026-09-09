@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -223,7 +225,7 @@ export default function AgentSkill() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -243,43 +245,43 @@ export default function AgentSkill() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const idKey = `${row.original.agentDefId}-${row.original.skillId}`;
-            return (
-                <Box sx={{ display: 'flex', gap: '1rem' }}>
-                    <Tooltip title="Validate Assignment">
-                        <IconButton color="primary" onClick={() => handleValidate(row)}>
-                            <VerifiedIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Update Agent Skill">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === idKey}
-                        >
-                            {isUpdateLoading === idKey ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Agent Skill">
-                        <IconButton color="error" onClick={() => handleDelete(row)}>
-                            <DeleteForeverIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "validate-assignment",
+              label: "Validate Assignment",
+              description: "Check the agent and skill assignment for configuration issues.",
+              icon: <VerifiedIcon />,
+              onSelect: () => handleValidate(row)
+            },
+            {
+              id: "update-agent-skill",
+              label: "Update Agent Skill",
+              icon: (
+                <SystemUpdateIcon />
+              ),
+
+              loading: () => Boolean(isUpdateLoading === idKey),
+              onSelect: () => handleUpdate(row)
+            },
+            {
+              id: "delete-agent-skill",
+              label: "Delete Agent Skill",
+              icon: <DeleteForeverIcon />,
+              destructive: true,
+              onSelect: () => handleDelete(row)
+            }
+          ]} />;
         },
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createAgentSkill', searchParams, taskContext))}>
                 Create New Agent Skill
             </Button>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </GenAiTaskLayout>
     );
 }

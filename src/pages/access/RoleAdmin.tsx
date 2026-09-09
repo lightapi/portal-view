@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -203,7 +205,7 @@ export default function RoleAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -221,53 +223,55 @@ export default function RoleAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Role">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.roleId}
-          >
-            {isUpdateLoading === row.original.roleId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Role Permissions">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
-            <DoNotTouchIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Role Row Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
-            <KeyboardDoubleArrowDownIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Role Column Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
-            <KeyboardDoubleArrowRightIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })}>
-            <CameraRollIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Role">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-role",
+        label: "Update Role",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.roleId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "role-permissions",
+        label: "Role Permissions",
+        icon: <DoNotTouchIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })
+      },
+      {
+        id: "role-row-filters",
+        label: "Role Row Filters",
+        icon: <KeyboardDoubleArrowDownIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })
+      },
+      {
+        id: "role-column-filters",
+        label: "Role Column Filters",
+        icon: <KeyboardDoubleArrowRightIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })
+      },
+      {
+        id: "manage-users",
+        label: "Manage Users",
+        icon: <CameraRollIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleUser', searchParams, { ...taskContext, roleId: row.original.roleId }), { state: { data: { roleId: row.original.roleId } } })
+      },
+      {
+        id: "delete-role",
+        label: "Delete Role",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRole', searchParams, taskContext))}>
         Create New Role
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -279,7 +283,7 @@ export default function RoleAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

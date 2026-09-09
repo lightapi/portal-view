@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -17,7 +19,7 @@ import DoNotTouchIcon from '@mui/icons-material/DoNotTouch';
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import AttributionIcon from '@mui/icons-material/Attribution';
-import CameraRollIcon from '@mui/icons-material/CameraRoll';
+
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -199,7 +201,7 @@ export default function AttributeAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -217,53 +219,55 @@ export default function AttributeAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Attribute">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.attributeId}
-          >
-            {isUpdateLoading === row.original.attributeId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Attribute Permissions">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
-            <DoNotTouchIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Attribute Row Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
-            <KeyboardDoubleArrowDownIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Attribute Column Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
-            <KeyboardDoubleArrowRightIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })}>
-            <AttributionIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Attribute">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-attribute",
+        label: "Update Attribute",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.attributeId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "attribute-permissions",
+        label: "Attribute Permissions",
+        icon: <DoNotTouchIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })
+      },
+      {
+        id: "attribute-row-filters",
+        label: "Attribute Row Filters",
+        icon: <KeyboardDoubleArrowDownIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })
+      },
+      {
+        id: "attribute-column-filters",
+        label: "Attribute Column Filters",
+        icon: <KeyboardDoubleArrowRightIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })
+      },
+      {
+        id: "manage-users",
+        label: "Manage Users",
+        icon: <AttributionIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeUser', searchParams, { ...taskContext, attributeId: row.original.attributeId }), { state: { data: { attributeId: row.original.attributeId } } })
+      },
+      {
+        id: "delete-attribute",
+        label: "Delete Attribute",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createAttribute', searchParams, taskContext))}>
         Create New Attribute
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -275,7 +279,7 @@ export default function AttributeAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

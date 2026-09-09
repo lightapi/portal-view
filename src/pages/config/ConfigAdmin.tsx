@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -220,7 +222,7 @@ export default function ConfigAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -237,35 +239,81 @@ export default function ConfigAdmin() {
     getRowId: (row) => row.configId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Config">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.configId}
-          >
-            {isUpdateLoading === row.original.configId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProperty', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
-        <Tooltip title="Environments"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configEnvironment', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><YardIcon /></IconButton></Tooltip>
-        <Tooltip title="Products"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProduct', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><Inventory2Icon /></IconButton></Tooltip>
-        <Tooltip title="Product Versions"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-        <Tooltip title="Instances"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><InstallMobileIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance APIs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><ApiIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance Apps"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><AppsIcon /></IconButton></Tooltip>
-        <Tooltip title="Instance App Api"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceAppApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })}><FormatIndentIncreaseIcon /></IconButton></Tooltip>
-        <Tooltip title="Delete Config">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-config",
+        label: "Update Config",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.configId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "properties",
+        label: "Properties",
+        description: "Manage configuration property definitions.",
+        icon: <FormatListBulletedIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configProperty', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "environments",
+        label: "Environments",
+        description: "Manage environment associations.",
+        icon: <YardIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configEnvironment', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "products",
+        label: "Products",
+        description: "Manage product associations.",
+        icon: <Inventory2Icon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configProduct', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "product-versions",
+        label: "Product Versions",
+        description: "Manage product version associations.",
+        icon: <AddToDriveIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "instances",
+        label: "Instances",
+        description: "Manage instance configuration associations.",
+        icon: <InstallMobileIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstance', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "instance-apis",
+        label: "Instance APIs",
+        description: "Manage APIs associated with this instance.",
+        icon: <ApiIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "instance-apps",
+        label: "Instance Apps",
+        description: "Manage application associations.",
+        icon: <AppsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "instance-app-api",
+        label: "Instance App Api",
+        description: "Manage application API configuration associations.",
+        icon: <FormatIndentIncreaseIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstanceAppApi', searchParams, { hostId: host ?? '', configId: row.original.configId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "delete-config",
+        label: "Delete Config",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button
         variant="contained"
@@ -275,7 +323,7 @@ export default function ConfigAdmin() {
         Create New Config
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -287,7 +335,7 @@ export default function ConfigAdmin() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

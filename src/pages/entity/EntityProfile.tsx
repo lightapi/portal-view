@@ -1,7 +1,9 @@
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+
 import React, { useMemo } from 'react';
 import Widget from '../../components/Widget/Widget';
 import { useUserState } from '../../contexts/UserContext';
@@ -14,7 +16,7 @@ export default function EntityProfile() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { email, userId } = useUserState();
-  
+
   const cmd = {
     host: 'lightapi.net',
     service: 'covid',
@@ -70,12 +72,22 @@ export default function EntityProfile() {
   if (data) {
     buttons = (
       <Box sx={buttonSx}>
-        <Button variant="contained" color="primary" onClick={updateEntity}>
-          Update
-        </Button>
-        <Button variant="contained" color="primary" onClick={deleteEntity}>
-          Delete
-        </Button>
+        <PortalActionScope><PortalActions row={null} actions={[
+          {
+            id: "update",
+            label: "Update",
+            icon: <PortalActionIcon />,
+            onSelect: updateEntity
+          },
+          {
+            id: "delete",
+            label: "Delete",
+            icon: <PortalActionIcon />,
+            destructive: true,
+            onSelect: deleteEntity
+          }
+        ]} /></PortalActionScope>
+
       </Box>
     );
   } else {

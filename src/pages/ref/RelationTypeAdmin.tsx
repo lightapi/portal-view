@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -213,7 +215,7 @@ export default function RelationTypeAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -231,31 +233,35 @@ export default function RelationTypeAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
-            <SystemUpdateIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Relations">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/relation', searchParams, contextForRow(row.original)), { state: { data: { relationId: row.original.relationId } } })}>
-            <LinkIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update",
+        label: "Update",
+        icon: <SystemUpdateIcon />,
+
+        loading: () => Boolean(isUpdateLoading !== null),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "manage-relations",
+        label: "Manage Relations",
+        icon: <LinkIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/ref/relation', searchParams, contextForRow(row.original)), { state: { data: { relationId: row.original.relationId } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefRelationType', searchParams, taskContext))}>
         Create New Relation Type
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -266,7 +272,7 @@ export default function RelationTypeAdmin() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

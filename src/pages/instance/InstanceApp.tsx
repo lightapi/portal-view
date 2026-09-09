@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
@@ -225,27 +227,31 @@ export default function InstanceApp() {
           filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
           Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
         },
-        {
-          id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => {
-            const disabled = !instanceAppOwnership.canModifyRecord(row.original);
-            return (
-              <Tooltip title={disabled ? 'You can only delete instance app links you own.' : 'Delete Instance App'}>
-                <span>
-                  <IconButton color="error" onClick={() => handleDelete(row)} disabled={disabled}><DeleteForeverIcon /></IconButton>
-                </span>
-              </Tooltip>
-            );
-          },
-        },
-        {
-          id: 'relations', header: 'Config', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-              <Tooltip title="Config Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, contextForRow(row.original)), { state: { data: { instanceAppId: row.original.instanceAppId, instanceId: row.original.instanceId, appId: row.original.appId, appVersion: row.original.appVersion } } })}><AddToDriveIcon /></IconButton></Tooltip>
-            </Box>
-          ),
-        },
+        { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+          Cell: ({ row }) => <PortalActions row={row} actions={[
+            ...(() => {
+              const disabled = !instanceAppOwnership.canModifyRecord(row.original);
+              return [
+                {
+                  id: "delete-instance-app",
+                  label: "Delete Instance App",
+                  icon: <DeleteForeverIcon />,
+                  destructive: true,
+                  disabledReason: () => (disabled) ? ('You can only delete instance app links you own.') : null,
+                  onSelect: () => handleDelete(row)
+                }
+              ];
+            })(),
+            {
+              id: "config-properties",
+              label: "Config Properties",
+              description: "Manage configuration values for this association.",
+              icon: <AddToDriveIcon />,
+              onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstanceApp', searchParams, contextForRow(row.original)), { state: { data: { instanceAppId: row.original.instanceAppId, instanceId: row.original.instanceId, appId: row.original.appId, appVersion: row.original.appVersion } } })
+            }
+          ]} />
+      },
+
       ],
       instanceAppOwnership,
     ),
@@ -253,7 +259,7 @@ export default function InstanceApp() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -292,7 +298,7 @@ export default function InstanceApp() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box>
@@ -308,7 +314,7 @@ export default function InstanceApp() {
             User context is required before owner-scoped instance app links can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

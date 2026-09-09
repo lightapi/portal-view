@@ -1,15 +1,5 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  Divider,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { PortalActions } from '../../../components/PortalActions/PortalActions';
+import { Box, Card, CardActions, CardContent, Chip, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import DetailsIcon from '@mui/icons-material/Details';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -150,26 +140,29 @@ export default function WorkflowCatalogCard({
           flexWrap: 'wrap',
           minWidth: viewMode === 'list' ? { md: 150 } : undefined,
         }}
-      >
-        <Button size="small" startIcon={<DetailsIcon />} onClick={() => onDetails(workflow)}>
-          Details
-        </Button>
-        <Button size="small" startIcon={<PlayArrowIcon />} onClick={() => onStart(workflow)}>
-          Start
-        </Button>
-        <Tooltip title={canModify ? 'Edit workflow' : 'You can only edit workflows you own.'}>
-          <span>
-            <Button
-              size="small"
-              startIcon={<SystemUpdateIcon />}
-              disabled={!canModify || isUpdating}
-              onClick={() => onEdit(workflow)}
-            >
-              Edit
-            </Button>
-          </span>
-        </Tooltip>
-      </CardActions>
+      ><PortalActions row={null} actions={[
+        {
+          id: "details",
+          label: "Details",
+          description: "View the complete record.",
+          icon: <DetailsIcon />,
+          onSelect: () => onDetails(workflow)
+        },
+        {
+          id: "start",
+          label: "Start",
+          icon: <PlayArrowIcon />,
+          onSelect: () => onStart(workflow)
+        },
+        {
+          id: "edit",
+          label: "Edit",
+          icon: <SystemUpdateIcon />,
+          disabledReason: () => !canModify ? 'You can only edit workflows you own.' : null,
+          loading: () => isUpdating,
+          onSelect: () => onEdit(workflow)
+        }
+      ]} /></CardActions>
     </Card>
   );
 }

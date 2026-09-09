@@ -1,38 +1,10 @@
+import { PortalActions, PortalActionScope } from '../../../components/PortalActions/PortalActions';
+import { useActionDisplay } from '../../../contexts/ActionDisplayContext';
+import { portalActionColumn } from '../../../components/PortalActions/usePortalActionTableOptions';
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  MaterialReactTable,
-  type MRT_ColumnDef,
-  type MRT_PaginationState,
-  type MRT_Row,
-} from 'material-react-table';
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Checkbox,
-  Chip,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  IconButton,
-  InputLabel,
-  Link,
-  MenuItem,
-  Select,
-  Snackbar,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { MaterialReactTable, type MRT_ColumnDef, type MRT_Row } from 'material-react-table';
+import { Alert, Autocomplete, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, FormControlLabel, FormHelperText, InputLabel, Link, MenuItem, Select, Snackbar, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import CheckIcon from '@mui/icons-material/Check';
 import CodeIcon from '@mui/icons-material/Code';
@@ -166,6 +138,7 @@ function stopTableKeyboardShortcuts(event: KeyboardEvent<HTMLElement>) {
 }
 
 export default function ConfigUpdatePage() {
+  const { mode: actionDisplay } = useActionDisplay();
   const navigate = useNavigate();
   const location = useLocation();
   const { host } = useUserState() as UserState;
@@ -835,12 +808,13 @@ export default function ConfigUpdatePage() {
           </Alert>
         )}
 
-        <MaterialReactTable
+        <PortalActionScope><MaterialReactTable
           columns={columns}
           data={data}
           enableGrouping
           enableColumnResizing
           enableRowActions
+          displayColumnDefOptions={{ 'mrt-row-actions': portalActionColumn<ConfigUpdateProperty>({ header: 'Actions' }, actionDisplay) }}
           state={tableState}
           initialState={{
             density: 'compact',
@@ -854,51 +828,52 @@ export default function ConfigUpdatePage() {
             color: 'error',
             children: loadError ? `Error loading config update properties: ${loadError}` : 'Error loading config update properties',
           } : undefined}
-          renderRowActions={({ row }: { row: MRT_Row<ConfigUpdateProperty> }) => {
+          renderRowActions={({ row }: { row: MRT_Row<ConfigUpdateProperty>; }) => {
             const key = rowKey(row.original);
             const draft = drafts[key];
             const applying = applyingRows[key];
-            return (
-              <Stack direction="row" spacing={0.25}>
-                <Tooltip title="Apply row">
-                  <span>
-                    <IconButton size="small" disabled={!draft || Boolean(draft.error) || applying} onClick={() => applyDraft(row.original)}>
-                      <CheckIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Reset override">
-                  <span>
-                    <IconButton
-                      size="small"
-                      disabled={!row.original.overridden || row.original.canDeleteOverride === false || applying}
-                      onClick={() => stageReset(row.original)}
-                    >
-                      <RestartAltIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Discard draft">
-                  <span>
-                    <IconButton size="small" disabled={!draft || applying} onClick={() => clearDraft(key)}>
-                      <UndoIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Open fallback form">
-                  <IconButton size="small" onClick={() => openFallbackForm(row.original)}>
-                    <OpenInNewIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Copy identifiers">
-                  <IconButton size="small" onClick={() => copyIdentifiers(row.original)}>
-                    <ContentCopyIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-            );
+            return <PortalActions row={row} actions={[
+              {
+                id: "apply-row",
+                label: "Apply row",
+                description: "Apply this row’s staged configuration change.",
+                icon: <CheckIcon fontSize="small" />,
+                disabledReason: () => applying ? 'Action in progress.' : !draft ? 'Stage a change before applying this row.' : draft.error ? String(draft.error) : null,
+                onSelect: () => applyDraft(row.original)
+              },
+              {
+                id: "reset-override",
+                label: "Reset override",
+                description: "Stage removal of the override to inherit its value.",
+                icon: <RestartAltIcon fontSize="small" />,
+                disabledReason: () => applying ? 'Action in progress.' : !row.original.overridden ? 'This property has no override.' : row.original.canDeleteOverride === false ? 'This override cannot be removed.' : null,
+                onSelect: () => stageReset(row.original)
+              },
+              {
+                id: "discard-draft",
+                label: "Discard draft",
+                description: "Discard this row’s unapplied change.",
+                icon: <UndoIcon fontSize="small" />,
+                disabledReason: () => applying ? 'Action in progress.' : !draft ? 'This row has no draft to discard.' : null,
+                onSelect: () => clearDraft(key)
+              },
+              {
+                id: "open-fallback-form",
+                label: "Open fallback form",
+                description: "Edit this property using its full form.",
+                icon: <OpenInNewIcon fontSize="small" />,
+                onSelect: () => openFallbackForm(row.original)
+              },
+              {
+                id: "copy-identifiers",
+                label: "Copy identifiers",
+                description: "Copy the identifiers needed to locate this property.",
+                icon: <ContentCopyIcon fontSize="small" />,
+                onSelect: () => copyIdentifiers(row.original)
+              }
+            ]} />;
           }}
-        />
+        /></PortalActionScope>
       </Stack>
 
       <ConfigStructuredValueDialog

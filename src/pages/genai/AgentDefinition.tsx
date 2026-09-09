@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -234,7 +236,7 @@ export default function AgentDefinition() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -252,37 +254,39 @@ export default function AgentDefinition() {
         muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Assign Skills">
-                    <IconButton color="primary" onClick={() => handleAssignSkills(row)}>
-                        <AssignmentTurnedInIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Manage Agent Directives">
-                    <IconButton color="primary" onClick={() => handleDirectives(row)}>
-                        <PolicyIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Update Agent Definition">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.agentDefId}
-                    >
-                        {isUpdateLoading === row.original.agentDefId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Agent Definition">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "assign-skills",
+          label: "Assign Skills",
+          description: "Manage skill assignments for this agent definition.",
+          icon: <AssignmentTurnedInIcon />,
+          onSelect: () => handleAssignSkills(row)
+        },
+        {
+          id: "manage-agent-directives",
+          label: "Manage Agent Directives",
+          description: "Manage the instructions associated with this agent.",
+          icon: <PolicyIcon />,
+          onSelect: () => handleDirectives(row)
+        },
+        {
+          id: "update-agent-definition",
+          label: "Update Agent Definition",
+          icon: (
+            <SystemUpdateIcon />
+          ),
+
+          loading: () => Boolean(isUpdateLoading === row.original.agentDefId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "delete-agent-definition",
+          label: "Delete Agent Definition",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          onSelect: () => handleDelete(row)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Button
                 variant="contained"
@@ -303,11 +307,11 @@ export default function AgentDefinition() {
                 Create New Agent Definition
             </Button>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </GenAiTaskLayout>
     );
 }

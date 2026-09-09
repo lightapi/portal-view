@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip, Typography, CircularProgress } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -220,7 +222,6 @@ export default function ConfigInstanceApi() {
     }
   }, [host, navigate, location.pathname, searchParams, taskContext]);
 
-
   const handleSync = useCallback(async () => {
     if (!host) {
       alert("Host is required.");
@@ -298,7 +299,7 @@ export default function ConfigInstanceApi() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -315,37 +316,43 @@ export default function ConfigInstanceApi() {
     getRowId: (row) => `${row.instanceApiId}-${row.configId}-${row.propertyName}`,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Property">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.propertyId}
-          >
-            {isUpdateLoading === row.original.propertyId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Property">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-property",
+        label: "Update Property",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.propertyId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-property",
+        label: "Delete Property",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<TuneIcon />}
-          onClick={() => navigate(buildConfigUpdateRoute('api', searchParams, taskContext))}
-          disabled={!initialInstanceApiId}
-        >
-          Update Config Values
-        </Button>
+        <PortalActions row={null} label="Page actions" actions={[
+          {
+            id: "update-config-values",
+            label: "Update Config Values",
+            icon: <TuneIcon />,
+            disabledReason: () => (!initialInstanceApiId) ? (!initialInstanceApiId ? 'Select an instance API.' : 'Configuration synchronization is in progress.') : null,
+            onSelect: () => navigate(buildConfigUpdateRoute('api', searchParams, taskContext))
+          },
+          {
+            id: "sync-config-from-api",
+            label: "Sync Config from Api",
+            icon: isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />,
+            disabledReason: () => (!initialInstanceApiId || isSyncLoading) ? (!initialInstanceApiId ? 'Select an instance API.' : 'Configuration synchronization is in progress.') : null,
+            onSelect: handleSync
+          }
+        ]} />
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
@@ -357,14 +364,7 @@ export default function ConfigInstanceApi() {
         >
           Add Config to Instance Api
         </Button>
-        <Button
-          variant="contained"
-          startIcon={isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
-          onClick={handleSync}
-          disabled={!initialInstanceApiId || isSyncLoading}
-        >
-          {isSyncLoading ? 'Syncing...' : 'Sync Config from Api'}
-        </Button>
+
         {initialConfigId && (
           <Typography variant="subtitle1">
             For Config: <strong>{initialConfigId}</strong>
@@ -377,7 +377,7 @@ export default function ConfigInstanceApi() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -389,7 +389,7 @@ export default function ConfigInstanceApi() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

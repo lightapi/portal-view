@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -10,7 +12,7 @@ import {
     type MRT_Row,
     type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Alert, Box, Button, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -273,7 +275,7 @@ export default function ConfigSnapshot() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -299,117 +301,129 @@ export default function ConfigSnapshot() {
                 size: 500,
             },
         },
-        renderRowActions: ({ row }) => (
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'nowrap',
-                    gap: 0.5,
-                }}
-            >
-                <Tooltip title="Update Snapshot">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.snapshotId}
-                    >
-                        <SystemUpdateIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Snapshot">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Snapshot Properties">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <FormatListBulletedIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="View canonical values.yml">
-                    <IconButton
-                        aria-label={`View values.yml for ${row.original.instanceName}`}
-                        onClick={() => setValuesSnapshot(row.original)}
-                    >
-                        <DataObjectIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Snapshot Files">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotFile', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <DescriptionIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Deployment Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotDeploymentInstanceProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <InstallMobileIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="API Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotInstanceApiProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <ApiIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="App Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotInstanceAppProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <AppsIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="App API Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotInstanceAppApiProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <FormatIndentIncreaseIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Inst Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotInstanceProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <TuneIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Env Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotEnvironmentProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <YardIcon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Prd Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotProductProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <Inventory2Icon />
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="PV Props">
-                    <IconButton onClick={() => navigate(
-                        buildTaskAwareRoute('/app/config/configSnapshotProductVersionProperty', searchParams, contextForRow(row.original)),
-                        { state: { data: row.original } },
-                    )}>
-                        <AddToDriveIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "update-snapshot",
+          label: "Update Snapshot",
+          icon: <SystemUpdateIcon />,
+
+          loading: () => Boolean(isUpdateLoading === row.original.snapshotId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "delete-snapshot",
+          label: "Delete Snapshot",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          onSelect: () => handleDelete(row)
+        },
+        {
+          id: "snapshot-properties",
+          label: "Snapshot Properties",
+          description: "View the snapshot configuration properties.",
+          icon: <FormatListBulletedIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "canonical-values",
+          label: `View values.yml for ${row.original.instanceName}`,
+          icon: <DataObjectIcon />,
+          onSelect: () => setValuesSnapshot(row.original)
+        },
+        {
+          id: "snapshot-files",
+          label: "Snapshot Files",
+          description: "View files captured by this snapshot.",
+          icon: <DescriptionIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotFile', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "deployment-props",
+          label: "Deployment Props",
+          description: "View deployment configuration properties.",
+          icon: <InstallMobileIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotDeploymentInstanceProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "api-props",
+          label: "API Props",
+          description: "View API configuration properties.",
+          icon: <ApiIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotInstanceApiProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "app-props",
+          label: "App Props",
+          description: "View application configuration properties.",
+          icon: <AppsIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotInstanceAppProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "app-api-props",
+          label: "App API Props",
+          description: "View application API configuration properties.",
+          icon: <FormatIndentIncreaseIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotInstanceAppApiProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "inst-props",
+          label: "Inst Props",
+          description: "View instance configuration properties.",
+          icon: <TuneIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotInstanceProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "env-props",
+          label: "Env Props",
+          description: "View environment configuration properties.",
+          icon: <YardIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotEnvironmentProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "prd-props",
+          label: "Prd Props",
+          description: "View product configuration properties.",
+          icon: <Inventory2Icon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotProductProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        },
+        {
+          id: "pv-props",
+          label: "PV Props",
+          description: "View product version configuration properties.",
+          icon: <AddToDriveIcon />,
+          onSelect: () => navigate(
+            buildTaskAwareRoute('/app/config/configSnapshotProductVersionProperty', searchParams, contextForRow(row.original)),
+            { state: { data: row.original } },
+          )
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Button
@@ -435,7 +449,14 @@ export default function ConfigSnapshot() {
                         </Button>
                     </span>
                 </Tooltip>
-                <Button startIcon={<HistoryIcon />} onClick={showHistory}>Show snapshot history</Button>
+            <PortalActions row={null} label="Page actions" actions={[
+              {
+                id: "show-snapshot-history",
+                label: "Show snapshot history",
+                icon: <HistoryIcon />,
+                onSelect: showHistory
+              }
+            ]} />
                 {selectedCount > 0 && (
                     <Button onClick={() => { setSelectedSnapshots(new Map()); setSelectionMessage(null); }}>Clear selection</Button>
                 )}
@@ -449,7 +470,7 @@ export default function ConfigSnapshot() {
                 )}
             </Box>
         ),
-    });
+    }));
 
     return (
         <Box sx={{ p: 1 }}>
@@ -463,7 +484,7 @@ export default function ConfigSnapshot() {
             </Box>
             {selectionMessage && <Alert severity="warning" sx={{ mb: 1 }}>{selectionMessage}</Alert>}
             {selectedCount >= 2 && compareIssue && <Alert severity="warning" sx={{ mb: 1 }}>{compareIssue}</Alert>}
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             <SnapshotValuesDialog hostId={host} snapshot={valuesSnapshot} onClose={() => setValuesSnapshot(null)} />
         </Box>
     );

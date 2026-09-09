@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
+import { selectPortalAction } from '../../test/portalActions';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import HindsightResourceTable, { type HindsightResourceConfig } from './HindsightResourceTable';
@@ -54,7 +56,7 @@ describe('Hindsight resource lifecycle UI', () => {
         expect(screen.queryByRole('button', { name: /Create/ })).not.toBeInTheDocument();
         expect(screen.queryByLabelText(/Deactivate|Delete|Update/)).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByTestId('VisibilityIcon').closest('button')!);
+        await selectPortalAction('View projection');
         await waitFor(() => expect(mocks.query).toHaveBeenCalledTimes(2));
         expect(mocks.query.mock.calls[0][0]).toBe('getAgentSessionHistories');
         expect(mocks.query.mock.calls[0][1]).toMatchObject({ hostId: 'host-a', bankId: 'bank-a', offset: 0, limit: 100, filters: [], sorting: [], active: true });
@@ -80,7 +82,7 @@ describe('Hindsight resource lifecycle UI', () => {
         expect(await screen.findByText('unit-a')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Link Unit and Entity' })).toBeInTheDocument();
 
-        fireEvent.click(screen.getByTestId('DeleteForeverIcon').closest('button')!);
+        await selectPortalAction('Unlink association');
         await waitFor(() => expect(mocks.command).toHaveBeenCalledTimes(1));
         expect(mocks.command).toHaveBeenCalledWith('unlinkAgentMemoryUnitEntity', {
             hostId: 'host-a', bankId: 'bank-a', unitId: 'unit-a', entityId: 'entity-a',

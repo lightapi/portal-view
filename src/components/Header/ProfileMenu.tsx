@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Person as AccountIcon } from "@mui/icons-material";
-import { IconButton, Menu, MenuItem, Typography, Box } from "@mui/material";
+import { IconButton, Menu, MenuItem, ListSubheader } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import type { IPublicClientApplication } from "@azure/msal-browser";
@@ -21,6 +21,7 @@ import {
 import { hasAnyRole } from "../../utils/ownershipScope";
 import { config, isSsoEnabled } from "../../../config";
 import { loginRequest } from "../../authConfig";
+import { ActionDisplayToggle } from '../PortalActions/ActionDisplayToggle';
 
 function ProfileMenuContent({
   msalInstance,
@@ -83,10 +84,11 @@ function ProfileMenuContent({
   return (
     <>
       <IconButton
-        aria-label="Open profile menu"
         aria-haspopup="true"
         color="inherit"
-        aria-controls="profile-menu"
+        aria-label="Account menu"
+        aria-expanded={Boolean(profileMenu)}
+        aria-controls={profileMenu ? 'profile-menu' : undefined}
         onClick={(e: React.MouseEvent<HTMLElement>) => setProfileMenu(e.currentTarget)}
         size="large"
         sx={{ ml: 0, p: 0.5 }}
@@ -102,16 +104,9 @@ function ProfileMenuContent({
         transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         sx={{}}
         PaperProps={{ sx: { minWidth: 265 } }}
-        disableAutoFocusItem
       >
-        {isAuthenticated ? (
-          <div>
-            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-              <Typography variant="h6" fontWeight="medium">
-                {email}
-              </Typography>
-            </Box>
-            <MenuItem
+        {isAuthenticated && (<ListSubheader>{email}</ListSubheader>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -122,8 +117,8 @@ function ProfileMenuContent({
               onClick={() => handleMenuItemClick(getProfile)}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Profile
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -134,8 +129,8 @@ function ProfileMenuContent({
               onClick={() => handleMenuItemClick(getPayment)}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Payment
-            </MenuItem>
-            {hasAnyRole(roles, ["admin", "host-admin"]) && (
+            </MenuItem>)}
+        {isAuthenticated && (hasAnyRole(roles, ["admin", "host-admin"]) && (
               <MenuItem
                 sx={{
                   color: 'text.hint',
@@ -148,8 +143,8 @@ function ProfileMenuContent({
               >
                 <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Update Roles
               </MenuItem>
-            )}
-            <MenuItem
+            ))}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -160,8 +155,8 @@ function ProfileMenuContent({
               onClick={() => handleMenuItemClick(getOrders)}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Orders
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -172,8 +167,8 @@ function ProfileMenuContent({
               onClick={() => handleMenuItemClick(userHost)}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Switch Host
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -184,8 +179,8 @@ function ProfileMenuContent({
               onClick={() => handleMenuItemClick(createOrg)}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Claim Org
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -195,8 +190,8 @@ function ProfileMenuContent({
               }}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Tasks
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -206,8 +201,8 @@ function ProfileMenuContent({
               }}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Messages
-            </MenuItem>
-            <MenuItem
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem
               sx={{
                 color: 'text.hint',
                 '&:hover, &:focus': {
@@ -217,48 +212,12 @@ function ProfileMenuContent({
               }}
             >
               <AccountIcon sx={{ mr: 2, color: 'text.hint' }} /> Notifications
-            </MenuItem>
-            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-              <Typography
-                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
-                color="primary"
-                onClick={() => handleMenuItemClick(changePassword)}
-              >
-                Change Password
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-              <Typography
-                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
-                color="primary"
-                onClick={() => handleMenuItemClick(signOut, msalInstance)}
-              >
-                Sign Out
-              </Typography>
-            </Box>
-          </div>
-        ) : (
-          <div>
-            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-              <Typography
-                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
-                color="primary"
-                onClick={signIn}
-              >
-                Sign In
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2 }}>
-              <Typography
-                sx={{ fontSize: 16, textDecoration: 'none', cursor: 'pointer' }}
-                color="primary"
-                onClick={() => handleMenuItemClick(signUp)}
-              >
-                Sign Up
-              </Typography>
-            </Box>
-          </div>
-        )}
+            </MenuItem>)}
+        {isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(changePassword)}>Change Password</MenuItem>)}
+        {isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(signOut, msalInstance)}>Sign Out</MenuItem>)}
+        {!isAuthenticated && (<MenuItem onClick={signIn}>Sign In</MenuItem>)}
+        {!isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(signUp)}>Sign Up</MenuItem>)}
+        <ActionDisplayToggle />
       </Menu>
     </>
   );

@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,18 +11,7 @@ import {
     type MRT_Row,
     type MRT_SortingState,
 } from 'material-react-table';
-import {
-    Alert,
-    Box,
-    Button,
-    Chip,
-    CircularProgress,
-    FormControlLabel,
-    IconButton,
-    Stack,
-    Switch,
-    Tooltip,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, FormControlLabel, Stack, Switch } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
@@ -202,7 +193,7 @@ export default function MemoryBanks() {
         },
     ], [openWorkspace]);
 
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data: rows,
         initialState: { density: 'compact', showColumnFilters: true },
@@ -220,13 +211,30 @@ export default function MemoryBanks() {
         muiToolbarAlertBannerProps: message ? { color: 'error', children: message } : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }: { row: MRT_Row<MemoryBank> }) => (
-            <Stack direction="row" spacing={0.5}>
-                <Tooltip title="Open workspace"><IconButton onClick={() => openWorkspace(row.original)}><OpenInNewIcon /></IconButton></Tooltip>
-                <Tooltip title={row.original.runtimeManaged ? 'Runtime-managed banks are read-only' : 'Update bank'}><span><IconButton aria-label="Update bank" onClick={() => void updateBank(row.original)} disabled={row.original.runtimeManaged || busyId === row.original.bankId}>{busyId === row.original.bankId ? <CircularProgress size={20} /> : <EditIcon />}</IconButton></span></Tooltip>
-                <Tooltip title={row.original.runtimeManaged ? 'Runtime-managed banks are read-only' : 'Deactivate bank'}><span><IconButton aria-label="Deactivate bank" color="error" onClick={() => void deleteBank(row.original)} disabled={row.original.runtimeManaged || busyId === row.original.bankId}><DeleteForeverIcon /></IconButton></span></Tooltip>
-            </Stack>
-        ),
+      renderRowActions: ({ row }: { row: MRT_Row<MemoryBank>; }) => <PortalActions row={row} actions={[
+        {
+          id: "open-workspace",
+          label: "Open workspace",
+          icon: <OpenInNewIcon />,
+          onSelect: () => openWorkspace(row.original)
+        },
+        {
+          id: "update-bank",
+          label: "Update bank",
+          icon: <EditIcon />,
+          disabledReason: () => (row.original.runtimeManaged || busyId === row.original.bankId) ? ((busyId === row.original.bankId) ? 'Action in progress.' : (row.original.runtimeManaged ? 'Runtime-managed banks are read-only.' : 'Action in progress.')) : null,
+          loading: () => Boolean(busyId === row.original.bankId),
+          onSelect: () => void updateBank(row.original)
+        },
+        {
+          id: "deactivate-bank",
+          label: "Deactivate bank",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          disabledReason: () => (row.original.runtimeManaged || busyId === row.original.bankId) ? (row.original.runtimeManaged ? 'Runtime-managed banks are read-only.' : 'Action in progress.') : null,
+          onSelect: () => void deleteBank(row.original)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'flex-start', sm: 'center' }}>
                 <Button variant="contained" startIcon={<AddBoxIcon />} onClick={createBank}>Create Memory Bank</Button>
@@ -236,7 +244,7 @@ export default function MemoryBanks() {
                 />
             </Stack>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={baseContext}>
@@ -244,7 +252,7 @@ export default function MemoryBanks() {
                 <Alert severity="info" sx={{ mb: 1 }}>
                     Runtime-created session banks are excluded by default before pagination and counts. Enable the control to include them.
                 </Alert>
-                <MaterialReactTable table={table} />
+          <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             </Box>
         </GenAiTaskLayout>
     );

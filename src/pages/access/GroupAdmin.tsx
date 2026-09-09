@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -196,7 +198,7 @@ export default function GroupAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -214,53 +216,55 @@ export default function GroupAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Group">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.groupId}
-          >
-            {isUpdateLoading === row.original.groupId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Group Permissions">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
-            <DoNotTouchIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Group Row Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
-            <KeyboardDoubleArrowDownIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Group Column Filters">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
-            <KeyboardDoubleArrowRightIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Users">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })}>
-            <GroupsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Group">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-group",
+        label: "Update Group",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.groupId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "group-permissions",
+        label: "Group Permissions",
+        icon: <DoNotTouchIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })
+      },
+      {
+        id: "group-row-filters",
+        label: "Group Row Filters",
+        icon: <KeyboardDoubleArrowDownIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })
+      },
+      {
+        id: "group-column-filters",
+        label: "Group Column Filters",
+        icon: <KeyboardDoubleArrowRightIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })
+      },
+      {
+        id: "manage-users",
+        label: "Manage Users",
+        icon: <GroupsIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupUser', searchParams, { ...taskContext, groupId: row.original.groupId }), { state: { data: { groupId: row.original.groupId } } })
+      },
+      {
+        id: "delete-group",
+        label: "Delete Group",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createGroup', searchParams, taskContext))}>
         Create New Group
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -272,7 +276,7 @@ export default function GroupAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

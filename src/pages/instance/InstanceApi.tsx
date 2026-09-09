@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AddToDriveIcon from "@mui/icons-material/AddToDrive";
@@ -236,7 +238,7 @@ export default function InstanceApi() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -254,32 +256,37 @@ export default function InstanceApi() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title={instanceApiOwnership.canModifyRecord(row.original) ? 'Delete Instance API' : 'You can only delete instance API links you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!instanceApiOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="Instance Api Config">
-          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
-            <AddToDriveIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Api Path Prefix">
-          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/instance/InstanceApiPathPrefix', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })}>
-            <RouteIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Select API Tools for Gateway publication">
-          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/genai/Tool', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })}>
-            <PublishIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "delete-instance-api",
+        label: "Delete Instance API",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!instanceApiOwnership.canModifyRecord(row.original)) ? ('You can only delete instance API links you own.') : null,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "instance-api-config",
+        label: "Instance Api Config",
+        description: "Manage configuration values for this instance API.",
+        icon: <AddToDriveIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configInstanceApi', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })
+      },
+      {
+        id: "api-path-prefix",
+        label: "Api Path Prefix",
+        description: "Manage URL path prefixes for this instance API.",
+        icon: <RouteIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/instance/InstanceApiPathPrefix', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion } } })
+      },
+      {
+        id: "select-api-tools-for-gateway-publication",
+        label: "Select API Tools for Gateway publication",
+        description: "Choose which tools this gateway publishes.",
+        icon: <PublishIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/genai/Tool', searchParams, contextForRow(row.original)), { state: { data: { instanceApiId: row.original.instanceApiId, instanceId: row.original.instanceId, instanceName: row.original.instanceName, productId: row.original.productId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, apiVersionId: row.original.apiVersionId, serviceId: row.original.serviceId, apiName: row.original.apiName, apiType: row.original.apiType, protocol: row.original.protocol, envTag: row.original.envTag, targetHost: row.original.targetHost } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -307,7 +314,7 @@ export default function InstanceApi() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -322,7 +329,7 @@ export default function InstanceApi() {
             User context is required before owner-scoped instance API links can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

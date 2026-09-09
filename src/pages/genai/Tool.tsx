@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,7 +12,7 @@ import {
     type MRT_Row,
     type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Box, Button, Chip, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Chip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -414,7 +416,7 @@ export default function Tool() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -434,62 +436,63 @@ export default function Tool() {
         enableRowActions: true,
         enableRowSelection: (row) => row.original.active,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Tooltip title="Update Tool">
-                    <IconButton
-                        onClick={() => handleUpdate(row)}
-                        disabled={isUpdateLoading === row.original.toolId}
-                    >
-                        {isUpdateLoading === row.original.toolId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <SystemUpdateIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title={row.original.descriptionEmbeddingStatus === 'failed' ? 'Retry Embedding' : 'Refresh Embedding'}>
-                    <IconButton
-                        onClick={() => handleRefreshEmbedding(row)}
-                        disabled={!row.original.active || isEmbeddingRefreshLoading === row.original.toolId}
-                    >
-                        {isEmbeddingRefreshLoading === row.original.toolId ? (
-                            <CircularProgress size={22} />
-                        ) : (
-                            <RefreshIcon />
-                        )}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Tool">
-                    <IconButton color="error" onClick={() => handleDelete(row)}>
-                        <DeleteForeverIcon />
-                    </IconButton>
-                </Tooltip>
-                {row.original.endpointId ? <Tooltip title="Workflow Access">
-                    <span><IconButton
-                        color="primary"
-                        onClick={() => setWorkflowAccessTool(row.original)}
-                        disabled={row.original.lightapiValidationStatus !== 'VALID'}
-                    ><SecurityIcon /></IconButton></span>
-                </Tooltip> : null}
-                <Tooltip title="Gateway Access Control">
-                    <span><IconButton color="secondary"
-                        onClick={() => setAccessControlTool(row.original)}
-                        disabled={!row.original.active}>
-                        <SecurityIcon />
-                    </IconButton></span>
-                </Tooltip>
-                {row.original.endpointId ? <Tooltip title="Invoke API Endpoint">
-                    <span><IconButton
-                        color="success"
-                        onClick={() => setInvokeTool(row.original)}
-                        disabled={!row.original.active
-                            || row.original.lifecycleStatus !== 'active'
-                            || row.original.lightapiValidationStatus !== 'VALID'}
-                    ><PlayArrowIcon /></IconButton></span>
-                </Tooltip> : null}
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "update-tool",
+          label: "Update Tool",
+          icon: (
+            <SystemUpdateIcon />
+          ),
+
+          loading: () => Boolean(isUpdateLoading === row.original.toolId),
+          onSelect: () => handleUpdate(row)
+        },
+        {
+          id: "refresh-embedding",
+          label: row.original.descriptionEmbeddingStatus === 'failed' ? 'Retry Embedding' : 'Refresh Embedding',
+          icon: (
+            <RefreshIcon />
+          ),
+          disabledReason: () => (!row.original.active || isEmbeddingRefreshLoading === row.original.toolId) ? (!row.original.active ? 'This tool is inactive.' : row.original.lightapiValidationStatus !== 'VALID' ? 'This tool requires valid LightAPI configuration.' : row.original.lifecycleStatus !== 'active' ? 'This tool must have an active lifecycle.' : 'Action in progress.') : null,
+          loading: () => Boolean(isEmbeddingRefreshLoading === row.original.toolId),
+          onSelect: () => handleRefreshEmbedding(row)
+        },
+        {
+          id: "delete-tool",
+          label: "Delete Tool",
+          icon: <DeleteForeverIcon />,
+          destructive: true,
+          onSelect: () => handleDelete(row)
+        },
+        {
+          id: "workflow-access",
+          label: "Workflow Access",
+          description: "Manage workflow access to this tool.",
+          icon: <SecurityIcon />,
+          hidden: () => !((row.original.endpointId)),
+          disabledReason: () => (row.original.lightapiValidationStatus !== 'VALID') ? (!row.original.active ? 'This tool is inactive.' : row.original.lightapiValidationStatus !== 'VALID' ? 'This tool requires valid LightAPI configuration.' : row.original.lifecycleStatus !== 'active' ? 'This tool must have an active lifecycle.' : 'Action in progress.') : null,
+          onSelect: () => setWorkflowAccessTool(row.original)
+        },
+        {
+          id: "gateway-access-control",
+          label: "Gateway Access Control",
+          description: "Manage gateway authorization for this tool.",
+          icon: <SecurityIcon />,
+          disabledReason: () => (!row.original.active) ? (!row.original.active ? 'This tool is inactive.' : row.original.lightapiValidationStatus !== 'VALID' ? 'This tool requires valid LightAPI configuration.' : row.original.lifecycleStatus !== 'active' ? 'This tool must have an active lifecycle.' : 'Action in progress.') : null,
+          onSelect: () => setAccessControlTool(row.original)
+        },
+        {
+          id: "invoke-api-endpoint",
+          label: "Invoke API Endpoint",
+          description: "Open the API endpoint invocation form.",
+          icon: <PlayArrowIcon />,
+          hidden: () => !((row.original.endpointId)),
+          disabledReason: () => (!row.original.active
+            || row.original.lifecycleStatus !== 'active'
+            || row.original.lightapiValidationStatus !== 'VALID') ? (!row.original.active ? 'This tool is inactive.' : row.original.lightapiValidationStatus !== 'VALID' ? 'This tool requires valid LightAPI configuration.' : row.original.lifecycleStatus !== 'active' ? 'This tool must have an active lifecycle.' : 'Action in progress.') : null,
+          onSelect: () => setInvokeTool(row.original)
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createTool', searchParams, taskContext))}>
                 Create New Tool
@@ -499,11 +502,11 @@ export default function Tool() {
                 Publish Selected ({selectedTools.length})
             </Button>
         </Box>,
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             {host && <GatewayToolPublicationDialog
                 open={publicationOpen || Boolean(accessControlTool)}
                 hostId={host}

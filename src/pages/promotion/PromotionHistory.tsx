@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +10,7 @@ import {
     type MRT_ColumnFiltersState,
     type MRT_SortingState,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, Chip } from '@mui/material';
+import { Alert, Box, Button, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
@@ -179,7 +181,7 @@ export default function PromotionHistory() {
     );
 
     // Table instance
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -207,21 +209,18 @@ export default function PromotionHistory() {
             : undefined,
         enableRowActions: true,
         positionActionsColumn: 'first',
-        renderRowActions: ({ row }) => (
-            <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-                <Tooltip title="View Diff Details">
-                    <IconButton
-                        onClick={() =>
-                            navigate('/app/promotion/diff', {
-                                state: { data: row.original },
-                            })
-                        }
-                    >
-                        <VisibilityIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        ),
+      renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+        {
+          id: "view-diff-details",
+          label: "View Diff Details",
+          description: "Inspect the changes included in this promotion.",
+          icon: <VisibilityIcon />,
+          onSelect: () =>
+            navigate('/app/promotion/diff', {
+              state: { data: row.original },
+            })
+        }
+      ]} />,
         renderTopToolbarCustomActions: () => (
             <Box sx={{ display: 'flex', gap: 2 }}>
                 <Button
@@ -236,12 +235,17 @@ export default function PromotionHistory() {
                 >
                     New Import
                 </Button>
-                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refreshProjectionStatus}>
-                    Refresh Status
-                </Button>
+            <PortalActions row={null} label="Page actions" actions={[
+              {
+                id: "refresh-status",
+                label: "Refresh Status",
+                icon: <RefreshIcon />,
+                onSelect: refreshProjectionStatus
+              }
+            ]} />
             </Box>
         ),
-    });
+    }));
 
     return (
         <Box>
@@ -253,7 +257,7 @@ export default function PromotionHistory() {
                     {alerts.releaseRollbackRecommended && ' Release rollback threshold exceeded.'}
                 </Alert>
             )}
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </Box>
     );
 }

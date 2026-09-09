@@ -1,3 +1,4 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -105,8 +106,21 @@ export default function SnapshotYamlDiff({ hostId, snapshotIds }: SnapshotYamlDi
           {snapshots.map(snapshot => (
             <Stack key={snapshot.snapshotId} direction="row" spacing={1} alignItems="center">
               <Typography variant="subtitle2">{snapshot.instanceName} · {snapshot.snapshotTs}</Typography>
-              <Button size="small" startIcon={<ContentCopyIcon />} onClick={() => copy(snapshot)}>Copy</Button>
-              <Button size="small" startIcon={<DownloadIcon />} onClick={() => download(snapshot)}>Download</Button>
+              <PortalActionScope><PortalActions row={null} actions={[
+                {
+                  id: "copy",
+                  label: "Copy",
+                  icon: <ContentCopyIcon />,
+                  onSelect: () => copy(snapshot)
+                },
+                {
+                  id: "download",
+                  label: "Download",
+                  icon: <DownloadIcon />,
+                  onSelect: () => download(snapshot)
+                }
+              ]} /></PortalActionScope>
+
             </Stack>
           ))}
         </Stack>

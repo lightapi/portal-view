@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -217,29 +219,26 @@ export default function ConfigInstanceApp() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigInstanceAppType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Property">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.propertyId}
-              >
-                {isUpdateLoading === row.original.propertyId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Property">
-              <IconButton color="error" onClick={() => handleDelete(row)}>
-                <DeleteForeverIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
+      { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => <PortalActions row={row} actions={[
+          {
+            id: "update-property",
+            label: "Update Property",
+            icon: (
+              <SystemUpdateIcon />
+            ),
+
+            loading: () => Boolean(isUpdateLoading === row.original.propertyId),
+            onSelect: () => handleUpdate(row)
+          },
+          {
+            id: "delete-property",
+            label: "Delete Property",
+            icon: <DeleteForeverIcon />,
+            destructive: true,
+            onSelect: () => handleDelete(row)
+          }
+        ]} />
       },
       { accessorKey: 'hostId', header: 'Host Id' },
       { accessorKey: 'instanceAppId', header: 'Instance App Id' },
@@ -273,7 +272,7 @@ export default function ConfigInstanceApp() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -292,14 +291,15 @@ export default function ConfigInstanceApp() {
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<TuneIcon />}
-          onClick={() => navigate(buildConfigUpdateRoute('app', searchParams, taskContext))}
-          disabled={!initialInstanceAppId}
-        >
-          Update Config Values
-        </Button>
+        <PortalActions row={null} label="Page actions" actions={[
+          {
+            id: "update-config-values",
+            label: "Update Config Values",
+            icon: <TuneIcon />,
+            disabledReason: () => (!initialInstanceAppId) ? ('Select an instance application to update its configuration.') : null,
+            onSelect: () => navigate(buildConfigUpdateRoute('app', searchParams, taskContext))
+          }
+        ]} />
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
@@ -323,7 +323,7 @@ export default function ConfigInstanceApp() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -335,7 +335,7 @@ export default function ConfigInstanceApp() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

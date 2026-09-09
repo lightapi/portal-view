@@ -1,3 +1,4 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -217,13 +218,14 @@ export default function ApiCatalog() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-          <Button
-            variant="outlined"
-            startIcon={<AdminPanelSettingsIcon />}
-            onClick={() => navigate(buildTaskAwareRoute('/app/service/admin', taskSearchParams, taskContext))}
-          >
-            API Admin
-          </Button>
+          <PortalActionScope><PortalActions row={null} actions={[
+            {
+              id: "api-admin",
+              label: "API Admin",
+              icon: <AdminPanelSettingsIcon />,
+              onSelect: () => navigate(buildTaskAwareRoute('/app/service/admin', taskSearchParams, taskContext))
+            }
+          ]} /></PortalActionScope>
           <Button
             variant="contained"
             startIcon={<AddBoxIcon />}
@@ -283,7 +285,7 @@ export default function ApiCatalog() {
         ) : apis.length === 0 ? (
           <Alert severity="info">No APIs match the current catalog filters.</Alert>
         ) : (
-          <Box
+          <PortalActionScope><Box
             sx={{
               display: 'grid',
               gridTemplateColumns: params.view === 'list'
@@ -307,7 +309,7 @@ export default function ApiCatalog() {
                 onUpdate={handleUpdate}
               />
             ))}
-          </Box>
+          </Box></PortalActionScope>
         )}
       </Box>
 

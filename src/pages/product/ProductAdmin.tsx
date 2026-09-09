@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -277,7 +279,7 @@ export default function ProductVersionAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -295,34 +297,65 @@ export default function ProductVersionAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Product Version">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.productVersionId}
-          >
-            {isUpdateLoading === row.original.productVersionId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Product Version"><IconButton color="error" onClick={() => handleDelete(row)}><DeleteForeverIcon /></IconButton></Tooltip>
-        <Tooltip title="Version Configs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><AddToDriveIcon /></IconButton></Tooltip>
-        <Tooltip title="Environments"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/environment', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { productVersionId: row.original.productVersionId, productId: row.original.productId } } })}><LanguageIcon /></IconButton></Tooltip>
-        <Tooltip title="Pipelines"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/pipeline', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><GridGoldenratioIcon /></IconButton></Tooltip>
-        <Tooltip title="Product Configs"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/config', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><PermDataSettingIcon /></IconButton></Tooltip>
-        <Tooltip title="Product Properties"><IconButton onClick={() => navigate(buildTaskAwareRoute('/app/product/property', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })}><FormatListBulletedIcon /></IconButton></Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-product-version",
+        label: "Update Product Version",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.productVersionId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-product-version",
+        label: "Delete Product Version",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "version-configs",
+        label: "Version Configs",
+        description: "Manage configuration associated with this product version.",
+        icon: <AddToDriveIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/config/configProductVersion', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "environments",
+        label: "Environments",
+        description: "Manage environment associations.",
+        icon: <LanguageIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/product/environment', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { productVersionId: row.original.productVersionId, productId: row.original.productId } } })
+      },
+      {
+        id: "pipelines",
+        label: "Pipelines",
+        icon: <GridGoldenratioIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/product/pipeline', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "product-configs",
+        label: "Product Configs",
+        description: "Manage configuration shared by the product.",
+        icon: <PermDataSettingIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/product/config', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })
+      },
+      {
+        id: "product-properties",
+        label: "Product Properties",
+        description: "Manage properties for this product version.",
+        icon: <FormatListBulletedIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/product/property', searchParams, { ...taskContext, productId: row.original.productId, productVersionId: row.original.productVersionId }), { state: { data: { ...row.original } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createProductVersion', searchParams, taskContext))}>
         Create New Version
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -334,7 +367,7 @@ export default function ProductVersionAdmin() {
           maxActions={3}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

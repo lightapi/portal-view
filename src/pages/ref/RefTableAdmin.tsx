@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -107,7 +109,6 @@ export default function RefTableAdmin() {
           active: activeStatus,
         },
       };
-
 
       const url = '/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd));
 
@@ -229,7 +230,7 @@ export default function RefTableAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -247,32 +248,31 @@ export default function RefTableAdmin() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading !== null}
-          >
-            {isUpdateLoading === row.original.tableId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Values">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/value', searchParams, contextForRow(row.original)), { state: { data: { tableId: row.original.tableId } } })}>
-            <DataObjectIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update",
+        label: "Update",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+        disabledReason: () => (isUpdateLoading !== null) ? ((isUpdateLoading === row.original.tableId) ? 'Action in progress.' : ('Another update is in progress.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.tableId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "manage-values",
+        label: "Manage Values",
+        icon: <DataObjectIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/ref/value', searchParams, contextForRow(row.original)), { state: { data: { tableId: row.original.tableId } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createRefTable', searchParams, taskContext))}>
@@ -280,7 +280,7 @@ export default function RefTableAdmin() {
         </Button>
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -291,7 +291,7 @@ export default function RefTableAdmin() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

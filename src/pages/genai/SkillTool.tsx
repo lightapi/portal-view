@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -206,7 +208,7 @@ export default function SkillTool() {
     );
 
     // Table instance configuration
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -226,38 +228,36 @@ export default function SkillTool() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const rowKey = `${row.original.skillId}-${row.original.toolId}`;
-            return (
-                <Box sx={{ display: 'flex', gap: '1rem' }}>
-                    <Tooltip title="Update Skill-Tool Association">
-                        <IconButton
-                            onClick={() => handleUpdate(row)}
-                            disabled={isUpdateLoading === rowKey}
-                        >
-                            {isUpdateLoading === rowKey ? (
-                                <CircularProgress size={22} />
-                            ) : (
-                                <SystemUpdateIcon />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Skill-Tool Association">
-                        <IconButton color="error" onClick={() => handleDelete(row)}>
-                            <DeleteForeverIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "update-skill-tool-association",
+              label: "Update Skill-Tool Association",
+              icon: (
+                <SystemUpdateIcon />
+              ),
+
+              loading: () => Boolean(isUpdateLoading === rowKey),
+              onSelect: () => handleUpdate(row)
+            },
+            {
+              id: "delete-skill-tool-association",
+              label: "Delete Skill-Tool Association",
+              icon: <DeleteForeverIcon />,
+              destructive: true,
+              onSelect: () => handleDelete(row)
+            }
+          ]} />;
         },
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createSkillTool', searchParams, taskContext))}>
                 Create New Skill Tool
             </Button>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </GenAiTaskLayout>
     );
 }

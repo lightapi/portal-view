@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -248,7 +250,7 @@ export default function TagAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -272,34 +274,38 @@ export default function TagAdmin() {
         size: 110,
       },
     },
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 0.5 }}>
-        {row.original.active ? <>
-          <Tooltip title="Update Tag">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.tagId}>
-              {isUpdateLoading === row.original.tagId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete Tag">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        </> : (
-          <Tooltip title="Restore Tag">
-            <IconButton color="primary" onClick={() => handleRestore(row)}>
-              <RestoreFromTrashIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-tag",
+        label: "Update Tag",
+        icon: <SystemUpdateIcon />,
+        hidden: () => !((row.original.active)),
+
+        loading: () => Boolean(isUpdateLoading === row.original.tagId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-tag",
+        label: "Delete Tag",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        hidden: () => !((row.original.active)),
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "restore-tag",
+        label: "Restore Tag",
+        icon: <RestoreFromTrashIcon />,
+        hidden: () => !((!(row.original.active))),
+        onSelect: () => handleRestore(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createTag', searchParams, taskContext))}>
         Create New Tag
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -311,7 +317,7 @@ export default function TagAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -6,7 +8,7 @@ import {
   type MRT_ColumnDef,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import ToggleOnIcon from '@mui/icons-material/ToggleOn';
 import { apiPost } from "../../api/apiPost.ts";
 import fetchClient from '../../utils/fetchClient';
@@ -43,7 +45,6 @@ export default function UserHost() {
     () => ({ hostId: host ?? '', userId: initialUserId ?? '' }),
     [host, initialUserId],
   );
-
 
   // Data and fetching state
   const [data, setData] = useState<UserHostType[]>([]);
@@ -121,7 +122,7 @@ export default function UserHost() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data, // Data is handled client-side by MRT
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -134,21 +135,15 @@ export default function UserHost() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading hosts for user' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title={row.original.current ? "This is the current host" : "Switch to this host"}>
-          <span>
-            <IconButton
-              color="primary"
-              onClick={() => handleSwitch(row)}
-              disabled={row.original.current}
-            >
-              <ToggleOnIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "switch-to-this-host",
+        label: "Switch to this host",
+        icon: <ToggleOnIcon />,
+        disabledReason: () => (row.original.current) ? ("This is the current host") : null,
+        onSelect: () => handleSwitch(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         {initialUserId && (
@@ -158,7 +153,7 @@ export default function UserHost() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -170,7 +165,7 @@ export default function UserHost() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

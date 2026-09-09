@@ -1,16 +1,5 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  Divider,
-  Skeleton,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { PortalActions } from '../../../components/PortalActions/PortalActions';
+import { Box, Card, CardActions, CardContent, Chip, Divider, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
 import type { ReactElement } from 'react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DetailsIcon from '@mui/icons-material/Details';
@@ -238,34 +227,36 @@ export default function ApiCatalogCard({
           flexWrap: 'wrap',
           minWidth: viewMode === 'list' ? { md: 170 } : undefined,
         }}
-      >
-        <Button size="small" startIcon={<DetailsIcon />} onClick={() => onDetails(api)}>
-          Details
-        </Button>
-        <Button
-          size="small"
-          startIcon={<FormatListBulletedIcon />}
-          disabled={!summary?.latestVersionId}
-          onClick={() => onOpenEndpoints(api, summary)}
-        >
-          Endpoints
-        </Button>
-        <Button size="small" startIcon={<AddBoxIcon />} onClick={() => onCreateVersion(api)}>
-          Version
-        </Button>
-        <Tooltip title={canModify ? 'Update API' : 'You can only update APIs you own.'}>
-          <span>
-            <Button
-              size="small"
-              startIcon={<SystemUpdateIcon />}
-              disabled={!canModify || isUpdating}
-              onClick={() => onUpdate(api)}
-            >
-              Update
-            </Button>
-          </span>
-        </Tooltip>
-      </CardActions>
+      ><PortalActions row={null} actions={[
+        {
+          id: "details",
+          label: "Details",
+          description: "View the complete record.",
+          icon: <DetailsIcon />,
+          onSelect: () => onDetails(api)
+        },
+        {
+          id: "endpoints",
+          label: "Endpoints",
+          icon: <FormatListBulletedIcon />,
+          disabledReason: () => (!summary?.latestVersionId) ? ('Create an API version before opening its endpoints.') : null,
+          onSelect: () => onOpenEndpoints(api, summary)
+        },
+        {
+          id: "version",
+          label: "Version",
+          icon: <AddBoxIcon />,
+          onSelect: () => onCreateVersion(api)
+        },
+        {
+          id: "update",
+          label: "Update",
+          icon: <SystemUpdateIcon />,
+          disabledReason: () => !canModify ? 'You can only update APIs you own.' : null,
+          loading: () => isUpdating,
+          onSelect: () => onUpdate(api)
+        }
+      ]} /></CardActions>
     </Card>
   );
 }

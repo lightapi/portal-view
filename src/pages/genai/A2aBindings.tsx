@@ -1,3 +1,6 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
@@ -163,12 +166,28 @@ export default function A2aBindings() {
     {accessorKey:'implementationKind',header:'Runtime'}, {accessorKey:'publicPath',header:'Public prefix'},
     {accessorKey:'publicationState',header:'Publication'}, {accessorKey:'contentDigest',header:'Digest'},
   ],[]);
-  const table=useMaterialReactTable({columns,data:rows,enableColumnFilters:true,
-    renderRowActions:({row})=><Stack direction="row" spacing={1}>
-      <Button size="small" onClick={()=>{setRemoteCardJson(row.original.remoteProfile?JSON.stringify(row.original.remoteProfile.agentCard,null,2):'');setEditing({...row.original});}}>Edit</Button>
-      <Button size="small" onClick={()=>setPublishing(row.original)}>Publish</Button>
-      <Button size="small" color="error" onClick={()=>void remove(row.original)}>Revoke</Button>
-    </Stack>,enableRowActions:true,positionActionsColumn:'last'});
+  const table=useMaterialReactTable(usePortalActionTableOptions({columns,data:rows,enableColumnFilters:true,
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "edit",
+        label: "Edit",
+        icon: <PortalActionIcon />,
+        onSelect: () => { setRemoteCardJson(row.original.remoteProfile ? JSON.stringify(row.original.remoteProfile.agentCard, null, 2) : ''); setEditing({ ...row.original }); }
+      },
+      {
+        id: "publish",
+        label: "Publish",
+        icon: <PortalActionIcon />,
+        onSelect: () => setPublishing(row.original)
+      },
+      {
+        id: "revoke",
+        label: "Revoke",
+        icon: <PortalActionIcon />,
+        destructive: true,
+        onSelect: () => void remove(row.original)
+      }
+    ]} />,enableRowActions:true,positionActionsColumn:'last'}));
 
   const set=<K extends keyof Binding>(key:K,value:Binding[K])=>setEditing(current=>current?{...current,[key]:value}:current);
   const setRemote=(patch:Partial<RemoteProfile>)=>setEditing(current=>current?{...current,
@@ -182,13 +201,21 @@ export default function A2aBindings() {
       <Typography variant="h5">A2A Bindings</Typography>
       <TextField size="small" label="Environment" value={environment} onChange={e=>setEnvironment(e.target.value)}/>
       <Button variant="contained" disabled={!host} onClick={()=>{setRemoteCardJson('');setEditing(empty(host!,environment));}}>Create binding</Button>
-      <Button disabled={!host} onClick={()=>setAuthoring(true)}>Manage publication profiles</Button>
+      <PortalActionScope><PortalActions row={null} label="Page actions" actions={[
+        {
+          id: "manage-publication-profiles",
+          label: "Manage publication profiles",
+          icon: <PortalActionIcon />,
+          disabledReason: () => (!host) ? ('Select a host to manage publication profiles.') : null,
+          onSelect: () => setAuthoring(true)
+        }
+      ]} /></PortalActionScope>
     </Stack>
     <Typography color="text.secondary" sx={{mb:2}}>
       UUID selectors identify Portal relationships only. Runtime configuration is published through the existing Config Server snapshot for host, serviceId, and envTag.
     </Typography>
     {error&&<Alert severity="error" sx={{mb:2}}>{error}</Alert>}
-    <Paper><MaterialReactTable table={table}/></Paper>
+    <Paper><PortalActionScope><MaterialReactTable table={table} /></PortalActionScope></Paper>
     <Dialog open={Boolean(editing)} onClose={()=>setEditing(null)} maxWidth="md" fullWidth>
       <DialogTitle>{editing?.a2aBindingId?'Update':'Create'} A2A binding</DialogTitle>
       {editing&&<DialogContent><Stack spacing={2} sx={{mt:1}}>

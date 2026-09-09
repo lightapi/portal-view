@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -220,7 +222,7 @@ export default function RefValue() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -238,25 +240,29 @@ export default function RefValue() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update Value">
-          <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading !== null}>
-            <SystemUpdateIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Value">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Locales">
-          <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/ref/locale', searchParams, contextForRow(row.original)), { state: { data: { valueId: row.original.valueId, tableId: row.original.tableId } } })}>
-            <LanguageIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-value",
+        label: "Update Value",
+        icon: <SystemUpdateIcon />,
+
+        loading: () => Boolean(isUpdateLoading !== null),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-value",
+        label: "Delete Value",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "manage-locales",
+        label: "Manage Locales",
+        icon: <LanguageIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/ref/locale', searchParams, contextForRow(row.original)), { state: { data: { valueId: row.original.valueId, tableId: row.original.tableId } } })
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -273,7 +279,7 @@ export default function RefValue() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -284,7 +290,7 @@ export default function RefValue() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

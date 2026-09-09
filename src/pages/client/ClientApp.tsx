@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -244,7 +246,7 @@ export default function ClientApp() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -262,55 +264,55 @@ export default function ClientApp() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title={clientAppOwnership.canModifyRecord(row.original) ? 'Update App' : 'You can only update client apps you own.'}>
-          <span>
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={!clientAppOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.appId}
-            >
-              {isUpdateLoading === row.original.appId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={clientAppOwnership.canModifyRecord(row.original) ? 'Delete App' : 'You can only delete client apps you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!clientAppOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title="OAuth Clients">
-          <IconButton onClick={() => navigate(
-            buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)),
-            { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
-          )}>
-            <AirlineSeatReclineNormalIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Create OAuth Client">
-          <IconButton onClick={() => navigate(
-            buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)),
-            { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
-          )}>
-            <VpnKeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Instance Apps">
-          <IconButton onClick={() => navigate(
-            buildTaskAwareRoute('/app/instance/InstanceApp', searchParams, contextForRow(row.original)),
-            { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
-          )}>
-            <ContentCopyIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-app",
+        label: "Update App",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+        disabledReason: () => (!clientAppOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.appId) ? ((isUpdateLoading === row.original.appId) ? 'Action in progress.' : ('You can only update client apps you own.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.appId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-app",
+        label: "Delete App",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!clientAppOwnership.canModifyRecord(row.original)) ? ('You can only delete client apps you own.') : null,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "oauth-clients",
+        label: "OAuth Clients",
+        icon: <AirlineSeatReclineNormalIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/oauth/authClient', searchParams, contextForRow(row.original)),
+          { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
+        )
+      },
+      {
+        id: "create-oauth-client",
+        label: "Create OAuth Client",
+        description: "Create an OAuth client with this record preselected.",
+        icon: <VpnKeyIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/form/createClient', searchParams, contextForRow(row.original)),
+          { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
+        )
+      },
+      {
+        id: "instance-apps",
+        label: "Instance Apps",
+        description: "Manage application associations.",
+        icon: <ContentCopyIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/instance/InstanceApp', searchParams, contextForRow(row.original)),
+          { state: { data: { hostId: row.original.hostId, appId: row.original.appId } } },
+        )
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createApp', searchParams, taskContext))}>
@@ -323,7 +325,7 @@ export default function ClientApp() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -340,7 +342,7 @@ export default function ClientApp() {
           User context is required before owner-scoped client apps can be loaded.
         </Alert>
       )}
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

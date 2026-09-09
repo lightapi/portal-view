@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -71,7 +73,7 @@ export default function Schedule() {
   const [searchParams] = useSearchParams();
   const { host, userId, email, roles, positions } = useUserState() as UserState;
   const searchContext = useMemo(() => contextFromSearchParams(searchParams), [searchParams]);
-  
+
   // Determine if we are in admin mode based on the URL path
   const isAdminView = location.pathname.includes('/admin');
   const scheduleOwnership = useMemo(
@@ -119,7 +121,7 @@ export default function Schedule() {
   const fetchData = useCallback(async () => {
     if (!host) return;
     if (ownedOnly && !userId) return; // Owner-scoped view must have a user id.
-    
+
     setIsError(false);
     if (!data.length) setIsLoading(true); else setIsRefetching(true);
 
@@ -260,36 +262,37 @@ export default function Schedule() {
           filterSelectOptions: [{ label: 'True', value: 'true' }, { label: 'False', value: 'false' }],
           Cell: ({ cell }) => (cell.getValue() ? 'True' : 'False'),
         },
-        {
-          id: 'update', header: 'Update', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => {
-            const disabled = !canModifySchedule(row.original);
-            return (
-              <Tooltip title={disabled ? 'You can only update schedules you own.' : 'Update Schedule'}>
-                <span>
-                  <IconButton onClick={() => handleUpdate(row)} disabled={disabled || isUpdateLoading === row.original.scheduleId}>
-                    {isUpdateLoading === row.original.scheduleId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-                  </IconButton>
-                </span>
-              </Tooltip>
-            );
-          },
-        },
-        {
-          id: 'delete', header: 'Delete', enableSorting: false, enableColumnFilter: false,
-          Cell: ({ row }) => {
-            const disabled = !canModifySchedule(row.original);
-            return (
-              <Tooltip title={disabled ? 'You can only delete schedules you own.' : 'Delete Schedule'}>
-                <span>
-                  <IconButton color="error" onClick={() => handleDelete(row)} disabled={disabled}>
-                    <DeleteForeverIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            );
-          },
-        },
+        { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+          Cell: ({ row }) => <PortalActions row={row} actions={[
+            ...(() => {
+              const disabled = !canModifySchedule(row.original);
+              return [
+                {
+                  id: "update-schedule",
+                  label: "Update Schedule",
+                  icon: <SystemUpdateIcon />,
+                  disabledReason: () => (disabled || isUpdateLoading === row.original.scheduleId) ? ((isUpdateLoading === row.original.scheduleId) ? 'Action in progress.' : ('You can only update schedules you own.')) : null,
+                  loading: () => Boolean(isUpdateLoading === row.original.scheduleId),
+                  onSelect: () => handleUpdate(row)
+                }
+              ];
+            })(),
+            ...(() => {
+              const disabled = !canModifySchedule(row.original);
+              return [
+                {
+                  id: "delete-schedule",
+                  label: "Delete Schedule",
+                  icon: <DeleteForeverIcon />,
+                  destructive: true,
+                  disabledReason: () => (disabled) ? ('You can only delete schedules you own.') : null,
+                  onSelect: () => handleDelete(row)
+                }
+              ];
+            })()
+          ]} />
+      },
+
       ];
       // Hide owner/audit columns for owner-scoped users.
       return ownedOnly
@@ -300,7 +303,7 @@ export default function Schedule() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -334,7 +337,7 @@ export default function Schedule() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -351,7 +354,7 @@ export default function Schedule() {
           User context is required before owner-scoped schedules can be loaded.
         </Alert>
       )}
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

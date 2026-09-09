@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -8,7 +10,7 @@ import {
   type MRT_ColumnFiltersState,
   type MRT_SortingState,
 } from 'material-react-table';
-import { Box, Button, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Stack, Tooltip, Typography } from '@mui/material';
 import FilterListIcon from "@mui/icons-material/FilterList";
 import AccessibleForwardIcon from "@mui/icons-material/AccessibleForward";
 import DoNotTouchIcon from "@mui/icons-material/DoNotTouch";
@@ -191,7 +193,7 @@ export default function ServiceEndpoint() {
   }), [taskContext]);
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     enableRowSelection: false,
@@ -200,85 +202,100 @@ export default function ServiceEndpoint() {
     renderRowActions: ({ row }) => {
       const s = { data: { ...row.original } };
       const rowContext = contextForRow(row.original);
-      return (
-        <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-          <Tooltip title="List Scopes">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/listScope', searchParams, rowContext), { state: row.original })}>
-              <AccessibleForwardIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="List Rules">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/listRule', searchParams, rowContext), { state: row.original })}>
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Role Permission">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, rowContext), { state: s })}>
-              <DoNotTouchIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Role Row Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowDownIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Role Col Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowRightIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Group Permission">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, rowContext), { state: s })}>
-              <DoNotTouchIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Group Row Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowDownIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Group Col Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowRightIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Position Permission">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionPermission', searchParams, rowContext), { state: s })}>
-              <DoNotTouchIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Position Row Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionRowFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowDownIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Position Col Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/positionColFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowRightIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Attribute Permission">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, rowContext), { state: s })}>
-              <DoNotTouchIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Attribute Row Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowDownIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Attribute Col Filter">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, rowContext), { state: s })}>
-              <KeyboardDoubleArrowRightIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="User Permission">
-            <IconButton onClick={() => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, rowContext), { state: s })}>
-              <AccessibilityIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      );
+      return <PortalActions row={row} actions={[
+        {
+          id: "list-scopes",
+          label: "List Scopes",
+          description: "Manage scopes for this endpoint.",
+          icon: <AccessibleForwardIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/listScope', searchParams, rowContext), { state: row.original })
+        },
+        {
+          id: "list-rules",
+          label: "List Rules",
+          description: "Manage endpoint rule associations.",
+          icon: <FilterListIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/listRule', searchParams, rowContext), { state: row.original })
+        },
+        {
+          id: "role-permission",
+          label: "Role Permission",
+          icon: <DoNotTouchIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/rolePermission', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "role-row-filter",
+          label: "Role Row Filter",
+          icon: <KeyboardDoubleArrowDownIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleRowFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "role-col-filter",
+          label: "Role Col Filter",
+          icon: <KeyboardDoubleArrowRightIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/roleColFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "group-permission",
+          label: "Group Permission",
+          icon: <DoNotTouchIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupPermission', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "group-row-filter",
+          label: "Group Row Filter",
+          icon: <KeyboardDoubleArrowDownIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupRowFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "group-col-filter",
+          label: "Group Col Filter",
+          icon: <KeyboardDoubleArrowRightIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/groupColFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "position-permission",
+          label: "Position Permission",
+          icon: <DoNotTouchIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/positionPermission', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "position-row-filter",
+          label: "Position Row Filter",
+          icon: <KeyboardDoubleArrowDownIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/positionRowFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "position-col-filter",
+          label: "Position Col Filter",
+          icon: <KeyboardDoubleArrowRightIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/positionColFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "attribute-permission",
+          label: "Attribute Permission",
+          icon: <DoNotTouchIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributePermission', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "attribute-row-filter",
+          label: "Attribute Row Filter",
+          icon: <KeyboardDoubleArrowDownIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeRowFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "attribute-col-filter",
+          label: "Attribute Col Filter",
+          icon: <KeyboardDoubleArrowRightIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/attributeColFilter', searchParams, rowContext), { state: s })
+        },
+        {
+          id: "user-permission",
+          label: "User Permission",
+          icon: <AccessibilityIcon />,
+          onSelect: () => navigate(buildTaskAwareRoute('/app/access/userPermission', searchParams, rowContext), { state: s })
+        }
+      ]} />;
     },
     initialState: { showColumnFilters: true, density: 'compact' },
     manualPagination: true,
@@ -306,7 +323,7 @@ export default function ServiceEndpoint() {
         </Button>
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -329,7 +346,7 @@ export default function ServiceEndpoint() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
       <ServiceEndpointAccessOverviewDrawer
         open={overviewOpen}

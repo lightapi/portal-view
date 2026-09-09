@@ -1,22 +1,8 @@
+import { PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../components/PortalActions/PortalActionTableCell';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-    Alert,
-    Autocomplete,
-    Box,
-    Button,
-    CircularProgress,
-    IconButton,
-    Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    TextField,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Alert, Autocomplete, Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
@@ -266,40 +252,36 @@ export default function AgentAssignment() {
                     </Box>
 
                     <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Skill</TableCell>
-                                    <TableCell>Priority</TableCell>
-                                    <TableCell>Sequence</TableCell>
-                                    <TableCell>Active Tools</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {assigned.length ? assigned.map(row => (
-                                    <TableRow key={row.skillId}>
-                                        <TableCell>{row.skillName || row.skillId}</TableCell>
-                                        <TableCell>{row.priority ?? 0}</TableCell>
-                                        <TableCell>{row.sequenceId ?? 0}</TableCell>
-                                        <TableCell>{row.activeToolCount ?? 0}</TableCell>
-                                        <TableCell align="right">
-                                            <Tooltip title="Delete assignment">
-                                                <IconButton color="error" onClick={() => handleDelete(row)}>
-                                                    <DeleteForeverIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5}>
-                                            <Typography variant="body2" color="text.secondary">No assigned skills.</Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+              <PortalActionScope><Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Skill</TableCell>
+                    <TableCell>Priority</TableCell>
+                    <TableCell>Sequence</TableCell>
+                    <TableCell>Active Tools</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {assigned.length ? assigned.map(row => (
+                    <TableRow key={row.skillId}>
+                      <TableCell>{row.skillName || row.skillId}</TableCell>
+                      <TableCell>{row.priority ?? 0}</TableCell>
+                      <TableCell>{row.sequenceId ?? 0}</TableCell>
+                      <TableCell>{row.activeToolCount ?? 0}</TableCell>
+                      <PortalActionTableCell row={row} actions={[
+                        { id: 'delete', label: 'Delete assignment', icon: <DeleteForeverIcon />, destructive: true, onSelect: () => handleDelete(row) },
+                      ]} />
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <Typography variant="body2" color="text.secondary">No assigned skills.</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table></PortalActionScope>
                     </Box>
                 </Box>
             </Box>

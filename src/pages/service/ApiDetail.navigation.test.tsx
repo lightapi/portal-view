@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
+import { selectPortalAction } from '../../test/portalActions';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -34,7 +36,7 @@ describe('API version edit navigation', () => {
         <Route path="/app/apiDetail" element={<ApiDetail />} />
         <Route path="/app/form/updateApiVersion" element={<Destination />} />
       </Routes></MemoryRouter>);
-      await userEvent.click(await screen.findByTestId('SystemUpdateIcon'));
+      await selectPortalAction('Update Api Version');
       const params = new URLSearchParams((await screen.findByTestId('destination')).textContent ?? '');
       expect(params.get('hostId')).toBe('host-a');
       expect(params.get('apiId')).toBe('api-a');

@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
+import { openPortalActions } from '../../test/portalActions';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
@@ -47,8 +49,11 @@ describe('Hindsight memory banks page', () => {
 
         expect(await screen.findByText('renamed-by-admin')).toBeInTheDocument();
         expect(screen.getByText('Runtime managed')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Update bank' })).toBeDisabled();
-        expect(screen.getByRole('button', { name: 'Deactivate bank' })).toBeDisabled();
+        await openPortalActions();
+        expect(screen.getByRole('menuitem', { name: 'Update bank' })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByRole('menuitem', { name: 'Deactivate bank' })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getAllByText('Runtime-managed banks are read-only.')).toHaveLength(2);
+        await user.keyboard('{Escape}');
         expect(queryCall(0)).toMatchObject({
             host: 'lightapi.net', service: 'genai', action: 'getAgentMemoryBanks', version: '0.1.0',
             data: { hostId: 'host-a', includeRuntimeManaged: false, filters: [], sorting: [], offset: 0, limit: 25 },

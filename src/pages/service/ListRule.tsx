@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -6,7 +8,7 @@ import {
   type MRT_ColumnDef,
   type MRT_ColumnFiltersState,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import fetchClient from "../../utils/fetchClient";
@@ -150,7 +152,7 @@ export default function ListRule() {
     [],
   );
 
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     enablePagination: false,
@@ -159,15 +161,15 @@ export default function ListRule() {
     enableColumnFilters: true,
     manualFiltering: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '1rem' }}>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row.original)}>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row.original)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button
         color="primary"
@@ -182,7 +184,7 @@ export default function ListRule() {
     onColumnFiltersChange: setColumnFilters,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading rules' } : undefined,
     state: { isLoading, showAlertBanner: Boolean(isError), columnFilters },
-  });
+  }));
 
   return (
     <Box>
@@ -193,7 +195,7 @@ export default function ListRule() {
         maxActions={3}
       />
       <Box mt={2}>
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

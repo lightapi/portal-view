@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -241,7 +243,7 @@ export default function Category() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -265,34 +267,38 @@ export default function Category() {
         size: 110,
       },
     },
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 0.5 }}>
-        {row.original.active ? <>
-          <Tooltip title="Update Category">
-            <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === row.original.categoryId}>
-              {isUpdateLoading === row.original.categoryId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete Category">
-            <IconButton color="error" onClick={() => handleDelete(row)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </Tooltip>
-        </> : (
-          <Tooltip title="Restore Category">
-            <IconButton color="primary" onClick={() => handleRestore(row)}>
-              <RestoreFromTrashIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-category",
+        label: "Update Category",
+        icon: <SystemUpdateIcon />,
+        hidden: () => !((row.original.active)),
+
+        loading: () => Boolean(isUpdateLoading === row.original.categoryId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-category",
+        label: "Delete Category",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        hidden: () => !((row.original.active)),
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "restore-category",
+        label: "Restore Category",
+        icon: <RestoreFromTrashIcon />,
+        hidden: () => !((!(row.original.active))),
+        onSelect: () => handleRestore(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildTaskAwareRoute('/app/form/createCategory', searchParams, taskContext))}>
         Create New Category
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -304,7 +310,7 @@ export default function Category() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

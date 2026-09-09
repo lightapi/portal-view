@@ -1,3 +1,6 @@
+import { PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../components/PortalActions/PortalActionTableCell';
+import PortalDeleteIcon from '@mui/icons-material/DeleteForever';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
@@ -98,8 +101,10 @@ export default function A2aPublicationDialog({open,binding,onClose,onPublished}:
       </>}
       <Typography variant="h6">Publication history</Typography>
       <FormControlLabel control={<Checkbox checked={emergency} onChange={event=>setEmergency(event.target.checked)}/>} label="Emergency revocation: also advance the signing profile revocation epoch"/>
-      <Table size="small"><TableHead><TableRow><TableCell>Version</TableCell><TableCell>State</TableCell><TableCell>Digest</TableCell><TableCell>Updated</TableCell><TableCell/></TableRow></TableHead>
-        <TableBody>{history.map(row=><TableRow key={row.publicationId}><TableCell>{row.publicationVersion}</TableCell><TableCell>{row.publicationState}</TableCell><TableCell sx={{fontFamily:'monospace'}}>{row.contentDigest}</TableCell><TableCell>{row.updateTs}</TableCell><TableCell><Button color="error" size="small" disabled={busy||!['STAGED','ACTIVE'].includes(row.publicationState)} onClick={()=>void revoke(row)}>Revoke</Button></TableCell></TableRow>)}</TableBody></Table>
+      <PortalActionScope><Table size="small"><TableHead><TableRow><TableCell>Version</TableCell><TableCell>State</TableCell><TableCell>Digest</TableCell><TableCell>Updated</TableCell><TableCell /></TableRow></TableHead>
+        <TableBody>{history.map(row => <TableRow key={row.publicationId}><TableCell>{row.publicationVersion}</TableCell><TableCell>{row.publicationState}</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>{row.contentDigest}</TableCell><TableCell>{row.updateTs}</TableCell><PortalActionTableCell row={row} actions={[
+          { id: 'revoke', label: 'Revoke', description: 'Stage revocation of this publication.', icon: <PortalDeleteIcon />, destructive: true, disabledReason: () => !['STAGED', 'ACTIVE'].includes(row.publicationState) ? 'Only staged or active publications can be revoked.' : null, loading: () => busy, onSelect: () => void revoke(row) },
+        ]} /></TableRow>)}</TableBody></Table></PortalActionScope>
     </Stack></DialogContent>
     <DialogActions><Button onClick={onClose} disabled={busy}>Close</Button><Button onClick={()=>void preview()} disabled={busy||!binding}>Preview</Button><Button variant="contained" onClick={()=>void publish()} disabled={busy||!candidate||!confirmed}>Sign and stage</Button></DialogActions>
   </Dialog>;

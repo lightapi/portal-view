@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -283,7 +285,7 @@ export default function RuntimeInstanceAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -310,31 +312,26 @@ export default function RuntimeInstanceAdmin() {
       ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' }
       : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title={runtimeInstanceOwnership.canModifyRecord(row.original) ? 'Update Runtime Instance' : 'You can only update runtime instances you own.'}>
-          <span>
-            <IconButton
-              onClick={() => handleUpdate(row)}
-              disabled={!runtimeInstanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.runtimeInstanceId}
-            >
-              {isUpdateLoading === row.original.runtimeInstanceId ? (
-                <CircularProgress size={22} />
-              ) : (
-                <SystemUpdateIcon />
-              )}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={runtimeInstanceOwnership.canModifyRecord(row.original) ? 'Delete Runtime Instance' : 'You can only delete runtime instances you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!runtimeInstanceOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update-runtime-instance",
+        label: "Update Runtime Instance",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+        disabledReason: () => (!runtimeInstanceOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.runtimeInstanceId) ? ((isUpdateLoading === row.original.runtimeInstanceId) ? 'Action in progress.' : ('You can only update runtime instances you own.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.runtimeInstanceId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete-runtime-instance",
+        label: "Delete Runtime Instance",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!runtimeInstanceOwnership.canModifyRecord(row.original)) ? ('You can only delete runtime instances you own.') : null,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -351,7 +348,7 @@ export default function RuntimeInstanceAdmin() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -367,7 +364,7 @@ export default function RuntimeInstanceAdmin() {
             User context is required before owner-scoped runtime instances can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

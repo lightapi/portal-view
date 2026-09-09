@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -276,7 +278,7 @@ export default function InstanceApiPathPrefix() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     // Turn on manual modes
@@ -308,24 +310,23 @@ export default function InstanceApiPathPrefix() {
       ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' }
       : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title={pathPrefixOwnership.canModifyRecord(row.original) ? 'Update' : 'You can only update path prefixes you own.'}>
-          <span>
-            <IconButton onClick={() => handleUpdate(row.original)} disabled={!pathPrefixOwnership.canModifyRecord(row.original)}>
-              <SystemUpdateIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={pathPrefixOwnership.canModifyRecord(row.original) ? 'Delete' : 'You can only delete path prefixes you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!pathPrefixOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update",
+        label: "Update",
+        icon: <SystemUpdateIcon />,
+        disabledReason: () => (!pathPrefixOwnership.canModifyRecord(row.original)) ? ('You can only update path prefixes you own.') : null,
+        onSelect: () => handleUpdate(row.original)
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!pathPrefixOwnership.canModifyRecord(row.original)) ? ('You can only delete path prefixes you own.') : null,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -348,7 +349,7 @@ export default function InstanceApiPathPrefix() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -364,7 +365,7 @@ export default function InstanceApiPathPrefix() {
             User context is required before owner-scoped path prefixes can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
     </Box>
   );

@@ -1,7 +1,9 @@
-import Button from '@mui/material/Button';
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+
 import React, { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Widget from '../../components/Widget/Widget';
@@ -70,12 +72,22 @@ export default function Profile() {
           />
         </Box>
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-          <Button variant="contained" color="primary" onClick={editProfile}>
-            Edit
-          </Button>
-          <Button variant="contained" color="primary" onClick={deleteProfile}>
-            Delete
-          </Button>
+          <PortalActionScope><PortalActions row={null} actions={[
+            {
+              id: "edit",
+              label: "Edit",
+              icon: <PortalActionIcon />,
+              onSelect: editProfile
+            },
+            {
+              id: "delete",
+              label: "Delete",
+              icon: <PortalActionIcon />,
+              destructive: true,
+              onSelect: deleteProfile
+            }
+          ]} /></PortalActionScope>
+
         </Box>
         <Box
           component="pre"

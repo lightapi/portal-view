@@ -1,3 +1,4 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -212,9 +213,14 @@ export default function WorkflowCatalog() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-          <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />} onClick={handleAdmin}>
-            Workflow Admin
-          </Button>
+          <PortalActionScope><PortalActions row={null} actions={[
+            {
+              id: "workflow-admin",
+              label: "Workflow Admin",
+              icon: <AdminPanelSettingsIcon />,
+              onSelect: handleAdmin
+            }
+          ]} /></PortalActionScope>
           <Button variant="contained" startIcon={<AddBoxIcon />} onClick={handleCreate}>
             Create Workflow
           </Button>
@@ -270,7 +276,7 @@ export default function WorkflowCatalog() {
         ) : workflows.length === 0 ? (
           <Alert severity="info">No workflows match the current catalog filters.</Alert>
         ) : (
-          <Box
+          <PortalActionScope><Box
             sx={{
               display: 'grid',
               gridTemplateColumns: params.view === 'list'
@@ -291,7 +297,7 @@ export default function WorkflowCatalog() {
                 onEdit={handleEdit}
               />
             ))}
-          </Box>
+          </Box></PortalActionScope>
         )}
       </Box>
 

@@ -1,8 +1,9 @@
+import { PortalActionScope } from '../../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../../components/PortalActions/PortalActionTableCell';
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent,
-  DialogTitle, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -158,23 +159,23 @@ export default function ResourcePanel({hostId, resource, canMutate = true, onVie
     </Box>
     {error && <Alert severity="error" sx={{mb:2}} onClose={() => setError('')}>{error}</Alert>}
     {loading ? <CircularProgress/> : <TableContainer component={Paper} variant="outlined">
-      <Table size="small"><TableHead><TableRow>
+      <PortalActionScope><Table size="small"><TableHead><TableRow>
         <TableCell>Actions</TableCell><TableCell>{resource.idField}</TableCell>
         {resource.columns.map(column => <TableCell key={column}>{resource.columnLabels?.[column] ?? column}</TableCell>)}
         <TableCell>Version</TableCell>
       </TableRow></TableHead><TableBody>
-        {visibleRows.map((row, index) => <TableRow key={String(row[resource.idField] ?? index)}>
-          <TableCell sx={{whiteSpace:'nowrap'}}>
-            {canMutate && <><Tooltip title="Edit"><IconButton size="small" onClick={() => open(row)}><EditIcon/></IconButton></Tooltip>
-            <Tooltip title="Delete"><IconButton size="small" color="error" onClick={() => void remove(row)}><DeleteIcon/></IconButton></Tooltip></>}
-            {resource.key === 'aliases' && onViewRoutes && <Button size="small" onClick={() => onViewRoutes(row)}>View routes</Button>}
-          </TableCell>
-          <TableCell>{display(row[resource.idField])}</TableCell>
-          {resource.columns.map(column => <TableCell key={column} sx={{maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}>{columnValue(row,column,resource.columnTooltipFields?.[column])}</TableCell>)}
-          <TableCell>{display(row.aggregateVersion)}</TableCell>
-        </TableRow>)}
-        {!visibleRows.length && <TableRow><TableCell colSpan={resource.columns.length + 3}>No active records.</TableCell></TableRow>}
-      </TableBody></Table>
+          {visibleRows.map((row, index) => <TableRow key={String(row[resource.idField] ?? index)}>
+            <PortalActionTableCell row={row} actions={[
+              { id: 'edit', label: 'Edit', icon: <EditIcon />, hidden: () => !canMutate, onSelect: () => open(row) },
+              { id: 'delete', label: 'Delete', icon: <DeleteIcon />, destructive: true, hidden: () => !canMutate, onSelect: () => void remove(row) },
+              { id: 'routes', label: 'View routes', description: 'Manage routes for this public alias.', icon: <PortalActionIcon />, hidden: () => resource.key !== 'aliases' || !onViewRoutes, onSelect: () => onViewRoutes?.(row) },
+            ]} />
+            <TableCell>{display(row[resource.idField])}</TableCell>
+            {resource.columns.map(column => <TableCell key={column} sx={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis' }}>{columnValue(row, column, resource.columnTooltipFields?.[column])}</TableCell>)}
+            <TableCell>{display(row.aggregateVersion)}</TableCell>
+          </TableRow>)}
+          {!visibleRows.length && <TableRow><TableCell colSpan={resource.columns.length + 3}>No active records.</TableCell></TableRow>}
+        </TableBody></Table></PortalActionScope>
     </TableContainer>}
     <Dialog open={editing !== null} onClose={close} fullWidth maxWidth="md">
       <DialogTitle>{create ? 'Create' : 'Update'} {resource.label}</DialogTitle>

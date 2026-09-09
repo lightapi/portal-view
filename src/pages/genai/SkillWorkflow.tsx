@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Button, IconButton, Tooltip, CircularProgress, Box } from '@mui/material';
+import { Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -256,7 +258,7 @@ export default function SkillWorkflow() {
         [],
     );
 
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data,
         initialState: { showColumnFilters: true, density: 'compact' },
@@ -276,41 +278,48 @@ export default function SkillWorkflow() {
         positionActionsColumn: 'first',
         renderRowActions: ({ row }) => {
             const key = rowKey(row.original);
-            return (
-                <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-                    <Tooltip title="Update Skill Workflow">
-                        <IconButton onClick={() => handleUpdate(row)} disabled={isUpdateLoading === key}>
-                            {isUpdateLoading === key ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Open Workflow Editor">
-                        <IconButton color="primary" onClick={() => handleOpenEditor(row)}>
-                            <EditNoteIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Start Workflow">
-                        <IconButton color="primary" onClick={() => handleStart(row)}>
-                            <PlayArrowIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Skill Workflow">
-                        <IconButton color="error" onClick={() => handleDelete(row)}>
-                            <DeleteForeverIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "update-skill-workflow",
+              label: "Update Skill Workflow",
+              icon: <SystemUpdateIcon />,
+
+              loading: () => Boolean(isUpdateLoading === key),
+              onSelect: () => handleUpdate(row)
+            },
+            {
+              id: "open-workflow-editor",
+              label: "Open Workflow Editor",
+              description: "Edit the workflow definition.",
+              icon: <EditNoteIcon />,
+              onSelect: () => handleOpenEditor(row)
+            },
+            {
+              id: "start-workflow",
+              label: "Start Workflow",
+              description: "Open the workflow start form.",
+              icon: <PlayArrowIcon />,
+              onSelect: () => handleStart(row)
+            },
+            {
+              id: "delete-skill-workflow",
+              label: "Delete Skill Workflow",
+              icon: <DeleteForeverIcon />,
+              destructive: true,
+              onSelect: () => handleDelete(row)
+            }
+          ]} />;
         },
         renderTopToolbarCustomActions: () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={() => navigate(buildGenAiTaskRoute('/app/form/createSkillWorkflow', searchParams, taskContext))}>
                 Create New Skill Workflow
             </Button>
         ),
-    });
+    }));
 
     return (
         <GenAiTaskLayout context={taskContext}>
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
         </GenAiTaskLayout>
     );
 }

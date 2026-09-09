@@ -1,4 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { renderWithActionDisplay as render } from '../../../test/renderWithActionDisplay';
+import { selectPortalAction } from '../../../test/portalActions';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ResourcePanel from './ResourcePanel';
@@ -40,7 +42,7 @@ describe('Policies resource form navigation', () => {
     });
 
     mocks.navigate.mockClear();
-    await userEvent.click(await screen.findByLabelText('Edit'));
+    await selectPortalAction('Edit');
     await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith('/app/form/updateModelPolicy',{
       state:{data:expect.objectContaining({
         hostId:'host-a',modelPolicyId:'policy-a',policyName:'governed-chat',

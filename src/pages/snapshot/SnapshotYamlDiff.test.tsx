@@ -1,5 +1,6 @@
+import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
 import { describe, expect, it, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { waitFor } from '@testing-library/react';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import SnapshotYamlDiff from './SnapshotYamlDiff';

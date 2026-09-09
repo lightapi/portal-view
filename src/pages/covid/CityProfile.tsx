@@ -1,4 +1,6 @@
-import Button from '@mui/material/Button';
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+
 import { Box } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -60,12 +62,22 @@ export default function CityProfile() {
           />
         </Box>
         <Box sx={{ '& > *': { m: 1 } }}>
-          <Button variant="contained" color="primary" onClick={updateCityMap}>
-            Update
-          </Button>
-          <Button variant="contained" color="primary" onClick={deleteCityMap}>
-            Delete
-          </Button>
+          <PortalActionScope><PortalActions row={null} actions={[
+            {
+              id: "update",
+              label: "Update",
+              icon: <PortalActionIcon />,
+              onSelect: updateCityMap
+            },
+            {
+              id: "delete",
+              label: "Delete",
+              icon: <PortalActionIcon />,
+              destructive: true,
+              onSelect: deleteCityMap
+            }
+          ]} /></PortalActionScope>
+
         </Box>
         <Box component="pre" sx={{ overflow: 'auto', mt: 2 }}>
           {JSON.stringify(data, null, 2)}

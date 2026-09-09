@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,20 +11,7 @@ import {
     type MRT_Row,
     type MRT_SortingState,
 } from 'material-react-table';
-import {
-    Alert,
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    IconButton,
-    Stack,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
@@ -297,7 +286,7 @@ export default function HindsightResourceTable({
     }, [config.association, config.columns]);
 
     const hasRowActions = !!(config.sessionProjection || (!bankReadOnly && (config.updateForm || config.deleteAction)));
-    const table = useMaterialReactTable({
+    const table = useMaterialReactTable(usePortalActionTableOptions({
         columns,
         data: rows,
         initialState: { density: 'compact', showColumnFilters: true },
@@ -325,26 +314,43 @@ export default function HindsightResourceTable({
         positionActionsColumn: 'first',
         renderRowActions: hasRowActions ? ({ row }) => {
             const key = rowKey(row.original, config.rowKeys);
-            return (
-                <Stack direction="row" spacing={0.5}>
-                    {config.sessionProjection && (
-                        <Tooltip title="View projection"><span><IconButton onClick={() => void handleSessionDetail(row)} disabled={busyKey === key}><VisibilityIcon /></IconButton></span></Tooltip>
-                    )}
-                    {!bankReadOnly && config.updateForm && (
-                        <Tooltip title={`Update ${config.label}`}><span><IconButton onClick={() => void handleUpdate(row)} disabled={busyKey === key}>{busyKey === key ? <CircularProgress size={20} /> : <EditIcon />}</IconButton></span></Tooltip>
-                    )}
-                    {!bankReadOnly && config.deleteAction && (
-                        <Tooltip title={config.association ? 'Unlink association' : `Deactivate ${config.label}`}><span><IconButton color="error" onClick={() => void handleDelete(row)} disabled={busyKey === key}><DeleteForeverIcon /></IconButton></span></Tooltip>
-                    )}
-                </Stack>
-            );
+          return <PortalActions row={row} actions={[
+            {
+              id: "view-projection",
+              label: "View projection",
+              icon: <VisibilityIcon />,
+              hidden: () => !((config.sessionProjection)),
+
+              loading: () => Boolean(busyKey === key),
+              onSelect: () => void handleSessionDetail(row)
+            },
+            {
+              id: "update-resource",
+              label: `Update ${config.label}`,
+              icon: <EditIcon />,
+              hidden: () => !((!bankReadOnly && config.updateForm)),
+
+              loading: () => Boolean(busyKey === key),
+              onSelect: () => void handleUpdate(row)
+            },
+            {
+              id: "unlink-association",
+              label: config.association ? 'Unlink association' : `Deactivate ${config.label}`,
+              icon: <DeleteForeverIcon />,
+              destructive: true,
+              hidden: () => !((!bankReadOnly && config.deleteAction)),
+
+              loading: () => Boolean(busyKey === key),
+              onSelect: () => void handleDelete(row)
+            }
+          ]} />;
         } : undefined,
         renderTopToolbarCustomActions: config.createForm && !bankReadOnly ? () => (
             <Button variant="contained" startIcon={<AddBoxIcon />} onClick={handleCreate}>
                 {config.association ? 'Link Unit and Entity' : `Create ${config.label}`}
             </Button>
         ) : undefined,
-    });
+    }));
 
     return (
         <Box>
@@ -360,7 +366,7 @@ export default function HindsightResourceTable({
                         : `${config.label} content is read-only until an embedding owner is available.`)}
                 </Alert>
             )}
-            <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
             <Dialog open={!!sessionDetail} onClose={() => setSessionDetail(null)} maxWidth="lg" fullWidth>
                 <DialogTitle>Session Projection</DialogTitle>
                 <DialogContent>

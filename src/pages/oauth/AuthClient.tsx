@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,21 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -349,7 +337,6 @@ export default function AuthClient() {
     setSecretCopied(false);
   }, []);
 
-
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<AuthClientType>[]>(
     () => applyOwnershipColumns([
@@ -391,7 +378,7 @@ export default function AuthClient() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -408,44 +395,46 @@ export default function AuthClient() {
     getRowId: (row) => row.clientId,
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Client Tokens">
-          <IconButton color="primary" onClick={() => navigate(buildTaskAwareRoute('/app/oauth/clientToken', searchParams, {
-            ...taskContext,
-            hostId: row.original.hostId,
-            clientId: row.original.clientId,
-            appId: row.original.appId ?? '',
-            apiId: row.original.apiId ?? '',
-            apiVersionId: row.original.apiVersionId ?? '',
-            instanceId: row.original.instanceId ?? '',
-          }), { state: { data: { clientId: row.original.clientId } } })}>
-            <VpnKeyIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Update Client' : 'You can only update OAuth clients you own.'}>
-          <span>
-            <IconButton onClick={() => handleUpdate(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.clientId}>
-              {isUpdateLoading === row.original.clientId ? <CircularProgress size={22} /> : <SystemUpdateIcon />}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Regenerate Client Secret' : 'You can only regenerate secrets for OAuth clients you own.'}>
-          <span>
-            <IconButton color="warning" onClick={() => handleRegenerateSecret(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original) || isSecretLoading === row.original.clientId}>
-              {isSecretLoading === row.original.clientId ? <CircularProgress size={22} /> : <LockResetIcon />}
-            </IconButton>
-          </span>
-        </Tooltip>
-        <Tooltip title={oauthClientOwnership.canModifyRecord(row.original) ? 'Delete Client' : 'You can only delete OAuth clients you own.'}>
-          <span>
-            <IconButton color="error" onClick={() => handleDelete(row)} disabled={!oauthClientOwnership.canModifyRecord(row.original)}>
-              <DeleteForeverIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "client-tokens",
+        label: "Client Tokens",
+        icon: <VpnKeyIcon />,
+        onSelect: () => navigate(buildTaskAwareRoute('/app/oauth/clientToken', searchParams, {
+          ...taskContext,
+          hostId: row.original.hostId,
+          clientId: row.original.clientId,
+          appId: row.original.appId ?? '',
+          apiId: row.original.apiId ?? '',
+          apiVersionId: row.original.apiVersionId ?? '',
+          instanceId: row.original.instanceId ?? '',
+        }), { state: { data: { clientId: row.original.clientId } } })
+      },
+      {
+        id: "update-client",
+        label: "Update Client",
+        icon: <SystemUpdateIcon />,
+        disabledReason: () => (!oauthClientOwnership.canModifyRecord(row.original) || isUpdateLoading === row.original.clientId) ? ((isUpdateLoading === row.original.clientId) ? 'Action in progress.' : ('You can only update OAuth clients you own.')) : null,
+        loading: () => Boolean(isUpdateLoading === row.original.clientId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "regenerate-client-secret",
+        label: "Regenerate Client Secret",
+        icon: <LockResetIcon />,
+        disabledReason: () => (!oauthClientOwnership.canModifyRecord(row.original) || isSecretLoading === row.original.clientId) ? ((isSecretLoading === row.original.clientId) ? 'Action in progress.' : ('You can only regenerate secrets for OAuth clients you own.')) : null,
+        loading: () => Boolean(isSecretLoading === row.original.clientId),
+        onSelect: () => handleRegenerateSecret(row)
+      },
+      {
+        id: "delete-client",
+        label: "Delete Client",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        disabledReason: () => (!oauthClientOwnership.canModifyRecord(row.original)) ? ('You can only delete OAuth clients you own.') : null,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -477,7 +466,7 @@ export default function AuthClient() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box>
@@ -493,7 +482,7 @@ export default function AuthClient() {
             User context is required before owner-scoped OAuth clients can be loaded.
           </Alert>
         )}
-        <MaterialReactTable table={table} />
+        <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
       </Box>
       <Dialog open={Boolean(regeneratedSecret)} onClose={handleCloseSecretDialog} maxWidth="sm" fullWidth>
         <DialogTitle>New Client Secret</DialogTitle>

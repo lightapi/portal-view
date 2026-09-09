@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -207,29 +209,26 @@ export default function ConfigDeploymentInstance() {
   // Column definitions
   const columns = useMemo<MRT_ColumnDef<ConfigDeploymentInstanceType>[]>(
     () => [
-      {
-        id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
-        Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-            <Tooltip title="Update Property">
-              <IconButton
-                onClick={() => handleUpdate(row)}
-                disabled={isUpdateLoading === row.original.propertyId}
-              >
-                {isUpdateLoading === row.original.propertyId ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  <SystemUpdateIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Property">
-              <IconButton color="error" onClick={() => handleDelete(row)}>
-                <DeleteForeverIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ),
+      { id: 'actions', header: 'Actions', enableSorting: false, enableColumnFilter: false,
+        Cell: ({ row }) => <PortalActions row={row} actions={[
+          {
+            id: "update-property",
+            label: "Update Property",
+            icon: (
+              <SystemUpdateIcon />
+            ),
+
+            loading: () => Boolean(isUpdateLoading === row.original.propertyId),
+            onSelect: () => handleUpdate(row)
+          },
+          {
+            id: "delete-property",
+            label: "Delete Property",
+            icon: <DeleteForeverIcon />,
+            destructive: true,
+            onSelect: () => handleDelete(row)
+          }
+        ]} />
       },
       { accessorKey: 'deploymentInstanceId', header: 'Deployment ID' },
       { accessorKey: 'instanceName', header: 'Instance Name' },
@@ -258,7 +257,7 @@ export default function ConfigDeploymentInstance() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -295,7 +294,7 @@ export default function ConfigDeploymentInstance() {
         )}
       </Box>
     ),
-  });
+  }, ['actions']));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -307,7 +306,7 @@ export default function ConfigDeploymentInstance() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

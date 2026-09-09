@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -229,7 +231,7 @@ export default function HostAdmin() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -258,57 +260,54 @@ export default function HostAdmin() {
 
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.1rem' }}>
-        <Tooltip title="Update">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.hostId}
-          >
-            {isUpdateLoading === row.original.hostId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Details">
-          <IconButton
-            onClick={() => navigate(
-              buildTaskAwareRoute('/app/host/hostDetail', searchParams, { hostId: row.original.hostId }),
-              { state: { data: { hostId: row.original.hostId } } },
-            )}
-          >
-            <SettingsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Host Users">
-          <IconButton
-            onClick={() => navigate(
-              buildTaskAwareRoute('/app/host/hostUser', searchParams, { hostId: row.original.hostId }),
-              { state: { data: { hostId: row.original.hostId } } },
-            )}
-          >
-            <PersonIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Operational Storage">
-          <IconButton
-            onClick={() => navigate(
-              buildTaskAwareRoute('/app/host/operationalStore', searchParams, { hostId: row.original.hostId }),
-              { state: { hostId: row.original.hostId, domain: row.original.domain, subDomain: row.original.subDomain } },
-            )}
-          >
-            <StorageIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update",
+        label: "Update",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.hostId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      },
+      {
+        id: "details",
+        label: "Details",
+        description: "View the complete record.",
+        icon: <SettingsIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/host/hostDetail', searchParams, { hostId: row.original.hostId }),
+          { state: { data: { hostId: row.original.hostId } } },
+        )
+      },
+      {
+        id: "host-users",
+        label: "Host Users",
+        icon: <PersonIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/host/hostUser', searchParams, { hostId: row.original.hostId }),
+          { state: { data: { hostId: row.original.hostId } } },
+        )
+      },
+      {
+        id: "operational-storage",
+        label: "Operational Storage",
+        description: "Register and manage the host operational database.",
+        icon: <StorageIcon />,
+        onSelect: () => navigate(
+          buildTaskAwareRoute('/app/host/operationalStore', searchParams, { hostId: row.original.hostId }),
+          { state: { hostId: row.original.hostId, domain: row.original.domain, subDomain: row.original.subDomain } },
+        )
+      }
+    ]} />,
 
     renderTopToolbarCustomActions: () => (
       <Button
@@ -319,7 +318,7 @@ export default function HostAdmin() {
         Create New Host
       </Button>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -331,7 +330,7 @@ export default function HostAdmin() {
           maxActions={1}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }

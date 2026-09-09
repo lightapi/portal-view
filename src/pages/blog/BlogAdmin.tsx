@@ -1,3 +1,5 @@
+import { PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../components/PortalActions/PortalActionTableCell';
 import { usePersistentTablePagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -69,16 +71,10 @@ function Row({ id, host }: RowProps) {
     <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
       <TableCell align="left">{host}</TableCell>
       <TableCell align="left">{id}</TableCell>
-      <TableCell align="right">
-        <IconButton onClick={handleUpdate} disabled={loading} size="small">
-          {loading ? <CircularProgress size={20} /> : <SystemUpdateIcon />}
-        </IconButton>
-      </TableCell>
-      <TableCell align="right">
-        <IconButton onClick={handleDelete} size="small" color="error">
-          <DeleteForeverIcon />
-        </IconButton>
-      </TableCell>
+      <PortalActionTableCell row={id} actions={[
+ {id:'update',label:'Update blog',icon:<SystemUpdateIcon />,loading:()=>loading,onSelect:handleUpdate},
+ {id:'delete',label:'Delete blog',icon:<DeleteForeverIcon />,destructive:true,onSelect:handleDelete},
+ ]} />
     </TableRow>
   );
 }
@@ -91,13 +87,12 @@ function BlogAdminList({ blogs }: BlogAdminListProps) {
   const { host } = useUserState();
   return (
     <TableContainer component={Paper}>
-      <Table aria-label="collapsible table">
+      <PortalActionScope><Table aria-label="collapsible table">
         <TableHead>
           <TableRow>
             <TableCell align="left">Host</TableCell>
             <TableCell align="left">Id</TableCell>
-            <TableCell align="right">Update</TableCell>
-            <TableCell align="right">Delete</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -109,7 +104,7 @@ function BlogAdminList({ blogs }: BlogAdminListProps) {
             />
           ))}
         </TableBody>
-      </Table>
+      </Table></PortalActionScope>
     </TableContainer>
   );
 }

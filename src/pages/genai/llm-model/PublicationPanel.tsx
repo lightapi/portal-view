@@ -1,3 +1,6 @@
+import { PortalActionScope } from '../../../components/PortalActions/PortalActions';
+import { PortalActionTableCell } from '../../../components/PortalActions/PortalActionTableCell';
+import PortalActionIcon from '@mui/icons-material/ArrowForward';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert, Box, Button, CircularProgress, MenuItem, Paper, Stack, Table, TableBody,
@@ -201,8 +204,8 @@ export default function PublicationPanel({hostId}: {hostId: string}) {
     <Paper variant="outlined" sx={{p:2}}>
       <Typography variant="subtitle1" sx={{mb:1}}>Instance publication history</Typography>
       {history.length === 0 ? <Typography color="text.secondary">No LLM configuration has been applied to this instance.</Typography>
-        : <TableContainer><Table size="small">
-          <TableHead><TableRow><TableCell>Application</TableCell><TableCell>Revision</TableCell><TableCell>Digest</TableCell><TableCell>Applied</TableCell><TableCell>Applied by</TableCell><TableCell>Current snapshot</TableCell><TableCell/></TableRow></TableHead>
+        : <TableContainer><PortalActionScope><Table size="small">
+          <TableHead><TableRow><TableCell>Application</TableCell><TableCell>Revision</TableCell><TableCell>Digest</TableCell><TableCell>Applied</TableCell><TableCell>Applied by</TableCell><TableCell>Current snapshot</TableCell><TableCell /></TableRow></TableHead>
           <TableBody>{history.map(item => <TableRow key={String(item.instancePublicationId)}>
             <TableCell>{String(item.applicationVersion ?? '—')}</TableCell>
             <TableCell>{String(item.publicationVersion ?? '—')}</TableCell>
@@ -210,12 +213,14 @@ export default function PublicationPanel({hostId}: {hostId: string}) {
             <TableCell>{String(item.updateTs ?? '—')}</TableCell>
             <TableCell>{String(item.updateUser ?? '—')}</TableCell>
             <TableCell>{item.currentSnapshotId ? <>
-              <code>{String(item.currentSnapshotId)}</code><br/>
+              <code>{String(item.currentSnapshotId)}</code><br />
               {item.snapshotContainsValues ? 'Contains these values; verify runtime reload' : 'Does not contain these values'}
             </> : 'No current snapshot'}</TableCell>
-            <TableCell><Button size="small" disabled={loading} onClick={() => void applyExactRevision(item)}>Apply exact revision</Button></TableCell>
+            <PortalActionTableCell row={item} actions={[
+              { id: 'apply', label: 'Apply exact revision', description: 'Reapply the stored configuration revision to this instance.', icon: <PortalActionIcon />, loading: () => loading, onSelect: () => void applyExactRevision(item) },
+            ]} />
           </TableRow>)}</TableBody>
-        </Table></TableContainer>}
+        </Table></PortalActionScope></TableContainer>}
     </Paper>
   </Stack>;
 }

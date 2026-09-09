@@ -1,15 +1,5 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Chip,
-  Divider,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { PortalActions } from '../../../components/PortalActions/PortalActions';
+import { Box, Card, CardActions, CardContent, Chip, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DetailsIcon from '@mui/icons-material/Details';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -162,20 +152,36 @@ export default function SchemaCatalogCard({
           flexWrap: 'wrap',
           minWidth: viewMode === 'list' ? { md: 170 } : undefined,
         }}
-      >
-        <Button size="small" startIcon={<DetailsIcon />} onClick={() => onDetails(schema)}>
-          Details
-        </Button>
-        <Button size="small" startIcon={<ContentCopyIcon />} disabled={!canUseExternalUrl} onClick={() => onCopyUrl(schema)}>
-          Copy URL
-        </Button>
-        <Button size="small" startIcon={<OpenInNewIcon />} disabled={!canUseExternalUrl} onClick={() => onOpenUrl(schema)}>
-          Open
-        </Button>
-        <Button size="small" startIcon={<SystemUpdateIcon />} disabled={isUpdating} onClick={() => onUpdate(schema)}>
-          {isUpdating ? 'Loading' : 'Update'}
-        </Button>
-      </CardActions>
+      ><PortalActions row={null} actions={[
+        {
+          id: "details",
+          label: "Details",
+          description: "View the complete record.",
+          icon: <DetailsIcon />,
+          onSelect: () => onDetails(schema)
+        },
+        {
+          id: "copy-url",
+          label: "Copy URL",
+          icon: <ContentCopyIcon />,
+          disabledReason: () => (!canUseExternalUrl) ? ('This schema has no supported external URL.') : null,
+          onSelect: () => onCopyUrl(schema)
+        },
+        {
+          id: "open",
+          label: "Open",
+          icon: <OpenInNewIcon />,
+          disabledReason: () => (!canUseExternalUrl) ? ('This schema has no supported external URL.') : null,
+          onSelect: () => onOpenUrl(schema)
+        },
+        {
+          id: "update",
+          label: "Update",
+          icon: <SystemUpdateIcon />,
+          loading: () => isUpdating,
+          onSelect: () => onUpdate(schema)
+        }
+      ]} /></CardActions>
     </Card>
   );
 }

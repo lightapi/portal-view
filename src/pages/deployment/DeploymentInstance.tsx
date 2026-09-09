@@ -1,3 +1,5 @@
+import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import { usePersistentPagination, PAGE_SIZE_OPTIONS } from '../../hooks/usePersistentPagination';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +11,7 @@ import {
   type MRT_SortingState,
   type MRT_Row,
 } from 'material-react-table';
-import { Box, Button, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
@@ -237,7 +239,7 @@ export default function DeploymentInstance() {
   );
 
   // Table instance configuration
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable(usePortalActionTableOptions({
     columns,
     data,
     initialState: { showColumnFilters: true, density: 'compact' },
@@ -255,48 +257,44 @@ export default function DeploymentInstance() {
     muiToolbarAlertBannerProps: isError ? { color: 'error', children: typeof isError === 'string' ? isError : 'Error loading data' } : undefined,
     enableRowActions: true,
     positionActionsColumn: 'first',
-    renderRowActions: ({ row }) => (
-      <Box sx={{ display: 'flex', gap: '0.5rem' }}>
-        <Tooltip title="Update">
-          <IconButton
-            onClick={() => handleUpdate(row)}
-            disabled={isUpdateLoading === row.original.deploymentInstanceId}
-          >
-            {isUpdateLoading === row.original.deploymentInstanceId ? (
-              <CircularProgress size={22} />
-            ) : (
-              <SystemUpdateIcon />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Manage Config">
-          <IconButton
-            onClick={() =>
-              navigate(buildTaskAwareRoute('/app/config/configDeploymentInstance', searchParams, {
-                ...taskContext,
+    renderRowActions: ({ row }) => <PortalActions row={row} actions={[
+      {
+        id: "update",
+        label: "Update",
+        icon: (
+          <SystemUpdateIcon />
+        ),
+
+        loading: () => Boolean(isUpdateLoading === row.original.deploymentInstanceId),
+        onSelect: () => handleUpdate(row)
+      },
+      {
+        id: "manage-config",
+        label: "Manage Config",
+        icon: <AddToDriveIcon />,
+        onSelect: () =>
+          navigate(buildTaskAwareRoute('/app/config/configDeploymentInstance', searchParams, {
+            ...taskContext,
+            instanceId: row.original.instanceId,
+            deploymentInstanceId: row.original.deploymentInstanceId,
+            serviceId: row.original.serviceId ?? '',
+          }), {
+            state: {
+              data: {
                 instanceId: row.original.instanceId,
                 deploymentInstanceId: row.original.deploymentInstanceId,
-                serviceId: row.original.serviceId ?? '',
-              }), {
-                state: {
-                  data: {
-                    instanceId: row.original.instanceId,
-                    deploymentInstanceId: row.original.deploymentInstanceId,
-                  },
-                },
-              })
-            }
-          >
-            <AddToDriveIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete">
-          <IconButton color="error" onClick={() => handleDelete(row)}>
-            <DeleteForeverIcon />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    ),
+              },
+            },
+          })
+      },
+      {
+        id: "delete",
+        label: "Delete",
+        icon: <DeleteForeverIcon />,
+        destructive: true,
+        onSelect: () => handleDelete(row)
+      }
+    ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -316,7 +314,7 @@ export default function DeploymentInstance() {
         )}
       </Box>
     ),
-  });
+  }));
 
   return (
     <Box sx={{ p: 1 }}>
@@ -328,7 +326,7 @@ export default function DeploymentInstance() {
           maxActions={2}
         />
       </Box>
-      <MaterialReactTable table={table} />
+      <PortalActionScope><MaterialReactTable table={table} /></PortalActionScope>
     </Box>
   );
 }
