@@ -63,7 +63,8 @@ it('preserves the selected agent identifiers when opening Chat and policy public
   await selectPortalAction('Publish Agent policy', await screen.findByTestId('agent'));
   expect(mocks.publication).toHaveBeenCalledWith(expect.objectContaining({ hostId: 'host-a', instanceId: 'agent', serviceId: 'agent-service' }));
   await selectPortalAction('Open Agent chat', screen.getByTestId('agent'));
-  expect(screen.getByTestId('location')).toHaveTextContent('/app/genai/chat?instanceId=agent&serviceId=agent-service&envTag=dev');
+  // Menu closure and the router's navigation transition can commit separately.
+  await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/app/genai/chat?instanceId=agent&serviceId=agent-service&envTag=dev'));
 });
 
 it('changes all rows and column sizing while preserving selection and avoiding a data refetch', async () => {
