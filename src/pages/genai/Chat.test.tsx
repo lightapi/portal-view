@@ -333,3 +333,27 @@ it('preserves every queued message identifier when acknowledgements arrive out o
   const key = Array.from({ length: sessionStorage.length }, (_, i) => sessionStorage.key(i)!).find(key => key.endsWith(':turns'))!;
   expect(JSON.parse(sessionStorage.getItem(key)!)).toEqual([{ clientMessageId: ids[0], turnId: 'turn-1' }, { clientMessageId: ids[1], turnId: 'turn-2' }]);
 });
+
+it.each([
+  { types: ['chat'], defaultType: 'chat' },
+  { types: ['coding'], defaultType: 'coding' },
+  { types: ['chat', 'coding'], defaultType: 'coding' },
+])('honors published turn policy $types with default $defaultType', async ({ types, defaultType }) => {
+  const user = userEvent.setup(); render(<Chat />);
+  const socket = await connect(user);
+  act(() => {
+    socket.readyState = 1; socket.onopen?.();
+    socket.receive({ type: 'session', session_id: 'policy-session', turnTypes: types, defaultTurnType: defaultType });
+  });
+  if (types.length === 1) {
+    expect(screen.queryByRole('combobox', { name: 'Turn type' })).not.toBeInTheDocument();
+    expect(screen.getByText(defaultType === 'coding' ? 'Coding implementation' : 'Chat', { selector: '.MuiChip-label' })).toBeInTheDocument();
+  } else {
+    expect(screen.getByRole('combobox', { name: 'Turn type' })).toHaveTextContent('Coding implementation');
+  }
+  if (defaultType === 'coding') {
+    expect(screen.getByLabelText('Repository bundle URI')).toBeInTheDocument();
+  } else {
+    expect(screen.queryByLabelText('Repository bundle URI')).not.toBeInTheDocument();
+  }
+});
