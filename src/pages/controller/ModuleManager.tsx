@@ -1,5 +1,4 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import Tooltip from '@mui/material/Tooltip';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -147,15 +146,13 @@ export default function ModuleManager() {
               >
                 Reload Selected
               </Button>
-              <PortalActionScope><PortalActions row={null} actions={[
-                {
-                  id: "reload-all",
-                  label: "Reload All",
-                  icon: <PortalActionIcon />,
-                  disabledReason: () => (!canReload || submitting) ? (!canReload ? 'The selected service does not support module reload.' : 'Reload in progress.') : null,
-                  onSelect: () => handleReload(true)
-                }
-              ]} /></PortalActionScope>
+              <Tooltip describeChild title={!canReload ? 'The selected service does not support module reload.' : submitting ? 'Reload in progress.' : ''}>
+                <span style={{ display: 'inline-flex' }}>
+                  <Button variant="contained" onClick={() => handleReload(true)} disabled={!canReload || submitting}>
+                    Reload All
+                  </Button>
+                </span>
+              </Tooltip>
             </Stack>
 
             {error && <Alert severity="error">{error}</Alert>}

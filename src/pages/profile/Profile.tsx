@@ -1,5 +1,4 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import Button from '@mui/material/Button';
 
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
@@ -72,21 +71,12 @@ export default function Profile() {
           />
         </Box>
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-          <PortalActionScope><PortalActions row={null} actions={[
-            {
-              id: "edit",
-              label: "Edit",
-              icon: <PortalActionIcon />,
-              onSelect: editProfile
-            },
-            {
-              id: "delete",
-              label: "Delete",
-              icon: <PortalActionIcon />,
-              destructive: true,
-              onSelect: deleteProfile
-            }
-          ]} /></PortalActionScope>
+          <Button variant="contained" color="primary" onClick={editProfile}>
+            Edit
+          </Button>
+          <Button variant="contained" color="error" onClick={deleteProfile}>
+            Delete
+          </Button>
 
         </Box>
         <Box

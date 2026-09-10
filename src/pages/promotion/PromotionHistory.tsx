@@ -235,14 +235,9 @@ export default function PromotionHistory() {
                 >
                     New Import
                 </Button>
-            <PortalActions row={null} label="Page actions" actions={[
-              {
-                id: "refresh-status",
-                label: "Refresh Status",
-                icon: <RefreshIcon />,
-                onSelect: refreshProjectionStatus
-              }
-            ]} />
+                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refreshProjectionStatus}>
+                    Refresh Status
+                </Button>
             </Box>
         ),
     }));

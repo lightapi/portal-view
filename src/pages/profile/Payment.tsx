@@ -1,5 +1,3 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
@@ -78,15 +76,9 @@ export default function Payment() {
           <Button variant="contained" color="primary" onClick={updatePayment}>
             {error ? 'Create' : 'Update'}
           </Button>
-          <PortalActionScope><PortalActions row={null} actions={[
-            {
-              id: "delete",
-              label: "Delete",
-              icon: <PortalActionIcon />,
-              destructive: true,
-              onSelect: deletePayment
-            }
-          ]} /></PortalActionScope>
+          <Button variant="contained" color="error" onClick={deletePayment}>
+            Delete
+          </Button>
         </Box>
         <Box
           component="pre"

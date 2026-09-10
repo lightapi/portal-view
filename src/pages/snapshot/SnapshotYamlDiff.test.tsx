@@ -1,4 +1,4 @@
-import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
+import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { EditorState } from '@codemirror/state';

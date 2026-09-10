@@ -1,5 +1,3 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
@@ -72,21 +70,12 @@ export default function EntityProfile() {
   if (data) {
     buttons = (
       <Box sx={buttonSx}>
-        <PortalActionScope><PortalActions row={null} actions={[
-          {
-            id: "update",
-            label: "Update",
-            icon: <PortalActionIcon />,
-            onSelect: updateEntity
-          },
-          {
-            id: "delete",
-            label: "Delete",
-            icon: <PortalActionIcon />,
-            destructive: true,
-            onSelect: deleteEntity
-          }
-        ]} /></PortalActionScope>
+        <Button variant="contained" color="primary" onClick={updateEntity}>
+          Update
+        </Button>
+        <Button variant="contained" color="error" onClick={deleteEntity}>
+          Delete
+        </Button>
 
       </Box>
     );

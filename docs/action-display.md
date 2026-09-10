@@ -23,9 +23,9 @@ measured pixel width. No page maintains a separate action count.
 
 Expanded mode shows one compact row of icon-only buttons with hover descriptions.
 Table position, filters, pagination, and selection remain unchanged. Native MUI tables use
-`PortalActionTableCell` inside a scope around the table. Secondary toolbar and
-card actions can use the renderer; a catalog list owns one scope around all
-its cards. Toolbar groups own a scope per group. Never wrap each row in
+`PortalActionTableCell` inside a scope around the table. Card actions can use the renderer; a catalog list owns one scope around all
+its cards. Page-level and toolbar buttons remain labeled buttons outside the
+shared renderer, independent of the display preference. Never wrap each row in
 a separate scope within a table.
 
 The scope owns one menu. It reads current action definitions while open and
@@ -42,10 +42,10 @@ menu's focus restoration. Unmounting the source cancels pending selection.
 - Native tables: BlogAdmin, AgentAssignment, SkillWorkspace, LLM ResourcePanel,
   LLM publication history, A2A authoring and A2A publication history.
 - Cards: API/schema/workflow catalogs and Knowledge Base policy/profile cards.
-- Secondary toolbar actions: configuration editing/sync, access policy overview,
-  snapshot history, promotion refresh, A2A publication profiles, profile/entity
-  maintenance, catalog administration, module reload-all, clone-result links,
-  snapshot copy/download, and skill editing.
+- Page-level and toolbar buttons are excluded, including configuration editing/sync,
+  policy overview, snapshot history, promotion refresh, publication profiles,
+  profile/entity maintenance, catalog administration, module reload-all,
+  clone-result links, snapshot copy/download, and skill editing.
 
 Primary Create/Add, Save/Cancel, Compare and other selection-driven operations
 remain visible. Table search, refresh, pagination, expand/collapse, field-copy
@@ -55,3 +55,8 @@ row-action collections. The header preference does not alter those controls.
 
 The PR checklist guards adoption on future pages. Review new action callbacks
 and custom tables for the shared pattern rather than adding independent menus.
+
+Page-level buttons preserve disabled-state explanations in tooltips, using a
+span wrapper so disabled buttons can expose the reason. Delete buttons use
+error styling to distinguish destructive actions from adjacent Edit or Update
+buttons. These affordances apply in both action-display modes.

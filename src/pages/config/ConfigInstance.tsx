@@ -329,15 +329,18 @@ export default function ConfigInstance() {
     ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <PortalActions row={null} label="Page actions" actions={[
-          {
-            id: "update-config-values",
-            label: "Update Config Values",
-            icon: <TuneIcon />,
-            disabledReason: () => (!initialInstanceId) ? ('Select an instance to update its configuration.') : null,
-            onSelect: () => navigate(buildConfigUpdateRoute('instance', searchParams, taskContext))
-          }
-        ]} />
+        <Tooltip describeChild title={!initialInstanceId ? 'Select an instance to update its configuration.' : ''}>
+          <span style={{ display: 'inline-flex' }}>
+            <Button
+              variant="outlined"
+              startIcon={<TuneIcon />}
+              onClick={() => navigate(buildConfigUpdateRoute('instance', searchParams, taskContext))}
+              disabled={!initialInstanceId}
+            >
+              Update Config Values
+            </Button>
+          </span>
+        </Tooltip>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}

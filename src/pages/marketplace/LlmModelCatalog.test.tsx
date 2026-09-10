@@ -1,5 +1,4 @@
-import { renderWithActionDisplay as render } from '../../test/renderWithActionDisplay';
-import { selectPortalAction } from '../../test/portalActions';
+import { render } from '@testing-library/react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,7 +55,7 @@ describe('LLM model marketplace catalog', () => {
     const user = userEvent.setup();
     const view = renderCatalog();
     await screen.findByText('gpt-a');
-    await selectPortalAction('LLM Models Admin');
+    await user.click(screen.getByRole('button', { name: 'LLM Models Admin' }));
     expect(await screen.findByTestId('route-result')).toHaveTextContent('/app/genai/LlmModelControlPlane');
 
     view.unmount();

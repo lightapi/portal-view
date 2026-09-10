@@ -1,3 +1,4 @@
+import Tooltip from '@mui/material/Tooltip';
 import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { usePortalActionTableOptions } from '../../components/PortalActions/usePortalActionTableOptions';
 import PortalActionIcon from '@mui/icons-material/ArrowForward';
@@ -201,15 +202,11 @@ export default function A2aBindings() {
       <Typography variant="h5">A2A Bindings</Typography>
       <TextField size="small" label="Environment" value={environment} onChange={e=>setEnvironment(e.target.value)}/>
       <Button variant="contained" disabled={!host} onClick={()=>{setRemoteCardJson('');setEditing(empty(host!,environment));}}>Create binding</Button>
-      <PortalActionScope><PortalActions row={null} label="Page actions" actions={[
-        {
-          id: "manage-publication-profiles",
-          label: "Manage publication profiles",
-          icon: <PortalActionIcon />,
-          disabledReason: () => (!host) ? ('Select a host to manage publication profiles.') : null,
-          onSelect: () => setAuthoring(true)
-        }
-      ]} /></PortalActionScope>
+      <Tooltip describeChild title={!host ? 'Select a host to manage publication profiles.' : ''}>
+        <span style={{ display: 'inline-flex' }}>
+          <Button disabled={!host} onClick={()=>setAuthoring(true)}>Manage publication profiles</Button>
+        </span>
+      </Tooltip>
     </Stack>
     <Typography color="text.secondary" sx={{mb:2}}>
       UUID selectors identify Portal relationships only. Runtime configuration is published through the existing Config Server snapshot for host, serviceId, and envTag.

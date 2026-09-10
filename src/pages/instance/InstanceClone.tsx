@@ -1,5 +1,3 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -393,27 +391,9 @@ export default function InstanceClone() {
         {stillProcessing && <Button startIcon={<RefreshIcon />} onClick={refreshStatus}>Refresh status</Button>}
         {status === 'FAILED_DLQ' && <Alert severity="error">Clone projection failed. Code: {statusResult?.errorCode ?? 'FAILED_DLQ'}. Contact support with the clone request ID; copied values are not shown.</Alert>}
         {finished && status !== 'FAILED_DLQ' && <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mt={2}>
-          <PortalActionScope><PortalActions row={null} actions={[
-            {
-              id: "open-instance",
-              label: "Open Instance",
-              icon: <PortalActionIcon />,
-              onSelect: () => navigate('/app/instance/InstanceAdmin')
-            },
-            {
-              id: "open-configuration",
-              label: "Open Configuration",
-              icon: <PortalActionIcon />,
-              onSelect: () => navigate('/app/config/configInstance', { state: { data: { instanceId: statusResult?.targetInstanceId } } })
-            },
-            {
-              id: "create-oauth-client",
-              label: "Create OAuth Client",
-              description: "Create an OAuth client with this record preselected.",
-              icon: <PortalActionIcon />,
-              onSelect: () => navigate('/app/form/createClient', { state: { data: { hostId: source?.hostId, instanceId: statusResult?.targetInstanceId } } })
-            }
-          ]} /></PortalActionScope>
+          <Button onClick={() => navigate('/app/instance/InstanceAdmin')}>Open Instance</Button>
+          <Button onClick={() => navigate('/app/config/configInstance', { state: { data: { instanceId: statusResult?.targetInstanceId } } })}>Open Configuration</Button>
+          <Button onClick={() => navigate('/app/form/createClient', { state: { data: { hostId: source?.hostId, instanceId: statusResult?.targetInstanceId } } })}>Create OAuth Client</Button>
 
         </Stack>}
       </Paper>}

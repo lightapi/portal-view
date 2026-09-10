@@ -337,22 +337,19 @@ export default function ConfigInstanceApi() {
     ]} />,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <PortalActions row={null} label="Page actions" actions={[
-          {
-            id: "update-config-values",
-            label: "Update Config Values",
-            icon: <TuneIcon />,
-            disabledReason: () => (!initialInstanceApiId) ? (!initialInstanceApiId ? 'Select an instance API.' : 'Configuration synchronization is in progress.') : null,
-            onSelect: () => navigate(buildConfigUpdateRoute('api', searchParams, taskContext))
-          },
-          {
-            id: "sync-config-from-api",
-            label: "Sync Config from Api",
-            icon: isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />,
-            disabledReason: () => (!initialInstanceApiId || isSyncLoading) ? (!initialInstanceApiId ? 'Select an instance API.' : 'Configuration synchronization is in progress.') : null,
-            onSelect: handleSync
-          }
-        ]} />
+        <Tooltip describeChild title={!initialInstanceApiId ? 'Select an instance API.' : ''}>
+          <span style={{ display: 'inline-flex' }}>
+            <Button
+              variant="outlined"
+              startIcon={<TuneIcon />}
+              onClick={() => navigate(buildConfigUpdateRoute('api', searchParams, taskContext))}
+              disabled={!initialInstanceApiId}
+            >
+              Update Config Values
+            </Button>
+          </span>
+        </Tooltip>
+
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}
@@ -364,6 +361,18 @@ export default function ConfigInstanceApi() {
         >
           Add Config to Instance Api
         </Button>
+        <Tooltip describeChild title={!initialInstanceApiId ? 'Select an instance API.' : isSyncLoading ? 'Configuration synchronization is in progress.' : ''}>
+          <span style={{ display: 'inline-flex' }}>
+            <Button
+              variant="contained"
+              startIcon={isSyncLoading ? <CircularProgress size={20} color="inherit" /> : <SyncIcon />}
+              onClick={handleSync}
+              disabled={!initialInstanceApiId || isSyncLoading}
+            >
+              {isSyncLoading ? 'Syncing...' : 'Sync Config from Api'}
+            </Button>
+          </span>
+        </Tooltip>
 
         {initialConfigId && (
           <Typography variant="subtitle1">

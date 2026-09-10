@@ -1,4 +1,4 @@
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import { PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -241,14 +241,9 @@ export default function SchemaCatalog() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-          <PortalActionScope><PortalActions row={null} actions={[
-            {
-              id: "schema-admin",
-              label: "Schema Admin",
-              icon: <AdminPanelSettingsIcon />,
-              onSelect: handleAdmin
-            }
-          ]} /></PortalActionScope>
+          <Button variant="outlined" startIcon={<AdminPanelSettingsIcon />} onClick={handleAdmin}>
+            Schema Admin
+          </Button>
           <Button variant="contained" startIcon={<AddBoxIcon />} onClick={handleCreate}>
             Create Schema
           </Button>

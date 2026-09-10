@@ -1,5 +1,4 @@
-import PortalActionIcon from '@mui/icons-material/ArrowForward';
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import Button from '@mui/material/Button';
 
 import { Box } from '@mui/material';
 import React, { useMemo } from 'react';
@@ -62,21 +61,12 @@ export default function CityProfile() {
           />
         </Box>
         <Box sx={{ '& > *': { m: 1 } }}>
-          <PortalActionScope><PortalActions row={null} actions={[
-            {
-              id: "update",
-              label: "Update",
-              icon: <PortalActionIcon />,
-              onSelect: updateCityMap
-            },
-            {
-              id: "delete",
-              label: "Delete",
-              icon: <PortalActionIcon />,
-              destructive: true,
-              onSelect: deleteCityMap
-            }
-          ]} /></PortalActionScope>
+          <Button variant="contained" color="primary" onClick={updateCityMap}>
+            Update
+          </Button>
+          <Button variant="contained" color="error" onClick={deleteCityMap}>
+            Delete
+          </Button>
 
         </Box>
         <Box component="pre" sx={{ overflow: 'auto', mt: 2 }}>

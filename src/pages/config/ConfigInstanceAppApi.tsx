@@ -301,15 +301,18 @@ export default function ConfigInstanceAppApi() {
     enableRowActions: false,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <PortalActions row={null} label="Page actions" actions={[
-          {
-            id: "update-config-values",
-            label: "Update Config Values",
-            icon: <TuneIcon />,
-            disabledReason: () => (!initialInstanceAppId || !initialInstanceApiId) ? ('Select an instance application and API to update their configuration.') : null,
-            onSelect: () => navigate(buildConfigUpdateRoute('appApi', searchParams, taskContext))
-          }
-        ]} />
+        <Tooltip describeChild title={!initialInstanceAppId || !initialInstanceApiId ? 'Select an instance application and API to update their configuration.' : ''}>
+          <span style={{ display: 'inline-flex' }}>
+            <Button
+              variant="outlined"
+              startIcon={<TuneIcon />}
+              onClick={() => navigate(buildConfigUpdateRoute('appApi', searchParams, taskContext))}
+              disabled={!initialInstanceAppId || !initialInstanceApiId}
+            >
+              Update Config Values
+            </Button>
+          </span>
+        </Tooltip>
         <Button
           variant="contained"
           startIcon={<AddBoxIcon />}

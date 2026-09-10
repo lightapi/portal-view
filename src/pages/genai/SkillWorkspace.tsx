@@ -1,4 +1,5 @@
-import { PortalActions, PortalActionScope } from '../../components/PortalActions/PortalActions';
+import Tooltip from '@mui/material/Tooltip';
+import { PortalActionScope } from '../../components/PortalActions/PortalActions';
 import { PortalActionTableCell } from '../../components/PortalActions/PortalActionTableCell';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -257,18 +258,17 @@ export default function SkillWorkspace() {
                     </Box>
                     <Button startIcon={<AddBoxIcon />} onClick={handleAddTool} disabled={!skillId}>Tool</Button>
                     <Button startIcon={<AddBoxIcon />} onClick={handleAddWorkflow} disabled={!skillId}>Workflow</Button>
-            <PortalActionScope><PortalActions row={null} label="Page actions" actions={[
-              {
-                id: 'edit-skill', label: 'Edit Skill', icon: <EditIcon />,
-                disabledReason: () => !skill ? 'Load a skill before editing it.' : null,
-                onSelect: handleEditSkill
-              },
-            ]} /></PortalActionScope>
-
                     <HelpLink
                         helpPath={SKILL_WORKSPACE_HELP_PATH}
                         tooltip="Help: Skill Workspace"
                     />
+                    <Tooltip describeChild title={!skill ? 'Load a skill before editing it.' : ''}>
+                      <span style={{ display: 'inline-flex' }}>
+                        <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditSkill} disabled={!skill}>
+                            Edit Skill
+                        </Button>
+                      </span>
+                    </Tooltip>
 
                 </Stack>
 

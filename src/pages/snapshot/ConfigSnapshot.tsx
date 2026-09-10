@@ -449,14 +449,7 @@ export default function ConfigSnapshot() {
                         </Button>
                     </span>
                 </Tooltip>
-            <PortalActions row={null} label="Page actions" actions={[
-              {
-                id: "show-snapshot-history",
-                label: "Show snapshot history",
-                icon: <HistoryIcon />,
-                onSelect: showHistory
-              }
-            ]} />
+                <Button startIcon={<HistoryIcon />} onClick={showHistory}>Show snapshot history</Button>
                 {selectedCount > 0 && (
                     <Button onClick={() => { setSelectedSnapshots(new Map()); setSelectionMessage(null); }}>Clear selection</Button>
                 )}
