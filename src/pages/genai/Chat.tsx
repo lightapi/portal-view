@@ -24,6 +24,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import CodingRequestForm from './CodingRequestForm';
+import HelpLink from '../../components/HelpLink/HelpLink';
 import { clientMessageId, codingPayload, emptyCodingInput } from './codingRequest';
 import { useChatAgents } from './useChatAgents';
 import { renewChatAuthentication } from './chatAuthentication';
@@ -349,6 +350,7 @@ export default function Chat() {
                 <Typography variant="h5" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
                     GenAI Chat
                 </Typography>
+                <HelpLink helpPath="/help/portal-view/pages/genai-chat" tooltip="Help: GenAI Chat" />
                 
                 <Chip icon={<PersonIcon />} label={isAuthenticated ? `Logged in as: ${email}` : 'Sign in to chat'}
                     color={isAuthenticated ? 'primary' : 'default'} variant="outlined"
