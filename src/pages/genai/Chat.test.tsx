@@ -357,3 +357,33 @@ it.each([
     expect(screen.queryByLabelText('Repository bundle URI')).not.toBeInTheDocument();
   }
 });
+
+it('displays durable coding completion once and never displays failure payloads as answers', async () => {
+  const user = userEvent.setup(); render(<Chat />);
+  const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a', turnTypes: ['coding'], defaultTurnType: 'coding' }); });
+  const result = { type: 'executionResult', turnId: 'turn-a', state: 'COMPLETED', text: 'The configuration is loaded at startup.' };
+  act(() => { socket.receive(result); socket.receive(result); });
+  expect(screen.getAllByText(result.text)).toHaveLength(1);
+  act(() => socket.receive({ ...result, turnId: 'turn-b', state: 'FAILED', text: 'Do not present this as success' }));
+  expect(screen.getByText('Coding task turn-b: FAILED.')).toBeInTheDocument();
+  expect(screen.queryByText('Do not present this as success')).not.toBeInTheDocument();
+});
+
+it('offers only advertised workspaces and submits a task without repository bundle fields', async () => {
+  const user = userEvent.setup(); render(<Chat />);
+  const socket = await connect(user);
+  act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a', turnTypes: ['coding'], defaultTurnType: 'coding' }); });
+  expect(screen.queryByLabelText('Workspace')).not.toBeInTheDocument();
+  act(() => socket.receive({ type: 'workspaceCatalog', workspaces: [{ workspaceId: 'personal', membershipRevision: 'sha256:'+'a'.repeat(64), intents: ['inspect', 'implement'] }] }));
+  expect(screen.getByRole('combobox', { name: 'Workspace' })).toBeInTheDocument();
+  expect(screen.queryByLabelText('Repository bundle URI')).not.toBeInTheDocument();
+  fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'Explain the config loader' } });
+  await user.click(screen.getByRole('button', { name: 'Send message' }));
+  const payload = JSON.parse(socket.send.mock.calls[0][0]);
+  expect(payload.profile).toBe('coding'); expect(payload).not.toHaveProperty('coding');
+  expect(payload.workspace).toMatchObject({ workspaceId: 'personal', intent: 'inspect', requestId: payload.clientMessageId, instruction: payload.text, task: { kind: 'new' } });
+  expect(payload.workspace).not.toHaveProperty('subject'); expect(payload.workspace).not.toHaveProperty('store');
+  act(() => socket.receive({ type: 'executionResult', turnId: 'turn-a', state: 'COMPLETED', text: 'It loads at startup.', workspace: { workspaceId: 'personal', taskId: 'task-one', checkpointDigest: 'sha256:'+'b'.repeat(64) } }));
+  expect(screen.getByLabelText('Existing task ID')).toHaveValue('task-one');
+});

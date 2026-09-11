@@ -24,6 +24,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import Cookies from 'universal-cookie';
 import { useUserState } from '../../contexts/UserContext';
 import CodingRequestForm from './CodingRequestForm';
+import WorkspaceRequestForm, { emptyWorkspaceInput, workspacePayload, type WorkspaceChoice } from './WorkspaceRequestForm';
 import HelpLink from '../../components/HelpLink/HelpLink';
 import { clientMessageId, codingPayload, emptyCodingInput } from './codingRequest';
 import { useChatAgents } from './useChatAgents';
@@ -55,6 +56,9 @@ export default function Chat() {
     const connectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [mode, setMode] = useState('chat');
     const [coding, setCoding] = useState(emptyCodingInput);
+    const [workspaces, setWorkspaces] = useState<WorkspaceChoice[]>([]);
+    const [workspace, setWorkspace] = useState(emptyWorkspaceInput);
+    const [codingSource, setCodingSource] = useState('bundle');
     const [sendError, setSendError] = useState('');
     const [sessionReady, setSessionReady] = useState(false);
     const [acceptedRequest, setAcceptedRequest] = useState<{ sessionId: string; request_id: string } | null>(null);
@@ -66,6 +70,7 @@ export default function Chat() {
     const lastSubmission = useRef<{ id: string; text: string } | null>(null);
     const userDisconnected = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const completedExecutions = useRef(new Set<string>());
 
     const cookies = new Cookies();
 
@@ -75,7 +80,9 @@ export default function Chat() {
         authenticationExpiresAt.current = null; draftId.current = null; lastSubmission.current = null;
         setConnected(false); setConnecting(false); setSessionReady(false);
         setMessages([]); setAcceptedRequest(null); setTurnTypes([]); setMode('chat');
+        completedExecutions.current.clear();
         setConnectionError(''); setSendError(''); setCoding(emptyCodingInput); setInput('');
+        setWorkspaces([]); setWorkspace(emptyWorkspaceInput); setCodingSource('bundle');
         return () => {
             contextGeneration.current += 1; renewal.current?.abort(); renewal.current = null;
             if (connectionTimer.current) clearTimeout(connectionTimer.current);
@@ -231,6 +238,15 @@ export default function Chat() {
                     setSessionReady(true);
                     sessionStorage.setItem(connectedKey, receivedSessionId);
                     addMessage('System', 'Session initialized: ' + receivedSessionId);
+                } else if (json.type === 'workspaceCatalog') {
+                    const choices: WorkspaceChoice[] = Array.isArray(json.workspaces) ? json.workspaces.filter((c: WorkspaceChoice) =>
+                        c && typeof c.workspaceId === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(c.workspaceId)
+                        && typeof c.membershipRevision === 'string' && /^sha256:[0-9a-f]{64}$/.test(c.membershipRevision)
+                        && Array.isArray(c.intents) && c.intents.length && c.intents.every(i => i === 'inspect' || i === 'implement')) : [];
+                    setWorkspaces(choices);
+                    setWorkspace(current => choices.some(c => c.workspaceId === current.workspaceId && c.intents.includes(current.intent)) ? current
+                        : { ...emptyWorkspaceInput, workspaceId: choices[0]?.workspaceId || '', intent: choices[0]?.intents[0] || 'inspect' });
+                    setCodingSource(choices.length ? 'workspace' : 'bundle');
                 } else if (json.type === 'authentication_context') {
                     authenticationExpiresAt.current = typeof json.expiresAt === 'number' ? json.expiresAt : 0;
                 } else if (json.type === 'authentication_required') {
@@ -257,6 +273,20 @@ export default function Chat() {
                         setAcceptedRequest({ sessionId: sessionStorage.getItem(connectedKey) || '', request_id: json.request_id });
                         addMessage('System', 'Coding request accepted for scheduling: ' + json.request_id + '. Completion and patch must be verified from the durable execution result.');
                     }
+                } else if (json.type === 'executionResult') {
+                    if (typeof json.turnId !== 'string' || !['COMPLETED', 'FAILED', 'CANCELLED', 'UNKNOWN'].includes(json.state)) return;
+                    const key = `${sessionStorage.getItem(connectedKey)}:${json.turnId}`;
+                    if (completedExecutions.current.has(key)) return;
+                    completedExecutions.current.add(key);
+                    addMessage('System', `Coding task ${json.turnId}: ${json.state}.`);
+                    if (json.state === 'COMPLETED' && typeof json.text === 'string' && json.text.trim()) {
+                        addMessage('Assistant', json.text);
+                    }
+                    if (json.state === 'COMPLETED' && typeof json.workspace?.taskId === 'string' && typeof json.workspace?.checkpointDigest === 'string') {
+                        addMessage('System', `Workspace task: ${json.workspace.taskId}\nCheckpoint: ${json.workspace.checkpointDigest}`);
+                        setWorkspace(current => current.workspaceId === json.workspace.workspaceId ? { ...current, taskKind: 'existing', taskId: json.workspace.taskId } : current);
+                    }
+                    setAcceptedRequest(current => current?.request_id === json.turnId ? null : current);
                 } else if (json.type === 'text') {
                     if (typeof json.text === 'string') {
                         addMessage('Assistant', json.text);
@@ -323,7 +353,9 @@ export default function Chat() {
         try {
             const id = draftId.current || clientMessageId();
             const payload = mode === 'coding'
-                ? { text: input, clientMessageId: id, profile: 'coding', coding: codingPayload(coding) }
+                ? codingSource === 'workspace'
+                    ? { text: input, clientMessageId: id, profile: 'coding', workspace: workspacePayload(workspaces, workspace, id, input) }
+                    : { text: input, clientMessageId: id, profile: 'coding', coding: codingPayload(coding) }
                 : { text: input, clientMessageId: id };
             if (selected) rememberChatTurn(getSessionKey(userId, serviceId, host || '', envTag, selected.instanceId), { clientMessageId: id });
             ws.current.send(JSON.stringify(payload));
@@ -402,7 +434,13 @@ export default function Chat() {
                 sessionStorage.removeItem(getSessionKey(userId, serviceId, host || '', envTag, selected.instanceId));
                 handleConnect();
             }}>New session</Button> : undefined}>{connectionError}</Alert>}
-            {sessionReady && mode === 'coding' && <CodingRequestForm value={coding} onChange={setCoding} onPrompt={setInput} />}
+            {sessionReady && mode === 'coding' && <>
+                {!!workspaces.length && <TextField select label="Code source" value={codingSource} onChange={e => setCodingSource(e.target.value)} sx={{ mb: 2 }}>
+                    <MenuItem value="workspace">Shared workspace</MenuItem><MenuItem value="bundle">Repository bundle</MenuItem>
+                </TextField>}
+                {codingSource === 'workspace' && workspaces.length ? <WorkspaceRequestForm choices={workspaces} value={workspace} onChange={setWorkspace} />
+                    : <CodingRequestForm value={coding} onChange={setCoding} onPrompt={setInput} />}
+            </>}
             {sendError && <Alert severity="error">{sendError}</Alert>}
             {acceptedRequest && <Alert severity="info" action={<Button component="a" download="accepted.json" href={'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({ ...acceptedRequest, profile: 'coding' }, null, 2))}>Download acceptance</Button>}>Accepted request: {acceptedRequest.request_id}. This is not a completed coding turn.</Alert>}
             <Paper elevation={3} sx={{ flex: '1 0 320px', minHeight: 320, mb: 2, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: '#f5f7f9' }}>
