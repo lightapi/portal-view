@@ -375,7 +375,7 @@ it('offers only advertised workspaces and submits a task without repository bund
   const socket = await connect(user);
   act(() => { socket.readyState = 1; socket.onopen?.(); socket.receive({ type: 'session', session_id: 'session-a', turnTypes: ['coding'], defaultTurnType: 'coding' }); });
   expect(screen.queryByLabelText('Workspace')).not.toBeInTheDocument();
-  act(() => socket.receive({ type: 'workspaceCatalog', workspaces: [{ workspaceId: 'personal', membershipRevision: 'sha256:'+'a'.repeat(64), intents: ['inspect', 'implement'] }] }));
+  act(() => socket.receive({ type: 'workspaceCatalog', workspaces: [{ workspaceId: 'personal', membershipRevision: 'sha256:'+'a'.repeat(64), runnerId: 'personal-codex-runner', intents: ['inspect', 'implement', 'review'] }] }));
   expect(screen.getByRole('combobox', { name: 'Workspace' })).toBeInTheDocument();
   expect(screen.queryByLabelText('Repository bundle URI')).not.toBeInTheDocument();
   fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'Explain the config loader' } });

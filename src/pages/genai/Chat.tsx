@@ -242,7 +242,7 @@ export default function Chat() {
                     const choices: WorkspaceChoice[] = Array.isArray(json.workspaces) ? json.workspaces.filter((c: WorkspaceChoice) =>
                         c && typeof c.workspaceId === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(c.workspaceId)
                         && typeof c.membershipRevision === 'string' && /^sha256:[0-9a-f]{64}$/.test(c.membershipRevision)
-                        && Array.isArray(c.intents) && c.intents.length && c.intents.every(i => i === 'inspect' || i === 'implement')) : [];
+                        && Array.isArray(c.intents) && c.intents.length && c.intents.every(i => i === 'inspect' || i === 'implement' || i === 'review')) : [];
                     setWorkspaces(choices);
                     setWorkspace(current => choices.some(c => c.workspaceId === current.workspaceId && c.intents.includes(current.intent)) ? current
                         : { ...emptyWorkspaceInput, workspaceId: choices[0]?.workspaceId || '', intent: choices[0]?.intents[0] || 'inspect' });
@@ -284,8 +284,9 @@ export default function Chat() {
                     }
                     if (json.state === 'COMPLETED' && typeof json.workspace?.taskId === 'string' && typeof json.workspace?.checkpointDigest === 'string') {
                         addMessage('System', `Workspace task: ${json.workspace.taskId}\nCheckpoint: ${json.workspace.checkpointDigest}`);
-                        setWorkspace(current => current.workspaceId === json.workspace.workspaceId ? { ...current, taskKind: 'existing', taskId: json.workspace.taskId } : current);
+                        setWorkspace(current => current.workspaceId === json.workspace.workspaceId ? { ...current, taskKind: 'existing', taskId: json.workspace.taskId, checkpointDigest: json.workspace.checkpointDigest, ...(json.codingThread ? {sessionRef: json.codingThread.sessionRef, sessionCheckpoint: json.codingThread.checkpoint, sessionMode: json.codingThread.state === 'READY' ? 'resume' : 'new'} : {}) } : current);
                     }
+                    if (json.state === 'COMPLETED' && json.codingThread) addMessage('System', `Conversation: ${json.codingThread.sessionRef}\nConversation checkpoint: ${json.codingThread.checkpoint}\nState: ${json.codingThread.state}`);
                     setAcceptedRequest(current => current?.request_id === json.turnId ? null : current);
                 } else if (json.type === 'text') {
                     if (typeof json.text === 'string') {
