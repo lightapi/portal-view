@@ -29,6 +29,7 @@ import GatewayToolPublicationDialog from './GatewayToolPublicationDialog';
 import type {PublishableTool} from './gatewayToolPublicationScope';
 import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
 import ToolInvokeDialog from './ToolInvokeDialog';
+import WorkflowToolInvokeDialog from './WorkflowToolInvokeDialog';
 import {freshToolForUpdate} from './toolUpdateModel';
 
 // --- Type Definitions ---
@@ -128,6 +129,7 @@ export default function Tool() {
     const [accessControlTool, setAccessControlTool] = useState<ToolType | null>(null);
     const [workflowAccessTool, setWorkflowAccessTool] = useState<ToolType | null>(null);
     const [invokeTool, setInvokeTool] = useState<ToolType | null>(null);
+    const [invokeWorkflowTool, setInvokeWorkflowTool] = useState<ToolType | null>(null);
     const selectedToolCache = useRef(new Map<string, ToolType>());
     const initialApiVersionId = (location.state as {data?: {apiVersionId?: string}} | null)?.data?.apiVersionId
         ?? searchParams.get('apiVersionId')
@@ -482,6 +484,16 @@ export default function Tool() {
           onSelect: () => setAccessControlTool(row.original)
         },
         {
+          id: "invoke-workflow-tool",
+          label: "Invoke Workflow Tool",
+          description: "Invoke the published Tool through the current Portal Gateway.",
+          icon: <PlayArrowIcon />,
+          hidden: () => row.original.executionPlacement !== 'workflow',
+          disabledReason: () => !row.original.active || row.original.lifecycleStatus !== 'active'
+            ? 'This workflow Tool must be active.' : null,
+          onSelect: () => setInvokeWorkflowTool(row.original)
+        },
+        {
           id: "invoke-api-endpoint",
           label: "Invoke API Endpoint",
           description: "Open the API endpoint invocation form.",
@@ -523,6 +535,11 @@ export default function Tool() {
                 open={Boolean(invokeTool)}
                 tool={invokeTool}
                 onClose={() => setInvokeTool(null)}
+            />
+            <WorkflowToolInvokeDialog
+                open={Boolean(invokeWorkflowTool)}
+                tool={invokeWorkflowTool}
+                onClose={() => setInvokeWorkflowTool(null)}
             />
         </GenAiTaskLayout>
     );
