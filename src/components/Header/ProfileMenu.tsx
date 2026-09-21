@@ -19,8 +19,8 @@ import {
   useUserState,
 } from "../../contexts/UserContext";
 import { hasAnyRole } from "../../utils/ownershipScope";
-import { config, isSsoEnabled } from "../../../config";
-import { loginRequest } from "../../authConfig";
+import { isSsoEnabled } from "../../../config";
+import { signIn } from "../../utils/signIn";
 import { ActionDisplayToggle } from '../PortalActions/ActionDisplayToggle';
 
 function ProfileMenuContent({
@@ -34,43 +34,7 @@ function ProfileMenuContent({
   const { isAuthenticated, userId, email, roles } = useUserState();
   const navigate = useNavigate();
 
-  const signIn = async () => {
-    if (isSsoEnabled) {
-      if (!msalInstance) {
-        console.error("MSAL instance unavailable while SSO is enabled");
-        return;
-      }
-
-      const normalizedBasePath =
-        config.basePath && config.basePath !== "/"
-          ? config.basePath.replace(/\/$/, "")
-          : "";
-      const msalRedirectUri =
-        config.redirectUri ||
-        `${window.location.origin}${normalizedBasePath}/redirect`;
-
-      try {
-        await msalInstance.loginRedirect({
-          ...loginRequest,
-          redirectUri: msalRedirectUri,
-        });
-        return;
-      } catch (error) {
-        console.error("Login error:", error);
-        return;
-      }
-    }
-
-    // Generate a random state for CSRF protection
-    const state = Math.random().toString(36).substring(7);
-    localStorage.setItem("portal_auth_state", state);
-
-    const defaultUrl = `https://signin.localhost?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=E&state=${state}`;
-    const signInUrl = config.signInUrl
-      ? `${config.signInUrl}&user_type=E&state=${state}`
-      : defaultUrl;
-    window.location.href = signInUrl;
-  };
+  const handleSignIn = () => signIn(msalInstance);
 
   const handleMenuClose = () => {
     setProfileMenu(null);
@@ -215,7 +179,7 @@ function ProfileMenuContent({
             </MenuItem>)}
         {isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(changePassword)}>Change Password</MenuItem>)}
         {isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(signOut, msalInstance)}>Sign Out</MenuItem>)}
-        {!isAuthenticated && (<MenuItem onClick={signIn}>Sign In</MenuItem>)}
+        {!isAuthenticated && (<MenuItem onClick={handleSignIn}>Sign In</MenuItem>)}
         {!isAuthenticated && (<MenuItem onClick={() => handleMenuItemClick(signUp)}>Sign Up</MenuItem>)}
         <ActionDisplayToggle />
       </Menu>

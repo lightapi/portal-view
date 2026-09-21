@@ -2709,6 +2709,10 @@
           {
             "id": "batch",
             "label": "batch"
+          },
+          {
+            "id": "cli",
+            "label": "cli"
           }
         ]
       },
@@ -2950,6 +2954,10 @@
           {
             "id": "batch",
             "label": "batch"
+          },
+          {
+            "id": "cli",
+            "label": "cli"
           }
         ]
       },

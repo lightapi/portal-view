@@ -10,6 +10,7 @@ import Layout from "./components/Layout/Layout";
 import RoleGate from "./components/RoleGate";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
+import DeviceApproval from "./pages/oauth/DeviceApproval";
 import TaskCenter from "./pages/tasks/TaskCenter";
 import TaskDetail from "./pages/tasks/TaskDetail";
 import RegisterAiAgentApiStep from "./pages/tasks/RegisterAiAgentApiStep";
@@ -331,9 +332,13 @@ const App = () => {
           }
         />
 
+        {/* The address `/login` prints; keeps the code in the query string. */}
+        <Route path="/device" element={<RedirectWithQuery to="/app/device" />} />
+
         {/* Layout routes */}
         <Route path="/app/*" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="device" element={<DeviceApproval />} />
           <Route path="tasks" element={<TaskCenter />} />
           <Route path="tasks/:taskId" element={<TaskDetail />} />
           <Route path="tasks/register-ai-agent/api" element={<RegisterAiAgentApiStep />} />
