@@ -6,8 +6,8 @@ import path from 'node:path';
 const requestLimit = 1024 * 1024;
 const responseLimit = 2 * 1024 * 1024;
 const allowedHeaders = ['cookie', 'x-csrf-token', 'origin', 'content-type', 'accept',
-  'mcp-protocol-version', 'mcp-session-id', 'x-workflow-grant'];
-const responseHeaders = ['content-type', 'mcp-session-id', 'mcp-protocol-version',
+  'mcp-protocol-version', 'mcp-method', 'mcp-name', 'x-workflow-grant'];
+const responseHeaders = ['content-type', 'mcp-protocol-version',
   'set-cookie', 'retry-after'];
 
 export function ingressHeaders(req, origin, scope, rejected = () => {}) {

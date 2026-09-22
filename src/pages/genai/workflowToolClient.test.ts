@@ -4,11 +4,11 @@ import { createWorkflowToolClient, workflowArguments } from './workflowToolClien
 function gateway() {
     const fetcher = vi.fn(async (_url: unknown, options: RequestInit) => {
         const request = JSON.parse(String(options.body));
-        const result = request.method === 'initialize' ? { protocolVersion: '2025-03-26' }
+        const result = request.method === 'server/discover' ? { supportedVersions: ['2026-07-28'], capabilities: { tools: {} } }
             : request.method === 'tools/list' ? { tools: [{ name: 'intake', inputSchema: { type: 'object' } }] }
                 : { isError: false, structuredContent: { workflowInstanceId: 'run' } };
         return new Response(JSON.stringify({ jsonrpc: '2.0', id: request.id, result }), {
-            headers: { 'content-type': 'application/json', 'mcp-session-id': 'private-session' },
+            headers: { 'content-type': 'application/json' },
         });
     });
     vi.stubGlobal('fetch', fetcher);
@@ -17,7 +17,7 @@ function gateway() {
 
 afterEach(() => vi.unstubAllGlobals());
 describe('Gateway Workflow client', () => {
-    it('uses a fixed Gateway URL, browser credentials and private in-memory MCP session', async () => {
+    it('uses fixed stateless Gateway requests with browser credentials', async () => {
         const fetcher = gateway();
         const client = createWorkflowToolClient();
         expect((await client.findTool('intake')).name).toBe('intake');
@@ -28,8 +28,9 @@ describe('Gateway Workflow client', () => {
             expect(request.credentials).toBe('include');
             expect(request.headers).not.toHaveProperty('Authorization');
         }
-        expect(fetcher.mock.calls[1][1].headers).toHaveProperty('Mcp-Session-Id', 'private-session');
-        expect(JSON.parse(String(fetcher.mock.calls[2][1].body)).params).toEqual({
+        expect(fetcher.mock.calls[1][1].headers).not.toHaveProperty('Mcp-Session-Id');
+        expect(fetcher.mock.calls[2][1].headers).toHaveProperty('Mcp-Name', 'intake');
+        expect(JSON.parse(String(fetcher.mock.calls[2][1].body)).params).toMatchObject({
             name: 'intake', arguments: { stageClaim: { transitionId: 'stable' } },
         });
     });
@@ -38,10 +39,10 @@ describe('Gateway Workflow client', () => {
         await expect(createWorkflowToolClient().findTool('missing')).rejects.toThrow('not available');
         expect(fetcher).toHaveBeenCalledTimes(2);
     });
-    it('rejects invocation before catalog/session initialization', async () => {
+    it('does not require catalog state before invocation', async () => {
         const fetcher = gateway();
-        await expect(createWorkflowToolClient().invoke('intake', {}, '')).rejects.toThrow('Load');
-        expect(fetcher).not.toHaveBeenCalled();
+        await expect(createWorkflowToolClient().invoke('intake', {}, '')).resolves.toBeTruthy();
+        expect(fetcher).toHaveBeenCalledTimes(1);
     });
     it('rejects a token pasted instead of a grant reference before transmitting it', async () => {
         const fetcher = gateway();
