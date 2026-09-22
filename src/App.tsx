@@ -170,10 +170,7 @@ import A2aBindings from "./pages/genai/A2aBindings";
 import AgentDirectives from "./pages/genai/AgentDirectives";
 import LlmModelControlPlane from "./pages/genai/llm-model/LlmModelControlPlane";
 import AgentAssignment from "./pages/genai/AgentAssignment";
-import TaskInfo from "./pages/workflow/TaskInfo";
-import TaskAsst from "./pages/workflow/TaskAsst";
 import HumanTask from "./pages/workflow/HumanTask";
-import HumanTasks from "./pages/workflow/HumanTasks";
 import AuditLog from "./pages/workflow/AuditLog";
 import Skill from "./pages/genai/Skill";
 import Tool from "./pages/genai/Tool";
@@ -584,10 +581,10 @@ const App = () => {
           <Route path="genai/AgentDefinition/:agentDefId/directives" element={<AgentDirectives />} />
           <Route path="genai/LlmModelControlPlane" element={<LlmModelControlPlane />} />
           <Route path="genai/AgentAssignment" element={<AgentAssignment />} />
-          <Route path="workflow/TaskInfo" element={<TaskInfo />} />
-          <Route path="workflow/TaskAsst" element={<TaskAsst />} />
+          <Route path="workflow/TaskInfo" element={<RedirectWithQuery to="/app/workflow/ProcessInfo" />} />
+          <Route path="workflow/TaskAsst" element={<RedirectWithQuery to="/app/workflow/Worklist" />} />
           <Route path="workflow/HumanTask" element={<HumanTask />} />
-          <Route path="workflow/HumanTasks" element={<HumanTasks />} />
+          <Route path="workflow/HumanTasks" element={<RedirectWithQuery to="/app/workflow/Worklist" />} />
           <Route path="workflow/AuditLog" element={<AuditLog />} />
           <Route path="genai/Skill" element={<Skill />} />
           <Route path="genai/SkillWorkspace" element={<SkillWorkspace />} />

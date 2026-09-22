@@ -15,8 +15,8 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
-import fetchClient from '../../utils/fetchClient';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
+import { workflowAdminClient } from './workflowAdminClient';
 
 type InboxTab = {
     id: string;
@@ -29,6 +29,7 @@ type InboxTab = {
 type HumanTaskRow = {
     hostId: string;
     taskAsstId: string;
+    assignmentVersion: number;
     taskId: string;
     processId?: string;
     wfInstanceId?: string;
@@ -38,7 +39,7 @@ type HumanTaskRow = {
     assignmentType?: string;
     assignmentId?: string;
     assignmentLabel?: string;
-    assignmentStatusCode?: string;
+    assignmentStatus?: string;
     claimedBy?: string;
     claimedTs?: string;
     claimExpiresTs?: string;
@@ -106,16 +107,8 @@ export default function Worklist() {
         if (background) setIsRefetching(true);
         setError(null);
 
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action: 'getHumanTaskInboxSummary',
-            version: '0.1.0',
-            data: { hostId: host },
-        };
-
         try {
-            const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            const json = await workflowAdminClient.inboxSummary();
             const nextTabs = json.tabs || [];
             setTabs(nextTabs);
             if (nextTabs.length > 0 && !nextTabs.some((tab: InboxTab) => tab.id === activeTab)) {
@@ -137,24 +130,30 @@ export default function Worklist() {
         }
         setError(null);
 
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action: 'getHumanTaskList',
-            version: '0.1.0',
-            data: {
-                hostId: host,
-                offset: pagination.pageIndex * pagination.pageSize,
-                limit: pagination.pageSize,
+        try {
+            const json = await workflowAdminClient.listHumanTasks({
+                page: {
+                    cursor: String(pagination.pageIndex * pagination.pageSize),
+                    pageSize: pagination.pageSize,
+                },
                 tabId: activeTab,
                 includeClaimed: true,
                 includeClaimedByOthers: showLocked,
-            },
-        };
-
-        try {
-            const json = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
-            setData(json.humanTasks || []);
+            });
+            setData((json.humanTasks || []).map((task: any) => ({
+                ...task,
+                assignmentStatus: task.assignmentStatus,
+                assignedTs: task.assignedAt,
+                claimExpiresTs: task.claimExpiresAt,
+                deadlineTs: task.deadline,
+                categoryCode: task.category,
+                reasonCode: task.reason,
+                taskStatusCode: task.taskStatus,
+                ask: { prompt: task.prompt },
+                canClaim: Boolean(task.canClaim?.allowed),
+                canRelease: Boolean(task.canRelease?.allowed),
+                canComplete: Boolean(task.canComplete?.allowed),
+            })));
             setRowCount(json.total || 0);
         } catch (e: any) {
             setError(e?.description || e?.message || 'Unable to load worklist tasks.');
@@ -201,20 +200,12 @@ export default function Worklist() {
         setActionLoading(`${action}:${row.taskAsstId}`);
         setError(null);
 
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action,
-            version: '0.1.0',
-            data: {
-                hostId: host,
-                taskAsstId: row.taskAsstId,
-                ...(action === 'claimHumanTask' ? { claimMinutes: 30 } : {}),
-            },
-        };
-
         try {
-            await fetchClient('/portal/command', { method: 'POST', body: cmd });
+            if (action === 'claimHumanTask') {
+                await workflowAdminClient.claimHumanTask(row.taskAsstId, row.assignmentVersion, 30);
+            } else {
+                await workflowAdminClient.releaseHumanTask(row.taskAsstId, row.assignmentVersion);
+            }
             await refresh();
         } catch (e: any) {
             setError(e?.description || e?.message || 'Unable to update task claim.');
@@ -227,9 +218,9 @@ export default function Worklist() {
     const columns = useMemo<MRT_ColumnDef<HumanTaskRow>[]>(
         () => [
             {
-                accessorKey: 'assignmentStatusCode',
+                accessorKey: 'assignmentStatus',
                 header: 'Status',
-                Cell: ({ row }) => statusChip(row.original.assignmentStatusCode, row.original.claimedBy),
+                Cell: ({ row }) => statusChip(row.original.assignmentStatus, row.original.claimedBy),
             },
             {
                 accessorFn: workflowLabel,

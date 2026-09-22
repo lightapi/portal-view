@@ -28,8 +28,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
 import { SchemaForm, utils } from 'react-schema-form';
 import { useUserState } from '../../contexts/UserContext';
-import fetchClient from '../../utils/fetchClient';
 import { buildWorkflowTaskContext, WorkflowTaskLayout } from './workflowTaskUtils';
+import { workflowAdminClient } from './workflowAdminClient';
 
 type AskOption = {
     label?: string;
@@ -53,6 +53,7 @@ type AskDefinition = {
 type HumanTaskDetail = {
     hostId: string;
     taskAsstId: string;
+    assignmentVersion: number;
     taskId: string;
     processId?: string;
     wfInstanceId?: string;
@@ -62,7 +63,7 @@ type HumanTaskDetail = {
     assignmentType?: string;
     assignmentId?: string;
     assignmentLabel?: string;
-    assignmentStatusCode?: string;
+    assignmentStatus?: string;
     claimedBy?: string;
     claimedTs?: string;
     claimExpiresTs?: string;
@@ -169,7 +170,7 @@ export default function HumanTask() {
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const taskAsstId = searchParams.get('taskAsstId') || '';
     const taskContext = useMemo(() => buildWorkflowTaskContext(host || undefined, searchParams), [host, searchParams]);
-    const source = (location.state as { source?: string } | null)?.source || '/app/workflow/HumanTasks';
+    const source = (location.state as { source?: string } | null)?.source || '/app/workflow/Worklist';
 
     const [task, setTask] = useState<HumanTaskDetail | null>(null);
     const [value, setValue] = useState<string>('');
@@ -195,15 +196,23 @@ export default function HumanTask() {
         }
         setIsLoading(true);
         setError(null);
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action: 'getHumanTask',
-            version: '0.1.0',
-            data: { hostId: host, taskAsstId },
-        };
         try {
-            const data = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)));
+            const result = await workflowAdminClient.getHumanTask(taskAsstId);
+            const data = {
+                ...result.task,
+                ask: result.ask,
+                contextSummary: result.contextSummary,
+                assignmentStatus: result.task.assignmentStatus,
+                assignedTs: result.task.assignedAt,
+                claimExpiresTs: result.task.claimExpiresAt,
+                deadlineTs: result.task.deadline,
+                categoryCode: result.task.category,
+                reasonCode: result.task.reason,
+                taskStatusCode: result.task.taskStatus,
+                canClaim: Boolean(result.task.canClaim?.allowed),
+                canRelease: Boolean(result.task.canRelease?.allowed),
+                canComplete: Boolean(result.task.canComplete?.allowed),
+            };
             setTask(data);
             const options = answerOptions(data.ask);
             const nextMode = modeForAsk(data.ask);
@@ -232,7 +241,7 @@ export default function HumanTask() {
     const options = answerOptions(ask);
     const objectSchema = useMemo(() => normalizeObjectSchema(ask?.schema), [ask?.schema]);
     const objectForm = useMemo(() => objectFormItems(ask, objectSchema), [ask, objectSchema]);
-    const isClaimed = task?.assignmentStatusCode === 'CLAIMED';
+    const isClaimed = task?.assignmentStatus === 'CLAIMED';
     const isClaimedByCurrentUser = Boolean(isClaimed && task?.claimedBy && userId && task.claimedBy === userId);
     const canSubmit = Boolean(task?.canComplete);
     const canClaim = Boolean(task?.canClaim);
@@ -245,19 +254,12 @@ export default function HumanTask() {
         if (!host || !task) return;
         setIsMutatingClaim(true);
         setError(null);
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action,
-            version: '0.1.0',
-            data: {
-                hostId: host,
-                taskAsstId: task.taskAsstId,
-                ...(action === 'claimHumanTask' ? { claimMinutes: 30 } : {}),
-            },
-        };
         try {
-            await fetchClient('/portal/command', { method: 'POST', body: cmd });
+            if (action === 'claimHumanTask') {
+                await workflowAdminClient.claimHumanTask(task.taskAsstId, task.assignmentVersion, 30);
+            } else {
+                await workflowAdminClient.releaseHumanTask(task.taskAsstId, task.assignmentVersion);
+            }
             await loadTask();
         } catch (e: any) {
             setError(e?.description || e?.message || 'Unable to update task claim.');
@@ -275,37 +277,14 @@ export default function HumanTask() {
         }
         setIsSubmitting(true);
         setError(null);
-        const submittedAt = new Date().toISOString();
         const workflowToolDecision = task.ask?.action === 'workflow-tool-access-decision';
-        const cmd = {
-            host: 'lightapi.net',
-            service: 'workflow',
-            action: workflowToolDecision ? 'decideWorkflowToolAccess' : 'completeTask',
-            version: '0.1.0',
-            data: workflowToolDecision ? {
-                hostId: host,
-                requestId: String(task.context?.requestId || ''),
-                workflowInstanceId: task.wfInstanceId,
-                taskId: task.taskId,
-                taskAsstId: task.taskAsstId,
-                requestDigest: String(task.context?.requestDigest || ''),
-                decision: String(submittedValue),
-                comment: comment.trim() || undefined,
-            } : {
-                hostId: host,
-                taskId: task.taskId,
-                taskAsstId: task.taskAsstId,
-                statusCode: 'C',
-                completedTs: submittedAt,
-                response: {
-                    value: submittedValue,
-                    comment: comment.trim() || undefined,
-                    submittedAt,
-                },
-            },
-        };
+        if (workflowToolDecision) {
+            setError('Role-authorized Workflow Tool decisions remain unavailable until live ROLE membership freshness is qualified.');
+            setIsSubmitting(false);
+            return;
+        }
         try {
-            await fetchClient('/portal/command', { method: 'POST', body: cmd });
+            await workflowAdminClient.completeHumanTask(task.taskAsstId, task.assignmentVersion, submittedValue, comment.trim() || undefined);
             setCompleted(true);
         } catch (e: any) {
             setError(e?.description || e?.message || 'Unable to submit task.');
@@ -518,7 +497,7 @@ export default function HumanTask() {
                                         <Typography variant="h5">
                                             {task.workflow?.name || task.wfTaskId || 'Human Task'}
                                         </Typography>
-                                        <Chip size="small" label={task.assignmentStatusCode || ''} />
+                                        <Chip size="small" label={task.assignmentStatus || ''} />
                                         <Chip size="small" label={`Task ${task.taskStatusCode || ''}`} variant="outlined" />
                                     </Stack>
                                     <Typography variant="body2" color="text.secondary">
