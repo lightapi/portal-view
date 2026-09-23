@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {publicationScope, type PublishableTool} from './gatewayToolPublicationScope';
+import {
+  externallyManagedToolIds,
+  publicationScope,
+  shouldShowOwnershipPlaceholder,
+  toolsMissingAccessPolicy,
+  type PublishableTool,
+} from './gatewayToolPublicationScope';
 import {gatewayToolQueryUrl} from './gatewayToolPublicationRpc';
 
 const endpoint = (toolId: string, apiVersionId: string): PublishableTool => ({
@@ -56,5 +62,25 @@ describe('Gateway Tool publication scope', () => {
       endpoint('one', 'api-version-a'),
       {toolId: 'workflow', name: 'workflow', executionPlacement: 'workflow'},
     ])).toEqual({mode: 'ADD_OR_UPDATE', apiVersionId: undefined});
+  });
+
+  it('treats externally managed endpoint access as inherited instead of missing', () => {
+    const readiness = [
+      {toolId: 'api-tool', endpointKey: 'workflow_cancel@call', state: 'PRESERVED_API'},
+      {toolId: 'new-tool', endpointKey: 'new_tool@call', state: 'UNCONFIGURED'},
+    ];
+
+    expect([...externallyManagedToolIds(readiness)]).toEqual(['api-tool']);
+    expect(toolsMissingAccessPolicy(
+      ['api-tool', 'new-tool', 'configured-tool'],
+      ['configured-tool'],
+      [],
+      readiness,
+    )).toEqual(['new-tool']);
+  });
+
+  it('shows an initialized policy editor when readiness is absent', () => {
+    expect(shouldShowOwnershipPlaceholder(undefined, false)).toBe(true);
+    expect(shouldShowOwnershipPlaceholder(undefined, true)).toBe(false);
   });
 });

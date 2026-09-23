@@ -7,7 +7,14 @@ import {
 } from '@mui/material';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
-import {publicationScope, type PublishableTool} from './gatewayToolPublicationScope';
+import {
+  externallyManagedToolIds,
+  publicationScope,
+  shouldShowOwnershipPlaceholder,
+  toolsMissingAccessPolicy,
+  type AccessReadiness,
+  type PublishableTool,
+} from './gatewayToolPublicationScope';
 import {gatewayToolQueryUrl, gatewayToolRpc} from './gatewayToolPublicationRpc';
 
 type GatewayInstance = {
@@ -33,7 +40,7 @@ type Candidate = {
   publicationVersion: number;
   changeSummary: ChangeSummary;
   accessPolicies?: AccessPolicy[];
-  accessReadiness?: Array<{toolId: string; endpointKey: string; state: string}>;
+  accessReadiness?: AccessReadiness[];
   propertyComparisons?: Array<{property: string; action: string; currentValue: unknown; proposedValue: unknown}>;
 };
 
@@ -113,6 +120,7 @@ export default function GatewayToolPublicationDialog({
   const [instanceId, setInstanceId] = useState('');
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [policies, setPolicies] = useState<Record<string, AccessPolicy>>({});
+  const [accessReadiness, setAccessReadiness] = useState<AccessReadiness[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{severity: 'success' | 'error' | 'info'; text: string} | null>(null);
@@ -150,6 +158,7 @@ export default function GatewayToolPublicationDialog({
     setCandidate(null);
     setConfirmed(false);
     setPolicies({});
+    setAccessReadiness([]);
     setMessage(null);
     void loadInstances();
   }, [loadInstances, open, tools]);
@@ -166,16 +175,27 @@ export default function GatewayToolPublicationDialog({
         ...(scope.apiVersionId ? {apiVersionId: scope.apiVersionId} : {}),
       }));
       const previewed = (value as Candidate).accessPolicies ?? [];
+      const readiness = (value as Candidate).accessReadiness ?? [];
       const previewById = Object.fromEntries(previewed.map(policy => [policy.toolId, normalizePolicy(policy)]));
-      const missingPolicy = tools.some(tool => !previewById[tool.toolId] && !policies[tool.toolId]);
-      setPolicies(previous => ({...previous, ...previewById, ...Object.fromEntries(
-        tools.filter(tool => !previewById[tool.toolId] && !previous[tool.toolId])
-          .map(tool => [tool.toolId, emptyPolicy(tool.toolId)]))}));
-      setCandidate(missingPolicy ? null : value as Candidate);
+      const inherited = externallyManagedToolIds(readiness);
+      const missingToolIds = toolsMissingAccessPolicy(
+        tools.map(tool => tool.toolId),
+        Object.keys(previewById),
+        Object.keys(policies),
+        readiness,
+      );
+      setAccessReadiness(readiness);
+      setPolicies(previous => {
+        const next = {...previous, ...previewById};
+        inherited.forEach(toolId => delete next[toolId]);
+        missingToolIds.forEach(toolId => { next[toolId] = emptyPolicy(toolId); });
+        return next;
+      });
+      setCandidate(missingToolIds.length ? null : value as Candidate);
       setConfirmed(false);
       setMessage({
-        severity: missingPolicy ? 'info' : 'info',
-        text: missingPolicy
+        severity: 'info',
+        text: missingToolIds.length
           ? 'Access defaults were loaded for newly published Tools. Configure them and preview again.'
           : 'This preview stages desired configuration only. The live gateway changes after an Instance Admin creates and activates a config snapshot.',
       });
@@ -220,7 +240,10 @@ export default function GatewayToolPublicationDialog({
           Publication writes the instance-level <code>mcp-router.tools</code> desired state. It does not move the current snapshot or change the live Gateway.
         </Alert>
         <TextField select label="Gateway instance" value={instanceId}
-          onChange={event => { setInstanceId(event.target.value); setCandidate(null); setMessage(null); }}
+          onChange={event => {
+            setInstanceId(event.target.value); setCandidate(null); setPolicies({});
+            setAccessReadiness([]); setConfirmed(false); setMessage(null);
+          }}
           disabled={loading || !instances.length}>
           {instances.map(instance => <MenuItem key={instance.instanceId} value={instance.instanceId}>
             {instance.instanceName ?? instance.serviceId ?? instance.instanceId}
@@ -246,6 +269,22 @@ export default function GatewayToolPublicationDialog({
           Protected Tools without a request rule remain hidden and fail closed. Public access uses the compiler-owned allow-public-access rule and still follows MCP route authentication.
         </Alert>
         {tools.map(tool => {
+          const readiness = accessReadiness.find(item => item.toolId === tool.toolId);
+          if (shouldShowOwnershipPlaceholder(readiness, Boolean(policies[tool.toolId]))) return <Box key={tool.toolId}
+              sx={{border: 1, borderColor: 'divider', borderRadius: 1, p: 2}}>
+            <Typography variant="subtitle1">{tool.name}</Typography>
+            <Typography color="text.secondary">Preview changes to resolve the current access-control owner.</Typography>
+          </Box>;
+          if (readiness?.state === 'PRESERVED_API' || readiness?.state === 'PRESERVED_EXTERNAL') return <Box key={tool.toolId}
+              sx={{border: 1, borderColor: 'divider', borderRadius: 1, p: 2}}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle1">{tool.name}</Typography>
+              <Alert severity="info">
+                Access control for <code>{readiness.endpointKey}</code> is inherited from the existing API publication.
+                Change it in API Admin and republish the API. Publishing this Tool preserves those rules.
+              </Alert>
+            </Stack>
+          </Box>;
           const policy = policies[tool.toolId] ?? emptyPolicy(tool.toolId);
           const update = (next: AccessPolicy) => {
             setPolicies(previous => ({...previous, [tool.toolId]: next}));
@@ -328,7 +367,9 @@ export default function GatewayToolPublicationDialog({
           <Chip label={`${summary.unchanged} unchanged`} />
           <Chip variant="outlined" label={`${summary.total} total after publication`} />
         </Stack>}
-        {candidate?.accessReadiness?.map(item => <Alert key={item.toolId} severity={item.state === 'PUBLISHABLE' ? 'success' : 'warning'}>
+        {accessReadiness.map(item => <Alert key={item.toolId}
+          severity={item.state === 'PUBLISHABLE' || item.state === 'PRESERVED_API'
+            || item.state === 'PRESERVED_EXTERNAL' ? 'success' : 'warning'}>
           {item.endpointKey}: {item.state}
         </Alert>)}
         {candidate?.propertyComparisons?.map(comparison => <Accordion key={comparison.property}>
