@@ -45,7 +45,8 @@ type Candidate = {
   noOp?: boolean;
 };
 
-type PublicationMode = 'ADD_OR_UPDATE' | 'REPLACE_API_SCOPE' | 'REMOVE_API_SCOPE';
+type PublicationMode = 'ADD_OR_UPDATE' | 'REPLACE_API_SCOPE' | 'REMOVE_API_SCOPE' | 'REMOVE_WORKFLOW_TOOLS';
+const isRemovalMode = (mode: PublicationMode | null) => mode === 'REMOVE_API_SCOPE' || mode === 'REMOVE_WORKFLOW_TOOLS';
 
 type AccessPolicy = {
   toolId: string;
@@ -135,6 +136,8 @@ export default function GatewayToolPublicationDialog({
   const [accessOptions, setAccessOptions] = useState<Record<AccessLookupType, AccessOption[]>>({rule: [], role: [], group: [], position: [], attribute: []});
   const [accessOptionsError, setAccessOptionsError] = useState('');
   const scope = useMemo(() => publicationScope(tools), [tools]);
+  const workflowToolsSelected = tools.length > 0 && tools.every(tool =>
+    !tool.endpointId && tool.executionPlacement?.toLowerCase() === 'workflow');
   const selectedInstance = instances.find(instance => instance.instanceId === instanceId);
 
   useEffect(() => {
@@ -208,14 +211,15 @@ export default function GatewayToolPublicationDialog({
 
   const preview = async (requestedMode: PublicationMode = scope.mode as PublicationMode) => {
     if (!instanceId) return;
-    const removing = requestedMode === 'REMOVE_API_SCOPE';
+    const removing = isRemovalMode(requestedMode);
     setLoading(true);
     setOperationMode(requestedMode);
     setCandidate(null);
     setMessage(null);
     try {
       const value = await fetchClient(gatewayToolQueryUrl('genai', 'getGatewayToolPublicationCandidate', {
-        hostId, instanceId, mode: requestedMode, toolIds: removing ? [] : tools.map(tool => tool.toolId),
+        hostId, instanceId, mode: requestedMode,
+        toolIds: requestedMode === 'REMOVE_API_SCOPE' ? [] : tools.map(tool => tool.toolId),
         accessPolicies: removing ? [] : tools.flatMap(tool => policies[tool.toolId] ? [policies[tool.toolId]] : []),
         ...(scope.apiVersionId ? {apiVersionId: scope.apiVersionId} : {}),
       }));
@@ -228,7 +232,9 @@ export default function GatewayToolPublicationDialog({
         setMessage({
           severity: 'info',
           text: removalCandidate.noOp
-            ? 'This API version is already unpublished from the selected Gateway; no change was staged.'
+            ? requestedMode === 'REMOVE_API_SCOPE'
+              ? 'This API version is already unpublished from the selected Gateway; no change was staged.'
+              : 'The selected workflow Tools are already unpublished from the selected Gateway; no change was staged.'
             : 'Review the exact Tool and access-control removals below. The live Gateway changes only after snapshot activation.',
         });
         return;
@@ -267,12 +273,13 @@ export default function GatewayToolPublicationDialog({
 
   const publish = async () => {
     if (!candidate || !instanceId || !operationMode) return;
-    const removing = operationMode === 'REMOVE_API_SCOPE';
+    const removing = isRemovalMode(operationMode);
     setLoading(true);
     setMessage(null);
     const result = await apiPost({
       url: '/portal/command', headers: {}, body: gatewayToolRpc('genai', 'publishGatewayTools', {
-        hostId, instanceId, mode: operationMode, toolIds: removing ? [] : tools.map(tool => tool.toolId),
+        hostId, instanceId, mode: operationMode,
+        toolIds: operationMode === 'REMOVE_API_SCOPE' ? [] : tools.map(tool => tool.toolId),
         accessPolicies: removing ? [] : tools.flatMap(tool => policies[tool.toolId] ? [policies[tool.toolId]] : []),
         ...(scope.apiVersionId ? {apiVersionId: scope.apiVersionId} : {}),
         expectedCandidateDigest: candidate.candidateDigest,
@@ -294,7 +301,10 @@ export default function GatewayToolPublicationDialog({
   const summary = candidate?.changeSummary;
   return <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth="md" fullWidth>
     <DialogTitle>{operationMode === 'REMOVE_API_SCOPE'
-      ? 'Unpublish API Tools from a Gateway' : 'Publish selected Tools to a Gateway'}</DialogTitle>
+      ? 'Unpublish API Tools from a Gateway'
+      : operationMode === 'REMOVE_WORKFLOW_TOOLS'
+        ? 'Unpublish selected workflow Tools from a Gateway'
+        : 'Publish selected Tools to a Gateway'}</DialogTitle>
     <DialogContent>
       <Stack spacing={2} sx={{pt: 1}}>
         <Alert severity="info">
@@ -324,11 +334,13 @@ export default function GatewayToolPublicationDialog({
         <Typography color="text.secondary">
           {operationMode === 'REMOVE_API_SCOPE'
             ? 'API-scope unpublish: every Tool bound to this API version is removed from the target; unrelated API and workflow Tools are preserved.'
+            : operationMode === 'REMOVE_WORKFLOW_TOOLS'
+              ? 'Selected workflow Tools and their exact endpoint access rules are removed from the target; unrelated Tools and access rules are preserved.'
             : scope.mode === 'REPLACE_API_SCOPE'
             ? 'API-scope publication: the selected API version endpoints replace that API version on the target; unrelated API and workflow Tools are preserved.'
             : 'Add/update publication: selected Tools are merged into the target; unrelated Tools are preserved.'}
         </Typography>
-        {operationMode !== 'REMOVE_API_SCOPE' && <><Typography variant="h6">Access Control</Typography>
+        {!isRemovalMode(operationMode) && <><Typography variant="h6">Access Control</Typography>
         <Alert severity="warning">
           Protected Tools without a request rule remain hidden and fail closed. Public access uses the compiler-owned allow-public-access rule and still follows MCP route authentication.
         </Alert>
@@ -486,6 +498,8 @@ export default function GatewayToolPublicationDialog({
           onChange={event => setConfirmed(event.target.checked)} />}
           label={operationMode === 'REMOVE_API_SCOPE'
             ? 'I reviewed the complete removals and approve staging this API-scope unpublish.'
+            : operationMode === 'REMOVE_WORKFLOW_TOOLS'
+              ? 'I reviewed the selected workflow Tool and access-rule removals and approve staging them.'
             : 'I reviewed the complete current and proposed property values and approve these overwrites.'} />}
         {message?.severity === 'success' && <Button variant="outlined" onClick={() => {
           onClose();
@@ -499,13 +513,17 @@ export default function GatewayToolPublicationDialog({
         onClick={() => void preview('REMOVE_API_SCOPE')} disabled={loading || !instanceId || !tools.length}>
         {loading && operationMode === 'REMOVE_API_SCOPE' ? <CircularProgress size={20} /> : 'Preview API unpublish'}
       </Button>}
+      {workflowToolsSelected && <Button color="error" variant="outlined"
+        onClick={() => void preview('REMOVE_WORKFLOW_TOOLS')} disabled={loading || !instanceId}>
+        {loading && operationMode === 'REMOVE_WORKFLOW_TOOLS' ? <CircularProgress size={20} /> : 'Preview workflow Tool unpublish'}
+      </Button>}
       <Button variant="outlined" onClick={() => void preview(scope.mode as PublicationMode)} disabled={loading || !instanceId || !tools.length}>
         {loading && !candidate ? <CircularProgress size={20} /> : 'Preview changes'}
       </Button>
       <Button variant="contained" onClick={() => void publish()} disabled={loading || !candidate || !confirmed
         || Object.values(policies).some(policy => policy.accessMode === 'PUBLIC' && !policy.publicReason?.trim())}>
         {loading && candidate ? <CircularProgress size={20} />
-          : operationMode === 'REMOVE_API_SCOPE' ? 'Stage unpublish' : 'Stage publication'}
+          : isRemovalMode(operationMode) ? 'Stage unpublish' : 'Stage publication'}
       </Button>
     </DialogActions>
   </Dialog>;
