@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Checkbox,
+  Accordion, AccordionDetails, AccordionSummary, Alert, Autocomplete, Box, Button, Checkbox,
   Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, MenuItem, Stack, TextField, Typography,
 } from '@mui/material';
@@ -79,6 +79,16 @@ type AccessPolicy = {
   publicReason?: string;
 };
 
+type AccessLookupType = 'rule' | 'role' | 'group' | 'position' | 'attribute';
+type AccessOption = {id: string; label: string};
+const ACCESS_LOOKUPS: Record<AccessLookupType, {service: string; action: string; responseKey: string; idKey: string; labels: string[]}> = {
+  rule: {service: 'rule', action: 'getRule', responseKey: 'rules', idKey: 'ruleId', labels: ['ruleName', 'ruleDesc']},
+  role: {service: 'role', action: 'getRole', responseKey: 'roles', idKey: 'roleId', labels: ['roleName', 'roleDesc']},
+  group: {service: 'group', action: 'getGroup', responseKey: 'groups', idKey: 'groupId', labels: ['groupName', 'groupDesc']},
+  position: {service: 'position', action: 'getPosition', responseKey: 'positions', idKey: 'positionId', labels: ['positionName', 'positionDesc']},
+  attribute: {service: 'attribute', action: 'getAttribute', responseKey: 'attributes', idKey: 'attributeId', labels: ['attributeName', 'attributeDesc']},
+};
+
 const emptyPolicy = (toolId: string): AccessPolicy => ({
   toolId, accessMode: 'PROTECTED', ruleIds: [], responseRuleIds: [],
   permissions: {roles: [], groups: [], positions: [], users: [], attributes: []},
@@ -94,12 +104,6 @@ const normalizePolicy = (policy: AccessPolicy): AccessPolicy => ({
 });
 
 const splitValues = (value: string) => value.split(/[\s,]+/).map(item => item.trim()).filter(Boolean);
-const attributeValues = (value: string) => splitValues(value).map(item => {
-  const separator = item.indexOf('=');
-  if (separator <= 0 || separator === item.length - 1) throw new Error('Attributes must use attributeId=value.');
-  return {attributeId: item.slice(0, separator), attributeValue: item.slice(separator + 1)};
-});
-
 function errorMessage(reason: unknown) {
   if (reason instanceof Error) return reason.message;
   if (reason && typeof reason === 'object') {
@@ -128,8 +132,40 @@ export default function GatewayToolPublicationDialog({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{severity: 'success' | 'error' | 'info'; text: string} | null>(null);
   const [operationMode, setOperationMode] = useState<PublicationMode | null>(null);
+  const [accessOptions, setAccessOptions] = useState<Record<AccessLookupType, AccessOption[]>>({rule: [], role: [], group: [], position: [], attribute: []});
+  const [accessOptionsError, setAccessOptionsError] = useState('');
   const scope = useMemo(() => publicationScope(tools), [tools]);
   const selectedInstance = instances.find(instance => instance.instanceId === instanceId);
+
+  useEffect(() => {
+    if (!open || !hostId) return;
+    let cancelled = false;
+    const load = async () => {
+      setAccessOptionsError('');
+      const entries = await Promise.all(Object.entries(ACCESS_LOOKUPS).map(async ([type, config]) => {
+        const cmd = {host: 'lightapi.net', service: config.service, action: config.action, version: '0.1.0', data: {
+          hostId, offset: 0, limit: 1000, sorting: JSON.stringify([]), filters: JSON.stringify([]), globalFilter: '', active: true,
+        }};
+        try {
+          const result = await fetchClient(`/portal/query?cmd=${encodeURIComponent(JSON.stringify(cmd))}`);
+          const rows = Array.isArray(result?.[config.responseKey]) ? result[config.responseKey] : [];
+          return [type, rows.map((row: Record<string, unknown>) => {
+            const id = String(row[config.idKey] ?? '');
+            const label = config.labels.map(key => row[key]).find(value => typeof value === 'string' && value.trim());
+            return id ? {id, label: typeof label === 'string' ? `${id} - ${label}` : id} : null;
+          }).filter(Boolean)] as const;
+        } catch {
+          return [type, []] as const;
+        }
+      }));
+      if (!cancelled) {
+        setAccessOptions(Object.fromEntries(entries) as Record<AccessLookupType, AccessOption[]>);
+        if (entries.every(([, options]) => options.length === 0)) setAccessOptionsError('Could not load access rule and principal options. Check access administration permissions.');
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [hostId, open]);
 
   const loadInstances = useCallback(async () => {
     if (!open || !hostId) return;
@@ -161,7 +197,9 @@ export default function GatewayToolPublicationDialog({
     if (!open) return;
     setCandidate(null);
     setConfirmed(false);
-    setPolicies({});
+    setPolicies(Object.fromEntries(tools
+      .filter(tool => !tool.endpointId)
+      .map(tool => [tool.toolId, emptyPolicy(tool.toolId)])));
     setAccessReadiness([]);
     setMessage(null);
     setOperationMode(null);
@@ -294,6 +332,7 @@ export default function GatewayToolPublicationDialog({
         <Alert severity="warning">
           Protected Tools without a request rule remain hidden and fail closed. Public access uses the compiler-owned allow-public-access rule and still follows MCP route authentication.
         </Alert>
+        {accessOptionsError && <Alert severity="warning">{accessOptionsError}</Alert>}
         {tools.map(tool => {
           const readiness = accessReadiness.find(item => item.toolId === tool.toolId);
           if (shouldShowOwnershipPlaceholder(readiness, Boolean(policies[tool.toolId]))) return <Box key={tool.toolId}
@@ -315,10 +354,38 @@ export default function GatewayToolPublicationDialog({
           const update = (next: AccessPolicy) => {
             setPolicies(previous => ({...previous, [tool.toolId]: next}));
             setCandidate(null); setConfirmed(false);
+            setAccessReadiness([]);
+            setMessage({severity: 'info', text: 'Access settings changed. Preview changes again, then review and confirm the publication.'});
           };
           return <Box key={tool.toolId} sx={{border: 1, borderColor: 'divider', borderRadius: 1, p: 2}}>
             <Stack spacing={2}>
               <Typography variant="subtitle1">{tool.name}</Typography>
+              <Accordion disableGutters>
+                <AccordionSummary expandIcon={<span>▾</span>}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="subtitle2">Access overview</Typography>
+                    <Chip size="small" label={policy.accessMode === 'PROTECTED' ? 'Protected' : 'Public'} />
+                    <Chip size="small" variant="outlined" label={`${policy.ruleIds.length} request rules`} />
+                    <Chip size="small" variant="outlined" label={`${Object.values(policy.permissions).flat().length} permissions`} />
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Stack spacing={1.5}>
+                    <PolicyOverviewSection title="Request rules" value={policy.ruleIds} />
+                    <PolicyOverviewSection title="Response filter rules" value={policy.responseRuleIds} />
+                    <PolicyOverviewSection title="Permissions" value={[
+                      ...policy.permissions.roles.map(value => `Role: ${value}`),
+                      ...policy.permissions.groups.map(value => `Group: ${value}`),
+                      ...policy.permissions.positions.map(value => `Position: ${value}`),
+                      ...policy.permissions.users.map(value => `User: ${value}`),
+                      ...policy.permissions.attributes.map(value => `Attribute: ${value.attributeId}=${value.attributeValue}`),
+                    ]} />
+                    <PolicyOverviewSection title="Row filters" value={policy.rowFilters.map(value => JSON.stringify(value))} />
+                    <PolicyOverviewSection title="Column filters" value={policy.columnFilters.map(value => JSON.stringify(value))} />
+                    {policy.accessMode === 'PUBLIC' && <PolicyOverviewSection title="Public access approval" value={policy.publicReason ? [policy.publicReason] : []} />}
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
               <TextField select label="Access mode" value={policy.accessMode}
                 onChange={event => update({...policy, accessMode: event.target.value as AccessPolicy['accessMode'],
                   ruleIds: [],
@@ -328,31 +395,39 @@ export default function GatewayToolPublicationDialog({
                 <MenuItem value="PROTECTED">Protected</MenuItem>
                 <MenuItem value="PUBLIC">Public</MenuItem>
               </TextField>
+              <Typography variant="caption" color="text.secondary">
+                {policy.accessMode === 'PROTECTED'
+                  ? 'Protected: the Gateway requires a matching request rule and its configured permissions. With no request rule, the Tool is hidden and denied.'
+                  : 'Public: the Gateway allows any caller that has passed MCP route authentication. Use only with an approval reason; route authentication still applies.'}
+              </Typography>
               {policy.accessMode === 'PROTECTED' ? <>
-                <TextField label="Request rule IDs" value={policy.ruleIds.join(', ')}
-                  helperText="Comma or space separated. An empty selection deliberately leaves the Tool unconfigured and denied."
-                  onChange={event => update({...policy, ruleIds: splitValues(event.target.value)})} />
-                {(['roles', 'groups', 'positions', 'users'] as const).map(dimension =>
-                  <TextField key={dimension} label={`Allowed ${dimension}`} value={policy.permissions[dimension].join(', ')}
-                    onChange={event => update({...policy, permissions: {...policy.permissions,
-                      [dimension]: splitValues(event.target.value)}})} />)}
-                <TextField key={`attributes-${JSON.stringify(policy.permissions.attributes)}`}
-                  label="Allowed attributes" defaultValue={policy.permissions.attributes
-                    .map(attribute => `${attribute.attributeId}=${attribute.attributeValue}`).join(', ')}
-                  helperText="Comma or space separated attributeId=value pairs."
-                  onBlur={event => {
-                    try {
-                      update({...policy, permissions: {...policy.permissions,
-                        attributes: attributeValues(event.target.value)}});
-                    } catch (reason) {
-                      setMessage({severity: 'error', text: errorMessage(reason)});
-                    }
-                  }} />
+                <AccessMultiSelect label="Request rules" options={accessOptions.rule} value={policy.ruleIds}
+                  onChange={ruleIds => update({...policy, ruleIds})}
+                  helperText="Search and select active request rules. An empty selection deliberately leaves the Tool unconfigured and denied."
+                  />
+                {(['roles', 'groups', 'positions'] as const).map(dimension => <AccessMultiSelect
+                  key={dimension} label={`Allowed ${dimension}`} options={accessOptions[dimension.slice(0, -1) as AccessLookupType]}
+                  value={policy.permissions[dimension]} onChange={values => update({...policy, permissions: {...policy.permissions, [dimension]: values}})} />)}
+                <TextField label="Allowed users" value={policy.permissions.users.join(', ')}
+                  helperText="Enter user IDs separated by commas or spaces."
+                  onChange={event => update({...policy, permissions: {...policy.permissions, users: splitValues(event.target.value)}})} />
+                <AccessMultiSelect label="Allowed attributes" options={accessOptions.attribute}
+                  value={policy.permissions.attributes.map(attribute => attribute.attributeId)}
+                  onChange={attributeIds => update({...policy, permissions: {...policy.permissions,
+                    attributes: attributeIds.map(attributeId => policy.permissions.attributes.find(item => item.attributeId === attributeId)
+                      ?? {attributeId, attributeValue: ''})}})}
+                  helperText="Select attributes, then enter a value for each below." />
+                {policy.permissions.attributes.map(attribute => <TextField key={attribute.attributeId}
+                  label={`${attribute.attributeId} value`} value={attribute.attributeValue}
+                  onChange={event => update({...policy, permissions: {...policy.permissions, attributes:
+                    policy.permissions.attributes.map(item => item.attributeId === attribute.attributeId
+                      ? {...item, attributeValue: event.target.value} : item)}})} />)}
               </> : <TextField required label="Public access approval reason" value={policy.publicReason ?? ''}
                 onChange={event => update({...policy, publicReason: event.target.value})} />}
-              <TextField label="Response filter rule IDs" value={policy.responseRuleIds.join(', ')}
-                helperText="Comma or space separated res-fil rules. Required when row or column filters are configured."
-                onChange={event => update({...policy, responseRuleIds: splitValues(event.target.value)})} />
+              <AccessMultiSelect label="Response filter rules" options={accessOptions.rule} value={policy.responseRuleIds}
+                onChange={responseRuleIds => update({...policy, responseRuleIds})}
+                helperText="Search and select response filter rules. Required when row or column filters are configured."
+              />
               <TextField key={`rows-${JSON.stringify(policy.rowFilters)}`}
                   label="Row filters" multiline minRows={3}
                   defaultValue={JSON.stringify(policy.rowFilters, null, 2)}
@@ -434,4 +509,32 @@ export default function GatewayToolPublicationDialog({
       </Button>
     </DialogActions>
   </Dialog>;
+}
+
+function PolicyOverviewSection({title, value}: {title: string; value: string[]}) {
+  return <Box>
+    <Typography variant="subtitle2">{title}</Typography>
+    <Typography variant="body2" color={value.length ? 'text.primary' : 'text.secondary'} sx={{whiteSpace: 'pre-wrap'}}>
+      {value.length ? value.join('\n') : 'None'}
+    </Typography>
+  </Box>;
+}
+
+function AccessMultiSelect({label, options, value, onChange, helperText}: {
+  label: string;
+  options: AccessOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  helperText?: string;
+}) {
+  const selected = value.map(id => options.find(option => option.id === id) ?? {id, label: id});
+  return <Autocomplete
+    multiple
+    options={options}
+    value={selected}
+    onChange={(_event, next) => onChange(next.map(option => option.id))}
+    getOptionLabel={option => option.label}
+    isOptionEqualToValue={(option, selectedOption) => option.id === selectedOption.id}
+    renderInput={params => <TextField {...params} label={label} helperText={helperText} placeholder={`Select ${label.toLowerCase()}`} />}
+  />;
 }
