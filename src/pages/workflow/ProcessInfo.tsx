@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, Switch, Tab, Tabs, Typography } from '@mui/material';
+import { Alert, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -55,6 +55,11 @@ export default function ProcessInfo() {
     const [features, setFeatures] = useState<FeatureType[]>([]);
     const [featuresHoldingVm, setFeaturesHoldingVm] = useState(false);
     const [detail, setDetail] = useState<any | null>(null);
+    const [processState, setProcessState] = useState('ALL');
+    const [definitionIdDraft, setDefinitionIdDraft] = useState('');
+    const [definitionId, setDefinitionId] = useState('');
+    const [createdFrom, setCreatedFrom] = useState('');
+    const [createdTo, setCreatedTo] = useState('');
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -63,6 +68,12 @@ export default function ProcessInfo() {
             const result = await workflowAdminClient.listProcesses({
                 page: { cursor: String(pagination.pageIndex * pagination.pageSize), pageSize: pagination.pageSize },
                 sort: 'createdAt:desc',
+                ...(processState === 'RUNNING' ? { states: ['ACCEPTED', 'RUNNING', 'COMPENSATING'] } : {}),
+                ...(processState === 'WAITING' ? { states: ['WAITING'] } : {}),
+                ...(processState === 'TERMINAL' ? { states: ['COMPLETED', 'FAILED', 'CANCELLED'] } : {}),
+                ...(definitionId.trim() ? { definitionId: definitionId.trim() } : {}),
+                ...(createdFrom ? { createdFrom: new Date(createdFrom).toISOString() } : {}),
+                ...(createdTo ? { createdTo: new Date(createdTo).toISOString() } : {}),
             });
             setData(result.processes || []);
             const page = result.page || {};
@@ -72,9 +83,20 @@ export default function ProcessInfo() {
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageIndex, pagination.pageSize]);
+    }, [createdFrom, createdTo, definitionId, pagination.pageIndex, pagination.pageSize, processState]);
 
     useEffect(() => { void load(); }, [load]);
+
+    const updateProcessFilter = useCallback((update: () => void) => {
+        update();
+        setPagination(current => ({ ...current, pageIndex: 0 }));
+    }, [setPagination]);
+
+    const definitionIdIsValid = !definitionIdDraft.trim() || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(definitionIdDraft.trim());
+    const applyDefinitionId = useCallback(() => {
+        if (!definitionIdIsValid) return;
+        updateProcessFilter(() => setDefinitionId(definitionIdDraft.trim()));
+    }, [definitionIdDraft, definitionIdIsValid, updateProcessFilter]);
 
     const loadFeatures = useCallback(async () => {
         setLoading(true);
@@ -160,7 +182,31 @@ export default function ProcessInfo() {
                 disabledReason: () => row.original.canCancelInvocation?.allowed ? null : (row.original.canCancelInvocation?.reason || 'Invocation cannot be cancelled.'),
                 onSelect: () => cancel(row.original) },
         ]} />,
-        renderTopToolbarCustomActions: () => <Button startIcon={<RefreshIcon />} onClick={() => void load()}>Refresh</Button>,
+        renderTopToolbarCustomActions: () => <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel id="workflow-process-state-label">State</InputLabel>
+                <Select labelId="workflow-process-state-label" label="State" value={processState}
+                    onChange={event => updateProcessFilter(() => setProcessState(event.target.value))}>
+                    <MenuItem value="ALL">All</MenuItem>
+                    <MenuItem value="RUNNING">Running</MenuItem>
+                    <MenuItem value="WAITING">Waiting</MenuItem>
+                    <MenuItem value="TERMINAL">Terminal</MenuItem>
+                </Select>
+            </FormControl>
+            <TextField size="small" label="Definition ID" value={definitionIdDraft}
+                error={!definitionIdIsValid}
+                helperText={!definitionIdIsValid ? 'Enter a valid UUID' : undefined}
+                onChange={event => setDefinitionIdDraft(event.target.value)}
+                onKeyDown={event => { if (event.key === 'Enter') applyDefinitionId(); }} />
+            <Button onClick={applyDefinitionId} disabled={!definitionIdIsValid}>Apply</Button>
+            <TextField size="small" type="datetime-local" label="Created from" value={createdFrom}
+                InputLabelProps={{ shrink: true }}
+                onChange={event => updateProcessFilter(() => setCreatedFrom(event.target.value))} />
+            <TextField size="small" type="datetime-local" label="Created to" value={createdTo}
+                InputLabelProps={{ shrink: true }}
+                onChange={event => updateProcessFilter(() => setCreatedTo(event.target.value))} />
+            <Button startIcon={<RefreshIcon />} onClick={() => void load()}>Refresh</Button>
+        </Stack>,
     }));
 
     const featureColumns = useMemo<MRT_ColumnDef<FeatureType>[]>(() => [
