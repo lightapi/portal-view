@@ -21,6 +21,8 @@ async function call(name: string, args: Record<string, unknown>) {
 }
 
 export const workflowAdminClient = {
+    start: (args: { workflowDefinitionId: string; input: Record<string, unknown>; idempotencyKey: string }) =>
+        call('workflow_start', args),
     listProcesses: (args: Record<string, unknown>) => call('workflow_list_processes', args),
     getProcess: (processId: string) => call('workflow_get_process', { processId }),
     listFeatures: (args: Record<string, unknown>) => call('workflow_list_features', args),

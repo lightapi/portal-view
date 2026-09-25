@@ -1,15 +1,28 @@
-import { describe, expect, it } from 'vitest';
-import { parseWorkflowToolResult } from './workflowAdminClient';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('workflowAdminClient result parsing', () => {
-    it('prefers structured content and accepts compact JSON text', () => {
-        expect(parseWorkflowToolResult({ structuredContent: { ok: true } })).toEqual({ ok: true });
-        expect(parseWorkflowToolResult({ content: [{ type: 'text', text: '{"ok":true}' }] })).toEqual({ ok: true });
+const mocks = vi.hoisted(() => ({ findTool: vi.fn(), invoke: vi.fn() }));
+vi.mock('../genai/workflowToolClient', () => ({
+    createWorkflowToolClient: () => mocks,
+}));
+
+import { workflowAdminClient } from './workflowAdminClient';
+
+beforeEach(() => {
+    mocks.findTool.mockReset().mockResolvedValue({ name: 'workflow_start' });
+    mocks.invoke.mockReset().mockResolvedValue({ structuredContent: { accepted: true }, isError: false });
+});
+
+describe('Workflow start client', () => {
+    it('sends the exact start arguments through Gateway MCP', async () => {
+        const args = {
+            workflowDefinitionId: 'definition', input: { value: 1 }, idempotencyKey: 'attempt',
+        };
+        await expect(workflowAdminClient.start(args)).resolves.toEqual({ accepted: true });
+        expect(mocks.findTool).toHaveBeenCalledWith('workflow_start');
+        expect(mocks.invoke).toHaveBeenCalledWith('workflow_start', args, '');
     });
-
-    it('surfaces tool errors and rejects missing results', () => {
-        expect(() => parseWorkflowToolResult({ isError: true, content: [{ type: 'text', text: 'claim conflict' }] }))
-            .toThrow('claim conflict');
-        expect(() => parseWorkflowToolResult({ content: [] })).toThrow('no structured Workflow result');
+    it('does not treat an MCP tool error as acceptance', async () => {
+        mocks.invoke.mockResolvedValue({ isError: true, content: [{ type: 'text', text: 'Denied' }] });
+        await expect(workflowAdminClient.start({ workflowDefinitionId: '', input: {}, idempotencyKey: '' })).rejects.toThrow('Denied');
     });
 });

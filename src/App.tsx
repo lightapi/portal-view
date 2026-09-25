@@ -46,6 +46,7 @@ import ListScope from "./pages/service/ListScope";
 import ListRule from "./pages/service/ListRule";
 import ClientApp from "./pages/client/ClientApp";
 import AuthClient from "./pages/oauth/AuthClient";
+import WorkflowBinding from "./pages/oauth/WorkflowBinding";
 import AuthSession from "./pages/oauth/AuthSession";
 import AuthSessionAudit from "./pages/oauth/AuthSessionAudit";
 import RefreshToken from "./pages/oauth/RefreshToken";
@@ -410,6 +411,7 @@ const App = () => {
           <Route path="oauth/providerApi" element={<ProviderApi />} />
           <Route path="oauth/providerClient" element={<ProviderClient />} />
           <Route path="oauth/authClient" element={<AuthClient />} />
+          <Route path="oauth/workflowBinding" element={<WorkflowBinding />} />
           <Route path="oauth/authSession" element={<AuthSession />} />
           <Route path="oauth/authSessionAudit" element={<AuthSessionAudit />} />
           <Route path="oauth/refreshToken" element={<RefreshToken />} />

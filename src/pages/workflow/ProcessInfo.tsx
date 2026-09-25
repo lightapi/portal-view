@@ -56,8 +56,10 @@ export default function ProcessInfo() {
     const [featuresHoldingVm, setFeaturesHoldingVm] = useState(false);
     const [detail, setDetail] = useState<any | null>(null);
     const [processState, setProcessState] = useState('ALL');
-    const [definitionIdDraft, setDefinitionIdDraft] = useState('');
-    const [definitionId, setDefinitionId] = useState('');
+    const [definitionIdDraft, setDefinitionIdDraft] = useState(() => searchParams.get('wfDefId') || '');
+    const [definitionId, setDefinitionId] = useState(() => searchParams.get('wfDefId') || '');
+    const [instanceIdDraft, setInstanceIdDraft] = useState(() => searchParams.get('wfInstanceId') || '');
+    const [instanceId, setInstanceId] = useState(() => searchParams.get('wfInstanceId') || '');
     const [createdFrom, setCreatedFrom] = useState('');
     const [createdTo, setCreatedTo] = useState('');
 
@@ -72,6 +74,7 @@ export default function ProcessInfo() {
                 ...(processState === 'WAITING' ? { states: ['WAITING'] } : {}),
                 ...(processState === 'TERMINAL' ? { states: ['COMPLETED', 'FAILED', 'CANCELLED'] } : {}),
                 ...(definitionId.trim() ? { definitionId: definitionId.trim() } : {}),
+                ...(instanceId.trim() ? { workflowInstanceId: instanceId.trim() } : {}),
                 ...(createdFrom ? { createdFrom: new Date(createdFrom).toISOString() } : {}),
                 ...(createdTo ? { createdTo: new Date(createdTo).toISOString() } : {}),
             });
@@ -83,9 +86,19 @@ export default function ProcessInfo() {
         } finally {
             setLoading(false);
         }
-    }, [createdFrom, createdTo, definitionId, pagination.pageIndex, pagination.pageSize, processState]);
+    }, [createdFrom, createdTo, definitionId, instanceId, pagination.pageIndex, pagination.pageSize, processState]);
 
     useEffect(() => { void load(); }, [load]);
+
+    useEffect(() => {
+        const nextDefinitionId = searchParams.get('wfDefId') || '';
+        const nextInstanceId = searchParams.get('wfInstanceId') || '';
+        setDefinitionIdDraft(nextDefinitionId);
+        setDefinitionId(nextDefinitionId);
+        setInstanceIdDraft(nextInstanceId);
+        setInstanceId(nextInstanceId);
+        setPagination(current => ({ ...current, pageIndex: 0 }));
+    }, [searchParams, setPagination]);
 
     const updateProcessFilter = useCallback((update: () => void) => {
         update();
@@ -93,10 +106,14 @@ export default function ProcessInfo() {
     }, [setPagination]);
 
     const definitionIdIsValid = !definitionIdDraft.trim() || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(definitionIdDraft.trim());
+    const instanceIdIsValid = !instanceIdDraft.trim() || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(instanceIdDraft.trim());
     const applyDefinitionId = useCallback(() => {
-        if (!definitionIdIsValid) return;
-        updateProcessFilter(() => setDefinitionId(definitionIdDraft.trim()));
-    }, [definitionIdDraft, definitionIdIsValid, updateProcessFilter]);
+        if (!definitionIdIsValid || !instanceIdIsValid) return;
+        updateProcessFilter(() => {
+            setDefinitionId(definitionIdDraft.trim());
+            setInstanceId(instanceIdDraft.trim());
+        });
+    }, [definitionIdDraft, definitionIdIsValid, instanceIdDraft, instanceIdIsValid, updateProcessFilter]);
 
     const loadFeatures = useCallback(async () => {
         setLoading(true);
@@ -160,6 +177,7 @@ export default function ProcessInfo() {
         { accessorKey: 'processState', header: 'Process', Cell: ({ cell }) => <Chip size="small" label={cell.getValue<string>()} /> },
         { accessorKey: 'invocationState', header: 'Invocation', Cell: ({ cell }) => <Chip size="small" variant="outlined" label={cell.getValue<string>() || 'Unlinked'} /> },
         { accessorKey: 'workflowName', header: 'Workflow' },
+        { accessorKey: 'definitionId', header: 'Definition ID' },
         { accessorKey: 'workflowVersion', header: 'Version' },
         { accessorKey: 'processId', header: 'Process Id' },
         { accessorKey: 'workflowInstanceId', header: 'Invocation Id' },
@@ -198,7 +216,12 @@ export default function ProcessInfo() {
                 helperText={!definitionIdIsValid ? 'Enter a valid UUID' : undefined}
                 onChange={event => setDefinitionIdDraft(event.target.value)}
                 onKeyDown={event => { if (event.key === 'Enter') applyDefinitionId(); }} />
-            <Button onClick={applyDefinitionId} disabled={!definitionIdIsValid}>Apply</Button>
+            <TextField size="small" label="Instance ID" value={instanceIdDraft}
+                error={!instanceIdIsValid}
+                helperText={!instanceIdIsValid ? 'Enter a valid UUID' : undefined}
+                onChange={event => setInstanceIdDraft(event.target.value)}
+                onKeyDown={event => { if (event.key === 'Enter') applyDefinitionId(); }} />
+            <Button onClick={applyDefinitionId} disabled={!definitionIdIsValid || !instanceIdIsValid}>Apply</Button>
             <TextField size="small" type="datetime-local" label="Created from" value={createdFrom}
                 InputLabelProps={{ shrink: true }}
                 onChange={event => updateProcessFilter(() => setCreatedFrom(event.target.value))} />

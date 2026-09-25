@@ -205,13 +205,9 @@ export default function WfDefinition() {
     }, [workflowOwnership, navigate, location.pathname, searchParams, contextForRow]);
 
     const handleStart = useCallback((row: MRT_Row<WfDefinitionType>) => {
-        navigate(buildWorkflowTaskRoute('/app/form/startWorkflow', searchParams, contextForRow(row.original)), {
+        navigate(buildWorkflowTaskRoute('/app/workflow/editor', searchParams, contextForRow(row.original)), {
             state: {
-                data: {
-                    hostId: row.original.hostId,
-                    wfDefId: row.original.wfDefId,
-                    input: "{}"
-                },
+                data: row.original,
                 source: location.pathname
             }
         });

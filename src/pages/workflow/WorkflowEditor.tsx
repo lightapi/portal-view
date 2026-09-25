@@ -89,6 +89,8 @@ import {
     type WorkflowStepInsertionPosition,
 } from './workflowEditorModel';
 import { workflowEventFailureRows, workflowFinalOutput, workflowRuntimeSettled } from './workflowRuntimeState';
+import { workflowAdminClient } from './workflowAdminClient';
+import { validateWorkflowStartReceipt } from './workflowStart';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -1109,8 +1111,8 @@ function buildTimeline(testRun: WorkflowTestRun | null, snapshot: WorkflowTestSn
     if (testRun) {
         events.push({
             id: `start-${testRun.wfInstanceId}`,
-            type: 'WorkflowStartedEvent',
-            status: 'submitted',
+            type: 'Start accepted',
+            status: 'accepted',
             detail: `Workflow instance ${testRun.wfInstanceId}`,
             timestamp: testRun.startedAt,
         });
@@ -1339,6 +1341,8 @@ export default function WorkflowEditor() {
     const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnosticState | null>(null);
     const [isRuntimeChecking, setIsRuntimeChecking] = useState(false);
     const [testInput, setTestInput] = useState('{\n  \n}');
+    const startAttempt = useRef<{ signature: string; key: string } | null>(null);
+    const startInFlight = useRef(false);
     const [testRun, setTestRun] = useState<WorkflowTestRun | null>(null);
     const [testSnapshot, setTestSnapshot] = useState<WorkflowTestSnapshot>(emptyTestSnapshot);
     const [testMessage, setTestMessage] = useState('');
@@ -2038,6 +2042,7 @@ export default function WorkflowEditor() {
     }, [hostId, testRun?.wfInstanceId]);
 
     const handleStartTest = useCallback(async () => {
+        if (startInFlight.current) return;
         setTestMessage('');
         if (!wfDefId) {
             setTestMessage('Save the workflow definition before starting a test run.');
@@ -2052,53 +2057,46 @@ export default function WorkflowEditor() {
             setTestMessage(`Fix test input: ${parsedInput.error}`);
             return;
         }
+        if (hasUnsavedChanges) {
+            setTestMessage('Save this exact workflow revision before starting it.');
+            return;
+        }
         const serverResult = await runServerValidation('EXECUTION');
         if (!serverResult.ok) {
             setTestMessage(`Fix workflow definition before testing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
         }
+        startInFlight.current = true;
         setIsTestStarting(true);
+        setTestRun(null);
         setTestSnapshot(emptyTestSnapshot);
         try {
-            const cmd = {
-                host: 'lightapi.net',
-                service: 'workflow',
-                action: 'startWorkflow',
-                version: '0.1.0',
-                data: { hostId, wfDefId, input: parsedInput.value },
-            };
-            const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
-            if (result.error) {
-                setTestMessage(result.error.description || result.error.message || 'Failed to start workflow test.');
-                return;
+            const signature = JSON.stringify([wfDefId, parsedInput.value]);
+            if (startAttempt.current?.signature !== signature) {
+                startAttempt.current = { signature, key: crypto.randomUUID() };
             }
-            const response = toRecord(result.data);
-            const wfInstanceId = textValue(response.wfInstanceId);
-            if (!wfInstanceId) {
-                setTestMessage('Workflow test started, but the response did not include wfInstanceId.');
-                return;
-            }
+            const response = validateWorkflowStartReceipt(await workflowAdminClient.start({
+                workflowDefinitionId: wfDefId,
+                input: parsedInput.value,
+                idempotencyKey: startAttempt.current.key,
+            }), wfDefId);
+            startAttempt.current = null;
+            const wfInstanceId = response.workflowInstanceId;
             const run = {
                 wfInstanceId,
-                startedAt: new Date().toISOString(),
+                startedAt: response.acceptedAt,
                 input: parsedInput.value,
-                response,
+                response: response as unknown as Record<string, unknown>,
             };
             setTestRun(run);
-            setTestMessage(`Workflow test started for instance ${wfInstanceId}.`);
-            const pollDelaysMs = [0, 250, 500, 1000, 2000];
-            for (const delayMs of pollDelaysMs) {
-                if (delayMs > 0) {
-                    await new Promise(resolve => window.setTimeout(resolve, delayMs));
-                }
-                if (await loadTestSnapshot(wfInstanceId)) break;
-            }
+            setTestMessage(`Start accepted for instance ${wfInstanceId}. Open Process Info for operational status. Editor runtime refresh is pending migration.`);
         } catch (error) {
-            setTestMessage(`Failed to start workflow test: ${errorText(error)}`);
+            setTestMessage(`Workflow start was rejected or acceptance is unconfirmed: ${errorText(error)} Retry uses the same idempotency key for this input.`);
         } finally {
+            startInFlight.current = false;
             setIsTestStarting(false);
         }
-    }, [clientBlockingProblem, hostId, loadTestSnapshot, runServerValidation, testInput, wfDefId]);
+    }, [clientBlockingProblem, hasUnsavedChanges, runServerValidation, testInput, wfDefId]);
 
     const handleCompleteAskTask = useCallback(async () => {
         if (!selectedAskTask) {
@@ -2922,11 +2920,11 @@ export default function WorkflowEditor() {
                     </Button>
                     <Button
                         variant="outlined"
-                        startIcon={isTestRefreshing ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
-                        onClick={() => loadTestSnapshot()}
-                        disabled={!testRun || isTestRefreshing}
+                        startIcon={<OpenInNewIcon />}
+                        onClick={() => navigate(buildContextRoute('/app/workflow/ProcessInfo', { hostId, wfDefId, wfInstanceId: testRun?.wfInstanceId || '' }))}
+                        disabled={!testRun}
                     >
-                        Refresh
+                        Operational Status
                     </Button>
                     <Button
                         variant="outlined"
