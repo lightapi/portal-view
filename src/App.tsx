@@ -164,6 +164,7 @@ import InstanceApiMcpTool from "./pages/instance/InstanceApiMcpTool";
 import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/workflow/WfDefinition";
 import WorkflowEditor from "./pages/workflow/WorkflowEditor";
+import WorkflowStart from "./pages/workflow/WorkflowStart";
 import Worklist from "./pages/workflow/Worklist";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
@@ -342,6 +343,7 @@ const App = () => {
           <Route path="tasks/register-ai-agent/api" element={<RegisterAiAgentApiStep />} />
           <Route path="tasks/register-ai-agent/runtime" element={<RegisterAiAgentRuntimeStep />} />
           <Route path="blog/blogList" element={<BlogList />} />
+          <Route path="form/startWorkflow" element={<WorkflowStart />} />
           <Route path="form/:formId" element={<Form />} />
           <Route path="notification" element={<Notification />} />
           <Route path="event/notifications" element={<Notification />} />
