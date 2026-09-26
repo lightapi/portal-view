@@ -262,8 +262,8 @@ export default function HumanTask() {
             }
             await loadTask();
         } catch (e: any) {
-            setError(e?.description || e?.message || 'Unable to update task claim.');
             await loadTask();
+            setError(e?.description || e?.message || 'Unable to update task claim.');
         } finally {
             setIsMutatingClaim(false);
         }
@@ -287,8 +287,8 @@ export default function HumanTask() {
             await workflowAdminClient.completeHumanTask(task.taskAsstId, task.assignmentVersion, submittedValue, comment.trim() || undefined);
             setCompleted(true);
         } catch (e: any) {
-            setError(e?.description || e?.message || 'Unable to submit task.');
             await loadTask();
+            setError(e?.description || e?.message || 'Unable to submit task.');
         } finally {
             setIsSubmitting(false);
         }

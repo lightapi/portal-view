@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
     getHumanTask: vi.fn(),
     completeHumanTask: vi.fn(),
+    claimHumanTask: vi.fn(),
+    releaseHumanTask: vi.fn(),
 }));
 
 vi.mock('../../contexts/UserContext', () => ({
@@ -15,6 +17,8 @@ vi.mock('./workflowAdminClient', () => ({
     workflowAdminClient: {
         getHumanTask: mocks.getHumanTask,
         completeHumanTask: mocks.completeHumanTask,
+        claimHumanTask: mocks.claimHumanTask,
+        releaseHumanTask: mocks.releaseHumanTask,
     },
 }));
 
@@ -24,6 +28,8 @@ describe('HumanTask workflow Tool access decision', () => {
     beforeEach(() => {
         mocks.getHumanTask.mockReset();
         mocks.completeHumanTask.mockReset();
+        mocks.claimHumanTask.mockReset();
+        mocks.releaseHumanTask.mockReset();
         mocks.getHumanTask.mockResolvedValue({
             task: {
                 hostId: '00000000-0000-0000-0000-000000000001',
@@ -63,5 +69,64 @@ describe('HumanTask workflow Tool access decision', () => {
 
         expect(await screen.findByText(/remain unavailable until live ROLE membership freshness is qualified/)).toBeInTheDocument();
         expect(mocks.completeHumanTask).not.toHaveBeenCalled();
+    });
+
+    it('keeps an ordinary approval failure visible after refreshing the task', async () => {
+        const user = userEvent.setup();
+        mocks.getHumanTask.mockResolvedValue({
+            task: {
+                hostId: '00000000-0000-0000-0000-000000000001',
+                taskAsstId: '00000000-0000-0000-0000-000000000002',
+                taskId: '00000000-0000-0000-0000-000000000003',
+                assignmentVersion: 4,
+                wfTaskId: 'manualApproval', assignmentStatus: 'CLAIMED', taskStatus: 'W',
+                claimedBy: 'user-1', canComplete: { allowed: true },
+            },
+            ask: {
+                mode: 'approval', prompt: 'Review mortgage',
+                options: [{ label: 'Approve', value: 'APPROVED' }],
+            },
+        });
+        mocks.completeHumanTask.mockRejectedValue(new Error('Workflow task submission failed'));
+
+        render(<MemoryRouter initialEntries={['/app/workflow/HumanTask?taskAsstId=00000000-0000-0000-0000-000000000002']}>
+            <Routes><Route path="/app/workflow/HumanTask" element={<HumanTask />} /></Routes>
+        </MemoryRouter>);
+
+        await user.click(await screen.findByRole('button', { name: 'Approve' }));
+
+        expect(await screen.findByText('Workflow task submission failed')).toBeInTheDocument();
+        expect(mocks.getHumanTask).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+        ['Claim', 'ASSIGNED', 'claimHumanTask', 'Claim failed'],
+        ['Release', 'CLAIMED', 'releaseHumanTask', 'Release failed'],
+    ] as const)('keeps a failed %s error visible after refreshing the task', async (button, status, method, message) => {
+        const user = userEvent.setup();
+        mocks.getHumanTask.mockResolvedValue({
+            task: {
+                hostId: '00000000-0000-0000-0000-000000000001',
+                taskAsstId: '00000000-0000-0000-0000-000000000002',
+                taskId: '00000000-0000-0000-0000-000000000003',
+                assignmentVersion: 4,
+                wfTaskId: 'manualApproval', assignmentStatus: status, taskStatus: 'W',
+                claimedBy: status === 'CLAIMED' ? 'user-1' : null,
+                canClaim: { allowed: button === 'Claim' },
+                canRelease: { allowed: button === 'Release' },
+                canComplete: { allowed: false },
+            },
+            ask: { mode: 'approval', prompt: 'Review mortgage' },
+        });
+        mocks[method].mockRejectedValue(new Error(message));
+
+        render(<MemoryRouter initialEntries={['/app/workflow/HumanTask?taskAsstId=00000000-0000-0000-0000-000000000002']}>
+            <Routes><Route path="/app/workflow/HumanTask" element={<HumanTask />} /></Routes>
+        </MemoryRouter>);
+
+        await user.click(await screen.findByRole('button', { name: button }));
+
+        expect(await screen.findByText(message)).toBeInTheDocument();
+        expect(mocks.getHumanTask).toHaveBeenCalledTimes(2);
     });
 });
