@@ -2,7 +2,7 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SchemaForm, utils } from "react-schema-form";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import forms from "../../data/Forms";
@@ -287,7 +287,7 @@ function hasInvalidStructuredDraft(container: HTMLElement | null) {
   );
 }
 
-function Form() {
+function Form({renderSupplement}: {renderSupplement?: (model: any, change: (key: string, value: any) => void) => ReactNode} = {}) {
   const params = useParams();
   const formId = params.formId;
   const location = useLocation();
@@ -599,6 +599,7 @@ function Form() {
             onModelChange={onModelChange}
           />
         </Box>
+        {renderSupplement?.(model, onModelChange)}
         {showErrors && (
           <Box sx={{ mt: 2, mb: 2, bgcolor: '#f8f8f8', p: 1, borderRadius: 1 }}>
             <pre>{JSON.stringify(validationResult, undefined, 2)}</pre>

@@ -18090,7 +18090,20 @@
           "title": "Dispatch Policy Reference",
           "type": "string"
         },
-        "workflowBinding": {"type": "object"}
+        "workflowBinding": {
+          "type": "object",
+          "properties": {
+            "cancellationPolicy": {"type": "string", "enum": ["before-effects-only", "cooperative", "disabled"], "default": "before-effects-only"},
+            "admissionLimits": {"type": "object", "properties": {
+              "maximumConcurrentRuns": {"type": "integer", "minimum": 1, "default": 20},
+              "maximumConcurrentRunsPerUser": {"type": "integer", "minimum": 1, "default": 2},
+              "startsPerMinute": {"type": "integer", "minimum": 1, "default": 120},
+              "startsPerMinutePerUser": {"type": "integer", "minimum": 1, "default": 10}
+            }},
+            "callerPolicy": {"type": "object", "properties": {"anyRole": {"type": "array", "items": {"type": "string"}}}},
+            "idempotencyPolicy": {"type": "object", "properties": {"resultReplayMs": {"type": "integer", "minimum": 0}}}
+          }
+        }
       },
       "required": [
         "hostId",
@@ -18441,7 +18454,20 @@
           "title": "Dispatch Policy Reference",
           "type": "string"
         },
-        "workflowBinding": {"type": "object"},
+        "workflowBinding": {
+          "type": "object",
+          "properties": {
+            "cancellationPolicy": {"type": "string", "enum": ["before-effects-only", "cooperative", "disabled"], "default": "before-effects-only"},
+            "admissionLimits": {"type": "object", "properties": {
+              "maximumConcurrentRuns": {"type": "integer", "minimum": 1, "default": 20},
+              "maximumConcurrentRunsPerUser": {"type": "integer", "minimum": 1, "default": 2},
+              "startsPerMinute": {"type": "integer", "minimum": 1, "default": 120},
+              "startsPerMinutePerUser": {"type": "integer", "minimum": 1, "default": 10}
+            }},
+            "callerPolicy": {"type": "object", "properties": {"anyRole": {"type": "array", "items": {"type": "string"}}}},
+            "idempotencyPolicy": {"type": "object", "properties": {"resultReplayMs": {"type": "integer", "minimum": 0}}}
+          }
+        },
         "active": {
           "title": "Active",
           "type": "boolean"

@@ -21,8 +21,10 @@ async function call(name: string, args: Record<string, unknown>) {
 }
 
 export const workflowAdminClient = {
-    start: (args: { workflowDefinitionId: string; input: Record<string, unknown>; idempotencyKey: string }) =>
-        call('workflow_start', args),
+    getBinding: (hostId: string, bindingId: string) => call('workflow_binding_get', {hostId, bindingId}),
+    getBindingForTool: (hostId: string, toolId: string) => call('workflow_binding_get', {hostId, toolId}),
+    listBindings: (args: {hostId: string; role: 'owner' | 'requester'; wfDefId?: string;
+        status?: string; limit?: number; cursor?: string}) => call('workflow_binding_list', {...args, limit: args.limit ?? 100}),
     listProcesses: (args: Record<string, unknown>) => call('workflow_list_processes', args),
     getProcess: (processId: string) => call('workflow_get_process', { processId }),
     listFeatures: (args: Record<string, unknown>) => call('workflow_list_features', args),

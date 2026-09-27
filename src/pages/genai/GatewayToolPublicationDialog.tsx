@@ -16,6 +16,9 @@ import {
   type PublishableTool,
 } from './gatewayToolPublicationScope';
 import {gatewayToolQueryUrl, gatewayToolRpc} from './gatewayToolPublicationRpc';
+import {workflowPortalClient, portalError} from '../workflow/workflowPortalClient';
+import {workflowAdminClient} from '../workflow/workflowAdminClient';
+import WorkflowOperationRecovery, {operationState} from '../workflow/WorkflowOperationRecovery';
 
 type GatewayInstance = {
   instanceId: string;
@@ -43,10 +46,13 @@ type Candidate = {
   accessReadiness?: AccessReadiness[];
   propertyComparisons?: Array<{property: string; action: string; currentValue: unknown; proposedValue: unknown}>;
   noOp?: boolean;
+  skippedTools?: Array<{toolId: string; name?: string; reason: string}>;
 };
 
 type PublicationMode = 'ADD_OR_UPDATE' | 'REPLACE_API_SCOPE' | 'REMOVE_API_SCOPE' | 'REMOVE_WORKFLOW_TOOLS';
 const isRemovalMode = (mode: PublicationMode | null) => mode === 'REMOVE_API_SCOPE' || mode === 'REMOVE_WORKFLOW_TOOLS';
+const retirementConfirmed = (receipt: any) => receipt?.result === 'retired'
+  || (receipt?.result === 'unchanged' && ['retired', 'withdrawn'].includes(receipt?.revisionStatus));
 
 type AccessPolicy = {
   toolId: string;
@@ -135,9 +141,16 @@ export default function GatewayToolPublicationDialog({
   const [operationMode, setOperationMode] = useState<PublicationMode | null>(null);
   const [accessOptions, setAccessOptions] = useState<Record<AccessLookupType, AccessOption[]>>({rule: [], role: [], group: [], position: [], attribute: []});
   const [accessOptionsError, setAccessOptionsError] = useState('');
+  const [bindingResults, setBindingResults] = useState<any[]>([]);
+  const [retirementResults, setRetirementResults] = useState<any[]>([]);
+  const [retirementHeads, setRetirementHeads] = useState<Record<string, number>>({});
+  const [bindingAttempted, setBindingAttempted] = useState(false);
+  const [skippedTools, setSkippedTools] = useState<Array<{toolId: string; name?: string; reason: string}>>([]);
   const scope = useMemo(() => publicationScope(tools), [tools]);
   const workflowToolsSelected = tools.length > 0 && tools.every(tool =>
     !tool.endpointId && tool.executionPlacement?.toLowerCase() === 'workflow');
+  const workflowToolIds = tools.filter(tool => tool.executionPlacement?.toLowerCase() === 'workflow')
+    .map(tool => tool.toolId);
   const selectedInstance = instances.find(instance => instance.instanceId === instanceId);
 
   useEffect(() => {
@@ -206,6 +219,11 @@ export default function GatewayToolPublicationDialog({
     setAccessReadiness([]);
     setMessage(null);
     setOperationMode(null);
+    setBindingResults([]);
+    setRetirementResults([]);
+    setRetirementHeads({});
+    setBindingAttempted(false);
+    setSkippedTools([]);
     void loadInstances();
   }, [loadInstances, open, tools]);
 
@@ -217,6 +235,21 @@ export default function GatewayToolPublicationDialog({
     setCandidate(null);
     setMessage(null);
     try {
+      if (!removing && workflowToolIds.length && !bindingAttempted) {
+        // This is a mutation. A later preview must never resend it after an uncertain receipt.
+        setBindingAttempted(true);
+        const publication = await workflowPortalClient.publishBindings(hostId, workflowToolIds);
+        const results = await Promise.all((publication.results ?? []).map(async result => {
+          if (result.code === 'WORKFLOW_DEFINITION_RETIRED')
+            return {...result, status: 'definitionRetired'};
+          if (result.status !== 'pending') return result;
+          try {
+            const view = await workflowAdminClient.getBindingForTool(hostId, result.toolId);
+            return {...result, owner: view?.revision?.owner};
+          } catch { return result; }
+        }));
+        setBindingResults(results);
+      }
       const value = await fetchClient(gatewayToolQueryUrl('genai', 'getGatewayToolPublicationCandidate', {
         hostId, instanceId, mode: requestedMode,
         toolIds: requestedMode === 'REMOVE_API_SCOPE' ? [] : tools.map(tool => tool.toolId),
@@ -225,6 +258,7 @@ export default function GatewayToolPublicationDialog({
       }));
       if (removing) {
         const removalCandidate = value as Candidate;
+        setSkippedTools([]);
         setAccessReadiness([]);
         setPolicies({});
         setCandidate(removalCandidate.noOp ? null : removalCandidate);
@@ -240,6 +274,7 @@ export default function GatewayToolPublicationDialog({
         return;
       }
       const previewed = (value as Candidate).accessPolicies ?? [];
+      setSkippedTools((value as Candidate).skippedTools ?? []);
       const readiness = (value as Candidate).accessReadiness ?? [];
       const previewById = Object.fromEntries(previewed.map(policy => [policy.toolId, normalizePolicy(policy)]));
       const inherited = externallyManagedToolIds(readiness);
@@ -271,11 +306,66 @@ export default function GatewayToolPublicationDialog({
     }
   };
 
+  const newBindingOperation = async (result: any) => {
+    setBindingResults(previous => previous.filter(item => item.toolId !== result.toolId));
+    try {
+      const value = await workflowPortalClient.publishBindings(hostId, [result.toolId]);
+      const fresh = await Promise.all((value.results ?? []).map(async (item: any) => {
+        if (item.status !== 'pending' || item.code) return item;
+        try { return {...item, owner: (await workflowAdminClient.getBindingForTool(hostId, item.toolId))?.revision?.owner}; }
+        catch { return item; }
+      }));
+      setBindingResults(previous => [...previous, ...fresh]);
+    } catch (reason) {
+      setBindingResults(previous => [...previous, {toolId: result.toolId, status: 'failed', ...operationState(portalError(reason))}]);
+    }
+  };
+
+  const refreshRetirement = async (toolId: string) => {
+    setRetirementHeads(previous => { const next = {...previous}; delete next[toolId]; return next; });
+    try {
+      await workflowPortalClient.refreshBindings(hostId, [toolId]);
+      const view = await workflowAdminClient.getBindingForTool(hostId, toolId);
+      if (view?.revision?.revisionStatus === 'retired') {
+        setMessage({severity: 'info', text: 'Workflow currently reports this binding retired. The expired operation outcome remains unconfirmed.'});
+        return;
+      }
+      if (!Number.isSafeInteger(view?.aggregateVersion) || view.aggregateVersion < 0)
+        throw new Error('Workflow Tool head version is unavailable.');
+      setRetirementHeads(previous => ({...previous, [toolId]: view.aggregateVersion}));
+    } catch (reason) {
+      setMessage({severity: 'error', text: `Retirement status refresh failed: ${errorMessage(reason)}`});
+    }
+  };
+
+  const newRetirementOperation = async (toolId: string) => {
+    const expected = retirementHeads[toolId];
+    if (!instanceId || expected === undefined) return;
+    setRetirementHeads(previous => { const next = {...previous}; delete next[toolId]; return next; });
+    try {
+      const receipt = await workflowPortalClient.retireBinding(hostId, instanceId, toolId, expected);
+      setRetirementResults(previous => previous.map(item => item.toolId === toolId
+        ? retirementConfirmed(receipt) ? {...item, status: 'retired', code: undefined, receipt}
+          : {...item, status: 'failed', code: 'WORKFLOW_RECEIPT_INVALID', message: 'Retirement receipt was invalid'}
+        : item));
+    } catch (reason) {
+      const failure = portalError(reason);
+      if (failure.code === 'VERSION_CONFLICT' || failure.code === 'WORKFLOW_TOOL_ON_GATEWAY') {
+        setMessage({severity: 'error', text: failure.message});
+        return;
+      }
+      setRetirementResults(previous => previous.map(item => item.toolId === toolId
+        ? {...item, ...operationState(failure), status: failure.code === 'WORKFLOW_OPERATION_PENDING' ? 'pending'
+          : failure.code === 'WORKFLOW_OPERATION_UNCONFIRMED' ? 'unconfirmed' : 'failed'} : item));
+    }
+  };
+
   const publish = async () => {
     if (!candidate || !instanceId || !operationMode) return;
     const removing = isRemovalMode(operationMode);
     setLoading(true);
     setMessage(null);
+    if (removing) setRetirementHeads({});
     const result = await apiPost({
       url: '/portal/command', headers: {}, body: gatewayToolRpc('genai', 'publishGatewayTools', {
         hostId, instanceId, mode: operationMode,
@@ -290,6 +380,7 @@ export default function GatewayToolPublicationDialog({
       setMessage({severity: 'error', text: errorMessage(result.error)});
     } else {
       setCandidate(null);
+      setRetirementResults(Array.isArray(result.data?.retirementResults) ? result.data.retirementResults : []);
       setMessage({
         severity: 'success',
         text: `Version ${candidate.publicationVersion} was staged for ${selectedInstance?.instanceName ?? instanceId}. Create and activate a config snapshot to deploy it.`,
@@ -314,6 +405,8 @@ export default function GatewayToolPublicationDialog({
           onChange={event => {
             setInstanceId(event.target.value); setCandidate(null); setPolicies({});
             setAccessReadiness([]); setConfirmed(false); setMessage(null);
+            setSkippedTools([]);
+            setRetirementResults([]); setRetirementHeads({});
             setOperationMode(null);
           }}
           disabled={loading || !instances.length}>
@@ -331,6 +424,66 @@ export default function GatewayToolPublicationDialog({
               label={`${tool.name}${tool.apiName ? ` · ${tool.apiName} ${tool.apiVersion ?? ''}` : ''}`} />)}
           </Stack>
         </Box>
+        {bindingResults.map(result => {
+          const tool = tools.find(item => item.toolId === result.toolId);
+          const operation = operationState(result);
+          const owner = result.owner?.userId ?? result.owner?.positionId ?? 'the Workflow owner';
+          const label = result.status === 'active' ? 'Published'
+            : result.status === 'definitionRetired' ? 'Workflow definition is retired; publish an active version before binding this Tool'
+            : result.status === 'definitionReady' ? 'Definition published; Tool binding publication still required'
+            : result.status === 'pending' && !operation.code ? `Waiting for approval from ${owner}`
+              : `${operation.code ?? 'WORKFLOW_PUBLICATION_FAILED'}: ${operation.message ?? result.message ?? 'Publication failed'}`;
+          return <Box key={result.toolId}>
+            <Alert severity={result.status === 'active' ? 'success' : result.status === 'failed' ? 'error' : 'info'}>
+              {tool?.name ?? result.toolId}: {label}
+            </Alert>
+            {operation.code && <WorkflowOperationRecovery hostId={hostId} operation={operation}
+              onRecovered={receipt => {
+                const bindingReceipt = Boolean(receipt?.bindingId && receipt?.bindingDigest
+                  && (receipt?.status === 'active' || receipt?.status === 'pendingApproval'));
+                const pending = receipt?.status === 'pendingApproval';
+                setBindingResults(previous => previous.map(item => item.toolId === result.toolId
+                  ? bindingReceipt ? {...item, code: undefined, status: pending ? 'pending' : 'active', receipt}
+                    : (receipt?.result === 'published' || receipt?.result === 'unchanged')
+                      && receipt?.status === 'active' && receipt?.wfDefId
+                      ? {...item, code: undefined, status: 'definitionReady', receipt}
+                      : receipt?.result === 'unchanged' && receipt?.status === 'retired' && receipt?.wfDefId
+                        ? {...item, code: 'WORKFLOW_DEFINITION_RETIRED', status: 'definitionRetired', receipt}
+                      : {...item, code: 'WORKFLOW_RECEIPT_INVALID', message: 'Recovered receipt did not identify a binding revision', receipt}
+                  : item));
+                if (bindingReceipt && pending) void workflowAdminClient.getBindingForTool(hostId, result.toolId)
+                  .then(view => setBindingResults(previous => previous.map(item => item.toolId === result.toolId
+                    ? {...item, owner: view?.revision?.owner} : item))).catch(() => undefined);
+              }}
+              onRefresh={() => void workflowPortalClient.refreshBindings(hostId, [result.toolId])}
+              onNew={() => void newBindingOperation(result)} newLabel="Publish as new operation" />}
+            {result.status === 'definitionReady' && <Button onClick={() => void newBindingOperation(result)}>
+              Continue Tool binding publication
+            </Button>}
+          </Box>;
+        })}
+        {retirementResults.map(result => {
+          const tool = tools.find(item => item.toolId === result.toolId);
+          const operation = operationState(result);
+          return <Box key={`retire-${result.toolId}`}>
+            <Alert severity={result.status === 'retired' ? 'success'
+              : result.status === 'pending' || result.status === 'unconfirmed' ? 'info' : 'error'}>
+              {tool?.name ?? result.toolId}: {result.status === 'retired' ? 'Workflow binding retired'
+                : `${result.code ?? 'WORKFLOW_RETIRE_FAILED'}: ${result.message ?? 'Workflow retirement failed after Gateway removal'}`}
+            </Alert>
+            {operation.code && <WorkflowOperationRecovery hostId={hostId} operation={operation}
+              onRecovered={receipt => setRetirementResults(previous => previous.map(item => item.toolId === result.toolId
+                ? retirementConfirmed(receipt) ? {...item, status: 'retired', code: undefined, receipt}
+                  : {...item, code: 'WORKFLOW_RECEIPT_INVALID', message: 'Recovered receipt did not confirm retirement', receipt}
+                : item))}
+              onRefresh={() => void refreshRetirement(result.toolId)}
+              onNew={retirementHeads[result.toolId] !== undefined
+                ? () => void newRetirementOperation(result.toolId) : undefined}
+              newLabel="Retire as new operation" />}
+            {operation.code === 'WORKFLOW_OPERATION_EXPIRED' && retirementHeads[result.toolId] === undefined
+              && <Alert severity="info">Refresh status before starting a new retirement operation.</Alert>}
+          </Box>;
+        })}
         <Typography color="text.secondary">
           {operationMode === 'REMOVE_API_SCOPE'
             ? 'API-scope unpublish: every Tool bound to this API version is removed from the target; unrelated API and workflow Tools are preserved.'
@@ -484,6 +637,9 @@ export default function GatewayToolPublicationDialog({
           severity={item.state === 'PUBLISHABLE' || item.state === 'PRESERVED_API'
             || item.state === 'PRESERVED_EXTERNAL' ? 'success' : 'warning'}>
           {item.endpointKey}: {item.state}
+        </Alert>)}
+        {skippedTools.map(item => <Alert key={item.toolId} severity="warning">
+          {item.name ?? item.toolId}: skipped — {item.reason}
         </Alert>)}
         {candidate?.propertyComparisons?.map(comparison => <Accordion key={comparison.property}>
           <AccordionSummary><Typography>{comparison.property} · {comparison.action}</Typography></AccordionSummary>

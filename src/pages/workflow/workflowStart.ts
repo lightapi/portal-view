@@ -21,7 +21,7 @@ export function validateWorkflowStartReceipt(result: unknown, definitionId: stri
         || !Number.isInteger(value.invocationStateVersion) || value.invocationStateVersion < 0
         || typeof value.acceptedAt !== 'string' || !Number.isFinite(Date.parse(value.acceptedAt))
         || typeof value.replayed !== 'boolean') {
-        throw new Error('Gateway returned an invalid Workflow start receipt; acceptance is unconfirmed.');
+        throw new Error('Portal returned an invalid Workflow start receipt; acceptance is unconfirmed.');
     }
     return value as WorkflowStartReceipt;
 }

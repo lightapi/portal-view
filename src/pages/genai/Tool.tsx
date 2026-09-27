@@ -12,7 +12,7 @@ import {
     type MRT_Row,
     type MRT_RowSelectionState,
 } from 'material-react-table';
-import { Box, Button, Chip } from '@mui/material';
+import { Box, Button, Chip, Tooltip } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -31,6 +31,8 @@ import WorkflowToolAccessDialog from './WorkflowToolAccessDialog';
 import ToolInvokeDialog from './ToolInvokeDialog';
 import WorkflowToolInvokeDialog from './WorkflowToolInvokeDialog';
 import {freshToolForUpdate} from './toolUpdateModel';
+import {workflowBindingStatus} from './workflowBindingStatus';
+import {workflowPortalClient} from '../workflow/workflowPortalClient';
 
 // --- Type Definitions ---
 type ToolApiResponse = {
@@ -85,6 +87,13 @@ type ToolType = {
     active: boolean;
     updateUser?: string;
     updateTs?: string;
+    publicationStatus?: string;
+    publicationComment?: string;
+    publicationErrorCode?: string;
+    publicationErrorMessage?: string;
+    publishedBindingDigest?: string;
+    gatewayBindingDigest?: string;
+    needsPublish?: boolean;
 };
 
 interface UserState {
@@ -124,6 +133,7 @@ export default function Tool() {
     const [rowCount, setRowCount] = useState(0);
     const [isUpdateLoading, setIsUpdateLoading] = useState<string | null>(null);
     const [isEmbeddingRefreshLoading, setIsEmbeddingRefreshLoading] = useState<string | null>(null);
+    const [isBindingRefreshLoading, setIsBindingRefreshLoading] = useState<string | null>(null);
     const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
     const [publicationOpen, setPublicationOpen] = useState(false);
     const [accessControlTool, setAccessControlTool] = useState<ToolType | null>(null);
@@ -293,6 +303,16 @@ export default function Tool() {
         }
     }, [fetchData]);
 
+    const handleRefreshBinding = useCallback(async (row: MRT_Row<ToolType>) => {
+        setIsBindingRefreshLoading(row.original.toolId);
+        try {
+            await workflowPortalClient.refreshBindings(row.original.hostId, [row.original.toolId]);
+            await fetchData();
+        } catch (error) {
+            setIsError(loadErrorMessage(error));
+        } finally { setIsBindingRefreshLoading(null); }
+    }, [fetchData]);
+
     // Column definitions
     const columns = useMemo<MRT_ColumnDef<ToolType>[]>(
         () => [
@@ -303,6 +323,15 @@ export default function Tool() {
             { accessorKey: 'apiId', header: 'API Id' },
             { accessorKey: 'implementationType', header: 'Implementation Type' },
             { accessorKey: 'executionPlacement', header: 'Execution Placement' },
+            { id: 'bindingStatus', header: 'Binding status', enableSorting: false, enableColumnFilter: false,
+              accessorFn: row => workflowBindingStatus(row)?.label ?? '',
+              Cell: ({row}) => {
+                const status = workflowBindingStatus(row.original);
+                if (!status) return null;
+                const chip = <Chip size="small" label={status.label} color={status.label === 'Active' ? 'success'
+                    : status.label === 'Failed' || status.label === 'Rejected' ? 'error' : 'warning'} />;
+                return status.detail ? <Tooltip title={status.detail}>{chip}</Tooltip> : chip;
+              } },
             { accessorKey: 'endpointId', header: 'Endpoint Id' },
             { accessorKey: 'capabilityRef', header: 'Capability Ref' },
             { accessorKey: 'lightapiValidationStatus', header: 'LightAPI Status' },
@@ -458,6 +487,12 @@ export default function Tool() {
           disabledReason: () => (!row.original.active || isEmbeddingRefreshLoading === row.original.toolId) ? (!row.original.active ? 'This tool is inactive.' : row.original.lightapiValidationStatus !== 'VALID' ? 'This tool requires valid LightAPI configuration.' : row.original.lifecycleStatus !== 'active' ? 'This tool must have an active lifecycle.' : 'Action in progress.') : null,
           loading: () => Boolean(isEmbeddingRefreshLoading === row.original.toolId),
           onSelect: () => handleRefreshEmbedding(row)
+        },
+        {
+          id: 'refresh-binding-status', label: 'Refresh status', icon: <RefreshIcon />,
+          hidden: () => row.original.executionPlacement !== 'workflow',
+          loading: () => isBindingRefreshLoading === row.original.toolId,
+          onSelect: () => handleRefreshBinding(row),
         },
         {
           id: "delete-tool",
