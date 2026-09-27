@@ -114,6 +114,16 @@ type WfDefinitionType = {
     active?: boolean;
     lifecycleStatus?: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
     versions?: WorkflowVersion[];
+    definitionSync?: WorkflowSyncStatus;
+    grantSync?: WorkflowSyncStatus;
+};
+
+type WorkflowSyncStatus = {
+    desiredRevision: number;
+    acknowledgedRevision: number;
+    status: 'synced' | 'pending';
+    lastErrorCode?: string;
+    lastErrorMessage?: string;
 };
 
 type WorkflowVersion = {
@@ -1311,6 +1321,10 @@ export default function WorkflowEditor() {
     const [active, setActive] = useState(initial.active ?? true);
     const [lifecycleStatus, setLifecycleStatus] = useState<WorkflowVersion['lifecycleStatus']>(initial.lifecycleStatus || 'DRAFT');
     const [versions, setVersions] = useState<WorkflowVersion[]>(initial.versions || []);
+    const [definitionSync, setDefinitionSync] = useState<WorkflowSyncStatus | null>(initial.definitionSync || null);
+    const [grantSync, setGrantSync] = useState<WorkflowSyncStatus | null>(initial.grantSync || null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncOutcomeUnconfirmed, setSyncOutcomeUnconfirmed] = useState(false);
     const [compareLeft, setCompareLeft] = useState('');
     const [compareRight, setCompareRight] = useState('');
     const [catalogVisible, setCatalogVisible] = useState(initial.catalogVisible ?? false);
@@ -1562,6 +1576,8 @@ export default function WorkflowEditor() {
                 setAggregateVersion(row.aggregateVersion);
                 setActive(row.active ?? true);
                 setLifecycleStatus(row.lifecycleStatus || 'DRAFT');
+                setDefinitionSync(row.definitionSync || null);
+                setGrantSync(row.grantSync || null);
                 setSavedDraftFingerprint(workflowDraftFingerprint({
                     hostId: row.hostId || '',
                     namespace: row.namespace || '',
@@ -2201,6 +2217,43 @@ export default function WorkflowEditor() {
         setMessage(`Transition removed: ${sourceStepId} -> ${targetStepId}.`);
     }, [definition, handleSelectWorkflowStep, isPublished]);
 
+    const refreshSyncStatus = useCallback(async (definitionId = wfDefId) => {
+        if (!definitionId) return false;
+        const row = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
+            host: 'lightapi.net', service: 'workflow', action: 'getWfDefinitionById', version: '0.1.0',
+            data: {hostId, wfDefId: definitionId},
+        })));
+        setDefinitionSync(row.definitionSync || null);
+        setGrantSync(row.grantSync || null);
+        setAggregateVersion(row.aggregateVersion);
+        setLifecycleStatus(row.lifecycleStatus);
+        setVersions(Array.isArray(row.versions) ? row.versions : []);
+        return row.definitionSync?.status === 'synced' && row.grantSync?.status === 'synced';
+    }, [hostId, wfDefId]);
+
+    const handleSync = useCallback(async () => {
+        if (!wfDefId || hasUnsavedChanges || isSyncing) return;
+        setIsSyncing(true);
+        try {
+            await workflowPortalClient.sync(hostId, wfDefId);
+            const confirmed = await refreshSyncStatus();
+            setSyncOutcomeUnconfirmed(!confirmed);
+            setMessage(confirmed ? 'Workflow definition and grants are synced.'
+                : 'Workflow sync is still pending.');
+        } catch (error) {
+            setSyncOutcomeUnconfirmed(true);
+            setMessage(`Workflow sync is still pending: ${portalError(error).message}`);
+            try {
+                if (await refreshSyncStatus()) {
+                    setSyncOutcomeUnconfirmed(false);
+                    setMessage('Workflow definition and grants are synced.');
+                }
+            } catch { /* keep the reported sync failure */ }
+        } finally {
+            setIsSyncing(false);
+        }
+    }, [hasUnsavedChanges, hostId, isSyncing, refreshSyncStatus, wfDefId]);
+
     const handleSave = useCallback(async () => {
         setMessage('');
         if (!hostId || !namespace || !name || !version || !definition.trim()) {
@@ -2252,7 +2305,8 @@ export default function WorkflowEditor() {
                 return;
             }
             const response = result.data || {};
-            setWfDefId(response.wfDefId || wfDefId);
+            const savedId = response.wfDefId || wfDefId;
+            setWfDefId(savedId);
             const nextAggregateVersion = response.newAggregateVersion || response.aggregateVersion || aggregateVersion;
             setAggregateVersion(nextAggregateVersion);
             setSavedDraftFingerprint(currentDraftFingerprint);
@@ -2261,14 +2315,30 @@ export default function WorkflowEditor() {
                 {version, definition, lifecycleStatus: 'DRAFT', aggregateVersion: nextAggregateVersion},
                 ...current.filter(item => item.version !== version),
             ]);
-            setMessage('Workflow definition saved.');
+            let syncSucceeded = false;
+            try {
+                await workflowPortalClient.sync(hostId, savedId);
+                syncSucceeded = true;
+                setMessage('Workflow definition saved and synced.');
+            } catch (syncError) {
+                setSyncOutcomeUnconfirmed(true);
+                setMessage(`Workflow definition saved locally; sync is pending: ${portalError(syncError).message}`);
+            }
+            try {
+                const confirmed = await refreshSyncStatus(savedId);
+                setSyncOutcomeUnconfirmed(!confirmed);
+                if (confirmed && !syncSucceeded) setMessage('Workflow definition saved and synced.');
+            } catch {
+                setSyncOutcomeUnconfirmed(true);
+                setMessage(current => `${current} Refresh sync status to verify the remote revision.`);
+            }
         } catch (error) {
             console.error('Failed to save workflow definition:', error);
             setMessage('Failed to save workflow definition due to a network error.');
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, currentDraftFingerprint, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
+    }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, currentDraftFingerprint, definition, hostId, isUpdate, name, namespace, ownerPositionId, refreshSyncStatus, runServerValidation, tagIds, version, wfDefId]);
 
     const refreshPublicationStatus = useCallback(async () => {
         if (!wfDefId) return;
@@ -2280,7 +2350,15 @@ export default function WorkflowEditor() {
             setAggregateVersion(row.aggregateVersion);
             setLifecycleStatus(row.lifecycleStatus);
             setVersions(Array.isArray(row.versions) ? row.versions : []);
-        } catch (reason) { setMessage(portalError(reason).message); }
+            setDefinitionSync(row.definitionSync || null);
+            setGrantSync(row.grantSync || null);
+            if (row.definitionSync?.status === 'synced' && row.grantSync?.status === 'synced') {
+                setSyncOutcomeUnconfirmed(false);
+            }
+        } catch (reason) {
+            setSyncOutcomeUnconfirmed(true);
+            setMessage(current => `${current} Sync status is unconfirmed: ${portalError(reason).message}`);
+        }
     }, [hostId, wfDefId]);
 
     const handlePublish = useCallback(async () => {
@@ -2313,6 +2391,8 @@ export default function WorkflowEditor() {
                 const failure = portalError(result.error);
                 setMessage(failure.message);
                 setDefinitionOperation(operationState(failure));
+                setSyncOutcomeUnconfirmed(true);
+                await refreshPublicationStatus();
                 return;
             }
             const response = result.data || {};
@@ -2328,11 +2408,14 @@ export default function WorkflowEditor() {
                 ? {...item, lifecycleStatus: 'PUBLISHED', aggregateVersion: nextAggregateVersion}
                 : item));
             setMessage(`Workflow version ${version} published and frozen.`);
+            await refreshPublicationStatus();
         } catch (error) {
             console.error('Failed to publish workflow version:', error);
             const failure = portalError(error);
             setMessage(failure.message);
             setDefinitionOperation(operationState(failure));
+            setSyncOutcomeUnconfirmed(true);
+            await refreshPublicationStatus();
         } finally {
             setIsSubmitting(false);
         }
@@ -2415,6 +2498,25 @@ export default function WorkflowEditor() {
             </Stack>
 
             {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
+            {wfDefId && (syncOutcomeUnconfirmed || definitionSync?.status === 'pending' || grantSync?.status === 'pending') &&
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2}>
+                        <Box sx={{ flex: 1 }}>
+                            {syncOutcomeUnconfirmed && 'Workflow sync outcome is unconfirmed. '}
+                            {definitionSync && grantSync && <>Definition: Portal revision {definitionSync.desiredRevision},
+                            Workflow acknowledged {definitionSync.acknowledgedRevision}. Grants: Portal revision{' '}
+                            {grantSync.desiredRevision}, Workflow acknowledged {grantSync.acknowledgedRevision}.</>}
+                            {(definitionSync?.lastErrorCode || grantSync?.lastErrorCode) &&
+                                <Typography variant="body2">
+                                    Last error: {definitionSync?.lastErrorCode || grantSync?.lastErrorCode}
+                                </Typography>}
+                        </Box>
+                        <Button variant="outlined" size="small" onClick={handleSync}
+                            disabled={hasUnsavedChanges || isSyncing || isSubmitting}>
+                            {isSyncing ? 'Syncing…' : 'Sync now'}
+                        </Button>
+                    </Stack>
+                </Alert>}
             <FormControlLabel control={<Checkbox checked={reapproveBindings}
                 onChange={event => setReapproveBindings(event.target.checked)} />}
                 label="Require re-approval of Tool bindings for this version" />

@@ -47,4 +47,6 @@ export const workflowPortalClient = {
   retryOperation: (hostId: string, operationId: string) => workflowCommand('retryWorkflowOperation', {hostId, operationId}),
   start: (hostId: string, wfDefId: string, input: Record<string, unknown>, idempotencyKey: string) =>
     workflowCommand('startWorkflow', {hostId, wfDefId, input, idempotencyKey}),
+  sync: (hostId: string, wfDefId: string) =>
+    workflowCommand('syncWfDefinition', {hostId, wfDefId}),
 };

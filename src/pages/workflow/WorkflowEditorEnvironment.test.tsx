@@ -137,10 +137,14 @@ describe('WorkflowEditor environment selector', () => {
 
         await user.click(screen.getByRole('button', { name: 'Save' }));
 
-        await waitFor(() => expect(mocks.apiPost).toHaveBeenCalledTimes(1));
-        const command = mocks.apiPost.mock.calls[0][0].body;
+        await waitFor(() => expect(mocks.apiPost.mock.calls.filter(([call]) =>
+            call.body.action === 'createWfDefinition')).toHaveLength(1));
+        const command = mocks.apiPost.mock.calls.find(([call]) =>
+            call.body.action === 'createWfDefinition')![0].body;
         expect(command.action).toBe('createWfDefinition');
         expect(command.data).not.toHaveProperty('wfDefId');
+        await waitFor(() => expect(mocks.apiPost.mock.calls.some(([call]) =>
+            call.body.action === 'syncWfDefinition')).toBe(true));
     });
 
     it('shows a nested workflow identity conflict as a red save error', async () => {

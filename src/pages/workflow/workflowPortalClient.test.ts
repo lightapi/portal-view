@@ -6,6 +6,13 @@ import {portalError, workflowPortalClient} from './workflowPortalClient';
 beforeEach(() => { mocks.apiPost.mockReset().mockResolvedValue({data: {accepted: true}}); });
 
 describe('Portal Workflow commands', () => {
+  it('routes manual sync through the authenticated Portal command', async () => {
+    await workflowPortalClient.sync('host', 'definition');
+    expect(mocks.apiPost.mock.calls[0][0].body).toMatchObject({
+      service: 'workflow', action: 'syncWfDefinition',
+      data: {hostId: 'host', wfDefId: 'definition'},
+    });
+  });
   it('uses Portal for Start with the body key', async () => {
     await workflowPortalClient.start('host', 'definition', {value: 1}, 'same-key');
     expect(mocks.apiPost).toHaveBeenCalledWith(expect.objectContaining({url: '/portal/command', body: {
