@@ -9,7 +9,7 @@ import {
     type MRT_ColumnDef,
     type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, Chip, FormControlLabel, Stack, Switch, Tab, Tabs } from '@mui/material';
+import { Alert, Box, Button, Chip, FormControlLabel, Stack, Switch, Tab, Tabs, Typography } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -17,6 +17,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { useUserState } from '../../contexts/UserContext';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 import { workflowAdminClient } from './workflowAdminClient';
+import type {BindingSummary} from './WfToolBindings';
 
 type InboxTab = {
     id: string;
@@ -100,6 +101,9 @@ export default function Worklist() {
     const [isRefetching, setIsRefetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [bindingApprovals, setBindingApprovals] = useState<BindingSummary[]>([]);
+    const [bindingError, setBindingError] = useState('');
+    const [bindingLoading, setBindingLoading] = useState(false);
     const [pagination, setPagination] = usePersistentPagination();
 
     const fetchSummary = useCallback(async (background = false) => {
@@ -163,6 +167,23 @@ export default function Worklist() {
         }
     }, [activeTab, host, pagination.pageIndex, pagination.pageSize, showLocked]);
 
+    const fetchBindingApprovals = useCallback(async () => {
+        if (!host) return;
+        setBindingLoading(true); setBindingError('');
+        try {
+            const rows: BindingSummary[] = [];
+            let cursor: string | undefined;
+            do {
+                const page = await workflowAdminClient.listBindings({hostId: host, role: 'owner',
+                    status: 'pendingApproval', limit: 100, ...(cursor ? {cursor} : {})});
+                rows.push(...(page.items ?? []));
+                cursor = page.nextCursor;
+            } while (cursor);
+            setBindingApprovals(rows);
+        } catch (reason: any) { setBindingError(reason?.message ?? 'Could not load Tool binding approvals.'); }
+        finally { setBindingLoading(false); }
+    }, [host]);
+
     useEffect(() => {
         fetchSummary(false);
     }, [fetchSummary]);
@@ -170,18 +191,20 @@ export default function Worklist() {
     useEffect(() => {
         fetchData(false);
     }, [fetchData]);
+    useEffect(() => { void fetchBindingApprovals(); }, [fetchBindingApprovals]);
 
     useEffect(() => {
         const id = window.setInterval(() => {
             fetchSummary(true);
             fetchData(true);
+            void fetchBindingApprovals();
         }, 15000);
         return () => window.clearInterval(id);
-    }, [fetchData, fetchSummary]);
+    }, [fetchBindingApprovals, fetchData, fetchSummary]);
 
     const refresh = useCallback(async () => {
-        await Promise.all([fetchSummary(true), fetchData(true)]);
-    }, [fetchData, fetchSummary]);
+        await Promise.all([fetchSummary(true), fetchData(true), fetchBindingApprovals()]);
+    }, [fetchBindingApprovals, fetchData, fetchSummary]);
 
     const handleTabChange = useCallback((_event: SyntheticEvent, value: string) => {
         setActiveTab(value);
@@ -329,6 +352,18 @@ export default function Worklist() {
     return (
         <WorkflowTaskLayout context={taskContext}>
             <Stack spacing={2}>
+                <Box sx={{border: 1, borderColor: 'divider', borderRadius: 1, p: 2}}>
+                    <Typography variant="h6">Tool binding approvals ({bindingApprovals.length})</Typography>
+                    {bindingError && <Alert severity="error">{bindingError}</Alert>}
+                    {!bindingLoading && !bindingApprovals.length && !bindingError &&
+                        <Typography>No pending Tool binding approvals.</Typography>}
+                    {bindingApprovals.map(item => <Stack key={item.bindingId} direction="row" spacing={1}
+                        alignItems="center" justifyContent="space-between">
+                        <Typography>{item.toolName} · {item.workflowVersion} · {item.requestedBy}</Typography>
+                        <Button onClick={() => navigate(`/app/workflow/tool-bindings/review/${encodeURIComponent(item.bindingId)}`)}>
+                            Review revision</Button>
+                    </Stack>)}
+                </Box>
                 {error ? <Alert severity="error">{error}</Alert> : null}
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs

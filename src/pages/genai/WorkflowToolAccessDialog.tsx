@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography,
 } from '@mui/material';
@@ -19,6 +19,7 @@ type Grant = {
     grantId: string; wfDefId: string; toolVersion: string;
     lightapiDigest: string; allowedEnvironments: string[]; aggregateVersion: number;
     workflowNamespace?: string; workflowName?: string; currentWorkflowVersion?: string;
+    grantSyncStatus?: string; grantSyncErrorCode?: string; grantSyncErrorMessage?: string;
 };
 
 function queryUrl(action: string, data: Record<string, unknown>) {
@@ -34,19 +35,39 @@ export default function WorkflowToolAccessDialog({
     const [grants, setGrants] = useState<Grant[]>([]);
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
+    const trackedDefinitions = useRef(new Set<string>());
+    const [syncStatuses, setSyncStatuses] = useState<Array<{wfDefId: string; status?: string;
+        code?: string; message?: string}>>([]);
 
     const load = useCallback(async () => {
         if (!open || !tool) return;
         const grantResult = await fetchClient(queryUrl('getWorkflowToolGrant', {
             hostId: tool.hostId, toolId: tool.toolId, active: true,
-        })).catch(() => ({ grants: [] }));
-        setGrants((grantResult.grants || []).filter((grant: Grant & { toolId?: string }) => grant.toolId === tool.toolId));
+        }));
+        const rows: Grant[] = (grantResult.grants || []).filter((grant: Grant & { toolId?: string }) => grant.toolId === tool.toolId);
+        rows.forEach(row => trackedDefinitions.current.add(row.wfDefId));
+        const sync = await Promise.all([...trackedDefinitions.current].map(async wfDefId => {
+            const status = await fetchClient(queryUrl('getWorkflowToolGrant', {
+                hostId: tool.hostId, wfDefId, active: true,
+            }));
+            return [wfDefId, status] as const;
+        }));
+        const byDefinition = Object.fromEntries(sync);
+        setSyncStatuses(sync.map(([wfDefId, status]) => ({wfDefId, status: status.grantSyncStatus,
+            code: status.grantSyncErrorCode, message: status.grantSyncErrorMessage})));
+        setGrants(rows.map(row => ({...row,
+            grantSyncStatus: byDefinition[row.wfDefId]?.grantSyncStatus,
+            grantSyncErrorCode: byDefinition[row.wfDefId]?.grantSyncErrorCode,
+            grantSyncErrorMessage: byDefinition[row.wfDefId]?.grantSyncErrorMessage,
+        })));
     }, [open, tool]);
 
-    useEffect(() => { load().catch(error => setMessage(String(error))); }, [load]);
+    useEffect(() => { load().catch(error => setMessage(String(error?.message ?? error))); }, [load]);
+    useEffect(() => { trackedDefinitions.current.clear(); setSyncStatuses([]); }, [tool?.toolId]);
 
     const revoke = async (grantRow: Grant) => {
         if (!tool) return;
+        trackedDefinitions.current.add(grantRow.wfDefId);
         setBusy(true); setMessage('');
         try {
             const result = await apiPost({
@@ -72,6 +93,13 @@ export default function WorkflowToolAccessDialog({
                     <Typography variant="caption">Pinned Tool {tool?.version} · {tool?.lightapiDigest}</Typography>
                 </Box>
                 <Alert severity="info">New access is requested from the Workflow Editor and approved through the GenAI Admin worklist. This view is read-only except for revocation.</Alert>
+                {syncStatuses.map(item => item.status === 'pending'
+                    ? <Alert key={item.wfDefId} severity="warning">{item.wfDefId}: Sync pending</Alert>
+                    : item.status === 'error' ? <Alert key={item.wfDefId} severity="error">
+                        {item.wfDefId}: {item.code}: {item.message}
+                        {['WORKFLOW_SYNC_REVISION_AHEAD', 'WORKFLOW_SYNC_REVISION_CONFLICT'].includes(item.code ?? '')
+                            ? ' — requires investigation.' : ''}
+                    </Alert> : null)}
                 {message ? <Alert severity={message.includes('granted') || message.includes('revoked') ? 'success' : 'warning'}>{message}</Alert> : null}
                 <Box>
                     <Typography variant="subtitle1">Existing workflow grants</Typography>

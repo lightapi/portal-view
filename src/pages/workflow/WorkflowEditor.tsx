@@ -14,6 +14,7 @@ import {
     Box,
     Button,
     Chip,
+    Checkbox,
     CircularProgress,
     Divider,
     Dialog,
@@ -89,8 +90,9 @@ import {
     type WorkflowStepInsertionPosition,
 } from './workflowEditorModel';
 import { workflowEventFailureRows, workflowFinalOutput, workflowRuntimeSettled } from './workflowRuntimeState';
-import { workflowAdminClient } from './workflowAdminClient';
 import { validateWorkflowStartReceipt } from './workflowStart';
+import {portalError, workflowPortalClient} from './workflowPortalClient';
+import WorkflowOperationRecovery, {operationState, type OperationState} from './WorkflowOperationRecovery';
 
 type WorkflowEditorState = {
     data?: Partial<WfDefinitionType>;
@@ -1312,6 +1314,8 @@ export default function WorkflowEditor() {
     const [compareLeft, setCompareLeft] = useState('');
     const [compareRight, setCompareRight] = useState('');
     const [catalogVisible, setCatalogVisible] = useState(initial.catalogVisible ?? false);
+    const [reapproveBindings, setReapproveBindings] = useState(false);
+    const [definitionOperation, setDefinitionOperation] = useState<OperationState | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState('');
@@ -2075,11 +2079,8 @@ export default function WorkflowEditor() {
             if (startAttempt.current?.signature !== signature) {
                 startAttempt.current = { signature, key: crypto.randomUUID() };
             }
-            const response = validateWorkflowStartReceipt(await workflowAdminClient.start({
-                workflowDefinitionId: wfDefId,
-                input: parsedInput.value,
-                idempotencyKey: startAttempt.current.key,
-            }), wfDefId);
+            const response = validateWorkflowStartReceipt(await workflowPortalClient.start(
+                hostId, wfDefId, parsedInput.value, startAttempt.current.key), wfDefId);
             startAttempt.current = null;
             const wfInstanceId = response.workflowInstanceId;
             const run = {
@@ -2091,12 +2092,12 @@ export default function WorkflowEditor() {
             setTestRun(run);
             setTestMessage(`Start accepted for instance ${wfInstanceId}. Open Process Info for operational status. Editor runtime refresh is pending migration.`);
         } catch (error) {
-            setTestMessage(`Workflow start was rejected or acceptance is unconfirmed: ${errorText(error)} Retry uses the same idempotency key for this input.`);
+            setTestMessage(`Workflow start was rejected or acceptance is unconfirmed: ${portalError(error).message} Retry uses the same idempotency key for this input.`);
         } finally {
             startInFlight.current = false;
             setIsTestStarting(false);
         }
-    }, [clientBlockingProblem, hasUnsavedChanges, runServerValidation, testInput, wfDefId]);
+    }, [clientBlockingProblem, hasUnsavedChanges, hostId, runServerValidation, testInput, wfDefId]);
 
     const handleCompleteAskTask = useCallback(async () => {
         if (!selectedAskTask) {
@@ -2270,10 +2271,11 @@ export default function WorkflowEditor() {
     }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, currentDraftFingerprint, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
     const handlePublish = useCallback(async () => {
-        if (!wfDefId || lifecycleStatus !== 'DRAFT' || !aggregateVersion) return;
-        const savedDraft = versions.find(item => item.version === version && item.lifecycleStatus === 'DRAFT');
-        if (!savedDraft || savedDraft.definition !== definition) {
-            setMessage('Save the current draft before publishing this workflow version.');
+        if (!wfDefId || !['DRAFT', 'PUBLISHED'].includes(lifecycleStatus) || !aggregateVersion) return;
+        const savedVersion = versions.find(item => item.version === version &&
+            (item.lifecycleStatus === 'DRAFT' || item.lifecycleStatus === 'PUBLISHED'));
+        if (!savedVersion || savedVersion.definition !== definition) {
+            setMessage('Save the exact workflow version before publishing or recovering it.');
             return;
         }
         const serverResult = await runServerValidation('EXECUTION');
@@ -2281,17 +2283,23 @@ export default function WorkflowEditor() {
             setMessage(`Fix workflow definition before publishing: ${serverResult.blockingProblem?.message || 'Server validation failed.'}`);
             return;
         }
-        if (!window.confirm(`Publish ${namespace}/${name} @ ${version}? This version will become immutable.`)) return;
+        if (!window.confirm(lifecycleStatus === 'PUBLISHED'
+            ? `Retry publication of the already frozen ${namespace}/${name} @ ${version}?`
+            : `Publish ${namespace}/${name} @ ${version}? This version will become immutable.`)) return;
         setIsSubmitting(true);
+        setDefinitionOperation(null);
         const cmd = {
             host: 'lightapi.net', service: 'workflow', action: 'publishWfDefinition', version: '0.1.0',
             data: {hostId, wfDefId, namespace, name, version, definition, catalogVisible,
+                bindingApproval: reapproveBindings ? 'reapprove' : 'carryOver',
                 ownerPositionId: ownerPositionId || undefined, categoryIds, tagIds, aggregateVersion, active},
         };
         try {
             const result = await apiPost({url: '/portal/command', headers: {}, body: cmd});
             if (result.error) {
-                setMessage(result.error.description || 'Failed to publish workflow version.');
+                const failure = portalError(result.error);
+                setMessage(failure.message);
+                setDefinitionOperation(operationState(failure));
                 return;
             }
             const response = result.data || {};
@@ -2304,11 +2312,26 @@ export default function WorkflowEditor() {
             setMessage(`Workflow version ${version} published and frozen.`);
         } catch (error) {
             console.error('Failed to publish workflow version:', error);
-            setMessage('Failed to publish workflow version due to a network error.');
+            const failure = portalError(error);
+            setMessage(failure.message);
+            setDefinitionOperation(operationState(failure));
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, catalogVisible, categoryIds, definition, hostId, lifecycleStatus, name, namespace, ownerPositionId, runServerValidation, tagIds, version, versions, wfDefId]);
+    }, [active, aggregateVersion, catalogVisible, categoryIds, definition, hostId, lifecycleStatus, name, namespace, ownerPositionId, reapproveBindings, runServerValidation, tagIds, version, versions, wfDefId]);
+
+    const refreshPublicationStatus = useCallback(async () => {
+        if (!wfDefId) return;
+        try {
+            const row = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
+                host: 'lightapi.net', service: 'workflow', action: 'getWfDefinitionById', version: '0.1.0',
+                data: {hostId, wfDefId},
+            })));
+            setAggregateVersion(row.aggregateVersion);
+            setLifecycleStatus(row.lifecycleStatus);
+            setVersions(Array.isArray(row.versions) ? row.versions : []);
+        } catch (reason) { setMessage(portalError(reason).message); }
+    }, [hostId, wfDefId]);
 
     const handleCreateVersion = useCallback(() => {
         const nextVersion = window.prompt('New workflow version', version);
@@ -2375,21 +2398,24 @@ export default function WorkflowEditor() {
                 <Button startIcon={isTestStarting ? <CircularProgress size={18} color="inherit" /> : <PlayArrowIcon />} onClick={handleStartTest} disabled={!wfDefId || isServerValidating || isTestStarting}>
                     Test
                 </Button>
-                {isPublished ? (
-                    <Button variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleCreateVersion} disabled={isSubmitting || isLoading}>
-                        Create New Version
-                    </Button>
-                ) : (
-                    <Button color="success" variant="outlined" startIcon={<VerifiedIcon />} onClick={handlePublish} disabled={!wfDefId || isSubmitting || isLoading || isServerValidating}>
-                        Publish Version
-                    </Button>
-                )}
+                {isPublished && <Button variant="outlined" startIcon={<PlaylistAddIcon />} onClick={handleCreateVersion} disabled={isSubmitting || isLoading}>
+                    Create New Version
+                </Button>}
+                <Button color="success" variant="outlined" startIcon={<VerifiedIcon />} onClick={handlePublish} disabled={!wfDefId || isSubmitting || isLoading || isServerValidating}>
+                    {isPublished ? 'Retry frozen publication' : 'Publish Version'}
+                </Button>
                 <Button variant="contained" startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={isPublished || isSubmitting || isLoading || isServerValidating}>
                     Save
                 </Button>
             </Stack>
 
             {message && <Alert severity={messageSeverity(message)} sx={{ mb: 2 }}>{message}</Alert>}
+            <FormControlLabel control={<Checkbox checked={reapproveBindings}
+                onChange={event => setReapproveBindings(event.target.checked)} />}
+                label="Require re-approval of Tool bindings for this version" />
+            {definitionOperation && <WorkflowOperationRecovery hostId={hostId} operation={definitionOperation}
+                onRecovered={() => { setDefinitionOperation(null); void refreshPublicationStatus(); }}
+                onRefresh={refreshPublicationStatus} onNew={handlePublish} newLabel="Publish as new operation" />}
             {pendingAccessRequests.length ? <Alert severity="info" sx={{ mb: 2 }}>
                 {pendingAccessRequests.length} Tool access request{pendingAccessRequests.length === 1 ? '' : 's'} awaiting approval.
                 {' '}{pendingAccessRequests.map(request => `${request.requestId}${request.requestWorkflowInstanceId ? ` (workflow ${request.requestWorkflowInstanceId})` : ''}`).join(', ')}

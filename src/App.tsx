@@ -16,7 +16,6 @@ import TaskDetail from "./pages/tasks/TaskDetail";
 import RegisterAiAgentApiStep from "./pages/tasks/RegisterAiAgentApiStep";
 import RegisterAiAgentRuntimeStep from "./pages/tasks/RegisterAiAgentRuntimeStep";
 import BlogList from "./pages/blog/BlogList";
-import Form from "./components/Form/Form";
 import Notification from "./pages/notification/Notification";
 import Failure from "./pages/failure/Failure";
 import Success from "./pages/success/Success";
@@ -165,7 +164,10 @@ import RuleDetail from "./pages/rule/RuleDetail";
 import WfDefinition from "./pages/workflow/WfDefinition";
 import WorkflowEditor from "./pages/workflow/WorkflowEditor";
 import WorkflowStart from "./pages/workflow/WorkflowStart";
+import ToolForm from "./pages/genai/ToolForm";
 import Worklist from "./pages/workflow/Worklist";
+import WfToolBindings from "./pages/workflow/WfToolBindings";
+import WfToolBindingReview from "./pages/workflow/WfToolBindingReview";
 import ProcessInfo from "./pages/workflow/ProcessInfo";
 import AgentDefinition from "./pages/genai/AgentDefinition";
 import A2aBindings from "./pages/genai/A2aBindings";
@@ -344,7 +346,7 @@ const App = () => {
           <Route path="tasks/register-ai-agent/runtime" element={<RegisterAiAgentRuntimeStep />} />
           <Route path="blog/blogList" element={<BlogList />} />
           <Route path="form/startWorkflow" element={<WorkflowStart />} />
-          <Route path="form/:formId" element={<Form />} />
+          <Route path="form/:formId" element={<ToolForm />} />
           <Route path="notification" element={<Notification />} />
           <Route path="event/notifications" element={<Notification />} />
           <Route path="failure" element={<Failure />} />
@@ -579,6 +581,8 @@ const App = () => {
           <Route path="workflow/WfDefinition" element={<WfDefinition />} />
           <Route path="workflow/editor" element={<WorkflowEditor />} />
           <Route path="workflow/Worklist" element={<Worklist />} />
+          <Route path="workflow/tool-bindings/:wfDefId" element={<WfToolBindings />} />
+          <Route path="workflow/tool-bindings/review/:bindingId" element={<WfToolBindingReview />} />
           <Route path="workflow/ProcessInfo" element={<ProcessInfo />} />
           <Route path="genai/AgentDefinition" element={<AgentDefinition />} />
           <Route path="genai/A2aBindings" element={<A2aBindings />} />

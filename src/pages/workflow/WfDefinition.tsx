@@ -11,11 +11,12 @@ import {
     type MRT_SortingState,
     type MRT_Row,
 } from 'material-react-table';
-import { Alert, Box, Button, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Tooltip, Typography } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import LinkIcon from '@mui/icons-material/Link';
 import { useUserState } from '../../contexts/UserContext';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -41,6 +42,9 @@ type WfDefinitionType = {
     active: boolean;
     updateUser?: string;
     updateTs?: string;
+    pendingBindingCount?: number;
+    ownerUserId?: string;
+    ownerPositionId?: string;
 };
 
 interface UserState {
@@ -221,6 +225,12 @@ export default function WfDefinition() {
                 { accessorKey: 'namespace', header: 'Namespace' },
                 { accessorKey: 'name', header: 'Name' },
                 { accessorKey: 'version', header: 'Version' },
+                {accessorKey: 'pendingBindingCount', header: 'Tool bindings', enableSorting: false,
+                    Cell: ({row}) => <Chip size="small" label={`${row.original.pendingBindingCount ?? 0} pending`}
+                        color={row.original.pendingBindingCount ? 'warning' : 'default'} />},
+                {accessorFn: row => row.pendingBindingCount ? 'true' : 'false', id: 'hasPendingBindings',
+                    header: 'Pending bindings only', filterVariant: 'select', enableSorting: false,
+                    filterSelectOptions: [{label: 'Yes', value: 'true'}, {label: 'No', value: 'false'}]},
                 {
                     accessorKey: 'lifecycleStatus',
                     header: 'Lifecycle',
@@ -299,6 +309,12 @@ export default function WfDefinition() {
           description: "Open the workflow start form.",
           icon: <PlayArrowIcon />,
           onSelect: () => handleStart(row)
+        },
+        {
+          id: 'tool-bindings', label: 'Tool Bindings', icon: <LinkIcon />,
+          disabledReason: () => workflowOwnership.ownsRecord(row.original) ? null
+              : 'Only the Workflow definition owner can review its Tool bindings.',
+          onSelect: () => navigate(`/app/workflow/tool-bindings/${encodeURIComponent(row.original.wfDefId)}`),
         },
         {
           id: "delete-workflow-definition",

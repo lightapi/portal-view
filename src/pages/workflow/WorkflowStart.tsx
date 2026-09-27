@@ -3,28 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import { workflowAdminClient } from './workflowAdminClient';
-
-type StartReceipt = {
-    accepted: true;
-    workflowInstanceId: string;
-    processId: string;
-    workflowDefinitionId: string;
-    definitionDigest: string;
-    state: string;
-};
-
-function isStartReceipt(value: any, workflowDefinitionId: string): value is StartReceipt {
-    return value?.accepted === true
-        && value.workflowDefinitionId === workflowDefinitionId
-        && typeof value.workflowInstanceId === 'string'
-        && typeof value.processId === 'string'
-        && typeof value.definitionDigest === 'string';
-}
+import {useUserState} from '../../contexts/UserContext';
+import {workflowPortalClient} from './workflowPortalClient';
+import {validateWorkflowStartReceipt, type WorkflowStartReceipt} from './workflowStart';
 
 export default function WorkflowStart() {
     const location = useLocation();
     const navigate = useNavigate();
+    const {host} = useUserState();
     const routeData = (location.state as any)?.data || {};
     const workflowDefinitionId = routeData.wfDefId
         || routeData.workflowDefinitionId
@@ -37,7 +23,7 @@ export default function WorkflowStart() {
     const [inputText, setInputText] = useState(initialInput);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
-    const [receipt, setReceipt] = useState<StartReceipt | null>(null);
+    const [receipt, setReceipt] = useState<WorkflowStartReceipt | null>(null);
     const attempt = useRef<{ signature: string; key: string } | null>(null);
     const source = (location.state as any)?.source;
 
@@ -51,7 +37,7 @@ export default function WorkflowStart() {
             setError('Workflow input must be valid JSON.');
             return;
         }
-        if (!workflowDefinitionId) {
+        if (!workflowDefinitionId || !host) {
             setError('A workflow definition ID is required. Open this page from a saved workflow.');
             return;
         }
@@ -66,14 +52,8 @@ export default function WorkflowStart() {
         attempt.current = { signature, key: idempotencyKey };
         setBusy(true);
         try {
-            const result = await workflowAdminClient.start({
-                workflowDefinitionId,
-                input: input as Record<string, unknown>,
-                idempotencyKey,
-            });
-            if (!isStartReceipt(result, workflowDefinitionId)) {
-                throw new Error('Gateway returned no valid workflow start receipt.');
-            }
+            const result = validateWorkflowStartReceipt(await workflowPortalClient.start(host, workflowDefinitionId,
+                input as Record<string, unknown>, idempotencyKey), workflowDefinitionId);
             setReceipt(result);
             attempt.current = null;
         } catch (cause: any) {

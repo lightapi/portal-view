@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
     apiPost: vi.fn(),
     fetchClient: vi.fn(),
     grants: [] as Array<Record<string, unknown>>,
+    sync: {} as Record<string, unknown>,
 }));
 
 vi.mock('../../api/apiPost', () => ({ apiPost: mocks.apiPost }));
@@ -28,6 +29,7 @@ describe('WorkflowToolAccessDialog', () => {
         mocks.apiPost.mockReset();
         mocks.apiPost.mockResolvedValue({ data: {} });
         mocks.grants = [];
+        mocks.sync = {};
         mocks.fetchClient.mockReset();
         mocks.fetchClient.mockImplementation((url: string) => {
             if (url === '/r/data?name=environment&host=host-a') {
@@ -42,7 +44,7 @@ describe('WorkflowToolAccessDialog', () => {
                     { wfDefId: 'workflow-b', namespace: 'support', name: 'Return flow' },
                 ] });
             }
-            return Promise.resolve({ grants: mocks.grants });
+            return Promise.resolve({ grants: mocks.grants, ...(queryData(url)?.wfDefId ? mocks.sync : {}) });
         });
         vi.stubGlobal('crypto', { randomUUID: () => 'grant-a' });
     });
@@ -90,5 +92,23 @@ describe('WorkflowToolAccessDialog', () => {
             .find(url => url.startsWith('/portal/query') && queryAction(url) === 'getWorkflowToolGrant');
         expect(grantQuery).toBeDefined();
         expect(queryData(grantQuery!)).toEqual({ hostId: 'host-a', toolId: 'tool-a', active: true });
+    });
+
+    it('shows pending grant synchronization and blocked revision errors', async () => {
+        mocks.grants = [{grantId: 'grant-a', toolId: 'tool-a', wfDefId: 'workflow-a',
+            allowedEnvironments: ['dev'], aggregateVersion: 1}];
+        mocks.sync = {grantSyncStatus: 'pending'};
+        const props = {open: true, tool: {hostId: 'host-a', toolId: 'tool-a', name: 'Order tool',
+            lightapiValidationStatus: 'VALID'}, onClose: vi.fn()};
+        const view = render(<WorkflowToolAccessDialog {...props} />);
+        expect(await screen.findByText(/Sync pending/)).toBeInTheDocument();
+        mocks.sync = {grantSyncStatus: 'error', grantSyncErrorCode: 'WORKFLOW_SYNC_REVISION_CONFLICT',
+            grantSyncErrorMessage: 'Revision differs'};
+        view.rerender(<WorkflowToolAccessDialog {...props} tool={{...props.tool, name: 'Order tool updated'}} />);
+        expect(await screen.findByText(/WORKFLOW_SYNC_REVISION_CONFLICT: Revision differs — requires investigation/)).toBeInTheDocument();
+        mocks.sync = {grantSyncStatus: 'error', grantSyncErrorCode: 'WORKFLOW_SYNC_REVISION_AHEAD',
+            grantSyncErrorMessage: 'Remote revision is ahead'};
+        view.rerender(<WorkflowToolAccessDialog {...props} tool={{...props.tool, name: 'Order tool refreshed'}} />);
+        expect(await screen.findByText(/WORKFLOW_SYNC_REVISION_AHEAD: Remote revision is ahead — requires investigation/)).toBeInTheDocument();
     });
 });
