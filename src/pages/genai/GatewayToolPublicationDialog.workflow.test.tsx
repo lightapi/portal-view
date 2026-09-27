@@ -22,6 +22,14 @@ function action(url: string) {
 }
 const tools = [{toolId: 'tool-a', name: 'Orders', executionPlacement: 'workflow'},
   {toolId: 'tool-b', name: 'Returns', executionPlacement: 'workflow'}];
+const definitionOperationId = '11111111-1111-4111-8111-111111111111';
+const retireOperationId = '22222222-2222-4222-8222-222222222222';
+const expiredOperationId = '33333333-3333-4333-8333-333333333333';
+const newRetireOperationId = '44444444-4444-4444-8444-444444444444';
+const activeDefinitionReceipt = {result: 'published', status: 'active',
+  wfDefId: '55555555-5555-4555-8555-555555555555', version: '1.0.0',
+  definitionDigest: `sha256:${'a'.repeat(64)}`, schemaDigest: `sha256:${'b'.repeat(64)}`,
+  bindingApproval: 'carryOver'};
 
 beforeEach(() => {
   mocks.fetchClient.mockReset().mockImplementation((url: string) => {
@@ -68,14 +76,13 @@ describe('Publish Selected Workflow Tools', () => {
   });
   it('continues Tool publication explicitly after recovering only the prerequisite definition', async () => {
     mocks.publishBindings.mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'unconfirmed',
-      code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: 'definition-operation'}]})
+      code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: definitionOperationId}]})
       .mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'active'}]});
-    mocks.retryOperation.mockResolvedValue({result: 'published', wfDefId: 'definition-a',
-      definitionDigest: 'sha256:definition'});
+    mocks.retryOperation.mockResolvedValue(activeDefinitionReceipt);
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
     await screen.findByText('Gateway A');
     fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
-    await screen.findByText(/Unconfirmed — Retry · definition-operation/);
+    await screen.findByText(`Unconfirmed — Retry · ${definitionOperationId}`);
     fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
     expect(await screen.findByText('Orders: Definition published; Tool binding publication still required')).toBeInTheDocument();
     expect(screen.queryByText('Orders: Published')).not.toBeInTheDocument();
@@ -86,9 +93,48 @@ describe('Publish Selected Workflow Tools', () => {
     await waitFor(() => expect(mocks.publishBindings).toHaveBeenCalledWith('host-a', ['tool-a']));
     expect(await screen.findByText('Orders: Published')).toBeInTheDocument();
   });
+  it('requires explicit continuation after recovering an unchanged active definition', async () => {
+    mocks.publishBindings.mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'unconfirmed',
+      code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: definitionOperationId}]})
+      .mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'active'}]});
+    mocks.retryOperation.mockResolvedValue({...activeDefinitionReceipt, result: 'unchanged'});
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    await screen.findByText(`Unconfirmed — Retry · ${definitionOperationId}`);
+    fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
+    expect(await screen.findByText('Orders: Definition published; Tool binding publication still required')).toBeInTheDocument();
+    expect(mocks.publishBindings).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Continue Tool binding publication'}));
+    await waitFor(() => expect(mocks.publishBindings).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Orders: Published')).toBeInTheDocument();
+  });
+  it('does not continue Tool publication after recovering a retired definition', async () => {
+    mocks.publishBindings.mockResolvedValue({results: [{toolId: 'tool-a', status: 'unconfirmed',
+      code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: definitionOperationId}]});
+    mocks.retryOperation.mockResolvedValue({result: 'unchanged', status: 'retired', wfDefId: 'definition-a'});
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    await screen.findByText(`Unconfirmed — Retry · ${definitionOperationId}`);
+    fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
+    expect(await screen.findByText(/Workflow definition is retired; publish an active version/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Continue Tool binding publication'})).not.toBeInTheDocument();
+    expect(mocks.publishBindings).toHaveBeenCalledTimes(1);
+  });
+  it('shows direct retired-definition publication without a binding continuation', async () => {
+    mocks.publishBindings.mockResolvedValue({results: [{toolId: 'tool-a', status: 'failed',
+      code: 'WORKFLOW_DEFINITION_RETIRED', message: 'Definition version is retired'}]});
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    expect(await screen.findByText(/Workflow definition is retired; publish an active version/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Continue Tool binding publication'})).not.toBeInTheDocument();
+    expect(mocks.publishBindings).toHaveBeenCalledTimes(1);
+  });
   it('shows retirement failure after Gateway staging and retries its original operation', async () => {
-    mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'failed',
-      code: 'WORKFLOW_OPERATION_UNCONFIRMED', message: 'Remote outcome unknown', operationId: 'retire-operation'},
+    mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'unconfirmed',
+      code: 'WORKFLOW_OPERATION_UNCONFIRMED', message: 'Remote outcome unknown', operationId: retireOperationId},
     {toolId: 'tool-b', status: 'failed', code: 'WORKFLOW_RETIRE_FAILED', message: 'Binding unavailable'}]}});
     mocks.retryOperation.mockResolvedValue({result: 'retired', toolId: 'tool-a', bindingId: 'revision-a'});
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={tools} onClose={vi.fn()} /></MemoryRouter>);
@@ -99,15 +145,15 @@ describe('Publish Selected Workflow Tools', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Stage unpublish'}));
     expect(await screen.findByText('Orders: WORKFLOW_OPERATION_UNCONFIRMED: Remote outcome unknown')).toBeInTheDocument();
     expect(screen.getByText('Returns: WORKFLOW_RETIRE_FAILED: Binding unavailable')).toBeInTheDocument();
-    expect(screen.getByText(/Unconfirmed — Retry · retire-operation/)).toBeInTheDocument();
+    expect(screen.getByText(`Unconfirmed — Retry · ${retireOperationId}`)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
-    await waitFor(() => expect(mocks.retryOperation).toHaveBeenCalledWith('host-a', 'retire-operation'));
+    await waitFor(() => expect(mocks.retryOperation).toHaveBeenCalledWith('host-a', retireOperationId));
     expect(await screen.findByText('Orders: Workflow binding retired')).toBeInTheDocument();
     expect(mocks.apiPost).toHaveBeenCalledTimes(1);
   });
   it('refreshes the Workflow head before deliberately starting a new retirement operation', async () => {
     mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'failed',
-      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: 'expired-retire'}]}});
+      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: expiredOperationId}]}});
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
     await screen.findByText('Gateway A');
     fireEvent.click(screen.getByRole('button', {name: 'Preview workflow Tool unpublish'}));
@@ -127,7 +173,7 @@ describe('Publish Selected Workflow Tools', () => {
   });
   it('keeps expired retirement visible when the refreshed head conflicts, without resubmitting', async () => {
     mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'failed',
-      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: 'expired-retire'}]}});
+      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: expiredOperationId}]}});
     mocks.retireBinding.mockRejectedValue({code: 'VERSION_CONFLICT', message: 'Workflow Tool head changed'});
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
     await screen.findByText('Gateway A');
@@ -145,9 +191,9 @@ describe('Publish Selected Workflow Tools', () => {
   });
   it('recovers a new retirement timeout only through RetryWorkflowOperation', async () => {
     mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'failed',
-      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: 'expired-retire'}]}});
+      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: expiredOperationId}]}});
     mocks.retireBinding.mockRejectedValue({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
-      metadata: {details: {operationId: 'new-retire'}}, message: 'Remote outcome unknown'});
+      metadata: {details: {operationId: newRetireOperationId}}, message: 'Remote outcome unknown'});
     mocks.retryOperation.mockResolvedValue({result: 'retired', bindingId: 'revision-a'});
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
     await screen.findByText('Gateway A');
@@ -158,16 +204,16 @@ describe('Publish Selected Workflow Tools', () => {
     await screen.findByText(/Expired; remote outcome unconfirmed/);
     fireEvent.click(screen.getByRole('button', {name: 'Refresh status'}));
     fireEvent.click(await screen.findByRole('button', {name: 'Retire as new operation'}));
-    expect(await screen.findByText(/Unconfirmed — Retry · new-retire/)).toBeInTheDocument();
+    expect(await screen.findByText(`Unconfirmed — Retry · ${newRetireOperationId}`)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
-    await waitFor(() => expect(mocks.retryOperation).toHaveBeenCalledWith('host-a', 'new-retire'));
+    await waitFor(() => expect(mocks.retryOperation).toHaveBeenCalledWith('host-a', newRetireOperationId));
     expect(await screen.findByText('Orders: Workflow binding retired')).toBeInTheDocument();
     expect(mocks.retireBinding).toHaveBeenCalledTimes(1);
     expect(mocks.apiPost).toHaveBeenCalledTimes(1);
   });
   it('keeps an expired operation visible when Refresh finds the binding already retired', async () => {
     mocks.apiPost.mockResolvedValue({data: {retirementResults: [{toolId: 'tool-a', status: 'failed',
-      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: 'expired-retire'}]}});
+      code: 'WORKFLOW_OPERATION_EXPIRED', operationId: expiredOperationId}]}});
     mocks.getBindingForTool.mockResolvedValue({aggregateVersion: 5, revision: {revisionStatus: 'retired'}});
     render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={[tools[0]]} onClose={vi.fn()} /></MemoryRouter>);
     await screen.findByText('Gateway A');

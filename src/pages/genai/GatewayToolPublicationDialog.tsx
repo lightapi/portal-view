@@ -240,6 +240,8 @@ export default function GatewayToolPublicationDialog({
         setBindingAttempted(true);
         const publication = await workflowPortalClient.publishBindings(hostId, workflowToolIds);
         const results = await Promise.all((publication.results ?? []).map(async result => {
+          if (result.code === 'WORKFLOW_DEFINITION_RETIRED')
+            return {...result, status: 'definitionRetired'};
           if (result.status !== 'pending') return result;
           try {
             const view = await workflowAdminClient.getBindingForTool(hostId, result.toolId);
@@ -353,7 +355,8 @@ export default function GatewayToolPublicationDialog({
         return;
       }
       setRetirementResults(previous => previous.map(item => item.toolId === toolId
-        ? {...item, status: 'failed', ...operationState(failure)} : item));
+        ? {...item, ...operationState(failure), status: failure.code === 'WORKFLOW_OPERATION_PENDING' ? 'pending'
+          : failure.code === 'WORKFLOW_OPERATION_UNCONFIRMED' ? 'unconfirmed' : 'failed'} : item));
     }
   };
 
@@ -426,6 +429,7 @@ export default function GatewayToolPublicationDialog({
           const operation = operationState(result);
           const owner = result.owner?.userId ?? result.owner?.positionId ?? 'the Workflow owner';
           const label = result.status === 'active' ? 'Published'
+            : result.status === 'definitionRetired' ? 'Workflow definition is retired; publish an active version before binding this Tool'
             : result.status === 'definitionReady' ? 'Definition published; Tool binding publication still required'
             : result.status === 'pending' && !operation.code ? `Waiting for approval from ${owner}`
               : `${operation.code ?? 'WORKFLOW_PUBLICATION_FAILED'}: ${operation.message ?? result.message ?? 'Publication failed'}`;
@@ -440,8 +444,11 @@ export default function GatewayToolPublicationDialog({
                 const pending = receipt?.status === 'pendingApproval';
                 setBindingResults(previous => previous.map(item => item.toolId === result.toolId
                   ? bindingReceipt ? {...item, code: undefined, status: pending ? 'pending' : 'active', receipt}
-                    : receipt?.result === 'published' && receipt?.wfDefId
+                    : (receipt?.result === 'published' || receipt?.result === 'unchanged')
+                      && receipt?.status === 'active' && receipt?.wfDefId
                       ? {...item, code: undefined, status: 'definitionReady', receipt}
+                      : receipt?.result === 'unchanged' && receipt?.status === 'retired' && receipt?.wfDefId
+                        ? {...item, code: 'WORKFLOW_DEFINITION_RETIRED', status: 'definitionRetired', receipt}
                       : {...item, code: 'WORKFLOW_RECEIPT_INVALID', message: 'Recovered receipt did not identify a binding revision', receipt}
                   : item));
                 if (bindingReceipt && pending) void workflowAdminClient.getBindingForTool(hostId, result.toolId)
@@ -459,7 +466,8 @@ export default function GatewayToolPublicationDialog({
           const tool = tools.find(item => item.toolId === result.toolId);
           const operation = operationState(result);
           return <Box key={`retire-${result.toolId}`}>
-            <Alert severity={result.status === 'retired' ? 'success' : 'error'}>
+            <Alert severity={result.status === 'retired' ? 'success'
+              : result.status === 'pending' || result.status === 'unconfirmed' ? 'info' : 'error'}>
               {tool?.name ?? result.toolId}: {result.status === 'retired' ? 'Workflow binding retired'
                 : `${result.code ?? 'WORKFLOW_RETIRE_FAILED'}: ${result.message ?? 'Workflow retirement failed after Gateway removal'}`}
             </Alert>

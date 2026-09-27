@@ -82,6 +82,14 @@ describe('Step 11 Workflow editor', () => {
       action: 'publishWfDefinition', data: expect.objectContaining({bindingApproval: 'carryOver'}),
     })})));
   });
+  it('reports a completed retired definition receipt without active publication success', async () => {
+    mocks.apiPost.mockResolvedValueOnce({data: {workflowPublication: {result: 'unchanged', status: 'retired'}}});
+    show();
+    await screen.findByText('Workflow graph');
+    fireEvent.click(screen.getByRole('button', {name: 'Publish Version'}));
+    expect(await screen.findByText(/remains retired in Workflow/)).toBeInTheDocument();
+    expect(screen.queryByText('Workflow version 1.0.0 published and frozen.')).not.toBeInTheDocument();
+  });
   it('keeps the unsaved-revision guard before Portal Start', async () => {
     show();
     await screen.findByText('Workflow graph');

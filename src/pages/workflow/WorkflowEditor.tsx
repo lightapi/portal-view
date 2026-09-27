@@ -2270,6 +2270,19 @@ export default function WorkflowEditor() {
         }
     }, [active, aggregateVersion, aiAuthored, catalogVisible, categoryIds, clientBlockingProblem, currentDraftFingerprint, definition, hostId, isUpdate, name, namespace, ownerPositionId, runServerValidation, tagIds, version, wfDefId]);
 
+    const refreshPublicationStatus = useCallback(async () => {
+        if (!wfDefId) return;
+        try {
+            const row = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
+                host: 'lightapi.net', service: 'workflow', action: 'getWfDefinitionById', version: '0.1.0',
+                data: {hostId, wfDefId},
+            })));
+            setAggregateVersion(row.aggregateVersion);
+            setLifecycleStatus(row.lifecycleStatus);
+            setVersions(Array.isArray(row.versions) ? row.versions : []);
+        } catch (reason) { setMessage(portalError(reason).message); }
+    }, [hostId, wfDefId]);
+
     const handlePublish = useCallback(async () => {
         if (!wfDefId || !['DRAFT', 'PUBLISHED'].includes(lifecycleStatus) || !aggregateVersion) return;
         const savedVersion = versions.find(item => item.version === version &&
@@ -2303,6 +2316,11 @@ export default function WorkflowEditor() {
                 return;
             }
             const response = result.data || {};
+            if (response.workflowPublication?.status === 'retired') {
+                setMessage(`Workflow version ${version} remains retired in Workflow. Publish an active version before binding Tools.`);
+                await refreshPublicationStatus();
+                return;
+            }
             const nextAggregateVersion = response.newAggregateVersion || response.aggregateVersion || aggregateVersion;
             setAggregateVersion(nextAggregateVersion);
             setLifecycleStatus('PUBLISHED');
@@ -2318,20 +2336,7 @@ export default function WorkflowEditor() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [active, aggregateVersion, catalogVisible, categoryIds, definition, hostId, lifecycleStatus, name, namespace, ownerPositionId, reapproveBindings, runServerValidation, tagIds, version, versions, wfDefId]);
-
-    const refreshPublicationStatus = useCallback(async () => {
-        if (!wfDefId) return;
-        try {
-            const row = await fetchClient('/portal/query?cmd=' + encodeURIComponent(JSON.stringify({
-                host: 'lightapi.net', service: 'workflow', action: 'getWfDefinitionById', version: '0.1.0',
-                data: {hostId, wfDefId},
-            })));
-            setAggregateVersion(row.aggregateVersion);
-            setLifecycleStatus(row.lifecycleStatus);
-            setVersions(Array.isArray(row.versions) ? row.versions : []);
-        } catch (reason) { setMessage(portalError(reason).message); }
-    }, [hostId, wfDefId]);
+    }, [active, aggregateVersion, catalogVisible, categoryIds, definition, hostId, lifecycleStatus, name, namespace, ownerPositionId, reapproveBindings, refreshPublicationStatus, runServerValidation, tagIds, version, versions, wfDefId]);
 
     const handleCreateVersion = useCallback(() => {
         const nextVersion = window.prompt('New workflow version', version);
@@ -2414,7 +2419,12 @@ export default function WorkflowEditor() {
                 onChange={event => setReapproveBindings(event.target.checked)} />}
                 label="Require re-approval of Tool bindings for this version" />
             {definitionOperation && <WorkflowOperationRecovery hostId={hostId} operation={definitionOperation}
-                onRecovered={() => { setDefinitionOperation(null); void refreshPublicationStatus(); }}
+                onRecovered={(receipt) => {
+                    setDefinitionOperation(null);
+                    if (receipt?.status === 'retired')
+                        setMessage('Workflow reports this definition retired. Publish an active version before binding Tools.');
+                    void refreshPublicationStatus();
+                }}
                 onRefresh={refreshPublicationStatus} onNew={handlePublish} newLabel="Publish as new operation" />}
             {pendingAccessRequests.length ? <Alert severity="info" sx={{ mb: 2 }}>
                 {pendingAccessRequests.length} Tool access request{pendingAccessRequests.length === 1 ? '' : 's'} awaiting approval.

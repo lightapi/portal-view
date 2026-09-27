@@ -5,6 +5,7 @@ export type WorkflowOperationError = Error & {
   operationId?: string;
   requestedBy?: string;
   requestedTs?: string;
+  operationState?: 'failed';
 };
 
 export function portalError(value: any): WorkflowOperationError {
@@ -20,6 +21,7 @@ export function portalError(value: any): WorkflowOperationError {
   error.operationId = details.operationId ?? nested?.operationId;
   error.requestedBy = details.requestedBy ?? nested?.requestedBy;
   error.requestedTs = details.requestedTs ?? nested?.requestedTs;
+  if (metadata.operationState === 'failed') error.operationState = 'failed';
   return error;
 }
 
