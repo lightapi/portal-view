@@ -18,7 +18,7 @@ import {
 import {gatewayToolQueryUrl, gatewayToolRpc} from './gatewayToolPublicationRpc';
 import {workflowPortalClient, portalError} from '../workflow/workflowPortalClient';
 import {workflowAdminClient} from '../workflow/workflowAdminClient';
-import WorkflowOperationRecovery, {operationState} from '../workflow/WorkflowOperationRecovery';
+import WorkflowOperationRecovery, {operationState, type OperationState} from '../workflow/WorkflowOperationRecovery';
 
 type GatewayInstance = {
   instanceId: string;
@@ -142,6 +142,8 @@ export default function GatewayToolPublicationDialog({
   const [accessOptions, setAccessOptions] = useState<Record<AccessLookupType, AccessOption[]>>({rule: [], role: [], group: [], position: [], attribute: []});
   const [accessOptionsError, setAccessOptionsError] = useState('');
   const [bindingResults, setBindingResults] = useState<any[]>([]);
+  const [batchBindingOperation, setBatchBindingOperation] = useState<OperationState | null>(null);
+  const [batchBindingOutcomeUnconfirmed, setBatchBindingOutcomeUnconfirmed] = useState(false);
   const [retirementResults, setRetirementResults] = useState<any[]>([]);
   const [retirementHeads, setRetirementHeads] = useState<Record<string, number>>({});
   const [bindingAttempted, setBindingAttempted] = useState(false);
@@ -220,6 +222,8 @@ export default function GatewayToolPublicationDialog({
     setMessage(null);
     setOperationMode(null);
     setBindingResults([]);
+    setBatchBindingOperation(null);
+    setBatchBindingOutcomeUnconfirmed(false);
     setRetirementResults([]);
     setRetirementHeads({});
     setBindingAttempted(false);
@@ -244,8 +248,15 @@ export default function GatewayToolPublicationDialog({
         } catch (reason) {
           const failure = portalError(reason);
           const operation = operationState(failure);
-          setBindingResults(workflowToolIds.map(toolId => ({toolId, status: 'unconfirmed',
-            ...operation, code: operation.code ?? 'WORKFLOW_OPERATION_UNCONFIRMED'})));
+          const confirmedFailure = operation.operationState === 'failed' || operation.code === 'ERR11000';
+          setBatchBindingOperation(confirmedFailure ? null : operation);
+          setBatchBindingOutcomeUnconfirmed(!confirmedFailure);
+          if (confirmedFailure) setBindingAttempted(false);
+          setBindingResults(workflowToolIds.map(toolId => ({toolId,
+            status: confirmedFailure ? 'failed' : 'unconfirmed', batchResult: true,
+            code: operation.code ?? 'WORKFLOW_OPERATION_UNCONFIRMED',
+            message: confirmedFailure ? errorMessage(reason)
+              : 'Batch outcome unconfirmed; refresh status before starting another publication.'})));
           throw failure;
         }
         const results = await Promise.all((publication.results ?? []).map(async result => {
@@ -312,6 +323,15 @@ export default function GatewayToolPublicationDialog({
       setMessage({severity: 'error', text: errorMessage(reason)});
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshBatchBindingStatus = async () => {
+    try {
+      await workflowPortalClient.refreshBindings(hostId, workflowToolIds);
+      setMessage({severity: 'info', text: 'Workflow binding status refreshed. Review each Tool binding revision before starting another publication.'});
+    } catch (reason) {
+      setMessage({severity: 'error', text: `Workflow binding status refresh failed: ${errorMessage(reason)}`});
     }
   };
 
@@ -433,6 +453,16 @@ export default function GatewayToolPublicationDialog({
               label={`${tool.name}${tool.apiName ? ` · ${tool.apiName} ${tool.apiVersion ?? ''}` : ''}`} />)}
           </Stack>
         </Box>
+        {batchBindingOutcomeUnconfirmed && <Box>
+          <Alert severity="warning">Batch Workflow Tool publication outcome is unconfirmed. Individual Tool operations were not identified by the response.</Alert>
+          {batchBindingOperation?.code?.startsWith('WORKFLOW_OPERATION_')
+            ? <WorkflowOperationRecovery hostId={hostId} operation={batchBindingOperation}
+              onRecovered={() => {
+                setBatchBindingOperation(null);
+                setMessage({severity: 'info', text: 'Batch Retry completed. Refresh binding status and review each Tool revision before starting another publication.'});
+              }} onRefresh={refreshBatchBindingStatus} />
+            : <Button onClick={() => void refreshBatchBindingStatus()}>Refresh batch status</Button>}
+        </Box>}
         {bindingResults.map(result => {
           const tool = tools.find(item => item.toolId === result.toolId);
           const operation = operationState(result);
@@ -446,7 +476,7 @@ export default function GatewayToolPublicationDialog({
             <Alert severity={result.status === 'active' ? 'success' : result.status === 'failed' ? 'error' : 'info'}>
               {tool?.name ?? result.toolId}: {label}
             </Alert>
-            {operation.code && <WorkflowOperationRecovery hostId={hostId} operation={operation}
+            {operation.code && !result.batchResult && <WorkflowOperationRecovery hostId={hostId} operation={operation}
               onRecovered={receipt => {
                 const bindingReceipt = Boolean(receipt?.bindingId && receipt?.bindingDigest
                   && (receipt?.status === 'active' || receipt?.status === 'pendingApproval'));
