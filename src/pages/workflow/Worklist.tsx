@@ -14,6 +14,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import RateReviewIcon from '@mui/icons-material/RateReview';
 import { useUserState } from '../../contexts/UserContext';
 import { buildWorkflowTaskContext, buildWorkflowTaskRoute, WorkflowTaskLayout } from './workflowTaskUtils';
 import { workflowAdminClient } from './workflowAdminClient';
@@ -357,12 +358,12 @@ export default function Worklist() {
                     {bindingError && <Alert severity="error">{bindingError}</Alert>}
                     {!bindingLoading && !bindingApprovals.length && !bindingError &&
                         <Typography>No pending Tool binding approvals.</Typography>}
-                    {bindingApprovals.map(item => <Stack key={item.bindingId} direction="row" spacing={1}
+                    <PortalActionScope>{bindingApprovals.map(item => <Stack key={item.bindingId} direction="row" spacing={1}
                         alignItems="center" justifyContent="space-between">
                         <Typography>{item.toolName} · {item.workflowVersion} · {item.requestedBy}</Typography>
-                        <Button onClick={() => navigate(`/app/workflow/tool-bindings/review/${encodeURIComponent(item.bindingId)}`)}>
-                            Review revision</Button>
-                    </Stack>)}
+                        <PortalActions row={item} actions={[{id: 'review-revision', label: 'Review revision',
+                            icon: <RateReviewIcon />, onSelect: selected => navigate(`/app/workflow/tool-bindings/review/${encodeURIComponent(selected.bindingId)}`)}]} />
+                    </Stack>)}</PortalActionScope>
                 </Box>
                 {error ? <Alert severity="error">{error}</Alert> : null}
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

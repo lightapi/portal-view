@@ -47,10 +47,14 @@ export default function WorkflowToolAccessDialog({
         const rows: Grant[] = (grantResult.grants || []).filter((grant: Grant & { toolId?: string }) => grant.toolId === tool.toolId);
         rows.forEach(row => trackedDefinitions.current.add(row.wfDefId));
         const sync = await Promise.all([...trackedDefinitions.current].map(async wfDefId => {
-            const status = await fetchClient(queryUrl('getWorkflowToolGrant', {
-                hostId: tool.hostId, wfDefId, active: true,
-            }));
-            return [wfDefId, status] as const;
+            try {
+                const status = await fetchClient(queryUrl('getWorkflowToolGrant', {
+                    hostId: tool.hostId, wfDefId, active: true,
+                }));
+                return [wfDefId, status] as const;
+            } catch {
+                return [wfDefId, {grantSyncStatus: 'unavailable'}] as const;
+            }
         }));
         const byDefinition = Object.fromEntries(sync);
         setSyncStatuses(sync.map(([wfDefId, status]) => ({wfDefId, status: status.grantSyncStatus,
@@ -93,7 +97,9 @@ export default function WorkflowToolAccessDialog({
                     <Typography variant="caption">Pinned Tool {tool?.version} · {tool?.lightapiDigest}</Typography>
                 </Box>
                 <Alert severity="info">New access is requested from the Workflow Editor and approved through the GenAI Admin worklist. This view is read-only except for revocation.</Alert>
-                {syncStatuses.map(item => item.status === 'pending'
+                {syncStatuses.map(item => item.status === 'unavailable'
+                    ? <Alert key={item.wfDefId} severity="warning">{item.wfDefId}: Sync status unavailable. Refresh to retry.</Alert>
+                    : item.status === 'pending'
                     ? <Alert key={item.wfDefId} severity="warning">{item.wfDefId}: Sync pending</Alert>
                     : item.status === 'error' ? <Alert key={item.wfDefId} severity="error">
                         {item.wfDefId}: {item.code}: {item.message}

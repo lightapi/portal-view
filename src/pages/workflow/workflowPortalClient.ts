@@ -9,12 +9,14 @@ export type WorkflowOperationError = Error & {
 };
 
 export function portalError(value: any): WorkflowOperationError {
-  if (value instanceof Error && 'code' in value) return value as WorkflowOperationError;
+  if (value instanceof Error && (typeof (value as WorkflowOperationError).code === 'string'
+    || !('code' in value))) return value as WorkflowOperationError;
   const nested = value?.error && typeof value.error === 'object' ? value.error : value;
   const metadata = nested?.metadata && typeof nested.metadata === 'object' ? nested.metadata : {};
   const details = metadata?.details && typeof metadata.details === 'object' ? metadata.details
     : nested?.details && typeof nested.details === 'object' ? nested.details : {};
-  const code = nested?.code ?? nested?.statusCode;
+  const rawCode = nested?.code ?? nested?.statusCode;
+  const code = rawCode == null ? undefined : String(rawCode);
   const message = nested?.description ?? nested?.message ?? value?.message ?? 'Workflow operation failed.';
   const error = new Error(`${code ? `${code}: ` : ''}${message}`) as WorkflowOperationError;
   error.code = code;
@@ -29,7 +31,9 @@ export async function workflowCommand<T = any>(action: string, data: Record<stri
   const result = await apiPost({url: '/portal/command', headers: {}, body: {
     host: 'lightapi.net', service, action, version: '0.1.0', data,
   }});
-  if (result.error || result.aborted) throw portalError(result.error ?? {message: 'Request aborted; outcome unconfirmed.'});
+  if (result.error || result.aborted) throw portalError(result.error ?? {
+    code: 'WORKFLOW_OPERATION_UNCONFIRMED', message: 'Request aborted; outcome unconfirmed.',
+  });
   return result.data as T;
 }
 

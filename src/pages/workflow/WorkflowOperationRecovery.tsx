@@ -26,7 +26,8 @@ function recoveryTimestamp(value: string): boolean {
 export function operationState(value: any): OperationState {
   const details = value?.metadata?.details ?? value?.details ?? value?.error?.metadata?.details
     ?? value?.error?.details ?? {};
-  return {code: value?.code ?? value?.error?.code, message: value?.message ?? value?.error?.message,
+  const rawCode = value?.code ?? value?.error?.code;
+  return {code: rawCode == null ? undefined : String(rawCode), message: value?.message ?? value?.error?.message,
     operationState: value?.operationState === 'failed' || value?.metadata?.operationState === 'failed'
       ? 'failed' : undefined,
     operationId: recoveryField(value?.operationId, item => operationIdPattern.test(item))

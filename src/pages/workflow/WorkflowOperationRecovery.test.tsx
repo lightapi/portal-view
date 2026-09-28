@@ -38,6 +38,10 @@ describe('D21 recovery controls', () => {
     expect(screen.getByText(/Pending, requested by other-user at 2026-09-26T00:00:00Z/)).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Retry'})).not.toBeInTheDocument();
   });
+  it('accepts a numeric Portal status code without throwing while rendering recovery', () => {
+    show(operationState({statusCode: 502, code: 502}));
+    expect(screen.queryByRole('button', {name: 'Retry'})).not.toBeInTheDocument();
+  });
   it('rejects malformed top-level and nested recovery metadata without offering Retry', () => {
     const operation = operationState({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
       operationId: 'bad-top-level', requestedBy: 42, requestedTs: 'invalid',

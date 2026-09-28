@@ -95,4 +95,18 @@ describe('immutable Workflow binding review', () => {
     await waitFor(() => expect(mocks.revokeBinding).toHaveBeenCalledWith('host-a', 'revision-new',
       'sha256:new', 'Retiring access'));
   });
+  it('keeps the original operation recoverable when Retry returns another revision', async () => {
+    const operationId = '11111111-1111-4111-8111-111111111111';
+    mocks.decideBinding.mockRejectedValueOnce({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
+      message: 'Outcome unknown', details: {operationId}});
+    mocks.retryOperation.mockResolvedValueOnce({bindingId: 'revision-other', bindingDigest: 'sha256:new',
+      revisionStatus: 'approved'});
+    show();
+    await screen.findByText('Requester');
+    fireEvent.click(screen.getByRole('button', {name: 'Approve'}));
+    fireEvent.click(await screen.findByRole('button', {name: 'Retry'}));
+    expect(await screen.findByText(/Retry receipt does not confirm the selected binding decision/)).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Retry'})).toBeInTheDocument();
+    expect(mocks.refreshBindings).not.toHaveBeenCalled();
+  });
 });

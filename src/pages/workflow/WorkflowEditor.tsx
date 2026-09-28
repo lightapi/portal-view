@@ -2387,8 +2387,11 @@ export default function WorkflowEditor() {
         };
         try {
             const result = await apiPost({url: '/portal/command', headers: {}, body: cmd});
-            if (result.error) {
-                const failure = portalError(result.error);
+            if (result.error || result.aborted) {
+                const failure = portalError(result.error ?? {
+                    code: 'WORKFLOW_OPERATION_UNCONFIRMED',
+                    message: 'Publication request aborted; outcome unconfirmed. Refresh status before starting another operation.',
+                });
                 setMessage(failure.message);
                 setDefinitionOperation(operationState(failure));
                 setSyncOutcomeUnconfirmed(true);

@@ -74,6 +74,53 @@ describe('Publish Selected Workflow Tools', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
     expect(await screen.findByText('Orders: Waiting for approval from owner-a')).toBeInTheDocument();
   });
+  it('keeps every binding outcome visible when the batch request is unconfirmed', async () => {
+    mocks.publishBindings.mockRejectedValue({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
+      message: 'Request aborted; outcome unconfirmed.'});
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={tools} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    expect(await screen.findByText(/Orders: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    expect(screen.getByText(/Returns: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Retry'})).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Refresh status'})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    await waitFor(() => expect(mocks.publishBindings).toHaveBeenCalledTimes(1));
+  });
+  it('offers one Retry for a batch error with one operation ID and keeps Tool outcomes unconfirmed', async () => {
+    mocks.publishBindings.mockRejectedValue({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
+      message: 'Batch outcome unknown', details: {operationId: definitionOperationId}});
+    mocks.retryOperation.mockResolvedValue(activeDefinitionReceipt);
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={tools} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    expect(await screen.findByText(`Unconfirmed — Retry · ${definitionOperationId}`)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', {name: 'Retry'})).toHaveLength(1);
+    expect(screen.getByText(/Orders: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    expect(screen.getByText(/Returns: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Retry'}));
+    await waitFor(() => expect(mocks.retryOperation).toHaveBeenCalledExactlyOnceWith('host-a', definitionOperationId));
+    expect(screen.queryByRole('button', {name: 'Retry'})).not.toBeInTheDocument();
+    expect(screen.getByText(/Orders: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    expect(screen.getByText(/Returns: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Refresh batch status'}));
+    await waitFor(() => expect(mocks.refreshBindings).toHaveBeenCalledWith('host-a', ['tool-a', 'tool-b']));
+    expect(mocks.publishBindings).toHaveBeenCalledTimes(1);
+  });
+  for (const code of ['ERR11000', 'WORKFLOW_INPUT_INVALID', 'VERSION_CONFLICT']) {
+    it(`shows a definite ${code} batch rejection as failed and permits a corrected attempt`, async () => {
+      mocks.publishBindings.mockRejectedValueOnce({code, message: 'Invalid Tool IDs'});
+      render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={tools} onClose={vi.fn()} /></MemoryRouter>);
+      await screen.findByText('Gateway A');
+      fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+      expect(await screen.findByText(`Orders: ${code}: Invalid Tool IDs`)).toBeInTheDocument();
+      expect(screen.getByText(`Returns: ${code}: Invalid Tool IDs`)).toBeInTheDocument();
+      expect(screen.queryByText(/Batch Workflow Tool publication outcome is unconfirmed/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'Retry'})).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+      await waitFor(() => expect(mocks.publishBindings).toHaveBeenCalledTimes(2));
+    });
+  }
   it('continues Tool publication explicitly after recovering only the prerequisite definition', async () => {
     mocks.publishBindings.mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'unconfirmed',
       code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: definitionOperationId}]})

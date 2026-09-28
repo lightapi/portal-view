@@ -118,7 +118,15 @@ export default function WfToolBindingReview() {
         <Button disabled={loading} onClick={() => void load()}>Refresh revision</Button>
       </Stack>
       {operation && host && <WorkflowOperationRecovery hostId={host} operation={operation}
-        onRecovered={() => {
+        onRecovered={(receipt) => {
+          const expectedStatus = lastAction === 'approve' ? 'approved'
+            : lastAction === 'reject' ? 'rejected' : 'revoked';
+          if (receipt?.bindingId !== revision.bindingId
+            || receipt?.bindingDigest !== revision.bindingDigest
+            || receipt?.revisionStatus !== expectedStatus) {
+            setError('Retry receipt does not confirm the selected binding decision. Refresh revision and retry the original operation.');
+            return;
+          }
           setOperation(null);
           void workflowPortalClient.refreshBindings(host, [revision.toolId])
             .catch(reason => setError(`Decision recovered; status refresh failed: ${portalError(reason).message}`))

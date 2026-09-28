@@ -43,4 +43,10 @@ describe('Portal Workflow commands', () => {
       data: {hostId: 'host', instanceId: 'gateway', toolId: 'tool', expectedAggregateVersion: 4},
     }}));
   });
+  it('normalizes numeric Portal status codes and treats aborted commands as unconfirmed', async () => {
+    expect(portalError({statusCode: 502, message: 'Unavailable'}).code).toBe('502');
+    mocks.apiPost.mockResolvedValue({aborted: true});
+    await expect(workflowPortalClient.publishBindings('host', ['tool']))
+      .rejects.toMatchObject({code: 'WORKFLOW_OPERATION_UNCONFIRMED'});
+  });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -25,7 +25,17 @@ export default function WorkflowStart() {
     const [error, setError] = useState('');
     const [receipt, setReceipt] = useState<WorkflowStartReceipt | null>(null);
     const attempt = useRef<{ signature: string; key: string } | null>(null);
+    const routeGeneration = useRef(0);
     const source = (location.state as any)?.source;
+
+    useEffect(() => {
+        routeGeneration.current += 1;
+        setInputText(initialInput);
+        setReceipt(null);
+        setError('');
+        setBusy(false);
+        attempt.current = null;
+    }, [workflowDefinitionId, initialInput]);
 
     const start = async () => {
         setError('');
@@ -50,16 +60,19 @@ export default function WorkflowStart() {
             ? attempt.current.key
             : crypto.randomUUID();
         attempt.current = { signature, key: idempotencyKey };
+        const generation = routeGeneration.current;
         setBusy(true);
         try {
             const result = validateWorkflowStartReceipt(await workflowPortalClient.start(host, workflowDefinitionId,
                 input as Record<string, unknown>, idempotencyKey), workflowDefinitionId);
+            if (generation !== routeGeneration.current) return;
             setReceipt(result);
             attempt.current = null;
         } catch (cause: any) {
+            if (generation !== routeGeneration.current) return;
             setError(cause?.message || 'Workflow start failed. Retry uses the same idempotency key for this input.');
         } finally {
-            setBusy(false);
+            if (generation === routeGeneration.current) setBusy(false);
         }
     };
 
