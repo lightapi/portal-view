@@ -525,7 +525,9 @@ export default function Tool() {
           icon: <PlayArrowIcon />,
           hidden: () => row.original.executionPlacement !== 'workflow',
           disabledReason: () => !row.original.active || row.original.lifecycleStatus !== 'active'
-            ? 'This workflow Tool must be active.' : null,
+            ? 'This workflow Tool must be active.'
+            : row.original.needsPublish || row.original.publicationStatus !== 'active'
+              ? 'Publish and approve the Workflow Tool binding before invoking it.' : null,
           onSelect: () => setInvokeWorkflowTool(row.original)
         },
         {

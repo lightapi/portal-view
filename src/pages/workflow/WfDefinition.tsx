@@ -225,7 +225,7 @@ export default function WfDefinition() {
                 { accessorKey: 'namespace', header: 'Namespace' },
                 { accessorKey: 'name', header: 'Name' },
                 { accessorKey: 'version', header: 'Version' },
-                {accessorKey: 'pendingBindingCount', header: 'Tool bindings', enableSorting: false,
+                {accessorKey: 'pendingBindingCount', header: 'Pending Tool bindings', enableSorting: false,
                     Cell: ({row}) => <Chip size="small" label={`${row.original.pendingBindingCount ?? 0} pending`}
                         color={row.original.pendingBindingCount ? 'warning' : 'default'} />},
                 {accessorFn: row => row.pendingBindingCount ? 'true' : 'false', id: 'hasPendingBindings',

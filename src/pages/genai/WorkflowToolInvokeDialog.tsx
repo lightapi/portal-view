@@ -40,6 +40,10 @@ export default function WorkflowToolInvokeDialog({ open, tool, onClose }: {
         finally { setBusy(false); }
     }
 
+    const gatewayResult = result && typeof result === 'object' ? result as Record<string, any> : null;
+    const toolError = gatewayResult?.isError === true ? gatewayResult.structuredContent?.error : null;
+    const rejectedBeforeEffect = toolError?.afterEffect === false;
+
     return <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth maxWidth="md">
         <DialogTitle>Invoke Workflow Tool · {tool?.name}</DialogTitle>
         <DialogContent><Stack spacing={2} sx={{ mt: 1 }}>
@@ -59,7 +63,13 @@ export default function WorkflowToolInvokeDialog({ open, tool, onClose }: {
                     label="I reviewed these arguments and authorize this workflow invocation and its declared effects." />
             </>}
             {error && <Alert severity="error">{error}</Alert>}
-            {submitted && <Alert severity="warning">Submission was attempted once. A network error does not prove that it was rejected. Keep the exact arguments and reconcile the workflow before starting another run. Closing this dialog does not cancel work or release its VM.</Alert>}
+            {submitted && rejectedBeforeEffect && <Alert severity="info">
+                {toolError?.code === 'WORKFLOW_START_REJECTED' && toolError?.message === 'republish this Tool'
+                    ? 'Gateway rejected this Tool before starting Workflow. Publish its Workflow Tool binding, then publish and activate the Gateway Tool configuration.'
+                    : 'Gateway confirmed this Tool call had no effect. Review the error before invoking again.'}
+            </Alert>}
+            {submitted && !rejectedBeforeEffect && (result === undefined || gatewayResult?.isError === true)
+                && <Alert severity="warning">Submission was attempted once. A network error does not prove that it was rejected. Keep the exact arguments and reconcile the workflow before starting another run. Closing this dialog does not cancel work or release its VM.</Alert>}
             {result !== undefined && <TextField label="Gateway result" multiline minRows={5} maxRows={15}
                 value={JSON.stringify(result, null, 2)} slotProps={{ input: { readOnly: true } }} />}
             <WorkflowRunControls key={tool?.toolId ?? 'closed'} />

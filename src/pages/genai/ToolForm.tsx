@@ -61,6 +61,10 @@ export function WorkflowToolFields({model, change}: {model: Model; change: (key:
       {(Object.keys(admissionDefaults) as Array<keyof typeof admissionDefaults>).map(key =>
         <TextField key={key} type="number" label={key} value={admission[key]} inputProps={{min: 1, step: 1}}
           onChange={event => change(`workflowBinding.admissionLimits.${key}`, Number(event.target.value))} />)}
+      <TextField type="number" label="Maximum parallel branches"
+        value={binding.runtimeBounds?.maximumParallelism ?? 1} inputProps={{min: 1, step: 1}}
+        helperText="Set this to at least the widest fork in the selected workflow definition."
+        onChange={event => change('workflowBinding.runtimeBounds.maximumParallelism', Number(event.target.value))} />
       <TextField label="Allowed caller roles" value={roleInput}
         helperText="Optional. Enter role names separated by commas."
         onChange={event => setRoleInput(event.target.value)}

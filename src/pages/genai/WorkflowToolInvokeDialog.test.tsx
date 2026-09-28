@@ -27,6 +27,7 @@ describe('Workflow invocation dialog', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Invoke Workflow' }));
         await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith('intake', { x: 1 }, ''));
         expect((await screen.findByLabelText('Gateway result') as HTMLTextAreaElement).value).toContain('run');
+        expect(screen.queryByText(/A network error does not prove/)).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Invoke Workflow' })).toBeDisabled();
     });
     it('keeps an uncertain submission fenced instead of enabling another call', async () => {
@@ -36,8 +37,20 @@ describe('Workflow invocation dialog', () => {
         fireEvent.click(screen.getByRole('checkbox'));
         fireEvent.click(screen.getByRole('button', { name: 'Invoke Workflow' }));
         await screen.findByText('connection lost');
+        expect(screen.getByText(/A network error does not prove/)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Invoke Workflow' })).toBeDisabled();
         expect(screen.getByLabelText('Arguments (JSON object)')).toBeDisabled();
+        expect(mocks.invoke).toHaveBeenCalledTimes(1);
+    });
+    it('shows a confirmed pre-dispatch rejection without the uncertain-run warning', async () => {
+        mocks.invoke.mockResolvedValueOnce({isError: true, structuredContent: {status: 'rejected',
+            error: {code: 'WORKFLOW_START_REJECTED', message: 'republish this Tool', afterEffect: false}}});
+        render(<WorkflowToolInvokeDialog open tool={tool} onClose={vi.fn()} />);
+        await screen.findByLabelText('Arguments (JSON object)');
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(screen.getByRole('button', { name: 'Invoke Workflow' }));
+        expect(await screen.findByText(/Publish its Workflow Tool binding/)).toBeInTheDocument();
+        expect(screen.queryByText(/A network error does not prove/)).not.toBeInTheDocument();
         expect(mocks.invoke).toHaveBeenCalledTimes(1);
     });
     it('fails closed if the Gateway hides the Tool', async () => {

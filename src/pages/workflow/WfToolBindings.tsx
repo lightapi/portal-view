@@ -30,7 +30,7 @@ export default function WfToolBindings() {
   return <Box sx={{p: 3}}><Stack spacing={2}>
     <Typography variant="h5">Tool Bindings</Typography>
     {error && <Alert severity="error">{error}</Alert>}
-    {!loading && !error && !items.length && <Typography>No Tool bindings for this definition.</Typography>}
+    {!loading && !error && !items.length && <Typography>No requested Tool binding revisions for this definition. Legacy Tool bindings are not shown here.</Typography>}
     {items.map(item => <Box key={item.bindingId} sx={{border: 1, borderColor: 'divider', borderRadius: 1, p: 2}}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
         <Box><Typography>{item.toolName} · {item.workflowVersion}</Typography>

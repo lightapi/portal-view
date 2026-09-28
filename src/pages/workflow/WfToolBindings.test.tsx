@@ -12,6 +12,13 @@ beforeEach(() => {mocks.listBindings.mockReset().mockResolvedValueOnce({items: [
   toolName: 'Returns', workflowVersion: '2.0', revisionStatus: 'pendingApproval', requestedBy: 'user-b'}]});});
 
 describe('owner Tool bindings', () => {
+  it('explains an empty revision list without claiming that no Portal binding exists', async () => {
+    mocks.listBindings.mockReset().mockResolvedValue({items: []});
+    render(<MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
+      <Routes><Route path="/app/workflow/tool-bindings/:wfDefId" element={<WfToolBindings />} /></Routes>
+    </MemoryRouter>);
+    expect(await screen.findByText(/No requested Tool binding revisions/)).toBeInTheDocument();
+  });
   it('uses the exact server cursor and retains both pages of immutable revisions', async () => {
     render(<MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
       <Routes><Route path="/app/workflow/tool-bindings/:wfDefId" element={<WfToolBindings />} /></Routes>

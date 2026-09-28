@@ -70,8 +70,9 @@ describe('workflow-backed Tool fields', () => {
     expect(screen.getByLabelText('maximumConcurrentRuns')).toHaveValue(9);
     expect(screen.getByLabelText('Result replay window (ms)')).toHaveValue(900000);
     fireEvent.change(screen.getByLabelText('maximumConcurrentRuns'), {target: {value: '10'}});
+    fireEvent.change(screen.getByLabelText('Maximum parallel branches'), {target: {value: '3'}});
     expect(model().workflowBinding.admissionLimits.maximumConcurrentRuns).toBe(10);
     expect(model().workflowBinding.idempotencyPolicy).toEqual({kind: 'explicit', resultReplayMs: 900000});
-    expect(model().workflowBinding.runtimeBounds).toEqual({maximumNestedCalls: 4});
+    expect(model().workflowBinding.runtimeBounds).toEqual({maximumNestedCalls: 4, maximumParallelism: 3});
   });
 });
