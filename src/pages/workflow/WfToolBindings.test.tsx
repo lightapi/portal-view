@@ -1,6 +1,7 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {ActionDisplayProvider} from '../../contexts/ActionDisplayContext';
 const mocks = vi.hoisted(() => ({listBindings: vi.fn()}));
 vi.mock('../../contexts/UserContext', () => ({useUserState: () => ({host: 'host-a'})}));
 vi.mock('./workflowAdminClient', () => ({workflowAdminClient: {listBindings: mocks.listBindings}}));
@@ -14,15 +15,15 @@ beforeEach(() => {mocks.listBindings.mockReset().mockResolvedValueOnce({items: [
 describe('owner Tool bindings', () => {
   it('explains an empty revision list without claiming that no Portal binding exists', async () => {
     mocks.listBindings.mockReset().mockResolvedValue({items: []});
-    render(<MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
+    render(<ActionDisplayProvider><MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
       <Routes><Route path="/app/workflow/tool-bindings/:wfDefId" element={<WfToolBindings />} /></Routes>
-    </MemoryRouter>);
+    </MemoryRouter></ActionDisplayProvider>);
     expect(await screen.findByText(/No requested Tool binding revisions/)).toBeInTheDocument();
   });
   it('uses the exact server cursor and retains both pages of immutable revisions', async () => {
-    render(<MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
+    render(<ActionDisplayProvider><MemoryRouter initialEntries={['/app/workflow/tool-bindings/definition-a']}>
       <Routes><Route path="/app/workflow/tool-bindings/:wfDefId" element={<WfToolBindings />} /></Routes>
-    </MemoryRouter>);
+    </MemoryRouter></ActionDisplayProvider>);
     expect(await screen.findByText(/Orders · 1.0/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Load more'}));
     expect(await screen.findByText(/Returns · 2.0/)).toBeInTheDocument();

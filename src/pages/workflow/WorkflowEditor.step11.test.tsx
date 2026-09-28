@@ -155,6 +155,14 @@ describe('Step 11 Workflow editor', () => {
     expect(await screen.findByText(/remains retired in Workflow/)).toBeInTheDocument();
     expect(screen.queryByText('Workflow version 1.0.0 published and frozen.')).not.toBeInTheDocument();
   });
+  it('leaves an aborted publication unconfirmed instead of freezing the version', async () => {
+    mocks.apiPost.mockResolvedValueOnce({aborted: true});
+    show();
+    await screen.findByText('Workflow graph');
+    fireEvent.click(screen.getByRole('button', {name: 'Publish Version'}));
+    expect(await screen.findByText(/Publication request aborted; outcome unconfirmed/)).toBeInTheDocument();
+    expect(screen.queryByText('Workflow version 1.0.0 published and frozen.')).not.toBeInTheDocument();
+  });
   it('keeps the unsaved-revision guard before Portal Start', async () => {
     show();
     await screen.findByText('Workflow graph');

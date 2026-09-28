@@ -74,6 +74,17 @@ describe('Publish Selected Workflow Tools', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
     expect(await screen.findByText('Orders: Waiting for approval from owner-a')).toBeInTheDocument();
   });
+  it('keeps every binding outcome visible when the batch request is unconfirmed', async () => {
+    mocks.publishBindings.mockRejectedValue({code: 'WORKFLOW_OPERATION_UNCONFIRMED',
+      message: 'Request aborted; outcome unconfirmed.'});
+    render(<MemoryRouter><GatewayToolPublicationDialog open hostId="host-a" tools={tools} onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText('Gateway A');
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    expect(await screen.findByText(/Orders: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    expect(screen.getByText(/Returns: WORKFLOW_OPERATION_UNCONFIRMED/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Preview changes'}));
+    await waitFor(() => expect(mocks.publishBindings).toHaveBeenCalledTimes(1));
+  });
   it('continues Tool publication explicitly after recovering only the prerequisite definition', async () => {
     mocks.publishBindings.mockResolvedValueOnce({results: [{toolId: 'tool-a', status: 'unconfirmed',
       code: 'WORKFLOW_OPERATION_UNCONFIRMED', operationId: definitionOperationId}]})

@@ -111,4 +111,15 @@ describe('WorkflowToolAccessDialog', () => {
         view.rerender(<WorkflowToolAccessDialog {...props} tool={{...props.tool, name: 'Order tool refreshed'}} />);
         expect(await screen.findByText(/WORKFLOW_SYNC_REVISION_AHEAD: Remote revision is ahead — requires investigation/)).toBeInTheDocument();
     });
+    it('keeps loaded grants visible when one definition status is unavailable', async () => {
+        mocks.grants = [{grantId: 'grant-a', toolId: 'tool-a', wfDefId: 'workflow-a',
+            allowedEnvironments: ['dev'], aggregateVersion: 1}];
+        mocks.fetchClient.mockImplementation((url: string) => queryData(url)?.wfDefId
+            ? Promise.reject(new Error('status unavailable')) : Promise.resolve({grants: mocks.grants}));
+        render(<WorkflowToolAccessDialog open tool={{hostId: 'host-a', toolId: 'tool-a', name: 'Order tool',
+            lightapiValidationStatus: 'VALID'}} onClose={vi.fn()} />);
+        expect(await screen.findByText(/workflow-a: Sync status unavailable/)).toBeInTheDocument();
+        expect(screen.getByText('Existing workflow grants')).toBeInTheDocument();
+        expect(screen.getAllByText('workflow-a')).toHaveLength(2);
+    });
 });

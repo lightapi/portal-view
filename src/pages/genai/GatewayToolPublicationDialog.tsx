@@ -238,7 +238,16 @@ export default function GatewayToolPublicationDialog({
       if (!removing && workflowToolIds.length && !bindingAttempted) {
         // This is a mutation. A later preview must never resend it after an uncertain receipt.
         setBindingAttempted(true);
-        const publication = await workflowPortalClient.publishBindings(hostId, workflowToolIds);
+        let publication;
+        try {
+          publication = await workflowPortalClient.publishBindings(hostId, workflowToolIds);
+        } catch (reason) {
+          const failure = portalError(reason);
+          const operation = operationState(failure);
+          setBindingResults(workflowToolIds.map(toolId => ({toolId, status: 'unconfirmed',
+            ...operation, code: operation.code ?? 'WORKFLOW_OPERATION_UNCONFIRMED'})));
+          throw failure;
+        }
         const results = await Promise.all((publication.results ?? []).map(async result => {
           if (result.code === 'WORKFLOW_DEFINITION_RETIRED')
             return {...result, status: 'definitionRetired'};
