@@ -51,6 +51,10 @@ type Candidate = {
 
 type PublicationMode = 'ADD_OR_UPDATE' | 'REPLACE_API_SCOPE' | 'REMOVE_API_SCOPE' | 'REMOVE_WORKFLOW_TOOLS';
 const isRemovalMode = (mode: PublicationMode | null) => mode === 'REMOVE_API_SCOPE' || mode === 'REMOVE_WORKFLOW_TOOLS';
+const CONFIRMED_BATCH_FAILURE_CODES = new Set([
+  'ERR11000', 'WORKFLOW_INPUT_INVALID', 'VERSION_CONFLICT',
+  'WORKFLOW_DEFINITION_MISMATCH', 'WORKFLOW_DEFINITION_RETIRED', 'WORKFLOW_TOOL_ON_GATEWAY',
+]);
 const retirementConfirmed = (receipt: any) => receipt?.result === 'retired'
   || (receipt?.result === 'unchanged' && ['retired', 'withdrawn'].includes(receipt?.revisionStatus));
 
@@ -248,7 +252,8 @@ export default function GatewayToolPublicationDialog({
         } catch (reason) {
           const failure = portalError(reason);
           const operation = operationState(failure);
-          const confirmedFailure = operation.operationState === 'failed' || operation.code === 'ERR11000';
+          const confirmedFailure = operation.operationState === 'failed'
+            || CONFIRMED_BATCH_FAILURE_CODES.has(operation.code ?? '');
           setBatchBindingOperation(confirmedFailure ? null : operation);
           setBatchBindingOutcomeUnconfirmed(!confirmedFailure);
           if (confirmedFailure) setBindingAttempted(false);
