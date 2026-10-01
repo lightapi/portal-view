@@ -154,14 +154,14 @@ export default function ApiDetail() {
       alert('You can only delete API versions you own.');
       return;
     }
-    if (!window.confirm(`Are you sure you want to delete app: ${row.original.apiVersionId}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete API version: ${row.original.apiVersionId}?`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(app => app.apiVersionId !== row.original.apiVersionId));
 
     const cmd = {
       host: 'lightapi.net', service: 'service', action: 'deleteApiVersion', version: '0.1.0',
-      data: { hostId: row.original.hostId, apiId: row.original.apiId, apiVersion: row.original.apiVersion , aggregateVersion: row.original.aggregateVersion},
+      data: { hostId: row.original.hostId, apiVersionId: row.original.apiVersionId, apiId: row.original.apiId, apiVersion: row.original.apiVersion, aggregateVersion: row.original.aggregateVersion },
     };
 
     try {

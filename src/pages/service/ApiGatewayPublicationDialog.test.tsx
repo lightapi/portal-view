@@ -138,4 +138,29 @@ describe('ApiGatewayPublicationDialog', () => {
       'Endpoint access key already has another owner: GET /pets',
     )).toBeInTheDocument();
   });
+
+  it('stages standalone retirement with the preview revision and digest', async () => {
+    vi.mocked(fetchClient).mockReset();
+    vi.mocked(fetchClient)
+      .mockResolvedValueOnce({ candidates: [{ ...candidate, versions: [{ ...candidate.versions[0], selected: true }] }] })
+      .mockResolvedValueOnce({ ...preview, associationAction: 'REMOVE', warnings: [] });
+    const user = userEvent.setup();
+    render(<MemoryRouter><ApiGatewayPublicationDialog open hostId={HOST_ID}
+      apiVersionId={API_VERSION_ID} apiVersion="1.0.0" onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText(/Projection revision 12 of 12/);
+    await user.click(screen.getByLabelText('Retire this version from Gateway'));
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    await screen.findByRole('button', { name: 'Stage retirement' });
+    const query = new URL(vi.mocked(fetchClient).mock.calls[1][0] as string, 'https://localhost');
+    expect(JSON.parse(query.searchParams.get('cmd')!).data).toMatchObject({
+      publicationMode: 'REMOVE_SELECTED', retireInstanceApiIds: [], apiVersionId: API_VERSION_ID,
+    });
+    await user.click(screen.getByRole('button', { name: 'Stage retirement' }));
+    await waitFor(() => expect(apiPost).toHaveBeenCalledOnce());
+    expect(vi.mocked(apiPost).mock.calls[0][0].body.data).toMatchObject({
+      publicationMode: 'REMOVE_SELECTED', expectedTargetAcceptedRevision: 12,
+      expectedPreviewDigest: 'sha256:preview',
+    });
+    expect(await screen.findByText(/Gateway retirement events accepted/)).toBeInTheDocument();
+  });
 });

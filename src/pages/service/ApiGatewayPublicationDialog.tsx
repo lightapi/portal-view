@@ -60,7 +60,7 @@ type DependencyDecision = PublicationIssue & {
 type PublicationPreview = {
   previewDigest: string;
   expectedTargetAcceptedRevision: number;
-  associationAction: 'CREATE' | 'REACTIVATE' | 'UPDATE';
+  associationAction: 'CREATE' | 'REACTIVATE' | 'UPDATE' | 'REMOVE';
   instanceApiId?: string;
   warnings: PublicationIssue[];
   blockingErrors: PublicationIssue[];
@@ -98,7 +98,7 @@ export default function ApiGatewayPublicationDialog({
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState<GatewayCandidate[]>([]);
   const [instanceId, setInstanceId] = useState('');
-  const [mode, setMode] = useState<'KEEP_EXISTING_VERSIONS' | 'REPLACE_SELECTED'>('KEEP_EXISTING_VERSIONS');
+  const [mode, setMode] = useState<'KEEP_EXISTING_VERSIONS' | 'REPLACE_SELECTED' | 'REMOVE_SELECTED'>('KEEP_EXISTING_VERSIONS');
   const [retireIds, setRetireIds] = useState<string[]>([]);
   const [preview, setPreview] = useState<PublicationPreview | null>(null);
   const [acknowledged, setAcknowledged] = useState<string[]>([]);
@@ -215,15 +215,15 @@ export default function ApiGatewayPublicationDialog({
 
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} fullWidth maxWidth="md">
-      <DialogTitle>Publish API {apiVersion} to Gateway</DialogTitle>
+      <DialogTitle>{mode === 'REMOVE_SELECTED' ? 'Retire' : 'Publish'} API {apiVersion} {mode === 'REMOVE_SELECTED' ? 'from' : 'to'} Gateway</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
           {result && (
             <Alert severity="success">
               {result.noChanges
-                ? 'The Gateway desired configuration already matches this API version; no events were needed.'
-                : `Gateway publication events accepted (${result.acceptedEventCount ?? 0}).`}
+                ? 'The Gateway desired configuration already matches the requested operation; no events were needed.'
+                : `Gateway ${mode === 'REMOVE_SELECTED' ? 'retirement' : 'publication'} events accepted (${result.acceptedEventCount ?? 0}).`}
               {' '}Projection is asynchronous; create a configuration snapshot after it catches up.
               {result.eventTransactionId && (
                 <Typography variant="caption" display="block">
@@ -280,7 +280,14 @@ export default function ApiGatewayPublicationDialog({
               >
                 <FormControlLabel value="KEEP_EXISTING_VERSIONS" control={<Radio />} label="Keep existing versions" />
                 <FormControlLabel value="REPLACE_SELECTED" control={<Radio />} label="Replace selected versions" />
+                <FormControlLabel value="REMOVE_SELECTED" control={<Radio />} label="Retire this version from Gateway" disabled={!selectedCandidate.versions.some(version => version.selected)} />
               </RadioGroup>
+              {mode === 'REMOVE_SELECTED' && (
+                <Alert severity="warning">
+                  Removes this version's published ACL entries, path prefixes, and application bindings.
+                  Shared endpoint entries are preserved. Create and activate a configuration snapshot after staging.
+                </Alert>
+              )}
               {selectedCandidate.versions.map((version) => (
                 <FormControlLabel
                   key={version.instanceApiId}
@@ -395,7 +402,7 @@ export default function ApiGatewayPublicationDialog({
             onClick={publish}
             disabled={loading || preview.blockingErrors.length > 0 || !warningsAcknowledged}
           >
-            {loading ? <CircularProgress size={20} /> : 'Publish events'}
+            {loading ? <CircularProgress size={20} /> : mode === 'REMOVE_SELECTED' ? 'Stage retirement' : 'Publish events'}
           </Button>
         )}
       </DialogActions>
