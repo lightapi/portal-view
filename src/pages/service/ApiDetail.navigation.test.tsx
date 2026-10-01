@@ -38,6 +38,7 @@ describe('API version edit navigation', () => {
     }]}><ApiDetail /></MemoryRouter>);
     await selectPortalAction('Delete Api Version');
     await waitFor(() => expect(apiPost).toHaveBeenCalled());
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('API api-a version 1.0.0'));
     expect(vi.mocked(apiPost).mock.calls.at(-1)?.[0].body.data).toMatchObject({
       hostId: 'host-a', apiId: 'api-a', apiVersion: '1.0.0', apiVersionId: 'version-a',
     });

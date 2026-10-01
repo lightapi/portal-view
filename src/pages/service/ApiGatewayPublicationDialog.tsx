@@ -68,6 +68,7 @@ type PublicationPreview = {
   retirements: PublicationVersion[];
   dependencyDecisions: DependencyDecision[];
   sourceCounts: { endpoints?: number; rules?: number; ruleBodies?: number };
+  retirementCounts?: { endpoints?: number; rules?: number; ruleBodies?: number; preservedEndpoints?: number; pathPrefixes?: number; applicationBindings?: number };
 };
 
 type PublicationResult = {
@@ -98,6 +99,7 @@ export default function ApiGatewayPublicationDialog({
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState<GatewayCandidate[]>([]);
   const [instanceId, setInstanceId] = useState('');
+  const [sourceActive, setSourceActive] = useState(true);
   const [mode, setMode] = useState<'KEEP_EXISTING_VERSIONS' | 'REPLACE_SELECTED' | 'REMOVE_SELECTED'>('KEEP_EXISTING_VERSIONS');
   const [retireIds, setRetireIds] = useState<string[]>([]);
   const [preview, setPreview] = useState<PublicationPreview | null>(null);
@@ -119,6 +121,9 @@ export default function ApiGatewayPublicationDialog({
         hostId, apiVersionId,
       }));
       const values = (response?.candidates ?? []) as GatewayCandidate[];
+      const active = response?.source?.active !== false;
+      setSourceActive(active);
+      setMode(active ? 'KEEP_EXISTING_VERSIONS' : 'REMOVE_SELECTED');
       setCandidates(values);
       if (values.length === 1) setInstanceId(values[0].instanceId);
     } catch (reason) {
@@ -132,6 +137,7 @@ export default function ApiGatewayPublicationDialog({
     if (!open) return;
     setCandidates([]);
     setInstanceId('');
+    setSourceActive(true);
     setMode('KEEP_EXISTING_VERSIONS');
     setRetireIds([]);
     setPreview(null);
@@ -219,6 +225,7 @@ export default function ApiGatewayPublicationDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
+          {!sourceActive && <Alert severity="info">This API version is deleted. Its remaining Gateway publications can still be retired.</Alert>}
           {result && (
             <Alert severity="success">
               {result.noChanges
@@ -240,6 +247,7 @@ export default function ApiGatewayPublicationDialog({
               displayEmpty
               onChange={(event) => {
                 setInstanceId(event.target.value);
+                setMode(sourceActive ? 'KEEP_EXISTING_VERSIONS' : 'REMOVE_SELECTED');
                 setRetireIds([]);
                 resetPreview();
               }}
@@ -278,14 +286,16 @@ export default function ApiGatewayPublicationDialog({
                   resetPreview();
                 }}
               >
-                <FormControlLabel value="KEEP_EXISTING_VERSIONS" control={<Radio />} label="Keep existing versions" />
-                <FormControlLabel value="REPLACE_SELECTED" control={<Radio />} label="Replace selected versions" />
+                <FormControlLabel value="KEEP_EXISTING_VERSIONS" control={<Radio />} label="Keep existing versions" disabled={!sourceActive} />
+                <FormControlLabel value="REPLACE_SELECTED" control={<Radio />} label="Replace selected versions" disabled={!sourceActive} />
                 <FormControlLabel value="REMOVE_SELECTED" control={<Radio />} label="Retire this version from Gateway" disabled={!selectedCandidate.versions.some(version => version.selected)} />
               </RadioGroup>
               {mode === 'REMOVE_SELECTED' && (
                 <Alert severity="warning">
-                  Removes this version's published ACL entries, path prefixes, and application bindings.
-                  Shared endpoint entries are preserved. Create and activate a configuration snapshot after staging.
+                  Retires this version's Gateway association, all its instance API properties, path prefixes,
+                  application bindings, and binding properties. Removes attributable ACL contributions;
+                  preserves surviving carriers and blocks ambiguous ownership.
+                  Create and activate a configuration snapshot after staging.
                 </Alert>
               )}
               {selectedCandidate.versions.map((version) => (
@@ -325,10 +335,15 @@ export default function ApiGatewayPublicationDialog({
           {preview && (
             <Box>
               <Typography variant="subtitle1">Preview</Typography>
-              <Typography variant="body2">
+              {preview.associationAction === 'REMOVE' ? <Typography variant="body2">
+                Retirement: ACL contributions: {preview.retirementCounts?.endpoints ?? 0};
+                rules removed: {preview.retirementCounts?.rules ?? 0}; rule bodies removed: {preview.retirementCounts?.ruleBodies ?? 0};
+                surviving endpoint entries: {preview.retirementCounts?.preservedEndpoints ?? 0};
+                path prefixes: {preview.retirementCounts?.pathPrefixes ?? 0}; application bindings: {preview.retirementCounts?.applicationBindings ?? 0}.
+              </Typography> : <Typography variant="body2">
                 Association: {preview.associationAction}; endpoints: {preview.sourceCounts.endpoints ?? 0};
                 rules: {preview.sourceCounts.rules ?? 0}; rule bodies: {preview.sourceCounts.ruleBodies ?? 0}.
-              </Typography>
+              </Typography>}
               {preview.properties.map((property) => (
                 <Box key={property.propertyId} sx={{ mt: 1 }}>
                   <Typography variant="body2">{property.propertyId}: {property.action}</Typography>
@@ -391,7 +406,8 @@ export default function ApiGatewayPublicationDialog({
         {!result && (
           <Button
             onClick={previewPublication}
-            disabled={loading || !instanceId || !selectedCandidate?.projectionReady}
+            disabled={loading || !instanceId || !selectedCandidate?.projectionReady
+              || (mode === 'REMOVE_SELECTED' && !selectedCandidate.versions.some(version => version.selected))}
           >
             Preview
           </Button>

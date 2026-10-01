@@ -143,7 +143,8 @@ describe('ApiGatewayPublicationDialog', () => {
     vi.mocked(fetchClient).mockReset();
     vi.mocked(fetchClient)
       .mockResolvedValueOnce({ candidates: [{ ...candidate, versions: [{ ...candidate.versions[0], selected: true }] }] })
-      .mockResolvedValueOnce({ ...preview, associationAction: 'REMOVE', warnings: [] });
+      .mockResolvedValueOnce({ ...preview, associationAction: 'REMOVE', warnings: [], sourceCounts: {},
+        retirementCounts: { endpoints: 3, rules: 2, ruleBodies: 2, preservedEndpoints: 1, pathPrefixes: 1, applicationBindings: 1 } });
     const user = userEvent.setup();
     render(<MemoryRouter><ApiGatewayPublicationDialog open hostId={HOST_ID}
       apiVersionId={API_VERSION_ID} apiVersion="1.0.0" onClose={vi.fn()} /></MemoryRouter>);
@@ -151,6 +152,7 @@ describe('ApiGatewayPublicationDialog', () => {
     await user.click(screen.getByLabelText('Retire this version from Gateway'));
     await user.click(screen.getByRole('button', { name: 'Preview' }));
     await screen.findByRole('button', { name: 'Stage retirement' });
+    expect(screen.getByText(/Retirement: ACL contributions: 3; rules removed: 2/)).toBeInTheDocument();
     const query = new URL(vi.mocked(fetchClient).mock.calls[1][0] as string, 'https://localhost');
     expect(JSON.parse(query.searchParams.get('cmd')!).data).toMatchObject({
       publicationMode: 'REMOVE_SELECTED', retireInstanceApiIds: [], apiVersionId: API_VERSION_ID,
@@ -162,5 +164,44 @@ describe('ApiGatewayPublicationDialog', () => {
       expectedPreviewDigest: 'sha256:preview',
     });
     expect(await screen.findByText(/Gateway retirement events accepted/)).toBeInTheDocument();
+  });
+
+  it('resets retirement mode when switching to a Gateway without this version', async () => {
+    vi.mocked(fetchClient).mockReset();
+    vi.mocked(fetchClient).mockResolvedValueOnce({ candidates: [
+      { ...candidate, versions: [{ ...candidate.versions[0], selected: true }] },
+      { ...candidate, instanceId: 'other-gateway', instanceName: 'Other Gateway', versions: [] },
+    ] }).mockResolvedValueOnce(preview);
+    const user = userEvent.setup();
+    render(<MemoryRouter><ApiGatewayPublicationDialog open hostId={HOST_ID}
+      apiVersionId={API_VERSION_ID} apiVersion="1.0.0" onClose={vi.fn()} /></MemoryRouter>);
+    await user.click(await screen.findByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: /Test Gateway/ }));
+    await user.click(screen.getByLabelText('Retire this version from Gateway'));
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: /Other Gateway/ }));
+    expect(screen.getByLabelText('Keep existing versions')).toBeChecked();
+    expect(screen.getByLabelText('Retire this version from Gateway')).toBeDisabled();
+    expect(screen.getByLabelText('Retire this version from Gateway')).not.toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    await screen.findByRole('button', { name: 'Publish events' });
+    const query = new URL(vi.mocked(fetchClient).mock.calls[1][0] as string, 'https://localhost');
+    expect(JSON.parse(query.searchParams.get('cmd')!).data.publicationMode).toBe('KEEP_EXISTING_VERSIONS');
+  });
+
+  it('allows only retirement for an already deleted API version', async () => {
+    vi.mocked(fetchClient).mockReset();
+    vi.mocked(fetchClient).mockResolvedValueOnce({ source: { active: false }, candidates: [
+      { ...candidate, versions: [{ ...candidate.versions[0], selected: true }] },
+    ] }).mockResolvedValueOnce({ ...preview, associationAction: 'REMOVE', warnings: [] });
+    const user = userEvent.setup();
+    render(<MemoryRouter><ApiGatewayPublicationDialog open hostId={HOST_ID}
+      apiVersionId={API_VERSION_ID} apiVersion="1.0.0" onClose={vi.fn()} /></MemoryRouter>);
+    await screen.findByText(/This API version is deleted/);
+    expect(screen.getByLabelText('Keep existing versions')).toBeDisabled();
+    expect(screen.getByLabelText('Replace selected versions')).toBeDisabled();
+    expect(screen.getByLabelText('Retire this version from Gateway')).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+    await screen.findByRole('button', { name: 'Stage retirement' });
   });
 });

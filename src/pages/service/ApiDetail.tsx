@@ -154,7 +154,7 @@ export default function ApiDetail() {
       alert('You can only delete API versions you own.');
       return;
     }
-    if (!window.confirm(`Are you sure you want to delete API version: ${row.original.apiVersionId}?`)) return;
+    if (!window.confirm(`Are you sure you want to delete API ${row.original.apiId} version ${row.original.apiVersion}? Retire its Gateway publications first; deletion does not remove Gateway configuration.`)) return;
 
     const originalData = [...data];
     setData(prev => prev.filter(app => app.apiVersionId !== row.original.apiVersionId));
@@ -167,11 +167,11 @@ export default function ApiDetail() {
     try {
       const result = await apiPost({ url: '/portal/command', headers: {}, body: cmd });
       if (result.error) {
-        alert('Failed to delete app. Please try again.');
+        alert('Failed to delete API version. Please try again.');
         setData(originalData);
       }
     } catch (e) {
-      alert('Failed to delete app due to a network error.');
+      alert('Failed to delete API version due to a network error.');
       setData(originalData);
     }
   }, [apiVersionOwnership, data]);
