@@ -94,6 +94,10 @@ export default function WorkflowToolAccessDialog({
             }});
             if (result.error) throw new Error(result.error.message || 'Workflow Access change failed');
             await load();
+            if (result.aborted) {
+                setMessage('Command outcome unconfirmed. Check operational publication and refresh before starting a workflow.');
+                return;
+            }
             setMessage('Policy saved. Check publication status below before starting a workflow.');
         } catch (error) { setMessage(String(error)); } finally { setBusy(false); }
     };
@@ -110,10 +114,18 @@ export default function WorkflowToolAccessDialog({
                 },
             });
             if (result.error) throw new Error(result.error.message || 'Revoke failed');
-            setMessage('Workflow access revoked.');
             await load();
+            setMessage(result.aborted
+                ? 'Command outcome unconfirmed. Check grant synchronization and refresh before starting a workflow.'
+                : 'Workflow access revoked.');
         } catch (error) { setMessage(String(error)); } finally { setBusy(false); }
     };
+
+    const publicationPending = broad.syncStatus === 'pending' || broad.syncStatus === 'error';
+    const broadLabel = !broad.enabled && publicationPending ? 'Disable pending publication'
+        : broad.renewalNeeded ? 'Renewal needed — Tool pins changed'
+        : broad.enabled && publicationPending ? 'Enable pending publication'
+        : broad.enabled ? 'Enabled for this exact Tool version' : 'Broad access disabled';
 
     return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
         <DialogTitle>Workflow Access · {tool?.name}</DialogTitle>
@@ -128,7 +140,8 @@ export default function WorkflowToolAccessDialog({
                 <Alert severity="info">A GenAI Admin can enable this reviewed Tool version for all workflows in this Host, including future workflows. No workflow-specific approval is needed while matching broad access is published. Gateway still enforces each caller’s API permissions. New access is requested from the Workflow Editor when broad access is absent.</Alert>
                 <Box>
                     <Typography variant="subtitle1">All workflows in this Host</Typography>
-                    <Chip label={broad.renewalNeeded ? 'Renewal needed — Tool pins changed' : broad.enabled ? 'Enabled for this exact Tool version' : 'Broad access disabled'} color={broad.enabled && !broad.renewalNeeded ? 'success' : 'default'} />
+                    <Chip label={broadLabel} color={broad.enabled && broad.effectiveEnabled === true && !broad.renewalNeeded && broad.syncStatus === 'synced' ? 'success' : 'default'} />
+                    {!broad.enabled && publicationPending ? <Alert severity="warning">The previous operational policy may still authorize fresh starts until the disable has a matching publication receipt.</Alert> : null}
                     {broad.toolVersion ? <Typography variant="body2">Reviewed {broad.toolVersion} · {broad.lightapiDigest}</Typography> : null}
                     {broad.enabled && broad.effectiveEnabled === false ? <Alert severity="warning">Broad access is currently unavailable. Check exact pins, lifecycle restrictions and operational publication below.</Alert> : null}
                     <Typography variant="body2">Only the reviewed environments and registered HTTP method are allowed. Tool/API lifecycle and supported routing restrictions still apply.</Typography>

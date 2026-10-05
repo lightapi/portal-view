@@ -156,4 +156,28 @@ describe('WorkflowToolAccessDialog', () => {
         await waitFor(()=>expect(mocks.apiPost).toHaveBeenCalledTimes(1));
         expect(mocks.apiPost.mock.calls[0][0].body).toMatchObject({action:'publishToolWorkflowAccess',data:{hostId:'host-a',toolId:'tool-a'}});
     });
+    it.each(['pending', 'error'])('does not claim a %s disable is operationally disabled', async syncStatus => {
+        mocks.broad = {enabled: false, effectiveEnabled: false, syncStatus};
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        expect(await screen.findByText('Disable pending publication')).toBeInTheDocument();
+        expect(screen.getByText(/previous operational policy may still authorize fresh starts/)).toBeInTheDocument();
+        expect(screen.queryByText('Broad access disabled')).not.toBeInTheDocument();
+    });
+    it('labels a confirmed disable as disabled', async () => {
+        mocks.broad = {enabled: false, syncStatus: 'synced'};
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        await waitFor(() => expect(screen.getByText(/Operational publication: synced/)).toBeInTheDocument());
+        expect(screen.getByText('Broad access disabled')).toBeInTheDocument();
+    });
+    it.each(['Enable reviewed version', 'Retry publication', 'Revoke'])('does not report success for an aborted %s command', async button => {
+        mocks.apiPost.mockResolvedValue({aborted: true});
+        mocks.broad = {enabled: true, syncStatus: 'pending'};
+        mocks.grants = [{grantId:'grant-a',toolId:'tool-a',wfDefId:'workflow-a',allowedEnvironments:['dev'],aggregateVersion:1}];
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        fireEvent.click(await screen.findByRole('button', {name:button}));
+        expect(await screen.findByText(/Command outcome unconfirmed/)).toBeInTheDocument();
+        expect(screen.queryByText(/Policy saved|Workflow access revoked/)).not.toBeInTheDocument();
+        expect(mocks.fetchClient.mock.calls.filter(([url]) => queryAction(url) === 'getToolWorkflowAccess').length).toBeGreaterThan(1);
+    });
+
 });

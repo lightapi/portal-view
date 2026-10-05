@@ -6,6 +6,9 @@ describe('workflow callable Tool snippets', () => {
     it('distinguishes broad access, specific grants and required access in editor options', () => {
         expect(workflowReferenceAccessLabel({accessStatus:'GRANTED',authorizationSource:'HOST_TOOL'})).toBe('Available to all workflows in this Host');
         expect(workflowReferenceAccessLabel({accessStatus:'GRANTED',authorizationSource:'SPECIFIC_GRANT'})).toBe('Specifically granted to this workflow');
+        for (const accessStatus of ['REJECTED', 'STALE', 'INELIGIBLE'] as const) {
+            expect(workflowReferenceAccessLabel({accessStatus})).toBe(accessStatus);
+        }
         expect(workflowReferenceAccessLabel({accessStatus:'REQUESTABLE'})).toBe('Access required');
         expect(workflowReferenceAccessLabel({accessStatus:'PENDING_APPROVAL'})).toBe('Access required · approval pending');
     });

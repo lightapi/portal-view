@@ -664,6 +664,7 @@ export function workflowReferenceAccessLabel(reference: Pick<CatalogReference, '
             ? 'Available to all workflows in this Host' : 'Specifically granted to this workflow';
     }
     if (reference.accessStatus === 'PENDING_APPROVAL') return 'Access required · approval pending';
+    if (['REJECTED', 'STALE', 'INELIGIBLE'].includes(reference.accessStatus || '')) return reference.accessStatus!;
     return 'Access required';
 }
 
@@ -2706,8 +2707,7 @@ export default function WorkflowEditor() {
                             options={categoryOptions}
                             value={selectedCategories}
                             loading={isTaxonomyLoading}
-                            getOptionLabel={option => option.kind === 'endpoints'
-                                ? `${option.label} · ${workflowReferenceAccessLabel(option)}` : option.label}
+                            getOptionLabel={option => option.label}
                             isOptionEqualToValue={(option, value) => option.id === value.id}
                             onChange={(_, value) => setCategoryIds(idsFromOptions(value))}
                             renderInput={params => <TextField {...params} label="Categories" size="small" />}
@@ -2944,7 +2944,8 @@ export default function WorkflowEditor() {
                             inputValue={referenceSearch}
                             onInputChange={(_event, value) => setReferenceSearch(value)}
                             onChange={(_event, value) => setSelectedReferenceId(value?.id || '')}
-                            getOptionLabel={option => option.label}
+                            getOptionLabel={option => option.kind === 'endpoints'
+                                ? `${option.label} · ${workflowReferenceAccessLabel(option)}` : option.label}
                             isOptionEqualToValue={(option, value) => option.id === value.id}
                             disabled={isCatalogLoading}
                             loading={isCatalogLoading}

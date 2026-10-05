@@ -100,8 +100,28 @@ describe('WorkflowEditor environment selector', () => {
         await user.click(await screen.findByRole('option', { name: 'API Endpoints' }));
         await user.click(screen.getByRole('combobox', { name: 'Reference' }));
         expect(await screen.findByRole('option', {
-            name: 'Customer Profile API · 1.0.0 · Get profile · GET · /customers/{customerId}',
+            name: 'Customer Profile API · 1.0.0 · Get profile · GET · /customers/{customerId} · Access required',
         })).toBeInTheDocument();
+    });
+
+
+    it('shows broad and specific authorization in the actual endpoint dropdown', async () => {
+        mocks.fetchClient.mockImplementation((url: string) => {
+            if (url === '/r/data?name=environment&host=host-a') return Promise.resolve([{id:'loc',label:'Local'}]);
+            if (queryCommand(url).action === 'getWorkflowReferenceTool') return Promise.resolve({tools: ['HOST_TOOL', 'SPECIFIC_GRANT'].map((authorizationSource, index) => ({
+                toolId: `tool-${index}`, capabilityRef: `api/get${index}`, apiName: 'API', apiVersion: '1.0.0',
+                name: `Get ${index}`, httpMethod: 'GET', endpointPath: `/items/${index}`, toolVersion:'1.0.0',
+                lightapiDigest: `sha256:${'a'.repeat(64)}`, accessStatus:'GRANTED', authorizationSource, allowedEnvironments:['loc'],
+            }))});
+            return Promise.resolve({});
+        });
+        const user = userEvent.setup();
+        render(<MemoryRouter initialEntries={['/app/workflow/editor']}><Routes><Route path="/app/workflow/editor" element={<WorkflowEditor />} /></Routes></MemoryRouter>);
+        await user.click(screen.getByRole('combobox', {name:'Reference Type'}));
+        await user.click(await screen.findByRole('option', {name:'API Endpoints'}));
+        await user.click(screen.getByRole('combobox', {name:'Reference'}));
+        expect(await screen.findByRole('option', {name:/Available to all workflows in this Host/})).toBeInTheDocument();
+        expect(screen.getByRole('option', {name:/Specifically granted to this workflow/})).toBeInTheDocument();
     });
 
     it('uses createWfDefinition only for the first explicit save', async () => {
@@ -261,7 +281,7 @@ do: []
         await user.click(await screen.findByRole('option', { name: 'API Endpoints' }));
         await user.click(screen.getByRole('combobox', { name: 'Reference' }));
         await user.click(await screen.findByRole('option', {
-            name: 'Customer Profile API · 1.0.0 · Get profile · GET · /customers/{customerId}',
+            name: 'Customer Profile API · 1.0.0 · Get profile · GET · /customers/{customerId} · Access required',
         }));
         await user.click(screen.getByRole('button', { name: 'Insert Reference' }));
 
