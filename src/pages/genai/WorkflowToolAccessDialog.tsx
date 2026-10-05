@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography,
+    Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography, TextField,
 } from '@mui/material';
 import { apiPost } from '../../api/apiPost';
 import fetchClient from '../../utils/fetchClient';
@@ -32,6 +32,11 @@ function queryUrl(action: string, data: Record<string, unknown>) {
 export default function WorkflowToolAccessDialog({
     open, tool, onClose,
 }: { open: boolean; tool: WorkflowAccessTool | null; onClose: () => void }) {
+    const [broad, setBroad] = useState<{enabled?: boolean; effectiveEnabled?: boolean; renewalNeeded?: boolean; aggregateVersion?: number;
+        toolVersion?: string; lightapiDigest?: string; allowedEnvironments?: string[]; allowedMethods?: string[];
+        syncStatus?: string; syncError?: string}>({});
+    const [environments, setEnvironments] = useState('dev');
+    const [methods, setMethods] = useState('GET');
     const [grants, setGrants] = useState<Grant[]>([]);
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
@@ -41,6 +46,10 @@ export default function WorkflowToolAccessDialog({
 
     const load = useCallback(async () => {
         if (!open || !tool) return;
+        const policy = await fetchClient(queryUrl('getToolWorkflowAccess', {hostId: tool.hostId, toolId: tool.toolId}));
+        setBroad(policy);
+        if (policy.allowedEnvironments) setEnvironments(policy.allowedEnvironments.join(', '));
+        if (policy.allowedMethods) setMethods(policy.allowedMethods.join(', '));
         const grantResult = await fetchClient(queryUrl('getWorkflowToolGrant', {
             hostId: tool.hostId, toolId: tool.toolId, active: true,
         }));
@@ -69,6 +78,26 @@ export default function WorkflowToolAccessDialog({
     useEffect(() => { load().catch(error => setMessage(String(error?.message ?? error))); }, [load]);
     useEffect(() => { trackedDefinitions.current.clear(); setSyncStatuses([]); }, [tool?.toolId]);
 
+    const setAccess = async (enabled: boolean, retry = false) => {
+        if (!tool) return;
+        setBusy(true); setMessage('');
+        try {
+            const result = await apiPost({url: '/portal/command', headers: {}, body: {
+                host: 'lightapi.net', service: 'genai', action: retry ? 'publishToolWorkflowAccess' : 'setToolWorkflowAccess', version: '0.1.0',
+                data: retry ? {hostId: tool.hostId, toolId: tool.toolId} : {
+                    hostId: tool.hostId, toolId: tool.toolId, capabilityRef: tool.capabilityRef,
+                    toolVersion: tool.version, lightapiDigest: tool.lightapiDigest, enabled,
+                    aggregateVersion: broad.aggregateVersion ?? 0,
+                    allowedEnvironments: environments.split(',').map(value => value.trim()).filter(Boolean),
+                    allowedMethods: methods.split(',').map(value => value.trim().toUpperCase()).filter(Boolean),
+                },
+            }});
+            if (result.error) throw new Error(result.error.message || 'Workflow Access change failed');
+            await load();
+            setMessage('Policy saved. Check publication status below before starting a workflow.');
+        } catch (error) { setMessage(String(error)); } finally { setBusy(false); }
+    };
+
     const revoke = async (grantRow: Grant) => {
         if (!tool) return;
         trackedDefinitions.current.add(grantRow.wfDefId);
@@ -96,7 +125,24 @@ export default function WorkflowToolAccessDialog({
                     <Typography>{tool?.capabilityRef}</Typography>
                     <Typography variant="caption">Pinned Tool {tool?.version} · {tool?.lightapiDigest}</Typography>
                 </Box>
-                <Alert severity="info">New access is requested from the Workflow Editor and approved through the GenAI Admin worklist. This view is read-only except for revocation.</Alert>
+                <Alert severity="info">A GenAI Admin can enable this reviewed Tool version for all workflows in this Host, including future workflows. No workflow-specific approval is needed while matching broad access is published. Gateway still enforces each caller’s API permissions. New access is requested from the Workflow Editor when broad access is absent.</Alert>
+                <Box>
+                    <Typography variant="subtitle1">All workflows in this Host</Typography>
+                    <Chip label={broad.renewalNeeded ? 'Renewal needed — Tool pins changed' : broad.enabled ? 'Enabled for this exact Tool version' : 'Broad access disabled'} color={broad.enabled && !broad.renewalNeeded ? 'success' : 'default'} />
+                    {broad.toolVersion ? <Typography variant="body2">Reviewed {broad.toolVersion} · {broad.lightapiDigest}</Typography> : null}
+                    {broad.enabled && broad.effectiveEnabled === false ? <Alert severity="warning">Broad access is currently unavailable. Check exact pins, lifecycle restrictions and operational publication below.</Alert> : null}
+                    <Typography variant="body2">Only the reviewed environments and registered HTTP method are allowed. Tool/API lifecycle and supported routing restrictions still apply.</Typography>
+                    <Stack direction="row" spacing={1} sx={{my: 1}}>
+                        <TextField label="Reviewed environments (comma separated)" value={environments} onChange={event => setEnvironments(event.target.value)} disabled={busy} />
+                        <TextField label="Registered HTTP method" value={methods} onChange={event => setMethods(event.target.value)} disabled={busy} />
+                    </Stack>
+                    <Button disabled={busy || tool?.lightapiValidationStatus !== 'VALID'} onClick={() => setAccess(true)}>{broad.renewalNeeded ? 'Renew reviewed version' : 'Enable reviewed version'}</Button>
+                    <Button color="error" disabled={busy || !broad.enabled} onClick={() => setAccess(false)}>Disable broad access</Button>
+                    <Typography variant="body2">Disabling blocks new starts that rely only on broad access after publication. Explicit workflow grants and already accepted runs remain authorized under their pins; caller-token expiry and execution fences still apply.</Typography>
+                    {broad.syncStatus ? <Alert severity={broad.syncStatus === 'synced' ? 'success' : 'warning'}>Operational publication: {broad.syncStatus}. {broad.syncError}
+                        {broad.syncStatus !== 'synced' ? <Button disabled={busy} onClick={() => setAccess(Boolean(broad.enabled), true)}>Retry publication</Button> : null}
+                    </Alert> : null}
+                </Box>
                 {syncStatuses.map(item => item.status === 'unavailable'
                     ? <Alert key={item.wfDefId} severity="warning">{item.wfDefId}: Sync status unavailable. Refresh to retry.</Alert>
                     : item.status === 'pending'
@@ -110,7 +156,7 @@ export default function WorkflowToolAccessDialog({
                 <Box>
                     <Typography variant="subtitle1">Existing workflow grants</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Approved definition-wide grants for this Tool.
+                        These grants authorize only the named workflow definition. Disabling broad access leaves them intact; revoking one leaves independent broad access intact.
                     </Typography>
                     {grants.length === 0 ? <Typography color="text.secondary">No workflow grants.</Typography> : null}
                     <Stack spacing={1}>
