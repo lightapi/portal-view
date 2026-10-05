@@ -11,6 +11,7 @@ export type WorkflowAccessTool = {
     name: string;
     version?: string;
     capabilityRef?: string;
+    apiMethod?: string;
     lightapiDigest?: string;
     lightapiValidationStatus?: string;
 };
@@ -35,8 +36,10 @@ export default function WorkflowToolAccessDialog({
     const [broad, setBroad] = useState<{enabled?: boolean; effectiveEnabled?: boolean; renewalNeeded?: boolean; aggregateVersion?: number;
         toolVersion?: string; lightapiDigest?: string; allowedEnvironments?: string[]; allowedMethods?: string[];
         syncStatus?: string; syncError?: string}>({});
-    const [environments, setEnvironments] = useState('dev');
-    const [methods, setMethods] = useState('GET');
+    const [policyLoaded, setPolicyLoaded] = useState(false);
+    const loadSequence = useRef(0);
+    const [environments, setEnvironments] = useState('');
+    const [methods, setMethods] = useState('');
     const [grants, setGrants] = useState<Grant[]>([]);
     const [message, setMessage] = useState('');
     const [busy, setBusy] = useState(false);
@@ -46,13 +49,25 @@ export default function WorkflowToolAccessDialog({
 
     const load = useCallback(async () => {
         if (!open || !tool) return;
-        const policy = await fetchClient(queryUrl('getToolWorkflowAccess', {hostId: tool.hostId, toolId: tool.toolId}));
-        setBroad(policy);
-        if (policy.allowedEnvironments) setEnvironments(policy.allowedEnvironments.join(', '));
-        if (policy.allowedMethods) setMethods(policy.allowedMethods.join(', '));
+        const sequence = ++loadSequence.current;
+        setPolicyLoaded(false); setEnvironments(''); setMethods(''); setBroad({});
+        const [policy, registry] = await Promise.all([
+            fetchClient(queryUrl('getToolWorkflowAccess', {hostId: tool.hostId, toolId: tool.toolId})),
+            fetchClient('/r/data?name=environment&host=' + encodeURIComponent(tool.hostId)),
+        ]);
+        if (sequence !== loadSequence.current) return;
+        const hostEnvironments: string[] = Array.isArray(registry)
+            ? registry.map((item: {id: string}) => item.id).filter(Boolean) : [];
+        const reviewedEnvironments = Array.isArray(policy.allowedEnvironments)
+            ? policy.allowedEnvironments.filter((id: string) => hostEnvironments.includes(id))
+            : hostEnvironments.slice(0, 1);
+        setBroad(policy); setPolicyLoaded(true);
+        setEnvironments(reviewedEnvironments.join(', '));
+        setMethods((tool.apiMethod || '').trim().toUpperCase());
         const grantResult = await fetchClient(queryUrl('getWorkflowToolGrant', {
             hostId: tool.hostId, toolId: tool.toolId, active: true,
         }));
+        if (sequence !== loadSequence.current) return;
         const rows: Grant[] = (grantResult.grants || []).filter((grant: Grant & { toolId?: string }) => grant.toolId === tool.toolId);
         rows.forEach(row => trackedDefinitions.current.add(row.wfDefId));
         const sync = await Promise.all([...trackedDefinitions.current].map(async wfDefId => {
@@ -65,6 +80,7 @@ export default function WorkflowToolAccessDialog({
                 return [wfDefId, {grantSyncStatus: 'unavailable'}] as const;
             }
         }));
+        if (sequence !== loadSequence.current) return;
         const byDefinition = Object.fromEntries(sync);
         setSyncStatuses(sync.map(([wfDefId, status]) => ({wfDefId, status: status.grantSyncStatus,
             code: status.grantSyncErrorCode, message: status.grantSyncErrorMessage})));
@@ -122,7 +138,7 @@ export default function WorkflowToolAccessDialog({
     };
 
     const publicationPending = broad.syncStatus === 'pending' || broad.syncStatus === 'error';
-    const broadLabel = !broad.enabled && publicationPending ? 'Disable pending publication'
+    const broadLabel = !policyLoaded ? 'Loading Workflow Access' : !broad.enabled && publicationPending ? 'Disable pending publication'
         : broad.renewalNeeded ? 'Renewal needed — Tool pins changed'
         : broad.enabled && publicationPending ? 'Enable pending publication'
         : broad.enabled ? 'Enabled for this exact Tool version' : 'Broad access disabled';
@@ -149,7 +165,7 @@ export default function WorkflowToolAccessDialog({
                         <TextField label="Reviewed environments (comma separated)" value={environments} onChange={event => setEnvironments(event.target.value)} disabled={busy} />
                         <TextField label="Registered HTTP method" value={methods} onChange={event => setMethods(event.target.value)} disabled={busy} />
                     </Stack>
-                    <Button disabled={busy || tool?.lightapiValidationStatus !== 'VALID'} onClick={() => setAccess(true)}>{broad.renewalNeeded ? 'Renew reviewed version' : 'Enable reviewed version'}</Button>
+                    <Button disabled={busy || tool?.lightapiValidationStatus !== 'VALID' || !environments.trim() || !methods.trim()} onClick={() => setAccess(true)}>{broad.renewalNeeded ? 'Renew reviewed version' : 'Enable reviewed version'}</Button>
                     <Button color="error" disabled={busy || !broad.enabled} onClick={() => setAccess(false)}>Disable broad access</Button>
                     <Typography variant="body2">Disabling blocks new starts that rely only on broad access after publication. Explicit workflow grants and already accepted runs remain authorized under their pins; caller-token expiry and execution fences still apply.</Typography>
                     {broad.syncStatus ? <Alert severity={broad.syncStatus === 'synced' ? 'success' : 'warning'}>Operational publication: {broad.syncStatus}. {broad.syncError}

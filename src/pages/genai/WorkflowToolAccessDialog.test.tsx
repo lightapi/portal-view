@@ -117,7 +117,8 @@ describe('WorkflowToolAccessDialog', () => {
     it('keeps loaded grants visible when one definition status is unavailable', async () => {
         mocks.grants = [{grantId: 'grant-a', toolId: 'tool-a', wfDefId: 'workflow-a',
             allowedEnvironments: ['dev'], aggregateVersion: 1}];
-        mocks.fetchClient.mockImplementation((url: string) => queryData(url)?.wfDefId
+        mocks.fetchClient.mockImplementation((url: string) => url.startsWith('/r/data')
+            ? Promise.resolve([{id:'test',label:'Testing'}]) : queryData(url)?.wfDefId
             ? Promise.reject(new Error('status unavailable')) : Promise.resolve({grants: mocks.grants}));
         render(<WorkflowToolAccessDialog open tool={{hostId: 'host-a', toolId: 'tool-a', name: 'Order tool',
             lightapiValidationStatus: 'VALID'}} onClose={vi.fn()} />);
@@ -126,7 +127,7 @@ describe('WorkflowToolAccessDialog', () => {
         expect(screen.getAllByText('workflow-a')).toHaveLength(2);
     });
     it('enables reviewed pins before workflows exist without creating a specific grant', async () => {
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',version:'1.0.0',
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',version:'1.0.0',apiMethod:'GET',
             capabilityRef:'GITHUB/getIssue',lightapiDigest:'sha256:reviewed',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
         await screen.findByText('Broad access disabled');
         fireEvent.click(screen.getByRole('button',{name:'Enable reviewed version'}));
@@ -139,7 +140,7 @@ describe('WorkflowToolAccessDialog', () => {
         mocks.broad={enabled:true,renewalNeeded:true,aggregateVersion:2,toolVersion:'1.0.0',lightapiDigest:'sha256:old',
             allowedEnvironments:['dev'],allowedMethods:['GET'],syncStatus:'synced'};
         mocks.grants=[{grantId:'grant-a',toolId:'tool-a',wfDefId:'demo3',workflowName:'demo3',allowedEnvironments:['dev'],aggregateVersion:1}];
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',version:'2.0.0',
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',version:'2.0.0',apiMethod:'GET',
             capabilityRef:'GITHUB/getIssue',lightapiDigest:'sha256:new',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
         await screen.findByText('Renewal needed — Tool pins changed');
         expect(screen.getByRole('button',{name:'Renew reviewed version'})).toBeInTheDocument();
@@ -151,21 +152,21 @@ describe('WorkflowToolAccessDialog', () => {
     });
     it('retries publication without manufacturing a new approval', async () => {
         mocks.broad={enabled:true,aggregateVersion:1,syncStatus:'pending'};
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',apiMethod:'GET',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
         fireEvent.click(await screen.findByRole('button',{name:'Retry publication'}));
         await waitFor(()=>expect(mocks.apiPost).toHaveBeenCalledTimes(1));
         expect(mocks.apiPost.mock.calls[0][0].body).toMatchObject({action:'publishToolWorkflowAccess',data:{hostId:'host-a',toolId:'tool-a'}});
     });
     it.each(['pending', 'error'])('does not claim a %s disable is operationally disabled', async syncStatus => {
         mocks.broad = {enabled: false, effectiveEnabled: false, syncStatus};
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',apiMethod:'GET',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
         expect(await screen.findByText('Disable pending publication')).toBeInTheDocument();
         expect(screen.getByText(/previous operational policy may still authorize fresh starts/)).toBeInTheDocument();
         expect(screen.queryByText('Broad access disabled')).not.toBeInTheDocument();
     });
     it('labels a confirmed disable as disabled', async () => {
         mocks.broad = {enabled: false, syncStatus: 'synced'};
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',apiMethod:'GET',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
         await waitFor(() => expect(screen.getByText(/Operational publication: synced/)).toBeInTheDocument());
         expect(screen.getByText('Broad access disabled')).toBeInTheDocument();
     });
@@ -173,11 +174,41 @@ describe('WorkflowToolAccessDialog', () => {
         mocks.apiPost.mockResolvedValue({aborted: true});
         mocks.broad = {enabled: true, syncStatus: 'pending'};
         mocks.grants = [{grantId:'grant-a',toolId:'tool-a',wfDefId:'workflow-a',allowedEnvironments:['dev'],aggregateVersion:1}];
-        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
-        fireEvent.click(await screen.findByRole('button', {name:button}));
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'GitHub',apiMethod:'GET',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        const action = await screen.findByRole('button', {name:button});
+        await waitFor(() => expect(action).toBeEnabled());
+        fireEvent.click(action);
         expect(await screen.findByText(/Command outcome unconfirmed/)).toBeInTheDocument();
         expect(screen.queryByText(/Policy saved|Workflow access revoked/)).not.toBeInTheDocument();
         expect(mocks.fetchClient.mock.calls.filter(([url]) => queryAction(url) === 'getToolWorkflowAccess').length).toBeGreaterThan(1);
+    });
+
+    it('initializes Host environments and the registered method, then clears values for a new Tool', async () => {
+        const fetch = mocks.fetchClient.getMockImplementation()!;
+        mocks.fetchClient.mockImplementation((url: string) => url.startsWith('/r/data')
+            ? Promise.resolve([{id:'qa',label:'QA'}]) : fetch(url));
+        const props = {open:true,tool:{hostId:'host-a',toolId:'post-tool',name:'Post tool',apiMethod:'POST',lightapiValidationStatus:'VALID'},onClose:vi.fn()};
+        const view = render(<WorkflowToolAccessDialog {...props} />);
+        await waitFor(() => expect(screen.getByLabelText('Registered HTTP method')).toHaveValue('POST'));
+        expect(screen.getByLabelText('Reviewed environments (comma separated)')).toHaveValue('qa');
+        fireEvent.click(screen.getByRole('button',{name:'Enable reviewed version'}));
+        await waitFor(() => expect(mocks.apiPost).toHaveBeenCalledTimes(1));
+        expect(mocks.apiPost.mock.calls[0][0].body.data).toMatchObject({allowedEnvironments:['qa'],allowedMethods:['POST']});
+        view.rerender(<WorkflowToolAccessDialog {...props} tool={{...props.tool,hostId:'host-b',toolId:'put-tool',apiMethod:'PUT'}} />);
+        await waitFor(() => expect(screen.getByLabelText('Registered HTTP method')).toHaveValue('PUT'));
+        expect(mocks.fetchClient).toHaveBeenCalledWith('/r/data?name=environment&host=host-b');
+        view.rerender(<WorkflowToolAccessDialog {...props} tool={{...props.tool,toolId:'unknown-method',apiMethod:undefined}} />);
+        await waitFor(() => expect(screen.getByLabelText('Registered HTTP method')).toHaveValue(''));
+        expect(screen.getByRole('button',{name:'Enable reviewed version'})).toBeDisabled();
+    });
+    it('does not enable with an unavailable Host environment registry', async () => {
+        const fetch = mocks.fetchClient.getMockImplementation()!;
+        mocks.fetchClient.mockImplementation((url: string) => url.startsWith('/r/data') ? Promise.resolve([]) : fetch(url));
+        render(<WorkflowToolAccessDialog open tool={{hostId:'host-a',toolId:'tool-a',name:'POST Tool',apiMethod:'POST',lightapiValidationStatus:'VALID'}} onClose={vi.fn()} />);
+        await waitFor(() => expect(screen.getByLabelText('Registered HTTP method')).toHaveValue('POST'));
+        expect(screen.getByLabelText('Reviewed environments (comma separated)')).toHaveValue('');
+        expect(screen.getByRole('button',{name:'Enable reviewed version'})).toBeDisabled();
+        expect(mocks.apiPost).not.toHaveBeenCalled();
     });
 
 });
