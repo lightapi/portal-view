@@ -176,6 +176,7 @@ type CatalogReference = {
     lightapiDigest?: string;
     httpMethod?: string;
     parameterLocations?: Record<string, unknown>;
+    authorizationSource?: 'HOST_TOOL' | 'SPECIFIC_GRANT';
     accessStatus?: 'GRANTED' | 'REQUESTABLE' | 'REQUEST_REQUIRED' | 'PENDING_APPROVAL' | 'REJECTED' | 'STALE' | 'INELIGIBLE';
     requestId?: string;
     requestStatus?: string;
@@ -657,6 +658,16 @@ function uuidV7() {
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+export function workflowReferenceAccessLabel(reference: Pick<CatalogReference, 'authorizationSource' | 'accessStatus'>) {
+    if (reference.accessStatus === 'GRANTED') {
+        return reference.authorizationSource === 'HOST_TOOL'
+            ? 'Available to all workflows in this Host' : 'Specifically granted to this workflow';
+    }
+    if (reference.accessStatus === 'PENDING_APPROVAL') return 'Access required · approval pending';
+    if (['REJECTED', 'STALE', 'INELIGIBLE'].includes(reference.accessStatus || '')) return reference.accessStatus!;
+    return 'Access required';
+}
+
 export function buildReferenceSnippet(reference: CatalogReference) {
     const stepId = slug(reference.kind === 'tools' ? reference.value : reference.label, reference.kind.slice(0, -1) || 'step');
     switch (reference.kind) {
@@ -942,6 +953,7 @@ function endpointReferences(value: unknown): CatalogReference[] {
             httpMethod: method,
             inputSchema: toRecord(endpoint.inputSchema),
             parameterLocations: toRecord(endpoint.parameterLocations),
+            authorizationSource: textValue(endpoint.authorizationSource) as CatalogReference['authorizationSource'],
             accessStatus: textValue(endpoint.accessStatus) as CatalogReference['accessStatus'],
             requestId: textValue(endpoint.requestId) || undefined,
             requestStatus: textValue(endpoint.requestStatus) || undefined,
@@ -2932,7 +2944,8 @@ export default function WorkflowEditor() {
                             inputValue={referenceSearch}
                             onInputChange={(_event, value) => setReferenceSearch(value)}
                             onChange={(_event, value) => setSelectedReferenceId(value?.id || '')}
-                            getOptionLabel={option => option.label}
+                            getOptionLabel={option => option.kind === 'endpoints'
+                                ? `${option.label} · ${workflowReferenceAccessLabel(option)}` : option.label}
                             isOptionEqualToValue={(option, value) => option.id === value.id}
                             disabled={isCatalogLoading}
                             loading={isCatalogLoading}
@@ -2954,7 +2967,7 @@ export default function WorkflowEditor() {
                                 {selectedReference.accessStatus ? <Chip size="small" sx={{ mt: 0.5 }}
                                     color={selectedReference.accessStatus === 'GRANTED' ? 'success'
                                         : selectedReference.accessStatus === 'PENDING_APPROVAL' ? 'warning' : 'default'}
-                                    label={selectedReference.accessStatus.replaceAll('_', ' ')} /> : null}
+                                    label={workflowReferenceAccessLabel(selectedReference)} /> : null}
                                 {selectedReference.description && <Typography variant="caption" color="text.secondary">{selectedReference.description}</Typography>}
                             </Box>
                         )}
