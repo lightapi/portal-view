@@ -19,13 +19,12 @@ async function fetchClient(endpoint: string, options: any = {}) {
     const cookies = new Cookies();
     const csrfToken = cookies.get('csrf');
 
-    const defaultHeaders: any = {
-        "Content-Type": "application/json",
-    };
+    const headers = new Headers({ "Content-Type": "application/json" });
 
     if (csrfToken) {
-        defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
+        headers.set('X-CSRF-TOKEN', csrfToken);
     }
+    new Headers(options.headers).forEach((value, name) => headers.set(name, value));
 
     let finalBody = options.body;
     let isJsonRpc = false;
@@ -67,10 +66,7 @@ async function fetchClient(endpoint: string, options: any = {}) {
 
     const requestConfig = {
         ...options,
-        headers: {
-            ...defaultHeaders,
-            ...options.headers,
-        },
+        headers,
         body: finalBody,
         credentials: 'include',
     };
@@ -103,9 +99,23 @@ async function fetchClient(endpoint: string, options: any = {}) {
             && 'jsonrpc' in error && error.jsonrpc === "2.0" && 'error' in error) {
             error = error.error;
         }
+        const csrfMismatch = response.status === 401 && (
+            typeof error === 'string'
+                ? /^ERR10039(?:[\s:]|$)/.test(error.trim())
+                : !!error && typeof error === 'object' && 'code' in error && error.code === 'ERR10039'
+        );
         if (typeof error === 'string') {
             const status = `HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`;
             error = error.trim() ? `${status}: ${error.trim()}` : status;
+        }
+        if (csrfMismatch) {
+            const guidance = 'CSRF verification failed. Reload the page; if it still fails, sign out and sign in again.';
+            if (typeof error === 'string') {
+                error = `${error} ${guidance}`;
+            } else if (error && typeof error === 'object') {
+                // Keep structured error codes and fields available to existing callers.
+                error = { ...error, description: `${'description' in error ? error.description : ''} ${guidance}`.trim() };
+            }
         }
         throw error;
     }
