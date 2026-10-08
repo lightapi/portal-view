@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import fs from "fs";
+import { portalLegacyRuntimeConfig } from "./server/legacyPortalConfig.mjs";
 import { workflowIngressPlugin } from "./server/workflowIngress.mjs";
 
 // Helper to sanitize Set-Cookie headers
@@ -19,7 +20,7 @@ function sanitizeSetCookieHeader(setCookieArr) {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   // Load environment variables based on the current mode (development, production, etc.)
   // The third argument "" ensures that all environment variables are loaded without a specific prefix.
   const env = loadEnv(mode, process.cwd(), "");
@@ -59,8 +60,8 @@ export default defineConfig(({ mode }) => {
   ];
 
   return {
-    plugins: [react(), workflowIngressPlugin(env.PORTAL_WORKFLOW_INGRESS_CONFIG)].filter(Boolean),
-    base: env.VITE_BASE_PATH || "/",
+    plugins: [react(), portalLegacyRuntimeConfig(env, { mode }), workflowIngressPlugin(env.PORTAL_WORKFLOW_INGRESS_CONFIG)].filter(Boolean),
+    base: command === "serve" ? (env.VITE_BASE_PATH || "/") : "./",
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
@@ -141,7 +142,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
-        "/schedules": {
+        "/schedulers": {
           target: apiBaseUrl,
           changeOrigin: true,
           secure: false,
@@ -177,7 +178,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: "dist",
-      sourcemap: true,
+      sourcemap: String(env.VITE_BUILD_SOURCEMAP || "false") === "true",
       minify: true,
       rollupOptions: {
         input: {
