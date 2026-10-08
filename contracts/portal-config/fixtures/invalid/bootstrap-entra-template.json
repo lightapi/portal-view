@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/",
+    "apiBasePath": ""
+  },
+  "authentication": {
+    "mode": "entra-sso",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "clientId": "00000000-0000-0000-0000-000000000000",
+    "redirectUri": "",
+    "postLogoutRedirectUri": ""
+  },
+  "features": {},
+  "externalLinks": {}
+}
