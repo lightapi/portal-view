@@ -1,3 +1,4 @@
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -29,6 +30,7 @@ function queryCommand(url: string) {
 
 describe('WorkflowEditor environment selector', () => {
     beforeEach(() => {
+  publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
         mocks.fetchClient.mockReset();
         mocks.apiPost.mockReset();
         mocks.apiPost.mockResolvedValue({ data: {} });

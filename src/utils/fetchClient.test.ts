@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fetchClient from "./fetchClient";
+import { publishTestConfig } from "../test/runtimeConfigFixture";
 
 const { cookieGet } = vi.hoisted(() => ({ cookieGet: vi.fn() }));
 
@@ -13,7 +14,10 @@ describe("fetchClient", () => {
   const responseJson = vi.fn();
   const fetchMock = vi.fn();
 
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
+    publishTestConfig({ routing: { apiBasePath: "/namespace-dev/service" } });
     responseJson.mockReset();
     fetchMock.mockReset();
     cookieGet.mockReset().mockReturnValue("csrf-token");
@@ -31,7 +35,7 @@ describe("fetchClient", () => {
 
     expect(responseJson).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringMatching(/\/logout$/),
+      `${window.location.origin}/namespace-dev/service/logout`,
       expect.objectContaining({
         method: "POST",
         credentials: "include",

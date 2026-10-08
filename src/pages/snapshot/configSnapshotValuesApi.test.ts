@@ -1,8 +1,12 @@
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getConfigSnapshotValues, SnapshotValuesApiError } from './configSnapshotValuesApi';
 
 describe('config snapshot values API', () => {
-  beforeEach(() => vi.unstubAllGlobals());
+  beforeEach(() => {
+    vi.unstubAllGlobals();
+    publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
+  });
 
   it('sends ordered ids, requested representations, and the abort signal', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
@@ -17,7 +21,8 @@ describe('config snapshot values API', () => {
       include: ['entries', 'yaml'],
       signal: controller.signal,
     });
-    const [, request] = fetchMock.mock.calls[0];
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url).toBe(`${window.location.origin}/namespace-dev/service/portal/query`);
     const body = JSON.parse(request.body);
     expect(request.signal).toBe(controller.signal);
     expect(body.method).toBe('lightapi.net/config/getConfigSnapshotValues/0.1.0');

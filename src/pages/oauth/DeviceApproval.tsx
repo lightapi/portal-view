@@ -289,5 +289,5 @@ function DeviceApprovalWithMsal() {
 }
 
 export default function DeviceApproval() {
-  return isSsoEnabled ? <DeviceApprovalWithMsal /> : <DeviceApprovalPage />;
+  return isSsoEnabled() ? <DeviceApprovalWithMsal /> : <DeviceApprovalPage />;
 }

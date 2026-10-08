@@ -1,3 +1,4 @@
+import { publishTestConfig } from "../../test/runtimeConfigFixture";
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
@@ -14,7 +15,6 @@ vi.mock('../../contexts/UserContext', () => ({
 }));
 
 vi.mock('../../utils/fetchClient', () => ({
-  BASE_URL: '',
   default: mocks.fetchClient,
 }));
 
@@ -46,6 +46,7 @@ function renderCategory() {
 
 describe('create-form idempotency', () => {
   beforeEach(() => {
+    publishTestConfig();
     vi.restoreAllMocks();
     mocks.fetchClient.mockReset();
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({

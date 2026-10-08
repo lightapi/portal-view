@@ -9,7 +9,7 @@ import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
-import { config } from '../../../../config';
+import { externalLinks } from '../../../../config';
 import SkeletonCardRow from '../../../components/SkeletonCardRow';
 import EmptyState from '../../../components/EmptyState';
 import { apiIconColor } from '../McpStatusChip';
@@ -75,7 +75,7 @@ export default function ApiPickerList({ apis, selection, onChange, mode, mcpReso
       warning: <>
         Don't see your API here? Its sidecar or micro-gateway instances may be running an older product version that does not support MCP.
         {' '}Upgrade the <strong>sidecar/micro-gateway</strong> (not the API itself) to the latest version to enable MCP support.
-        {' '}<Link href={config.productReleaseUrl} target="_blank" rel="noopener noreferrer">View latest release</Link>
+        {' '}<Link href={externalLinks().productReleases} target="_blank" rel="noopener noreferrer">View latest release</Link>
       </>,
     },
     registry: {

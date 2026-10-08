@@ -193,5 +193,5 @@ function ProfileMenuWithMsal() {
 }
 
 export default function ProfileMenu() {
-  return isSsoEnabled ? <ProfileMenuWithMsal /> : <ProfileMenuContent />;
+  return isSsoEnabled() ? <ProfileMenuWithMsal /> : <ProfileMenuContent />;
 }

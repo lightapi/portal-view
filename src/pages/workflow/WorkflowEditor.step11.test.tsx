@@ -1,3 +1,4 @@
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
@@ -33,6 +34,7 @@ function show() {
 }
 
 beforeEach(() => {
+  publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
   currentRow = row;
   mocks.fetchClient.mockReset().mockImplementation((url: string) => {
     if (action(url) === 'getWfDefinitionById') return Promise.resolve(currentRow);

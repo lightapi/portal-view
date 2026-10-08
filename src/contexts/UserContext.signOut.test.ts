@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { signOut } from "./UserContext";
 import { logoutFromBackend } from "../api/auth";
 
-const authMode = vi.hoisted(() => ({ sso: true }));
-
-vi.mock("../../config", () => ({
-  config: { basePath: "/portal" },
-  get isSsoEnabled() {
-    return authMode.sso;
-  },
-}));
+import { publishTestConfig } from "../test/runtimeConfigFixture";
+import { resetPortalConfigForTests } from "../runtimeConfig/store";
+const entra = {
+  mode: 'entra-sso' as const,
+  tenantId: '3f2b8c1e-7a4d-4e2b-9c1f-5d6e7a8b9c0d',
+  clientId: 'e4d9217c-829a-44ce-961b-845fb6c5a82e',
+};
+afterEach(() => { resetPortalConfigForTests(); vi.restoreAllMocks(); });
 
 vi.mock("../api/auth", () => ({ logoutFromBackend: vi.fn() }));
 
@@ -17,7 +17,7 @@ const mockedLogout = vi.mocked(logoutFromBackend);
 
 describe("signOut", () => {
   beforeEach(() => {
-    authMode.sso = true;
+    publishTestConfig({ authentication: entra, routing: { publicBasePath: "/portal" } });
     mockedLogout.mockReset();
   });
 
@@ -39,7 +39,8 @@ describe("signOut", () => {
   });
 
   it("uses stateless logout and navigates only after success", async () => {
-    authMode.sso = false;
+    resetPortalConfigForTests();
+    publishTestConfig();
     mockedLogout.mockResolvedValue(undefined);
     const navigate = vi.fn();
 
@@ -50,7 +51,8 @@ describe("signOut", () => {
   });
 
   it("does not navigate when stateless logout fails", async () => {
-    authMode.sso = false;
+    resetPortalConfigForTests();
+    publishTestConfig();
     mockedLogout.mockRejectedValue(new Error("CORS failure"));
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const navigate = vi.fn();
@@ -60,4 +62,25 @@ describe("signOut", () => {
     expect(mockedLogout).toHaveBeenCalledWith("/logout");
     expect(navigate).not.toHaveBeenCalled();
   });
+  it.each(['/', '/namespace-dev/service/ai/portal'])('uses the configured base %s for logout', async publicBasePath => {
+    resetPortalConfigForTests();
+    publishTestConfig({ authentication: entra, routing: { publicBasePath } });
+    const logoutRedirect = vi.fn().mockResolvedValue(undefined);
+    await signOut(vi.fn(), vi.fn(), undefined, { logoutRedirect } as never);
+    expect(logoutRedirect).toHaveBeenCalledWith({
+      postLogoutRedirectUri: `${window.location.origin}${publicBasePath === '/' ? '' : publicBasePath}/redirect`,
+    });
+  });
+
+  it('honors the explicit post-logout URI independently of the login redirect', async () => {
+    resetPortalConfigForTests();
+    publishTestConfig({ authentication: { ...entra,
+      redirectUri: 'https://login.example.test/redirect',
+      postLogoutRedirectUri: 'https://logout.example.test/signed-out',
+    } });
+    const logoutRedirect = vi.fn().mockResolvedValue(undefined);
+    await signOut(vi.fn(), vi.fn(), undefined, { logoutRedirect } as never);
+    expect(logoutRedirect).toHaveBeenCalledWith({ postLogoutRedirectUri: 'https://logout.example.test/signed-out' });
+  });
+
 });

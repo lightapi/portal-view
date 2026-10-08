@@ -196,7 +196,7 @@ import GlobalSnapshotExport from "./pages/migration/GlobalSnapshotExport";
 import GlobalSnapshotConvert from "./pages/migration/GlobalSnapshotConvert";
 import Chat from "./pages/genai/Chat";
 import { useEffect, useRef } from "react";
-import { config, isSsoEnabled } from "../config";
+import { publicBasePath, isSsoEnabled } from "../config";
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { loginRequest } from "./authConfig";
@@ -311,21 +311,18 @@ const MsalSessionBootstrap = () => {
 };
 
 const App = () => {
-  const basename = config?.basePath || "/";
-
   return (
     <BrowserRouter
-      basename={basename}
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      basename={publicBasePath()}
     >
-      {isSsoEnabled ? <MsalSessionBootstrap /> : null}
+      {isSsoEnabled() ? <MsalSessionBootstrap /> : null}
       <Routes>
         {/* Redirect from root to dashboard preserving query parameters */}
         <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
         <Route
           path="/redirect"
           element={
-            isSsoEnabled ? (
+            isSsoEnabled() ? (
               <RedirectAfterMsal to="/app/dashboard" />
             ) : (
               <RedirectWithQuery to="/app/dashboard" />

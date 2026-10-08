@@ -1,3 +1,4 @@
+import { publishTestConfig } from "../../test/runtimeConfigFixture";
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,7 +11,7 @@ const mocks = vi.hoisted(() => ({ fetchClient: vi.fn() }));
 vi.mock('../../contexts/UserContext', () => ({
   useUserState: () => ({ host: 'host-a', isAuthenticated: true }),
 }));
-vi.mock('../../utils/fetchClient', () => ({ BASE_URL: '', default: mocks.fetchClient }));
+vi.mock('../../utils/fetchClient', () => ({ default: mocks.fetchClient }));
 vi.mock('../HelpLink', () => ({ default: () => null }));
 
 const lookupOnlyHostForms = [
@@ -34,6 +35,7 @@ function usesHostIdParameter(value: unknown): boolean {
 
 describe('host-dependent form lookup context', () => {
   beforeEach(() => {
+    publishTestConfig();
     mocks.fetchClient.mockReset();
     mocks.fetchClient.mockResolvedValue({});
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -77,7 +79,7 @@ describe('host-dependent form lookup context', () => {
 
     expect(await screen.findByRole('heading', { name: 'Ref Locale' })).toBeInTheDocument();
     await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalledWith(
-      '/r/data?name=language&host=host-a',
+      `${window.location.origin}/r/data?name=language&host=host-a`,
       expect.objectContaining({ credentials: 'include' }),
     ));
 

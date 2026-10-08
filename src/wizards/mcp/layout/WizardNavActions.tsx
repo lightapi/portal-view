@@ -56,7 +56,7 @@ export default function WizardNavActions({
           onClick={onCommitApi}
           disabled={submitting}
         >
-          {committedApiId ? 'Next' : preRegisteredApiId ? 'Confirm & Save' : isPreRegistrationEnabled ? 'Generate API ID' : 'Save & Continue'}
+          {committedApiId ? 'Next' : preRegisteredApiId ? 'Confirm & Save' : isPreRegistrationEnabled() ? 'Generate API ID' : 'Save & Continue'}
         </Button>
       )}
 
