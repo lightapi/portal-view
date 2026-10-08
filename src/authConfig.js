@@ -5,42 +5,24 @@
 
 import { LogLevel } from "@azure/msal-browser";
 
-import { config, isSsoEnabled } from "../config";
-
-const clientId =
-    typeof config.clientId === "string" ? config.clientId.trim() : "";
-const tenantId =
-    typeof config.tenantId === "string" ? config.tenantId.trim() : "";
-const redirectUri =
-    typeof config.redirectUri === "string" ? config.redirectUri.trim() : "";
-
-if (isSsoEnabled && !clientId) {
-    throw new Error(
-        "Missing required MSAL configuration: VITE_CLIENT_ID must be a non-empty string when SSO is enabled.",
-    );
-}
-
-if (isSsoEnabled && !tenantId) {
-    throw new Error(
-        "Missing required MSAL configuration: VITE_TENANT_ID must be a non-empty string when SSO is enabled.",
-    );
-}
-
-const authConfig = {
-    clientId,
-    authority: `https://login.microsoftonline.com/${tenantId}`,
-    ...(redirectUri ? { redirectUri } : {}),
-    postLogoutRedirectUri: "/redirect",
-    clientCapabilities: ["CP1"],
-};
+import { browserRedirectUri } from "./utils/runtimePaths";
 
 /**
  * Configuration object to be passed to MSAL instance on creation.
  * For a full list of MSAL.js configuration parameters, visit:
  * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/configuration.md
+ * @param {Extract<import("./runtimeConfig/types").AuthenticationConfig, {mode: "entra-sso"}>} auth
+ * @returns {import("@azure/msal-browser").Configuration}
  */
-export const msalConfig = {
-    auth: authConfig,
+export function buildMsalConfig(auth) {
+    return {
+    auth: {
+        clientId: auth.clientId,
+        authority: `https://login.microsoftonline.com/${auth.tenantId}`,
+        redirectUri: browserRedirectUri(auth.redirectUri),
+        postLogoutRedirectUri: browserRedirectUri(auth.postLogoutRedirectUri),
+        clientCapabilities: ["CP1"],
+    },
     cache: {
         cacheLocation: "localStorage", // Configures cache location. "sessionStorage" is more secure, but "localStorage" gives you SSO between tabs.
         storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
@@ -74,7 +56,8 @@ export const msalConfig = {
             }
         }
     }
-};
+    };
+}
 
 /**
  * Add here the endpoints and scopes when obtaining an access token for protected web APIs. For more information, see:
