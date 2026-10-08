@@ -131,9 +131,11 @@ describe("configuration failures isolate application imports", () => {
     ["invalid configuration", () => response('{"schemaVersion":2}'), /Unsupported schema version/],
     ["oversized declared length", () => response(undefined, { "Content-Length": "65537" }), /65536/],
     ["oversized text", () => response(" ".repeat(65537)), /65536/],
+    // 21846 code units, 65538 UTF-8 bytes: a string-length check would accept it.
+    ["oversized multi-byte body", () => response("€".repeat(21846)), /65536 byte/],
   ] as const)("%s", async (_name, makeResponse, message) => {
     const result = makeResponse();
-    const read = vi.spyOn(result, "text");
+    const read = vi.spyOn(result, "arrayBuffer");
     fetchMock.mockResolvedValue(result);
     await start();
     expectError(message);
@@ -151,7 +153,7 @@ describe("configuration failures isolate application imports", () => {
     expect(imports).toEqual([]);
   });
 
-  it("accepts exactly 65536 characters and a matching declared length", async () => {
+  it("accepts exactly 65536 bytes and a matching declared length", async () => {
     fetchMock.mockResolvedValue(response(JSON.stringify(oauth2).padEnd(65536, " "), { "Content-Length": "65536" }));
     await start();
     expect(imports).toEqual(["oauth2", "main"]);

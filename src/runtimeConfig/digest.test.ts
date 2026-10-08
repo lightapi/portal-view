@@ -5,11 +5,14 @@ import { publishTestConfig } from "../test/runtimeConfigFixture";
 
 const fetchMock = vi.fn<typeof fetch>();
 let base: HTMLBaseElement;
+let timeout: AbortController;
 
 beforeEach(() => {
   setInitialConfigDigest("initial");
   resetPortalConfigForTests();
   fetchMock.mockReset();
+  timeout = new AbortController();
+  vi.spyOn(AbortSignal, "timeout").mockReturnValue(timeout.signal);
   vi.stubGlobal("fetch", fetchMock);
   base = document.createElement("base");
   base.href = "https://portal.example.test/namespace/service/portal/";
@@ -58,13 +61,24 @@ describe("checkConfigDrift", () => {
     expect(initialConfigDigest).toBe("initial");
   });
 
-  it("uses a no-store HEAD resolved against document.baseURI", async () => {
+  it("uses a bounded no-store HEAD resolved against document.baseURI", async () => {
     fetchMock.mockResolvedValue(new Response(null));
     await checkConfigDrift();
+    expect(AbortSignal.timeout).toHaveBeenCalledExactlyOnceWith(10_000);
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
       new URL("https://portal.example.test/namespace/service/portal/portal-config.json"),
-      { method: "HEAD", cache: "no-store" },
+      { method: "HEAD", cache: "no-store", signal: timeout.signal },
     );
+  });
+
+  it("settles a stalled HEAD as no drift when its timeout fires", async () => {
+    fetchMock.mockImplementation((_url, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+    }));
+    const pending = checkConfigDrift();
+    timeout.abort(new DOMException("The operation timed out.", "TimeoutError"));
+    expect(await pending).toBe(false);
+    expect(initialConfigDigest).toBe("initial");
   });
 
   it("never reads replacement configuration or replaces the initial digest or published object", async () => {

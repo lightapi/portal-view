@@ -62,6 +62,9 @@ export default defineConfig(({ mode, command }) => {
   return {
     plugins: [react(), portalLegacyRuntimeConfig(env, { mode }), workflowIngressPlugin(env.PORTAL_WORKFLOW_INGRESS_CONFIG)].filter(Boolean),
     base: command === "serve" ? (env.VITE_BASE_PATH || "/") : "./",
+    // Release assets are portable: deployment values come from portal-config.json,
+    // so no dotenv file (including ignored *.local files) may reach client code.
+    envDir: mode === "release" ? false : undefined,
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

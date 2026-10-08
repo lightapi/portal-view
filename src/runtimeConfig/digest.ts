@@ -11,6 +11,8 @@ export async function checkConfigDrift(): Promise<boolean> {
     const response = await fetch(new URL("portal-config.json", document.baseURI), {
       method: "HEAD",
       cache: "no-store",
+      // Bound each check so a stalled proxy cannot accumulate pending requests.
+      signal: AbortSignal.timeout(10_000),
     });
     // Error pages (proxy 5xx, legacy 404) carry their own ETags; they are not drift.
     if (!response.ok) return false;

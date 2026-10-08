@@ -19,13 +19,14 @@ export async function startPortal(): Promise<void> {
     }
     const contentLength = response.headers.get("Content-Length");
     if (contentLength !== null && Number(contentLength) > 65536) {
-      throw new Error("Portal configuration exceeds the 65536 character limit");
+      throw new Error("Portal configuration exceeds the 65536 byte limit");
     }
-    const text = await response.text();
-    if (text.length > 65536) {
-      throw new Error("Portal configuration exceeds the 65536 character limit");
+    // Measure bytes before decoding: string length counts UTF-16 code units.
+    const bytes = await response.arrayBuffer();
+    if (bytes.byteLength > 65536) {
+      throw new Error("Portal configuration exceeds the 65536 byte limit");
     }
-    const candidate: unknown = JSON.parse(text);
+    const candidate: unknown = JSON.parse(new TextDecoder().decode(bytes));
     const cfg = publishPortalConfig(validatePortalConfig(candidate));
     setInitialConfigDigest(response.headers.get("X-Portal-Config-Digest") ??
       response.headers.get("ETag") ?? "");
