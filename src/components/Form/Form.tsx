@@ -10,7 +10,8 @@ import { useUserState } from "../../contexts/UserContext";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import HelpLink from "../HelpLink";
-import fetchClient, { BASE_URL } from "../../utils/fetchClient";
+import fetchClient from "../../utils/fetchClient";
+import { apiUrl } from "../../utils/runtimePaths";
 import { allPageRegistry } from "../../tasks/pageRegistry";
 import { taskRegistry } from "../../tasks/taskRegistry";
 import {
@@ -30,7 +31,6 @@ import {
 
 const withBaseUrlForDynaSelect = (items: any[] | null) => {
   if (!items) return items;
-  const isLocalEnv = import.meta.env.DEV;
 
   return items.map((item) => {
     if (item?.type !== "dynaselect") {
@@ -41,15 +41,11 @@ const withBaseUrlForDynaSelect = (items: any[] | null) => {
       return item;
     }
 
-    if (isLocalEnv) {
-      return item;
-    }
-
     return {
       ...item,
       action: {
         ...item.action,
-        url: `${BASE_URL}${actionUrl}`,
+        url: apiUrl(actionUrl),
       },
     };
   });

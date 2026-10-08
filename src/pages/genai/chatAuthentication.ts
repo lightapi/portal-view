@@ -1,4 +1,5 @@
 import Cookies from 'universal-cookie';
+import { apiUrl } from '../../utils/runtimePaths';
 
 /** Trigger the existing gateway refresh-cookie flow; never read or store bearer tokens. */
 export async function renewChatAuthentication(signal?: AbortSignal): Promise<void> {
@@ -7,7 +8,7 @@ export async function renewChatAuthentication(signal?: AbortSignal): Promise<voi
     const host = cookies.get('host');
     if (!owner || !host) throw new Error('Sign in again before reconnecting.');
     const cmd = { host: 'lightapi.net', service: 'user', action: 'getNonceByUserId', version: '0.1.0', data: { userId: 'fake' } };
-    const response = await fetch('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd)), {
+    const response = await fetch(apiUrl('/portal/query?cmd=' + encodeURIComponent(JSON.stringify(cmd))), {
         credentials: 'include', signal, redirect: 'error',
         headers: { 'X-CSRF-TOKEN': cookies.get('csrf') || '' },
     });

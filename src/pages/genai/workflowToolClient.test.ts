@@ -1,5 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createWorkflowToolClient, workflowArguments } from './workflowToolClient';
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
+import { apiUrl } from '../../utils/runtimePaths';
+
+beforeEach(() => {
+    publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
+});
 
 function gateway() {
     const fetcher = vi.fn(async (_url: unknown, options: RequestInit) => {
@@ -24,7 +30,8 @@ describe('Gateway Workflow client', () => {
         await client.invoke('intake', { stageClaim: { transitionId: 'stable' } }, '');
         expect(fetcher).toHaveBeenCalledTimes(3);
         for (const [url, request] of fetcher.mock.calls) {
-            expect(url).toBe('/mcp');
+            expect(url).toBe(apiUrl('/mcp'));
+            expect(url).toBe(`${window.location.origin}/namespace-dev/service/mcp`);
             expect(request.credentials).toBe('include');
             expect(request.headers).not.toHaveProperty('Authorization');
         }

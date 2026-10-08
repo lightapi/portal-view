@@ -1,5 +1,5 @@
 import Cookies from 'universal-cookie';
-import { BASE_URL } from '../../utils/fetchClient';
+import { apiUrl } from '../../utils/runtimePaths';
 
 const protocolVersion = '2026-07-28';
 const maximumResponseBytes = 2 * 1024 * 1024;
@@ -24,7 +24,7 @@ export function workflowArguments(raw: string): Record<string, unknown> {
 /** Session credentials stay inside the ordinary browser/BFF boundary. No token input,
  * credential export, arbitrary target URL, or automatic invocation retry is exposed. */
 export function createWorkflowToolClient() {
-    const endpoint = import.meta.env.DEV ? '/mcp' : `${BASE_URL}/mcp`;
+    const endpoint = apiUrl('/mcp');
 
     async function request(method: string, params: Record<string, unknown>, grantId?: string) {
         const id = crypto.randomUUID();

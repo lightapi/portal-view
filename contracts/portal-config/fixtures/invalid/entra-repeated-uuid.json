@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/namespace-dev/service/ai/portal",
+    "apiBasePath": "/namespace-dev/service"
+  },
+  "authentication": {
+    "mode": "entra-sso",
+    "tenantId": "11111111-2222-3333-4444-555555555555",
+    "clientId": "11111111-1111-1111-1111-111111111111",
+    "redirectUri": ""
+  },
+  "features": {
+    "preRegistrationApiIdPath": "apiId",
+    "preRegistrationServiceIdPath": "",
+    "preRegistrationErrorPath": "",
+    "toolsSyncErrorPath": "",
+    "preRegistrationEnabled": false,
+    "toolsSyncEnabled": false,
+    "preRegistrationUrl": "",
+    "toolsSyncUrl": "",
+    "preRegistrationPayloadMapping": {},
+    "wizardRequiredApiFields": [
+      "categoryIds",
+      "apiDesc",
+      "region",
+      "businessGroup",
+      "lob",
+      "platform"
+    ]
+  },
+  "externalLinks": {
+    "portalDocumentation": "https://doc.lightapi.net",
+    "apiOnboarding": "https://lightapi.net",
+    "productReleases": "https://lightapi.net/releases"
+  }
+}

@@ -4,7 +4,7 @@ import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
-import { config } from '../../../config';
+import { externalLinks } from '../../../config';
 import ChoiceCard from '../../components/ChoiceCard';
 
 export type ApiOrigin = 'third-party';
@@ -18,7 +18,7 @@ export default function SelectApiOriginStep({ value, onChange }: Props) {
   const [linkOpened, setLinkOpened] = useState(false);
 
   const handleInternalClick = () => {
-    window.open(config.apiOnboardUrl, '_blank', 'noopener,noreferrer');
+    window.open(externalLinks().apiOnboarding, '_blank', 'noopener,noreferrer');
     setLinkOpened(true);
   };
 

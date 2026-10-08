@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/",
+    "apiBasePath": ""
+  },
+  "authentication": {
+    "mode": "oauth2",
+    "signInUrl": "https://signin.example.com?client_id=portal-client"
+  },
+  "features": {
+    "preRegistrationEnabled": true,
+    "preRegistrationUrl": "/apis/register",
+    "preRegistrationServiceIdPath": "data.serviceId",
+    "preRegistrationErrorPath": "error.message",
+    "preRegistrationPayloadMapping": {
+      "api": "apiId"
+    },
+    "toolsSyncEnabled": true,
+    "toolsSyncUrl": "https://tools.example.com/sync?region=ca",
+    "toolsSyncErrorPath": "error",
+    "wizardRequiredApiFields": [
+      "apiDesc"
+    ]
+  },
+  "externalLinks": {}
+}

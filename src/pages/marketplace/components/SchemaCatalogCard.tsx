@@ -6,7 +6,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SchemaIcon from '@mui/icons-material/Schema';
 import SystemUpdateIcon from '@mui/icons-material/SystemUpdate';
 import type { SchemaCatalogItem, SchemaCatalogViewMode } from '../hooks/useSchemaCatalog';
-import { formatSchemaTaxonomyLabel, schemaExternalPath } from '../hooks/useSchemaCatalog';
+import { formatSchemaTaxonomyLabel, schemaAliasUrlProblem, schemaExternalPath } from '../hooks/useSchemaCatalog';
 
 type SchemaCatalogCardProps = {
   schema: SchemaCatalogItem;
@@ -68,6 +68,9 @@ export default function SchemaCatalogCard({
   const title = schema.schemaName || schema.schemaAlias || schema.schemaId;
   const externalPath = schemaExternalPath(schema);
   const canUseExternalUrl = !!externalPath && !!schema.externalVisible && schema.schemaStatus === 'P';
+  const aliasProblem = schemaAliasUrlProblem(schema);
+  const externalUrlDisabledReason = () => aliasProblem
+    ?? ((!canUseExternalUrl) ? ('This schema has no supported external URL.') : null);
 
   return (
     <Card
@@ -164,14 +167,14 @@ export default function SchemaCatalogCard({
           id: "copy-url",
           label: "Copy URL",
           icon: <ContentCopyIcon />,
-          disabledReason: () => (!canUseExternalUrl) ? ('This schema has no supported external URL.') : null,
+          disabledReason: externalUrlDisabledReason,
           onSelect: () => onCopyUrl(schema)
         },
         {
           id: "open",
           label: "Open",
           icon: <OpenInNewIcon />,
-          disabledReason: () => (!canUseExternalUrl) ? ('This schema has no supported external URL.') : null,
+          disabledReason: externalUrlDisabledReason,
           onSelect: () => onOpenUrl(schema)
         },
         {

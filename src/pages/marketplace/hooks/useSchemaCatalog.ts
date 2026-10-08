@@ -199,8 +199,17 @@ export function formatSchemaTaxonomyLabel(value: string) {
   return formatTaxonomyLabel(value);
 }
 
+/** Mirrors the schema command's alias rule (light-portal AbstractSchemaCommand). */
+export const SCHEMA_ALIAS_PATTERN = /^[a-z0-9_-]+$/;
+
+/** Explain why an alias cannot form an external URL, or null when it can. */
+export function schemaAliasUrlProblem(schema: Pick<SchemaCatalogItem, 'schemaAlias'>): string | null {
+  if (!schema.schemaAlias || SCHEMA_ALIAS_PATTERN.test(schema.schemaAlias)) return null;
+  return `Schema alias '${schema.schemaAlias}' is not URL-friendly (use lower-case letters, digits, '_' or '-'). Update the schema alias to enable its external URL.`;
+}
+
 export function schemaExternalPath(schema: Pick<SchemaCatalogItem, 'schemaAlias'>) {
-  return schema.schemaAlias ? `/r/schema/${schema.schemaAlias}` : '';
+  return schema.schemaAlias ? `/r/schema/${encodeURIComponent(schema.schemaAlias)}` : '';
 }
 
 export function useSchemaCatalog({ host, params }: UseSchemaCatalogArgs) {

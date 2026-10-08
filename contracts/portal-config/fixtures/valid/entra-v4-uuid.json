@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/",
+    "apiBasePath": ""
+  },
+  "authentication": {
+    "mode": "entra-sso",
+    "tenantId": "3f2b8c1e-7a4d-4e2b-9c1f-5d6e7a8b9c0d",
+    "clientId": "e4d9217c-829a-44ce-961b-845fb6c5a82e",
+    "redirectUri": "https://portal.example.com/redirect",
+    "postLogoutRedirectUri": "http://portal.localhost:3000/redirect"
+  },
+  "features": {},
+  "externalLinks": {}
+}

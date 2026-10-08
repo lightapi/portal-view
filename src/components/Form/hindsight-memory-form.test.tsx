@@ -1,3 +1,4 @@
+import { publishTestConfig } from "../../test/runtimeConfigFixture";
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,11 +10,12 @@ const mocks = vi.hoisted(() => ({ fetchClient: vi.fn() }));
 vi.mock('../../contexts/UserContext', () => ({
     useUserState: () => ({ host: 'host-a', isAuthenticated: true }),
 }));
-vi.mock('../../utils/fetchClient', () => ({ BASE_URL: '', default: mocks.fetchClient }));
+vi.mock('../../utils/fetchClient', () => ({ default: mocks.fetchClient }));
 vi.mock('../HelpLink', () => ({ default: () => null }));
 
 describe('Hindsight memory forms', () => {
     beforeEach(() => {
+    publishTestConfig();
         mocks.fetchClient.mockReset();
         mocks.fetchClient.mockResolvedValue({ entityId: 'entity-a' });
     });

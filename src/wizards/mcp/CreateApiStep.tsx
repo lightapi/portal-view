@@ -31,13 +31,13 @@ export default function CreateApiStep({
   registerOptions,
 }: Props) {
   const isServer = mode === 'server';
-  const isApiIdLockedByPreRegistration = isPreRegistrationEnabled;
-  const isCategoryRequired = wizardRequiredApiFields.includes('categoryIds');
-  const isDescriptionRequired = wizardRequiredApiFields.includes('apiDesc');
-  const isRegionRequired = wizardRequiredApiFields.includes('region');
-  const isBusinessGroupRequired = wizardRequiredApiFields.includes('businessGroup');
-  const isLobRequired = wizardRequiredApiFields.includes('lob');
-  const isPlatformRequired = wizardRequiredApiFields.includes('platform');
+  const isApiIdLockedByPreRegistration = isPreRegistrationEnabled();
+  const isCategoryRequired = wizardRequiredApiFields().includes('categoryIds');
+  const isDescriptionRequired = wizardRequiredApiFields().includes('apiDesc');
+  const isRegionRequired = wizardRequiredApiFields().includes('region');
+  const isBusinessGroupRequired = wizardRequiredApiFields().includes('businessGroup');
+  const isLobRequired = wizardRequiredApiFields().includes('lob');
+  const isPlatformRequired = wizardRequiredApiFields().includes('platform');
   const [userOptions, setUserOptions] = useState<Option[]>([]);
   const [regionOptions, setRegionOptions] = useState<Option[]>([]);
   const [businessGroupOptions, setBusinessGroupOptions] = useState<Option[]>([]);

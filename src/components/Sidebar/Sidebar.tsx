@@ -81,7 +81,7 @@ import {
   SidebarFooter,
 } from "./SidebarStyles";
 
-const structure = [
+const buildStructure = () => [
   { id: 0, label: "Home", link: "/app/dashboard", icon: <HomeIcon /> },
   { id: 1, label: "Tasks", link: "/app/tasks", icon: <FactCheckOutlinedIcon /> },
 
@@ -89,7 +89,7 @@ const structure = [
   {
     id: 500, type: "group", label: "Quick Start", defaultOpen: true,
     children: [
-      ...(isSsoEnabled
+      ...(isSsoEnabled()
         ? [{ id: 2, label: "MCP Gateway", role: "user", link: "/app/mcp/gateway", icon: <RouterOutlinedIcon /> }]
         : []),
     ],
@@ -298,7 +298,7 @@ function Sidebar() {
       ? `${subDomain}.${domain} portal`
       : `${domain} portal`
     : "API Portal";
-  const visibleStructure = filterSidebarItems(structure, roles);
+  const visibleStructure = filterSidebarItems(buildStructure(), roles);
 
   useEffect(function () {
     window.addEventListener("resize", handleWindowWidthChange);

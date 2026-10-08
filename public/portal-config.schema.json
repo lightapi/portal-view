@@ -1,0 +1,330 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Portal runtime configuration, schema version 1",
+  "$comment": "Structural validation only. Also run the handwritten semantic validator: URL parsing and query inspection, UUID placeholder rejection, and secret-shaped field/mapping-value checks. Defaults are annotations; validators apply them. The loader enforces the 64 KiB document limit.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "routing",
+    "authentication",
+    "features",
+    "externalLinks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publicBasePath",
+        "apiBasePath"
+      ],
+      "properties": {
+        "publicBasePath": {
+          "anyOf": [
+            {
+              "const": "/"
+            },
+            {
+              "$ref": "#/$defs/path"
+            }
+          ]
+        },
+        "apiBasePath": {
+          "anyOf": [
+            {
+              "const": ""
+            },
+            {
+              "$ref": "#/$defs/path"
+            }
+          ]
+        }
+      }
+    },
+    "authentication": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "signInUrl"
+          ],
+          "properties": {
+            "mode": {
+              "const": "oauth2"
+            },
+            "signInUrl": {
+              "$ref": "#/$defs/signInUrl"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "tenantId",
+            "clientId"
+          ],
+          "properties": {
+            "mode": {
+              "const": "entra-sso"
+            },
+            "tenantId": {
+              "$ref": "#/$defs/uuid"
+            },
+            "clientId": {
+              "$ref": "#/$defs/uuid"
+            },
+            "redirectUri": {
+              "$ref": "#/$defs/redirect"
+            },
+            "postLogoutRedirectUri": {
+              "$ref": "#/$defs/redirect"
+            }
+          }
+        }
+      ]
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "preRegistrationApiIdPath": {
+          "type": "string",
+          "maxLength": 2048,
+          "default": "apiId"
+        },
+        "preRegistrationServiceIdPath": {
+          "type": "string",
+          "maxLength": 2048,
+          "default": ""
+        },
+        "preRegistrationErrorPath": {
+          "type": "string",
+          "maxLength": 2048,
+          "default": ""
+        },
+        "toolsSyncErrorPath": {
+          "type": "string",
+          "maxLength": 2048,
+          "default": ""
+        },
+        "preRegistrationEnabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "toolsSyncEnabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "preRegistrationUrl": {
+          "$ref": "#/$defs/featureUrl",
+          "default": ""
+        },
+        "toolsSyncUrl": {
+          "$ref": "#/$defs/featureUrl",
+          "default": ""
+        },
+        "preRegistrationPayloadMapping": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "default": {},
+          "$comment": "Keys are data. Secret/password/token restrictions on values are semantic validation."
+        },
+        "wizardRequiredApiFields": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "default": [
+            "categoryIds",
+            "apiDesc",
+            "region",
+            "businessGroup",
+            "lob",
+            "platform"
+          ]
+        }
+      }
+    },
+    "externalLinks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "portalDocumentation": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^[hH][tT][tT][pP][sS]://",
+          "format": "uri",
+          "default": "https://doc.lightapi.net"
+        },
+        "apiOnboarding": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^[hH][tT][tT][pP][sS]://",
+          "format": "uri",
+          "default": "https://lightapi.net"
+        },
+        "productReleases": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^[hH][tT][tT][pP][sS]://",
+          "format": "uri",
+          "default": "https://lightapi.net/releases"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "path": {
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^(/[A-Za-z0-9._~!$&'()*+,;=:@-]+)+$",
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "(^|/)\\.{1,2}(/|$)"
+          },
+          {
+            "pattern": "[\\s\\u0000-\\u001f\\u007f]"
+          }
+        ]
+      }
+    },
+    "rawUrl": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[\\\\\\s\\u0000-\\u001f\\u007f#]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[^?]*@"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[^?]*%([2][fFeE]|[5][cC])"
+          }
+        },
+        {
+          "not": {
+            "pattern": "%(?![0-9a-fA-F]{2})"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(https?://[^/?]+)?/([^?]*/)?\\.{1,2}(/|\\?|$)"
+          }
+        }
+      ]
+    },
+    "httpsUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "allOf": [
+        {
+          "$ref": "#/$defs/rawUrl"
+        },
+        {
+          "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?]*)?(\\?.*)?$"
+        }
+      ]
+    },
+    "signInUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "minLength": 1,
+      "allOf": [
+        {
+          "$ref": "#/$defs/rawUrl"
+        },
+        {
+          "anyOf": [
+            {
+              "pattern": "^/(?![/\\\\])[^?]*(\\?.*)?$"
+            },
+            {
+              "pattern": "^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?]*)?(\\?.*)?$"
+            }
+          ]
+        }
+      ],
+      "$comment": "Exactly one non-empty decoded client_id and no decoded state/user_type keys are required by semantic validation."
+    },
+    "uuid": {
+      "type": "string",
+      "maxLength": 36,
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "$comment": "No version restriction. Repeated-digit placeholders (including nil/max) are rejected semantically.",
+      "minLength": 36
+    },
+    "redirect": {
+      "anyOf": [
+        {
+          "const": ""
+        },
+        {
+          "type": "string",
+          "maxLength": 2048,
+          "allOf": [
+            {
+              "$ref": "#/$defs/rawUrl"
+            },
+            {
+              "pattern": "^(https://[A-Za-z0-9.-]+|http://([A-Za-z0-9.-]*\\.)?[lL][oO][cC][aA][lL][hH][oO][sS][tT])(:[0-9]{1,5})?(/[^?]*)?$"
+            },
+            {
+              "not": {
+                "pattern": "\\?"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "featureUrl": {
+      "anyOf": [
+        {
+          "const": ""
+        },
+        {
+          "type": "string",
+          "maxLength": 2048,
+          "allOf": [
+            {
+              "$ref": "#/$defs/rawUrl"
+            },
+            {
+              "pattern": "^/(?:[A-Za-z0-9._~!$&'()*+,;=:@{}-]+(?:/[A-Za-z0-9._~!$&'()*+,;=:@{}-]+)*)?(\\?.*)?$"
+            }
+          ],
+          "$comment": "Root-relative BFF endpoint: canonical path segments, {apiId}/{version} templates and an optional query."
+        },
+        {
+          "$ref": "#/$defs/httpsUrl"
+        }
+      ]
+    }
+  }
+}

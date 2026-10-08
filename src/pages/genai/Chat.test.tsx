@@ -1,3 +1,4 @@
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -26,6 +27,7 @@ class Socket {
   receive(value: unknown) { this.onmessage?.({ data: JSON.stringify(value) }); }
 }
 beforeEach(() => {
+  publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
   Socket.instances = []; sessionStorage.clear(); state.host = 'host-a'; state.email = 'owner@example.com'; state.isAuthenticated = true;
   vi.mocked(fetchClient).mockReset().mockResolvedValue({ instances: [agent], total: 1 });
   window.history.replaceState({}, '', '/app/genai/chat?instanceId=instance-a');
@@ -52,7 +54,9 @@ it('uses the authenticated Gateway route and sends a typed coding payload only a
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   }
 
-  expect(new URL(socket.url).pathname).toBe('/chat');
+  expect(new URL(socket.url).pathname).toBe('/namespace-dev/service/chat');
+  expect(new URL(socket.url).host).toBe(window.location.host);
+  expect(new URL(socket.url).protocol).toBe(window.location.protocol === 'https:' ? 'wss:' : 'ws:');
   expect(new URL(socket.url).searchParams.get('serviceId')).toBe('com.networknt.agent.codex-personal-1.0.0');
   expect(socket.protocols).toEqual(['csrf.csrf-test']);
   expect(new URL(socket.url).searchParams.get('envTag')).toBe('test');
@@ -278,6 +282,10 @@ it('renews expired authentication and reconnects the same session without replay
   await user.click(screen.getByRole('button', { name: 'Send message' }));
   await waitFor(() => expect(Socket.instances).toHaveLength(2));
   expect(refresh).toHaveBeenCalledOnce(); expect(socket.send).not.toHaveBeenCalled();
+  const refreshUrl = new URL(refresh.mock.calls[0][0]);
+  expect(refreshUrl.origin).toBe(window.location.origin);
+  expect(refreshUrl.pathname).toBe('/namespace-dev/service/portal/query');
+  expect(JSON.parse(refreshUrl.searchParams.get('cmd')!)).toMatchObject({ action: 'getNonceByUserId', data: { userId: 'fake' } });
   const renewed = Socket.instances[1]; expect(new URL(renewed.url).searchParams.get('sessionId')).toBe('session-a');
   act(() => { renewed.readyState = 1; renewed.onopen?.(); renewed.receive({ type: 'session', session_id: 'session-a' }); });
   expect(renewed.send).not.toHaveBeenCalled();

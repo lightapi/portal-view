@@ -1,3 +1,5 @@
+import { apiUrl } from '../../../utils/runtimePaths';
+import { buildToolsSyncUrl } from '../toolsSyncUrl';
 import { useMsal } from '@azure/msal-react';
 import { loginRequest } from '../../../authConfig';
 import { apiPost } from '../../../api/apiPost';
@@ -79,7 +81,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
   };
 
   const resolveApiIdFromPreRegistration = async (): Promise<string> => {
-    const endpointUrl = preRegistrationUrl;
+    const endpointUrl = preRegistrationUrl();
     if (!endpointUrl) {
       throw new Error('Missing VITE_PRE_REGISTRATION_URL while pre-registration is enabled.');
     }
@@ -87,7 +89,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     // Build payload from config mapping; resolve IDs/arrays to plain-text labels via option lookup
     const rawForm = form as Record<string, unknown>;
     const registrationPayload: Record<string, unknown> = {};
-    for (const [payloadKey, formField] of Object.entries(preRegistrationPayloadMapping)) {
+    for (const [payloadKey, formField] of Object.entries(preRegistrationPayloadMapping())) {
       const raw = rawForm[formField];
       const opts = optionLookup[formField];
       if (Array.isArray(raw)) {
@@ -105,7 +107,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     }
 
     const idToken = await getIdToken();
-    const response = await fetch(endpointUrl, {
+    const response = await fetch(endpointUrl.startsWith('/') ? apiUrl(endpointUrl) : endpointUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -119,8 +121,8 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       let errorMessage = `Registration request failed (${response.status})`;
       try {
         const errData = await response.json() as Record<string, unknown>;
-        const extracted = preRegistrationErrorPath
-          ? getValueByPath(errData, preRegistrationErrorPath)
+        const extracted = preRegistrationErrorPath()
+          ? getValueByPath(errData, preRegistrationErrorPath())
           : (errData.message ?? errData.error ?? errData.detail ?? errData.description);
         if (typeof extracted === 'string' && extracted.trim()) {
           errorMessage = extracted.trim();
@@ -138,15 +140,15 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     }
 
     const data: unknown = await response.json().catch(() => ({}));
-    const responsePath = preRegistrationApiIdPath;
+    const responsePath = preRegistrationApiIdPath();
     const apiIdValue = getValueByPath(data, responsePath);
     if (typeof apiIdValue !== 'string' || !apiIdValue.trim()) {
       throw new Error(`Registration response did not include a valid API ID at path "${responsePath}".`);
     }
 
     // Optionally extract serviceId if a path is configured
-    if (preRegistrationServiceIdPath) {
-      const serviceIdValue = getValueByPath(data, preRegistrationServiceIdPath);
+    if (preRegistrationServiceIdPath()) {
+      const serviceIdValue = getValueByPath(data, preRegistrationServiceIdPath());
       if (typeof serviceIdValue === 'string' && serviceIdValue.trim()) {
         setPreRegisteredServiceId(serviceIdValue.trim());
         patchVersion({ serviceId: serviceIdValue.trim() });
@@ -160,7 +162,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
   };
 
   const validateApi = (): boolean => {
-    const apiIdGeneratedByPreRegistration = isPreRegistrationEnabled && !committedApiId;
+    const apiIdGeneratedByPreRegistration = isPreRegistrationEnabled() && !committedApiId;
 
     const validators: [keyof CreateApiForm, string, () => boolean][] = [
       ['apiId',        'API ID is required',         () => !!form.apiId.trim() || apiIdGeneratedByPreRegistration],
@@ -175,7 +177,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     ];
 
     const alwaysRequired: (keyof CreateApiForm)[] = ['apiId', 'apiName', 'apiStatus'];
-    const requiredSet = new Set<keyof CreateApiForm>([...alwaysRequired, ...(wizardRequiredApiFields as (keyof CreateApiForm)[])]);
+    const requiredSet = new Set<keyof CreateApiForm>([...alwaysRequired, ...(wizardRequiredApiFields() as readonly (keyof CreateApiForm)[])]);
 
     const errs: Partial<Record<keyof CreateApiForm, string>> = {};
     for (const [field, message, isValid] of validators) {
@@ -227,7 +229,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
     setSubmitting(true);
     setSubmitError(null);
 
-    const shouldPreRegister = isPreRegistrationEnabled && !committedApiId;
+    const shouldPreRegister = isPreRegistrationEnabled() && !committedApiId;
 
     // Phase 1 — fire pre-registration and hold for user confirmation
     if (shouldPreRegister && !preRegisteredApiId) {
@@ -390,10 +392,8 @@ export function useMcpWizardHandlers(state: McpWizardState) {
 
   const syncToolsToExternalRegistry = async (tools: typeof selectedMcpTools): Promise<void> => {
     const externalApiId = registrationExternalApiId ?? committedApiId;
-    if (!isToolsSyncEnabled || !toolsSyncUrl || !externalApiId || !versionForm.apiVersion.trim()) return;
-    const url = toolsSyncUrl
-      .replace('{apiId}', encodeURIComponent(externalApiId))
-      .replace('{version}', encodeURIComponent(versionForm.apiVersion.trim()));
+    if (!isToolsSyncEnabled() || !toolsSyncUrl() || !externalApiId || !versionForm.apiVersion.trim()) return;
+    const url = buildToolsSyncUrl(toolsSyncUrl(), externalApiId, versionForm.apiVersion.trim());
     const gatewayServiceId = versionForm.serviceId.trim();
     const body: Record<string, unknown> = {
       tools: tools.map((t) => ({
@@ -421,7 +421,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       })),
     };
     const idToken = await getIdToken();
-    const response = await fetch(url, {
+    const response = await fetch(url.startsWith('/') ? apiUrl(url) : url, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -434,8 +434,8 @@ export function useMcpWizardHandlers(state: McpWizardState) {
       let errorMessage = `Tools sync failed (${response.status})`;
       try {
         const errData = await response.json() as Record<string, unknown>;
-        const extracted = toolsSyncErrorPath
-          ? getValueByPath(errData, toolsSyncErrorPath)
+        const extracted = toolsSyncErrorPath()
+          ? getValueByPath(errData, toolsSyncErrorPath())
           : (errData.message ?? errData.error ?? errData.detail);
         if (typeof extracted === 'string' && extracted.trim()) errorMessage = extracted.trim();
       } catch { /* not JSON */ }

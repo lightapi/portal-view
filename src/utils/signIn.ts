@@ -1,5 +1,6 @@
 import type { IPublicClientApplication } from "@azure/msal-browser";
-import { config, isSsoEnabled } from "../../config";
+import { getPortalConfig } from "../../config";
+import { browserRedirectUri } from "./runtimePaths";
 import { loginRequest } from "../authConfig";
 
 /**
@@ -8,20 +9,17 @@ import { loginRequest } from "../authConfig";
  * the header menu and any page that asks the person to sign in cannot drift apart.
  */
 export async function signIn(msalInstance?: IPublicClientApplication): Promise<void> {
-  if (isSsoEnabled) {
+  const auth = getPortalConfig().authentication;
+  if (auth.mode === "entra-sso") {
     if (!msalInstance) {
       console.error("MSAL instance unavailable while SSO is enabled");
       return;
     }
 
-    const normalizedBasePath =
-      config.basePath && config.basePath !== "/" ? config.basePath.replace(/\/$/, "") : "";
-    const msalRedirectUri = config.redirectUri || `${window.location.origin}${normalizedBasePath}/redirect`;
-
     try {
       await msalInstance.loginRedirect({
         ...loginRequest,
-        redirectUri: msalRedirectUri,
+        redirectUri: browserRedirectUri(auth.redirectUri),
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -30,9 +28,11 @@ export async function signIn(msalInstance?: IPublicClientApplication): Promise<v
   }
 
   // Generate a random state for CSRF protection
-  const state = Math.random().toString(36).substring(7);
+  const state = crypto.randomUUID();
   localStorage.setItem("portal_auth_state", state);
 
-  const defaultUrl = `https://signin.localhost?client_id=f7d42348-c647-4efb-a52d-4c5787421e72&user_type=E&state=${state}`;
-  window.location.href = config.signInUrl ? `${config.signInUrl}&user_type=E&state=${state}` : defaultUrl;
+  const url = new URL(auth.signInUrl, window.location.origin);
+  url.searchParams.set("user_type", "E");
+  url.searchParams.set("state", state);
+  window.location.href = url.toString();
 }

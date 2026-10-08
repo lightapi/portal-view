@@ -9,7 +9,9 @@ import {
   Drawer,
   IconButton,
   Pagination,
+  Snackbar,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -29,10 +31,12 @@ import {
   type SchemaTagMatchMode,
   buildPortalQueryUrl,
   parseSchemaCatalogParams,
+  schemaAliasUrlProblem,
   schemaExternalPath,
   useSchemaCatalog,
 } from './hooks/useSchemaCatalog';
 import fetchClient from '../../utils/fetchClient';
+import { apiUrl } from '../../utils/runtimePaths';
 import { useUserState } from '../../contexts/UserContext';
 import TaskActionPanel from '../../tasks/TaskActionPanel';
 import { buildTaskAwareRoute, contextFromSearchParams, mergeTaskContext } from '../../tasks/taskUtils';
@@ -139,6 +143,7 @@ export default function SchemaCatalog() {
   const [updatingSchemaId, setUpdatingSchemaId] = useState<string | null>(null);
   const [detailSchema, setDetailSchema] = useState<SchemaCatalogItem | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [urlError, setUrlError] = useState<string | null>(null);
   const {
     categories,
     tagGroups,
@@ -182,18 +187,40 @@ export default function SchemaCatalog() {
     }
   }, []);
 
-  const copyExternalUrl = useCallback((schema: SchemaCatalogItem) => {
+  // URL validation stays in apiUrl; failures are shown instead of thrown from the click.
+  const externalUrl = useCallback((schema: SchemaCatalogItem): string | null => {
+    const problem = schemaAliasUrlProblem(schema);
+    if (problem) {
+      setUrlError(problem);
+      return null;
+    }
     const path = schemaExternalPath(schema);
-    if (!path) return;
-    const url = new URL(path, window.location.origin).toString();
-    navigator.clipboard?.writeText(url).catch(() => undefined);
+    if (!path) return null;
+    try {
+      return apiUrl(path);
+    } catch (reason) {
+      setUrlError(`Cannot build the external URL for schema alias '${schema.schemaAlias}': ${reason instanceof Error ? reason.message : String(reason)}`);
+      return null;
+    }
   }, []);
 
+  const copyExternalUrl = useCallback((schema: SchemaCatalogItem) => {
+    const url = externalUrl(schema);
+    if (!url) return;
+    if (!navigator.clipboard) {
+      setUrlError(`Clipboard is unavailable in this browser context. Copy the URL manually: ${url}`);
+      return;
+    }
+    navigator.clipboard.writeText(url).catch((reason) => {
+      setUrlError(`Could not copy the URL (${reason instanceof Error ? reason.message : String(reason)}). Copy it manually: ${url}`);
+    });
+  }, [externalUrl]);
+
   const openExternalUrl = useCallback((schema: SchemaCatalogItem) => {
-    const path = schemaExternalPath(schema);
-    if (!path) return;
-    window.open(path, '_blank', 'noopener,noreferrer');
-  }, []);
+    const url = externalUrl(schema);
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }, [externalUrl]);
 
   const handleAdmin = useCallback(() => {
     navigate(buildTaskAwareRoute('/app/schema/admin', taskSearchParams, taskContext));
@@ -375,9 +402,13 @@ export default function SchemaCatalog() {
             </Stack>
 
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} disabled={!schemaExternalPath(detailSchema)} onClick={() => copyExternalUrl(detailSchema)}>
-                Copy URL
-              </Button>
+              <Tooltip title={schemaAliasUrlProblem(detailSchema) ?? ''}>
+                <span>
+                  <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} disabled={!schemaExternalPath(detailSchema) || !!schemaAliasUrlProblem(detailSchema)} onClick={() => copyExternalUrl(detailSchema)}>
+                    Copy URL
+                  </Button>
+                </span>
+              </Tooltip>
               {isDetailLoading && <CircularProgress size={24} />}
             </Stack>
 
@@ -442,6 +473,11 @@ export default function SchemaCatalog() {
           </Stack>
         )}
       </Drawer>
+      <Snackbar open={!!urlError} onClose={() => setUrlError(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="error" onClose={() => setUrlError(null)} sx={{ maxWidth: 640, overflowWrap: 'anywhere' }}>
+          {urlError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/portal/",
+    "apiBasePath": ""
+  },
+  "authentication": {
+    "mode": "oauth2",
+    "signInUrl": "https://signin.example.com?client_id=portal-client"
+  },
+  "features": {},
+  "externalLinks": {}
+}

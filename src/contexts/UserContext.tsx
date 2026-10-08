@@ -2,7 +2,8 @@ import React from "react";
 import Cookies from "universal-cookie";
 import fetchClient from "../utils/fetchClient";
 import { logoutFromBackend } from "../api/auth";
-import { config, isSsoEnabled } from "../../config";
+import { getPortalConfig } from "../../config";
+import { browserRedirectUri } from "../utils/runtimePaths";
 import type { IPublicClientApplication } from "@azure/msal-browser";
 import { buildTaskAwareRoute } from "../tasks/taskUtils";
 import type { TaskResolvedContext } from "../tasks/types";
@@ -228,7 +229,8 @@ async function signOut(
 ) {
   dispatch({ type: "SIGN_OUT_SUCCESS" });
 
-  if (isSsoEnabled) {
+  const auth = getPortalConfig().authentication;
+  if (auth.mode === "entra-sso") {
     try {
       await logoutFromBackend("/auth/ms/logout");
     } catch (error) {
@@ -236,13 +238,8 @@ async function signOut(
     }
 
     if (msalInstance) {
-      const normalizedBasePath =
-        config.basePath && config.basePath !== "/"
-          ? config.basePath.replace(/\/$/, "")
-          : "";
-
       await msalInstance.logoutRedirect({
-        postLogoutRedirectUri: `${window.location.origin}${normalizedBasePath}/redirect`,
+        postLogoutRedirectUri: browserRedirectUri(auth.postLogoutRedirectUri),
       });
       return;
     }

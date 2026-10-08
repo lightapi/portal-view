@@ -14,7 +14,7 @@ import {
 } from '../controller/capabilities';
 import Cookies from 'universal-cookie';
 import { useUserState } from './UserContext';
-import { config } from '../../config';
+import { apiWebSocketUrl } from '../utils/runtimePaths';
 
 interface ControllerState {
   isLiveConnected: boolean; // Unified status
@@ -95,18 +95,7 @@ const ControllerContext = createContext<ControllerContextValue | undefined>(unde
 const MCP_ENDPOINT = '/ctrl/mcp';
 
 function buildMcpUrl(): string {
-  const configuredBaseUrl = (config.apiBaseUrl || '').trim();
-  const useDevProxy = import.meta.env.DEV && MCP_ENDPOINT.startsWith('/');
-  const httpUrl = (useDevProxy || !configuredBaseUrl)
-    ? new URL(MCP_ENDPOINT, window.location.href).toString()
-    : `${configuredBaseUrl.replace(/\/+$/, '')}${MCP_ENDPOINT}`;
-  const mcpUrl = new URL(httpUrl, window.location.href);
-  if (mcpUrl.protocol === 'https:') {
-    mcpUrl.protocol = 'wss:';
-  } else if (mcpUrl.protocol === 'http:') {
-    mcpUrl.protocol = 'ws:';
-  }
-  return mcpUrl.toString();
+  return apiWebSocketUrl(MCP_ENDPOINT);
 }
 
 export function ControllerProvider({ children }: { children: React.ReactNode }) {

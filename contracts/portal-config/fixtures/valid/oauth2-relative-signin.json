@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "routing": {
+    "publicBasePath": "/namespace-dev/service/ai/portal",
+    "apiBasePath": "/namespace-dev/service"
+  },
+  "authentication": {
+    "mode": "oauth2",
+    "signInUrl": "/namespace-dev/service/signin?client_id=portal-client&lang=en"
+  },
+  "features": {},
+  "externalLinks": {}
+}

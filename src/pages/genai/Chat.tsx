@@ -1,3 +1,4 @@
+import { apiWebSocketUrl } from '../../utils/runtimePaths';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
@@ -163,8 +164,7 @@ export default function Chat() {
         const sessionId = sessionStorage.getItem(connectedKey);
 
         // Construct URL using new URL() so IPv6 hosts are correctly bracketed.
-        const url = new URL('/chat', window.location.href);
-        url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const url = new URL(apiWebSocketUrl('/chat'));
         url.searchParams.set('userId', userId);
         url.searchParams.set('serviceId', serviceId);
         url.searchParams.set('envTag', envTag);

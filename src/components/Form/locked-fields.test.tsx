@@ -1,3 +1,4 @@
+import { publishTestConfig } from "../../test/runtimeConfigFixture";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -8,11 +9,12 @@ const mocks = vi.hoisted(() => ({ fetchClient: vi.fn() }));
 vi.mock("../../contexts/UserContext", () => ({
   useUserState: () => ({ host: "host-a", isAuthenticated: true }),
 }));
-vi.mock("../../utils/fetchClient", () => ({ BASE_URL: "", default: mocks.fetchClient }));
+vi.mock("../../utils/fetchClient", () => ({ default: mocks.fetchClient }));
 vi.mock("../HelpLink", () => ({ default: () => null }));
 
 describe("task-locked form fields", () => {
   beforeEach(() => {
+    publishTestConfig();
     mocks.fetchClient.mockReset();
     mocks.fetchClient.mockResolvedValue([]);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({

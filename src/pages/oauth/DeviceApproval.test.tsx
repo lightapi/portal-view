@@ -5,9 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const configMock = vi.hoisted(() => ({ signInUrl: '', sso: false }));
 vi.mock('../../../config', () => ({
   config: configMock,
-  get isSsoEnabled() {
-    return configMock.sso;
-  },
+  isSsoEnabled: () => configMock.sso,
 }));
 vi.mock('../../utils/fetchClient', () => ({ default: vi.fn() }));
 vi.mock('../../utils/signIn', () => ({ signIn: vi.fn() }));

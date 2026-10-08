@@ -1,4 +1,4 @@
-import { config } from "../../config";
+import { externalLinks } from "../../config";
 
 export const DEFAULT_PORTAL_HELP_PATH = "/help/portal-view/index";
 
@@ -10,6 +10,6 @@ export function normalizeHelpPath(helpPath?: string | null) {
 
 export function buildPortalHelpUrl(helpPath?: string | null) {
   const normalizedPath = normalizeHelpPath(helpPath);
-  const baseUrl = config.portalDocBaseUrl.trim().replace(/\/+$/, "");
+  const baseUrl = externalLinks().portalDocumentation.trim().replace(/\/+$/, "");
   return baseUrl ? `${baseUrl}${normalizedPath}` : normalizedPath;
 }

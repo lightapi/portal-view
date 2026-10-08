@@ -1,7 +1,8 @@
+import { publishTestConfig } from '../../test/runtimeConfigFixture';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import YAML from 'yaml';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@uiw/react-codemirror', () => ({
     default: ({ value, onChange, onUpdate }: {
@@ -38,6 +39,10 @@ vi.mock('./WorkflowGraph', () => ({
 }));
 
 import WorkflowEditor from './WorkflowEditor';
+
+beforeEach(() => {
+    publishTestConfig({ routing: { apiBasePath: '/namespace-dev/service' } });
+});
 
 describe('WorkflowEditor YAML cursor insertion', () => {
     it('selects the step under the cursor and inserts the palette step after it', () => {

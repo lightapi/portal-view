@@ -1,3 +1,4 @@
+import { publishTestConfig } from "../../test/runtimeConfigFixture";
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -18,7 +19,6 @@ vi.mock('../../contexts/UserContext', () => ({
 }));
 
 vi.mock('../../utils/fetchClient', () => ({
-  BASE_URL: '',
   default: mocks.fetchClient,
 }));
 
@@ -70,6 +70,7 @@ async function applyJson(groupName: string, value: unknown) {
 
 describe('LLM model form routes', () => {
   beforeEach(() => {
+    publishTestConfig();
     mocks.fetchClient.mockReset();
     mocks.fetchClient.mockResolvedValue({modelId: 'model-a'});
     vi.stubGlobal('fetch', vi.fn().mockImplementation(async (request: RequestInfo | URL) => {

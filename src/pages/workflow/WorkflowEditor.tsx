@@ -1,3 +1,4 @@
+import { joinApiPath } from '../../utils/runtimePaths';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import CodeMirror from '@uiw/react-codemirror';
@@ -1984,8 +1985,13 @@ export default function WorkflowEditor() {
             return;
         }
         const url = runtimeDiagnosticsUrl.trim();
-        if (!url) {
-            setRuntimeDiagnostics({ status: 'error', message: 'Runtime diagnostics URL is required.', gatewayTools: [], missingTools: analysis.toolRefs });
+        try {
+            if (!url.startsWith('/') || url.startsWith('//') || url.includes('\\')) {
+                throw new Error('Expected an API-relative path beginning with a single /, without backslashes.');
+            }
+            joinApiPath('', url);
+        } catch {
+            setRuntimeDiagnostics({ status: 'error', message: 'Enter an API-relative path beginning with a single /, without backslashes or dot segments (for example, /diagnostics/tools or /mcp).', gatewayTools: [], missingTools: analysis.toolRefs });
             return;
         }
         setIsRuntimeChecking(true);
@@ -2979,7 +2985,8 @@ export default function WorkflowEditor() {
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Runtime Diagnostics</Typography>
                     <Stack spacing={1}>
                         <TextField
-                            label="Diagnostics URL"
+                            label="Diagnostics API-relative path"
+                            helperText="Use /diagnostics/... or /mcp. The configured API prefix is applied automatically; absolute URLs are not supported."
                             value={runtimeDiagnosticsUrl}
                             onChange={event => setRuntimeDiagnosticsUrl(event.target.value)}
                             size="small"

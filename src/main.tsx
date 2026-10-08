@@ -9,14 +9,10 @@ import { ActionDisplayProvider } from "./contexts/ActionDisplayContext";
 import { SiteProvider } from "./contexts/SiteContext.tsx";
 import { AppProvider } from "./contexts/AppContext.tsx";
 import { ControllerProvider } from "./contexts/ControllerContext.tsx";
-import { PublicClientApplication } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import "./index.css";
 import App from "./App.tsx";
-import { msalConfig } from "./authConfig.js";
-import { isSsoEnabled } from "../config";
-
-const instance = isSsoEnabled ? new PublicClientApplication(msalConfig) : null;
+import { getMsalInstance } from "./auth/runtimeAuth";
 
 const appTree = (
   <LayoutProvider>
@@ -37,12 +33,15 @@ const appTree = (
   </LayoutProvider>
 );
 
-createRoot(document.getElementById("root")!).render(
+export function renderPortal(): void {
+  const instance = getMsalInstance();
+  createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {isSsoEnabled && instance ? (
+    {instance ? (
       <MsalProvider instance={instance}>{appTree}</MsalProvider>
     ) : (
       appTree
     )}
   </StrictMode>,
 );
+}

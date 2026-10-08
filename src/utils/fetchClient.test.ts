@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fetchClient from "./fetchClient";
+import { publishTestConfig } from "../test/runtimeConfigFixture";
+import { resetPortalConfigForTests } from "../runtimeConfig/store";
 
 const { cookieGet } = vi.hoisted(() => ({ cookieGet: vi.fn() }));
 
@@ -13,7 +15,10 @@ describe("fetchClient", () => {
   const responseJson = vi.fn();
   const fetchMock = vi.fn();
 
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
+    publishTestConfig({ routing: { apiBasePath: "/namespace-dev/service" } });
     responseJson.mockReset();
     fetchMock.mockReset();
     cookieGet.mockReset().mockReturnValue("csrf-token");
@@ -31,12 +36,34 @@ describe("fetchClient", () => {
 
     expect(responseJson).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringMatching(/\/logout$/),
+      `${window.location.origin}/namespace-dev/service/logout`,
       expect.objectContaining({
         method: "POST",
         credentials: "include",
         headers: expect.any(Headers),
       }),
+    );
+    expect(fetchMock.mock.calls[0][1].headers.get("X-CSRF-TOKEN")).toBe("csrf-token");
+  });
+
+  it.each(["", "/namespace-dev/service"])("rejects unsafe form actions before reading CSRF or sending a body at API base %s", async (base) => {
+    resetPortalConfigForTests();
+    publishTestConfig({ routing: { apiBasePath: base } });
+    for (const action of ["/\\attacker.example/collect", "/\t\\attacker.example/collect", "/%2e%2e/collect", "/portal/query#collect"]) {
+      await expect(fetchClient(action, { method: "POST", body: { submitted: "dummy-sensitive-value" } })).rejects.toThrow();
+    }
+    expect(cookieGet).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["", "/namespace-dev/service"])("sends valid form actions to the same origin at API base %s", async (base) => {
+    resetPortalConfigForTests();
+    publishTestConfig({ routing: { apiBasePath: base } });
+    fetchMock.mockResolvedValue({ ok: true, status: 204 });
+    await fetchClient("/portal/command?next=%2Fhome", { method: "POST", body: { submitted: "dummy-value" } });
+    expect(fetchMock).toHaveBeenCalledWith(
+      window.location.origin + base + "/portal/command?next=%2Fhome",
+      expect.objectContaining({ method: "POST", body: '{"submitted":"dummy-value"}', credentials: "include" }),
     );
     expect(fetchMock.mock.calls[0][1].headers.get("X-CSRF-TOKEN")).toBe("csrf-token");
   });
