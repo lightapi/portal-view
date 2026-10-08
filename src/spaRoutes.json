@@ -1,0 +1,6 @@
+[
+  { "path": "/", "match": "exact" },
+  { "path": "/app", "match": "prefix" },
+  { "path": "/redirect", "match": "exact" },
+  { "path": "/device", "match": "exact" }
+]
