@@ -27,6 +27,7 @@ const LINK_DEFAULTS: PortalRuntimeConfig["externalLinks"] = {
 };
 const SECRET_FIELD = /secret|password|private|token|bearer|credential/i;
 const PATH = /^(\/[A-Za-z0-9._~!$&'()*+,;=:@-]+)+$/;
+const FEATURE_PATH = /^(\/[A-Za-z0-9._~!$&'()*+,;=:@{}-]+)+$/;
 const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 function fail(field: string, message: string): never {
@@ -149,7 +150,18 @@ function authentication(value: unknown): AuthenticationConfig {
 
 function featureUrl(value: unknown, field: string): string {
   const result = string(value, field);
-  if (result.startsWith("/") || result === "") return path(result, field, true, true);
+  if (result === "") return result;
+  if (result.startsWith("/")) {
+    // Root-relative BFF endpoints keep canonical segments (joinApiPath drops empty
+    // ones) but may carry {apiId}/{version} templates and a query.
+    const rawPath = result.split("?", 1)[0];
+    if (rawPath !== "/" && (FEATURE_PATH.exec(rawPath)?.[0] !== rawPath
+        || rawPath.split("/").some((segment) => segment === "." || segment === ".."))) {
+      fail(field, "Must be a canonical root-relative endpoint without trailing slash or dot segments");
+    }
+    strictUrl(result, field, true);
+    return result;
+  }
   strictUrl(result, field, false);
   return result;
 }

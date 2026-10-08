@@ -309,10 +309,17 @@
           "const": ""
         },
         {
-          "const": "/"
-        },
-        {
-          "$ref": "#/$defs/path"
+          "type": "string",
+          "maxLength": 2048,
+          "allOf": [
+            {
+              "$ref": "#/$defs/rawUrl"
+            },
+            {
+              "pattern": "^/(?:[A-Za-z0-9._~!$&'()*+,;=:@{}-]+(?:/[A-Za-z0-9._~!$&'()*+,;=:@{}-]+)*)?(\\?.*)?$"
+            }
+          ],
+          "$comment": "Root-relative BFF endpoint: canonical path segments, {apiId}/{version} templates and an optional query."
         },
         {
           "$ref": "#/$defs/httpsUrl"

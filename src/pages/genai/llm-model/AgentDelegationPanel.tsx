@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { Alert, Button, Checkbox, FormControlLabel, Link, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import fetchClient from '../../../utils/fetchClient';
 import { commandLlm, queryLlm } from './api';
@@ -120,8 +121,8 @@ export default function AgentDelegationPanel({hostId, initialInstanceId = ''}: {
       {preview && <><Typography>Source fingerprint: {String(preview.sourceDigest)}</Typography>
         <Typography component="pre" sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(generated,null,2)}</Typography>
         {bindings?.map(binding => <Stack key={String(binding.clientId)} direction="row" spacing={2}>
-          <Link href={`/app/genai/AgentDefinition?agentDefId=${encodeURIComponent(String(binding.agentDefId))}`}>Agent {String(binding.agentDefId)}</Link>
-          <Link href={`/app/oauth/authClient?clientId=${encodeURIComponent(String(binding.clientId))}`}>OAuth client {String(binding.clientId)}</Link>
+          <Link component={RouterLink} to={`/app/genai/AgentDefinition?agentDefId=${encodeURIComponent(String(binding.agentDefId))}`}>Agent {String(binding.agentDefId)}</Link>
+          <Link component={RouterLink} to={`/app/oauth/authClient?clientId=${encodeURIComponent(String(binding.clientId))}`}>OAuth client {String(binding.clientId)}</Link>
         </Stack>)}
       </>}
       {ownership?.managed === true && <>

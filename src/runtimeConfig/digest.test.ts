@@ -47,6 +47,11 @@ describe("checkConfigDrift", () => {
     expect(initialConfigDigest).toBe("initial");
   });
 
+  it.each([404, 502, 503])("ignores a differing ETag on HTTP %i", async (status) => {
+    fetchMock.mockResolvedValue(new Response(null, { status, headers: { ETag: "\"proxy-error\"" } }));
+    expect(await checkConfigDrift()).toBe(false);
+  });
+
   it("returns false on network rejection", async () => {
     fetchMock.mockRejectedValue(new Error("offline"));
     expect(await checkConfigDrift()).toBe(false);

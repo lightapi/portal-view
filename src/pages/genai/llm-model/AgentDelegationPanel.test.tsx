@@ -1,5 +1,6 @@
 import {render,screen,waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {MemoryRouter} from 'react-router-dom';
 import {beforeEach,expect,it,vi} from 'vitest';
 import AgentDelegationPanel from './AgentDelegationPanel';
 const mocks=vi.hoisted(()=>({query:vi.fn(),command:vi.fn(),fetch:vi.fn()}));
@@ -43,4 +44,17 @@ it('keeps the gateway selector available when entered from Instance Config',asyn
  await screen.findByDisplayValue('issuer');
  expect(screen.getByRole('combobox',{name:'Gateway instance'})).toBeEnabled();
  expect(screen.getByRole('checkbox',{name:'Require agent workload token: /v1/responses@post'})).not.toBeChecked();
+});
+it('derived binding links stay under the router basename',async()=>{
+ const base=mocks.query.getMockImplementation()!;
+ mocks.query.mockImplementation(async(action:string,data:unknown)=>action==='getLlmGatewayPublicationCandidate'
+  ?{sourceDigest:'source',configProperties:[{propertyName:'agentDelegation',propertyValue:{bindings:[{clientId:'c/1',agentDefId:'a1'}]}}]}
+  :base(action,data));
+ render(<MemoryRouter basename="/ns/service/portal" initialEntries={['/ns/service/portal/app/genai/llmModel']}>
+  <AgentDelegationPanel hostId="host" initialInstanceId="gateway"/></MemoryRouter>);
+ const preview=await screen.findByRole('button',{name:'Preview saved policy and derived bindings'});
+ await waitFor(()=>expect(preview).toBeEnabled());
+ await userEvent.click(preview);
+ expect(await screen.findByRole('link',{name:'Agent a1'})).toHaveAttribute('href','/ns/service/portal/app/genai/AgentDefinition?agentDefId=a1');
+ expect(screen.getByRole('link',{name:'OAuth client c/1'})).toHaveAttribute('href','/ns/service/portal/app/oauth/authClient?clientId=c%2F1');
 });

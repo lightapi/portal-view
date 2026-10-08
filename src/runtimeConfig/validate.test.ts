@@ -212,16 +212,18 @@ describe("rule 7: UUID layout, placeholders, and explicit redirects", () => {
 describe("rules 8 and 9: feature destinations and external links", () => {
   it.each(["preRegistrationUrl", "toolsSyncUrl"])("validates feature %s", (key) => {
     const field = `features.${key}`;
-    for (const value of ["", "/", "/api/register", "https://service.example.com/", "https://service.example.com/sync?q=a@b&state=static"]) {
+    for (const value of ["", "/", "/api/register", "https://service.example.com/", "https://service.example.com/sync?q=a@b&state=static",
+      "/sync?x=1", "/register?source=portal&next=/a%2Fb", "/registry/apis/{apiId}/versions/{version}/tools"]) {
       expect(() => validatePortalConfig(configured(field, value))).not.toThrow();
     }
-    for (const value of [null, 42, "/sync?x=1", "/sync/", "/a/../sync", "//host", "http://localhost/sync",
+    for (const value of [null, 42, "/sync/", "/a//sync", "/a/../sync", "/./sync", "/a%2Fb", "/a%2e%2e/b", "/a%20b", "/sync#x",
+      "/sy nc", "/sy\\nc", "/sync?x=%zz", "//host", "http://localhost/sync",
       "https://host/%2Fsync", "https://host/a/../sync", "https://user@host/sync", "https://host/sync#x",
       "https://host/sync?x=%zz", "https://host/sy nc", "https://host/sy\\nc"]) {
       rejects(configured(field, value), field);
     }
-    expect(() => validatePortalConfig(configured(field, "/" + "x".repeat(255)))).not.toThrow();
-    rejects(configured(field, "/" + "x".repeat(256)), field, /256/);
+    expect(() => validatePortalConfig(configured(field, "/" + "x".repeat(2047)))).not.toThrow();
+    rejects(configured(field, "/" + "x".repeat(2048)), field, /2048/);
     const prefix = "https://host/";
     expect(() => validatePortalConfig(configured(field, prefix + "x".repeat(2048 - prefix.length)))).not.toThrow();
     rejects(configured(field, prefix + "x".repeat(2049 - prefix.length)), field, /2048/);

@@ -1,4 +1,5 @@
 import { apiUrl } from '../../../utils/runtimePaths';
+import { buildToolsSyncUrl } from '../toolsSyncUrl';
 import { useMsal } from '@azure/msal-react';
 import { loginRequest } from '../../../authConfig';
 import { apiPost } from '../../../api/apiPost';
@@ -392,9 +393,7 @@ export function useMcpWizardHandlers(state: McpWizardState) {
   const syncToolsToExternalRegistry = async (tools: typeof selectedMcpTools): Promise<void> => {
     const externalApiId = registrationExternalApiId ?? committedApiId;
     if (!isToolsSyncEnabled() || !toolsSyncUrl() || !externalApiId || !versionForm.apiVersion.trim()) return;
-    const url = toolsSyncUrl()
-      .replace('{apiId}', encodeURIComponent(externalApiId))
-      .replace('{version}', encodeURIComponent(versionForm.apiVersion.trim()));
+    const url = buildToolsSyncUrl(toolsSyncUrl(), externalApiId, versionForm.apiVersion.trim());
     const gatewayServiceId = versionForm.serviceId.trim();
     const body: Record<string, unknown> = {
       tools: tools.map((t) => ({

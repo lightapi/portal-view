@@ -207,8 +207,7 @@ test('full Vite builds reproduce archive and manifest bytes in one clean isolate
   const git = args => execFileSync('git', args, { cwd: snapshot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   git(['init', '-q']);
   git(['add', '.']);
-  // The required release/ ignore pattern also matches scripts/release/ until
-  // these source files are tracked. Commit them explicitly in the fixture.
+  // Commit the release tooling explicitly in case the fixture runs before it is tracked.
   git(['add', '-f', ...added]);
   git(['-c', 'user.name=WP7 fixture', '-c', 'user.email=wp7@example.invalid', '-c', 'core.hooksPath=/dev/null', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'Temporary WP7 test snapshot']);
   const commit = git(['rev-parse', 'HEAD']).trim();

@@ -12,6 +12,8 @@ export async function checkConfigDrift(): Promise<boolean> {
       method: "HEAD",
       cache: "no-store",
     });
+    // Error pages (proxy 5xx, legacy 404) carry their own ETags; they are not drift.
+    if (!response.ok) return false;
     const digest = response.headers.get("X-Portal-Config-Digest") ??
       response.headers.get("ETag") ?? "";
     return digest !== "" && digest !== initialConfigDigest;

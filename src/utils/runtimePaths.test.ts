@@ -80,6 +80,43 @@ describe("runtime URLs", () => {
   );
 
   it.each([
+    "/\\attacker.example/collect", "/\\\\attacker.example/collect", "/portal\\query",
+    "/\t\\attacker.example/collect", "/portal\n/query", "/portal\r/query",
+    "/portal query", "/portal/query#fragment", "/%2e%2e/collect", "/.%2E/collect",
+    "/%2e/collect", "/%2f%2fattacker.example/collect", "/%5Cattacker.example/collect",
+    "/portal/%zz", "/portal/%",
+  ])("rejects malformed or normalization-sensitive API path %j", (endpoint) => {
+    for (const base of ["", "/namespace-dev/service"]) {
+      resetPortalConfigForTests();
+      configure("https://h", base);
+      expect(() => apiUrl(endpoint)).toThrow();
+      expect(() => apiWebSocketUrl(endpoint)).toThrow();
+    }
+  });
+
+  it.each(["", "/namespace-dev/service"])("retains valid escaped paths and queries at API base %s", (base) => {
+    configure("https://h", base);
+    const endpoint = "/portal/a%20b/.well-known/%E2%9C%93?next=https%3A%2F%2Fother.example&value=%5c%2f";
+    expect(apiUrl(endpoint)).toBe("https://h" + base + endpoint);
+  });
+
+  it("checks the resolved origin independently of endpoint validation", () => {
+    configure("https://h");
+    const RealURL = URL;
+    vi.stubGlobal("URL", class extends RealURL {
+      constructor(path: string | URL, base?: string | URL) {
+        super(path, base);
+        this.hostname = "attacker.example";
+      }
+    });
+    try {
+      expect(() => apiUrl("/portal/query")).toThrow(/same-origin/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([
     ["https://h", "/x", "wss://h/x/chat"], ["http://h", "/x", "ws://h/x/chat"],
     ["https://h", "", "wss://h/chat"], ["http://h", "", "ws://h/chat"],
   ])("maps WebSocket protocol at %s with API base %s", (origin, base, expected) => {
