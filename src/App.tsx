@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import RoleGate from "./components/RoleGate";
+import ConfigDriftNotice from "./components/ConfigDriftNotice";
 import Error from "./pages/error";
 import Dashboard from "./pages/dashboard/Dashboard";
 import DeviceApproval from "./pages/oauth/DeviceApproval";
@@ -316,6 +317,7 @@ const App = () => {
       basename={publicBasePath()}
     >
       {isSsoEnabled() ? <MsalSessionBootstrap /> : null}
+      <ConfigDriftNotice />
       <Routes>
         {/* Redirect from root to dashboard preserving query parameters */}
         <Route path="/" element={<RedirectWithQuery to="/app/dashboard" />} />
