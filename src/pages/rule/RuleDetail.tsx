@@ -173,7 +173,6 @@ export default function RuleDetail() {
                 data: {
                     hostId: host ?? ruleData.hostId,
                     ruleId: ruleData.ruleId,
-                    executorType: "java",
                     testMode: "conditions",
                     inputContext: "{}",
                     expectedResult: true,
@@ -195,7 +194,7 @@ export default function RuleDetail() {
                 hostId: testCase.hostId ?? host ?? ruleData.hostId,
                 ruleId: testCase.ruleId,
                 testId: testCase.testId,
-                executorType: testCase.executorType,
+                executorType: "rust",
                 testMode: testCase.testMode,
             },
         };
@@ -325,7 +324,7 @@ export default function RuleDetail() {
                                             </TableCell>
                                             <TableCell>
                                                 <Box display="flex" gap={1} mb={1}>
-                                                    <Chip size="small" label={testCase.executorType || "java"} />
+                                                    <Chip size="small" label="rust" />
                                                     <Chip size="small" label={testCase.testMode || "conditions"} />
                                                     <Chip size="small" color={testCase.expectedResult ? "success" : "default"} label={`expected: ${String(testCase.expectedResult ?? "N/A")}`} />
                                                 </Box>

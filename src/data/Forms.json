@@ -9148,10 +9148,9 @@
           "title": "Executor",
           "type": "string",
           "enum": [
-            "java",
-            "rust",
-            "both"
-          ]
+            "rust"
+          ],
+          "default": "rust"
         },
         "testMode": {
           "title": "Test Mode",
@@ -9251,10 +9250,9 @@
           "title": "Executor",
           "type": "string",
           "enum": [
-            "java",
-            "rust",
-            "both"
-          ]
+            "rust"
+          ],
+          "default": "rust"
         },
         "testMode": {
           "title": "Test Mode",
