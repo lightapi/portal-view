@@ -45,8 +45,10 @@ export function assertPortableOutput(directory, markers = []) {
   }
 }
 
-// Release mode loads no dotenv files and the child build drops VITE_* inputs, so
-// no build-time browser value may appear in emitted bytes; never log the values.
+// Release mode disables Vite's client dotenv exposure via envDir: false, and the
+// child build drops VITE_* inputs. Explicit loadEnv calls still load dotenv files
+// for build configuration and validation; no build-time browser value may appear
+// in emitted bytes. Never log the values.
 export function deploymentMarkers(env) {
   return Object.entries(env)
     .filter(([key, value]) => key.startsWith('VITE_') && value.length >= 8)
