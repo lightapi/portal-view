@@ -9250,7 +9250,9 @@
           "title": "Executor",
           "type": "string",
           "enum": [
-            "rust"
+            "rust",
+            "java",
+            "both"
           ],
           "default": "rust"
         },

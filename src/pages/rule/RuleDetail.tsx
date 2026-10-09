@@ -324,7 +324,8 @@ export default function RuleDetail() {
                                             </TableCell>
                                             <TableCell>
                                                 <Box display="flex" gap={1} mb={1}>
-                                                    <Chip size="small" label="rust" />
+                                                    <Chip size="small" label={`saved executor: ${testCase.executorType ?? "rust"}`} />
+                                                    <Chip size="small" label="runs in Workflow" />
                                                     <Chip size="small" label={testCase.testMode || "conditions"} />
                                                     <Chip size="small" color={testCase.expectedResult ? "success" : "default"} label={`expected: ${String(testCase.expectedResult ?? "N/A")}`} />
                                                 </Box>

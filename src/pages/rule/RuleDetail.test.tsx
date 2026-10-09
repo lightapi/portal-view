@@ -13,7 +13,7 @@ beforeEach(() => {
   mocks.fetch.mockReset();
   mocks.fetch.mockImplementation((url: string) => {
     const command = JSON.parse(new URL(url, 'https://portal.test').searchParams.get('cmd')!);
-    return Promise.resolve(command.action === 'runRuleTestCase' ? { success: true } : {
+    return Promise.resolve(command.action === 'runRuleTestCase' ? { success: true, executorType: 'rust' } : {
       testCases: [{ ruleId: 'cel-rule', testId: 'test-1', testName: 'Saved Java test', executorType: 'java' }],
       total: 1,
     });
@@ -30,21 +30,24 @@ function mount() {
 
 it('runs legacy saved test cases using the Workflow executor', async () => {
   mount();
+  expect(await screen.findByText('saved executor: java')).toBeVisible();
+  expect(screen.queryByText('saved executor: rust')).not.toBeInTheDocument();
   await userEvent.click(await screen.findByRole('button', { name: 'Run' }));
   await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(2));
   const [url] = mocks.fetch.mock.calls[1];
   const command = JSON.parse(new URL(url, 'https://portal.test').searchParams.get('cmd')!);
   expect(command.action).toBe('runRuleTestCase');
   expect(command.data).toMatchObject({ ruleId: 'cel-rule', testId: 'test-1', executorType: 'rust' });
-  expect(screen.getByText('rust')).toBeVisible();
+  expect(screen.getByText('saved executor: java')).toBeVisible();
+  expect(await screen.findByText(/"executorType": "rust"/)).toBeVisible();
 });
 
 it('creates test cases with the Workflow executor and offers no Java executor', async () => {
   mount();
   await userEvent.click(await screen.findByRole('button', { name: /Add Test Case/i }));
   expect(JSON.parse(screen.getByTestId('state').textContent!).data.executorType).toBeUndefined();
-  for (const form of [forms.createRuleTestCase, forms.updateRuleTestCase]) {
-    expect(form.schema.properties.executorType.enum).toEqual(['rust']);
-    expect(form.schema.properties.executorType.default).toBe('rust');
-  }
+  expect(forms.createRuleTestCase.schema.properties.executorType.enum).toEqual(['rust']);
+  expect(forms.updateRuleTestCase.schema.properties.executorType.enum).toEqual(['rust', 'java', 'both']);
+  expect(forms.createRuleTestCase.schema.properties.executorType.default).toBe('rust');
+  expect(forms.updateRuleTestCase.schema.properties.executorType.default).toBe('rust');
 });
