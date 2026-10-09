@@ -45,6 +45,16 @@ export function assertPortableOutput(directory, markers = []) {
   }
 }
 
+// Release mode disables Vite's client dotenv exposure via envDir: false, and the
+// child build drops VITE_* inputs. Explicit loadEnv calls still load dotenv files
+// for build configuration and validation; no build-time browser value may appear
+// in emitted bytes. Never log the values.
+export function deploymentMarkers(env) {
+  return Object.entries(env)
+    .filter(([key, value]) => key.startsWith('VITE_') && value.length >= 8)
+    .map(([, value]) => value);
+}
+
 export function buildRelease() {
   if (process.argv.length !== 2) throw new Error('Usage: build-release.mjs (inputs come from environment)');
   const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -76,11 +86,8 @@ export function buildRelease() {
   const env = { ...process.env, SOURCE_DATE_EPOCH: epochInput, TZ: 'UTC' };
   for (const name of Object.keys(env)) if (name.startsWith('VITE_') && name !== 'VITE_BUILD_SOURCEMAP') delete env[name];
   delete env.ZIPOPT;
-  // Check actual emitted bytes against deployment-specific values from both
-  // process and dotenv inputs; never log their values.
-  const markers = Object.entries({ ...effective, ...process.env })
-    .filter(([key, value]) => /^VITE_.*(?:BASE_PATH|API_BASE_URL|SIGNIN_URL|TENANT_ID|CLIENT_ID|REDIRECT_URI)$/.test(key) && value.length >= 8)
-    .map(([, value]) => value);
+  // Check actual emitted bytes against values from both process and dotenv inputs.
+  const markers = deploymentMarkers({ ...effective, ...process.env });
   rmSync(dist, { recursive: true, force: true });
   rmSync(output, { recursive: true, force: true });
   mkdirSync(output, { recursive: true });

@@ -3,7 +3,11 @@
 The handwritten browser validator is `src/runtimeConfig/validate.ts`; its public
 types are in `src/runtimeConfig/types.ts`. The draft 2020-12 structural schema is
 `public/portal-config.schema.json`. These implement WP1 of the portable signed
-runtime-configuration plan. No bootstrap or configuration consumer uses them yet.
+runtime-configuration plan. `src/bootstrap.ts` fetches `portal-config.json`
+relative to `document.baseURI`, enforces the 64 KiB byte limit, validates and
+deep-freezes the document, and publishes it before any authentication or
+application module is imported. Application code reads it through the selectors
+in `config.ts` and the URL helpers in `src/utils/runtimePaths.ts`.
 
 Run locally from portal-view:
 
@@ -42,7 +46,8 @@ Both the browser validator and the future WP8 gateway validator must also:
   any correctly laid-out non-placeholder UUID without a version constraint.
 - Enforce the redirect HTTP exception only for `localhost` and `.localhost`
   hosts. Explicit redirects have no query; absent and empty redirects remain
-  distinct, to be derived by later consumers.
+  distinct in validated output, and `browserRedirectUri` derives
+  `<publicBasePath>/redirect` on the current origin for both.
 - Reject secret-shaped schema field names, case-insensitively matching
   `secret|password|private|token|bearer|credential`. Mapping keys are data,
   exempt from that field-name check. Mapping **values** must not contain
@@ -51,15 +56,20 @@ Both the browser validator and the future WP8 gateway validator must also:
 
 External links require an absolute HTTPS URL and the general string bound; they
 do not inherit sign-in query, userinfo, fragment, or hostname-shape restrictions.
-Feature service URLs permit empty strings, canonical root paths (256 characters
-maximum), or HTTPS URLs with rules 6.1–6.4. Relative feature paths have no query.
-Feature enablement does not add an unstated non-empty URL requirement.
+Feature service URLs permit empty strings, root-relative BFF endpoints, or HTTPS
+URLs with rules 6.1–6.4, within the general 2048-character bound. Root-relative
+endpoints use canonical segments without trailing slash or dot segments, may
+contain `{apiId}`/`{version}` templates and a query, and are joined to
+`routing.apiBasePath`. Feature enablement does not add an unstated non-empty URL
+requirement.
 
 In the named invalid corpus, `oauth2-has-state`, `oauth2-no-client-id`,
-`entra-nil-uuid`, and `entra-repeated-uuid` intentionally pass structural schema
+`entra-nil-uuid`, `entra-repeated-uuid`, and `bootstrap-entra-template`
+intentionally pass structural schema
 validation and require semantic rejection. Unknown/secret field fixtures also
 fail schema allowlists, but the semantic validator supplies the secret diagnostic.
-The 64 KiB document byte-size check belongs to the WP3 loader, not this validator.
+The 64 KiB document limit counts response bytes and is enforced by
+`src/bootstrap.ts` before JSON parsing, not by this validator.
 
 ## Valid fixtures
 
@@ -71,6 +81,7 @@ The 64 KiB document byte-size check belongs to the WP3 loader, not this validato
 | `minimal-defaults.json` | Required but empty feature/link objects receive every specified default. |
 | `oauth2-relative-signin.json` | Exact relative sign-in addition with `client_id=portal-client&lang=en`; non-generated query fields survive. |
 | `entra-v4-uuid.json` | Non-placeholder v4 identifiers, explicit HTTPS login redirect, `.localhost` HTTP logout redirect. |
+| `feature-relative-templates.json` | Prefixed API base with a root-relative pre-registration URL carrying a query and a root-relative tools-sync `{apiId}`/`{version}` template. |
 
 ## Invalid fixtures
 
@@ -103,11 +114,12 @@ The 64 KiB document byte-size check belongs to the WP3 loader, not this validato
 | `entra-nil-uuid.json` | Reject nil UUID placeholders (semantic). |
 | `entra-repeated-uuid.json` | Reject repeated-digit client UUID placeholders (semantic). |
 | `entra-bad-uuid-layout.json` | Length alone does not establish UUID layout. |
+| `bootstrap-entra-template.json` | Reject the nil-UUID Entra placeholder template with empty redirects (semantic). |
 
 ## Cross-language reuse
 
 WP8 must copy these JSON files verbatim into its fixture corpus, keep their
 valid/invalid classification, and run both structural and semantic validation.
 Do not normalize invalid URLs before testing them. Treat these as contract
-examples, not deployment configuration or credentials. No copy into light-fabric
-is part of WP1.
+examples, not deployment configuration or credentials. light-fabric keeps a
+byte-for-byte copy in `frameworks/light-pingora/tests/fixtures/portal-config`.

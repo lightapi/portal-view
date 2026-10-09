@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sign } from 'node:crypto';
-import { assertPortableOutput, collectMembers, sortKeysDeep } from './build-release.mjs';
+import { assertPortableOutput, collectMembers, deploymentMarkers, sortKeysDeep } from './build-release.mjs';
 import { cacheClass, sha256, verifyRelease } from './verify-release.mjs';
 
 const root = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -194,6 +194,20 @@ test('portable output refuses symlinks, dot paths, backslashes, maps, deployment
   }
 });
 
+test('every identifying build-time browser value is a deployment marker', () => {
+  assert.deepEqual(deploymentMarkers({
+    VITE_APP_MAPBOX_TOKEN: 'pk.synthetic-map-token', VITE_BASE_PATH: '/deployment-prefix',
+    VITE_PORT: '3000', VITE_BUILD_SOURCEMAP: 'false', REACT_APP_OTHER: 'not-a-vite-value',
+  }), ['pk.synthetic-map-token', '/deployment-prefix']);
+});
+
+test('release mode loads no dotenv files into client env', async () => {
+  const { resolveConfig } = await import('vite');
+  const config = await resolveConfig({ root, mode: 'release', logLevel: 'silent' }, 'build');
+  assert.equal(config.envDir, false);
+  assert.deepEqual(Object.keys(config.env).filter(key => key.startsWith('VITE_') && !(key in process.env)), []);
+});
+
 test('full Vite builds reproduce archive and manifest bytes in one clean isolated source commit', { timeout: 300000 }, () => {
   const snapshot = path.join(temporary, 'source');
   mkdirSync(snapshot);
@@ -246,8 +260,14 @@ test('full Vite builds reproduce archive and manifest bytes in one clean isolate
     assert.equal(readFileSync(path.join(snapshot, 'dist/sentinel'), 'utf8'), 'preserve');
     if (before) writeFileSync(target, before); else rmSync(target);
   }
+  // Ignored dotenv files keep the tree clean; a client-referenced value must still not ship.
+  const ignoredToken = 'wp7-ignored-dotenv-token';
+  writeFileSync(path.join(snapshot, '.env.release.local'), `VITE_APP_MAPBOX_TOKEN=${ignoredToken}\n`);
   const first = run({ TZ: 'Pacific/Honolulu', VITE_API_BASE_URL: 'https://wp7-api.example.invalid', VITE_BASE_PATH: '/wp7-deployment-marker' });
   assert.equal(first.status, 0, `${first.error ?? ''}\n${first.stderr.slice(-2000)}\n${first.stdout.slice(-1000)}`);
+  for (const member of collectMembers(path.join(snapshot, 'dist')).files) {
+    assert.equal(readFileSync(path.join(snapshot, 'dist', member)).includes(ignoredToken), false, member);
+  }
   const archivePath = path.join(output, `portal-view-${version}.zip`);
   const firstZip = readFileSync(archivePath);
   const firstManifest = readFileSync(path.join(output, 'release-manifest.json'));
