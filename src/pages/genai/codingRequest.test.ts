@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { codingPayload, emptyCodingInput, importCodingRequest } from './codingRequest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { clientMessageId, codingPayload, emptyCodingInput, importCodingRequest } from './codingRequest';
 const input = { ...emptyCodingInput, artifactUri: 'file:///spool/repo.bundle', digest: 'sha256:' + 'a'.repeat(64), size: '42', baseRevision: 'b'.repeat(40) };
 describe('typed coding request', () => {
   it('builds the fixed implementation authority and imports a generated smoke request', () => {
@@ -16,5 +16,17 @@ describe('typed coding request', () => {
   it('does not silently widen imported tools or writable roots, or drop review authority', () => {
     for (const change of [{ allowedTools: ['fs.read'] }, { writableRoots: ['/elsewhere'] }, { role: 'review' }, { remediation: {} }])
       expect(() => importCodingRequest({ profile: 'coding', text: 'request', coding: { ...codingPayload(input), ...change } })).toThrow();
+  });
+});
+
+describe('client message IDs', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('uses Web Crypto outside secure contexts', () => {
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(1) });
+    expect(clientMessageId()).toBe('01010101-0101-4101-8101-010101010101');
+  });
+  it('does not generate predictable IDs without Web Crypto', () => {
+    vi.stubGlobal('crypto', undefined);
+    expect(() => clientMessageId()).toThrow('Secure random ID generation is unavailable');
   });
 });

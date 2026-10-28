@@ -346,12 +346,12 @@ export default function Chat() {
     const handleSend = () => {
         if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !connected || !sessionReady || !turnTypes.includes(mode)) return;
         setSendError('');
-        if (authenticationExpiresAt.current !== null && Date.now() >= authenticationExpiresAt.current * 1000) {
-            draftId.current ||= clientMessageId();
-            void reauthenticate();
-            return;
-        }
         try {
+            if (authenticationExpiresAt.current !== null && Date.now() >= authenticationExpiresAt.current * 1000) {
+                draftId.current ||= clientMessageId();
+                void reauthenticate();
+                return;
+            }
             const id = draftId.current || clientMessageId();
             const payload = mode === 'coding'
                 ? codingSource === 'workspace'

@@ -37,7 +37,7 @@ export function buildSnapshotComparison(snapshots: SnapshotValues[]): SnapshotCo
   for (const entries of entryMaps) for (const key of Array.from(entries.keys())) keys.add(key);
 
   const rows = Array.from(keys).sort().map(key => {
-    const cells: Record<string, SnapshotComparisonCell> = {};
+    const cells: Record<string, SnapshotComparisonCell> = Object.create(null);
     const values = snapshots.map((snapshot, index) => {
       const entry = entryMaps[index].get(key) ?? null;
       cells[snapshot.snapshotId] = entry;
@@ -50,7 +50,7 @@ export function buildSnapshotComparison(snapshots: SnapshotValues[]): SnapshotCo
   const detailKeys = new Set<string>();
   for (const entries of detailEntryMaps) for (const key of Array.from(entries.keys())) detailKeys.add(key);
   const detailRows = Array.from(detailKeys).sort(compareDetailKeys).map(key => {
-    const cells: Record<string, SnapshotComparisonDetailCell | null> = {};
+    const cells: Record<string, SnapshotComparisonDetailCell | null> = Object.create(null);
     const values = snapshots.map((snapshot, index) => {
       const entry = detailEntryMaps[index].get(key) ?? null;
       cells[snapshot.snapshotId] = entry;

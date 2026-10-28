@@ -1,3 +1,4 @@
+import { secureRandomUUID } from '../../utils/secureRandomUUID';
 import fetchClient from '../../utils/fetchClient';
 
 const API = { host: 'lightapi.net', service: 'genai', version: '0.1.0' } as const;
@@ -40,9 +41,7 @@ export async function knowledgeQuery<T>(action: string, data: Record<string, unk
 export async function knowledgeCommand(action: string, data: Record<string, unknown>) {
     const idempotent = IDEMPOTENT_KNOWLEDGE_COMMANDS.has(action);
     const idempotencyKey = idempotent
-        ? (typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+        ? secureRandomUUID()
         : undefined;
     return fetchClient('/portal/command', {
         method: 'POST',

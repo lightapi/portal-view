@@ -12,6 +12,28 @@ vi.mock("universal-cookie", () => ({
 }));
 
 describe("fetchClient", () => {
+  const legacy = { host: 'lightapi.net', service: 'genai', action: 'createKnowledgeBase', version: '0.1.0', data: { name: 'example' } };
+  it('sends distinct correlation IDs for concurrent legacy commands and queries without Web Crypto', async () => {
+    vi.stubGlobal('crypto', undefined);
+    fetchMock.mockResolvedValue({ ok: true, status: 204 });
+    await Promise.all([
+      fetchClient('/portal/command', { method: 'POST', body: legacy }),
+      fetchClient('/portal/query', { method: 'POST', body: { ...legacy, action: 'getKnowledgeBases' } }),
+    ]);
+    const bodies = fetchMock.mock.calls.map(call => JSON.parse(call[1].body));
+    expect(bodies[0]).toEqual({ jsonrpc: '2.0', method: 'lightapi.net/genai/createKnowledgeBase/0.1.0',
+      params: { name: 'example' }, id: expect.stringMatching(/^portal-rpc-\d+$/) });
+    expect(bodies[1].method).toBe('lightapi.net/genai/getKnowledgeBases/0.1.0');
+    expect(bodies[1].id).not.toBe(bodies[0].id);
+  });
+  it('preserves an explicit caller JSON-RPC ID without generating a replacement', async () => {
+    vi.stubGlobal('crypto', undefined);
+    fetchMock.mockResolvedValue({ ok: true, status: 204 });
+    const body = { jsonrpc: '2.0', method: 'example', params: {}, id: 'caller-123' };
+    await fetchClient('/portal/command', { method: 'POST', body });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(body);
+  });
+
   const responseJson = vi.fn();
   const fetchMock = vi.fn();
 
