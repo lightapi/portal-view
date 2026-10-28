@@ -1,6 +1,8 @@
-import { secureRandomUUID } from './secureRandomUUID';
 import Cookies from 'universal-cookie';
 import { apiUrl } from "./runtimePaths";
+
+// These IDs only correlate responses within this page; they are not security tokens.
+let rpcSequence = 0;
 
 /**
  * Custom fetch wrapper with automatic base URL prefixing and CSRF handling
@@ -44,7 +46,7 @@ async function fetchClient(endpoint: string, options: any = {}) {
             else if (bodyObj.host && bodyObj.service && bodyObj.action && bodyObj.version && !bodyObj.rest) {
                 const method = `${bodyObj.host}/${bodyObj.service}/${bodyObj.action}/${bodyObj.version}`;
                 const params = bodyObj.data || {};
-                const id = secureRandomUUID();
+                const id = `portal-rpc-${++rpcSequence}`;
                 bodyObj = {
                     jsonrpc: "2.0",
                     method: method,

@@ -22,6 +22,10 @@ describe('snapshot comparison', () => {
     }
     // Structured clone may restore Object.prototype, but must keep dangerous keys as data properties.
     const transferred = structuredClone(model);
+    expect(Object.getPrototypeOf(transferred.rows[0].cells)).toBe(Object.prototype);
+    expect(Object.getOwnPropertyDescriptor(transferred.rows[0].cells, id)).toEqual(expect.objectContaining({
+      value: expect.objectContaining({ value: { leaf: 'first' } }),
+    }));
     expect(Object.hasOwn(transferred.rows[0].cells, id)).toBe(true);
     expect(transferred.rows[0].cells[id]?.value).toEqual({ leaf: 'first' });
     expect(Object.hasOwn(transferred.detailRows[0].cells, id)).toBe(true);

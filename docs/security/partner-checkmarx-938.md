@@ -8,11 +8,11 @@ The partner's scanned revision and deployed artifact remain unknown.
 
 | Assessment / worksheet rows | Source disposition |
 | --- | --- |
-| A03 / 4–5 | Both comparison cell dictionaries use null prototypes. Arbitrary IDs, including __proto__, constructor, prototype and toString, remain own data keys without changing dictionary prototypes. Regression tests cover top-level/detail cells and structured-clone worker transfer. This removes reliance on API UUID validation for this primitive. |
+| A03 / 4–5 | Both comparison cell dictionaries use null prototypes. Arbitrary IDs, including __proto__, constructor, prototype and toString, remain own data keys without changing dictionary prototypes. Regression tests cover top-level/detail cells and structured-clone worker transfer; null prototypes protect construction, not the transferred object. This removes reliance on API UUID validation for this primitive. |
 | A09 / 24 | Chat client message IDs use the shared secureRandomUUID helper. The draft remains visible with an error if cryptographic generation is unavailable, including expired-session renewal. |
-| A09 / 26 | Generated legacy JSON-RPC IDs use the same helper; explicit caller JSON-RPC IDs remain unchanged. Missing Web Crypto rejects before fetch. |
+| A09 / 26 | Generated legacy JSON-RPC correlation IDs use a per-page sequence, avoiding both weak randomness and a Web Crypto dependency. Explicit caller JSON-RPC IDs remain unchanged. |
 | A09 / 27 | Knowledge command idempotency keys use the same helper, one key per invocation. Commands requiring no idempotency key do not request one; missing Web Crypto rejects keyed commands before dispatch. |
-| A10 / 25 | History confirms the old ProfileMenu generator was OAuth state, not a correlation ID. It has already been replaced by cryptographic generation in the shared sign-in helper. New regression coverage locks in ProfileMenu delegation, secure state use and failure before redirect/storage without secure UUID support. |
+| A10 / 25 | History confirms the old ProfileMenu generator was OAuth state, not a correlation ID. The historical generator was already replaced by cryptographic generation. Sign-in now uses secureRandomUUID, including the getRandomValues fallback. Menu tests exercise the real helper, secure state storage/redirect and a visible retryable failure without Web Crypto. |
 
 ## Cryptographic IDs
 
@@ -22,7 +22,27 @@ preserves chat's UUID format in contexts where randomUUID is unavailable. It
 throws when neither cryptographic API is available, rather than falling back to
 Math.random or a timestamp. A failed native generator is propagated without
 silent downgrade. The separate createIdempotencyKey form helper already uses
-Web Crypto and has a different opaque-key format; it is unchanged.
+Web Crypto and has a different opaque-key format; it is unchanged. clientMessageId
+is a compatibility re-export of secureRandomUUID, not another implementation.
+The migration covers the assessed chat, Knowledge and OAuth paths; other direct
+randomUUID call sites are outside this change. It does not claim repository-wide
+ID-generator consolidation.
+
+JSON-RPC IDs only correlate responses within one page. A monotonically increasing
+per-page sequence is sufficient; it is not used as an idempotency key, credential
+or OAuth state. Legacy-shaped query and command calls therefore remain usable
+without Web Crypto.
+
+## Snapshot worker boundary
+
+Null-prototype cell dictionaries prevent prototype setter execution while the
+worker builds the comparison. Structured clone restores Object.prototype on the
+receiving side, but preserves dangerous names such as __proto__ as own data
+properties. The UI only reads cells by the snapshot IDs already populated by the
+builder; it does not add new untrusted keys to transferred cells. Tests verify
+that both regular and detail values survive transfer as own properties. This
+change does not promise that null prototypes survive worker transfer or that
+subsequent arbitrary writes to ordinary objects are safe.
 
 ## Historical OAuth evidence
 
@@ -44,23 +64,10 @@ revision. Do not describe the historical weak state generator as a false positiv
 
 A09 concerns weak client-generated keys. Keys are not credentials; randomizing
 one does not replace authenticated authorization or establish actor isolation.
-Read-only source checks found:
-
-- light-portal at a8da0c88ee3fb8178dd43c2a02495d6b99084c69:
-  command/genai-command/.../KnowledgeCommands.java requires verified audit identity
-  and delegates operational commands with Authorization and Idempotency-Key.
-- light-fabric at 60f1a91e07503ec9ed36d019f00cdadaa688375b:
-  apps/light-knowledge-admin/src/lib.rs authorizes commands, checks environment and
-  knowledge-base owner visibility before job lookup, and scopes replay lookup to
-  (knowledge_base_id, idempotency_key). Conflicting operation/data returns a conflict.
-  Same-payload replay is shared within that authorized knowledge-base scope;
-  the lookup is not scoped to an individual actor.
-
-These are source observations, not backend isolation tests or a claim that every
-create/operational command has been qualified. This frontend PR does not change
-backend authorization/replay policy. Deployment owners must verify the intended
-owner scope, cross-owner rejection and replay behavior with their deployed backend;
-if per-actor replay isolation is required, track that backend policy separately.
+This frontend PR does not change or qualify backend authorization/replay policy.
+Deployment owners must verify the intended authenticated owner/operation scope,
+cross-owner rejection and replay behavior against their deployed backend. These
+are backend acceptance criteria, not conclusions established by frontend tests.
 
 ## Deployment closure
 

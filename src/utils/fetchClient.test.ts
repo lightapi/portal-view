@@ -13,18 +13,18 @@ vi.mock("universal-cookie", () => ({
 
 describe("fetchClient", () => {
   const legacy = { host: 'lightapi.net', service: 'genai', action: 'createKnowledgeBase', version: '0.1.0', data: { name: 'example' } };
-  it('uses cryptographic UUID bytes for legacy JSON-RPC IDs without randomUUID', async () => {
-    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(2) });
-    fetchMock.mockResolvedValue({ ok: true, status: 204 });
-    await fetchClient('/portal/command', { method: 'POST', body: legacy });
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body).toEqual({ jsonrpc: '2.0', method: 'lightapi.net/genai/createKnowledgeBase/0.1.0',
-      params: { name: 'example' }, id: '02020202-0202-4202-8202-020202020202' });
-  });
-  it('rejects legacy commands before sending when Web Crypto is unavailable', async () => {
+  it('sends distinct correlation IDs for concurrent legacy commands and queries without Web Crypto', async () => {
     vi.stubGlobal('crypto', undefined);
-    await expect(fetchClient('/portal/command', { method: 'POST', body: legacy })).rejects.toThrow('Secure random ID generation is unavailable');
-    expect(fetchMock).not.toHaveBeenCalled();
+    fetchMock.mockResolvedValue({ ok: true, status: 204 });
+    await Promise.all([
+      fetchClient('/portal/command', { method: 'POST', body: legacy }),
+      fetchClient('/portal/query', { method: 'POST', body: { ...legacy, action: 'getKnowledgeBases' } }),
+    ]);
+    const bodies = fetchMock.mock.calls.map(call => JSON.parse(call[1].body));
+    expect(bodies[0]).toEqual({ jsonrpc: '2.0', method: 'lightapi.net/genai/createKnowledgeBase/0.1.0',
+      params: { name: 'example' }, id: expect.stringMatching(/^portal-rpc-\d+$/) });
+    expect(bodies[1].method).toBe('lightapi.net/genai/getKnowledgeBases/0.1.0');
+    expect(bodies[1].id).not.toBe(bodies[0].id);
   });
   it('preserves an explicit caller JSON-RPC ID without generating a replacement', async () => {
     vi.stubGlobal('crypto', undefined);

@@ -103,12 +103,18 @@ describe('signIn without SSO', () => {
 
 describe('OAuth state generation security', () => {
   beforeEach(() => publishTestConfig());
-  it.each([undefined, {}])('fails before persisting state or redirecting without secure UUID support: %s', crypto => {
+  it.each([undefined, {}])('fails before persisting state or redirecting without Web Crypto: %s', crypto => {
     vi.stubGlobal('crypto', crypto);
     return expect(signIn()).rejects.toThrow().then(() => {
       expect(assigned).toBeNull();
       expect(localStorage.getItem('portal_auth_state')).toBeNull();
     });
+  });
+  it('uses getRandomValues for OAuth state when randomUUID is unavailable', async () => {
+    vi.stubGlobal('crypto', { getRandomValues: (bytes: Uint8Array) => bytes.fill(4) });
+    await signIn();
+    expect(localStorage.getItem('portal_auth_state')).toBe('04040404-0404-4404-8404-040404040404');
+    expect(new URL(assigned!).searchParams.get('state')).toBe(localStorage.getItem('portal_auth_state'));
   });
   it('never invokes the historical Math.random state generator', async () => {
     const weak = vi.spyOn(Math, 'random');

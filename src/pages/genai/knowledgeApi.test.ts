@@ -47,12 +47,6 @@ describe('Knowledge command API', () => {
         expect(mockedFetchClient).not.toHaveBeenCalled();
     });
 
-    it('does not request randomness for ordinary aggregate updates', async () => {
-        vi.stubGlobal('crypto', undefined);
-        await knowledgeCommand('updateKnowledgeBase', { aggregateVersion: 1 });
-        expect(mockedFetchClient).toHaveBeenCalledWith('/portal/command', expect.not.objectContaining({ headers: expect.anything() }));
-    });
-
     it('generates separate keys for separate invocations', async () => {
         const uuid = vi.fn().mockReturnValueOnce('00000000-0000-4000-8000-000000000001')
             .mockReturnValueOnce('00000000-0000-4000-8000-000000000002');
@@ -63,7 +57,8 @@ describe('Knowledge command API', () => {
             .toEqual(['00000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002']);
     });
 
-    it('does not send an idempotency key for ordinary aggregate updates', async () => {
+    it('does not send an idempotency key or need randomness for ordinary aggregate updates', async () => {
+        vi.stubGlobal('crypto', undefined);
         const data = {
             knowledgeBaseId: '018f0000-0000-7000-8000-000000000002',
             environment: 'dev', aggregateVersion: 1,

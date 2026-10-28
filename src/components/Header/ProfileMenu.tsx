@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Person as AccountIcon } from "@mui/icons-material";
-import { IconButton, Menu, MenuItem, ListSubheader } from "@mui/material";
+import { IconButton, Menu, MenuItem, ListSubheader, Alert } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import type { IPublicClientApplication } from "@azure/msal-browser";
@@ -30,11 +30,20 @@ function ProfileMenuContent({
 }) {
   const theme = useTheme();
   const [profileMenu, setProfileMenu] = useState<null | HTMLElement>(null);
+  const [signInError, setSignInError] = useState<string | null>(null);
   const userDispatch = useUserDispatch();
   const { isAuthenticated, userId, email, roles } = useUserState();
   const navigate = useNavigate();
 
-  const handleSignIn = () => signIn(msalInstance);
+  const handleSignIn = async () => {
+    setSignInError(null);
+    try {
+      await signIn(msalInstance);
+    } catch {
+      setProfileMenu(null);
+      setSignInError('Unable to sign in securely. Try a supported browser or contact your administrator.');
+    }
+  };
 
   const handleMenuClose = () => {
     setProfileMenu(null);
@@ -47,6 +56,7 @@ function ProfileMenuContent({
 
   return (
     <>
+      {signInError && <Alert severity="error">{signInError}</Alert>}
       <IconButton
         aria-haspopup="true"
         color="inherit"

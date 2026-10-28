@@ -1,4 +1,4 @@
-import { secureRandomUUID } from '../../utils/secureRandomUUID';
+export { secureRandomUUID as clientMessageId } from '../../utils/secureRandomUUID';
 
 export type CodingInput = {
   artifactUri: string; digest: string; size: string; baseRevision: string;
@@ -8,10 +8,6 @@ export const emptyCodingInput: CodingInput = {
   artifactUri: '', digest: '', size: '', baseRevision: '', workspaceRoot: '/workspace/repository',
   maximumPatchBytes: '65536', maximumChangedFiles: '1',
 };
-/** Message IDs remain UUIDs even outside secure contexts. */
-export function clientMessageId(): string {
-  return secureRandomUUID();
-}
 const positive = (text: string, name: string) => {
   const value = Number(text);
   if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive safe integer.`);

@@ -1,6 +1,7 @@
 import type { IPublicClientApplication } from "@azure/msal-browser";
 import { getPortalConfig } from "../../config";
 import { browserRedirectUri } from "./runtimePaths";
+import { secureRandomUUID } from "./secureRandomUUID";
 import { loginRequest } from "../authConfig";
 
 /**
@@ -28,7 +29,7 @@ export async function signIn(msalInstance?: IPublicClientApplication): Promise<v
   }
 
   // Generate a random state for CSRF protection
-  const state = crypto.randomUUID();
+  const state = secureRandomUUID();
   localStorage.setItem("portal_auth_state", state);
 
   const url = new URL(auth.signInUrl, window.location.origin);
