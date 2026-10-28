@@ -10,6 +10,25 @@ const IDS = [
 ];
 
 describe('snapshot comparison', () => {
+  it.each(['__proto__', 'constructor', 'prototype', 'toString'])('treats snapshot ID %s as an ordinary own key, including worker transfer', id => {
+    const first = { ...snapshot(0, [entry('nested', { leaf: 'first' }, 'map')]), snapshotId: id };
+    const second = snapshot(1, [entry('nested', { leaf: 'second' }, 'map')]);
+    const model = buildSnapshotComparison([first, second]);
+    for (const rows of [model.rows, model.detailRows]) {
+      expect(Object.getPrototypeOf(rows[0].cells)).toBeNull();
+      expect(Object.hasOwn(rows[0].cells, id)).toBe(true);
+      expect(rows[0].cells[id]?.value).toEqual(rows === model.rows ? { leaf: 'first' } : 'first');
+      expect(rows[0].status).toBe('valueChanged');
+    }
+    // Structured clone may restore Object.prototype, but must keep dangerous keys as data properties.
+    const transferred = structuredClone(model);
+    expect(Object.hasOwn(transferred.rows[0].cells, id)).toBe(true);
+    expect(transferred.rows[0].cells[id]?.value).toEqual({ leaf: 'first' });
+    expect(Object.hasOwn(transferred.detailRows[0].cells, id)).toBe(true);
+    expect(transferred.detailRows[0].cells[id]?.value).toBe('first');
+    expect(Object.prototype).not.toHaveProperty('leaf');
+  });
+
   it('ignores map order, preserves list order, and detects source-only changes', () => {
     const model = buildSnapshotComparison([
       snapshot(0, [entry('map', { b: 2, a: 1 }, 'map'), entry('list', ['a', 'b'], 'list'), entry('source', true, 'boolean', 'environment')]),

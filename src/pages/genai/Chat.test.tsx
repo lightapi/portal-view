@@ -395,3 +395,23 @@ it('offers only advertised workspaces and submits a task without repository bund
   act(() => socket.receive({ type: 'executionResult', turnId: 'turn-a', state: 'COMPLETED', text: 'It loads at startup.', workspace: { workspaceId: 'personal', taskId: 'task-one', checkpointDigest: 'sha256:'+'b'.repeat(64) } }));
   expect(screen.getByLabelText('Existing task ID')).toHaveValue('task-one');
 });
+
+it.each([false, true])('keeps the draft and reports missing Web Crypto before send/renewal (expired=%s)', async expired => {
+  const refresh = vi.fn();
+  const user = userEvent.setup(); render(<Chat />); const socket = await connect(user);
+  act(() => {
+    socket.readyState = 1; socket.onopen?.();
+    socket.receive({ type: 'session', session_id: 'session-a' });
+    if (expired) socket.receive({ type: 'authentication_context', expiresAt: Math.floor(Date.now() / 1000) - 1 });
+  });
+  vi.stubGlobal('fetch', refresh);
+  vi.stubGlobal('crypto', undefined);
+  try {
+    fireEvent.change(screen.getByPlaceholderText('Type your message here...'), { target: { value: 'unsent draft' } });
+    await user.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(screen.getByText('Secure random ID generation is unavailable')).toBeInTheDocument();
+    expect(socket.send).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Type your message here...')).toHaveValue('unsent draft');
+  } finally { vi.unstubAllGlobals(); }
+});

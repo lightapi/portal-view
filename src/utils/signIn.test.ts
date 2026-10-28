@@ -26,6 +26,7 @@ afterEach(() => {
   resetPortalConfigForTests();
   Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('signIn with SSO enabled', () => {
@@ -97,5 +98,23 @@ describe('signIn without SSO', () => {
     await expect(signIn()).rejects.toThrow('Portal runtime configuration is not loaded');
     expect(assigned).toBeNull();
     expect(localStorage.getItem('portal_auth_state')).toBeNull();
+  });
+});
+
+describe('OAuth state generation security', () => {
+  beforeEach(() => publishTestConfig());
+  it.each([undefined, {}])('fails before persisting state or redirecting without secure UUID support: %s', crypto => {
+    vi.stubGlobal('crypto', crypto);
+    return expect(signIn()).rejects.toThrow().then(() => {
+      expect(assigned).toBeNull();
+      expect(localStorage.getItem('portal_auth_state')).toBeNull();
+    });
+  });
+  it('never invokes the historical Math.random state generator', async () => {
+    const weak = vi.spyOn(Math, 'random');
+    vi.stubGlobal('crypto', { randomUUID: () => '00000000-0000-4000-8000-000000000001' });
+    await signIn();
+    expect(weak).not.toHaveBeenCalled();
+    expect(new URL(assigned!).searchParams.get('state')).toBe(localStorage.getItem('portal_auth_state'));
   });
 });

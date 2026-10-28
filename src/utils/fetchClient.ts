@@ -1,3 +1,4 @@
+import { secureRandomUUID } from './secureRandomUUID';
 import Cookies from 'universal-cookie';
 import { apiUrl } from "./runtimePaths";
 
@@ -43,7 +44,7 @@ async function fetchClient(endpoint: string, options: any = {}) {
             else if (bodyObj.host && bodyObj.service && bodyObj.action && bodyObj.version && !bodyObj.rest) {
                 const method = `${bodyObj.host}/${bodyObj.service}/${bodyObj.action}/${bodyObj.version}`;
                 const params = bodyObj.data || {};
-                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 10);
+                const id = secureRandomUUID();
                 bodyObj = {
                     jsonrpc: "2.0",
                     method: method,
